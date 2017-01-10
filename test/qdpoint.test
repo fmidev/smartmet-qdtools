@@ -1,0 +1,305 @@
+#!/usr/bin/perl
+
+$qdpoint = "../qdpoint";
+$results = "results";
+$hiladata = "data/hiladata.sqd";
+$pistedata = "data/pistedata.fqd";
+$synopdata = "data/synop.sqd";
+
+%usednames = ();
+
+
+# Paikannimi optio -p
+
+DoTest("default querydata toimii",
+       "default_data",
+       "-p Helsinki > /dev/null && echo Toimii || echo Ei toimi");
+
+DoTest("pistedatan tulostus Helsinkiin",
+       "piste_data_helsinki",
+       "-p Helsinki -q $pistedata");
+
+DoTest("hiladatan tulostus Helsinkiin",
+       "hila_data_helsinki",
+       "-p Helsinki -q $pistedata");
+
+DoTest("pistedata Helsinki ja Tampere",
+       "piste_data_helsinki_tampere",
+       "-p Helsinki,Tampere -q $pistedata");
+
+DoTest("hiladata Helsinki ja Tampere",
+       "hila_data_helsinki_tampere",
+       "-p Helsinki,Tampere -q $hiladata");
+
+# Paikkalista optio -l
+
+DoTest("paikkakuntien tulostus -l optiolla",
+       "paikkakunnat_hki_tampere_turku",
+       "-l data/asemalista.dat -q $hiladata");
+
+# Parametri optio -P
+
+DoTest("lämpötilan poimiminen -P optiolla pistedatasta",
+       "lampotila_piste_data_helsinki",
+       "-P Temperature -p Helsinki -q $pistedata");
+
+DoTest("lämpötilan poimiminen -P optiolla hiladatasta",
+       "lampotila_hila_data_helsinki",
+       "-P Temperature -p Helsinki -q $hiladata");
+
+# Useampi parametri kerrallaan
+
+DoTest("usean parametrin poimiminen -P optiolla pistedatasta",
+       "lampotila_paine_piste_data_helsinki",
+       "-P Temperature,Pressure -p Helsinki -q $pistedata");
+
+DoTest("usean parametrin poimiminen -P optiolla hiladatasta",
+       "lampotila_paine_hila_data_helsinki",
+       "-P Temperature,Pressure -p Helsinki -q $hiladata");
+
+# Haluttu koordinaatti
+
+DoTest("halutun latlongin poimiminen -x -y optiolla pistedatasta",
+       "latlong_piste_data_helsinki",
+       "-x 25 -y 60 -P Temperature -q $pistedata");
+
+DoTest("halutun latlongin poimiminen -x -y optiolla hiladatasta",
+       "latlong_hila_data_helsinki",
+       "-x 25 -y 60 -P Temperature -q $hiladata");
+
+# Rivien lukumääräoptio -n
+
+DoTest("yhden rivin poimiminen -n optiolla pistedatasta",
+       "yksirivi_piste_data_helsinki",
+       "-n -p Helsinki -q $pistedata");
+
+DoTest("yhden rivin poimiminen -n optiolla hiladatasta",
+       "yksirivi_hila_data_helsinki",
+       "-n -p Helsinki -q $hiladata");
+
+DoTest("usean rivin poimiminen -n optiolla pistedatasta",
+       "usearivi_piste_data_helsinki",
+       "-n 3 -p Helsinki -q $pistedata");
+
+DoTest("usean rivin poimiminen -n optiolla hiladatasta",
+       "usearivi_hila_data_helsinki",
+       "-n 3 -p Helsinki -q $hiladata");
+
+# WMO asemanumero optio -w
+
+DoTest("WMO asemien poimiminen -w optiolla",
+       "wmoasemat_piste",
+       "-w -q $pistedata");
+
+DoTest("WMO asemista viimeisin rivi -w -n optiolla",
+       "wmoasemat_yksirivi_piste",
+       "-w -n -q $pistedata");
+
+DoTest("Yhden WMO aseman poimiminen -w optiolla",
+       "wmoasema_kaisaniemi",
+       "-w 2978 -q $pistedata");
+
+DoTest("Usean WMO aseman poimiminen -w optiolla",
+       "wmoasema_kaisaniemi_ja_vantaa",
+       "-w 2978,2974 -q $pistedata");
+
+# Asemien luettelointioptio -s
+
+DoTest("WMO asemien luettelointi -s optiolla",
+       "wmoasemat_luettelo",
+       "-s -w -n -q $pistedata");
+
+DoTest("WMO asemien luettelointi -s -N optioilla",
+       "wmoasemat_luettelo_lahimmat",
+       "-s -N 10 -p Helsinki -q $pistedata");
+
+DoTest("WMO asemien luettelointi -s -N 1 optioilla",
+       "wmoasemat_luettelo_lahin",
+       "-s -N 1 -p Helsinki -q $pistedata");
+
+# Testataan etäisyysmaksimi -d
+
+DoTest("oletusarvoinen maksimietäisyys",
+       "oletus_maksimietaisyys",
+       "-p Helsinki -q $pistedata");
+
+DoTest("liian pieni maksimietäisyys",
+       "pieni_maksimietaisyys",
+       "-p Helsinki -d 1 -q $pistedata");
+
+DoTest("tarpeeksi iso maksimietäisyys",
+       "iso_maksimietaisyys",
+       "-p Helsinki -d 10 -q $pistedata");
+
+# Testataan metafunktio MetaIsDark
+
+DoTest("metafunktio MetaIsDark Helsinkiin",
+       "metaisdark_helsinki_piste",
+       "-P MetaIsDark -p Helsinki -q $pistedata");
+
+DoTest("metafunktio MetaIsDark Utsjoelle",
+       "metaisdark_utsjoki_hila",
+       "-P MetaIsDark -p Utsjoki -q $hiladata");
+
+# Testataan metafunktiot MetaN ja MetaNN
+
+DoTest("metafunktio MetaN ja MetaNN Helsinkiin",
+       "metan_metann_helsinki_hila",
+       "-P TotalCloudCover,MiddleAndLowCloudCover,MetaN,MetaNN -p Helsinki -q $hiladata");
+
+# Testataan metafunktio MetaSnowProb
+
+DoTest("metafunktio MetaSnowProb Helsinkiin",
+       "metasnowprob_helsinki_piste",
+       "-P MetaSnowProb -p Helsinki -q $pistedata");
+
+# Testataan metafunktio MetaSurfaceRadiation
+
+DoTest("metafunktio MetaSurfaceRadiation Helsinkiin",
+       "metasurfaceradiation_helsinki_hila",
+       "-P MetaSurfaceRadiation -p Helsinki -q $hiladata");
+
+# Testataan metafunktio MetaThetaE
+
+DoTest("metafunktio MetaThetaE Helsinkiin",
+       "metathetae_helsinki_piste",
+       "-P Temperature,Pressure,Humidity,MetaThetaE -p Helsinki -q $pistedata");
+
+# Testataan -q optio monella datalla
+
+DoTest("-q pistedata,hiladata",
+       "piste_hila_jarjestys",
+       "-P Temperature -p Helsinki -q $pistedata,$hiladat");
+
+DoTest("-q hiladata,pistedata",
+       "hila_piste_jarjestys",
+       "-P Temperature -p Helsinki -q $hiladata,$pistedata");
+
+# < 5 km etaisyys loytyy vain pistedatasta
+DoTest("-q pistedata,hiladata -d 5",
+       "piste_hila_jarjestys_etaisyys",
+       "-d 5 -P Temperature -p Helsinki -q $pistedata,$hiladata");
+
+DoTest("-q hiladata,pistedata -d 5",
+       "hila_piste_jarjestys_etaisyys",
+       "-d 5 -P Temperature -p Helsinki -q $hiladata,$pistedata");
+
+# Puuttuvien arvojen käsittely
+
+DoTest("puuttuvien arvojen korvaus halutulla merkkijonolla",
+       "puuttuvien_korvaus",
+       "-q $synopdata -w 2889 -m NULL");
+
+DoTest("puuttuvien arvojen interpolointi rajalla 60",
+       "puuttuvien_interpolointi_60",
+       "-q $synopdata -i 60 -w 2889 -P DewPoint");
+
+DoTest("puuttuvien arvojen interpolointi rajalla 120",
+       "puuttuvien_interpolointi_120",
+       "-q $synopdata -i 120 -w 2889 -P DewPoint");
+
+DoTest("puuttuvien arvojen interpolointi rajalla 180",
+       "puuttuvien_interpolointi_180",
+       "-q $synopdata -i 180 -w 2889 -P DewPoint");
+
+# Testataan -N optio
+
+DoTest("-N optio hakee lähimmät pisteet",
+       "piste_N_lahinta",
+       "-N 5 -P Temperature -p Helsinki -q $pistedata");
+
+DoTest("-N optio hakee lähimmän yhden pisteen",
+       "piste_1_lahin",
+       "-N 1 -P Temperature -p Helsinki -q $pistedata");
+
+DoTest("-N optio rajoittuu -d optiolla",
+       "piste_N_lahinta_etaisyydella",
+       "-N 100 -d 20 -P Temperature -p Helsinki -q $pistedata");
+
+print "Done\n";
+
+# ----------------------------------------------------------------------
+# Run a single test
+# ----------------------------------------------------------------------
+
+sub DoTest
+{
+    my($text,$name,$arguments) = @_;
+
+    if(exists($usednames{$name}))
+    {
+	print "Virhe regressiotesteissä: $name käytössä useamman kerran\n";
+	exit(1);
+    }
+    $usednames{$name} = 1;
+
+    # Halutut tulokset ovat täällä
+
+    my($resultfile) = "qdpoint_$name";
+
+    # Saadut tulokset
+    my($tmpfile) = "${resultfile}.tmp";
+
+    # Korjaa komento lopulliseen muotoon
+    $cmd = "$qdpoint $arguments 2>&1";
+
+    # Aja käsky
+    
+    $output = `$cmd`;
+
+    # Vertaa tuloksia
+
+    print padname($text);
+    if(equalcontent("$results/$resultfile",$output))
+    {
+	print " ok\n";
+	unlink($tmpfile);
+    }
+    else
+    {
+	print " FAILED!\n";
+	print "( $resultfile <> $tmpfile in $results/ )\n";
+
+	open(OUT,">$results/$tmpfile")
+	    or die "Could not open $results/$tmpfile for writing\n";
+	print OUT $output;
+	close(OUT);
+    }
+}
+
+# ----------------------------------------------------------------------
+# Pad the given string to 70 characters with dots
+# ----------------------------------------------------------------------
+
+sub padname
+{
+    my($str) = @_[0];
+
+    while(length($str) < 70)
+    {
+	$str .= ".";
+    }
+    return $str;
+}
+
+# ----------------------------------------------------------------------
+# Compare two files
+# ----------------------------------------------------------------------
+
+sub equalcontent
+{
+    my($file,$text) = @_;
+
+    # File must exits
+
+    if(!(-e $file))
+    { return 0; }
+
+    # Read binary file and compare results
+
+    open(FILE,"$file");
+    binmode(FILE);
+    read(FILE,$buffer,(stat(FILE))[7]);
+    close(FILE);
+    return ($buffer eq $text);
+}

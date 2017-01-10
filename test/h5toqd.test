@@ -1,0 +1,118 @@
+#!/usr/bin/perl
+
+$program = "../h5toqd";
+$results = "results";
+
+%usednames = ();
+
+DoTest("daily precipitation","daily.sqd","data/daily.h5");
+DoTest("dbz","dbz.sqd","data/dbz.h5");
+DoTest("echo top","etop.sqd","data/etop.h5");
+DoTest("max","max.sqd","data/max.h5");
+DoTest("pac","pac.sqd","data/pac.h5");
+DoTest("ppi","ppi.sqd","data/ppi.h5");
+DoTest("vil","vil.sqd","data/vil.h5");
+DoTest("rr3h","3h.sqd","data/3h.h5");
+DoTest("cappi","cappi.sqd","data/cappi.h5");
+DoTest("pvol","pvol.sqd","data/pvol.h5");
+
+# Uses an unsupported projection
+DoTest("comp","comp.sqd","data/comp.h5");
+
+# Not Opera parameters:
+# DoTest("zhail","zhail.sqd","data/zhail.h5");
+# DoTest("lmr","lmr.sqd","data/lmr.h5");
+# DoTest("ltb","ltb.sqd","data/ltb.h5");
+# DoTest("smv","smv.sqd","data/smv.h5");
+# DoTest("sri","sri.sqd","data/sri.h5");
+# DoTest("srv","srv.sqd","data/srv.h5");
+# DoTest("hshear","hshear.sqd","data/hshear.h5");
+# DoTest("vshear","vshear.sqd","data/vshear.h5");
+# DoTest("shear","shear.sqd","data/shear.h5");
+# DoTest("shear2","shear2.sqd","data/shear2.h5");
+
+print "Done\n";
+
+# ----------------------------------------------------------------------
+# Run a single test
+# ----------------------------------------------------------------------
+
+sub DoTest
+{
+    my($text,$name,$arguments) = @_;
+
+    if(exists($usednames{$name}))
+    {
+	print "Virhe regressiotesteissä: $name käytössä useamman kerran\n";
+	exit(1);
+    }
+    $usednames{$name} = 1;
+
+    # Halutut tulokset ovat täällä
+
+    my($resultfile) = "h5toqd_$name";
+
+    # Saadut tulokset
+    my($tmpfile) = "${resultfile}.tmp";
+
+    # Korjaa komento lopulliseen muotoon
+    $cmd = "$program $arguments $results/$tmpfile";
+
+    # Aja käsky
+    
+    # print "$cmd\n";
+    # $output = `$cmd 2>/dev/null`;
+    $output = `$cmd`;
+
+    # Vertaa tuloksia
+
+    print padname($text);
+
+    if(! -e "results/$tmpfile")
+    {
+	print " FAILED TO PRODUCE OUTPUT FILE\n";
+    }
+    elsif(! -e "results/$resultfile")
+    {
+	print " FAILED: TRUE RESULT MISSING\n";
+	unlink("$results/$tmpfile");
+    }
+    else
+    {
+	my($difference) = `qddifference results/$resultfile results/$tmpfile`;
+
+	$difference =~ s/^\s+//;
+	$difference =~ s/\s+$//;
+	
+	if($difference < 0.0001)
+	{
+	    if($difference <= 0)
+	    { print " OK\n"; }
+	    else
+	    { print " OK (diff <= $difference)\n"; }
+	    unlink("$results/$tmpfile");
+	}
+	else
+	{
+	    print " FAILED! (maxdiff = $difference)\n";
+	    print "( $resultfile <> $tmpfile in $results/ )\n";
+	}
+    }
+}
+
+# ----------------------------------------------------------------------
+# Pad the given string to 70 characters with dots
+# ----------------------------------------------------------------------
+
+sub padname
+{
+    my($str) = @_[0];
+
+    while(length($str) < 70)
+    {
+	$str .= ".";
+    }
+    return $str;
+}
+
+# ----------------------------------------------------------------------

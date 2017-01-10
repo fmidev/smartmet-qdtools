@@ -1,0 +1,216 @@
+#!/usr/bin/perl
+
+$qdmissing = "../qdmissing";
+$results = "results";
+$hiladata = "data/hiladata.sqd";
+$pistedata = "data/pistedata.fqd";
+$synopdata = "data/synop.sqd";
+
+%usednames = ();
+
+# Ilman optioita
+
+DoTest("pistedatan testi ilman optioita",
+       "pistedata",
+       "$pistedata");
+
+DoTest("hiladatan testi ilman optioita",
+       "hiladata",
+       "$hiladata");
+
+DoTest("synopdatan testi ilman optioita",
+       "synopdata",
+       "$synopdata");
+
+# Optio -n
+
+DoTest("pistedatan -n testi",
+       "pistedata_n",
+       "-n $pistedata");
+
+DoTest("hiladatan -n testi",
+       "hiladata_n",
+       "-n $hiladata");
+
+DoTest("synopdatan -n testi",
+       "synopdata_n",
+       "-n $synopdata");
+
+# Optio -N
+
+DoTest("pistedatan -N testi",
+       "pistedata_iso_n",
+       "-N $pistedata");
+
+DoTest("hiladatan -N testi",
+       "hiladata_iso_n",
+       "-N $hiladata");
+
+DoTest("synopdatan -N testi",
+       "synopdata_iso_n",
+       "-N $synopdata");
+
+# Optio -t
+
+DoTest("pistedatan -t testi",
+       "pistedata_t",
+       "-t $pistedata");
+
+DoTest("hiladatan -t testi",
+       "hiladata_t",
+       "-t $hiladata");
+
+DoTest("synopdatan -t testi",
+       "synopdata_t",
+       "-t $synopdata");
+
+# Optio -T UTC
+
+DoTest("pistedatan -T UTC testi",
+       "pistedata_T_UTC",
+       "-T UTC $pistedata");
+
+DoTest("hiladatan -T UTC testi",
+       "hiladata_T_UTC",
+       "-T UTC $hiladata");
+
+DoTest("synopdatan -T testi",
+       "synopdata_T_UTC",
+       "-T UTC $synopdata");
+
+# Optio -P
+
+DoTest("pistedatan -P Temperature,WindSpeedMS testi",
+       "pistedata_P_Temperature_WindSpeedMS",
+       "-P Temperature,WindSpeedMS $pistedata");
+
+DoTest("hiladatan -P Temperature,WindSpeedMS testi",
+       "hiladata_P_Temperature_WindSpeedMS",
+       "-P Temperature,WindSpeedMS $hiladata");
+
+DoTest("synopdatan -P Temperature,WindSpeedMS testi",
+       "synopdata_P_Temperature_WindSpeedMS",
+       "-P Temperature,WindSpeedMS $synopdata");
+
+# Optio -w
+
+DoTest("pistedatan -w testi",
+       "pistedata_w",
+       "-w -P Temperature $pistedata");
+
+DoTest("synopdatan -w testi",
+       "synopdata_w",
+       "-w -P Temperature $synopdata");
+
+# Optiot -w -Z
+
+DoTest("pistedatan -w -Z testi",
+       "pistedata_w_z",
+       "-w -Z -P Temperature $pistedata");
+
+DoTest("synopdatan -w -Z testi",
+       "synopdata_w_z",
+       "-w -Z -P Temperature $synopdata");
+
+# Monta optiota
+
+DoTest("pistedatan optiokokoelma",
+       "pistedata_optiokokoelma",
+       "-P Temperature,WindSpeedMS -T Europe/Stockholm -N -t $pistedata");
+
+DoTest("hiladatan optiokokoelma",
+       "hiladata_optiokokoelma",
+       "-P Temperature,WindSpeedMS -T Europe/Stockholm -N -t $hiladata");
+
+DoTest("synopdatan optiokokoelma",
+       "synopdata_optiokokoelma",
+       "-P Temperature,WindSpeedMS -T Europe/Stockholm -N -t $synopdata");
+
+
+print "Done\n";
+
+# ----------------------------------------------------------------------
+# Run a single test
+# ----------------------------------------------------------------------
+
+sub DoTest
+{
+    my($text,$name,$arguments) = @_;
+
+    if(exists($usednames{$name}))
+    {
+	print "Virhe regressiotesteissä: $name käytössä useamman kerran\n";
+	exit(1);
+    }
+    $usednames{$name} = 1;
+
+    # Halutut tulokset ovat täällä
+
+    my($resultfile) = "qdmissing_$name";
+
+    # Saadut tulokset
+    my($tmpfile) = "${resultfile}.tmp";
+
+    # Korjaa komento lopulliseen muotoon
+    $cmd = "$qdmissing $arguments 2>&1";
+
+    # Aja käsky
+    
+    $output = `$cmd`;
+
+    # Vertaa tuloksia
+
+    print padname($text);
+    if(equalcontent("$results/$resultfile",$output))
+    {
+	print " OK\n";
+	unlink($tmpfile);
+    }
+    else
+    {
+	print " FAILED!\n";
+	print "( $resultfile <> $tmpfile in $results/ )\n";
+
+	open(OUT,">$results/$tmpfile")
+	    or die "Could not open $results/$tmpfile for writing\n";
+	print OUT $output;
+	close(OUT);
+    }
+}
+
+# ----------------------------------------------------------------------
+# Pad the given string to 70 characters with dots
+# ----------------------------------------------------------------------
+
+sub padname
+{
+    my($str) = @_[0];
+
+    while(length($str) < 70)
+    {
+	$str .= ".";
+    }
+    return $str;
+}
+
+# ----------------------------------------------------------------------
+# Compare two files
+# ----------------------------------------------------------------------
+
+sub equalcontent
+{
+    my($file,$text) = @_;
+
+    # File must exits
+
+    if(!(-e $file))
+    { return 0; }
+
+    # Read binary file and compare results
+
+    open(FILE,"$file");
+    binmode(FILE);
+    read(FILE,$buffer,(stat(FILE))[7]);
+    close(FILE);
+    return ($buffer eq $text);
+}

@@ -1,0 +1,94 @@
+#!/usr/bin/perl
+
+$program = "../nctoqd";
+$results = "results";
+
+%usednames = ();
+
+# DoTest("myocean","myocean.sqd","-c ../cnf/netcdf.conf data/myocean.nc");
+
+print "Done\n";
+
+# ----------------------------------------------------------------------
+# Run a single test
+# ----------------------------------------------------------------------
+
+sub DoTest
+{
+    my($text,$name,$arguments) = @_;
+
+    if(exists($usednames{$name}))
+    {
+	print "Virhe regressiotesteissä: $name käytössä useamman kerran\n";
+	exit(1);
+    }
+    $usednames{$name} = 1;
+
+    # Halutut tulokset ovat täällä
+
+    my($resultfile) = "nctoqd_$name";
+
+    # Saadut tulokset
+    my($tmpfile) = "${resultfile}.tmp";
+
+    # Korjaa komento lopulliseen muotoon
+    $cmd = "$program $arguments $results/$tmpfile";
+
+    # Aja käsky
+    
+    # print "$cmd\n";
+    # $output = `$cmd 2>/dev/null`;
+    $output = `$cmd`;
+
+    # Vertaa tuloksia
+
+    print padname($text);
+
+    if(! -e "results/$tmpfile")
+    {
+	print " FAILED TO PRODUCE OUTPUT FILE\n";
+    }
+    elsif(! -e "results/$resultfile")
+    {
+	print " FAILED: TRUE RESULT MISSING\n";
+	unlink("$results/$tmpfile");
+    }
+    else
+    {
+	my($difference) = `qddifference results/$resultfile results/$tmpfile`;
+
+	$difference =~ s/^\s+//;
+	$difference =~ s/\s+$//;
+	
+	if($difference < 0.0001)
+	{
+	    if($difference <= 0)
+	    { print " ok\n"; }
+	    else
+	    { print " ok (diff <= $difference)\n"; }
+	    unlink("$results/$tmpfile");
+	}
+	else
+	{
+	    print " FAILED! (maxdiff = $difference)\n";
+	    print "( $resultfile <> $tmpfile in $results/ )\n";
+	}
+    }
+}
+
+# ----------------------------------------------------------------------
+# Pad the given string to 70 characters with dots
+# ----------------------------------------------------------------------
+
+sub padname
+{
+    my($str) = @_[0];
+
+    while(length($str) < 70)
+    {
+	$str .= ".";
+    }
+    return $str;
+}
+
+# ----------------------------------------------------------------------

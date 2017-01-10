@@ -1,0 +1,94 @@
+#!/usr/bin/perl
+
+$program = "../bufrtoqd";
+$results = "results";
+
+%usednames = ();
+
+DoTest("buoy observations",
+       "buoy.sqd",
+       "-c ../cnf/bufr.conf -s ../cnf/stations.csv data/buoy.bufr");
+
+DoTest("land observations",
+       "land.sqd",
+       "-c ../cnf/bufr.conf -s ../cnf/stations.csv data/land.bufr");
+
+DoTest("airplane (AMDAR) observations",
+       "amdar.sqd",
+       "-c ../cnf/bufr.conf -s ../cnf/stations.csv data/amdar.bufr");
+
+DoTest("soundings",
+       "sounding.sqd",
+       "-c ../cnf/bufr.conf -s ../cnf/stations.csv data/sounding.bufr");
+
+print "Done\n";
+
+# ----------------------------------------------------------------------
+# Run a single test
+# ----------------------------------------------------------------------
+
+sub DoTest
+{
+    my($text,$name,$arguments) = @_;
+
+    if(exists($usednames{$name}))
+    {
+	print "Virhe regressiotesteissä: $name käytössä useamman kerran\n";
+	exit(1);
+    }
+    $usednames{$name} = 1;
+
+    # Halutut tulokset ovat täällä
+
+    my($resultfile) = "bufrtoqd_$name";
+
+    # Saadut tulokset
+    my($tmpfile) = "${resultfile}.tmp";
+
+    # Korjaa komento lopulliseen muotoon
+    $cmd = "$program $arguments $results/$tmpfile";
+
+    # Aja käsky
+    
+    # print "$cmd\n";
+    $output = `$cmd 2>/dev/null`;
+
+    # Vertaa tuloksia
+
+    print padname($text);
+
+    my($difference) = `qddifference results/$resultfile results/$tmpfile`;
+    $difference =~ s/^\s+//;
+    $difference =~ s/\s+$//;
+
+    if($difference < 0.0001)
+    {
+	if($difference <= 0)
+	{ print " OK\n"; }
+	else
+	{ print " OK (diff <= $difference)\n"; }
+	unlink("$results/$tmpfile");
+    }
+    else
+    {
+	print " FAILED! (maxdiff = $difference)\n";
+	print "( $resultfile <> $tmpfile in $results/ )\n";
+    }
+}
+
+# ----------------------------------------------------------------------
+# Pad the given string to 70 characters with dots
+# ----------------------------------------------------------------------
+
+sub padname
+{
+    my($str) = @_[0];
+
+    while(length($str) < 70)
+    {
+	$str .= ".";
+    }
+    return $str;
+}
+
+# ----------------------------------------------------------------------

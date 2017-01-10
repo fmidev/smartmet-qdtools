@@ -1,0 +1,238 @@
+#!/usr/bin/perl
+
+$program = "../qdfilter";
+$results = "results";
+$hiladata = "data/hiladata.sqd";
+$pistedata = "data/pistedata.fqd";
+
+%usednames = ();
+
+$PARAMS = "Temperature,WindSpeedMS,WindDirection";
+
+# available functions
+
+DoTest("min hiladata 24h",
+       "min_hiladata",
+       "-p $PARAMS 0 1440 min $hiladata");
+
+DoTest("max hiladata 24h",
+       "max_hiladata",
+       "-p $PARAMS 0 1440 max $hiladata");
+
+DoTest("mean hiladata 24h",
+       "mean_hiladata",
+       "-p $PARAMS 0 1440 mean $hiladata");
+
+DoTest("meanabs hiladata 24h",
+       "meanabs_hiladata",
+       "-p $PARAMS 0 1440 meanabs $hiladata");
+
+DoTest("sum hiladata 24h",
+       "sum_hiladata",
+       "-p $PARAMS 0 1440 sum $hiladata");
+
+DoTest("median hiladata 24h",
+       "median_hiladata",
+       "-p $PARAMS 0 1440 median $hiladata");
+
+DoTest("maxmean hiladata 24h",
+       "maxmean_hiladata",
+       "-p $PARAMS 0 1440 maxmean $hiladata");
+
+DoTest("min pistedata 24h",
+       "min_pistedata",
+       "-p $PARAMS 0 1440 min $pistedata");
+
+DoTest("max pistedata 24h",
+       "max_pistedata",
+       "-p $PARAMS 0 1440 max $pistedata");
+
+DoTest("mean pistedata 24h",
+       "mean_pistedata",
+       "-p $PARAMS 0 1440 mean $pistedata");
+
+DoTest("meanabs pistedata 24h",
+       "meanabs_pistedata",
+       "-p $PARAMS 0 1440 meanabs $pistedata");
+
+DoTest("sum pistedata 3h",
+       "sum_pistedata",
+       "-p $PARAMS 0 180 sum $pistedata");
+
+DoTest("median pistedata 3h",
+       "median_pistedata",
+       "-p $PARAMS 0 180 median $pistedata");
+
+DoTest("maxmean pistedata 3h",
+       "maxmean_pistedata",
+       "-p $PARAMS 0 180 maxmean $pistedata");
+
+# Option -a
+
+DoTest("sum hiladata 24h -a",
+       "sum_hiladata_a",
+       "-a -p $PARAMS 0 1440 sum $hiladata");
+
+DoTest("sum pistedata 24h -a",
+       "sum_pistedata_a",
+       "-a -p $PARAMS 0 1440 sum $pistedata");
+
+# Option -t
+
+DoTest("sum hiladata 24h -t 24,48",
+       "sum_hiladata_t_24_48",
+       "-t 24,48 -p $PARAMS 0 1440 sum $hiladata");
+
+DoTest("sum pistedata 3h -t -18,-6",
+       "sum_pistedata_t_18_6",
+       "-t -18,-6 -p $PARAMS 0 180 sum $pistedata");
+
+DoTest("sum hiladata 24h -t 24,48,3",
+       "sum_hiladata_t_24_48_3",
+       "-t 24,48,3 -p $PARAMS 0 1440 sum $hiladata");
+
+DoTest("sum pistedata 3h -t -18,-6,3",
+       "sum_pistedata_t_18_6_3",
+       "-t -18,-6,3 -p $PARAMS 0 180 sum $pistedata");
+
+# Option -T
+
+DoTest("sum hiladata 24h -T 24,48",
+       "sum_hiladata_T_24_48",
+       "-T 24,48 -p $PARAMS 0 1440 sum $hiladata");
+
+DoTest("sum pistedata 3h -T -18,-6",
+       "sum_pistedata_T_18_6",
+       "-T -18,-6 -p $PARAMS 0 180 sum $pistedata");
+
+DoTest("sum hiladata 24h -T 24,48,3",
+       "sum_hiladata_T_24_48_3",
+       "-T 24,48,3 -p $PARAMS 0 1440 sum $hiladata");
+
+DoTest("sum pistedata 3h -T -18,-6,3",
+       "sum_pistedata_T_18_6_3",
+       "-T -18,-6,3 -p $PARAMS 0 180 sum $pistedata");
+
+# Option -i
+
+DoTest("sum hiladata 24h -i 18",
+       "sum_hiladata_i_18",
+       "-i 18 -p $PARAMS 0 1440 sum $hiladata");
+
+DoTest("sum pistedata 3h -i 18",
+       "sum_pistedata_i_18",
+       "-i 18 -p $PARAMS 0 180 sum $pistedata");
+
+# Option -I
+
+DoTest("sum hiladata 24h -I 18",
+       "sum_hiladata_iso_i_18",
+       "-I 18 -p $PARAMS 0 1440 sum $hiladata");
+
+DoTest("sum pistedata 3h -I 18",
+       "sum_pistedata_iso_i_18",
+       "-I 18 -p $PARAMS 0 180 sum $pistedata");
+
+
+print "Done\n";
+
+# ----------------------------------------------------------------------
+# Run a single test
+# ----------------------------------------------------------------------
+
+sub DoTest
+{
+    my($text,$name,$arguments) = @_;
+
+    if(exists($usednames{$name}))
+    {
+	print "Virhe regressiotesteissä: $name käytössä useamman kerran\n";
+	exit(1);
+    }
+    $usednames{$name} = 1;
+
+    # Halutut tulokset ovat täällä
+
+    my($resultfile) = "qdfilter_$name";
+
+    # Saadut tulokset
+    my($tmpfile) = "${resultfile}.tmp";
+
+    # Korjaa komento lopulliseen muotoon
+    $cmd = "$program $arguments > $results/$tmpfile";
+
+    # Aja käsky
+    
+    $output = `$cmd`;
+
+    # Vertaa tuloksia
+
+    print padname($text);
+
+    my($difference) = `qddifference results/$resultfile results/$tmpfile`;
+    $difference =~ s/^\s+//;
+    $difference =~ s/\s+$//;
+
+    if(! -e "results/$resultfile")
+    {
+	print " FAILED! ($resultfile missing)\n";
+    }
+    elsif($difference < 0.0001)
+    {
+	if($difference == 0)
+	{ print " OK\n"; }
+	else
+	{ print " OK (diff <= $difference)\n"; }
+        unlink("results/$tmpfile");
+    }
+    else
+    {
+        print " FAILED! (maxdiff = $difference)\n";
+        print "( $resultfile <> $tmpfile)\n";
+    }
+}
+
+# ----------------------------------------------------------------------
+# Pad the given string to 70 characters with dots
+# ----------------------------------------------------------------------
+
+sub padname
+{
+    my($str) = @_[0];
+
+    while(length($str) < 70)
+    {
+	$str .= ".";
+    }
+    return $str;
+}
+
+# ----------------------------------------------------------------------
+# Compare two files
+# ----------------------------------------------------------------------
+
+sub equalcontent
+{
+    my($file1,$file2) = @_;
+
+    # Files must exits
+
+    if(!(-e $file1)) { return 0; }
+    if(!(-e $file2)) { return 0; }
+
+    # Read binary file and compare results
+
+    open(FILE1,"$file1");
+    binmode(FILE1);
+    read(FILE1,$buffer1,(stat(FILE1))[7]);
+    close(FILE1);
+
+    open(FILE2,"$file2");
+    binmode(FILE2);
+    read(FILE2,$buffer2,(stat(FILE2))[7]);
+    close(FILE2);
+
+    return ($buffer1 eq $buffer2);
+}
+
+# ----------------------------------------------------------------------

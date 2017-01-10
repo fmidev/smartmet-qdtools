@@ -1,0 +1,208 @@
+#!/usr/bin/perl
+
+$program = "../qdinfo";
+$results = "results";
+$hiladata = "data/hiladata.sqd";
+$pistedata = "data/pistedata.fqd";
+
+%usednames = ();
+
+# option -q
+
+DoTest("argumentti -q onnistuu",
+       "argument_q_succeeds",
+       "-q $pistedata");
+
+DoTest("argumentti -q epäonnistuu",
+       "argument_q_fails",
+       "-q foobar");
+
+# option -l
+
+DoTest("argumentti -l",
+       "argument_l",
+       "-l");
+
+# option -v
+
+DoTest("argumentti -v pistedatalle",
+       "argument_v_piste",
+       "-v -q $pistedata");
+
+# option -p
+
+DoTest("argumentti -p pistedatalle",
+       "argument_p_piste",
+       "-p -q $pistedata");
+
+DoTest("argumentti -p hiladatalle",
+       "argument_p_hila",
+       "-p -q $hiladata");
+
+# option -P
+
+DoTest("argumentti -P pistedatalle",
+       "argument_iso_p_piste",
+       "-P -q $pistedata");
+
+DoTest("argumentti -P hiladatalle",
+       "argument_iso_p_hila",
+       "-P -q $hiladata");
+
+# option -t
+
+DoTest("argumentti -t pistedatalle",
+       "argument_t_piste",
+       "-t -q $pistedata");
+
+DoTest("argumentti -t hiladatalle",
+       "argument_t_hila",
+       "-t -q $hiladata");
+
+DoTest("argumentti -t formaatin kera",
+       "argument_t_format",
+       "-t %A%Y%m%d%H%M%S -q $hiladata");
+
+# option -T
+
+DoTest("argumentti -T pistedatalle",
+       "argument_iso_t_piste",
+       "-T -q $pistedata");
+
+DoTest("argumentti -T hiladatalle",
+       "argument_iso_t_hila",
+       "-T -q $hiladata");
+
+DoTest("argumentti -T formaatin kera",
+       "argument_iso_t_format",
+       "-T %A%Y%m%d%H%M%S -q $hiladata");
+
+# option -z
+
+DoTest("argumentti -z pistedatalle",
+       "argument_z_piste",
+       "-z -q $pistedata");
+
+DoTest("argumentti -z hiladatalle",
+       "argument_z_hila",
+       "-z -q $hiladata");
+
+# option -r
+
+DoTest("argumentti -r pistedatalle",
+       "argument_r_piste",
+       "-r -q $pistedata");
+
+DoTest("argumentti -r hiladatalle",
+       "argument_r_hila",
+       "-r -q $hiladata");
+
+# option -x
+
+DoTest("argumentti -x pistedatalle",
+       "argument_x_piste",
+       "-x -q $pistedata");
+
+DoTest("argumentti -x hiladatalle",
+       "argument_x_hila",
+       "-x -q $hiladata");
+
+# option -X
+
+DoTest("argumentti -X pistedatalle",
+       "argument_iso_x_piste",
+       "-X -q $pistedata");
+
+DoTest("argumentti -X hiladatalle",
+       "argument_iso_x_hila",
+       "-X -q $hiladata");
+
+print "Done\n";
+
+# ----------------------------------------------------------------------
+# Run a single test
+# ----------------------------------------------------------------------
+
+sub DoTest
+{
+    my($text,$name,$arguments) = @_;
+
+    if(exists($usednames{$name}))
+    {
+	print "Virhe regressiotesteissä: $name käytössä useamman kerran\n";
+	exit(1);
+    }
+    $usednames{$name} = 1;
+
+    # Halutut tulokset ovat täällä
+
+    my($resultfile) = "qdinfo_$name";
+
+    # Saadut tulokset
+    my($tmpfile) = "${resultfile}.tmp";
+
+    # Korjaa komento lopulliseen muotoon
+    $cmd = "$program $arguments 2>&1";
+
+    # Aja käsky
+    
+    $output = `$cmd`;
+
+    # Vertaa tuloksia
+
+    print padname($text);
+    if(equalcontent("$results/$resultfile",$output))
+    {
+	print " OK\n";
+	unlink($tmpfile);
+    }
+    else
+    {
+	print " FAILED!\n";
+	print "( $resultfile <> $tmpfile in $results/ )\n";
+
+	open(OUT,">$results/$tmpfile")
+	    or die "Could not open $results/$tmpfile for writing\n";
+	print OUT $output;
+	close(OUT);
+    }
+}
+
+# ----------------------------------------------------------------------
+# Pad the given string to 70 characters with dots
+# ----------------------------------------------------------------------
+
+sub padname
+{
+    my($str) = @_[0];
+
+    while(length($str) < 70)
+    {
+	$str .= ".";
+    }
+    return $str;
+}
+
+# ----------------------------------------------------------------------
+# Compare two files
+# ----------------------------------------------------------------------
+
+sub equalcontent
+{
+    my($file,$text) = @_;
+
+    # File must exits
+
+    if(!(-e $file))
+    { return 0; }
+
+    # Read binary file and compare results
+
+    open(FILE,"$file");
+    binmode(FILE);
+    read(FILE,$buffer,(stat(FILE))[7]);
+    close(FILE);
+    return ($buffer eq $text);
+}
+
+# ----------------------------------------------------------------------

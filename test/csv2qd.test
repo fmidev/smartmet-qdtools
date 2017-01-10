@@ -1,0 +1,156 @@
+#!/usr/bin/perl
+
+$program = "../csv2qd";
+$results = "results";
+$common = "-S /smartmet/share/csv/stations.csv -P ../cnf/parameters.csv";
+
+%usednames = ();
+
+DoTest("synop data",
+       "synop_plain",
+       "$common -p Temperature,WindSpeedMS,Precipitation1h data/synop.csv");
+
+DoTest("synop data with timezone",
+       "synop_timezone",
+       "$common -p Temperature,WindSpeedMS,Precipitation1h -t Europe/Helsinki data/synop.csv");
+
+DoTest("synop 2 files",
+       "synop_2files",
+       "$common -p Temperature,WindSpeedMS,Precipitation1h data/synop1.csv data/synop2.csv");
+
+DoTest("synop data with -O timeid",
+       "synop_reverse",
+       "$common -O timeid -p Temperature,WindSpeedMS,Precipitation1h data/reversesynop.csv");
+
+DoTest("synop data with -m NULL",
+       "synop_missing",
+       "$common -m NULL -p Temperature,WindSpeedMS,Precipitation1h data/nullsynop.csv");
+
+DoTest("road1h data with -S",
+       "road1h_plain",
+       "-S /smartmet/share/csv/roadstations.csv -p Temperature,WindSpeedMS data/road1h.csv");
+
+DoTest("sounding data with -O idtimelevel",
+       "sounding_idtimelevel",
+       "$common -m NULL -O idtimelevel -p GeopHeight,Temperature,Pressure data/soundings_idtimelevel.csv");
+
+DoTest("sounding data with -O idleveltime",
+       "sounding_idleveltime",
+       "$common -m NULL -O idleveltime -p GeopHeight,Temperature,Pressure data/soundings_idleveltime.csv");
+
+DoTest("sounding data with -O timeidlevel",
+       "sounding_timeidlevel",
+       "$common -m NULL -O timeidlevel -p GeopHeight,Temperature,Pressure data/soundings_timeidlevel.csv");
+
+DoTest("sounding data with -O timelevelid",
+       "sounding_timelevelid",
+       "$common -m NULL -O timelevelid -p GeopHeight,Temperature,Pressure data/soundings_timelevelid.csv");
+
+DoTest("sounding data with -O levelidtime",
+       "sounding_levelidtime",
+       "$common -m NULL -O levelidtime -p GeopHeight,Temperature,Pressure data/soundings_levelidtime.csv");
+
+DoTest("sounding data with -O leveltimeid",
+       "sounding_leveltimeid",
+       "$common -m NULL -O leveltimeid -p GeopHeight,Temperature,Pressure data/soundings_leveltimeid.csv");
+
+
+print "Done\n";
+
+# ----------------------------------------------------------------------
+# Run a single test
+# ----------------------------------------------------------------------
+
+sub DoTest
+{
+    my($text,$name,$arguments) = @_;
+
+    if(exists($usednames{$name}))
+    {
+	print "Virhe regressiotesteissä: $name käytössä useamman kerran\n";
+	exit(1);
+    }
+    $usednames{$name} = 1;
+
+    # Halutut tulokset ovat täällä
+
+    my($resultfile) = "csv2qd_$name";
+
+    # Saadut tulokset
+    my($tmpfile) = "${resultfile}.tmp";
+
+    # Korjaa komento lopulliseen muotoon
+    $cmd = "$program $arguments $results/$tmpfile";
+
+    # Aja käsky
+    
+    # print "$cmd\n";
+    $output = `$cmd`;
+
+    # Vertaa tuloksia
+
+    print padname($text);
+
+    my($difference) = `qddifference results/$resultfile results/$tmpfile`;
+    $difference =~ s/^\s+//;
+    $difference =~ s/\s+$//;
+
+    if($difference < 0.0001)
+    {
+	if($difference <= 0)
+	{ print " OK\n"; }
+	else
+	{ print " OK (diff <= $difference)\n"; }
+	unlink("$results/$tmpfile");
+    }
+    else
+    {
+	print " FAILED! (maxdiff = $difference)\n";
+	print "( $resultfile <> $tmpfile in $results/ )\n";
+    }
+}
+
+# ----------------------------------------------------------------------
+# Pad the given string to 70 characters with dots
+# ----------------------------------------------------------------------
+
+sub padname
+{
+    my($str) = @_[0];
+
+    while(length($str) < 70)
+    {
+	$str .= ".";
+    }
+    return $str;
+}
+
+# ----------------------------------------------------------------------
+# Compare two files
+# ----------------------------------------------------------------------
+
+sub equalcontent
+{
+    my($file1,$file2) = @_;
+
+    # Files must exits
+
+    if(!(-e $file1)) { return 0; }
+    if(!(-e $file2)) { return 0; }
+
+    # Read binary file and compare results
+
+    open(FILE1,"$file1");
+    binmode(FILE1);
+    read(FILE1,$buffer1,(stat(FILE1))[7]);
+    close(FILE1);
+
+    open(FILE2,"$file2");
+    binmode(FILE2);
+    read(FILE2,$buffer2,(stat(FILE2))[7]);
+    close(FILE2);
+
+    return ($buffer1 eq $buffer2);
+}
+
+# ----------------------------------------------------------------------

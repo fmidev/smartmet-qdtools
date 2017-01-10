@@ -1,0 +1,221 @@
+#!/usr/bin/perl
+
+$program = "../qdcrop";
+$results = "results";
+$data = "data/hiladata.sqd";
+$pistedata = "data/pistedata.fqd";
+
+%usednames = ();
+
+# option -w
+
+DoTest("argument -w 2974,2944,2845 succeeds",
+       "argument_w_3_stations_succeeds",
+       "-w 2974,2944,2845 $pistedata");
+
+DoTest("argument -w 2845-2944,2980 succeeds",
+       "argument_w_ok_ranges_succeeds",
+       "-w 2845-2944,2980 $pistedata");
+
+DoTest("argument -W 0-2801,2836,2864-99999 succeeds",
+       "argument_W_discard_ranges_succeeds",
+       "-W 0-2801,2836,2864-99999 $pistedata");
+
+DoTest("argument -w 2845-2944 -W 2900-2940 succeeds",
+       "argument_w_W_ranges_succeeds",
+       "-w 2845-2944 -W 2900-2940 $pistedata");
+
+# option -t
+
+DoTest("argument -i 18 succeeds",
+       "argument_i_18_succeeds",
+       "-i 18 $data");
+
+DoTest("argument -I 18 succeeds",
+       "argument_iso_i_18_succeeds",
+       "-I 18 $data");
+
+DoTest("argument -t 0,48 -i 18 succeeds",
+       "argument_t_0_48_i_18_succeeds",
+       "-t 0,48 -i 18 $data");
+
+DoTest("argument -T 0,48 -I 18 succeeds",
+       "argument_iso_t_0_48_iso_i_18_succeeds",
+       "-T 0,48 -I 18 $data");
+
+DoTest("argument -t 10 succeeds",
+       "argument_t_10_succeeds",
+       "-t 10 $data");
+
+DoTest("argument -t 5,10 succeeds",
+       "argument_t_5_10_succeeds",
+       "-t 5,10 $data");
+
+DoTest("argument -t 1,10,3 succeeds",
+       "argument_t_1_10_3_succeeds",
+       "-t 1,10,3 $data");
+
+DoTest("argument -T 1,10,3 succeeds",
+       "argument_iso_t_1_10_3_succeeds",
+       "-T 1,10,3 $data");
+
+# option -p
+
+DoTest("argument -p Temperature,Precipitation1h succeeds",
+       "argument_p_succeeds",
+       "-p Temperature,Precipitation1h $data");
+
+# option -r
+
+DoTest("argument -r Temperature,TotalWindMS succeeds",
+       "argument_r_succeeds",
+       "-r Temperature,TotalWindMS $data");
+
+# option -A
+
+DoTest("argument -A DewPoint,Temperature succeeds",
+       "argument_a_succeeds",
+       "-A DewPoint,Temperature $data");
+
+DoTest("argument -p Temperature -A DewPoint succeeds",
+       "argument_p_a_succeeds",
+       "-p Temperature -A DewPoint $data");
+
+# option -g
+
+DoTest("argument -g 10x20+5+15 succeeds",
+       "argument_g_pos_succeeds",
+       "-g 10x20+5+15 $data");
+
+DoTest("argument -g 10x20-10-20 succeeds",
+       "argument_g_minus_succeeds",
+       "-g 10x20-10-20 $data");
+
+# option -G
+
+DoTest("argument -G 25,60,40,71 succeeds",
+       "argument_iso_g_succeeds",
+       "-G 25,60,40,71 $data");
+
+# option -d
+
+DoTest("argument -d 2x1 succeeds",
+       "argument_g_2_1_succeeds",
+       "-d 2x1 $data");
+
+DoTest("argument -d 1x2 succeeds",
+       "argument_g_1_2_succeeds",
+       "-d 1x2 $data");
+
+DoTest("argument -d 2x2 succeeds",
+       "argument_g_2_2_succeeds",
+       "-d 2x2 $data");
+
+# option -g and -d simultaneously
+
+DoTest("argument -g 10x10+10+10 -d 2x2 succeeds",
+       "argument_gd_succeeds",
+       "-g 10x10+10+10 -d 2x2 $data");
+
+# Option -S
+
+DoTest("argument -S succeeds",
+       "argument_iso_s_succeeds",
+       "-S 200210111000,200210112000,200210120500 $data");
+
+# Option -P
+
+DoTest("argument -P succeeds",
+       "argument_iso_p_succeeds",
+       "-P latlon:20,60,40,70:50x50km $data");
+
+print "Done\n";
+
+# ----------------------------------------------------------------------
+# Run a single test
+# ----------------------------------------------------------------------
+
+sub DoTest
+{
+    my($text,$name,$arguments) = @_;
+
+    if(exists($usednames{$name}))
+    {
+	print "Virhe regressiotesteissä: $name käytössä useamman kerran\n";
+	exit(1);
+    }
+    $usednames{$name} = 1;
+
+    # Halutut tulokset ovat täällä
+
+    my($resultfile) = "qdcrop_$name";
+
+    # Saadut tulokset
+    my($tmpfile) = "${resultfile}.tmp";
+
+    # Korjaa komento lopulliseen muotoon
+    $cmd = "$program -V $arguments $results/$tmpfile";
+
+    # Aja käsky
+    
+    $output = `$cmd`;
+
+    # Vertaa tuloksia
+
+    print padname($text);
+    if(equalcontent("$results/$resultfile","$results/$tmpfile"))
+    {
+	print " OK\n";
+	unlink("$results/$tmpfile");
+    }
+    else
+    {
+	print " FAILED!\n";
+	print "( $resultfile <> $tmpfile in $results/ )\n";
+    }
+}
+
+# ----------------------------------------------------------------------
+# Pad the given string to 70 characters with dots
+# ----------------------------------------------------------------------
+
+sub padname
+{
+    my($str) = @_[0];
+
+    while(length($str) < 70)
+    {
+	$str .= ".";
+    }
+    return $str;
+}
+
+# ----------------------------------------------------------------------
+# Compare two files
+# ----------------------------------------------------------------------
+
+sub equalcontent
+{
+    my($file1,$file2) = @_;
+
+    # Files must exits
+
+    if(!(-e $file1)) { return 0; }
+    if(!(-e $file2)) { return 0; }
+
+    # Read binary file and compare results
+
+    open(FILE1,"$file1");
+    binmode(FILE1);
+    read(FILE1,$buffer1,(stat(FILE1))[7]);
+    close(FILE1);
+
+    open(FILE2,"$file2");
+    binmode(FILE2);
+    read(FILE2,$buffer2,(stat(FILE2))[7]);
+    close(FILE2);
+
+    return ($buffer1 eq $buffer2);
+}
+
+# ----------------------------------------------------------------------

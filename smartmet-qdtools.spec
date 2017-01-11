@@ -88,8 +88,10 @@ Provides: qdsoundingindex = %{Version}
 Provides: qdsplit = %{Version} 
 Provides: qdstat = %{Version} 
 Provides: qdview = %{Version} 
-Obsoletes: qdconversion < 17.1.10
-Obsoletes: qdtools < 17.1.10
+Obsoletes: smartmet-qdconversion < 17.1.10
+Obsoletes: smartmet-qdconversion-debuginfo < 17.1.10
+Obsoletes: smartmet-qdtools < 17.1.10
+Obsoletes: smartmet-qdtools.debuginfo < 17.1.10
 
 %description
 Command line tools for handling querydata

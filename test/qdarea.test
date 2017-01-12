@@ -1,0 +1,155 @@
+#!/usr/bin/perl
+
+$qdarea = "../qdarea";
+$results = "results";
+$data = "data/qdarea.sqd";
+
+%usednames = ();
+
+DoTest("-P mean(mean(t2m)) -p Helsinki",
+       "mean_t2m_Helsinki",
+       "-P 'mean(mean(t2m))' -p Helsinki");
+
+DoTest("-P max(t2m),min(t2m) -p Helsinki",
+       "min_max_t2m_Helsinki",
+       "-P 'min(t2m),max(t2m)' -p Helsinki");
+
+DoTest("-P mean(t2m) -p Helsinki:50",
+       "mean_t2m_Helsinki_50",
+       "-P 'mean(t2m)' -p Helsinki:50");
+
+DoTest("-T 06-18 -P mean(t2m) -p Helsinki",
+       "06_18_mean_t2m_Helsinki",
+       "-T 06-18 -P 'mean(t2m)' -p Helsinki");
+
+DoTest("-T 6:12 -P mean(t2m) -p Helsinki",
+       "06_12_mean_t2m_Helsinki",
+       "-T 06:12 -P 'mean(t2m)' -p Helsinki");
+
+DoTest("-t UTC -P mean(t2m) -p Helsinki",
+       "utc_mean_t2m_Helsinki",
+       "-t UTC -P 'mean(t2m)' -p Helsinki");
+
+DoTest("-t Europe/Stockholm -P mean(t2m) -p Helsinki",
+       "stockholm_mean_t2m_Helsinki",
+       "-t Europe/Stockholm -P 'mean(t2m)' -p Helsinki");
+
+DoTest("-s -P mean(t2m),min(t2m),max(t2m) -p Helsinki",
+       "php_mean_min_max_t2m_Helsinki",
+       "-s -P 'mean(t2m),min(t2m),max(t2m)' -p Helsinki");
+
+DoTest("-S tmean,tmin,tmax -P mean(t2m),min(t2m),max(t2m) -p Helsinki",
+       "php_tmean_tmin_tmax_Helsinki",
+       "-S tmean,tmin,tmax -P 'mean(t2m),min(t2m),max(t2m)' -p Helsinki");
+
+DoTest("-E -P mean(t2m) -p Helsinki",
+       "epoch_mean_t2m_Helsinki",
+       "-E -P 'mean(t2m)' -p Helsinki");
+
+DoTest("-P mean(t2m) -p Helsinki::Turku::Imatra",
+       "mean_t2m_Helsinki_Turku_Imatra",
+       "-P 'mean(t2m)' -p Helsinki::Turku::Imatra");
+
+DoTest("-s -P mean(t2m) -p Helsinki::Turku::Imatra",
+       "php_mean_t2m_Helsinki_Turku_Imatra",
+       "-s -P 'mean(t2m)' -p Helsinki::Turku::Imatra");
+
+DoTest("-P mean(t2m) -p 25,60",
+       "mean_t2m_25_60",
+       "-P 'mean(t2m)' -p 25,60");
+
+DoTest("-T all -P mean(t2m) -p 25,60",
+       "all_mean_t2m_25_60",
+       "-T all -P 'mean(t2m)' -p 25,60");
+
+DoTest("-T data -p 25,60:50 -P percentage[0.1:100](mean(rr1h))",
+       "percentage_rain",
+       "-T data -p 25,60:50 -P 'percentage[0.1:100](mean(rr1h))'");
+
+print "Done\n";
+
+# ----------------------------------------------------------------------
+# Run a single test
+# ----------------------------------------------------------------------
+
+sub DoTest
+{
+    my($text,$name,$arguments) = @_;
+
+    if(exists($usednames{$name}))
+    {
+	print "Virhe regressiotesteissä: $name käytössä useamman kerran\n";
+	exit(1);
+    }
+    $usednames{$name} = 1;
+
+    # Halutut tulokset ovat täällä
+
+    my($resultfile) = "qdarea_$name";
+
+    # Saadut tulokset
+    my($tmpfile) = "${resultfile}.tmp";
+
+    # Korjaa komento lopulliseen muotoon
+    $cmd = "$qdarea $arguments -q $data 2>&1";
+
+    # Aja käsky
+    
+    $output = `$cmd`;
+
+    # Vertaa tuloksia
+
+    print padname($text);
+    if(equalcontent("$results/$resultfile",$output))
+    {
+	print " ok\n";
+	unlink($tmpfile);
+    }
+    else
+    {
+	print " FAILED!\n";
+	print "( $resultfile <> $tmpfile in $results/ )\n";
+
+	open(OUT,">$results/$tmpfile")
+	    or die "Could not open $results/$tmpfile for writing\n";
+	print OUT $output;
+	close(OUT);
+    }
+}
+
+# ----------------------------------------------------------------------
+# Pad the given string to 70 characters with dots
+# ----------------------------------------------------------------------
+
+sub padname
+{
+    my($str) = @_[0];
+
+    while(length($str) < 70)
+    {
+	$str .= ".";
+    }
+    return $str;
+}
+
+# ----------------------------------------------------------------------
+# Compare two files
+# ----------------------------------------------------------------------
+
+sub equalcontent
+{
+    my($file,$text) = @_;
+
+    # File must exits
+
+    if(!(-e $file))
+    { return 0; }
+
+    # Read binary file and compare results
+
+    open(FILE,"$file");
+    binmode(FILE);
+    read(FILE,$buffer,(stat(FILE))[7]);
+    close(FILE);
+    return ($buffer eq $text);
+}

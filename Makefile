@@ -62,6 +62,7 @@ INCLUDES = -I$(includedir) \
 
 
 LIBS = -L$(libdir) \
+	-lsmartmet-calculator \
 	-lsmartmet-smarttools \
 	-lsmartmet-newbase \
 	-lsmartmet-macgyver \

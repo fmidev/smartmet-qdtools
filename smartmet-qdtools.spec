@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.1.10
+Version: 17.1.12
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -17,16 +17,18 @@ BuildRequires: libbufr >= 3.2
 BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
+BuildRequires: smartmet-library-calculator-devel >= 16.5.25
+BuildRequires: smartmet-library-gis-devel >= 16.5.25
 BuildRequires: smartmet-library-imagine-devel >= 16.10.27
 BuildRequires: smartmet-library-macgyver-devel >= 16.9.30
 BuildRequires: smartmet-library-newbase-devel >= 16.11.18
 BuildRequires: smartmet-library-smarttools-devel >= 16.10.29
-BuildRequires: smartmet-library-gis-devel >= 16.5.25
 BuildRequires: mdsplib >= 14.9.3
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: zlib-devel
 BuildRequires: gdal-devel >= 1.11.4
 Requires: smartmet-timezones >= 16.11.14
+Requires: smartmet-library-calculator >= 16.5.25
 Requires: smartmet-library-gis >= 16.5.25
 Requires: smartmet-library-imagine >= 16.10.27
 Requires: smartmet-library-macgyver >= 16.9.30
@@ -67,6 +69,7 @@ Provides: qdversionchange = %{Version}
 Provides: synop2qd = %{Version} 
 Provides: temp2qd = %{Version} 
 Provides: wrftoqd = %{Version} 
+Provides: qdarea = %{Version} 
 Provides: qdcheck = %{Version} 
 Provides: qdcombine = %{Version} 
 Provides: qdcrop = %{Version} 
@@ -122,6 +125,23 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(0775,root,root,0775)
+%{_bindir}/ashtoqd
+%{_bindir}/bufrtoqd
+%{_bindir}/combinepgms2qd
+%{_bindir}/csv2qd
+%{_bindir}/flash2qd 
+%{_bindir}/grib2tojpg
+%{_bindir}/grib2toqd
+%{_bindir}/gribtoqd
+%{_bindir}/h5toqd
+%{_bindir}/laps2qd
+%{_bindir}/metar2qd
+%{_bindir}/nc2qd
+%{_bindir}/nctoqd
+%{_bindir}/pgm2qd
+%{_bindir}/qd2csv 
+%{_bindir}/qd2geotiff 
+%{_bindir}/qdarea
 %{_bindir}/qdcheck
 %{_bindir}/qdcombine
 %{_bindir}/qdcrop 
@@ -142,28 +162,12 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/qdsoundingindex
 %{_bindir}/qdsplit 
 %{_bindir}/qdstat
-%{_bindir}/qdview
-%{_bindir}/ashtoqd
-%{_bindir}/bufrtoqd
-%{_bindir}/combinepgms2qd
-%{_bindir}/csv2qd
-%{_bindir}/flash2qd 
-%{_bindir}/grib2tojpg
-%{_bindir}/grib2toqd
-%{_bindir}/gribtoqd
-%{_bindir}/h5toqd
-%{_bindir}/laps2qd
-%{_bindir}/metar2qd
-%{_bindir}/nctoqd
-%{_bindir}/nc2qd
-%{_bindir}/radartoqd
-%{_bindir}/pgm2qd
-%{_bindir}/qd2csv 
 %{_bindir}/qdtogrib
 %{_bindir}/qdversionchange
+%{_bindir}/qdview
+%{_bindir}/radartoqd
 %{_bindir}/synop2qd 
 %{_bindir}/temp2qd 
-%{_bindir}/qd2geotiff 
 %{_bindir}/wrftoqd
 %defattr(0664,root,root,0775)
 %{_datadir}/smartmet/dictionaries/*.conf
@@ -174,6 +178,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Jan 12 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.1.12-1.fmi
+- Added qdarea from deprecated textgenapps package
+
 * Tue Jan 10 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.1.10-1.fmi
 - Updated to use FMI open source naming conventions
 

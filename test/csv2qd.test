@@ -91,7 +91,7 @@ sub DoTest
 
     print padname($text);
 
-    my($difference) = `qddifference results/$resultfile results/$tmpfile`;
+    my($difference) = `../qddifference results/$resultfile results/$tmpfile`;
     $difference =~ s/^\s+//;
     $difference =~ s/\s+$//;
 

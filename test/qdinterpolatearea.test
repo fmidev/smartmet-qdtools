@@ -89,7 +89,7 @@ sub DoSqdTest
 
     # Vertaa tuloksia
 
-    my($difference) = `qddifference $resultfile $tmpfile`;
+    my($difference) = `../qddifference $resultfile $tmpfile`;
     $difference =~ s/^\s+//;
     $difference =~ s/\s+$//;
 

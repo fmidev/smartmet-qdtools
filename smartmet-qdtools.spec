@@ -3,7 +3,7 @@
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
 Version: 17.1.12
-Release: 1%{?dist}.fmi
+Release: 2%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -74,6 +74,7 @@ Provides: qdcheck = %{Version}
 Provides: qdcombine = %{Version} 
 Provides: qdcrop = %{Version} 
 Provides: qddiff = %{Version} 
+Provides: qddifference = %{Version} 
 Provides: qdextract = %{Version} 
 Provides: qdfilter = %{Version} 
 Provides: qdgridcalc = %{Version} 
@@ -148,6 +149,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/qdcombine
 %{_bindir}/qdcrop 
 %{_bindir}/qddiff 
+%{_bindir}/qddifference
 %{_bindir}/qdextract
 %{_bindir}/qdfilter 
 %{_bindir}/qdgridcalc
@@ -180,6 +182,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Jan 12 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.1.12-2.fmi
+- Added qddifference since it is needed in the tests
+
 * Thu Jan 12 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.1.12-1.fmi
 - Added qdarea from deprecated textgenapps package
 

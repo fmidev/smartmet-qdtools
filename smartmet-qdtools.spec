@@ -95,6 +95,8 @@ Obsoletes: smartmet-qdconversion < 17.1.10
 Obsoletes: smartmet-qdconversion-debuginfo < 17.1.10
 Obsoletes: smartmet-qdtools < 17.1.10
 Obsoletes: smartmet-qdtools.debuginfo < 17.1.10
+Obsoletes: smartmet-qdarea < 17.1.12
+Obsoletes: smartmet-qdarea-debuginfo < 17.1.12
 
 %description
 Command line tools for handling querydata

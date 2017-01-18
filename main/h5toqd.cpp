@@ -838,6 +838,7 @@ NFmiParamDescriptor create_pdesc(const hid_t &hid)
 bool is_level_parameter(const std::string &product)
 {
   if (product == "CAPPI") return true;
+  if (product == "PCAPPI") return true;
   if (product == "PPI") return true;
   if (product == "ETOP") return true;
   if (product == "RHI") return true;
@@ -857,6 +858,7 @@ bool is_level_parameter(const std::string &product)
 FmiLevelType level_type(const std::string &product)
 {
   if (product == "CAPPI") return kFmiHeight;
+  if (product == "PCAPPI") return kFmiHeight;
   if (product == "PPI") return kFmiAnyLevelType;   // newbase has no angle level
   if (product == "ETOP") return kFmiAnyLevelType;  // newbase has no dBZ level
   if (product == "RHI") return kFmiAnyLevelType;   // newbase has no azimuth levels
@@ -984,6 +986,7 @@ NFmiVPlaceDescriptor collect_pvol_levels(const hid_t &hid)
  * the level in some manner:
  *
  *   CAPPI  Layer height in meters above the radar
+ *   PCAPPI Layer height in meters above the radar
  *   PPI    Elevation angle in degrees
  *   ETOP   Reflectivity limit in dBZ (clouds=-10, rain=10, thunder=20 etc)
  *   RHI    Azimuth angle in degrees

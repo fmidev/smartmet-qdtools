@@ -2,8 +2,8 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.1.12
-Release: 2%{?dist}.fmi
+Version: 17.1.18
+Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -17,23 +17,23 @@ BuildRequires: libbufr >= 3.2
 BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
-BuildRequires: smartmet-library-calculator-devel >= 16.5.25
-BuildRequires: smartmet-library-gis-devel >= 16.5.25
-BuildRequires: smartmet-library-imagine-devel >= 16.10.27
-BuildRequires: smartmet-library-macgyver-devel >= 16.9.30
-BuildRequires: smartmet-library-newbase-devel >= 16.11.18
-BuildRequires: smartmet-library-smarttools-devel >= 16.10.29
+BuildRequires: smartmet-library-calculator-devel >= 17.1.12
+BuildRequires: smartmet-library-gis-devel >= 17.1.13
+BuildRequires: smartmet-library-imagine-devel >= 17.1.4
+BuildRequires: smartmet-library-macgyver-devel >= 16.12.20
+BuildRequires: smartmet-library-newbase-devel >= 17.1.17
+BuildRequires: smartmet-library-smarttools-devel >= 17.1.4
 BuildRequires: mdsplib >= 14.9.3
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: zlib-devel
 BuildRequires: gdal-devel >= 1.11.4
 Requires: smartmet-timezones >= 16.11.14
-Requires: smartmet-library-calculator >= 16.5.25
-Requires: smartmet-library-gis >= 16.5.25
-Requires: smartmet-library-imagine >= 16.10.27
-Requires: smartmet-library-macgyver >= 16.9.30
-Requires: smartmet-library-newbase >= 16.11.18
-Requires: smartmet-library-smarttools >= 16.10.29
+Requires: smartmet-library-calculator >= 17.1.12
+Requires: smartmet-library-gis >= 17.1.13
+Requires: smartmet-library-imagine >= 17.1.4
+Requires: smartmet-library-macgyver >= 16.12.20
+Requires: smartmet-library-newbase >= 17.1.17
+Requires: smartmet-library-smarttools >= 17.1.4
 Requires: grib_api >= 1.14.0
 Requires: hdf5 >= 1.8.12
 Requires: jasper >= 1.900.1
@@ -182,6 +182,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Jan 18 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.1.18-1.fmi
+- Added PCAPPI level support to h5toqd
+
 * Thu Jan 12 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.1.12-2.fmi
 - Added qddifference since it is needed in the tests
 

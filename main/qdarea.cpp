@@ -5,24 +5,24 @@
  */
 // ======================================================================
 
-#include <textgen/Acceptor.h>
-#include <textgen/AnalysisSources.h>
-#include <textgen/GridForecaster.h>
-#include <textgen/HourPeriodGenerator.h>
-#include <textgen/IntervalPeriodGenerator.h>
-#include <textgen/NullPeriodGenerator.h>
-#include <textgen/LatestWeatherSource.h>
-#include <textgen/ListedPeriodGenerator.h>
-#include <textgen/MaximumCalculator.h>
-#include <textgen/MinimumCalculator.h>
-#include <textgen/RangeAcceptor.h>
-#include <textgen/RegularMaskSource.h>
-#include <textgen/WeatherArea.h>
-#include <textgen/WeatherFunction.h>
-#include <textgen/WeatherParameter.h>
-#include <textgen/WeatherPeriod.h>
-#include <textgen/WeatherResult.h>
-#include <textgen/Settings.h>
+#include <calculator/Acceptor.h>
+#include <calculator/AnalysisSources.h>
+#include <calculator/GridForecaster.h>
+#include <calculator/HourPeriodGenerator.h>
+#include <calculator/IntervalPeriodGenerator.h>
+#include <calculator/NullPeriodGenerator.h>
+#include <calculator/LatestWeatherSource.h>
+#include <calculator/ListedPeriodGenerator.h>
+#include <calculator/MaximumCalculator.h>
+#include <calculator/MinimumCalculator.h>
+#include <calculator/RangeAcceptor.h>
+#include <calculator/RegularMaskSource.h>
+#include <calculator/WeatherArea.h>
+#include <calculator/WeatherFunction.h>
+#include <calculator/WeatherParameter.h>
+#include <calculator/WeatherPeriod.h>
+#include <calculator/WeatherResult.h>
+#include <calculator/Settings.h>
 
 #include <newbase/NFmiArea.h>
 #include <newbase/NFmiCmdLine.h>

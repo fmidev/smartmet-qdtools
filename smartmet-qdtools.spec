@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.1.18
+Version: 17.1.23
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -182,6 +182,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Mon Jan 23 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.1.23-1.fmi
+- Optimized qdcombine for speed
+
 * Wed Jan 18 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.1.18-1.fmi
 - Added PCAPPI level support to h5toqd
 

@@ -3,8 +3,6 @@
 // aikojen/parametrien/leveleiden mukaan ja tuottaa niistä yksi
 // yhteinen data tiedosto.
 
-#include <iostream>
-
 #include <NFmiCmdLine.h>
 #include <NFmiAreaFactory.h>
 #include <NFmiStringTools.h>
@@ -17,6 +15,11 @@
 #include <NFmiGrid.h>
 #include <NFmiTotalWind.h>
 #include <NFmiWeatherAndCloudiness.h>
+
+#include <boost/foreach.hpp>
+
+#include <iostream>
+#include <utility>
 
 using namespace std;
 
@@ -85,32 +88,54 @@ static void FillCombinedData(const vector<string> &theDataFileNames,
 
     if (sourceInfo.Grid() && usedGrid == *sourceInfo.Grid())
     {
+      typedef std::pair<unsigned int, unsigned int> IndexPair;
+      typedef std::vector<IndexPair> Indexes;
+      Indexes params, times, levels;
+
+      // Collect indexes for common parameters, times and levels
       for (sourceInfo.ResetParam(); sourceInfo.NextParam();)
-      {
         if (theInfo.Param(*(sourceInfo.Param().GetParam())))
+          params.push_back(IndexPair(sourceInfo.ParamIndex(), theInfo.ParamIndex()));
+
+      for (sourceInfo.ResetTime(); sourceInfo.NextTime();)
+        if (theInfo.Time(sourceInfo.Time()))
+          times.push_back(IndexPair(sourceInfo.TimeIndex(), theInfo.TimeIndex()));
+
+      for (sourceInfo.ResetLevel(); sourceInfo.NextLevel();)
+        if (theForcedLevel || theInfo.Level(*sourceInfo.Level()))
+          levels.push_back(IndexPair(sourceInfo.LevelIndex(), theInfo.LevelIndex()));
+
+      // We avoid unnecessary location loops with this extra test
+
+      if (!params.empty() && !times.empty() && !levels.empty())
+      {
+        BOOST_FOREACH (const IndexPair &param, params)
         {
-          for (sourceInfo.ResetTime(); sourceInfo.NextTime();)
+          sourceInfo.ParamIndex(param.first);
+          theInfo.ParamIndex(param.second);
+
+          for (sourceInfo.ResetLocation(), theInfo.ResetLocation();
+               sourceInfo.NextLocation() && theInfo.NextLocation();)
           {
-            if (theInfo.Time(sourceInfo.Time()))
+            BOOST_FOREACH (const IndexPair &level, levels)
             {
-              for (sourceInfo.ResetLevel(); sourceInfo.NextLevel();)
+              sourceInfo.LevelIndex(level.first);
+              theInfo.LevelIndex(level.second);
+
+              BOOST_FOREACH (const IndexPair &time, times)
               {
-                if (theForcedLevel || theInfo.Level(*sourceInfo.Level()))
-                {
-                  for (sourceInfo.ResetLocation(), theInfo.ResetLocation();
-                       sourceInfo.NextLocation() && theInfo.NextLocation();)
-                  {
-                    if (theInfo.FloatValue() == kFloatMissing)
-                      theInfo.FloatValue(sourceInfo.FloatValue());
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+                sourceInfo.TimeIndex(time.first);
+                theInfo.TimeIndex(time.second);
+
+                if (theInfo.FloatValue() == kFloatMissing)
+                  theInfo.FloatValue(sourceInfo.FloatValue());
+              }  // times
+            }    // levels
+          }      // locations
+        }        // params
+      }          // if !empty
+    }            // if same grid
+  }              // for files
 }
 
 struct LevelLessThan
@@ -150,8 +175,8 @@ static NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
 
   NFmiParamBag firstParaBag = qi.ParamBag();
   bool isAllParamBagsIdentical = true;  // jos kaikki parambagit olivat identtisiä, kopioidaan se
-                                        // suoraan käyttöön, koska muuten parametrien järjestys voi
-                                        // muuttua
+  // suoraan käyttöön, koska muuten parametrien järjestys voi
+  // muuttua
 
   for (unsigned int i = 0; i < dataFileNames.size(); i++)
   {

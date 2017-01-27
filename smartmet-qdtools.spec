@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.1.23
+Version: 17.1.27
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -18,22 +18,22 @@ BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: smartmet-library-calculator-devel >= 17.1.12
-BuildRequires: smartmet-library-gis-devel >= 17.1.13
+BuildRequires: smartmet-library-gis-devel >= 17.1.18
 BuildRequires: smartmet-library-imagine-devel >= 17.1.4
-BuildRequires: smartmet-library-macgyver-devel >= 16.12.20
-BuildRequires: smartmet-library-newbase-devel >= 17.1.17
-BuildRequires: smartmet-library-smarttools-devel >= 17.1.4
+BuildRequires: smartmet-library-macgyver-devel >= 17.1.18
+BuildRequires: smartmet-library-newbase-devel >= 17.1.26
+BuildRequires: smartmet-library-smarttools-devel >= 17.1.27
 BuildRequires: mdsplib >= 14.9.3
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: zlib-devel
 BuildRequires: gdal-devel >= 1.11.4
-Requires: smartmet-timezones >= 16.11.14
+Requires: smartmet-timezones >= 17.1.21
 Requires: smartmet-library-calculator >= 17.1.12
-Requires: smartmet-library-gis >= 17.1.13
+Requires: smartmet-library-gis >= 17.1.18
 Requires: smartmet-library-imagine >= 17.1.4
-Requires: smartmet-library-macgyver >= 16.12.20
-Requires: smartmet-library-newbase >= 17.1.17
-Requires: smartmet-library-smarttools >= 17.1.4
+Requires: smartmet-library-macgyver >= 17.1.18
+Requires: smartmet-library-newbase >= 17.1.26
+Requires: smartmet-library-smarttools >= 17.1.27
 Requires: grib_api >= 1.14.0
 Requires: hdf5 >= 1.8.12
 Requires: jasper >= 1.900.1
@@ -182,6 +182,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Fri Jan 27 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.1.27-1.fmi
+- Recompiled due to NFmiQueryData object size change
+
 * Mon Jan 23 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.1.23-1.fmi
 - Optimized qdcombine for speed
 

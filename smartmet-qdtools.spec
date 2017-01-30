@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.1.27
+Version: 17.1.30
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -17,7 +17,7 @@ BuildRequires: libbufr >= 3.2
 BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
-BuildRequires: smartmet-library-calculator-devel >= 17.1.12
+BuildRequires: smartmet-library-calculator-devel >= 17.1.27
 BuildRequires: smartmet-library-gis-devel >= 17.1.18
 BuildRequires: smartmet-library-imagine-devel >= 17.1.4
 BuildRequires: smartmet-library-macgyver-devel >= 17.1.18
@@ -27,8 +27,8 @@ BuildRequires: mdsplib >= 14.9.3
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: zlib-devel
 BuildRequires: gdal-devel >= 1.11.4
-Requires: smartmet-timezones >= 17.1.21
-Requires: smartmet-library-calculator >= 17.1.12
+Requires: smartmet-timezones >= 17.1.28
+Requires: smartmet-library-calculator >= 17.1.27
 Requires: smartmet-library-gis >= 17.1.18
 Requires: smartmet-library-imagine >= 17.1.4
 Requires: smartmet-library-macgyver >= 17.1.18
@@ -182,6 +182,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Mon Jan 30 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.1.30-1.fmi
+- qdsplit option t can now be used to speed up the program for large input files
+- qdsplit now ignores calculating the missing percentage if the limit is >= 100.
+
 * Fri Jan 27 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.1.27-1.fmi
 - Recompiled due to NFmiQueryData object size change
 

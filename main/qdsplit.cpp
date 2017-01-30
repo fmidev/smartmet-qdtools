@@ -41,6 +41,7 @@
 #include <fstream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 using namespace std;
 
@@ -55,6 +56,7 @@ struct Options
   bool verbose;
   bool shortnames;
   bool setorigintime;
+  int simultaneoustimes;
   float missinglimit;
   string inputfile;
   string outputdir;
@@ -63,6 +65,7 @@ struct Options
       : verbose(false),
         shortnames(false),
         setorigintime(false),
+        simultaneoustimes(1),
         missinglimit(100),
         inputfile(),
         outputdir()
@@ -96,6 +99,7 @@ void usage()
        << "\t-h\tprint this help information" << endl
        << "\t-v\tverbose mode" << endl
        << "\t-s\tcreate short filenames" << endl
+       << "\t-t [n]\thow many times to process simultaneously (default is 1)" << endl
        << "\t-m limit\thow much data is allowed to be missing (%, default is 100)" << endl
        << "\t-O\tset origin time = valid time" << endl
        << endl;
@@ -111,7 +115,7 @@ void usage()
 
 bool parse_command_line(int argc, const char* argv[])
 {
-  NFmiCmdLine cmdline(argc, argv, "hvsm!O");
+  NFmiCmdLine cmdline(argc, argv, "hvst!m!O");
 
   if (cmdline.Status().IsError()) throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
 
@@ -144,6 +148,12 @@ bool parse_command_line(int argc, const char* argv[])
       throw runtime_error("Missing limit value should be 0-100");
   }
 
+  if (cmdline.isOption('t'))
+  {
+    options.simultaneoustimes = boost::lexical_cast<int>(cmdline.OptionValue('t'));
+    if (options.simultaneoustimes < 1) throw runtime_error("Option t argument must be at least 1");
+  }
+
   return true;
 }
 
@@ -162,6 +172,65 @@ NFmiTimeDescriptor make_timedescriptor(const NFmiFastQueryInfo theQ)
     return NFmiTimeDescriptor(theQ.ValidTime(), times);
   else
     return NFmiTimeDescriptor(theQ.OriginTime(), times);
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Calculate percentage of missing values
+ */
+//----------------------------------------------------------------------
+
+float calc_missing(NFmiFastQueryInfo& info)
+{
+  if (options.missinglimit >= 100) return -1;
+
+  int total = 0;
+  int missing = 0;
+
+  for (info.ResetParam(); info.NextParam(false);)
+  {
+    for (info.ResetLocation(); info.NextLocation();)
+    {
+      for (info.ResetLevel(); info.NextLevel();)
+      {
+        for (info.ResetTime(); info.NextTime();)
+        {
+          float value = info.FloatValue();
+          if (value == kFloatMissing) ++missing;
+          ++total;
+        }
+      }
+    }
+  }
+
+  return (total > 0 ? 100.0 * missing / total : 0);
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Establish final and temporary names for the querydata
+ */
+// ----------------------------------------------------------------------
+
+pair<string, string> make_outnames(NFmiFastQueryInfo& info)
+{
+  info.FirstTime();
+
+  string outname = (options.outputdir + '/' + info.ValidTime().ToStr(kYYYYMMDDHHMM).CharPtr());
+
+#ifdef UNIX
+  string tmpname = (options.outputdir + "/." + info.ValidTime().ToStr(kYYYYMMDDHHMM).CharPtr());
+#else
+  string tmpname =
+      (options.outputdir + "/" + info.ValidTime().ToStr(kYYYYMMDDHHMM).CharPtr()) + ".tmp";
+#endif
+
+  if (options.shortnames)
+    outname += ".sqd";
+  else
+    outname += '_' + NFmiFileSystem::BaseName(NFmiFileSystem::FindQueryData(options.inputfile));
+
+  return make_pair(outname, tmpname);
 }
 
 // ----------------------------------------------------------------------
@@ -201,63 +270,128 @@ void extract_time(NFmiFastQueryInfo& theQ)
 
   // Count the amount of missing values if needed
 
-  int total = 0;
-  int missing = 0;
+  float misses = calc_missing(dstinfo);
 
-  if (options.missinglimit < 100)
-  {
-    for (dstinfo.ResetParam(), theQ.ResetParam();
-         dstinfo.NextParam(false) && theQ.NextParam(false);)
-    {
-      for (dstinfo.ResetLocation(), theQ.ResetLocation();
-           dstinfo.NextLocation() && theQ.NextLocation();)
-      {
-        for (dstinfo.ResetLevel(), theQ.ResetLevel(); dstinfo.NextLevel() && theQ.NextLevel();)
-        {
-          float value = theQ.FloatValue();
-          if (value == kFloatMissing) ++missing;
-          ++total;
-        }
-      }
-    }
-  }
+  pair<string, string> names = make_outnames(dstinfo);
+  const string& outname = names.first;
+  const string& tmpname = names.second;
 
-  string outname = (options.outputdir + '/' + theQ.ValidTime().ToStr(kYYYYMMDDHHMM).CharPtr());
-
-#ifdef UNIX
-  string tmpname = (options.outputdir + "/." + theQ.ValidTime().ToStr(kYYYYMMDDHHMM).CharPtr());
-#endif
-
-  if (options.shortnames)
-    outname += ".sqd";
-  else
-  {
-    std::string filename = NFmiFileSystem::FindQueryData(options.inputfile);
-    outname += '_' + NFmiFileSystem::BaseName(filename);
-  }
-
-  float miss = (total > 0 ? 100.0 * missing / total : 0);
-
-  if (options.missinglimit < 100 && miss > options.missinglimit)
+  if (options.missinglimit < 100 && misses > options.missinglimit)
   {
     if (options.verbose)
-      cout << "Skipping " << outname << " since missing percentage is " << miss << endl;
+      cout << "Skipping " << outname << " since missing percentage is " << misses << endl;
   }
   else
   {
     // write the data out
 
-    if (options.verbose) cout << "Writing '" << outname << " (missing " << miss << "%)" << endl;
+    if (options.verbose) cout << "Writing '" << outname << " (missing " << misses << "%)" << endl;
 
-#ifdef UNIX
     // Use dotfile to prevent for example roadmodel crashes
 
     data->Write(tmpname);
     if (boost::filesystem::exists(outname)) boost::filesystem::remove(outname);
     boost::filesystem::rename(tmpname, outname);
-#else
-    data->Write(outname);
-#endif
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Extract the given time indices from the querydata
+ */
+// ----------------------------------------------------------------------
+
+void extract_times(NFmiFastQueryInfo& theQ, unsigned long index1, unsigned long index2)
+{
+  // Make sure we're within limits (one beyond last possible index)
+  index2 = std::min(index2, theQ.SizeParams());
+
+  // create new data containers
+
+  std::vector<NFmiQueryData*> datas;
+  std::vector<NFmiFastQueryInfo*> infos;
+
+  for (unsigned long idx = index1; idx < index2; ++idx)
+  {
+    theQ.TimeIndex(idx);
+    NFmiTimeDescriptor tdesc = make_timedescriptor(theQ);
+
+    NFmiFastQueryInfo tmpinfo(
+        theQ.ParamDescriptor(), tdesc, theQ.HPlaceDescriptor(), theQ.VPlaceDescriptor());
+
+    NFmiQueryData* qd = NFmiQueryDataUtil::CreateEmptyData(tmpinfo);
+    NFmiFastQueryInfo* info = new NFmiFastQueryInfo(qd);
+
+    datas.push_back(qd);
+    infos.push_back(info);
+  }
+
+  // copy the data for time selected times
+
+  for (theQ.ResetParam(); theQ.NextParam();)
+  {
+    for (std::size_t i = 0; i < infos.size(); i++)
+      infos[i]->ParamIndex(theQ.ParamIndex());
+
+    for (theQ.ResetLocation(); theQ.NextLocation();)
+    {
+      for (std::size_t i = 0; i < infos.size(); i++)
+        infos[i]->LocationIndex(theQ.LocationIndex());
+
+      for (theQ.ResetLevel(); theQ.NextLevel();)
+      {
+        for (std::size_t i = 0; i < infos.size(); i++)
+          infos[i]->LevelIndex(theQ.LevelIndex());
+        {
+          for (unsigned long i = index1; i < index2; ++i)
+          {
+            theQ.TimeIndex(i);
+            float value = theQ.FloatValue();
+            infos[i - index1]->FloatValue(value);
+          }
+        }
+      }
+    }
+  }
+
+  // Write the datas
+
+  for (std::size_t i = 0; i < datas.size(); i++)
+  {
+    // Count the amount of missing values if needed
+
+    float misses = calc_missing(*infos[i]);
+
+    pair<string, string> names = make_outnames(*infos[i]);
+    const string& outname = names.first;
+    const string& tmpname = names.second;
+
+    if (options.missinglimit < 100 && misses > options.missinglimit)
+    {
+      if (options.verbose)
+        cout << "Skipping " << outname << " since missing percentage is " << misses << endl;
+    }
+    else
+    {
+      // write the data out
+
+      if (options.verbose)
+      {
+        if (misses >= 0)
+          cout << "Writing '" << outname << " (missing " << misses << "%)" << endl;
+        else
+          cout << "Writing '" << outname << endl;
+      }
+
+      // Use dotfile to prevent for example roadmodel crashes
+
+      datas[i]->Write(tmpname);
+      if (boost::filesystem::exists(outname)) boost::filesystem::remove(outname);
+      boost::filesystem::rename(tmpname, outname);
+    }
+
+    delete datas[i];
+    delete infos[i];
   }
 }
 
@@ -276,10 +410,24 @@ int run(int argc, const char* argv[])
   NFmiQueryData qd(options.inputfile);
   NFmiFastQueryInfo qi(&qd);
 
-  // Process all the timesteps
+// Process all the timesteps
 
-  for (qi.ResetTime(); qi.NextTime();)
-    extract_time(qi);
+#if 0
+  if (options.simultaneoustimes == 1)
+  {
+    for (qi.ResetTime(); qi.NextTime();)
+      extract_time(qi);
+  }
+
+  else
+#endif
+  {
+    for (unsigned long index1 = 0; index1 < qi.SizeParams(); index1 += options.simultaneoustimes)
+    {
+      unsigned long index2 = index1 + options.simultaneoustimes;
+      extract_times(qi, index1, index2);
+    }
+  }
 
   return 0;
 }

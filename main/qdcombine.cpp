@@ -33,6 +33,7 @@ void Usage(void)
 {
   cout << "Usage: qdcombine [options] directory [file2 file3...]> output" << endl
        << "       qdcombine [options] -o [outfile] directory [file2 file3...]" << endl
+       << "       qdcombine [options] -O [mmapped_outfile] directory [file2 file3...]" << endl
        << endl
        << "Program combines all qdatas from given directory to one file if possible." << endl
        << "if multiple arguments are given, each is read in as a file, or as" << endl
@@ -45,6 +46,7 @@ void Usage(void)
        << "Options:" << endl
        << endl
        << "\t-o outfile Output filename, normally data is printed to standard output" << endl
+       << "\t-O outfile Memory mapped output filename" << endl
        << "\t-l force levelType[,value] (e.g. 5000,0 would be normal ground data)." << endl
        << "\t-p e.g. 240,ecmwf\tMake result data's producer id and name as wanted." << endl
        << endl;
@@ -255,7 +257,7 @@ static NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
 
 void Run(int argc, const char *argv[])
 {
-  NFmiCmdLine cmdline(argc, argv, "l!p!o!");
+  NFmiCmdLine cmdline(argc, argv, "l!p!o!O!");
 
   // Tarkistetaan optioiden oikeus:
 
@@ -303,7 +305,15 @@ void Run(int argc, const char *argv[])
       wantedProducer);  // tämä tuhoaa dynaamisen datan automaattisesti
 
   std::string outfile = "-";
+  bool mmapped = false;
+
   if (cmdline.isOption('o')) outfile = cmdline.OptionValue('o');
+
+  if (cmdline.isOption('O'))
+  {
+    outfile = cmdline.OptionValue('O');
+    mmapped = true;
+  }
 
   vector<string> dataFileNames;
 
@@ -345,12 +355,23 @@ void Run(int argc, const char *argv[])
   NFmiQueryInfo innerInfo =
       ::MakeCombinedInnerInfo(dataFileNames, usedGrid, forcedLevel, wantedProducer);
 
-  NFmiQueryData *newData = NFmiQueryDataUtil::CreateEmptyData(innerInfo);
-  if (newData)
+  if (!mmapped)
   {
+    NFmiQueryData *newData = NFmiQueryDataUtil::CreateEmptyData(innerInfo);
+    if (newData)
+    {
+      NFmiFastQueryInfo info(newData);
+      ::FillCombinedData(dataFileNames, info, forcedLevel);
+      newData->Write(outfile);
+    }
+    delete newData;
+  }
+  else
+  {
+    NFmiQueryData *newData = NFmiQueryDataUtil::CreateEmptyData(innerInfo, outfile, true);
     NFmiFastQueryInfo info(newData);
     ::FillCombinedData(dataFileNames, info, forcedLevel);
-    newData->Write(outfile);
+    delete newData;
   }
 }
 

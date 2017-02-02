@@ -21,6 +21,8 @@
  *   - -h for help information
  *   - -v for verbose mode
  *   - -s use timestamp only in the name, not the original name
+ *   - -t [n] split several times simultaneously
+ *   - -T [n] split several times simultaneously using memory mapping
  *   - -m limit for assigning a limit on the amount of missing data (%)
  *   - -O set origin time equal to output valid time
  *
@@ -56,6 +58,7 @@ struct Options
   bool verbose;
   bool shortnames;
   bool setorigintime;
+  bool memorymapping;
   int simultaneoustimes;
   float missinglimit;
   string inputfile;
@@ -65,6 +68,7 @@ struct Options
       : verbose(false),
         shortnames(false),
         setorigintime(false),
+        memorymapping(false),
         simultaneoustimes(1),
         missinglimit(100),
         inputfile(),
@@ -100,6 +104,7 @@ void usage()
        << "\t-v\tverbose mode" << endl
        << "\t-s\tcreate short filenames" << endl
        << "\t-t [n]\thow many times to process simultaneously (default is 1)" << endl
+       << "\t-T [n]\thow many times to process simultaneously with memory mapping" << endl
        << "\t-m limit\thow much data is allowed to be missing (%, default is 100)" << endl
        << "\t-O\tset origin time = valid time" << endl
        << endl;
@@ -115,7 +120,7 @@ void usage()
 
 bool parse_command_line(int argc, const char* argv[])
 {
-  NFmiCmdLine cmdline(argc, argv, "hvst!m!O");
+  NFmiCmdLine cmdline(argc, argv, "hvst!T!m!O");
 
   if (cmdline.Status().IsError()) throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
 
@@ -148,11 +153,19 @@ bool parse_command_line(int argc, const char* argv[])
       throw runtime_error("Missing limit value should be 0-100");
   }
 
+  if (cmdline.isOption('t') && cmdline.isOption('T'))
+    throw std::runtime_error("Cannot use options t and T simultaneously");
+
   if (cmdline.isOption('t'))
-  {
     options.simultaneoustimes = boost::lexical_cast<int>(cmdline.OptionValue('t'));
-    if (options.simultaneoustimes < 1) throw runtime_error("Option t argument must be at least 1");
+
+  if (cmdline.isOption('T'))
+  {
+    options.simultaneoustimes = boost::lexical_cast<int>(cmdline.OptionValue('T'));
+    options.memorymapping = true;
   }
+
+  if (options.simultaneoustimes < 1) throw runtime_error("Option t/T argument must be at least 1");
 
   return true;
 }
@@ -214,8 +227,6 @@ float calc_missing(NFmiFastQueryInfo& info)
 
 pair<string, string> make_outnames(NFmiFastQueryInfo& info)
 {
-  info.FirstTime();
-
   string outname = (options.outputdir + '/' + info.ValidTime().ToStr(kYYYYMMDDHHMM).CharPtr());
 
 #ifdef UNIX
@@ -226,9 +237,17 @@ pair<string, string> make_outnames(NFmiFastQueryInfo& info)
 #endif
 
   if (options.shortnames)
+  {
     outname += ".sqd";
+    tmpname += ".sqd";
+  }
   else
-    outname += '_' + NFmiFileSystem::BaseName(NFmiFileSystem::FindQueryData(options.inputfile));
+  {
+    std::string suffix =
+        '_' + NFmiFileSystem::BaseName(NFmiFileSystem::FindQueryData(options.inputfile));
+    outname += suffix;
+    tmpname += suffix;
+  }
 
   return make_pair(outname, tmpname);
 }
@@ -319,7 +338,16 @@ void extract_times(NFmiFastQueryInfo& theQ, unsigned long index1, unsigned long 
     NFmiFastQueryInfo tmpinfo(
         theQ.ParamDescriptor(), tdesc, theQ.HPlaceDescriptor(), theQ.VPlaceDescriptor());
 
-    NFmiQueryData* qd = NFmiQueryDataUtil::CreateEmptyData(tmpinfo);
+    NFmiQueryData* qd = 0;
+
+    if (!options.memorymapping)
+      qd = NFmiQueryDataUtil::CreateEmptyData(tmpinfo);
+    else
+    {
+      pair<string, string> names = make_outnames(theQ);
+      qd = NFmiQueryDataUtil::CreateEmptyData(tmpinfo, names.second, false);
+    }
+
     NFmiFastQueryInfo* info = new NFmiFastQueryInfo(qd);
 
     datas.push_back(qd);
@@ -362,6 +390,7 @@ void extract_times(NFmiFastQueryInfo& theQ, unsigned long index1, unsigned long 
 
     float misses = calc_missing(*infos[i]);
 
+    infos[i]->FirstTime();
     pair<string, string> names = make_outnames(*infos[i]);
     const string& outname = names.first;
     const string& tmpname = names.second;
@@ -369,7 +398,10 @@ void extract_times(NFmiFastQueryInfo& theQ, unsigned long index1, unsigned long 
     if (options.missinglimit < 100 && misses > options.missinglimit)
     {
       if (options.verbose)
+      {
         cout << "Skipping " << outname << " since missing percentage is " << misses << endl;
+        if (options.memorymapping) boost::filesystem::remove(tmpname);
+      }
     }
     else
     {
@@ -385,7 +417,8 @@ void extract_times(NFmiFastQueryInfo& theQ, unsigned long index1, unsigned long 
 
       // Use dotfile to prevent for example roadmodel crashes
 
-      datas[i]->Write(tmpname);
+      if (!options.memorymapping) datas[i]->Write(tmpname);
+
       if (boost::filesystem::exists(outname)) boost::filesystem::remove(outname);
       boost::filesystem::rename(tmpname, outname);
     }
@@ -410,23 +443,12 @@ int run(int argc, const char* argv[])
   NFmiQueryData qd(options.inputfile);
   NFmiFastQueryInfo qi(&qd);
 
-// Process all the timesteps
+  // Process all the timesteps
 
-#if 0
-  if (options.simultaneoustimes == 1)
+  for (unsigned long index1 = 0; index1 < qi.SizeTimes(); index1 += options.simultaneoustimes)
   {
-    for (qi.ResetTime(); qi.NextTime();)
-      extract_time(qi);
-  }
-
-  else
-#endif
-  {
-    for (unsigned long index1 = 0; index1 < qi.SizeTimes(); index1 += options.simultaneoustimes)
-    {
-      unsigned long index2 = index1 + options.simultaneoustimes;
-      extract_times(qi, index1, index2);
-    }
+    unsigned long index2 = index1 + options.simultaneoustimes;
+    extract_times(qi, index1, index2);
   }
 
   return 0;

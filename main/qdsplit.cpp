@@ -304,7 +304,7 @@ void extract_time(NFmiFastQueryInfo& theQ)
 void extract_times(NFmiFastQueryInfo& theQ, unsigned long index1, unsigned long index2)
 {
   // Make sure we're within limits (one beyond last possible index)
-  index2 = std::min(index2, theQ.SizeParams());
+  index2 = std::min(index2, theQ.SizeTimes());
 
   // create new data containers
 
@@ -422,7 +422,7 @@ int run(int argc, const char* argv[])
   else
 #endif
   {
-    for (unsigned long index1 = 0; index1 < qi.SizeParams(); index1 += options.simultaneoustimes)
+    for (unsigned long index1 = 0; index1 < qi.SizeTimes(); index1 += options.simultaneoustimes)
     {
       unsigned long index2 = index1 + options.simultaneoustimes;
       extract_times(qi, index1, index2);

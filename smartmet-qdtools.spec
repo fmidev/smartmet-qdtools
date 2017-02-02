@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.1.30
+Version: 17.2.2
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -182,6 +182,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Feb  2 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.2.2-1.fmi
+- Fixed qdsplit to loop over the number of times instead of parameters
+
 * Mon Jan 30 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.1.30-1.fmi
 - qdsplit option t can now be used to speed up the program for large input files
 - qdsplit now ignores calculating the missing percentage if the limit is >= 100.

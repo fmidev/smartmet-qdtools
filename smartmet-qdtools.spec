@@ -103,7 +103,7 @@ Obsoletes: smartmet-qdarea-debuginfo < 17.1.12
 Command line tools for handling querydata
 
 %prep
-%setup -q -n %{BINNAME}
+%setup -q -n %{RPMNAME}
  
 %build
 make %{_smp_mflags}

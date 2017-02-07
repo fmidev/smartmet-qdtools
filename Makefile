@@ -167,7 +167,7 @@ release: objdir $(MAINPROGS)
 profile: objdir $(MAINPROGS)
 
 .SECONDEXPANSION:
-$(MAINPROGS): % : obj/%.o $(OBJS)
+$(MAINPROGS): % : obj/%.o $(OBJFILES)
 	$(CC) $(LDFLAGS) -o $@ obj/$@.o $(OBJFILES) $(LIBS)
 
 clean:

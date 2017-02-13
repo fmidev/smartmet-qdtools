@@ -266,6 +266,8 @@ NFmiHPlaceDescriptor create_hdesc(double x1,
   NFmiArea* area;
   if (grid_mapping == POLAR_STEREOGRAPHIC)
     area = new NFmiStereographicArea(NFmiPoint(x1, y1), NFmiPoint(x2, y2), centralLongitude);
+  else if (grid_mapping == LAMBERT_CONFORMAL_CONIC)
+    throw std::runtime_error("Lambert conformal conic projection not supported");
   else
     area = new NFmiLatLonArea(NFmiPoint(x1, y1), NFmiPoint(x2, y2));
 
@@ -585,6 +587,12 @@ int run(int argc, char* argv[])
   NcVar* z = find_axis(ncfile, "z");
   NcVar* t = (isStereographicProjection ? 0 : find_axis(ncfile, "T"));
 
+  // Alternate names
+  if (x == 0) x = find_axis(ncfile, "projection_x_coordinate");
+  if (y == 0) y = find_axis(ncfile, "projection_y_coordinate");
+  if (z == 0) z = find_axis(ncfile, "projection_z_coordinate");
+  if (t == 0) t = find_axis(ncfile, "time");
+
   if (x == 0) throw std::runtime_error("Failed to find X-axis variable");
   if (y == 0) throw std::runtime_error("Failed to find Y-axis variable");
   // if (z == 0) throw std::runtime_error("Failed to find Z-axis variable");
@@ -634,10 +642,13 @@ int run(int argc, char* argv[])
   NFmiParamDescriptor pdesc = create_pdesc(ncfile, paramconvs);
 
   NFmiFastQueryInfo qi(pdesc, tdesc, hdesc, vdesc);
-  std::auto_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(qi));
-  NFmiFastQueryInfo info(data.get());
+  std::unique_ptr<NFmiQueryData> data;
 
-  if (data.get() == 0) throw std::runtime_error("Could not allocate memory for result data");
+  if (options.memorymap)
+    data.reset(NFmiQueryDataUtil::CreateEmptyData(qi, options.outfile, true));
+  else
+    data.reset(NFmiQueryDataUtil::CreateEmptyData(qi));
+  NFmiFastQueryInfo info(data.get());
 
   info.SetProducer(NFmiProducer(options.producernumber, options.producername));
 
@@ -647,7 +658,7 @@ int run(int argc, char* argv[])
 
   if (options.outfile == "-")
     data->Write();
-  else
+  else if (!options.memorymap)
     data->Write(options.outfile);
 
   return 0;

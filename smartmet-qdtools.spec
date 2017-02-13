@@ -2,8 +2,8 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.2.2
-Release: 2%{?dist}.fmi
+Version: 17.2.13
+Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -182,6 +182,13 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Mon Feb 13 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.2.13-1.fmi
+- Recompiled due to newbase API change
+
+* Mon Feb  6 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.2.6-1.fmi
+- nctoqd now recognizes more ways to identify axis variables
+- Added --mmap option to nctoqd to enable memory mapping the output file
+
 * Thu Feb  2 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.2.2-2.fmi
 - Added qdsplit option -T which memory maps output
 - Added qdcombine option -O which memory maps output

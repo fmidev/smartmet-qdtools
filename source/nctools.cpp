@@ -35,18 +35,16 @@ namespace nctools
 
 Options::Options()
     : verbose(false),
-      outfile("-")
+      outfile("-"),
 #ifdef UNIX
-      ,
-      configfile("/usr/share/smartmet/formats/netcdf.conf")
+      configfile("/usr/share/smartmet/formats/netcdf.conf"),
 #else
-      ,
-      configfile("netcdf.conf")
+      configfile("netcdf.conf"),
 #endif
-      ,
       producername("UNKNOWN"),
       producernumber(0),
       timeshift(0),
+      memorymap(false),
       fixstaggered(false),
       ignoreUnitChangeParams(),
       excludeParams(),
@@ -83,6 +81,7 @@ bool parse_options(int argc, char *argv[], Options &options)
       "version,V", "display version number")(
       "infile,i", po::value(&options.infile), "input netcdf file")(
       "outfile,o", po::value(&options.outfile), "output querydata file")(
+      "mmap", po::bool_switch(&options.memorymap), "memory map output file to save RAM")(
       "config,c", po::value(&options.configfile), msg1.c_str())(
       "timeshift,t", po::value(&options.timeshift), "additional time shift in minutes")(
       "producer,p", po::value(&producerinfo), "producer number,name")(
@@ -143,6 +142,9 @@ bool parse_options(int argc, char *argv[], Options &options)
 
   if (!fs::exists(options.infile))
     throw std::runtime_error("Input file '" + options.infile + "' does not exist");
+
+  if (options.memorymap && options.outfile == "-")
+    throw std::runtime_error("Cannot memory map standard output");
 
   // Parse parameter settings
 

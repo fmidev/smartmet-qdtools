@@ -9,6 +9,7 @@
 
 #define DEBUG_PRINT 0
 #define POLAR_STEREOGRAPHIC "polar_stereographic"
+#define LAMBERT_CONFORMAL_CONIC "lambert_conformal_conic"
 
 class NFmiFastQueryInfo;
 
@@ -32,6 +33,7 @@ struct Options
   std::string producername;  // --producername
   long producernumber;       // --producernumber
   long timeshift;            // -t <minutes>
+  bool memorymap;            // --mmap
   bool fixstaggered;  // -s (muuttaa staggered datat perusdatan muotoon, interpoloi datan perus
                       // hilaan)
   std::list<std::string> ignoreUnitChangeParams;  // -u name1,name2,...

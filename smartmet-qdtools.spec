@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.2.13
+Version: 17.2.24
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -182,6 +182,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Fri Feb 24 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.2.24-1.fmi
+- Fixed qdtogrib scanning modes, the output was upside down
+
 * Mon Feb 13 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.2.13-1.fmi
 - Recompiled due to newbase API change
 

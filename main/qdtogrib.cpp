@@ -240,6 +240,9 @@ void set_latlon_geometry(NFmiFastQueryInfo &theInfo,
   gset(gribHandle, "iDirectionIncrementInDegrees", gridCellWidthInDegrees);
   gset(gribHandle, "jDirectionIncrementInDegrees", gridCellHeightInDegrees);
 
+  gset(gribHandle, "jScansPositively", 1);
+  gset(gribHandle, "iScansNegatively", 0);
+
   // DUMP(gribHandle, "geography");
 
   theValueArray.resize(nx * ny);  // tehdää datan siirto taulusta oikean kokoinen
@@ -287,6 +290,9 @@ void set_rotated_latlon_geometry(NFmiFastQueryInfo &theInfo,
         "GRIB does not support rotated latlon areas where longitude is also rotated");
 
   gset(gribHandle, "angleOfRotationInDegrees", a->SouthernPole().Y());
+
+  gset(gribHandle, "jScansPositively", 1);
+  gset(gribHandle, "iScansNegatively", 0);
 
   // DUMP(gribHandle, "geography");
 
@@ -363,6 +369,9 @@ void set_stereographic_geometry(NFmiFastQueryInfo &theInfo,
   if (lat_0 != 90)
     throw std::runtime_error("Only N-pole polar stereographic projections are supported");
 
+  gset(gribHandle, "jScansPositively", 1);
+  gset(gribHandle, "iScansNegatively", 0);
+
   // DUMP(gribHandle,"geography");
 
   theValueArray.resize(nx * ny);  // tehdää datan siirto taulusta oikean kokoinen
@@ -401,6 +410,9 @@ void set_mercator_geometry(NFmiFastQueryInfo &theInfo,
 
   gset(gribHandle, "orientationOfTheGridInDegrees", lon_0);
   gset(gribHandle, "LaDInDegrees", lat_ts);
+
+  gset(gribHandle, "jScansPositively", 1);
+  gset(gribHandle, "iScansNegatively", 0);
 
   theValueArray.resize(nx * ny);  // tehdää datan siirto taulusta oikean kokoinen
 }
@@ -567,25 +579,16 @@ void copy_values(NFmiFastQueryInfo &theInfo,
   float offset = 0.0;
   get_conversion(param.GetIdent(), &scale, &offset);
 
-  // Ei toimi bl -> tr täyttö järjestys vielä. Pitää kokeilla tl -> br!!!!
   int i = 0;
-  theInfo.Top();
-  do
+  for (theInfo.ResetLocation(); theInfo.NextLocation();)
   {
-    theInfo.Left();
-    do
-    {
-      float value = theInfo.FloatValue();
-      if (value != kFloatMissing)
-        theValueArray[i] = (value - offset) / scale;
-      else
-        theValueArray[i] = 9999;  // GRIB missing value by default
-      i++;
-    } while (theInfo.MoveRight());
-  } while (theInfo.MoveDown());
-
-  //	for(theInfo.MoveDown(); theInfo.NextLocation(); )
-  //		theValueArray[i] = theInfo.FloatValue();
+    float value = theInfo.FloatValue();
+    if (value != kFloatMissing)
+      theValueArray[i] = (value - offset) / scale;
+    else
+      theValueArray[i] = 999;  // GRIB1 missing value by default
+    i++;
+  }
 
   grib_set_double_array(gribHandle, "values", &theValueArray[0], theValueArray.size());
 }

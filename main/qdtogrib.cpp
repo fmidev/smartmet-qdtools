@@ -586,7 +586,7 @@ void copy_values(NFmiFastQueryInfo &theInfo,
     if (value != kFloatMissing)
       theValueArray[i] = (value - offset) / scale;
     else
-      theValueArray[i] = 999;  // GRIB1 missing value by default
+      theValueArray[i] = 9999;  // GRIB1 missing value by default
     i++;
   }
 

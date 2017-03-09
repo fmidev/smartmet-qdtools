@@ -3,17 +3,17 @@ project(qdtools)
 
 set(
 	INCLUDE_DIRECTORY
-	include
+	${PROJECT_SOURCE_DIR}/include
 )
 
 set(
 	SOURCE_DIRECTORY
-	source
+	${PROJECT_SOURCE_DIR}/source
 )
 
 set(
 	MAIN_DIRECTORY
-	main
+	${PROJECT_SOURCE_DIR}/main
 )
 
 add_subdirectory(

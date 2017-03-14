@@ -19,3 +19,7 @@ set(
 add_subdirectory(
 	main-cmake-lists/qdversionchange
 )
+
+add_subdirectory(
+	main-cmake-lists/qdsignificantlevelfilter
+)

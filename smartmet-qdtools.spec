@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.3.9
+Version: 17.3.14
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -86,6 +86,7 @@ Provides: qdpoint = %{Version}
 Provides: qdproject = %{Version} 
 Provides: qdscript = %{Version} 
 Provides: qdset = %{Version} 
+Provides: qdsignificantlevelfilter = %{Version}
 Provides: qdsmoother = %{Version} 
 Provides: qdsounding = %{Version} 
 Provides: qdsoundingindex = %{Version} 
@@ -161,6 +162,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/qdproject 
 %{_bindir}/qdscript
 %{_bindir}/qdset
+%{_bindir}/qdsignificantlevelfilter
 %{_bindir}/qdsmoother 
 %{_bindir}/qdsounding 
 %{_bindir}/qdsoundingindex
@@ -182,6 +184,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Mar 14 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.3.14-1.fmi
+- Added qdsignificantlevelfilter
+
 * Thu Mar  9 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.3.9-1.fmi
 - Updated to use the latest newbase and smarttools
 

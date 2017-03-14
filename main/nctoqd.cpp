@@ -6,23 +6,24 @@
  */
 // ======================================================================
 
-#include "NFmiEnumConverter.h"
-#include "NFmiFastQueryInfo.h"
-#include "NFmiQueryData.h"
-#include "NFmiQueryDataUtil.h"
-#include "NFmiLatLonArea.h"
-#include "NFmiStereographicArea.h"
-#include "NFmiHPlaceDescriptor.h"
-#include "NFmiVPlaceDescriptor.h"
-#include "NFmiTimeDescriptor.h"
-#include "NFmiTimeList.h"
-#include "NFmiParamDescriptor.h"
-#include "NFmiAreaFactory.h"
-
 #include "nctools.h"
-#include <CsvReader.h>
-#include <String.h>
-#include <TimeParser.h>
+
+#include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiLatLonArea.h>
+#include <newbase/NFmiStereographicArea.h>
+#include <newbase/NFmiHPlaceDescriptor.h>
+#include <newbase/NFmiVPlaceDescriptor.h>
+#include <newbase/NFmiTimeDescriptor.h>
+#include <newbase/NFmiTimeList.h>
+#include <newbase/NFmiParamDescriptor.h>
+#include <newbase/NFmiAreaFactory.h>
+
+#include <macgyver/CsvReader.h>
+#include <macgyver/StringConversion.h>
+#include <macgyver/TimeParser.h>
 
 #include <netcdfcpp.h>
 

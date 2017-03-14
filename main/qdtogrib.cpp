@@ -2,16 +2,16 @@
 
 #include "GribTools.h"
 
-#include "NFmiArea.h"
-#include "NFmiGrid.h"
-#include "NFmiCmdLine.h"
-#include "NFmiFastQueryInfo.h"
-#include "NFmiFileString.h"
-#include "NFmiRotatedLatLonArea.h"
-#include "NFmiStereographicArea.h"
-#include "NFmiQueryData.h"
+#include <newbase/NFmiArea.h>
+#include <newbase/NFmiGrid.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiFileString.h>
+#include <newbase/NFmiRotatedLatLonArea.h>
+#include <newbase/NFmiStereographicArea.h>
+#include <newbase/NFmiQueryData.h>
 
-#include "grib_api.h"
+#include <grib_api.h>
 
 #include <boost/filesystem/operations.hpp>
 #include <boost/lexical_cast.hpp>

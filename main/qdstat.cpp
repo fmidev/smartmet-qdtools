@@ -1,13 +1,13 @@
 #include "TimeTools.h"
 
-#include <NFmiEnumConverter.h>
-#include <NFmiFastQueryInfo.h>
-#include <NFmiMetTime.h>
-#include <NFmiParameterName.h>
-#include <NFmiQueryData.h>
+#include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiMetTime.h>
+#include <newbase/NFmiParameterName.h>
+#include <newbase/NFmiQueryData.h>
 
-#include <String.h>
-#include <TimeParser.h>
+#include <macgyver/StringConversion.h>
+#include <macgyver/TimeParser.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem/operations.hpp>

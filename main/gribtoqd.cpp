@@ -32,26 +32,26 @@
 
 #include "GribTools.h"
 
-#include "NFmiStreamQueryData.h"
-#include "NFmiGrid.h"
-#include "NFmiStereographicArea.h"
-#include "NFmiRotatedLatLonArea.h"
-#include "NFmiMercatorArea.h"
-#include "NFmiLatLonArea.h"
-#include "NFmiCmdLine.h"
-#include "NFmiTimeList.h"
-#include "NFmiQueryDataUtil.h"
-#include "NFmiValueString.h"
-#include "NFmiTotalWind.h"
-#include "NFmiStringTools.h"
-#include "NFmiInterpolation.h"
-#include "NFmiSettings.h"
-#include "NFmiAreaFactory.h"
-#include "NFmiMilliSecondTimer.h"
-#include "NFmiFileSystem.h"
-#include "NFmiFileString.h"
+#include <newbase/NFmiStreamQueryData.h>
+#include <newbase/NFmiGrid.h>
+#include <newbase/NFmiStereographicArea.h>
+#include <newbase/NFmiRotatedLatLonArea.h>
+#include <newbase/NFmiMercatorArea.h>
+#include <newbase/NFmiLatLonArea.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiTimeList.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiValueString.h>
+#include <newbase/NFmiTotalWind.h>
+#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiInterpolation.h>
+#include <newbase/NFmiSettings.h>
+#include <newbase/NFmiAreaFactory.h>
+#include <newbase/NFmiMilliSecondTimer.h>
+#include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiFileString.h>
 
-#include "grib_api.h"
+#include <grib_api.h>
 
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>

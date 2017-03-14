@@ -3,11 +3,11 @@
 
 #include <string>
 #include <vector>
-#include "NFmiGrid.h"
-#include "NFmiLevelBag.h"
-#include "NFmiMetTime.h"
-#include "NFmiQueryInfo.h"
-#include "NFmiTimeList.h"
+#include <newbase/NFmiGrid.h>
+#include <newbase/NFmiLevelBag.h>
+#include <newbase/NFmiMetTime.h>
+#include <newbase/NFmiQueryInfo.h>
+#include <newbase/NFmiTimeList.h>
 
 class NFmiQueryData;
 class NcFile;
@@ -204,16 +204,16 @@ class FmiNetCdfQueryData
   bool IsSurfaceVariable(NcVar &theVar);
   void MakesureSurfaceMetaDataIsInitialized();
 
-  bool fDataOk;                         // onko t‰m‰ initialisoitu ja onko annettu NcFile ollut ok.
-  FmiTDimVarInfo itsTInfo;              // aika muuttujan tiedot t‰h‰n
-  FmiXYDimVarInfo itsXInfo;             // X eli hilan longitude piste muuttujan tiedot t‰h‰n
-  FmiXYDimVarInfo itsYInfo;             // Y eli hilan latitude piste muuttujan tiedot t‰h‰n
+  bool fDataOk;              // onko t‰m‰ initialisoitu ja onko annettu NcFile ollut ok.
+  FmiTDimVarInfo itsTInfo;   // aika muuttujan tiedot t‰h‰n
+  FmiXYDimVarInfo itsXInfo;  // X eli hilan longitude piste muuttujan tiedot t‰h‰n
+  FmiXYDimVarInfo itsYInfo;  // Y eli hilan latitude piste muuttujan tiedot t‰h‰n
   FmiProjectionInfo itsProjectionInfo;  // jos datassa on lat-lon:ista poikkeava projektio, ker‰t‰‰n
                                         // t‰h‰n tarvittavat tiedot
   std::vector<FmiVarInfo> itsNormalParameters;  // t‰ss‰ on ns. normaalien muutuja parametrien
                                                 // lista, joissa on ulottuvuuksina edelliset 4
                                                 // muuttuja infot
-  NFmiGrid itsGrid;                             // t‰m‰ hila m‰‰r‰t‰‰n, kun X, ja Y arvot on saatu
+  NFmiGrid itsGrid;  // t‰m‰ hila m‰‰r‰t‰‰n, kun X, ja Y arvot on saatu
   NFmiProducer itsProducer;
   FmiNcMetaData itsSurfaceMetaData;
   FmiNcMetaData itsHeightLevelMetaData;

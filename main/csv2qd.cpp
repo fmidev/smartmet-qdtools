@@ -16,22 +16,20 @@
  */
 // ======================================================================
 
-// macgyver
-#include <CsvReader.h>
-#include <TimeParser.h>
-#include <TimeZoneFactory.h>
+#include <macgyver/CsvReader.h>
+#include <macgyver/TimeParser.h>
+#include <macgyver/TimeZoneFactory.h>
 
-// newbase
-#include <NFmiEnumConverter.h>
-#include <NFmiFastQueryInfo.h>
-#include <NFmiHPlaceDescriptor.h>
-#include <NFmiParamDescriptor.h>
-#include <NFmiProducerName.h>
-#include <NFmiQueryData.h>
-#include <NFmiQueryDataUtil.h>
-#include <NFmiTimeDescriptor.h>
-#include <NFmiTimeList.h>
-#include <NFmiVPlaceDescriptor.h>
+#include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiHPlaceDescriptor.h>
+#include <newbase/NFmiParamDescriptor.h>
+#include <newbase/NFmiProducerName.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiTimeDescriptor.h>
+#include <newbase/NFmiTimeList.h>
+#include <newbase/NFmiVPlaceDescriptor.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>

@@ -20,12 +20,12 @@
  *  parametreille.
  */
 
-#include <NFmiAreaFactory.h>
-#include <NFmiCmdLine.h>
-#include <NFmiGrid.h>
-#include <NFmiQueryData.h>
-#include <NFmiQueryDataUtil.h>
-#include <NFmiStringTools.h>
+#include <newbase/NFmiAreaFactory.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiGrid.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiStringTools.h>
 #include <algorithm>
 #include <fstream>
 

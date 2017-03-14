@@ -1,7 +1,7 @@
 #ifndef NFMIDATAMODIFIERDATACHECKING_H
 #define NFMIDATAMODIFIERDATACHECKING_H
 
-#include "NFmiDataModifier.h"
+#include <newbase/NFmiDataModifier.h>
 
 // ***************************************************************
 // ***************   Tehd‰‰n Modifier luokat t‰ss‰ !!! ***********

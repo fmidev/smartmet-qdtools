@@ -3,7 +3,7 @@
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
 Version: 17.3.14
-Release: 1%{?dist}.fmi
+Release: 2%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -19,8 +19,8 @@ BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: smartmet-library-calculator-devel >= 17.2.10
 BuildRequires: smartmet-library-gis-devel >= 17.1.18
-BuildRequires: smartmet-library-imagine-devel >= 17.2.10
-BuildRequires: smartmet-library-macgyver-devel >= 17.2.22
+BuildRequires: smartmet-library-imagine-devel >= 17.3.14
+BuildRequires: smartmet-library-macgyver-devel >= 17.3.14
 BuildRequires: smartmet-library-newbase-devel >= 17.3.9
 BuildRequires: smartmet-library-smarttools-devel >= 17.3.9
 BuildRequires: mdsplib >= 14.9.3
@@ -30,8 +30,8 @@ BuildRequires: gdal-devel >= 1.11.4
 Requires: smartmet-timezones >= 17.3.6
 Requires: smartmet-library-calculator >= 17.2.10
 Requires: smartmet-library-gis >= 17.1.18
-Requires: smartmet-library-imagine >= 17.2.10
-Requires: smartmet-library-macgyver >= 17.2.22
+Requires: smartmet-library-imagine >= 17.3.14
+Requires: smartmet-library-macgyver >= 17.3.14
 Requires: smartmet-library-newbase >= 17.3.9
 Requires: smartmet-library-smarttools >= 17.3.9
 Requires: grib_api >= 1.14.0
@@ -184,6 +184,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Mar 14 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.3.14-2.fmi
+- Recompiled with the latest macgyver
+
 * Tue Mar 14 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.3.14-1.fmi
 - Added qdsignificantlevelfilter
 

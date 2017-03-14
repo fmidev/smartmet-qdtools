@@ -7,10 +7,10 @@
 
 #include "Pgm2QueryData.h"
 
-#include "NFmiCmdLine.h"
-#include "NFmiStringTools.h"
-#include "NFmiFileSystem.h"
-#include "NFmiQueryData.h"
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiQueryData.h>
 
 #include <list>
 #include <fstream>

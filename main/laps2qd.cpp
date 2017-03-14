@@ -8,16 +8,18 @@
  *
  */
 
+#include "FmiNetCdfQueryData.h"
+
 #include <iostream>
 #include <string>
 #include <vector>
-#include "NFmiFileString.h"
-#include "NFmiProducer.h"
-#include "NFmiStringTools.h"
-#include "NFmiCmdLine.h"
-#include "NFmiMilliSecondTimer.h"
-#include "FmiNetCdfQueryData.h"
-#include "NFmiStreamQueryData.h"
+
+#include <newbase/NFmiFileString.h>
+#include <newbase/NFmiProducer.h>
+#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiMilliSecondTimer.h>
+#include <newbase/NFmiStreamQueryData.h>
 
 static void Usage(const std::string &theExecutableName)
 {

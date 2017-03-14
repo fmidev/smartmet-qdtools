@@ -7,17 +7,17 @@
 
 #include "Projection.h"
 
-#include "NFmiImage.h"
-#include "NFmiPath.h"
+#include <imagine/NFmiImage.h>
+#include <imagine/NFmiPath.h>
 
-#include "NFmiEquidistArea.h"
-#include "NFmiGlobals.h"
-#include "NFmiGnomonicArea.h"
-#include "NFmiLatLonArea.h"
-#include "NFmiMercatorArea.h"
-#include "NFmiPoint.h"
-#include "NFmiStereographicArea.h"
-#include "NFmiYKJArea.h"
+#include <newbase/NFmiEquidistArea.h>
+#include <newbase/NFmiGlobals.h>
+#include <newbase/NFmiGnomonicArea.h>
+#include <newbase/NFmiLatLonArea.h>
+#include <newbase/NFmiMercatorArea.h>
+#include <newbase/NFmiPoint.h>
+#include <newbase/NFmiStereographicArea.h>
+#include <newbase/NFmiYKJArea.h>
 
 #include <stdexcept>
 

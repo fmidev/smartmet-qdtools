@@ -21,12 +21,13 @@
 //**********************************************************
 
 #include "NFmiQueryDataChecker.h"
-#include "NFmiQueryData.h"
-#include "NFmiFastQueryInfo.h"
-#include "NFmiDataModifier.h"
-#include "NFmiDataModifierMinMax.h"
 #include "NFmiParamCheckData.h"
 #include "NFmiDataModifierDataChecking.h"
+
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiDataModifier.h>
+#include <newbase/NFmiDataModifierMinMax.h>
 
 #include <time.h>
 #include <set>

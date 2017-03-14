@@ -23,13 +23,13 @@
  *
  */
 
-#include "NFmiQueryData.h"
-#include "NFmiStreamQueryData.h"
-#include "NFmiCmdLine.h"
-#include "NFmiValueString.h"
-#include "NFmiTimeList.h"
-#include "NFmiStringTools.h"
-#include "NFmiQueryDataUtil.h"
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiStreamQueryData.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiValueString.h>
+#include <newbase/NFmiTimeList.h>
+#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiQueryDataUtil.h>
 
 #include <stdexcept>
 #include <fstream>

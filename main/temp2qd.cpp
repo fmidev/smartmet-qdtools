@@ -5,18 +5,18 @@
 
 #include <iostream>
 
-#include "NFmiCmdLine.h"
-#include "NFmiAreaFactory.h"
-#include "NFmiStringTools.h"
-#include "NFmiStreamQueryData.h"
-#include "NFmiQueryDataUtil.h"
-#include "NFmiFileSystem.h"
-#include "NFmiTimeList.h"
-#include "NFmiArea.h"
-#include "NFmiGrid.h"
-#include "NFmiTEMPCode.h"
-#include "NFmiFileString.h"
-#include "NFmiAviationStationInfoSystem.h"
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiAreaFactory.h>
+#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiStreamQueryData.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiTimeList.h>
+#include <newbase/NFmiArea.h>
+#include <newbase/NFmiGrid.h>
+#include <smarttools/NFmiTEMPCode.h>
+#include <newbase/NFmiFileString.h>
+#include <smarttools/NFmiAviationStationInfoSystem.h>
 
 using namespace std;
 
@@ -236,12 +236,12 @@ void Domain(int argc, const char *argv[])
     for (list<string>::iterator it = fileList.begin(); it != fileList.end(); ++it)
     {
       //	3. Lue listan tiedostot vuorollaan sis‰‰n ja tulkitse siit‰ mahdolliset TEMPit
-      //querydataksi
+      // querydataksi
       std::string finalFileName = usedPath + *it;
       foundAnyFiles = true;
       string tempFileContent;
       //			if(NFmiFileSystem::ReadFile2String(wantedPath + fileListVec[k],
-      //tempFileContent))
+      // tempFileContent))
       if (NFmiFileSystem::ReadFile2String(finalFileName, tempFileContent))
       {
         //	4. tulkitse siit‰ mahdolliset TEMPit querydataksi
@@ -271,7 +271,7 @@ void Domain(int argc, const char *argv[])
   if (bigQData)
   {
     //		auto_ptr<NFmiQueryData> bigQDataPtr(bigQData); // tuhoaa datan automaattisesti
-    //lopuksi
+    // lopuksi
     NFmiStreamQueryData sQOutData(bigQData);
     if (!sQOutData.WriteCout())
       throw runtime_error("Error: Couldn't write combined qdata to stdout.");

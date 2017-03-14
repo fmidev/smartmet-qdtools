@@ -30,15 +30,15 @@
 
 #include "TimeTools.h"
 
-#include <NFmiCmdLine.h>
-#include <NFmiEnumConverter.h>
-#include <NFmiFastQueryInfo.h>
-#include <NFmiFileSystem.h>
-#include <NFmiLevel.h>
-#include <NFmiLocationFinder.h>
-#include <NFmiQueryData.h>
-#include <NFmiSettings.h>
-#include <NFmiStringTools.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiLevel.h>
+#include <newbase/NFmiLocationFinder.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiSettings.h>
+#include <newbase/NFmiStringTools.h>
 
 #include <ctime>
 #include <iostream>
@@ -51,8 +51,8 @@ using namespace std;
 
 #ifdef _MSC_VER
 #pragma warning(disable : 4996)  // winkkari puolella putenv ja tzset -funktiot on deprekoitu ja
-                                 // suositellaan k‰ytt‰m‰‰n _-nimisi‰ versioita, poistin sitten n‰m‰
-                                 // varoitukset pragmalla
+// suositellaan k‰ytt‰m‰‰n _-nimisi‰ versioita, poistin sitten n‰m‰
+// varoitukset pragmalla
 #endif
 
 // ----------------------------------------------------------------------

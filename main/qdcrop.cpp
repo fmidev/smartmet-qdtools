@@ -103,15 +103,15 @@
  */
 // ======================================================================
 
-#include <NFmiAreaFactory.h>
-#include <NFmiCmdLine.h>
-#include <NFmiEnumConverter.h>
-#include <NFmiFastQueryInfo.h>
-#include <NFmiGrid.h>
-#include <NFmiQueryData.h>
-#include <NFmiQueryDataUtil.h>
-#include <NFmiStringTools.h>
-#include <NFmiTimeList.h>
+#include <newbase/NFmiAreaFactory.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiGrid.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiTimeList.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>

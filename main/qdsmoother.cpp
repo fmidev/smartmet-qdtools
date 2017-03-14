@@ -107,16 +107,16 @@
  */
 // ======================================================================
 
-#include <NFmiCmdLine.h>
-#include <NFmiEnumConverter.h>
-#include <NFmiFastQueryInfo.h>
-#include <NFmiFileSystem.h>
-#include <NFmiQueryData.h>
-#include <NFmiQueryDataUtil.h>
-#include <NFmiSettings.h>
-#include <NFmiSmoother.h>
-#include <NFmiStringTools.h>
-#include <NFmiTimeList.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiSettings.h>
+#include <newbase/NFmiSmoother.h>
+#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiTimeList.h>
 
 #include <boost/shared_ptr.hpp>
 

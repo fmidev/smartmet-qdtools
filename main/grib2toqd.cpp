@@ -40,27 +40,27 @@
 
 #include "GribTools.h"
 
-#include "NFmiAreaFactory.h"
-#include "NFmiCmdLine.h"
-#include "NFmiCommentStripper.h"
-#include "NFmiFileString.h"
-#include "NFmiFileSystem.h"
-#include "NFmiGrid.h"
-#include "NFmiInterpolation.h"
-#include "NFmiLatLonArea.h"
-#include "NFmiMercatorArea.h"
-#include "NFmiMilliSecondTimer.h"
-#include "NFmiQueryDataUtil.h"
-#include "NFmiRotatedLatLonArea.h"
-#include "NFmiSettings.h"
-#include "NFmiStereographicArea.h"
-#include "NFmiStreamQueryData.h"
-#include "NFmiStringTools.h"
-#include "NFmiTimeList.h"
-#include "NFmiTotalWind.h"
-#include "NFmiValueString.h"
+#include <newbase/NFmiAreaFactory.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiCommentStripper.h>
+#include <newbase/NFmiFileString.h>
+#include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiGrid.h>
+#include <newbase/NFmiInterpolation.h>
+#include <newbase/NFmiLatLonArea.h>
+#include <newbase/NFmiMercatorArea.h>
+#include <newbase/NFmiMilliSecondTimer.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiRotatedLatLonArea.h>
+#include <newbase/NFmiSettings.h>
+#include <newbase/NFmiStereographicArea.h>
+#include <newbase/NFmiStreamQueryData.h>
+#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiTimeList.h>
+#include <newbase/NFmiTotalWind.h>
+#include <newbase/NFmiValueString.h>
 
-#include "grib_api.h"
+#include <grib_api.h>
 
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
@@ -143,8 +143,8 @@ struct GribFilterOptions
 
   string itsOutputFileName;  // -o optio tai sitten tulostetann cout:iin
   bool fUseOutputFile;
-  size_t itsMaxQDataSizeInBytes;     // default max koko 1 GB
-  int itsReturnStatus;               // 0 = ok
+  size_t itsMaxQDataSizeInBytes;  // default max koko 1 GB
+  int itsReturnStatus;            // 0 = ok
   NFmiLevelBag itsIgnoredLevelList;  // lista miss‰ yksitt‰isi‰ leveleit‰, mitk‰ halutaan j‰tt‰‰
                                      // pois laskuista
   vector<boost::shared_ptr<NFmiQueryData> > itsGeneratedDatas;

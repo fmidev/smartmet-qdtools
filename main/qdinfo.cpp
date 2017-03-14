@@ -77,23 +77,23 @@
  */
 // ======================================================================
 
-#include <NFmiCmdLine.h>
-#include <NFmiEnumConverter.h>
-#include <NFmiEquidistArea.h>
-#include <NFmiFastQueryInfo.h>
-#include <NFmiFileString.h>
-#include <NFmiFileSystem.h>
-#include <NFmiGnomonicArea.h>
-#include <NFmiGrid.h>
-#include <NFmiKKJArea.h>
-#include <NFmiLatLonArea.h>
-#include <NFmiMercatorArea.h>
-#include <NFmiPKJArea.h>
-#include <NFmiRotatedLatLonArea.h>
-#include <NFmiSettings.h>
-#include <NFmiStereographicArea.h>
-#include <NFmiStringList.h>
-#include <NFmiYKJArea.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiEquidistArea.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiFileString.h>
+#include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiGnomonicArea.h>
+#include <newbase/NFmiGrid.h>
+#include <newbase/NFmiKKJArea.h>
+#include <newbase/NFmiLatLonArea.h>
+#include <newbase/NFmiMercatorArea.h>
+#include <newbase/NFmiPKJArea.h>
+#include <newbase/NFmiRotatedLatLonArea.h>
+#include <newbase/NFmiSettings.h>
+#include <newbase/NFmiStereographicArea.h>
+#include <newbase/NFmiStringList.h>
+#include <newbase/NFmiYKJArea.h>
 
 #include <algorithm>
 #include <list>

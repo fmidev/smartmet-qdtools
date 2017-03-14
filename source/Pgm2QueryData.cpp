@@ -9,15 +9,15 @@
 #include "ProjectionParser.h"
 #include "DataTransform.h"
 #include "Projection.h"
-
 #include "Pgm2QueryData.h"
-#include "NFmiStringTools.h"
-#include "NFmiFileSystem.h"
-#include "NFmiEnumConverter.h"
-#include "NFmiQueryData.h"
-#include "NFmiGrid.h"
-#include "NFmiQueryDataUtil.h"
-#include "NFmiFastQueryInfo.h"
+
+#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiGrid.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiFastQueryInfo.h>
 
 #include <boost/shared_ptr.hpp>
 

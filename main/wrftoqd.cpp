@@ -6,17 +6,17 @@
  */
 // ======================================================================
 
-#include "NFmiAreaFactory.h"
-#include "NFmiFastQueryInfo.h"
-#include "NFmiHPlaceDescriptor.h"
-#include "NFmiParamDescriptor.h"
-#include "NFmiQueryData.h"
-#include "NFmiQueryDataUtil.h"
-#include "NFmiTimeDescriptor.h"
-#include "NFmiTimeList.h"
-#include "NFmiVPlaceDescriptor.h"
+#include "nctools.h"
 
-#include <nctools.h>
+#include <newbase/NFmiAreaFactory.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiHPlaceDescriptor.h>
+#include <newbase/NFmiParamDescriptor.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiTimeDescriptor.h>
+#include <newbase/NFmiTimeList.h>
+#include <newbase/NFmiVPlaceDescriptor.h>
 
 #include <netcdfcpp.h>
 

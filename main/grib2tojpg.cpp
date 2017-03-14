@@ -7,32 +7,31 @@
                                       // joka johtuu 'puretuista' STL-template nimist‰)
 #endif
 
-#include "NFmiStreamQueryData.h"
-#include "NFmiGrid.h"
-#include "NFmiStereographicArea.h"
-#include "NFmiRotatedLatLonArea.h"
-#include "NFmiMercatorArea.h"
-#include "NFmiLatLonArea.h"
-#include "NFmiCmdLine.h"
-#include "NFmiTimeList.h"
-#include "NFmiQueryDataUtil.h"
-#include "NFmiValueString.h"
-#include "NFmiTotalWind.h"
-#include "NFmiStringTools.h"
-#include "NFmiInterpolation.h"
-#include "NFmiSettings.h"
-#include "NFmiCommentStripper.h"
-#include "NFmiAreaFactory.h"
+#include <newbase/NFmiStreamQueryData.h>
+#include <newbase/NFmiGrid.h>
+#include <newbase/NFmiStereographicArea.h>
+#include <newbase/NFmiRotatedLatLonArea.h>
+#include <newbase/NFmiMercatorArea.h>
+#include <newbase/NFmiLatLonArea.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiTimeList.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiValueString.h>
+#include <newbase/NFmiTotalWind.h>
+#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiInterpolation.h>
+#include <newbase/NFmiSettings.h>
+#include <newbase/NFmiCommentStripper.h>
+#include <newbase/NFmiAreaFactory.h>
 
-#include "grib_api.h"
+#include <grib_api.h>
 //#include "grib_api_internal.h"
 
-// libjpeg
 extern "C" {
-#include <stdio.h>
 #include <jpeglib.h>
 }
 
+#include <cstdio>
 #include <sstream>
 #include <stdexcept>
 #include <functional>
@@ -282,7 +281,7 @@ static void HandleProjectionString(const string &theProjStr,
           pos2 = theProjStr.find(",", pos2 + 1);
           if (pos2 != string::npos)
           {  // nyt lˆytyi toinen pilkku, josta alkaa ylim‰‰r‰isten hilakokojen m‰‰ritys. T‰m‰ loppu
-             // pit‰‰ saada
+            // pit‰‰ saada
             // pois hilan m‰‰ritys stringist‰
             projStringUsed = std::string(theProjStr.begin(), theProjStr.begin() + pos2);
             if (gridSizesList.size() == 4)
@@ -912,7 +911,7 @@ static NFmiDataIdent GetParam(grib_handle *theGribHandle, const NFmiProducer &th
     int status4 = grib_get_long(theGribHandle, "parameterNumber", &parameterNumber);
     if (status3 == 0 && status4 == 0)
     {  // tehd‰‰n parametri numeroksi categorian ja numberin yhdistelm‰ niin ett‰ eri categorioissa
-       // olevat
+      // olevat
       // parametrit eiv‰t menisi p‰‰llekk‰in eli parId = 1000*categoria+number
       unsigned int parId = parameterCategory * 1000 + parameterNumber;
       string name = NFmiStringTools::Convert(parId);
@@ -1042,7 +1041,7 @@ static void FillGridData(grib_handle *theGribHandle,
       }
       else if (scanningMode == 80)  // en tied‰ mik‰ t‰m‰ moodi on, grib2 speksi ei m‰‰r‰‰ 5. tai 7.
                                     // bitin merkityst‰
-                                    // jouduin vain kokeilemaan LAPS datan juoksutuksen k‰sipelill‰
+      // jouduin vain kokeilemaan LAPS datan juoksutuksen k‰sipelill‰
       {
         for (size_t i = 0; i < values_length; i++)
         {
@@ -1241,7 +1240,7 @@ static bool CropParam(GridRecordData *gribData,
         //				if(paramChangeItem.itsLevel)
         //				{
         //					if(gribData->itsLevel.GetIdent() == 1) // jos param
-        //laitettu
+        // laitettu
         // pinta dataksi cropataan muut paitsi pintalevelit
         //						return true;
         //				}

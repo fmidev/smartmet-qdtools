@@ -22,9 +22,9 @@
  *  parametreille.
  */
 
-#include <NFmiCmdLine.h>
-#include <NFmiQueryData.h>
-#include <NFmiQueryDataUtil.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiQueryDataUtil.h>
 #include <boost/lexical_cast.hpp>
 //#include "NFmiMilliSecondTimer.h"
 

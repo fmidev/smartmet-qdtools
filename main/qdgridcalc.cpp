@@ -5,13 +5,13 @@
 //#pragma warning(disable : 4511 4512 4100 4127) // Remove boost warnings from VC++
 #endif
 
-#include <NFmiArea.h>
-#include <NFmiAreaFactory.h>
-#include <NFmiCmdLine.h>
-#include <NFmiGrid.h>
-#include <NFmiLocation.h>
-#include <NFmiQueryInfo.h>
-#include <NFmiStringTools.h>
+#include <newbase/NFmiArea.h>
+#include <newbase/NFmiAreaFactory.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiGrid.h>
+#include <newbase/NFmiLocation.h>
+#include <newbase/NFmiQueryInfo.h>
+#include <newbase/NFmiStringTools.h>
 
 #include <boost/shared_ptr.hpp>
 #include <fstream>

@@ -1,11 +1,11 @@
-#include <NFmiCmdLine.h>
-#include <NFmiEnumConverter.h>
-#include <NFmiFastQueryInfo.h>
-#include <NFmiFileString.h>
-#include <NFmiQueryData.h>
-#include <NFmiQueryDataUtil.h>
-#include <NFmiSettings.h>
-#include <NFmiSmartToolUtil.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiFileString.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiSettings.h>
+#include <smarttools/NFmiSmartToolUtil.h>
 #include <fstream>
 
 bool ReadScriptFile(const std::string &theFileName, std::string *theScript);

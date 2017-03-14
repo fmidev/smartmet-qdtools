@@ -2,8 +2,8 @@
 #ifndef NFMIPARAMCHECKDATA_H
 #define NFMIPARAMCHECKDATA_H
 
-#include "NFmiGlobals.h"
-#include "NFmiEnumConverter.h"
+#include <newbase/NFmiGlobals.h>
+#include <newbase/NFmiEnumConverter.h>
 #include <boost/lexical_cast.hpp>
 
 static NFmiEnumConverter converter;
@@ -122,7 +122,7 @@ class NFmiOhjausData
                                                                   // tuntia ennen nykyhetke‰, 0= ei
                                                                   // v‰litet‰)
   std::vector<int> itsMaxDataStartHourDifferenceForwardInHours;   // maksimi alkuaika-heitto
-                                                                  // nykyhetkest‰ eteenp‰in tunteina
+  // nykyhetkest‰ eteenp‰in tunteina
   // (eli data alkaa enint‰‰n esim. 1
   // tuntia j‰lkeen nykyhetken, -1=
   // ei v‰litet‰)

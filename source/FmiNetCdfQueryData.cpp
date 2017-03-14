@@ -1,13 +1,13 @@
 // FmiNetCdfQueryData.cpp
 
 #include "FmiNetCdfQueryData.h"
-#include "NFmiAreaFactory.h"
-#include "NFmiFastQueryInfo.h"
-#include "NFmiLatLonArea.h"
-#include "NFmiQueryDataUtil.h"
-#include "NFmiStereographicArea.h"
+#include <newbase/NFmiAreaFactory.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiLatLonArea.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiStereographicArea.h>
 
-#include "netcdfcpp.h"
+#include <netcdfcpp.h>
 
 #include <boost/algorithm/string/case_conv.hpp>
 

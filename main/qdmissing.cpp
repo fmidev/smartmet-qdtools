@@ -37,13 +37,13 @@
 
 #include "TimeTools.h"
 
-#include <NFmiCmdLine.h>
-#include <NFmiEnumConverter.h>
-#include <NFmiFastQueryInfo.h>
-#include <NFmiFileSystem.h>
-#include <NFmiQueryData.h>
-#include <NFmiSettings.h>
-#include <NFmiStringTools.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiSettings.h>
+#include <newbase/NFmiStringTools.h>
 
 #include <ctime>
 #include <iostream>

@@ -5,12 +5,12 @@
 #include <string>
 #include <vector>
 #include "FmiNetCdfQueryData.h"
-#include "NFmiCmdLine.h"
-#include "NFmiFileString.h"
-#include "NFmiMilliSecondTimer.h"
-#include "NFmiProducer.h"
-#include "NFmiStreamQueryData.h"
-#include "NFmiStringTools.h"
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiFileString.h>
+#include <newbase/NFmiMilliSecondTimer.h>
+#include <newbase/NFmiProducer.h>
+#include <newbase/NFmiStreamQueryData.h>
+#include <newbase/NFmiStringTools.h>
 
 static void Usage(const std::string &theExecutableName)
 {

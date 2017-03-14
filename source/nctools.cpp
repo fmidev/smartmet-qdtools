@@ -1,7 +1,8 @@
 
-#include <Cast.h>
-#include "NFmiFastQueryInfo.h"
 #include "nctools.h"
+
+#include <macgyver/Cast.h>
+#include <newbase/NFmiFastQueryInfo.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/split.hpp>

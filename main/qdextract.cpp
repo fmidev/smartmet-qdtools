@@ -4,11 +4,11 @@
  */
 // ======================================================================
 
-#include <NFmiCommentStripper.h>
-#include <NFmiFastQueryInfo.h>
-#include <NFmiLocationBag.h>
-#include <NFmiQueryData.h>
-#include <NFmiQueryDataUtil.h>
+#include <newbase/NFmiCommentStripper.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiLocationBag.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiQueryDataUtil.h>
 
 #include <boost/program_options.hpp>
 

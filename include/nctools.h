@@ -1,11 +1,11 @@
 
 #pragma once
 
-#include <CsvReader.h>
+#include <macgyver/CsvReader.h>
 #include <netcdfcpp.h>
 #include <list>
 #include <map>
-#include "NFmiEnumConverter.h"
+#include <newbase/NFmiEnumConverter.h>
 
 #define DEBUG_PRINT 0
 #define POLAR_STEREOGRAPHIC "polar_stereographic"

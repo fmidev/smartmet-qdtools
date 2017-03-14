@@ -47,12 +47,12 @@
  */
 // ======================================================================
 
-#include <NFmiArea.h>
-#include <NFmiAreaFactory.h>
-#include <NFmiCmdLine.h>
-#include <NFmiPreProcessor.h>
-#include <NFmiQueryData.h>
-#include <NFmiStringTools.h>
+#include <newbase/NFmiArea.h>
+#include <newbase/NFmiAreaFactory.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiPreProcessor.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiStringTools.h>
 
 #include <boost/shared_ptr.hpp>
 

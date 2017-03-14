@@ -12,10 +12,10 @@
 
 #include "NFmiQueryDataChecker.h"
 #include "NFmiParamCheckData.h"
-#include <NFmiCommentStripper.h>
-#include <NFmiValueString.h>
-#include <NFmiFastQueryInfo.h>
-#include <NFmiQueryData.h>
+#include <newbase/NFmiCommentStripper.h>
+#include <newbase/NFmiValueString.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiQueryData.h>
 
 #include <boost/filesystem/operations.hpp>
 #include <boost/program_options.hpp>
@@ -361,7 +361,7 @@ int run(int argc, char *argv[])
     dataChecker.CheckList(1 + 2 + 4);  // 1=missing data check ja 2=suoraa dataa
     if (ohjausData.itsLocationCheckingType == 2)
       dataChecker.RandomlyCheckedLocationCount(ohjausData.itsRandomPointCount);
-    else                                 // tarkistetaan tässä vaiheessa muuten vain kaikki pisteet
+    else  // tarkistetaan tässä vaiheessa muuten vain kaikki pisteet
       dataChecker.LocationCheckType(0);  // 0= tarkista kaikki pisteet
 
     int stat = dataChecker.DoTotalCheck() ? 0 : 2;

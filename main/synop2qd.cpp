@@ -5,21 +5,21 @@
 
 #include <fstream>
 
-#include "NFmiCmdLine.h"
-#include "NFmiAreaFactory.h"
-#include "NFmiStringTools.h"
-#include "NFmiStreamQueryData.h"
-#include "NFmiQueryDataUtil.h"
-#include "NFmiFileSystem.h"
-#include "NFmiTimeList.h"
-#include "NFmiArea.h"
-#include "NFmiGrid.h"
-#include "NFmiFileString.h"
-#include "NFmiTotalWind.h"
-#include "NFmiSoundingFunctions.h"
-#include "NFmiProducerName.h"
-#include "NFmiAviationStationInfoSystem.h"
-#include "NFmiMilliSecondTimer.h"
+#include <newbase/NFmiArea.h>
+#include <newbase/NFmiAreaFactory.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiFileString.h>
+#include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiGrid.h>
+#include <newbase/NFmiMilliSecondTimer.h>
+#include <newbase/NFmiProducerName.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiStreamQueryData.h>
+#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiTimeList.h>
+#include <newbase/NFmiTotalWind.h>
+#include <smarttools/NFmiAviationStationInfoSystem.h>
+#include <smarttools/NFmiSoundingFunctions.h>
 
 #include <fstream>
 
@@ -603,7 +603,7 @@ class NFmiSynopCode
 
         if (::isdigit(static_cast<unsigned char>(IIiii_Str[0])) == false)
           //			throw runtime_error(string("Ignoring this synop, starts with non
-          //digit
+          // digit
           // value, might be header part: \n") + theSynopStr);
           throw ExceptionSynopEndIgnoreMessage();
 

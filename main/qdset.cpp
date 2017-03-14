@@ -8,12 +8,12 @@
  *
  */
 
-#include <NFmiCmdLine.h>
-#include <NFmiEnumConverter.h>
-#include <NFmiQueryData.h>
-#include <NFmiFastQueryInfo.h>
-#include <NFmiStringTools.h>
-#include <NFmiVersion.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiVersion.h>
 
 #include <boost/filesystem/operations.hpp>
 

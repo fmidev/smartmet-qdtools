@@ -67,25 +67,25 @@
  */
 // ======================================================================
 
-#include <NFmiCalculator.h>
-#include <NFmiCmdLine.h>
-#include <NFmiDataIntegrator.h>
-#include <NFmiDataModifierAvg.h>
-#include <NFmiDataModifierAvgAbs.h>
-#include <NFmiDataModifierChange.h>
-#include <NFmiDataModifierMax.h>
-#include <NFmiDataModifierMin.h>
-#include <NFmiDataModifierSum.h>
-#include <NFmiDataModifierMaxMean.h>
-#include <NFmiDataModifierMedian.h>
-#include <NFmiDataModifierStandardDeviation.h>
-#include <NFmiEnumConverter.h>
-#include <NFmiFastQueryInfo.h>
-#include <NFmiGrid.h>
-#include <NFmiQueryData.h>
-#include <NFmiQueryDataUtil.h>
-#include <NFmiStringTools.h>
-#include <NFmiTimeList.h>
+#include <newbase/NFmiCalculator.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiDataIntegrator.h>
+#include <newbase/NFmiDataModifierAvg.h>
+#include <newbase/NFmiDataModifierAvgAbs.h>
+#include <newbase/NFmiDataModifierChange.h>
+#include <newbase/NFmiDataModifierMax.h>
+#include <newbase/NFmiDataModifierMin.h>
+#include <newbase/NFmiDataModifierSum.h>
+#include <newbase/NFmiDataModifierMaxMean.h>
+#include <newbase/NFmiDataModifierMedian.h>
+#include <newbase/NFmiDataModifierStandardDeviation.h>
+#include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiGrid.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiTimeList.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>

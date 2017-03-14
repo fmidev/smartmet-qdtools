@@ -7,10 +7,10 @@
 #ifndef GRIBTOOLS_H
 #define GRIBTOOLS_H
 
-#include "NFmiLevel.h"
-#include "NFmiParam.h"
+#include <newbase/NFmiLevel.h>
+#include <newbase/NFmiParam.h>
 
-#include "grib_api.h"
+#include <grib_api.h>
 #include <string>
 #include <vector>
 

@@ -33,16 +33,16 @@ RJTT 242030Z 36010KT 6000 -RA FEW007 SCT010 BKN015 12/11 Q1008 RMK
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
 
-#include "NFmiAviationStationInfoSystem.h"
-#include "NFmiCmdLine.h"
-#include "NFmiFastQueryInfo.h"
-#include "NFmiFileString.h"
-#include "NFmiFileSystem.h"
-#include "NFmiProducerName.h"
-#include "NFmiQueryData.h"
-#include "NFmiQueryDataUtil.h"
-#include "NFmiStreamQueryData.h"
-#include "NFmiTimeList.h"
+#include <smarttools/NFmiAviationStationInfoSystem.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiFileString.h>
+#include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiProducerName.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiStreamQueryData.h>
+#include <newbase/NFmiTimeList.h>
 
 #include "metar_structs.h"
 
@@ -265,8 +265,8 @@ static NFmiMetTime GetTime(const std::string &timeStr,
       // aTime.FromStr(NFmiString(timeStr), kDDHHMM); // bugi FromStr-metodissa, ei toimi
       if (aTime > currentTime)
         aTime.PreviousMetTime(NFmiTimePerioid(0, 1, 0, 0, 0, 0));  // siirret‰‰n kuukausi
-                                                                   // taaksep‰in, jos saatu aika oli
-                                                                   // tulevaisuudessa
+      // taaksep‰in, jos saatu aika oli
+      // tulevaisuudessa
       return aTime;
     }
     else
@@ -300,8 +300,8 @@ static bool ConvertTimeList2TimeBag(NFmiTimeList &theTimeList, NFmiTimeBag &theT
     theTimeList.Next();
     int resolution = theTimeList.CurrentResolution();
     int maxMissedSteps = static_cast<int>(3. * 60. / resolution);  // t‰ss‰ lasketaan montako
-                                                                   // steppi‰ on 3 tunnissa, mik‰ on
-                                                                   // hyv‰ksytt‰v‰ aukko datassa
+    // steppi‰ on 3 tunnissa, mik‰ on
+    // hyv‰ksytt‰v‰ aukko datassa
     int currentRes = 0;
     for (; theTimeList.Next();)
     {

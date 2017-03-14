@@ -7,14 +7,14 @@
 
 #include "Pgm2QueryData.h"
 
-#include "NFmiCmdLine.h"
-#include "NFmiStringTools.h"
-#include "NFmiFileSystem.h"
-#include "NFmiQueryData.h"
-#include "NFmiQueryDataUtil.h"
-#include "NFmiStreamQueryData.h"
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiStreamQueryData.h>
 
-#include "boost/shared_ptr.hpp"
+#include <boost/shared_ptr.hpp>
 
 #include <list>
 #include <fstream>

@@ -29,13 +29,13 @@
  */
 // ======================================================================
 
-#include <NFmiCmdLine.h>
-#include <NFmiFastQueryInfo.h>
-#include <NFmiFileSystem.h>
-#include <NFmiQueryData.h>
-#include <NFmiQueryDataUtil.h>
-#include <NFmiTimeDescriptor.h>
-#include <NFmiTimeList.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiTimeDescriptor.h>
+#include <newbase/NFmiTimeList.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/filesystem.hpp>

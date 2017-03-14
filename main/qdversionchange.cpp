@@ -31,12 +31,12 @@
 // Usage: type inputTiedosto | QDVersionFilter.exe [infoversion=7] [keepCloudSymbol=0=false] >
 // outputTiedosto
 
-#include "NFmiStreamQueryData.h"
-#include "NFmiQueryDataUtil.h"
-#include "NFmiCmdLine.h"
-#include "NFmiValueString.h"
-#include "NFmiStringTools.h"
-#include "NFmiMilliSecondTimer.h"
+#include <newbase/NFmiStreamQueryData.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiValueString.h>
+#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiMilliSecondTimer.h>
 
 #include <stdexcept>
 
@@ -75,7 +75,7 @@ void run(int argc, const char *argv[])
       kFmiHourlyMaximumGust;  // täytä totalWind-parametrin windGust osio tällä parametrilla.
                               // Ota pois löytynyt windGust param päätason parametreista.
   std::vector<int> precipFormParIds;  // -f optiolla voidaan antaa lista parId:tä, joita käytetään
-                                      // Weather-parametrin precipForm -aliparametrin täyttämisessä.
+  // Weather-parametrin precipForm -aliparametrin täyttämisessä.
   // Parametrit annetaan pilkulla eroteltuina ja ne ovat prioriteetti järjestyksessä. Jos 1. löytyy
   // arvo johonkin aikaan
   // ja paikkaan, sitä käytetään, jos 1. arvo on puuttuvaa, käytetään 2. arvoa jne.

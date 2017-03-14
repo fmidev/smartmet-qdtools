@@ -34,7 +34,7 @@
 #ifndef FMI_RADCONTOUR_PROJECTION_H
 #define FMI_RADCONTOUR_PROJECTION_H
 
-#include <NFmiArea.h>
+#include <newbase/NFmiArea.h>
 #include <boost/shared_ptr.hpp>
 #include <string>
 

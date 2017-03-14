@@ -24,9 +24,9 @@
 
 #include "NFmiParamCheckData.h"
 
-#include <NFmiParamBag.h>
-#include <NFmiLocationBag.h>
-#include <NFmiTimeDescriptor.h>
+#include <newbase/NFmiParamBag.h>
+#include <newbase/NFmiLocationBag.h>
+#include <newbase/NFmiTimeDescriptor.h>
 
 #include <vector>
 

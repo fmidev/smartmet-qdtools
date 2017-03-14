@@ -5,18 +5,18 @@
  */
 // ======================================================================
 
-#include <NFmiArea.h>
-#include <NFmiCmdLine.h>
-#include <NFmiEnumConverter.h>
-#include <NFmiFastQueryInfo.h>
-#include <NFmiFileSystem.h>
-#include <NFmiLatLonArea.h>
-#include <NFmiQueryData.h>
-#include <NFmiFastQueryInfo.h>
+#include <newbase/NFmiArea.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiLatLonArea.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiFastQueryInfo.h>
 
-#include <NFmiGshhsTools.h>
-#include <NFmiImage.h>
-#include <NFmiPath.h>
+#include <imagine/NFmiGshhsTools.h>
+#include <imagine/NFmiImage.h>
+#include <imagine/NFmiPath.h>
 
 #include <boost/lexical_cast.hpp>
 

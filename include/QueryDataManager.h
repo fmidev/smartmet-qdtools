@@ -17,7 +17,7 @@
 #ifndef QUERYDATAMANAGER_H
 #define QUERYDATAMANAGER_H
 
-#include <NFmiFastQueryInfo.h>
+#include <newbase/NFmiFastQueryInfo.h>
 #include <boost/tuple/tuple.hpp>
 
 #include <map>

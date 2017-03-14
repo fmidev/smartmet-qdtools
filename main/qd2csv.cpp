@@ -22,9 +22,8 @@
 #include <stdexcept>
 #include <sstream>
 
-// newbase
-#include <NFmiEnumConverter.h>
-#include <NFmiStreamQueryData.h>
+#include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiStreamQueryData.h>
 
 using namespace std;
 

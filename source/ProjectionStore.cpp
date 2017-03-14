@@ -7,8 +7,8 @@
 
 #include "ProjectionStore.h"
 #include "Projection.h"
-#include "NFmiArea.h"
-#include "NFmiPath.h"
+#include <newbase/NFmiArea.h>
+#include <imagine/NFmiPath.h>
 #include <map>
 #include <stdexcept>
 

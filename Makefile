@@ -54,12 +54,7 @@ INCLUDES = -I$(includedir) \
 	-I$(includedir)/bufr \
 	-I$(includedir)/libecbufr \
 	-I$(includedir)/ecbufr \
-	-I$(includedir)/smartmet \
-	-I$(includedir)/smartmet/newbase \
-	-I$(includedir)/smartmet/smarttools \
-	-I$(includedir)/smartmet/macgyver \
-	-I$(includedir)/smartmet/imagine
-
+	-I$(includedir)/smartmet
 
 LIBS = -L$(libdir) \
 	-lsmartmet-calculator \

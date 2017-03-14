@@ -6,27 +6,24 @@
  */
 // ======================================================================
 
-// macgyver
-#include <String.h>
+#include <macgyver/StringConversion.h>
 
-// newbase
-#include <NFmiAreaFactory.h>
-#include <NFmiEnumConverter.h>
-#include <NFmiEquidistArea.h>
-#include <NFmiFastQueryInfo.h>
-#include <NFmiGnomonicArea.h>
-#include <NFmiGrid.h>
-#include <NFmiHPlaceDescriptor.h>
-#include <NFmiLambertEqualArea.h>
-#include <NFmiMercatorArea.h>
-#include <NFmiQueryData.h>
-#include <NFmiQueryDataUtil.h>
-#include <NFmiStereographicArea.h>
-#include <NFmiTimeDescriptor.h>
-#include <NFmiTimeList.h>
-#include <NFmiVPlaceDescriptor.h>
+#include <newbase/NFmiAreaFactory.h>
+#include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiEquidistArea.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiGnomonicArea.h>
+#include <newbase/NFmiGrid.h>
+#include <newbase/NFmiHPlaceDescriptor.h>
+#include <newbase/NFmiLambertEqualArea.h>
+#include <newbase/NFmiMercatorArea.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiStereographicArea.h>
+#include <newbase/NFmiTimeDescriptor.h>
+#include <newbase/NFmiTimeList.h>
+#include <newbase/NFmiVPlaceDescriptor.h>
 
-// boost
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/bind.hpp>
@@ -36,7 +33,6 @@
 #include <boost/program_options.hpp>
 #include <boost/shared_ptr.hpp>
 
-// system
 #include <fstream>
 #include <limits>
 #include <stdexcept>

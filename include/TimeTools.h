@@ -8,8 +8,8 @@
 #ifndef TIMETOOLS_H
 #define TIMETOOLS_H
 
-#include <NFmiTime.h>
-#include <NFmiMetTime.h>
+#include <newbase/NFmiTime.h>
+#include <newbase/NFmiMetTime.h>
 #include <string>
 
 namespace TimeTools

@@ -29,23 +29,23 @@
 #include "QueryDataManager.h"
 #include "TimeTools.h"
 
-#include <NFmiStringTools.h>
-#include <NFmiCmdLine.h>
-#include <NFmiDataIntegrator.h>
-#include <NFmiDataModifierProb.h>
-#include <NFmiEnumConverter.h>
-#include <NFmiIndexMask.h>
-#include <NFmiIndexMaskTools.h>
-#include <NFmiFileSystem.h>
-#include <NFmiLocation.h>
-#include <NFmiLocationFinder.h>
-#include <NFmiMetMath.h>
-#include <NFmiPreProcessor.h>
-#include <NFmiSettings.h>
-#include <NFmiValueString.h>
+#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiDataIntegrator.h>
+#include <newbase/NFmiDataModifierProb.h>
+#include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiIndexMask.h>
+#include <newbase/NFmiIndexMaskTools.h>
+#include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiLocation.h>
+#include <newbase/NFmiLocationFinder.h>
+#include <newbase/NFmiMetMath.h>
+#include <newbase/NFmiPreProcessor.h>
+#include <newbase/NFmiSettings.h>
+#include <newbase/NFmiValueString.h>
 
-#include <String.h>
-#include <WorldTimeZones.h>
+#include <macgyver/StringConversion.h>
+#include <macgyver/WorldTimeZones.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem/operations.hpp>

@@ -33,32 +33,25 @@ This file is part of libECBUFR.
                                            // warnings that e.g. MSVC++ 2012 generates
 #endif
 
-// macgyver
-#include <String.h>
-#include <CsvReader.h>
+#include <macgyver/StringConversion.h>
+#include <macgyver/CsvReader.h>
 
-// newbase
+#include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiGlobals.h>
+#include <newbase/NFmiHPlaceDescriptor.h>
+#include <newbase/NFmiLocationBag.h>
+#include <newbase/NFmiMetTime.h>
+#include <newbase/NFmiParamDescriptor.h>
+#include <newbase/NFmiProducerName.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiStation.h>
+#include <newbase/NFmiTimeDescriptor.h>
+#include <newbase/NFmiTimeList.h>
+#include <newbase/NFmiVPlaceDescriptor.h>
 
-#include <NFmiEnumConverter.h>
-#include <NFmiFastQueryInfo.h>
-#include <NFmiGlobals.h>
-#include <NFmiHPlaceDescriptor.h>
-#include <NFmiLocationBag.h>
-#include <NFmiMetTime.h>
-#include <NFmiParamDescriptor.h>
-#include <NFmiProducerName.h>
-#include <NFmiQueryData.h>
-#include <NFmiQueryDataUtil.h>
-#include <NFmiStation.h>
-#include <NFmiTimeDescriptor.h>
-#include <NFmiTimeList.h>
-#include <NFmiVPlaceDescriptor.h>
-
-// smarttools
-
-#include <NFmiAviationStationInfoSystem.h>
-
-// system
+#include <smarttools/NFmiAviationStationInfoSystem.h>
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/erase.hpp>

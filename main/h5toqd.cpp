@@ -9,26 +9,24 @@
 #include <MXA/HDF5/H5Utilities.h>
 #include <MXA/HDF5/H5Lite.h>
 
-// macgyver
-#include <String.h>
-#include <TimeParser.h>
+#include <macgyver/StringConversion.h>
+#include <macgyver/TimeParser.h>
 
-// newbase
-#include <NFmiAreaFactory.h>
-#include <NFmiEnumConverter.h>
-#include <NFmiEquidistArea.h>
-#include <NFmiFastQueryInfo.h>
-#include <NFmiGrid.h>
-#include <NFmiLevelType.h>
-#include <NFmiParamDescriptor.h>
-#include <NFmiMercatorArea.h>
-#include <NFmiStereographicArea.h>
-#include <NFmiTimeDescriptor.h>
-#include <NFmiTimeList.h>
-#include <NFmiHPlaceDescriptor.h>
-#include <NFmiVPlaceDescriptor.h>
-#include <NFmiQueryData.h>
-#include <NFmiQueryDataUtil.h>
+#include <newbase/NFmiAreaFactory.h>
+#include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiEquidistArea.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiGrid.h>
+#include <newbase/NFmiLevelType.h>
+#include <newbase/NFmiParamDescriptor.h>
+#include <newbase/NFmiMercatorArea.h>
+#include <newbase/NFmiStereographicArea.h>
+#include <newbase/NFmiTimeDescriptor.h>
+#include <newbase/NFmiTimeList.h>
+#include <newbase/NFmiHPlaceDescriptor.h>
+#include <newbase/NFmiVPlaceDescriptor.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiQueryDataUtil.h>
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string.hpp>

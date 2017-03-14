@@ -5,7 +5,7 @@
 // ======================================================================
 
 #include "GribTools.h"
-#include "NFmiCommentStripper.h"
+#include <newbase/NFmiCommentStripper.h>
 
 #include <boost/lexical_cast.hpp>
 

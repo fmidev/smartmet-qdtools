@@ -8,8 +8,8 @@
 #include "ProjectionParser.h"
 #include "Projection.h"
 #include "ProjectionStore.h"
-#include "NFmiArea.h"
-#include "NFmiPoint.h"
+#include <newbase/NFmiArea.h>
+#include <newbase/NFmiPoint.h>
 #include <iostream>
 #include <stdexcept>
 #include <string>

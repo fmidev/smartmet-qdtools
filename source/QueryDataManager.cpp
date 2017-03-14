@@ -11,8 +11,8 @@
 
 #include "QueryDataManager.h"
 
-#include <NFmiFileSystem.h>
-#include <NFmiQueryData.h>
+#include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiQueryData.h>
 
 #include <sstream>
 #include <stdexcept>

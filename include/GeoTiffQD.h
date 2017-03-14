@@ -4,11 +4,11 @@
 #define GeoTiffQD_H
 
 #include <string>
-#include <stdio.h>
+#include <cstdio>
 
-#include "NFmiQueryData.h"
-#include "NFmiFastQueryInfo.h"
-#include "NFmiRotatedLatLonArea.h"
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiRotatedLatLonArea.h>
 
 #include <boost/optional.hpp>
 

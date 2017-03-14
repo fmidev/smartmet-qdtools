@@ -1,12 +1,12 @@
 
 
-#include <NFmiQueryData.h>
-#include <NFmiQueryDataUtil.h>
-#include <NFmiCmdLine.h>
-#include <NFmiMilliSecondTimer.h>
-#include <NFmiSoundingIndexCalculator.h>
-#include <NFmiFileString.h>
-#include <NFmiSoundingFunctions.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiMilliSecondTimer.h>
+#include <newbase/NFmiFileString.h>
+#include <smarttools/NFmiSoundingIndexCalculator.h>
+#include <smarttools/NFmiSoundingFunctions.h>
 
 #include <iostream>
 #include <fstream>

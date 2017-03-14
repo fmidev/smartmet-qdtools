@@ -23,27 +23,25 @@
  */
 // ======================================================================
 
-// macgyver
-#include <String.h>
-#include <TimeParser.h>
-#include <TimeFormatter.h>
+#include <macgyver/StringConversion.h>
+#include <macgyver/TimeParser.h>
+#include <macgyver/TimeFormatter.h>
 
-// newbase
-#include <NFmiArea.h>
-#include <NFmiAreaFactory.h>
-#include <NFmiFastQueryInfo.h>
-#include <NFmiGrid.h>
-#include <NFmiIndexMask.h>
-#include <NFmiIndexMaskTools.h>
-#include <NFmiHPlaceDescriptor.h>
-#include <NFmiLevelType.h>
-#include <NFmiParamDescriptor.h>
-#include <NFmiQueryData.h>
-#include <NFmiQueryDataUtil.h>
-#include <NFmiSvgPath.h>
-#include <NFmiTimeDescriptor.h>
-#include <NFmiTimeList.h>
-#include <NFmiVPlaceDescriptor.h>
+#include <newbase/NFmiArea.h>
+#include <newbase/NFmiAreaFactory.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiGrid.h>
+#include <newbase/NFmiIndexMask.h>
+#include <newbase/NFmiIndexMaskTools.h>
+#include <newbase/NFmiHPlaceDescriptor.h>
+#include <newbase/NFmiLevelType.h>
+#include <newbase/NFmiParamDescriptor.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiSvgPath.h>
+#include <newbase/NFmiTimeDescriptor.h>
+#include <newbase/NFmiTimeList.h>
+#include <newbase/NFmiVPlaceDescriptor.h>
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>

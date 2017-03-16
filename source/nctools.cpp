@@ -1,7 +1,6 @@
 
 #include "nctools.h"
 
-#include <macgyver/Cast.h>
 #include <newbase/NFmiFastQueryInfo.h>
 
 #include <boost/algorithm/string.hpp>
@@ -156,7 +155,7 @@ bool parse_options(int argc, char *argv[], Options &options)
     if (parts.size() != 2)
       throw std::runtime_error("Option --producer expects a comma separated number,name argument");
 
-    options.producernumber = Fmi::number_cast<long>(parts[0]);
+    options.producernumber = std::stol(parts[0]);
     options.producername = parts[1];
   }
 

@@ -17,9 +17,13 @@ set(
 )
 
 add_subdirectory(
-	main-cmake-lists/qdversionchange
+	main-cmake-lists/qdclimatologydatasmoother
 )
 
 add_subdirectory(
 	main-cmake-lists/qdsignificantlevelfilter
+)
+
+add_subdirectory(
+	main-cmake-lists/qdversionchange
 )

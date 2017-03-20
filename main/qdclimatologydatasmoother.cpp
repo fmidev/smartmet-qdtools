@@ -7,6 +7,7 @@
 #include <NFmiTotalWind.h>
 #include <NFmiTimeList.h>
 #include <NFmiDataModifierAvg.h>
+#include <NFmiTimeDescriptor.h>
 
 #include <fstream>
 
@@ -53,7 +54,7 @@ static void CheckData(NFmiFastQueryInfo &info, const string &filePath)
 }
 
 
-static unique_ptr<NFmiQueryData> CreateNewEmtyData(NFmiFastQueryInfo &info)
+static unique_ptr<NFmiQueryData> CreateNewEmtyData(NFmiQueryInfo &info)
 {
     return unique_ptr<NFmiQueryData>(NFmiQueryDataUtil::CreateEmptyData(info));
 }
@@ -136,9 +137,52 @@ static void FillNewData(const unique_ptr<NFmiQueryData> &newData, NFmiFastQueryI
     }
 }
 
+static NFmiTimePerioid CalcTimeListResolution(NFmiTimeList &timeList)
+{
+    // Check for most common time difference from the first 20 times in time list and return it.
+    // map contains each different time-step in minutes and their count.
+    map<int, size_t> timeDiffInMinutesCounter;
+    size_t i = 0;
+    for(timeList.Reset(); timeList.Next() && i < 20; i++)
+    {
+        timeDiffInMinutesCounter[timeList.CurrentResolution()]++;
+    }
+
+    // Can't use C++14 yet so can't use auto with lambda parameters
+    using pair_type = decltype(timeDiffInMinutesCounter)::value_type;
+    auto maxElement = max_element(
+        timeDiffInMinutesCounter.begin(), timeDiffInMinutesCounter.end(), 
+        [&](const pair_type &element1, const pair_type &element2) 
+    {return element1.second < element2.second; }
+    );
+
+    return NFmiTimePerioid(maxElement->first);
+}
+
+static NFmiTimeBag MakeNewValidTimeBag(NFmiTimeList &timeList)
+{
+    NFmiTimePerioid resolution = ::CalcTimeListResolution(timeList);
+    return NFmiTimeBag(timeList.FirstTime(), timeList.LastTime(), resolution);
+}
+
+static NFmiQueryInfo MakeNewMetaInfo(NFmiFastQueryInfo &info)
+{
+    // If original data has timeList type timeDescriptor, new metaInfo
+    // will contain timeBag type time structure, because its faster to use
+    // in SmartMet's timeSerialViews.
+    if(info.TimeDescriptor().ValidTimeBag())
+        return NFmiQueryInfo(info);
+    else
+    {
+        NFmiTimeBag validTimes = ::MakeNewValidTimeBag(*(info.TimeDescriptor().ValidTimeList()));
+        NFmiTimeDescriptor times(info.OriginTime(), validTimes);
+        return NFmiQueryInfo(info.ParamDescriptor(), times, info.HPlaceDescriptor(), info.VPlaceDescriptor());
+    }
+}
+
 static unique_ptr<NFmiQueryData> CreateFilteredData(NFmiFastQueryInfo &info, int smoothedDays)
 {
-    unique_ptr<NFmiQueryData> newData = ::CreateNewEmtyData(info);
+    unique_ptr<NFmiQueryData> newData = ::CreateNewEmtyData(::MakeNewMetaInfo(info));
     ::FillNewData(newData, info, smoothedDays);
     return newData;
 }

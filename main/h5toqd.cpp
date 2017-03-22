@@ -6,8 +6,8 @@
  */
 // ======================================================================
 
-#include <MXA/HDF5/H5Utilities.h>
 #include <MXA/HDF5/H5Lite.h>
+#include <MXA/HDF5/H5Utilities.h>
 
 #include <macgyver/StringConversion.h>
 #include <macgyver/TimeParser.h>
@@ -17,30 +17,31 @@
 #include <newbase/NFmiEquidistArea.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiGrid.h>
+#include <newbase/NFmiHPlaceDescriptor.h>
 #include <newbase/NFmiLevelType.h>
-#include <newbase/NFmiParamDescriptor.h>
 #include <newbase/NFmiMercatorArea.h>
+#include <newbase/NFmiParamDescriptor.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiQueryDataUtil.h>
 #include <newbase/NFmiStereographicArea.h>
 #include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiTimeList.h>
-#include <newbase/NFmiHPlaceDescriptor.h>
 #include <newbase/NFmiVPlaceDescriptor.h>
-#include <newbase/NFmiQueryData.h>
-#include <newbase/NFmiQueryDataUtil.h>
 
-#include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/optional.hpp>
 #include <boost/program_options.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <iostream>
+#include <numeric>
 #include <string>
 #include <vector>
-#include <numeric>
 
 // Global to get better error messages outside param descriptor builder
 
@@ -334,6 +335,47 @@ T get_attribute(const hid_t &hid,
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Optional double values
+ */
+// ----------------------------------------------------------------------
+
+boost::optional<double> get_optional_double(const hid_t &hid,
+                                            std::string path,
+                                            const std::string &name)
+{
+  try
+  {
+    return get_attribute_value<double>(hid, path, name);
+  }
+  catch (...)
+  {
+    return {};
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Optional double values
+ */
+// ----------------------------------------------------------------------
+
+boost::optional<double> get_optional_double(const hid_t &hid,
+                                            std::string parent_path,
+                                            const std::string &group_name,
+                                            const std::string &attribute_name)
+{
+  try
+  {
+    return get_attribute<double>(hid, parent_path, group_name, attribute_name);
+  }
+  catch (...)
+  {
+    return {};
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Test existence of attribute
  */
 // ----------------------------------------------------------------------
@@ -622,25 +664,7 @@ FmiParameterName opera_name_to_newbase(const std::string &product,
                                        const hid_t &hid,
                                        const std::string &prefix)
 {
-  if (product == "PPI")
-  {
-    if (quantity == "TH")
-      return kFmiReflectivity;
-    else if (quantity == "DBZH")
-      return kFmiCorrectedReflectivity;
-  }
-  else if (product == "CAPPI")
-  {
-    if (quantity == "TH")
-      return kFmiReflectivity;
-    else if (quantity == "DBZH")
-      return kFmiCorrectedReflectivity;
-    else if (quantity == "VRAD")
-      return kFmiRadialVelocity;
-    else if (quantity == "WRAD" || quantity == "W")  // W is used by Latvians
-      return kFmiSpectralWidth;
-  }
-  else if (product == "PCAPPI")
+  if (product == "PPI" || product == "CAPPI" || product == "PCAPPI")
   {
     if (quantity == "TH")
       return kFmiReflectivity;
@@ -678,6 +702,20 @@ FmiParameterName opera_name_to_newbase(const std::string &product,
       return kFmiReflectivity;
     else if (quantity == "DBZH")
       return kFmiCorrectedReflectivity;
+    else if (quantity == "VRAD")
+      return kFmiRadialVelocity;
+    else if (quantity == "WRAD" || quantity == "W")  // W is used by Latvians
+      return kFmiSpectralWidth;
+    else if (quantity == "ZDR")
+      return kFmiDifferentialReflectivity;
+    else if (quantity == "KDP")
+      return kFmiSpecificDifferentialPhase;
+    else if (quantity == "PHIDP")
+      return kFmiDifferentialPhase;
+    else if (quantity == "SQI")
+      return kFmiSignalQualityIndex;
+    else if (quantity == "RHOHV")
+      return kFmiReflectivityCorrelation;
   }
   else if (product == "COMP")
   {
@@ -1284,6 +1322,21 @@ void print_hdf_information(const hid_t &hid)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Apply gain and offset
+ */
+// ----------------------------------------------------------------------
+
+double apply_gain_offset(double value,
+                         const boost::optional<double> &gain,
+                         const boost::optional<double> &offset)
+{
+  if (gain) value *= *gain;
+  if (offset) value += *offset;
+  return value;
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Copy one dataset
  */
 // ----------------------------------------------------------------------
@@ -1319,10 +1372,10 @@ void copy_dataset(const hid_t &hid, NFmiFastQueryInfo &info, int datanum)
 
       // Establish numeric transformation
 
-      double nodata = get_attribute<double>(hid, iprefix, "what", "nodata");
-      double undetect = get_attribute<double>(hid, iprefix, "what", "undetect");
-      double gain = get_attribute<double>(hid, iprefix, "what", "gain");
-      double offset = get_attribute<double>(hid, iprefix, "what", "offset");
+      auto nodata = get_optional_double(hid, iprefix, "what", "nodata");
+      auto undetect = get_optional_double(hid, iprefix, "what", "undetect");
+      auto gain = get_optional_double(hid, iprefix, "what", "gain");
+      auto offset = get_optional_double(hid, iprefix, "what", "offset");
 
       FmiParameterName id = opera_name_to_newbase(product, quantity, hid, iprefix + "/what");
 
@@ -1363,12 +1416,12 @@ void copy_dataset(const hid_t &hid, NFmiFastQueryInfo &info, int datanum)
         // And copy the value
         int value = values[k];
 
-        if (value == nodata)
+        if (nodata && value == *nodata)
           info.FloatValue(kFloatMissing);
-        else if (value == undetect)
-          info.FloatValue(gain * 0 + offset);
+        else if (undetect && value == *undetect)
+          info.FloatValue(apply_gain_offset(0, gain, offset));
         else
-          info.FloatValue(gain * value + offset);
+          info.FloatValue(apply_gain_offset(value, gain, offset));
 
         ++pos;
       }
@@ -1392,10 +1445,10 @@ void copy_dataset(const hid_t &hid, NFmiFastQueryInfo &info, int datanum)
 
     // Establish numeric transformation
 
-    double nodata = get_attribute<double>(hid, prefix, "what", "nodata");
-    double undetect = get_attribute<double>(hid, prefix, "what", "undetect");
-    double gain = get_attribute<double>(hid, prefix, "what", "gain");
-    double offset = get_attribute<double>(hid, prefix, "what", "offset");
+    auto nodata = get_optional_double(hid, prefix, "what", "nodata");
+    auto undetect = get_optional_double(hid, prefix, "what", "undetect");
+    auto gain = get_optional_double(hid, prefix, "what", "gain");
+    auto offset = get_optional_double(hid, prefix, "what", "offset");
 
     FmiParameterName id = opera_name_to_newbase(product, quantity, hid, "/" + prefix + "/what");
 
@@ -1443,12 +1496,12 @@ void copy_dataset(const hid_t &hid, NFmiFastQueryInfo &info, int datanum)
       // And copy the value
       int value = values[k];
 
-      if (value == nodata)
+      if (nodata && value == *nodata)
         info.FloatValue(kFloatMissing);
-      else if (value == undetect)
-        info.FloatValue(gain * 0 + offset);
+      else if (undetect && value == *undetect)
+        info.FloatValue(apply_gain_offset(0, gain, offset));
       else
-        info.FloatValue(gain * value + offset);
+        info.FloatValue(apply_gain_offset(value, gain, offset));
 
       ++pos;
     }
@@ -1459,12 +1512,12 @@ void copy_dataset(const hid_t &hid, NFmiFastQueryInfo &info, int datanum)
     BOOST_FOREACH (int value, values)
     {
       info.NextLocation();
-      if (value == nodata)
+      if (nodata && value == *nodata)
         info.FloatValue(kFloatMissing);
-      else if (value == undetect)
-        info.FloatValue(gain * 0 + offset);
+      else if (undetect && value == *undetect)
+        info.FloatValue(apply_gain_offset(0, gain, offset));
       else
-        info.FloatValue(gain * value + offset);
+        info.FloatValue(apply_gain_offset(value, gain, offset));
     }
 #endif
   }
@@ -1504,10 +1557,10 @@ void copy_dataset_pvol(const hid_t &hid, NFmiFastQueryInfo &info, int datanum)
 
   // Establish numeric transformation
 
-  double nodata = get_attribute_value<double>(hid, prefix + "/data1/what", "nodata");
-  double undetect = get_attribute_value<double>(hid, prefix + "/data1/what", "undetect");
-  double gain = get_attribute_value<double>(hid, prefix + "/data1/what", "gain");
-  double offset = get_attribute_value<double>(hid, prefix + "/data1/what", "offset");
+  auto nodata = get_optional_double(hid, prefix + "/data1/what", "nodata");
+  auto undetect = get_optional_double(hid, prefix + "/data1/what", "undetect");
+  auto gain = get_optional_double(hid, prefix + "/data1/what", "gain");
+  auto offset = get_optional_double(hid, prefix + "/data1/what", "offset");
 
   // Establish measurement details
 
@@ -1574,12 +1627,12 @@ void copy_dataset_pvol(const hid_t &hid, NFmiFastQueryInfo &info, int datanum)
         // And copy the value
         int value = values[ray * nbins + bin];
 
-        if (value == nodata)
+        if (nodata && value == *nodata)
           info.FloatValue(kFloatMissing);
-        else if (value == undetect)
-          info.FloatValue(gain * 0 + offset);
+        else if (undetect && value == *undetect)
+          info.FloatValue(apply_gain_offset(0, gain, offset));
         else
-          info.FloatValue(gain * value + offset);
+          info.FloatValue(apply_gain_offset(value, gain, offset));
       }
       else
         std::runtime_error("Internal error when projecting PVOL data to cartesian coordinates");

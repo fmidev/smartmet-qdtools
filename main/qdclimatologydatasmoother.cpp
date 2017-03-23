@@ -24,6 +24,7 @@ void Usage(void)
     cout << "If day value is 5, average is calculated from 2 days preor and 2 days after." << endl;
     cout << "the calculation time. Values are taken from those days only from the same utc hour." << endl;
     cout << "-d days-smoothed <default 3>\tOver how many days is smoothing calculated." << endl;
+    cout << "-p 240,Ecmwf\tSet result data's producer id and name as wanted." << endl;
     cout << "\tdays-smoothed must be positive odd integer." << endl;
 }
 
@@ -180,9 +181,11 @@ static NFmiQueryInfo MakeNewMetaInfo(NFmiFastQueryInfo &info)
     }
 }
 
-static unique_ptr<NFmiQueryData> CreateFilteredData(NFmiFastQueryInfo &info, int smoothedDays)
+static unique_ptr<NFmiQueryData> CreateFilteredData(NFmiFastQueryInfo &info, int smoothedDays, const NFmiProducer &wantedProducer)
 {
     unique_ptr<NFmiQueryData> newData = ::CreateNewEmtyData(::MakeNewMetaInfo(info));
+    if(newData && wantedProducer.GetIdent())
+        newData->Info()->SetProducer(wantedProducer);
     ::FillNewData(newData, info, smoothedDays);
     return newData;
 }
@@ -209,9 +212,40 @@ static void WriteQueryData(unique_ptr<NFmiQueryData> &data, const string &filePa
     }
 }
 
+static int GetSmoothedDays(NFmiCmdLine &cmdLine)
+{
+    int smoothedDays = 3;
+    if(cmdLine.isOption('d'))
+    {
+        smoothedDays = boost::lexical_cast<int>(cmdLine.OptionValue('d'));
+        if(smoothedDays < 3)
+            ::MakeErrorAndUsageMessages("Error: Invalid smoothed-days value given, must be positive odd number and at least 3");
+        if(smoothedDays % 2 == 0)
+            ::MakeErrorAndUsageMessages("Error: Invalid smoothed-days value given, must be odd number");
+        if(smoothedDays > 50)
+            ::MakeErrorAndUsageMessages("Error: Invalid smoothed-days value given, can't be over 50 days, that would give questianable results");
+    }
+    return smoothedDays;
+}
+
+static NFmiProducer GetProducer(NFmiCmdLine &cmdLine)
+{
+    // Default producer with 0 id is not used at all.
+    NFmiProducer producer(0, "");
+    if(cmdLine.isOption('p'))
+    {
+        std::vector<std::string> strVector = NFmiStringTools::Split(cmdLine.OptionValue('p'), ",");
+        if(strVector.size() != 2)
+            ::MakeErrorAndUsageMessages("Error: Error: with -p option, 2 comma separated parameters expected (e.g. 240,Ec)");
+        producer.SetIdent(boost::lexical_cast<unsigned long>(strVector[0]));
+        producer.SetName(strVector[1]);
+    }
+    return producer;
+}
+
 void Domain(int argc, const char *argv[])
 {
-  NFmiCmdLine cmdline(argc, argv, "d!");
+  NFmiCmdLine cmdline(argc, argv, "d!p!");
 
   // Tarkistetaan optioiden oikeus:
   if (cmdline.Status().IsError())
@@ -226,21 +260,13 @@ void Domain(int argc, const char *argv[])
   }
   string fileNameIn = cmdline.Parameter(1);
   string fileNameOut = cmdline.Parameter(2);
-  int smoothedDays = 3;
-  if(cmdline.isOption('d'))
-  {
-      smoothedDays = boost::lexical_cast<int>(cmdline.OptionValue('d'));
-      if(smoothedDays < 3)
-          ::MakeErrorAndUsageMessages("Error: Invalid smoothed-days value given, must be positive odd number and at least 3");
-      if(smoothedDays % 2 == 0)
-          ::MakeErrorAndUsageMessages("Error: Invalid smoothed-days value given, must be odd number");
-      if(smoothedDays > 50)
-          ::MakeErrorAndUsageMessages("Error: Invalid smoothed-days value given, can't be over 50 days, that would give questianable results");
-  }
+  int smoothedDays = ::GetSmoothedDays(cmdline);
+  NFmiProducer wantedProducer = ::GetProducer(cmdline);
+
   NFmiQueryData qData(fileNameIn);
   NFmiFastQueryInfo info(&qData);
   ::CheckData(info, fileNameIn);
-  unique_ptr<NFmiQueryData> newData = CreateFilteredData(info, smoothedDays);
+  unique_ptr<NFmiQueryData> newData = CreateFilteredData(info, smoothedDays, wantedProducer);
   ::WriteQueryData(newData, fileNameOut);
 }
 

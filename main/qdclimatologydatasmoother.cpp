@@ -218,8 +218,8 @@ static int GetSmoothedDays(NFmiCmdLine &cmdLine)
     if(cmdLine.isOption('d'))
     {
         smoothedDays = boost::lexical_cast<int>(cmdLine.OptionValue('d'));
-        if(smoothedDays < 3)
-            ::MakeErrorAndUsageMessages("Error: Invalid smoothed-days value given, must be positive odd number and at least 3");
+        if(smoothedDays < 1)
+            ::MakeErrorAndUsageMessages("Error: Invalid smoothed-days value given, must be positive odd number and at least 1");
         if(smoothedDays % 2 == 0)
             ::MakeErrorAndUsageMessages("Error: Invalid smoothed-days value given, must be odd number");
         if(smoothedDays > 50)

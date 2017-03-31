@@ -97,6 +97,7 @@ void run(int argc, const char *argv[])
   FmiParameterName windGustParId =
       kFmiHourlyMaximumGust;  // täytä totalWind-parametrin windGust osio tällä parametrilla.
                               // Ota pois löytynyt windGust param päätason parametreista.
+
   int maxUsedThreadCount = 0;  // kuinko monta worker-threadia tekee töitä, < 1 -arvot tarkoittaa,
                                // että otetaan kaikki koneen threadit käyttöön
 

@@ -60,6 +60,29 @@ int main(int argc, const char *argv[])
   return 0;  // homma meni putkeen palauta 0 onnistumisen merkiksi!!!!
 }
 
+static std::vector<int> GetOptionalParamIdList(const NFmiCmdLine &cmdline, char option)
+{
+    std::vector<int> paramIdVector;
+    if(cmdline.isOption(option))
+    {
+        std::string precipFromIdListStr = cmdline.OptionValue(option);
+        try
+        {
+            paramIdVector = NFmiStringTools::Split<std::vector<int> >(precipFromIdListStr);
+        }
+        catch(...)
+        {
+            std::string errorString("-");
+            errorString += option;
+            errorString += " was not correctly formatted, there should be an integer or list\nof integers "
+                "separated by commas, e.g.\"123\" or \"123,-28\", given option was:\n";
+            errorString += precipFromIdListStr;
+            throw std::runtime_error(errorString);
+        }
+    }
+    return paramIdVector;
+}
+
 void run(int argc, const char *argv[])
 {
   string inputfile = "-";
@@ -74,17 +97,10 @@ void run(int argc, const char *argv[])
   FmiParameterName windGustParId =
       kFmiHourlyMaximumGust;  // t‰yt‰ totalWind-parametrin windGust osio t‰ll‰ parametrilla.
                               // Ota pois lˆytynyt windGust param p‰‰tason parametreista.
-  std::vector<int> precipFormParIds;  // -f optiolla voidaan antaa lista parId:t‰, joita k‰ytet‰‰n
-  // Weather-parametrin precipForm -aliparametrin t‰ytt‰misess‰.
-  // Parametrit annetaan pilkulla eroteltuina ja ne ovat prioriteetti j‰rjestyksess‰. Jos 1. lˆytyy
-  // arvo johonkin aikaan
-  // ja paikkaan, sit‰ k‰ytet‰‰n, jos 1. arvo on puuttuvaa, k‰ytet‰‰n 2. arvoa jne.
-  // Jos parId on positiivinen, kyseinen parametri poistetaan tulosdatan p‰‰tason parametrilistasta,
-  // jos se on negatiivinen, j‰tet‰‰n se sinne.
   int maxUsedThreadCount = 0;  // kuinko monta worker-threadia tekee tˆit‰, < 1 -arvot tarkoittaa,
                                // ett‰ otetaan kaikki koneen threadit k‰yttˆˆn
 
-  NFmiCmdLine cmdline(argc, argv, "t!w!g!ahi!m!pbf!");
+  NFmiCmdLine cmdline(argc, argv, "t!w!g!ahi!m!pbf!F!P!");
   // Tarkistetaan optioiden oikeus:
   if (cmdline.Status().IsError())
   {
@@ -121,21 +137,16 @@ void run(int argc, const char *argv[])
 
   bool doAccuratePrecip = false;
   if (cmdline.isOption('p')) doAccuratePrecip = true;
-  if (cmdline.isOption('f'))
-  {
-    std::string precipFromIdListStr = cmdline.OptionValue('f');
-    try
-    {
-      precipFormParIds = NFmiStringTools::Split<std::vector<int> >(precipFromIdListStr);
-    }
-    catch (...)
-    {
-      throw std::runtime_error(
-          "-f option was not correctly formatted, there should be an integer or list\nof integers "
-          "separated by commas, e.g.\"123\" or \"123,-28\", given option was:\n" +
-          precipFromIdListStr);
-    }
-  }
+
+  // -f optiolla voidaan antaa lista parId:t‰, joita k‰ytet‰‰n Weather-parametrin 
+  // precipForm -aliparametrin t‰ytt‰misess‰.
+  // Parametrit annetaan pilkulla eroteltuina ja ne ovat prioriteetti j‰rjestyksess‰. Jos 1. lˆytyy
+  // arvo johonkin aikaan ja paikkaan, sit‰ k‰ytet‰‰n, jos 1. arvo on puuttuvaa, k‰ytet‰‰n 2. arvoa jne.
+  // Jos parId on positiivinen, kyseinen parametri poistetaan tulosdatan p‰‰tason parametrilistasta,
+  // jos se on negatiivinen, j‰tet‰‰n se sinne.
+  std::vector<int> precipFormParIds = ::GetOptionalParamIdList(cmdline, 'f');
+  std::vector<int> fogParIds = ::GetOptionalParamIdList(cmdline, 'F');
+  std::vector<int> potParIds = ::GetOptionalParamIdList(cmdline, 'P');
 
   if (cmdline.NumberofParameters() >= 1)
     infoVersion = NFmiStringTools::Convert<float>(cmdline.Parameter(1));
@@ -179,8 +190,10 @@ void Usage(void)
        << "\t-g windGust-parId Add windGust param to totalWind using param" << endl
        << "\t\twith given parId." << endl
        << "\t-f precipForm-parId-list <id1[,id2,...]> Add precipForm param values to Weather using "
-          "param(s)"
-       << endl
+          "param(s)" << endl
+       << "\t-F fog-parId-list <id1[,id2,...]> Add fog param values to Weather using param(s)" << endl
+       << "\t-P pot-parId-list <id1[,id2,...]> Add pot param (probability of thunder) values "
+          "to Weather using param(s)" << endl
        << "\t\twith given parId(s). If parId is positive, param will be removed from result data."
        << endl
        << "\t\tIf parId is negative, param will be left in result data." << endl

@@ -57,7 +57,7 @@ static void CheckData(NFmiFastQueryInfo &info, const string &filePath)
         "Error: input data doesn't contains time spread suitable for one year climatplogical data");
 }
 
-static unique_ptr<NFmiQueryData> CreateNewEmtyData(NFmiQueryInfo &info)
+static unique_ptr<NFmiQueryData> CreateNewEmptyData(NFmiQueryInfo &info)
 {
   return unique_ptr<NFmiQueryData>(NFmiQueryDataUtil::CreateEmptyData(info));
 }
@@ -200,7 +200,7 @@ static unique_ptr<NFmiQueryData> CreateFilteredData(NFmiFastQueryInfo &info,
                                                     int smoothedDays,
                                                     const NFmiProducer &wantedProducer)
 {
-  unique_ptr<NFmiQueryData> newData = ::CreateNewEmtyData(::MakeNewMetaInfo(info));
+  unique_ptr<NFmiQueryData> newData = ::CreateNewEmptyData(::MakeNewMetaInfo(info));
   if (newData && wantedProducer.GetIdent()) newData->Info()->SetProducer(wantedProducer);
   ::FillNewData(newData, info, smoothedDays);
   return newData;

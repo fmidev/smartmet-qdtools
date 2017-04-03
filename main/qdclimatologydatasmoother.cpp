@@ -200,7 +200,8 @@ static unique_ptr<NFmiQueryData> CreateFilteredData(NFmiFastQueryInfo &info,
                                                     int smoothedDays,
                                                     const NFmiProducer &wantedProducer)
 {
-  unique_ptr<NFmiQueryData> newData = ::CreateNewEmptyData(::MakeNewMetaInfo(info));
+  auto tmpinfo = ::MakeNewMetaInfo(info);
+  unique_ptr<NFmiQueryData> newData = ::CreateNewEmptyData(tmpinfo);
   if (newData && wantedProducer.GetIdent()) newData->Info()->SetProducer(wantedProducer);
   ::FillNewData(newData, info, smoothedDays);
   return newData;

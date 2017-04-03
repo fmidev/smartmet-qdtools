@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.3.22
+Version: 17.4.3
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -21,8 +21,8 @@ BuildRequires: smartmet-library-calculator-devel >= 17.3.16
 BuildRequires: smartmet-library-gis-devel >= 17.3.14
 BuildRequires: smartmet-library-imagine-devel >= 17.3.14
 BuildRequires: smartmet-library-macgyver-devel >= 17.3.16
-BuildRequires: smartmet-library-newbase-devel >= 17.3.22
-BuildRequires: smartmet-library-smarttools-devel >= 17.3.9
+BuildRequires: smartmet-library-newbase-devel >= 17.4.3
+BuildRequires: smartmet-library-smarttools-devel >= 17.4.3
 BuildRequires: mdsplib >= 14.9.3
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: zlib-devel
@@ -32,8 +32,8 @@ Requires: smartmet-library-calculator >= 17.3.16
 Requires: smartmet-library-gis >= 17.3.14
 Requires: smartmet-library-imagine >= 17.3.14
 Requires: smartmet-library-macgyver >= 17.3.16
-Requires: smartmet-library-newbase >= 17.3.22
-Requires: smartmet-library-smarttools >= 17.3.9
+Requires: smartmet-library-newbase >= 17.4.3
+Requires: smartmet-library-smarttools >= 17.4.3
 Requires: grib_api >= 1.14.0
 Requires: hdf5 >= 1.8.12
 Requires: jasper >= 1.900.1
@@ -71,6 +71,7 @@ Provides: temp2qd = %{Version}
 Provides: wrftoqd = %{Version} 
 Provides: qdarea = %{Version} 
 Provides: qdcheck = %{Version} 
+Provides: qdclimatologydatasmoother = %{Version} 
 Provides: qdcombine = %{Version} 
 Provides: qdcrop = %{Version} 
 Provides: qddiff = %{Version} 
@@ -147,6 +148,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/qd2geotiff 
 %{_bindir}/qdarea
 %{_bindir}/qdcheck
+%{_bindir}/qdclimatologydatasmoother
 %{_bindir}/qdcombine
 %{_bindir}/qdcrop 
 %{_bindir}/qddiff 
@@ -184,6 +186,12 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Mon Apr  3 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.4.3-1.fmi
+- Added qdclimatologydatasmoother
+- qdversionchange option -F specifies fog parameter to be used
+- qdversionchange option -P specifies probability of thunder parameter to be used
+- qdversionchange now uses all cores by default for extra speed, use -m to override
+
 * Wed Mar 22 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.3.22-1.fmi
 - h5toqd now works with more parameters
 - h5toqd now allows gain, offset and undetect to be missing

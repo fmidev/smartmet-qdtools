@@ -164,6 +164,8 @@ void run(int argc, const char *argv[])
                                                                  doWeatherAndCloudiness,
                                                                  windGustParId,
                                                                  precipFormParIds,
+                                                                 fogParIds,
+                                                                 potParIds,
                                                                  allowLessParamsWhenCreatingWeather,
                                                                  maxUsedThreadCount,
                                                                  doAccuratePrecip,

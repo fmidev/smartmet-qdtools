@@ -21,6 +21,10 @@ add_subdirectory(
 )
 
 add_subdirectory(
+	main-cmake-lists/qddifference
+)
+
+add_subdirectory(
 	main-cmake-lists/qdsignificantlevelfilter
 )
 

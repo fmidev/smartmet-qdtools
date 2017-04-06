@@ -109,6 +109,12 @@ else
   bindir = $(BINDIR)
 endif
 
+ifeq ($(origin DATADIR), undefined)
+  datadir = $(PREFIX)/share
+else
+  datadir = $(DATADIR)
+endif
+
 # Special modes
 
 ifneq (,$(findstring debug,$(MAKECMDGOALS)))
@@ -179,6 +185,14 @@ install:
 	  echo $(INSTALL_PROG) $$prog $(bindir)/$$prog; \
 	  $(INSTALL_PROG) $$prog $(bindir)/$$prog; \
 	done
+	mkdir -p $(datadir)/smartmet/dictionaries
+	$(INSTALL_DATA) cnf/en.conf $(datadir)/smartmet/dictionaries
+	mkdir -p $(datadir)/smartmet/formats
+	$(INSTALL_DATA) cnf/netcdf.conf $(datadir)/smartmet/formats/
+	$(INSTALL_DATA) cnf/grib.conf $(datadir)/smartmet/formats/
+	$(INSTALL_DATA) cnf/bufr.conf $(datadir)/smartmet/formats/
+	$(INSTALL_DATA) cnf/stations.csv $(datadir)/smartmet/
+	$(INSTALL_DATA) cnf/parameters.csv $(datadir)/smartmet/
 
 test:
 	cd test && make test

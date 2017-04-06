@@ -109,24 +109,14 @@ Command line tools for handling querydata
  
 %build
 make %{_smp_mflags}
-make
 
 %install
 %makeinstall
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/smartmet/dictionaries
-install -m 644 cnf/en.conf $RPM_BUILD_ROOT%{_datadir}/smartmet/dictionaries/
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/smartmet/formats
-install -m 644 cnf/grib.conf      $RPM_BUILD_ROOT%{_datadir}/smartmet/formats/grib.conf
-install -m 644 cnf/netcdf.conf    $RPM_BUILD_ROOT%{_datadir}/smartmet/formats/netcdf.conf
-install -m 644 cnf/bufr.conf      $RPM_BUILD_ROOT%{_datadir}/smartmet/formats/bufr.conf
-install -m 644 cnf/stations.csv   $RPM_BUILD_ROOT%{_datadir}/smartmet/stations.csv
-install -m 644 cnf/parameters.csv $RPM_BUILD_ROOT%{_datadir}/smartmet/parameters.csv
 
 %check
 make test
 
 %clean
-rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(0775,root,root,0775)

@@ -33,7 +33,6 @@ RJTT 242030Z 36010KT 6000 -RA FEW007 SCT010 BKN015 12/11 Q1008 RMK
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
 
-#include <smarttools/NFmiAviationStationInfoSystem.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileString.h>
@@ -43,12 +42,12 @@ RJTT 242030Z 36010KT 6000 -RA FEW007 SCT010 BKN015 12/11 Q1008 RMK
 #include <newbase/NFmiQueryDataUtil.h>
 #include <newbase/NFmiStreamQueryData.h>
 #include <newbase/NFmiTimeList.h>
-
-#include "metar_structs.h"
+#include <smarttools/NFmiAviationStationInfoSystem.h>
 
 extern "C" {
-void prtDMETR(Decoded_METAR *);
-int DcdMETAR(char *, Decoded_METAR *);
+#include "metar_structs.h"
+void print_decoded_metar(Decoded_METAR *);
+int decode_metar(char *, Decoded_METAR *);
 }
 
 using namespace std;
@@ -1261,7 +1260,7 @@ static void FillMetarDataCloudSection(MetarData &data,
   ::FillMetarDataCloudSection2(data,
                                cloudCover_symbols,
                                cloudType_symbols,
-                               metarStruct.cldTypHgt[0],
+                               metarStruct.cloudGroup[0],
                                data.itsClCover1Index,
                                data.itsClBase1Index,
                                data.itsClType1Index,
@@ -1271,7 +1270,7 @@ static void FillMetarDataCloudSection(MetarData &data,
   ::FillMetarDataCloudSection2(data,
                                cloudCover_symbols,
                                cloudType_symbols,
-                               metarStruct.cldTypHgt[1],
+                               metarStruct.cloudGroup[1],
                                data.itsClCover2Index,
                                data.itsClBase2Index,
                                data.itsClType2Index,
@@ -1281,7 +1280,7 @@ static void FillMetarDataCloudSection(MetarData &data,
   ::FillMetarDataCloudSection2(data,
                                cloudCover_symbols,
                                cloudType_symbols,
-                               metarStruct.cldTypHgt[2],
+                               metarStruct.cloudGroup[2],
                                data.itsClCover3Index,
                                data.itsClBase3Index,
                                data.itsClType3Index,
@@ -1291,7 +1290,7 @@ static void FillMetarDataCloudSection(MetarData &data,
   ::FillMetarDataCloudSection2(data,
                                cloudCover_symbols,
                                cloudType_symbols,
-                               metarStruct.cldTypHgt[3],
+                               metarStruct.cloudGroup[3],
                                data.itsClCover4Index,
                                data.itsClBase4Index,
                                data.itsClType4Index,
@@ -1320,7 +1319,7 @@ static void DecodeMetar(NFmiAviationStationInfoSystem &theStationInfoSystem,
     return;
 
   Decoded_METAR metarStruct;
-  if (::DcdMETAR(const_cast<char *>(theMetarStr.c_str()), &metarStruct) ==
+  if (decode_metar(const_cast<char *>(theMetarStr.c_str()), &metarStruct) ==
       0)  // DcdMETAR palauttaa 0:n jos ok
   {
     string icaoStr = metarStruct.stnid;

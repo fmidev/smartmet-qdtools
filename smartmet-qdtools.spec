@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.4.4
+Version: 17.4.8
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -22,8 +22,8 @@ BuildRequires: smartmet-library-gis-devel >= 17.3.14
 BuildRequires: smartmet-library-imagine-devel >= 17.3.14
 BuildRequires: smartmet-library-macgyver-devel >= 17.3.16
 BuildRequires: smartmet-library-newbase-devel >= 17.4.4
-BuildRequires: smartmet-library-smarttools-devel >= 17.4.3
-BuildRequires: mdsplib >= 14.9.3
+BuildRequires: smartmet-library-smarttools-devel >= 17.4.4
+BuildRequires: mdsplib >= 16.4.8
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: zlib-devel
 BuildRequires: gdal-devel >= 1.11.4
@@ -33,7 +33,7 @@ Requires: smartmet-library-gis >= 17.3.14
 Requires: smartmet-library-imagine >= 17.3.14
 Requires: smartmet-library-macgyver >= 17.3.16
 Requires: smartmet-library-newbase >= 17.4.4
-Requires: smartmet-library-smarttools >= 17.4.3
+Requires: smartmet-library-smarttools >= 17.4.4
 Requires: grib_api >= 1.14.0
 Requires: hdf5 >= 1.8.12
 Requires: jasper >= 1.900.1
@@ -176,6 +176,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Sat Apr  8 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.4.8-1.fmi
+- Switched to using mdsplib from GitHub
+
 * Tue Apr  4 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.4.4-1.fmi
 - Fixed qdversionchange to use fog and probability of thunder parameters properly
 

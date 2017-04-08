@@ -9,6 +9,11 @@ else
   MAINFLAGS += -std=c++11 -fdiagnostics-color=always
 endif
 
+# mdsplib does not declare things correctly
+
+MAINFLAGS += -fpermissive
+
+
 EXTRAFLAGS = \
 	-Werror \
 	-Winline \

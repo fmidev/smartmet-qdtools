@@ -17,15 +17,7 @@ set(
 )
 
 add_subdirectory(
-	main-cmake-lists/qdclimatologydatasmoother
-)
-
-add_subdirectory(
 	main-cmake-lists/qddifference
-)
-
-add_subdirectory(
-	main-cmake-lists/qdsignificantlevelfilter
 )
 
 add_subdirectory(

@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.4.8
+Version: 17.5.3
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -71,7 +71,6 @@ Provides: temp2qd = %{Version}
 Provides: wrftoqd = %{Version} 
 Provides: qdarea = %{Version} 
 Provides: qdcheck = %{Version} 
-Provides: qdclimatologydatasmoother = %{Version} 
 Provides: qdcombine = %{Version} 
 Provides: qdcrop = %{Version} 
 Provides: qddiff = %{Version} 
@@ -87,7 +86,6 @@ Provides: qdpoint = %{Version}
 Provides: qdproject = %{Version} 
 Provides: qdscript = %{Version} 
 Provides: qdset = %{Version} 
-Provides: qdsignificantlevelfilter = %{Version}
 Provides: qdsmoother = %{Version} 
 Provides: qdsounding = %{Version} 
 Provides: qdsoundingindex = %{Version} 
@@ -138,7 +136,6 @@ make test
 %{_bindir}/qd2geotiff 
 %{_bindir}/qdarea
 %{_bindir}/qdcheck
-%{_bindir}/qdclimatologydatasmoother
 %{_bindir}/qdcombine
 %{_bindir}/qdcrop 
 %{_bindir}/qddiff 
@@ -154,7 +151,6 @@ make test
 %{_bindir}/qdproject 
 %{_bindir}/qdscript
 %{_bindir}/qdset
-%{_bindir}/qdsignificantlevelfilter
 %{_bindir}/qdsmoother 
 %{_bindir}/qdsounding 
 %{_bindir}/qdsoundingindex
@@ -176,6 +172,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed May  3 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.5.3-1.fmi
+- Moved qdsignificantlevelfilter and qdclimatologydatasmoother to fmitools-package
+
 * Sat Apr  8 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.4.8-1.fmi
 - Switched to using mdsplib from GitHub
 

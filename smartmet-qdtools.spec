@@ -3,7 +3,7 @@
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
 Version: 17.5.3
-Release: 1%{?dist}.fmi
+Release: 2%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -172,6 +172,11 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed May  3 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.5.3-2.fmi
+- qdtogrib now handles negative lead times by ignoring them
+- qdtogrib -v now reports if some time steps are omitted for having negative lead times
+- qdtogrib -D or --dump now dumps GRIB contents using grib_api, used to be done with -v
+
 * Wed May  3 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.5.3-1.fmi
 - Moved qdsignificantlevelfilter and qdclimatologydatasmoother to fmitools-package
 

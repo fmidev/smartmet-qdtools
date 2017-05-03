@@ -3,13 +3,13 @@
 #include "GribTools.h"
 
 #include <newbase/NFmiArea.h>
-#include <newbase/NFmiGrid.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileString.h>
+#include <newbase/NFmiGrid.h>
+#include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiRotatedLatLonArea.h>
 #include <newbase/NFmiStereographicArea.h>
-#include <newbase/NFmiQueryData.h>
 
 #include <grib_api.h>
 
@@ -18,8 +18,8 @@
 #include <boost/program_options.hpp>
 
 #include <cassert>
-#include <cstdlib>
 #include <cstdio>
+#include <cstdlib>
 #include <map>
 #include <string>
 
@@ -47,6 +47,7 @@ struct Options
   bool split;               // -s --split
   bool crop;                // -d --delete
   bool verbose;             // -v --verbose
+  bool dump;                // -D --dump ; generate a grib_api dump
   NFmiLevel level;          // -l --level
   ParamChangeTable ptable;  // -c --config
 };
@@ -61,6 +62,7 @@ Options::Options()
       split(false),
       crop(false),
       verbose(false),
+      dump(false),
       level(),
       ptable()
 {
@@ -117,6 +119,7 @@ bool parse_options(int argc, char *argv[])
   po::options_description desc("Allowed options");
   desc.add_options()("help,h", "print out help message")("version,V", "display version number")(
       "verbose,v", po::bool_switch(&options.verbose), "set verbose mode on")(
+      "dump,D", po::bool_switch(&options.dump), "dump GRIB contents using grib_api dumper")(
       "infile,i", po::value(&options.infile), "input querydata")(
       "outfile,o", po::value(&options.outfile), "output grib file")(
       "grib1,1", po::bool_switch(&options.grib1), "output GRIB1")(
@@ -565,6 +568,16 @@ void copy_values(NFmiFastQueryInfo &theInfo,
   const NFmiMetTime &vTime = theInfo.ValidTime();
   long diff = vTime.DifferenceInHours(oTime);
 
+  // Forecast time cannot be negative. This may happen for example
+  // when using the SmartMet Editor. We simply ignore such lines.
+
+  if (diff < 0)
+  {
+    if (options.verbose)
+      std::cout << "Ignoring timestep " << vTime << " for having a negative lead time" << std::endl;
+    return;
+  }
+
   if (options.grib1)
     gset(gribHandle, "P1", diff);
   else
@@ -696,7 +709,7 @@ int run(const int argc, char *argv[])
           for (qi.ResetTime(); qi.NextTime();)
           {
             copy_values(qi, gribHandle, valueArray);
-            if (options.verbose)
+            if (options.dump)
 #if (GRIB_API_MAJOR_VERSION < 1)  // jos versio esim. 0.8.2, grib_dump_content-rajapinta erilainen
                                   // kuin uusilla grib_api versioilla
               // grib_dump_content(gribHandle, stdout, "serialize", option_flags);

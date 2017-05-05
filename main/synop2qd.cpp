@@ -5,6 +5,7 @@
 
 #include <fstream>
 
+#include <macgyver/TimeParser.h>
 #include <newbase/NFmiArea.h>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiCmdLine.h>
@@ -964,6 +965,7 @@ void Usage(void)
        << "\t-v \tVerbose mode, reports more about errors encountered." << endl
        << "\t-S \tUse this to convert SHIP-messages to qd (not with B-option)." << endl
        << "\t-B \tUse this to convert BUOY-messages to qd (not with S-option)." << endl
+       << "\t-r <date>\tReference date to be used instead of the wall clock time." << endl
        << endl
        << "Note: qdconversion comes with a SYNOP stations file stored in" << endl
        << endl
@@ -1154,7 +1156,8 @@ static void CheckHourValue(short hourValue,
   ::CheckTimeValue(hourValue, 0, 23, g_hourNameStr, origTimeStr, functionName);
 }
 
-static NFmiMetTime GetTimeFromSynopHeader(const string &theTimeStr)
+static NFmiMetTime GetTimeFromSynopHeader(const string &theTimeStr,
+                                          const NFmiMetTime &referenceTime)
 {
   if (theTimeStr.size() != 5)
   {
@@ -1169,7 +1172,8 @@ static NFmiMetTime GetTimeFromSynopHeader(const string &theTimeStr)
           theTimeStr + "'");
   }
   short timeStep = 60;
-  NFmiMetTime currentTime(timeStep);
+  // NFmiMetTime currentTime(timeStep);
+  NFmiMetTime currentTime(referenceTime);
   NFmiMetTime aTime(currentTime);
   short day = NFmiStringTools::Convert<short>(string(theTimeStr.begin(), theTimeStr.begin() + 2));
   short hour =
@@ -1277,7 +1281,8 @@ static std::string TakeAwayKnownErrorWordFromStart(const std::string &theStr)
     return theStr;
 }
 
-static void MakeSynopCodeDataFromSYNOPStr(const string &theUsedSynopBlock,
+static void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
+                                          const string &theUsedSynopBlock,
                                           NFmiAviationStationInfoSystem &theAviStations,
                                           bool fRoundTimesToNearestSynopticTimes,
                                           bool verbose,
@@ -1309,7 +1314,7 @@ static void MakeSynopCodeDataFromSYNOPStr(const string &theUsedSynopBlock,
       if (fDoBuoyMessages)
         aTime = ::GetTimeFromBuoyHeader(timeStr, dateStr);
       else
-        aTime = ::GetTimeFromSynopHeader(timeStr);
+        aTime = ::GetTimeFromSynopHeader(timeStr, referenceTime);
     }
     catch (...)
     {
@@ -1377,7 +1382,7 @@ static void MakeSynopCodeDataFromSYNOPStr(const string &theUsedSynopBlock,
           if (fDoBuoyMessages)
             aTime2 = ::GetTimeFromBuoyHeader(timeStr2, dateStr2);
           else
-            aTime2 = ::GetTimeFromSynopHeader(timeStr2);
+            aTime2 = ::GetTimeFromSynopHeader(timeStr2, referenceTime);
         }
         catch (std::exception &e)
         {
@@ -1556,7 +1561,8 @@ static bool GetPossibleNextSynopBlockInfo(const std::string &synopFileBlockStr,
   return false;
 }
 
-void FillSynopCodeDataVectorFromSYNOPStr(std::vector<NFmiSynopCode> &theSynopCodeVector,
+void FillSynopCodeDataVectorFromSYNOPStr(const NFmiMetTime &referenceTime,
+                                         std::vector<NFmiSynopCode> &theSynopCodeVector,
                                          const std::string &theSYNOPStr,
                                          NFmiAviationStationInfoSystem &theAviStations,
                                          bool fRoundTimesToNearestSynopticTimes,
@@ -1602,7 +1608,8 @@ void FillSynopCodeDataVectorFromSYNOPStr(std::vector<NFmiSynopCode> &theSynopCod
     try
     {
       size_t oldSynopCodeVecSize = theSynopCodeVector.size();
-      ::MakeSynopCodeDataFromSYNOPStr(usedSynopBlock,
+      ::MakeSynopCodeDataFromSYNOPStr(referenceTime,
+                                      usedSynopBlock,
                                       theAviStations,
                                       fRoundTimesToNearestSynopticTimes,
                                       verbose,
@@ -1792,7 +1799,7 @@ void Domain(int argc, const char *argv[])
 {
   NFmiMilliSecondTimer timer;
 
-  NFmiCmdLine cmdline(argc, argv, "s!p!tvSBf");
+  NFmiCmdLine cmdline(argc, argv, "s!p!tvSBfr!");
 
   // Tarkistetaan optioiden oikeus:
 
@@ -1833,6 +1840,10 @@ void Domain(int argc, const char *argv[])
     aviStationInfoSystem.InitFromWmoFlatTable(stationFile);
   else
     aviStationInfoSystem.InitFromMasterTableCsv(stationFile);
+
+  // Reference time = wall clock by default
+  NFmiMetTime referenceTime;
+  if (cmdline.isOption('r')) referenceTime = Fmi::TimeParser::parse(cmdline.OptionValue('r'));
 
   bool doShipMessages = false;
   if (cmdline.isOption('S')) doShipMessages = true;
@@ -1886,7 +1897,8 @@ void Domain(int argc, const char *argv[])
       if (NFmiFileSystem::ReadFile2String(finalFileName, synopFileContent))
       {
         string errorStr;
-        ::FillSynopCodeDataVectorFromSYNOPStr(synopCodeVector,
+        ::FillSynopCodeDataVectorFromSYNOPStr(referenceTime,
+                                              synopCodeVector,
                                               synopFileContent,
                                               aviStationInfoSystem,
                                               roundTimesToNearestSynopticTimes,

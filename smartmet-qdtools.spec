@@ -2,8 +2,8 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.5.3
-Release: 2%{?dist}.fmi
+Version: 17.5.5
+Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -172,6 +172,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Fri May  5 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.5.5-1.fmi
+- Added synop2qd -r option for setting a reference time different from the wall clock for testing purposes
+
 * Wed May  3 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.5.3-2.fmi
 - qdtogrib now handles negative lead times by ignoring them
 - qdtogrib -v now reports if some time steps are omitted for having negative lead times

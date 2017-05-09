@@ -192,12 +192,16 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
 
   // Metadata **************************
 
-  double *adfGeoTransform;
+  double adfGeoTransform[6] = {0.0,0.0,0.0,0.0,0.0,0.0};
   // Places - latlon
   if (geomDefinedType == kLatLonGeom)
   {
-    double adfGeoTransformTmp[6] = {tlLon, aLon, 0, tlLat, 0, -aLat};  // decree
-    adfGeoTransform = adfGeoTransformTmp;
+    //double adfGeoTransformTmp[6] = {tlLon, aLon, 0, tlLat, 0, -aLat};  // decree
+    //adfGeoTransform = adfGeoTransformTmp;
+    adfGeoTransform[0] = tlLon;
+    adfGeoTransform[1] = aLon;
+    adfGeoTransform[3] = tlLat;
+    adfGeoTransform[5] = -aLat;
   }
   else if (geomDefinedType == kYkjGeom)
   {
@@ -209,8 +213,12 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
     double aLon = (brWorldXY.X() - tlWorldXY.X()) / width;
     double aLat = (tlWorldXY.Y() - brWorldXY.Y()) / height;
 
-    double adfGeoTransformTmp[6] = {tlWorldXY.X(), aLon, 0, tlWorldXY.Y(), 0, -aLat};  // decree
-    adfGeoTransform = adfGeoTransformTmp;
+    //double adfGeoTransformTmp[6] = {tlWorldXY.X(), aLon, 0, tlWorldXY.Y(), 0, -aLat};  // decree
+    //adfGeoTransform = adfGeoTransformTmp;
+    adfGeoTransform[0] = tlWorldXY.X();
+    adfGeoTransform[1] = aLon;
+    adfGeoTransform[3] = tlWorldXY.Y();
+    adfGeoTransform[5] = -aLat;
   }
   else
   {
@@ -223,8 +231,12 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
       double aLon = rotLatLon->XScale() / width;
       double aLat = rotLatLon->YScale() / height;
 
-      double adfGeoTransformTmp[6] = {tlLon, aLon, 0, tlLat, 0, aLat};  // decree
-      adfGeoTransform = adfGeoTransformTmp;
+      //double adfGeoTransformTmp[6] = {tlLon, aLon, 0, tlLat, 0, aLat};  // decree
+      //adfGeoTransform = adfGeoTransformTmp;
+      adfGeoTransform[0] = tlLon;
+      adfGeoTransform[1] = aLon;
+      adfGeoTransform[3] = tlLat;
+      adfGeoTransform[5] = aLat;
     }
     else
     {
@@ -238,8 +250,12 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
         double aLon = (brWorldXY.X() - tlWorldXY.X()) / width;
         double aLat = (tlWorldXY.Y() - brWorldXY.Y()) / height;
 
-        double adfGeoTransformTmp[6] = {tlWorldXY.X(), aLon, 0, tlWorldXY.Y(), 0, -aLat};  // decree
-        adfGeoTransform = adfGeoTransformTmp;
+        //double adfGeoTransformTmp[6] = {tlWorldXY.X(), aLon, 0, tlWorldXY.Y(), 0, -aLat};  // decree
+        //adfGeoTransform = adfGeoTransformTmp;
+        adfGeoTransform[0] = tlWorldXY.X();
+        adfGeoTransform[1] = aLon;
+        adfGeoTransform[3] = tlWorldXY.Y();
+        adfGeoTransform[5] = -aLat;
       }
     }
   }

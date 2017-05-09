@@ -172,6 +172,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue May  9 2017 Mikko Visa <mikko.visa@fmi.fi> - 17.5.9-1.fmi
+- Fix qd2geotiff projection bug
+
 * Fri May  5 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.5.5-1.fmi
 - Added synop2qd -r option for setting a reference time different from the wall clock for testing purposes
 

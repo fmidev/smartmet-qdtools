@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.5.5
+Version: 17.5.9
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools

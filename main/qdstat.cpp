@@ -10,17 +10,17 @@
 #include <macgyver/TimeParser.h>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/date_time/gregorian/gregorian.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/date_time/gregorian/gregorian.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/program_options.hpp>
 
 #include <cmath>
 #include <iomanip>
-#include <list>
 #include <limits>
+#include <list>
 #include <map>
 #include <set>
 #include <sstream>
@@ -807,6 +807,7 @@ std::string Stats::report() const
     else
     {
       double delta = (itsMax - itsMin) / options.bins;
+
       for (std::size_t i = 0; i < options.bins; i++)
       {
         double minvalue = itsMin + i * delta;
@@ -815,7 +816,7 @@ std::string Stats::report() const
         BOOST_FOREACH (const auto& value_count, itsCounts)
         {
           double value = value_count.first;
-          if ((value >= minvalue && value < maxvalue) || value == itsMax)
+          if ((value >= minvalue && value < maxvalue) || (i + 1 == options.bins && value == itsMax))
             count += value_count.second;
         }
 

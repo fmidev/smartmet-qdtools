@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.5.5
+Version: 17.5.29
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -172,6 +172,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Mon May 29 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.5.29-1.fmi
+- Fixed qdstat to count the maximum value into distributions only once
+
 * Fri May  5 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.5.5-1.fmi
 - Added synop2qd -r option for setting a reference time different from the wall clock for testing purposes
 

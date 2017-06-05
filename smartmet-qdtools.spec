@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.5.29
+Version: 17.6.5
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -172,6 +172,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Mon Jun  5 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.6.5-1.fmi
+- Added qdcrop -m parameter,limit
+
 * Mon May 29 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.5.29-1.fmi
 - Fixed qdstat to count the maximum value into distributions only once
 

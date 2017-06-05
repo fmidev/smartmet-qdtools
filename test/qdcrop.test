@@ -129,6 +129,16 @@ DoTest("argument -P succeeds",
        "argument_iso_p_succeeds",
        "-P latlon:20,60,40,70:50x50km $data");
 
+# Option -m
+
+DoTest("argument -m 60 succeeds",
+       "argument_m_60_succeeds",
+       "-m 60 $pistedata");
+
+DoTest("argument -m Temperature,60 succeeds",
+       "argument_m_temperature_60_succeeds",
+       "-m Temperature,60 $pistedata");
+
 print "Done\n";
 
 # ----------------------------------------------------------------------

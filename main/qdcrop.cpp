@@ -95,7 +95,7 @@
  * Define the WMO numbers of the stations to extract from point data.
  * The default is to extract all stations.
  * </dd>
- * <dt>-m [limit]</dt>
+ * <dt>-m [limit] | [parameter,limit]</dt>
  * <dd>
  * Maximum allowed amount of missing values for a time step to be included
  * </dd>
@@ -237,7 +237,7 @@ void usage()
        << "\tThe stations to remove from point data as identified by" << endl
        << "\tthe WMO numbers of the stations or ranges of them" << endl
        << endl
-       << "-m <limit>" << endl
+       << "-m <limit> | <parameter,limit>" << endl
        << "\tMaximum allowed amount of missing values for a time step to be included" << endl
        << endl;
 }
@@ -816,8 +816,17 @@ NFmiTime ParseDate(const string& theTime)
  */
 // ----------------------------------------------------------------------
 
-set<NFmiMetTime> FindBadTimes(NFmiFastQueryInfo& theQ, double theLimit)
+set<NFmiMetTime> FindBadTimes(NFmiFastQueryInfo& theQ, double theLimit, string theParam)
 {
+  // the parameter to be checked, if any
+  FmiParameterName paramnum = kFmiBadParameter;
+  if (!theParam.empty())
+  {
+    paramnum = parse_param(theParam);
+    if (!theQ.Param(paramnum))
+      throw runtime_error("Parameter '" + theParam + "' is not available in the querydata");
+  }
+
   unsigned long ntimes = theQ.SizeTimes();
   vector<long> missing_count(ntimes, 0);
   vector<long> total_count(ntimes, 0);
@@ -826,16 +835,21 @@ set<NFmiMetTime> FindBadTimes(NFmiFastQueryInfo& theQ, double theLimit)
   // (This PLZT loop order is optimal for cache efficiency)
 
   for (theQ.ResetParam(); theQ.NextParam(false);)
-    for (theQ.ResetLocation(); theQ.NextLocation();)
-      for (theQ.ResetLevel(); theQ.NextLevel();)
-      {
-        std::size_t i = 0;
-        for (theQ.ResetTime(); theQ.NextTime(); ++i)
+  {
+    if (paramnum == kFmiBadParameter || paramnum == theQ.Param().GetParamIdent())
+    {
+      for (theQ.ResetLocation(); theQ.NextLocation();)
+        for (theQ.ResetLevel(); theQ.NextLevel();)
         {
-          ++total_count[i];
-          if (theQ.FloatValue() == kFloatMissing) ++missing_count[i];
+          std::size_t i = 0;
+          for (theQ.ResetTime(); theQ.NextTime(); ++i)
+          {
+            ++total_count[i];
+            if (theQ.FloatValue() == kFloatMissing) ++missing_count[i];
+          }
         }
-      }
+    }
+  }
 
   // Now determine which times are OK to keep
 
@@ -899,10 +913,11 @@ int run(int argc, const char* argv[])
   NFmiTime opt_reftime;         // reference time in UTC time
   bool opt_usereftime = false;  // option -z or -Z not used yet
 
-  int opt_local_hour = -1;        // the local hour to extract
-  int opt_utc_hour = -1;          // the UTC hour to extract
-  int opt_utc_minute = -1;        // the UTC minute to extract
-  double opt_missing_limit = -1;  // allowed percentage of missing values
+  int opt_local_hour = -1;            // the local hour to extract
+  int opt_utc_hour = -1;              // the UTC hour to extract
+  int opt_utc_minute = -1;            // the UTC minute to extract
+  double opt_missing_limit = -1;      // allowed percentage of missing values
+  std::string opt_missing_parameter;  // parameter to be checked (default = all)
 
   vector<NFmiTime> opt_crops;  // -S option
 
@@ -966,7 +981,17 @@ int run(int argc, const char* argv[])
 
   if (cmdline.isOption('m'))
   {
-    opt_missing_limit = NFmiStringTools::Convert<double>(cmdline.OptionValue('m'));
+    vector<string> parts = NFmiStringTools::Split(cmdline.OptionValue('m'));
+    if (parts.size() == 1)
+      opt_missing_limit = NFmiStringTools::Convert<double>(parts[0]);
+    else if (parts.size() == 2)
+    {
+      opt_missing_parameter = parts[0];
+      opt_missing_limit = NFmiStringTools::Convert<double>(parts[1]);
+    }
+    else
+      throw runtime_error("Option -m argument has too many parts");
+
     if (opt_missing_limit <= 0 || opt_missing_limit > 100)
       throw runtime_error("Option -m argument must be in the range 0-100, excluding 0");
 
@@ -1074,7 +1099,7 @@ int run(int argc, const char* argv[])
 
   if (cmdline.NumberofOptions() == 1 && opt_missing_limit > 0)
   {
-    set<NFmiMetTime> badtimes = FindBadTimes(srcinfo, opt_missing_limit);
+    set<NFmiMetTime> badtimes = FindBadTimes(srcinfo, opt_missing_limit, opt_missing_parameter);
     if (badtimes.empty())
       qd.Write(opt_outfile);  // just copy as is to output
     else
@@ -1236,7 +1261,7 @@ int run(int argc, const char* argv[])
 
   if (opt_missing_limit > 0)
   {
-    set<NFmiMetTime> badtimes = FindBadTimes(dstinfo, opt_missing_limit);
+    set<NFmiMetTime> badtimes = FindBadTimes(dstinfo, opt_missing_limit, opt_missing_parameter);
     if (!badtimes.empty())
     {
       // Filter out the bad timesteps

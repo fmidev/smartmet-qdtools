@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.6.5
+Version: 17.6.15
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -36,7 +36,7 @@ Requires: smartmet-library-newbase >= 17.4.4
 Requires: smartmet-library-smarttools >= 17.4.4
 Requires: grib_api >= 1.14.0
 Requires: hdf5 >= 1.8.12
-Requires: jasper >= 1.900.1
+Requires: jasper-libs >= 1.900.1
 Requires: libecbufr
 Requires: libbufr >= 3.2
 Requires: netcdf >= 4.3.3.1
@@ -172,6 +172,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Jun 15 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.6.15-1.fmi
+- Fixed dependency to be on jasper-libs and not on jasper
+
 * Mon Jun  5 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.6.5-1.fmi
 - Added qdcrop -m parameter,limit
 

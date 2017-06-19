@@ -8,18 +8,18 @@
 
 #include "nctools.h"
 
+#include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiHPlaceDescriptor.h>
+#include <newbase/NFmiLatLonArea.h>
+#include <newbase/NFmiParamDescriptor.h>
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
-#include <newbase/NFmiLatLonArea.h>
 #include <newbase/NFmiStereographicArea.h>
-#include <newbase/NFmiHPlaceDescriptor.h>
-#include <newbase/NFmiVPlaceDescriptor.h>
 #include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiTimeList.h>
-#include <newbase/NFmiParamDescriptor.h>
-#include <newbase/NFmiAreaFactory.h>
+#include <newbase/NFmiVPlaceDescriptor.h>
 
 #include <macgyver/CsvReader.h>
 #include <macgyver/StringConversion.h>
@@ -30,20 +30,20 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/bind.hpp>
+#include <boost/date_time/posix_time/ptime.hpp>
+#include <boost/filesystem/operations.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <boost/date_time/posix_time/ptime.hpp>
 
 #include <cmath>
-#include <limits>
 #include <fstream>
+#include <functional>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <utility>
-#include <functional>
 
 nctools::Options options;
 
@@ -95,6 +95,49 @@ NcVar* find_axis(const NcFile& ncfile, const std::string& axisname)
     }
   }
   return NULL;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * Try various names to find x axis
+ */
+// ----------------------------------------------------------------------
+NcVar* find_x_axis(const NcFile& ncfile)
+{
+  NcVar* x = find_axis(ncfile, "x");
+  if (x == 0) x = find_axis(ncfile, "degree_east");
+  if (x == 0) x = find_axis(ncfile, "degrees_east");
+  if (x == 0) x = find_axis(ncfile, "degree_E");
+  if (x == 0) x = find_axis(ncfile, "degrees_E");
+  if (x == 0) x = find_axis(ncfile, "degreeE");
+  if (x == 0) x = find_axis(ncfile, "degreesE");
+  if (x == 0) x = find_axis(ncfile, "100  km");
+  if (x == 0) x = find_axis(ncfile, "m");
+  if (x == 0) x = find_axis(ncfile, "projection_x_coordinate");
+
+  return x;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * Try various names to find x axis
+ */
+// ----------------------------------------------------------------------
+NcVar* find_y_axis(const NcFile& ncfile)
+{
+  NcVar* y = find_axis(ncfile, "y");
+  if (y == 0) y = find_axis(ncfile, "degree_north");
+  if (y == 0) y = find_axis(ncfile, "degrees_north");
+  if (y == 0) y = find_axis(ncfile, "degree_N");
+  if (y == 0) y = find_axis(ncfile, "degrees_N");
+  if (y == 0) y = find_axis(ncfile, "degreeN");
+  if (y == 0) y = find_axis(ncfile, "degreesN");
+  if (y == 0) y = find_axis(ncfile, "100  km");
+  if (y == 0) y = find_axis(ncfile, "m");
+
+  if (y == 0) y = find_axis(ncfile, "projection_y_coordinate");
+
+  return y;
 }
 
 // ----------------------------------------------------------------------
@@ -583,14 +626,13 @@ int run(int argc, char* argv[])
   std::string grid_mapping(find_projection(ncfile, centralLongitude));
   bool isStereographicProjection = (grid_mapping == POLAR_STEREOGRAPHIC);
 
-  NcVar* x = find_axis(ncfile, "x");
-  NcVar* y = find_axis(ncfile, "y");
+  NcVar* x = find_x_axis(ncfile);
+  NcVar* y = find_y_axis(ncfile);
+
   NcVar* z = find_axis(ncfile, "z");
   NcVar* t = (isStereographicProjection ? 0 : find_axis(ncfile, "T"));
 
   // Alternate names
-  if (x == 0) x = find_axis(ncfile, "projection_x_coordinate");
-  if (y == 0) y = find_axis(ncfile, "projection_y_coordinate");
   if (z == 0) z = find_axis(ncfile, "projection_z_coordinate");
   if (t == 0) t = find_axis(ncfile, "time");
 
@@ -644,11 +686,15 @@ int run(int argc, char* argv[])
 
   NFmiFastQueryInfo qi(pdesc, tdesc, hdesc, vdesc);
   std::unique_ptr<NFmiQueryData> data;
-
   if (options.memorymap)
+  {
     data.reset(NFmiQueryDataUtil::CreateEmptyData(qi, options.outfile, true));
+  }
   else
+  {
     data.reset(NFmiQueryDataUtil::CreateEmptyData(qi));
+  }
+
   NFmiFastQueryInfo info(data.get());
 
   info.SetProducer(NFmiProducer(options.producernumber, options.producername));

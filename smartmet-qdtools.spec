@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.6.15
+Version: 17.6.20
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -172,6 +172,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Jun 20 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.6.20-1.fmi
+- nctoqd: improved axis name handling
+
 * Thu Jun 15 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.6.15-1.fmi
 - Fixed dependency to be on jasper-libs and not on jasper
 

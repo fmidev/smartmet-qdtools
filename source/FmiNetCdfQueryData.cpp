@@ -103,8 +103,6 @@ static NFmiQueryData *MakeQueryData(NcFile &theNcFile,
                                     NFmiQueryInfo &theMetaInfo,
                                     std::vector<FmiVarInfo> &theVarInfos)
 {
-  if (&theMetaInfo == 0) return 0;
-
   NFmiQueryData *qData = NFmiQueryDataUtil::CreateEmptyData(theMetaInfo);
   NFmiFastQueryInfo fInfo(qData);
 

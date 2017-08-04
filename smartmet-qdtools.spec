@@ -27,6 +27,8 @@ BuildRequires: mdsplib >= 16.4.8
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: zlib-devel
 BuildRequires: gdal-devel >= 1.11.4
+BuildRequires: jasper-devel
+BuildRequires: mxadatamodel
 Requires: smartmet-timezones >= 17.3.6
 Requires: smartmet-library-calculator >= 17.3.16
 Requires: smartmet-library-gis >= 17.3.14

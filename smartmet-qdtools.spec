@@ -9,6 +9,7 @@ Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
 Source0: %{name}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot-%(%{__id_u} -n)
+BuildRequires: gcc-c++
 BuildRequires: make
 BuildRequires: boost-devel
 BuildRequires: bzip2-devel

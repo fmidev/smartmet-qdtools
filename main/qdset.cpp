@@ -10,15 +10,17 @@
 
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiEnumConverter.h>
-#include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiStringTools.h>
 #include <newbase/NFmiVersion.h>
 
+#include <macgyver/TimeParser.h>
+
 #include <boost/filesystem/operations.hpp>
 
-#include <stdexcept>
 #include <fstream>
+#include <stdexcept>
 
 using namespace std;  // tätä ei saa sitten laittaa headeriin, eikä ennen includeja!!!!
 
@@ -64,6 +66,7 @@ void Usage(void)
        << "   -p precisionString\tNew parameter precision string (e.g. %0.1f)" << endl
        << "   -Z <value>\t\tNew level value" << endl
        << "   -L <value>\t\tNew level type" << endl
+       << "   -T <time>\tNew UTC origin time in ISO, SQL or timestamp format" << endl
        << endl
        << "Example usage: qdset -n 'Temperature' dataFile Temperature" << endl
        << endl;
@@ -71,7 +74,7 @@ void Usage(void)
 
 void run(int argc, const char* argv[])
 {
-  NFmiCmdLine cmdline(argc, argv, "n!d!N!D!l!u!i!t!s!b!p!Z!L!");
+  NFmiCmdLine cmdline(argc, argv, "n!d!N!D!l!u!i!t!s!b!p!Z!L!T!");
   // Tarkistetaan optioiden oikeus:
   if (cmdline.Status().IsError())
   {
@@ -84,27 +87,24 @@ void run(int argc, const char* argv[])
 
   bool producerChange = (cmdline.isOption('N') || cmdline.isOption('D'));
   bool levelChange = (cmdline.isOption('Z') || cmdline.isOption('L'));
+  bool originChange = cmdline.isOption('T');
 
-  if (producerChange && (cmdline.NumberofParameters() < 1 || cmdline.NumberofParameters() > 2))
+  if ((producerChange || originChange || levelChange) &&
+      (cmdline.NumberofParameters() < 1 || cmdline.NumberofParameters() > 2))
   {
-    cerr << "Error: atleast 1 parameter expected when changing producer, dataFile\n\n";
-    Usage();
-    throw runtime_error("");  // tässä piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
-                              // joten en voinut laittaa virheviesti poikkeuksen mukana.
-  }
-  else if (levelChange && (cmdline.NumberofParameters() < 1 || cmdline.NumberofParameters() > 2))
-  {
-    cerr << "Error: atleast 1 parameter expected when changing levels, dataFile\n\n";
+    cerr << "Error: atleast 1 parameter expected when changing producer, level or origin time, "
+            "dataFile\n\n";
     Usage();
     throw runtime_error("");
   }
-  else if (!producerChange && !levelChange && cmdline.NumberofParameters() != 2)
+  else if (!producerChange && !levelChange && !originChange && cmdline.NumberofParameters() != 2)
   {
     cerr << "Error: 2 parameters expected, dataFile 'parameter-id/name'\n\n";
     Usage();
     throw runtime_error("");  // tässä piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
   }
+
   string dataFile(cmdline.Parameter(1));
 
   NFmiQueryData qd(dataFile, false);
@@ -131,7 +131,7 @@ void run(int argc, const char* argv[])
     }
   }
   if (!paramFound)
-    if (!producerChange && !levelChange)
+    if (!producerChange && !originChange && !levelChange)
       throw runtime_error(string("Annettua parametria: '") + paramIdOrName +
                           "' ei löytynyt datasta.");
 
@@ -205,6 +205,12 @@ void run(int argc, const char* argv[])
     long newtype = NFmiStringTools::Convert<long>(cmdline.OptionValue('L'));
     info->First();
     info->EditLevel().SetIdent(newtype);
+  }
+
+  if (cmdline.isOption('T'))
+  {
+    std::string stamp = cmdline.OptionValue('T');
+    info->OriginTime(Fmi::TimeParser::parse(stamp));
   }
 
   // Copied from NFmiStreamQueryData::WriteData for backward compatibility

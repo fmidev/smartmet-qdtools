@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.7.18
+Version: 17.8.18
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -176,7 +176,7 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
-* Fri Aug 18 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.7.18-1.fmi
+* Fri Aug 18 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.8.18-1.fmi
 - qdset: added option -T for setting a new origin time in UTC
 - gribtoqd: fixed to work with WAM data for which 1st and last longitudes are zero
 

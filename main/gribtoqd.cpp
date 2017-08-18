@@ -32,24 +32,24 @@
 
 #include "GribTools.h"
 
-#include <newbase/NFmiStreamQueryData.h>
-#include <newbase/NFmiGrid.h>
-#include <newbase/NFmiStereographicArea.h>
-#include <newbase/NFmiRotatedLatLonArea.h>
-#include <newbase/NFmiMercatorArea.h>
-#include <newbase/NFmiLatLonArea.h>
-#include <newbase/NFmiCmdLine.h>
-#include <newbase/NFmiTimeList.h>
-#include <newbase/NFmiQueryDataUtil.h>
-#include <newbase/NFmiValueString.h>
-#include <newbase/NFmiTotalWind.h>
-#include <newbase/NFmiStringTools.h>
-#include <newbase/NFmiInterpolation.h>
-#include <newbase/NFmiSettings.h>
 #include <newbase/NFmiAreaFactory.h>
-#include <newbase/NFmiMilliSecondTimer.h>
-#include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiFileString.h>
+#include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiGrid.h>
+#include <newbase/NFmiInterpolation.h>
+#include <newbase/NFmiLatLonArea.h>
+#include <newbase/NFmiMercatorArea.h>
+#include <newbase/NFmiMilliSecondTimer.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiRotatedLatLonArea.h>
+#include <newbase/NFmiSettings.h>
+#include <newbase/NFmiStereographicArea.h>
+#include <newbase/NFmiStreamQueryData.h>
+#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiTimeList.h>
+#include <newbase/NFmiTotalWind.h>
+#include <newbase/NFmiValueString.h>
 
 #include <grib_api.h>
 
@@ -58,11 +58,11 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
 
+#include <functional>
 #include <iomanip>
+#include <set>
 #include <sstream>
 #include <stdexcept>
-#include <functional>
-#include <set>
 #include <stdlib.h>
 
 using namespace std;
@@ -1837,6 +1837,9 @@ static void DoPossibleGlobalLongitudeFixes(double &Lo1,
   if (Lo1 > 180) Lo1 -= 360;
   if (Lo2 > 180) Lo2 -= 360;
 
+  // If input was 0...360 this will fix it back to 0...360 (WAM data)
+  if (Lo1 == Lo2) Lo2 += 360;
+
   // Select Atlantic or Pacific view
 
   if (theGribFilterOptions.fDoAtlanticFix && Lo1 == 0 &&
@@ -1872,6 +1875,9 @@ static NFmiArea *CreateLatlonArea(grib_handle *theGribHandle,
     // We ignore the status of the version check intentionally and assume V2
     long version = 2;
     grib_get_long(theGribHandle, "editionNumber", &version);
+
+    // Fix BAM data which uses zero for both longitudes
+    if (Lo1 == 0 && Lo2 == 0) Lo2 = 360;
 
     long iScansNegatively = 0;
     int iScansNegativelyStatus =

@@ -1837,7 +1837,7 @@ static void DoPossibleGlobalLongitudeFixes(double &Lo1,
   if (Lo1 > 180) Lo1 -= 360;
   if (Lo2 > 180) Lo2 -= 360;
 
-  // If input was 0...360 this will fix it back to 0...360 (WAM data)
+  // If input was 0...360 this will fix it back to 0...360 (BAM data)
   if (Lo1 == Lo2) Lo2 += 360;
 
   // Select Atlantic or Pacific view

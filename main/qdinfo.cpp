@@ -95,6 +95,10 @@
 #include <newbase/NFmiStringList.h>
 #include <newbase/NFmiYKJArea.h>
 
+#ifdef UNIX
+#include <gdal/ogr_spatialref.h>
+#endif
+
 #include <algorithm>
 #include <ctime>
 #include <list>
@@ -547,6 +551,13 @@ void ReportProjection(NFmiFastQueryInfo *q)
   unsigned long classid = area->ClassId();
   const auto rect = area->WorldRect();
 
+#ifdef UNIX
+  const auto wkt = area->WKT();
+  OGRSpatialReference crs;
+  if (crs.SetFromUserInput(wkt.c_str()) != OGRERR_NONE)
+    throw std::runtime_error("GDAL does not understand the WKT in the data");
+#endif
+
   cout << "projection\t\t= " << area->ClassName() << endl;
 
   cout << "top left lonlat\t\t= " << area->TopLeftLatLon().X() << ',' << area->TopLeftLatLon().Y()
@@ -564,13 +575,16 @@ void ReportProjection(NFmiFastQueryInfo *q)
        << std::setprecision(6) << endl
        << endl;
 
-  cout << "fmiarea\t= " << area->AreaStr() << endl
+  cout << "fmiarea\t= " << area->AreaStr() << endl;
 #ifdef UNIX
-       << "wktarea\t= " << area->WKT() << endl
+  char *proj4 = nullptr;
+  crs.exportToProj4(&proj4);
+  cout << "wktarea\t= " << area->WKT() << endl << "proj4\t= " << proj4 << endl;
+  OGRFree(proj4);
 #endif
-       << endl;
 
-  cout << "top\t= " << area->Top() << endl
+  cout << endl
+       << "top\t= " << area->Top() << endl
        << "left\t= " << area->Left() << endl
        << "right\t= " << area->Right() << endl
        << "bottom\t= " << area->Bottom() << endl

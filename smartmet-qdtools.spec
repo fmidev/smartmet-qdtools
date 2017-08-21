@@ -3,7 +3,7 @@
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
 Version: 17.8.21
-Release: 1%{?dist}.fmi
+Release: 2%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -176,6 +176,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Mon Aug 21 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.8.21-2.fmi
+- qdinfo -x now prints the PROJ.4 string for the data
+
 * Mon Aug 21 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.8.21-1.fmi
 - qdinfo -x now prints the data bounding box in native world coordinates
 

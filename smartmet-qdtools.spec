@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.8.18
+Version: 17.8.21
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -22,22 +22,22 @@ BuildRequires: libpng-devel
 BuildRequires: smartmet-library-calculator-devel >= 17.3.16
 BuildRequires: smartmet-library-gis-devel >= 17.3.14
 BuildRequires: smartmet-library-imagine-devel >= 17.3.14
-BuildRequires: smartmet-library-macgyver-devel >= 17.3.16
-BuildRequires: smartmet-library-newbase-devel >= 17.4.4
-BuildRequires: smartmet-library-smarttools-devel >= 17.4.4
+BuildRequires: smartmet-library-macgyver-devel >= 17.7.29
+BuildRequires: smartmet-library-newbase-devel >= 17.8.1
+BuildRequires: smartmet-library-smarttools-devel >= 17.6.13
 BuildRequires: mdsplib >= 16.4.8
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: zlib-devel
 BuildRequires: gdal-devel >= 1.11.4
 BuildRequires: jasper-devel
 BuildRequires: mxadatamodel
-Requires: smartmet-timezones >= 17.3.6
+Requires: smartmet-timezones >= 17.4.12
 Requires: smartmet-library-calculator >= 17.3.16
 Requires: smartmet-library-gis >= 17.3.14
 Requires: smartmet-library-imagine >= 17.3.14
-Requires: smartmet-library-macgyver >= 17.3.16
-Requires: smartmet-library-newbase >= 17.4.4
-Requires: smartmet-library-smarttools >= 17.4.4
+Requires: smartmet-library-macgyver >= 17.7.29
+Requires: smartmet-library-newbase >= 17.8.1
+Requires: smartmet-library-smarttools >= 17.6.13
 Requires: grib_api >= 1.14.0
 Requires: hdf5 >= 1.8.12
 Requires: jasper-libs >= 1.900.1
@@ -176,6 +176,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Mon Aug 21 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.8.21-1.fmi
+- qdinfo -x now prints the data bounding box in native world coordinates
+
 * Fri Aug 18 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.8.18-1.fmi
 - qdset: added option -T for setting a new origin time in UTC
 - gribtoqd: fixed to work with WAM data for which 1st and last longitudes are zero

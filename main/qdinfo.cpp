@@ -96,9 +96,9 @@
 #include <newbase/NFmiYKJArea.h>
 
 #include <algorithm>
+#include <ctime>
 #include <list>
 #include <string>
-#include <ctime>
 
 using namespace std;
 
@@ -545,6 +545,7 @@ void ReportProjection(NFmiFastQueryInfo *q)
   }
 
   unsigned long classid = area->ClassId();
+  const auto rect = area->WorldRect();
 
   cout << "projection\t\t= " << area->ClassName() << endl;
 
@@ -556,9 +557,12 @@ void ReportProjection(NFmiFastQueryInfo *q)
        << area->BottomLeftLatLon().Y() << endl;
   cout << "bottom right lonlat\t= " << area->BottomRightLatLon().X() << ','
        << area->BottomRightLatLon().Y() << endl;
-  cout << "center lonlat\t= " << area->CenterLatLon().X() << ',' << area->CenterLatLon().Y()
+  cout << "center lonlat\t\t= " << area->CenterLatLon().X() << ',' << area->CenterLatLon().Y()
+       << endl
+       << std::setprecision(9) << "bbox\t\t\t= [" << rect.Left() << " " << rect.Right() << " "
+       << std::min(rect.Bottom(), rect.Top()) << " " << std::max(rect.Bottom(), rect.Top()) << "]"
+       << std::setprecision(6) << endl
        << endl;
-  cout << endl;
 
   cout << "fmiarea\t= " << area->AreaStr() << endl
 #ifdef UNIX

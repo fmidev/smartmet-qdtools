@@ -3,7 +3,7 @@
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
 Version: 17.8.22
-Release: 1%{?dist}.fmi
+Release: 2%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -19,7 +19,7 @@ BuildRequires: libbufr >= 3.2
 BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
-BuildRequires: smartmet-library-calculator-devel >= 17.3.16
+BuildRequires: smartmet-library-calculator-devel >= 17.8.22
 BuildRequires: smartmet-library-gis-devel >= 17.3.14
 BuildRequires: smartmet-library-imagine-devel >= 17.3.14
 BuildRequires: smartmet-library-macgyver-devel >= 17.7.29
@@ -32,7 +32,7 @@ BuildRequires: gdal-devel >= 1.11.4
 BuildRequires: jasper-devel
 BuildRequires: mxadatamodel
 Requires: smartmet-timezones >= 17.4.12
-Requires: smartmet-library-calculator >= 17.3.16
+Requires: smartmet-library-calculator >= 17.8.22
 Requires: smartmet-library-gis >= 17.3.14
 Requires: smartmet-library-imagine >= 17.3.14
 Requires: smartmet-library-macgyver >= 17.7.29
@@ -176,7 +176,7 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
-* Upcomingg
+* Tue Aug 22 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.8.22-2.fmi
 - Fixed qdarea -c to work
 
 * Tue Aug 22 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.8.22-1.fmi

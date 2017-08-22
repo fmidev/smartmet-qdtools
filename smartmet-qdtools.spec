@@ -2,8 +2,8 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.8.21
-Release: 2%{?dist}.fmi
+Version: 17.8.22
+Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -176,6 +176,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Aug 22 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.8.22-1.fmi
+- qdarea::querydata is no longer required if qdarea -q is used
+
 * Mon Aug 21 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.8.21-2.fmi
 - qdinfo -x now prints the PROJ.4 string for the data
 

@@ -10,19 +10,19 @@
 #include <calculator/GridForecaster.h>
 #include <calculator/HourPeriodGenerator.h>
 #include <calculator/IntervalPeriodGenerator.h>
-#include <calculator/NullPeriodGenerator.h>
 #include <calculator/LatestWeatherSource.h>
 #include <calculator/ListedPeriodGenerator.h>
 #include <calculator/MaximumCalculator.h>
 #include <calculator/MinimumCalculator.h>
+#include <calculator/NullPeriodGenerator.h>
 #include <calculator/RangeAcceptor.h>
 #include <calculator/RegularMaskSource.h>
+#include <calculator/Settings.h>
 #include <calculator/WeatherArea.h>
 #include <calculator/WeatherFunction.h>
 #include <calculator/WeatherParameter.h>
 #include <calculator/WeatherPeriod.h>
 #include <calculator/WeatherResult.h>
-#include <calculator/Settings.h>
 
 #include <newbase/NFmiArea.h>
 #include <newbase/NFmiCmdLine.h>
@@ -659,7 +659,7 @@ void parse_command_line(int argc, const char* argv[])
   options.php = false;
   options.epoch_time = false;
   options.timezone = Settings::optional_string("qdarea::timezone", "local");
-  options.querydata = NFmiStringTools::Split(Settings::require("qdarea::querydata"));
+  options.querydata = NFmiStringTools::Split(Settings::optional_string("qdarea::querydata", ""));
   options.coordinatefile =
       Settings::optional_string("qdarea::coordinates", "/smartmet/share/coordinates/default.txt");
 
@@ -687,6 +687,9 @@ void parse_command_line(int argc, const char* argv[])
   // -q option must be parsed before -T option
   if (cmdline.isOption('q'))
     options.querydata = NFmiStringTools::Split<vector<string> >(cmdline.OptionValue('q'));
+
+  if (options.querydata.empty())
+    throw runtime_error("No querydata specified via -q or via qdarea::querydata");
 
   // must initialize data sources right after -q
 

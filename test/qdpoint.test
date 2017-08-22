@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
 $qdpoint = "../qdpoint";
+$coordinatefile = "conf/coordinates.txt";
 $results = "results";
 $hiladata = "data/hiladata.sqd";
 $pistedata = "data/pistedata.fqd";
@@ -241,7 +242,7 @@ sub DoTest
     my($tmpfile) = "${resultfile}.tmp";
 
     # Korjaa komento lopulliseen muotoon
-    $cmd = "$qdpoint $arguments 2>&1";
+    $cmd = "$qdpoint -c $coordinatefile $arguments 2>&1";
 
     # Aja käsky
     

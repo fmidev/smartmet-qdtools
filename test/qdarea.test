@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
 $qdarea = "../qdarea";
+$coordinatefile = "conf/coordinates.txt";
 $results = "results";
 $data = "data/qdarea.sqd";
 
@@ -91,7 +92,7 @@ sub DoTest
     my($tmpfile) = "${resultfile}.tmp";
 
     # Korjaa komento lopulliseen muotoon
-    $cmd = "$qdarea $arguments -q $data 2>&1";
+    $cmd = "$qdarea -c $coordinatefile $arguments -q $data 2>&1";
 
     # Aja käsky
     

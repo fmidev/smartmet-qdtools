@@ -32,6 +32,10 @@ DoTest("hiladata Helsinki ja Tampere",
        "hila_data_helsinki_tampere",
        "-p Helsinki,Tampere -q $hiladata");
 
+DoTest("pistedata Neverlandiin",
+       "piste_data_neverland",
+       "-p Neverland -q $pistedata");
+
 # Paikkalista optio -l
 
 DoTest("paikkakuntien tulostus -l optiolla",

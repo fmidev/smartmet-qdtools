@@ -47,6 +47,10 @@ DoTest("-E -P mean(t2m) -p Helsinki",
        "epoch_mean_t2m_Helsinki",
        "-E -P 'mean(t2m)' -p Helsinki");
 
+DoTest("-P mean(mean(t2m)) -p Neverland",
+       "mean_t2m_Neverland",
+       "-P 'mean(mean(t2m))' -p Neverland");
+
 DoTest("-P mean(t2m) -p Helsinki::Turku::Imatra",
        "mean_t2m_Helsinki_Turku_Imatra",
        "-P 'mean(t2m)' -p Helsinki::Turku::Imatra");

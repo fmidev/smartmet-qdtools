@@ -176,6 +176,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Upcomingg
+- Fixed qdarea -c to work
+
 * Tue Aug 22 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.8.22-1.fmi
 - qdarea::querydata is no longer required if qdarea -q is used
 

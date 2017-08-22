@@ -712,22 +712,17 @@ void parse_command_line(int argc, const char* argv[])
   // This must be done after the timezone has been set and data has been read
   establish_time_period();
 
-  if (cmdline.isOption('P'))
-    parse_parameter_option(cmdline.OptionValue('P'));
-  else
-    throw runtime_error("Option -P must be given");
-
-  if (cmdline.isOption('p'))
-    parse_area_option(cmdline.OptionValue('p'));
-  else
-    throw runtime_error("Option -p must be given");
-
   if (cmdline.isOption('T'))
     parse_interval_option(cmdline.OptionValue('T'));
   else
     parse_interval_option("24");
 
-  // -S must be parsed after the -P option
+  if (cmdline.isOption('P'))
+    parse_parameter_option(cmdline.OptionValue('P'));
+  else
+    throw runtime_error("Option -P must be given");
+
+  // NOTE: -S must be parsed after the -P option
 
   if (cmdline.isOption('s')) options.php = true;
 
@@ -755,6 +750,15 @@ void parse_command_line(int argc, const char* argv[])
 
   if (!NFmiFileSystem::FileExists(options.coordinatefile))
     throw runtime_error("The coordinatefile '" + options.coordinatefile + "' does not exist");
+
+  Settings::set("textgen::coordinates", options.coordinatefile);
+
+  // NOTE: Must be done after coordinate source has been defined
+
+  if (cmdline.isOption('p'))
+    parse_area_option(cmdline.OptionValue('p'));
+  else
+    throw runtime_error("Option -p must be given");
 }
 
 // ----------------------------------------------------------------------

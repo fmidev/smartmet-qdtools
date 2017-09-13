@@ -30,6 +30,8 @@
 // This is global so that we can not just parse but also print errors
 NFmiEnumConverter converter;
 
+const int column_width = 10;
+
 // ----------------------------------------------------------------------
 /*!
  * \brief Command line options
@@ -312,10 +314,11 @@ void Stats::operator()(double value)
 std::string Stats::header()
 {
   std::ostringstream out;
-  out << std::setw(10) << std::right << "Min" << std::setw(10) << std::right << "Mean"
-      << std::setw(10) << std::right << "Max" << std::setw(10) << std::right << "Count"
-      << std::setw(10) << std::right << "Valid" << std::setw(10) << std::right << "Miss"
-      << std::setw(10) << std::right << "NaN" << std::setw(10) << std::right << "Inf";
+  out << std::setw(column_width + 1) << std::right << "Min" << std::setw(column_width + 1)
+      << std::right << "Mean" << std::setw(column_width + 1) << std::right << "Max"
+      << std::setw(column_width) << std::right << "Count" << std::setw(column_width) << std::right
+      << "Valid" << std::setw(column_width) << std::right << "Miss" << std::setw(column_width)
+      << std::right << "NaN" << std::setw(column_width) << std::right << "Inf";
   return out.str();
 }
 
@@ -759,21 +762,23 @@ std::string Stats::report() const
 
   if (options.percentages)
   {
-    out << std::fixed << std::setprecision(2) << std::setw(10) << std::right << itsMin
-        << std::setprecision(2) << std::setw(10) << std::right << mean << std::setprecision(2)
-        << std::setw(10) << std::right << itsMax << std::setw(10) << std::right << itsCount
-        << std::setw(10) << std::right << 100.0 * itsValidCount / itsCount << std::setw(10)
-        << std::right << 100.0 * itsMissingCount / itsCount << std::setw(10) << std::right
-        << 100.0 * itsNaNCount / itsCount << std::setw(10) << std::right
+    out << std::fixed << std::setprecision(2) << ' ' << std::setw(column_width) << std::right
+        << itsMin << std::setprecision(2) << ' ' << std::setw(column_width) << std::right << mean
+        << std::setprecision(2) << ' ' << std::setw(column_width) << std::right << itsMax
+        << std::setw(column_width) << std::right << itsCount << std::setw(column_width)
+        << std::right << 100.0 * itsValidCount / itsCount << std::setw(column_width) << std::right
+        << 100.0 * itsMissingCount / itsCount << std::setw(column_width) << std::right
+        << 100.0 * itsNaNCount / itsCount << std::setw(column_width) << std::right
         << 100.0 * itsInfCount / itsCount;
   }
   else
   {
-    out << std::fixed << std::setprecision(2) << std::setw(10) << std::right << itsMin
-        << std::setprecision(2) << std::setw(10) << std::right << mean << std::setprecision(2)
-        << std::setw(10) << std::right << itsMax << std::setw(10) << std::right << itsCount
-        << std::setw(10) << std::right << itsValidCount << std::setw(10) << std::right
-        << itsMissingCount << std::setw(10) << std::right << itsNaNCount << std::setw(10)
+    out << std::fixed << std::setprecision(2) << ' ' << std::setw(column_width) << std::right
+        << itsMin << std::setprecision(2) << ' ' << std::setw(column_width) << std::right << mean
+        << std::setprecision(2) << ' ' << std::setw(column_width) << std::right << itsMax
+        << std::setw(column_width) << std::right << itsCount << std::setw(column_width)
+        << std::right << itsValidCount << std::setw(column_width) << std::right << itsMissingCount
+        << std::setw(column_width) << std::right << itsNaNCount << std::setw(column_width)
         << std::right << itsInfCount;
   }
 
@@ -790,13 +795,13 @@ std::string Stats::report() const
 
         if (options.percentages)
         {
-          out << std::fixed << std::setprecision(2) << std::setw(10) << std::right << value
-              << std::setw(10) << std::right << 100.0 * count / itsValidCount;
+          out << std::fixed << std::setprecision(2) << std::setw(column_width) << std::right
+              << value << std::setw(column_width) << std::right << 100.0 * count / itsValidCount;
         }
         else
         {
-          out << std::fixed << std::setprecision(2) << std::setw(10) << std::right << value
-              << std::setw(10) << std::right << count;
+          out << std::fixed << std::setprecision(2) << std::setw(column_width) << std::right
+              << value << std::setw(column_width) << std::right << count;
         }
 
         int w = static_cast<int>(std::round(options.barsize * count / itsValidCount));
@@ -825,9 +830,9 @@ std::string Stats::report() const
 
         out << std::setw(20) << std::right << range.str();
         if (options.percentages)
-          out << std::setw(10) << std::right << 100.0 * count / itsValidCount;
+          out << std::setw(column_width) << std::right << 100.0 * count / itsValidCount;
         else
-          out << std::setw(10) << std::right << count;
+          out << std::setw(column_width) << std::right << count;
 
         int w = static_cast<int>(std::round(options.barsize * count / itsValidCount));
         out << std::setw(5) << std::right << '|' << std::string(w, '=')
@@ -866,6 +871,7 @@ std::size_t max_param_width(NFmiFastQueryInfo& qi)
   {
     qi.Param(p);
     std::string name = converter.ToString(qi.Param().GetParam()->GetIdent());
+    if (name.empty()) name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
     widest = std::max(widest, name.size());
   }
   return widest;
@@ -903,6 +909,7 @@ void stat_locations_times(NFmiFastQueryInfo& qi)
   {
     qi.Param(p);
     std::string name = converter.ToString(qi.Param().GetParam()->GetIdent());
+    if (name.empty()) name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
 
     Stats stats;
     stats.param(p);
@@ -930,6 +937,7 @@ void stat_locations_these_times(NFmiFastQueryInfo& qi)
   {
     qi.Param(p);
     std::string name = converter.ToString(qi.Param().GetParam()->GetIdent());
+    if (name.empty()) name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
 
     std::cout << std::setw(param_width) << std::right << "Parameter" << std::setw(18) << std::right
               << "Time" << Stats::header() << std::endl;
@@ -967,6 +975,7 @@ void stat_these_stations_these_times(NFmiFastQueryInfo& qi)
 
     qi.Param(p);
     std::string name = converter.ToString(qi.Param().GetParam()->GetIdent());
+    if (name.empty()) name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
     std::cout << name << std::endl;
 
     BOOST_FOREACH (int wmo, options.these_stations)
@@ -1009,6 +1018,7 @@ void stat_these_stations_times(NFmiFastQueryInfo& qi)
   {
     qi.Param(p);
     std::string name = converter.ToString(qi.Param().GetParam()->GetIdent());
+    if (name.empty()) name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
 
     BOOST_FOREACH (int wmo, options.these_stations)
     {

@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.8.28
+Version: 17.9.13
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -176,6 +176,10 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Sep 13 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.9.13-1.fmi
+- qdstat now fails more gracefully if the statistics overflow column widths
+- qdstat now prints parameter number if the name is unknown
+
 * Mon Aug 28 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.8.28-1.fmi
 - Upgrade to boost 1.65
 

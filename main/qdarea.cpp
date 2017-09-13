@@ -386,6 +386,7 @@ void usage()
        << "   -S [namelist]\tPrint results as a PHP hash table with named data fields" << endl
        << "   -E\t\t\tPrint times in Epoch seconds" << endl
        << "   -v\t\t\tVerbose mode on" << endl
+       << "   -Q\t\t\tQuiet mode on - do not print mere warnings" << endl
        << endl
        << "For example:" << endl
        << endl
@@ -408,6 +409,7 @@ struct options_list
   vector<string> querydata;
   string coordinatefile;
   bool verbose;
+  bool quiet;
   bool php;
   bool epoch_time;
   vector<string> php_names;
@@ -655,6 +657,7 @@ void parse_command_line(int argc, const char* argv[])
 
   // Establish the defaults
 
+  options.quiet = false;
   options.verbose = false;
   options.php = false;
   options.epoch_time = false;
@@ -665,7 +668,7 @@ void parse_command_line(int argc, const char* argv[])
 
   // Parse the command line
 
-  NFmiCmdLine cmdline(argc, argv, "P!p!T!t!q!c!S!Esvh");
+  NFmiCmdLine cmdline(argc, argv, "P!p!T!t!q!c!S!EsvhQ");
 
   if (cmdline.Status().IsError()) throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
 
@@ -681,6 +684,8 @@ void parse_command_line(int argc, const char* argv[])
   // verbose mode check first, so we can be verbose from the start
 
   if (cmdline.isOption('v')) options.verbose = true;
+
+  if (cmdline.isOption('Q')) options.quiet = true;
 
   if (cmdline.isOption('E')) options.epoch_time = true;
 
@@ -822,10 +827,19 @@ AnalysisSources find_source(const WeatherArea& theArea)
 
   if (idx >= options.querydata.size())
   {
-    if (theArea.isNamed())
-      throw runtime_error(theArea.name() + " is not contained in any querydata");
+    // If only one querystring option was given, leave the responsibility
+    // to the user that not all of the polygon is inside the data.
+
+    if (options.querydata.size() == 1)
+    {
+      idx = 0;
+      if (!options.quiet)
+        cerr << "Warning: The area is not fully contained in the querydata" << endl;
+    }
+    else if (theArea.isNamed())
+      throw runtime_error(theArea.name() + " is not fully contained in any querydata");
     else
-      throw runtime_error("The area is not contained in any querydata");
+      throw runtime_error("The area is not fully contained in any querydata");
   }
 
   Settings::set("textgen::default_forecast", options.querydata[idx]);

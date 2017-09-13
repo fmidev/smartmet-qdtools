@@ -3,7 +3,7 @@
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
 Version: 17.9.13
-Release: 2%{?dist}.fmi
+Release: 3%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -176,6 +176,10 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Sep 13 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.9.13-3.fmi
+- qdarea not uses the input shape even if not fully inside the single specified querydata
+- Added qdarea -Q option to silence warnings on above
+
 * Wed Sep 13 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.9.13-2.fmi
 - nctoqd now handles attribute_fill value correctly
 

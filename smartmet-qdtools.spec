@@ -3,7 +3,7 @@
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
 Version: 17.9.13
-Release: 1%{?dist}.fmi
+Release: 2%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -20,10 +20,10 @@ BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: smartmet-library-calculator-devel >= 17.8.28
-BuildRequires: smartmet-library-gis-devel >= 17.8.28
+BuildRequires: smartmet-library-gis-devel >= 17.9.12
 BuildRequires: smartmet-library-imagine-devel >= 17.8.28
 BuildRequires: smartmet-library-macgyver-devel >= 17.8.28
-BuildRequires: smartmet-library-newbase-devel >= 17.8.28
+BuildRequires: smartmet-library-newbase-devel >= 17.9.13
 BuildRequires: smartmet-library-smarttools-devel >= 17.8.28
 BuildRequires: mdsplib >= 16.4.8
 BuildRequires: netcdf-devel >= 4.3.3.1
@@ -33,10 +33,10 @@ BuildRequires: jasper-devel
 BuildRequires: mxadatamodel
 Requires: smartmet-timezones >= 17.4.12
 Requires: smartmet-library-calculator >= 17.8.28
-Requires: smartmet-library-gis >= 17.8.28
+Requires: smartmet-library-gis >= 17.9.12
 Requires: smartmet-library-imagine >= 17.8.28
 Requires: smartmet-library-macgyver >= 17.8.28
-Requires: smartmet-library-newbase >= 17.8.28
+Requires: smartmet-library-newbase >= 17.9.13
 Requires: smartmet-library-smarttools >= 17.8.28
 Requires: grib_api >= 1.14.0
 Requires: hdf5 >= 1.8.12
@@ -176,6 +176,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Sep 13 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.9.13-2.fmi
+- nctoqd now handles attribute_fill value correctly
+
 * Wed Sep 13 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.9.13-1.fmi
 - qdstat now fails more gracefully if the statistics overflow column widths
 - qdstat now prints parameter number if the name is unknown

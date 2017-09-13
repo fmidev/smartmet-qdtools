@@ -367,6 +367,9 @@ NcVar *find_variable(const NcFile &ncfile, const std::string &name)
 float get_missingvalue(NcVar *var)
 {
   NcAtt *att = var->get_att("_FillValue");
+  if (att != 0) return att->values()->as_float(0);
+  // Fillvalue can be also fill_value
+  att = var->get_att("fill_value");
   if (att != 0)
     return att->values()->as_float(0);
   else

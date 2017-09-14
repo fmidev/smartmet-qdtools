@@ -79,7 +79,7 @@ LIBS = -L$(libdir) \
 	-lgdal \
 	-lmetar \
 	-ljasper \
-	-lgrib_api \
+	-leccodes \
 	-lnetcdf_c++ -lnetcdf \
 	-lMXADataModel -lhdf5 \
 	-lbufr \

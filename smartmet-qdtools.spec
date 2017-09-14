@@ -2,8 +2,8 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.9.13
-Release: 3%{?dist}.fmi
+Version: 17.9.14
+Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -13,7 +13,7 @@ BuildRequires: gcc-c++
 BuildRequires: make
 BuildRequires: boost-devel
 BuildRequires: bzip2-devel
-BuildRequires: grib_api-devel >= 1.14.0
+BuildRequires: eccodes-devel
 BuildRequires: hdf5-devel >= 1.8.12
 BuildRequires: libbufr >= 3.2
 BuildRequires: libecbufr
@@ -23,7 +23,7 @@ BuildRequires: smartmet-library-calculator-devel >= 17.8.28
 BuildRequires: smartmet-library-gis-devel >= 17.9.12
 BuildRequires: smartmet-library-imagine-devel >= 17.8.28
 BuildRequires: smartmet-library-macgyver-devel >= 17.8.28
-BuildRequires: smartmet-library-newbase-devel >= 17.9.13
+BuildRequires: smartmet-library-newbase-devel >= 17.9.11
 BuildRequires: smartmet-library-smarttools-devel >= 17.8.28
 BuildRequires: mdsplib >= 16.4.8
 BuildRequires: netcdf-devel >= 4.3.3.1
@@ -36,9 +36,9 @@ Requires: smartmet-library-calculator >= 17.8.28
 Requires: smartmet-library-gis >= 17.9.12
 Requires: smartmet-library-imagine >= 17.8.28
 Requires: smartmet-library-macgyver >= 17.8.28
-Requires: smartmet-library-newbase >= 17.9.13
+Requires: smartmet-library-newbase >= 17.9.11
 Requires: smartmet-library-smarttools >= 17.8.28
-Requires: grib_api >= 1.14.0
+Requires: eccodes
 Requires: hdf5 >= 1.8.12
 Requires: jasper-libs >= 1.900.1
 Requires: libecbufr
@@ -176,6 +176,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Sep 14 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.9.14-1.fmi
+- Switched from grib_api to eccodes
+
 * Wed Sep 13 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.9.13-3.fmi
 - qdarea not uses the input shape even if not fully inside the single specified querydata
 - Added qdarea -Q option to silence warnings on above

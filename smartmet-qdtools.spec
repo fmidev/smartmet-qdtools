@@ -45,6 +45,13 @@ Requires: libecbufr
 Requires: libbufr >= 3.2
 Requires: netcdf >= 4.3.3.1
 Requires: gdal >= 1.11.4
+Requires: boost-regex
+Requires: boost-iostreams
+Requires: boost-date-time
+Requires: boost-program-options
+Requires: boost-thread
+Requires: boost-filesystem
+Requires: boost-system
 Requires: bzip2-libs
 Requires: glibc
 Requires: libgcc

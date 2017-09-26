@@ -83,6 +83,39 @@ static std::vector<int> GetOptionalParamIdList(const NFmiCmdLine &cmdline, char 
     return paramIdVector;
 }
 
+// Transform N octas to %: 
+// one octa is 12.5 % (result will be rounded *later* to nearest 10 %, due to WeatherAndCloudiness limitation)
+//    E.g. 0 -> 0 %, 4 -> 50 %, 8 -> 100 %
+//    9 -> 100 % (9 = can't observe cloudines due e.g. fog, how should we really put this, missing? )
+//    all other values -> missing
+static float convertOctaToProcent(float octas)
+{
+    if(octas >= 0 && octas <= 8)
+        return octas * 12.5f;
+    else if(octas == 9)
+        return 100.f;
+    else
+        return kFloatMissing;
+}
+
+static void ConvertNfromOctasToProcent(std::unique_ptr<NFmiQueryData> &data, NFmiFastQueryInfo &sourceInfo)
+{
+    NFmiFastQueryInfo info(data.get());
+    if(info.Param(kFmiTotalCloudCover) && sourceInfo.Param(kFmiTotalCloudCover))
+    {
+        for(info.ResetLocation(), sourceInfo.ResetLocation(); info.NextLocation() && sourceInfo.NextLocation(); )
+        {
+            for(info.ResetLevel(), sourceInfo.ResetLevel(); info.NextLevel() && sourceInfo.NextLevel(); )
+            {
+                for(info.ResetTime(), sourceInfo.ResetTime(); info.NextTime() && sourceInfo.NextTime(); )
+                {
+                    info.FloatValue(::convertOctaToProcent(sourceInfo.FloatValue()));
+                }
+            }
+        }
+    }
+}
+
 void run(int argc, const char *argv[])
 {
   string inputfile = "-";
@@ -100,8 +133,9 @@ void run(int argc, const char *argv[])
 
   int maxUsedThreadCount = 0;  // kuinko monta worker-threadia tekee töitä, < 1 -arvot tarkoittaa,
                                // että otetaan kaikki koneen threadit käyttöön
+  bool convertNfromOctasToProcent = false;
 
-  NFmiCmdLine cmdline(argc, argv, "t!w!g!ahi!m!pbf!F!P!");
+  NFmiCmdLine cmdline(argc, argv, "t!w!g!ahi!m!pbf!F!P!N");
   // Tarkistetaan optioiden oikeus:
   if (cmdline.Status().IsError())
   {
@@ -137,7 +171,8 @@ void run(int argc, const char *argv[])
   if (cmdline.isOption('b')) buildTimeBag = true;
 
   bool doAccuratePrecip = false;
-  if (cmdline.isOption('p')) doAccuratePrecip = true;
+  if(cmdline.isOption('p')) doAccuratePrecip = true;
+  if(cmdline.isOption('N')) convertNfromOctasToProcent = true;
 
   // -f optiolla voidaan antaa lista parId:tä, joita käytetään Weather-parametrin 
   // precipForm -aliparametrin täyttämisessä.
@@ -157,7 +192,7 @@ void run(int argc, const char *argv[])
   NFmiQueryData qd(inputfile);
   NFmiFastQueryInfo sourceInfo(&qd);
 
-  NFmiQueryData *uusiData = NFmiQueryDataUtil::MakeCombineParams(sourceInfo,
+  std::unique_ptr<NFmiQueryData> uusiData(NFmiQueryDataUtil::MakeCombineParams(sourceInfo,
                                                                  infoVersion,
                                                                  keepCloudSymbolParameter,
                                                                  doTotalWind,
@@ -169,10 +204,10 @@ void run(int argc, const char *argv[])
                                                                  allowLessParamsWhenCreatingWeather,
                                                                  maxUsedThreadCount,
                                                                  doAccuratePrecip,
-                                                                 buildTimeBag);
-
+                                                                 buildTimeBag));
+  if(convertNfromOctasToProcent)
+      ::ConvertNfromOctasToProcent(uusiData, sourceInfo);
   uusiData->Write();
-  delete uusiData;
 }
 
 // ----------------------------------------------------------------------
@@ -204,7 +239,8 @@ void Usage(void)
        << "\t\tN and rr(1h|3h|6h) parameters." << endl
        << "\t-m <thread-count>\tMax used worker threads, default all" << endl
        << "\t-p  add accurate precip param and calcs snowFall param per 1h" << endl
-       << "\t-b  build time bag instead of time list if possible (required by TAF editor)" << endl
+      << "\t-b  build time bag instead of time list if possible (required by TAF editor)" << endl
+      << "\t-N  Convert (observed) N parameter from octas to %, default = not" << endl
        << "\tExample usage: qdversionchange -t 1 -w 0 7 < input > output" << endl
        << endl;
 }

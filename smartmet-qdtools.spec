@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.9.14
+Version: 17.9.27
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -21,9 +21,9 @@ BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: smartmet-library-calculator-devel >= 17.8.28
 BuildRequires: smartmet-library-gis-devel >= 17.9.12
-BuildRequires: smartmet-library-imagine-devel >= 17.8.28
+BuildRequires: smartmet-library-imagine-devel >= 17.9.22
 BuildRequires: smartmet-library-macgyver-devel >= 17.8.28
-BuildRequires: smartmet-library-newbase-devel >= 17.9.11
+BuildRequires: smartmet-library-newbase-devel >= 17.9.14
 BuildRequires: smartmet-library-smarttools-devel >= 17.8.28
 BuildRequires: mdsplib >= 16.4.8
 BuildRequires: netcdf-devel >= 4.3.3.1
@@ -34,9 +34,9 @@ BuildRequires: mxadatamodel
 Requires: smartmet-timezones >= 17.4.12
 Requires: smartmet-library-calculator >= 17.8.28
 Requires: smartmet-library-gis >= 17.9.12
-Requires: smartmet-library-imagine >= 17.8.28
+Requires: smartmet-library-imagine >= 17.9.22
 Requires: smartmet-library-macgyver >= 17.8.28
-Requires: smartmet-library-newbase >= 17.9.11
+Requires: smartmet-library-newbase >= 17.9.14
 Requires: smartmet-library-smarttools >= 17.8.28
 Requires: eccodes
 Requires: hdf5 >= 1.8.12
@@ -183,6 +183,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Sep 27 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.9.27-1.fmi
+- qdversionchange option -N will convert TotalCloudiness from octas to percents
+
 * Thu Sep 14 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.9.14-1.fmi
 - Switched from grib_api to eccodes
 

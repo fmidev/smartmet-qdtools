@@ -14,6 +14,7 @@ BuildRequires: make
 BuildRequires: boost-devel
 BuildRequires: bzip2-devel
 BuildRequires: eccodes-devel
+BuildRequires: eccodes
 BuildRequires: hdf5-devel >= 1.8.12
 BuildRequires: libbufr >= 3.2
 BuildRequires: libecbufr
@@ -31,6 +32,7 @@ BuildRequires: zlib-devel
 BuildRequires: gdal-devel >= 1.11.4
 BuildRequires: jasper-devel
 BuildRequires: mxadatamodel
+BuildRequires: netcdf-cxx-devel
 Requires: smartmet-timezones >= 17.4.12
 Requires: smartmet-library-calculator >= 17.8.28
 Requires: smartmet-library-gis >= 17.9.12

@@ -33,8 +33,8 @@ This file is part of libECBUFR.
                                            // warnings that e.g. MSVC++ 2012 generates
 #endif
 
-#include <macgyver/StringConversion.h>
 #include <macgyver/CsvReader.h>
+#include <macgyver/StringConversion.h>
 
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiFastQueryInfo.h>

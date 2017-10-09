@@ -286,12 +286,14 @@ static bool GetGribLongValue(grib_handle *theGribHandle,
   return grib_get_long(theGribHandle, theDefinitionName.c_str(), &theLongValueOut) == 0;
 }
 
+#if 0
 static bool GetGribDoubleValue(grib_handle *theGribHandle,
                                const std::string &theDefinitionName,
                                double &theDoubleValueOut)
 {
   return grib_get_double(theGribHandle, theDefinitionName.c_str(), &theDoubleValueOut) == 0;
 }
+#endif
 
 static void ReplaceChar(string &theFileName, char replaceThis, char toThis)
 {
@@ -485,23 +487,28 @@ static NFmiLevel GetLevel(grib_handle *theGribHandle)
 {
   long usedLevelType = ::GetUsedLevelType(theGribHandle);
 
-  double levelValue = 0;
-  bool levelValueOk = ::GetGribDoubleValue(theGribHandle, "vertical.level", levelValue);
+  long levelValue = 0;
+  bool levelValueOk = ::GetGribLongValue(theGribHandle, "vertical.level", levelValue);
 
-  if (levelValueOk)
-    return NFmiLevel(
-        usedLevelType, NFmiStringTools::Convert(levelValue), static_cast<float>(levelValue));
-  else
-    throw runtime_error("Error: Couldn't get level from given grib_handle.");
+  if (!levelValueOk) throw runtime_error("Error: Couldn't get level from given grib_handle.");
+
+  // Note: a missing value is encoded as a 16-bit -1, which is converted to max int by
+  // grib_get_long. Bizarre API, if there is no better way to test for missing values
+
+  if (levelValue == std::numeric_limits<int>::max())
+    throw runtime_error("Error: MISSING level value in data");
+
+  return NFmiLevel(
+      usedLevelType, NFmiStringTools::Convert(levelValue), static_cast<float>(levelValue));
 }
 
-static double GetMissingValue(grib_handle *theGribHandle)
+static long GetMissingValue(grib_handle *theGribHandle)
 {
   // DUMP(theGribHandle);
   // missingValue is not in edition independent docs
 
-  double missingValue = 0;
-  int status = grib_get_double(theGribHandle, "missingValue", &missingValue);
+  long missingValue = 0;
+  int status = grib_get_long(theGribHandle, "missingValue", &missingValue);
   if (status == 0)
     return missingValue;
   else
@@ -874,20 +881,34 @@ static std::vector<std::string> MakeFullPathFileList(list<string> &theFileNameLi
   return fullFileNameVector;
 }
 
-static vector<string> GetDataFiles(const string &theFileOrPatternOrDirectory)
+static vector<string> GetDataFiles(const NFmiCmdLine &cmdline)
 {
-  string directory = theFileOrPatternOrDirectory;
-  if (NFmiFileSystem::DirectoryExists(directory))
-  {  // jos oli hakemisto, luetaan tieedostolista hakemistosta
-    list<string> dirList = NFmiFileSystem::DirectoryFiles(directory);
-    return ::MakeFullPathFileList(dirList, directory);
+  vector<string> all_files;
+
+  for (int i = 1; i <= cmdline.NumberofParameters(); i++)
+  {
+    auto path = cmdline.Parameter(i);
+
+    if (NFmiFileSystem::DirectoryExists(path))
+    {
+      auto files = NFmiFileSystem::DirectoryFiles(path);
+      auto files2 = ::MakeFullPathFileList(files, path);
+      copy(files2.begin(), files2.end(), back_inserter(all_files));
+    }
+    else if (NFmiFileSystem::FileExists(path))
+    {
+      all_files.push_back(path);
+    }
+    else
+    {
+      auto files = NFmiFileSystem::PatternFiles(path);
+      auto directory = ::GetDirectory(path);
+      auto files2 = ::MakeFullPathFileList(files, directory);
+      copy(files2.begin(), files2.end(), back_inserter(all_files));
+    }
   }
 
-  string filePattern = theFileOrPatternOrDirectory;  // Huom! Myös yhden tiedoston tarkkaa nimeä
-                                                     // voidaan pitää patternina.
-  list<string> patternList = NFmiFileSystem::PatternFiles(filePattern);
-  directory = ::GetDirectory(filePattern);
-  return ::MakeFullPathFileList(patternList, directory);
+  return all_files;
 }
 
 class CombineDataStructureSearcher
@@ -4756,7 +4777,9 @@ static int BuildAndStoreAllDatas(vector<string> &theFileList,
 
 void Usage(void)
 {
-  cerr << "Usage: grib2qd [options] inputgribfile  > outputqdata" << endl
+  cerr << "Usage: grib2qd [options] inputfile1 [inputfile2 ...]  > outputqdata" << endl
+       << endl
+       << "Convert GRIB files to querydata." << endl
        << endl
        << "Options:" << endl
        << endl
@@ -4815,11 +4838,10 @@ void Usage(void)
        << "\t\t pressure- and hybrid-data. Give two or three projections " << endl
        << "\t\t separated by semicolons ';'. E.g." << endl
        << "\t\t proj1:gridSize1[;proj2:gridSize2][;proj3:gridSize3]" << endl
-
        << endl;
 }
 
-static bool DoCommandLineCheck(NFmiCmdLine &theCmdLine, std::string &theFilePatternOrDirectoryOut)
+static bool DoCommandLineCheck(NFmiCmdLine &theCmdLine)
 {
   if (theCmdLine.Status().IsError())
   {
@@ -4830,14 +4852,13 @@ static bool DoCommandLineCheck(NFmiCmdLine &theCmdLine, std::string &theFilePatt
     return false;
   }
 
-  if (theCmdLine.NumberofParameters() != 1)
+  if (theCmdLine.NumberofParameters() < 1)
   {
-    cerr << "Error: 1 parameter expected, 'inputfile'\n\n";
+    cerr << "Error: At least 1 input file or directory expected\n\n";
     ::Usage();
     return false;
   }
-  else
-    theFilePatternOrDirectoryOut = theCmdLine.Parameter(1);
+
   return true;
 }
 
@@ -4982,22 +5003,18 @@ int Run(int argc, const char **argv, bool &fReportExecutionTime)
 
   NFmiCmdLine cmdline(argc, argv, "o!m!l!g!p!aASnL!G!c!dvP!D!tH!r!yzCiR!");
 
-  // Tarkistetaan optioiden oikeus:
-  std::string filePatternOrDirectory;  // ohjelman 1. argumentti sisältää joko tiedoston nimen,
-                                       // patternin tai hakemiston.
   // Jonkin näistä avulla muodostetaan lista, jossa voi olla 0-n kpl tiedoston nimiä.
-  if (::DoCommandLineCheck(cmdline, filePatternOrDirectory) == false) return 1;
+  if (::DoCommandLineCheck(cmdline) == false) return 1;
 
   if (cmdline.isOption('t')) fReportExecutionTime = true;
   if (::GribDefinitionPath(cmdline) == false) return 1;
   int status = ::GetOptions(cmdline, gribFilterOptions);
   if (status != 0) return status;
 
-  vector<string> fileList = ::GetDataFiles(filePatternOrDirectory);
+  vector<string> fileList = ::GetDataFiles(cmdline);
+
   if (fileList.empty())
-    throw runtime_error(string("Error there were no matching grib files or given directory was "
-                               "empty, see parameter:\n") +
-                        filePatternOrDirectory);
+    throw runtime_error("Error there were no matching grib files or given directory was empty");
 
   return ::BuildAndStoreAllDatas(fileList, gribFilterOptions);
 }

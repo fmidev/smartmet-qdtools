@@ -3,7 +3,7 @@
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
 Version: 17.10.9
-Release: 1%{?dist}.fmi
+Release: 2%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -185,6 +185,10 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Mon Oct  9 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.10.9-2.fmi
+- gribtoqd can now take multiple files, directories or patterns as parameters
+- gribtoqd will no longer crash if a level value is missing, the message will be ignored
+
 * Mon Oct  9 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.10.9-1.fmi
 - qdfilter -i and -I options now accept multiple hour selections simultaneously
 

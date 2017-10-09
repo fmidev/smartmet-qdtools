@@ -123,6 +123,10 @@ DoTest("sum pistedata 3h -i 18",
        "sum_pistedata_i_18",
        "-i 18 -p $PARAMS 0 180 sum $pistedata");
 
+DoTest("sum hiladata 24h -i 6,12,18",
+       "sum_hiladata_i_6_12_18",
+       "-i 6,12,18 -p $PARAMS 0 1440 sum $hiladata");
+
 # Option -I
 
 DoTest("sum hiladata 24h -I 18",
@@ -132,6 +136,10 @@ DoTest("sum hiladata 24h -I 18",
 DoTest("sum pistedata 3h -I 18",
        "sum_pistedata_iso_i_18",
        "-I 18 -p $PARAMS 0 180 sum $pistedata");
+
+DoTest("sum pistedata 3h -I 6,12,18",
+       "sum_pistedata_iso_i_5_12_18",
+       "-I 6,12,18 -p $PARAMS 0 180 sum $pistedata");
 
 
 print "Done\n";
@@ -160,6 +168,7 @@ sub DoTest
 
     # Korjaa komento lopulliseen muotoon
     $cmd = "$program $arguments > $results/$tmpfile";
+    # print("\n$cmd\n");
 
     # Aja käsky
     

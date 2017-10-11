@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.10.9
+Version: 17.10.11
 Release: 2%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -185,6 +185,13 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Oct 11 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.10.11-2.fmi
+- bufrtoqd no longer crashes if opening a file for reading fails
+
+* Wed Oct 11 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.10.11-1.fmi
+- bufrtoqd option -S: skip sounding levels which have been marked as insignificant (code 8042)
+- bufrtoqd now validates the argument to option -C (--category)
+
 * Mon Oct  9 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.10.9-2.fmi
 - gribtoqd can now take multiple files, directories or patterns as parameters
 - gribtoqd will no longer crash if a level value is missing, the message will be ignored

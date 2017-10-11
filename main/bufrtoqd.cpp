@@ -210,8 +210,12 @@ struct Options
 {
   Options();
 
-  bool verbose;              // -v --verbose
-  bool debug;                //    --debug
+  bool verbose;  // -v --verbose
+  bool debug;    //    --debug
+  // Code 8042 = extended vertical sounding significance. Levels with value zero will be skipped if
+  // this option is used. This may significantly reduce the size of the sounding (from thousands to
+  // less than 100)
+  bool significance;         // -S --significance
   bool subsets;              //    --subsets
   std::string category;      // -C --category
   std::string conffile;      // -c --config
@@ -237,6 +241,7 @@ Options options;
 Options::Options()
     : verbose(false),
       debug(false),
+      significance(false),
       subsets(false),
       category()
 #ifdef UNIX
@@ -281,6 +286,7 @@ bool parse_options(int argc, char *argv[], Options &options)
       "verbose,v", po::bool_switch(&options.verbose), "set verbose mode on")(
       "debug", po::bool_switch(&options.debug), "set debug mode on")(
       "subsets", po::bool_switch(&options.subsets), "decode all subsets, not just first ones")(
+      "significance,S", po::bool_switch(&options.significance), "extract only significant levels")(
       "config,c", po::value(&options.conffile), msg1.c_str())(
       "stations,s", po::value(&options.stationsfile), msg2.c_str())(
       "infile,i", po::value(&options.infile), "input BUFR file or directory")(
@@ -310,32 +316,32 @@ bool parse_options(int argc, char *argv[], Options &options)
 
   if (opt.count("help"))
   {
-    std::cout << "Usage: bufrtoqd [options] infile/dir outfile" << std::endl
-              << std::endl
-              << "Converts BUFR observations to querydata." << std::endl
-              << std::endl
-              << desc << std::endl
-              << std::endl
-              << "The known data category names for option -C are: " << std::endl
-              << std::endl
-              << " * 'land' or 'land surface'" << std::endl
-              << " * 'sea' or 'sea surface'" << std::endl
-              << " * 'sounding'" << std::endl
-              << " * 'satellite sounding'" << std::endl
-              << " * 'upper air level'" << std::endl
-              << " * 'upper air level with satellite'" << std::endl
-              << " * 'radar'" << std::endl
-              << " * 'synoptic'" << std::endl
-              << " * 'physical'" << std::endl
-              << " * 'dispersal'" << std::endl
-              << " * 'radiological'" << std::endl
-              << " * 'tables'" << std::endl
-              << " * 'satellite surface'" << std::endl
-              << " * 'radiances'" << std::endl
-              << " * 'oceanographic'" << std::endl
-              << " * 'image'" << std::endl
-              << std::endl
-              << "Conversion of all categories is not supported though." << std::endl;
+    std::cout << "Usage: bufrtoqd [options] infile/dir outfile\n"
+                 "Converts BUFR observations to querydata.\n\n"
+              << desc
+              << "\n"
+                 "If option -S is used, only sounding levels with a nonzero extended vertical\n"
+                 "significance (code 8042) value will be extracted. This may reduce the size of\n"
+                 "high resolution sounding from thousands of levels to less than one hundred,\n"
+                 "and thus significantly reduce the size of the output querydata.\n\n"
+                 "The known data category names for option -C are:\n\n"
+                 " * 'land' or 'land surface'\n"
+                 " * 'sea' or 'sea surface'\n"
+                 " * 'sounding'\n"
+                 " * 'satellite sounding'\n"
+                 " * 'upper air level'\n"
+                 " * 'upper air level with satellite'\n"
+                 " * 'radar'\n"
+                 " * 'synoptic'\n"
+                 " * 'physical'\n"
+                 " * 'dispersal'\n"
+                 " * 'radiological'\n"
+                 " * 'tables'\n"
+                 " * 'satellite surface'\n"
+                 " * 'radiances'\n"
+                 " * 'oceanographic'\n"
+                 " * 'image'\n\n"
+                 "Conversion of all categories is not supported though.\n";
     return false;
   }
 
@@ -346,6 +352,9 @@ bool parse_options(int argc, char *argv[], Options &options)
 
   if (!fs::exists(options.infile))
     throw std::runtime_error("Input BUFR '" + options.infile + "' does not exist");
+
+  // Validate the category option
+  if (!options.category.empty()) data_category(options.category);
 
   // Handle the alternative ways to define the producer
 
@@ -575,6 +584,25 @@ bool message_looks_valid(const Message &msg)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Accept only significant sounding levels if option -S is used
+ */
+// ----------------------------------------------------------------------
+
+bool message_is_significant(const Message &msg)
+{
+  // If sounding level filtering is not on, keep the message
+  if (!options.significance) return true;
+
+  // If there is no significance value, keep the message
+  Message::const_iterator sig = msg.find(8042);  // extended vertical sounding sig.
+  if (sig == msg.end()) return true;
+
+  // Significant levels are marked with nonzero values
+  return (sig->second.value > 0);
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Append records from a dataset to a list
  */
 // ----------------------------------------------------------------------
@@ -636,7 +664,10 @@ void append_message(Messages &messages, BUFR_Dataset *dts, BUFR_Tables *tables)
       }
       else if (desc == replicating_desc)
       {
-        if (!message.empty() && message_looks_valid(message)) messages.push_back(message);
+        if (!message.empty() && message_looks_valid(message))
+        {
+          if (message_is_significant(message)) messages.push_back(message);
+        }
 
         message = replicated_message;
         message.insert(Message::value_type(desc, rec));
@@ -655,10 +686,10 @@ void append_message(Messages &messages, BUFR_Dataset *dts, BUFR_Tables *tables)
 
     if (!message.empty())
     {
-      if (message_looks_valid(message))
-        messages.push_back(message);
-      else
+      if (!message_looks_valid(message))
         message.clear();
+      else if (message_is_significant(message))
+        messages.push_back(message);
     }
   }
 }
@@ -681,7 +712,6 @@ void read_message(const std::string &filename,
                      "rb");  // VC++ vaatii että avataan binäärisenä (Linuxissa se on default)
   if (bufr == NULL)
   {
-    bufr_free_tables(file_tables);
     throw std::runtime_error("Could not open BUFR file '" + filename + "' reading");
   }
 
@@ -691,7 +721,8 @@ void read_message(const std::string &filename,
 
   int count = 0;
 
-  BUFR_Message *msg;
+  BUFR_Message *msg = nullptr;
+
   while (bufr_read_message(bufr, &msg) > 0)
   {
     ++count;
@@ -738,8 +769,8 @@ void read_message(const std::string &filename,
 
     // Read the dataset
 
-    BUFR_Dataset *dts = NULL;
-    if (use_tables == NULL)
+    BUFR_Dataset *dts = nullptr;
+    if (use_tables == nullptr)
     {
       // dts = NULL;  // is already null
       std::cerr << "Warning: No BUFR table version " << msg->s1.master_table_version << " available"
@@ -755,7 +786,7 @@ void read_message(const std::string &filename,
       }
     }
 
-    if (dts == NULL)
+    if (dts == nullptr)
     {
       bufr_free_message(msg);
       // continuing at this point may cause a segmentation fault
@@ -775,7 +806,7 @@ void read_message(const std::string &filename,
     if (bufr_contains_tables(dts))
     {
       BUFR_Tables *tables = bufr_extract_tables(dts);
-      if (tables != NULL)
+      if (tables != nullptr)
       {
         bufr_tables_list_merge(tables_list, tables);
         bufr_free_tables(tables);

@@ -2,8 +2,8 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.10.11
-Release: 2%{?dist}.fmi
+Version: 17.10.13
+Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -185,6 +185,10 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Fri Oct 13 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.10.13-1.fmi
+- bufrtoqd now ignores insignificant sounding levels by default
+- Replaced bufrtoqd -S and --significance by --insignificant
+
 * Wed Oct 11 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.10.11-2.fmi
 - bufrtoqd no longer crashes if opening a file for reading fails
 

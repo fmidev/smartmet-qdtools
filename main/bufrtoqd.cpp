@@ -212,10 +212,10 @@ struct Options
 
   bool verbose;  // -v --verbose
   bool debug;    //    --debug
-  // Code 8042 = extended vertical sounding significance. Levels with value zero will be skipped if
-  // this option is used. This may significantly reduce the size of the sounding (from thousands to
-  // less than 100)
-  bool significance;         // -S --significance
+  // Code 8042 = extended vertical sounding significance. Insignificant levels
+  // will also be output if this option is used. This may significantly increase
+  // the size of the sounding (from ~100 to ~5000 levels)
+  bool insignificant;        //    --insignificant
   bool subsets;              //    --subsets
   std::string category;      // -C --category
   std::string conffile;      // -c --config
@@ -241,7 +241,7 @@ Options options;
 Options::Options()
     : verbose(false),
       debug(false),
-      significance(false),
+      insignificant(false),
       subsets(false),
       category()
 #ifdef UNIX
@@ -286,7 +286,9 @@ bool parse_options(int argc, char *argv[], Options &options)
       "verbose,v", po::bool_switch(&options.verbose), "set verbose mode on")(
       "debug", po::bool_switch(&options.debug), "set debug mode on")(
       "subsets", po::bool_switch(&options.subsets), "decode all subsets, not just first ones")(
-      "significance,S", po::bool_switch(&options.significance), "extract only significant levels")(
+      "insignificant",
+      po::bool_switch(&options.insignificant),
+      "extract also insignificant sounding levels")(
       "config,c", po::value(&options.conffile), msg1.c_str())(
       "stations,s", po::value(&options.stationsfile), msg2.c_str())(
       "infile,i", po::value(&options.infile), "input BUFR file or directory")(
@@ -316,32 +318,33 @@ bool parse_options(int argc, char *argv[], Options &options)
 
   if (opt.count("help"))
   {
-    std::cout << "Usage: bufrtoqd [options] infile/dir outfile\n"
-                 "Converts BUFR observations to querydata.\n\n"
-              << desc
-              << "\n"
-                 "If option -S is used, only sounding levels with a nonzero extended vertical\n"
-                 "significance (code 8042) value will be extracted. This may reduce the size of\n"
-                 "high resolution sounding from thousands of levels to less than one hundred,\n"
-                 "and thus significantly reduce the size of the output querydata.\n\n"
-                 "The known data category names for option -C are:\n\n"
-                 " * 'land' or 'land surface'\n"
-                 " * 'sea' or 'sea surface'\n"
-                 " * 'sounding'\n"
-                 " * 'satellite sounding'\n"
-                 " * 'upper air level'\n"
-                 " * 'upper air level with satellite'\n"
-                 " * 'radar'\n"
-                 " * 'synoptic'\n"
-                 " * 'physical'\n"
-                 " * 'dispersal'\n"
-                 " * 'radiological'\n"
-                 " * 'tables'\n"
-                 " * 'satellite surface'\n"
-                 " * 'radiances'\n"
-                 " * 'oceanographic'\n"
-                 " * 'image'\n\n"
-                 "Conversion of all categories is not supported though.\n";
+    std::cout
+        << "Usage: bufrtoqd [options] infile/dir outfile\n"
+           "Converts BUFR observations to querydata.\n\n"
+        << desc
+        << "\n"
+           "If option --insignificant is used, sounding levels with a zero extended vertical\n"
+           "significance (code 8042) value will be extracted. This may increase the size of\n"
+           "high resolution sounding from a hundred levels to thousands, and thus significantly\n"
+           "increase the size of the output querydata.\n\n"
+           "The known data category names for option -C are:\n\n"
+           " * 'land' or 'land surface'\n"
+           " * 'sea' or 'sea surface'\n"
+           " * 'sounding'\n"
+           " * 'satellite sounding'\n"
+           " * 'upper air level'\n"
+           " * 'upper air level with satellite'\n"
+           " * 'radar'\n"
+           " * 'synoptic'\n"
+           " * 'physical'\n"
+           " * 'dispersal'\n"
+           " * 'radiological'\n"
+           " * 'tables'\n"
+           " * 'satellite surface'\n"
+           " * 'radiances'\n"
+           " * 'oceanographic'\n"
+           " * 'image'\n\n"
+           "Conversion of all categories is not supported though.\n";
     return false;
   }
 
@@ -590,10 +593,10 @@ bool message_looks_valid(const Message &msg)
 
 bool message_is_significant(const Message &msg)
 {
-  // If sounding level filtering is not on, keep the message
-  if (!options.significance) return true;
+  // Keep all levels if --insignificant was used
+  if (options.insignificant) return true;
 
-  // If there is no significance value, keep the message
+  // If there is no vertical significance value in the message, keep it
   Message::const_iterator sig = msg.find(8042);  // extended vertical sounding sig.
   if (sig == msg.end()) return true;
 

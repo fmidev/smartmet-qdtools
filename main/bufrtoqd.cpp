@@ -738,90 +738,100 @@ void read_message(const std::string &filename,
       continue;
     }
 
-    // Print message headers
+    // Try to parse a single message. If it fails, skip to the next one.
 
-    if (options.verbose)
+    try
     {
-      std::cout << "MESSAGE NUMBER " << count << std::endl;
-      bufr_print_message(msg, bufr_print_output);
-    }
+      // Print message headers
 
-    // Save data category if necessary
-
-    if (options.category.empty())
-      datacategories.insert(msg->s1.msg_type);
-    else if (msg->s1.msg_type == data_category(options.category))
-      datacategories.insert(msg->s1.msg_type);
-    else
-    {
-      bufr_free_message(msg);
-      if (options.debug)
-        std::cout << "Message " << count << " in " << filename << " is not of desired category"
-                  << std::endl;
-      continue;
-    }
-
-    // Use default tables first
-
-    BUFR_Tables *use_tables = file_tables;
-
-    // Try to find another if not compatible
-
-    if (use_tables->master.version != msg->s1.master_table_version)
-      use_tables = bufr_use_tables_list(tables_list, msg->s1.master_table_version);
-
-    // Read the dataset
-
-    BUFR_Dataset *dts = nullptr;
-    if (use_tables == nullptr)
-    {
-      // dts = NULL;  // is already null
-      std::cerr << "Warning: No BUFR table version " << msg->s1.master_table_version << " available"
-                << std::endl;
-    }
-    else
-    {
-      dts = bufr_decode_message(msg, use_tables);
       if (options.verbose)
       {
-        std::cout << "Decoding message version " << msg->s1.master_table_version
-                  << " with BUFR tables version " << use_tables->master.version << std::endl;
+        std::cout << "MESSAGE NUMBER " << count << std::endl;
+        bufr_print_message(msg, bufr_print_output);
       }
-    }
 
-    if (dts == nullptr)
-    {
-      bufr_free_message(msg);
-      // continuing at this point may cause a segmentation fault
-      throw std::runtime_error("Could not decode message " +
-                               boost::lexical_cast<std::string>(count));
-    }
-    if (dts->data_flag & BUFR_FLAG_INVALID)
-    {
-      bufr_free_message(msg);
-      // continuing at this point may cause a segmentation fault
-      throw std::runtime_error("Message number " + boost::lexical_cast<std::string>(count) +
-                               " is invalid");
-    }
+      // Save data category if necessary
 
-    // Search for local table updates
-
-    if (bufr_contains_tables(dts))
-    {
-      BUFR_Tables *tables = bufr_extract_tables(dts);
-      if (tables != nullptr)
+      if (options.category.empty())
+        datacategories.insert(msg->s1.msg_type);
+      else if (msg->s1.msg_type == data_category(options.category))
+        datacategories.insert(msg->s1.msg_type);
+      else
       {
-        bufr_tables_list_merge(tables_list, tables);
-        bufr_free_tables(tables);
+        bufr_free_message(msg);
+        if (options.debug)
+          std::cout << "Message " << count << " in " << filename << " is not of desired category"
+                    << std::endl;
+        continue;
       }
+
+      // Use default tables first
+
+      BUFR_Tables *use_tables = file_tables;
+
+      // Try to find another if not compatible
+
+      if (use_tables->master.version != msg->s1.master_table_version)
+        use_tables = bufr_use_tables_list(tables_list, msg->s1.master_table_version);
+
+      // Read the dataset
+
+      BUFR_Dataset *dts = nullptr;
+      if (use_tables == nullptr)
+      {
+        // dts = NULL;  // is already null
+        std::cerr << "Warning: No BUFR table version " << msg->s1.master_table_version
+                  << " available" << std::endl;
+      }
+      else
+      {
+        dts = bufr_decode_message(msg, use_tables);
+        if (options.verbose)
+        {
+          std::cout << "Decoding message version " << msg->s1.master_table_version
+                    << " with BUFR tables version " << use_tables->master.version << std::endl;
+        }
+      }
+
+      if (dts == nullptr)
+      {
+        bufr_free_message(msg);
+        // continuing at this point may cause a segmentation fault
+        throw std::runtime_error("Could not decode message " +
+                                 boost::lexical_cast<std::string>(count));
+      }
+      if (dts->data_flag & BUFR_FLAG_INVALID)
+      {
+        bufr_free_message(msg);
+        // continuing at this point may cause a segmentation fault
+        throw std::runtime_error("Message number " + boost::lexical_cast<std::string>(count) +
+                                 " is invalid");
+      }
+
+      // Search for local table updates
+
+      if (bufr_contains_tables(dts))
+      {
+        BUFR_Tables *tables = bufr_extract_tables(dts);
+        if (tables != nullptr)
+        {
+          bufr_tables_list_merge(tables_list, tables);
+          bufr_free_tables(tables);
+        }
+      }
+
+      append_message(messages, dts, file_tables);
+
+      // Done with the current message
+
+      bufr_free_dataset(dts);
+      bufr_free_message(msg);
     }
-
-    append_message(messages, dts, file_tables);
-
-    // Done with the current message
-
-    bufr_free_dataset(dts);
-    bufr_free_message(msg);
+    catch (std::exception &e)
+    {
+      std::cerr << "Warning: " << e.what() << "  ...skipping to next message in '" << filename
+                << "'" << std::endl;
+    }
   }
 }
 
@@ -1666,9 +1676,9 @@ void copy_records_amdar(NFmiFastQueryInfo &info, const Messages &messages, const
     if (lon != kFloatMissing && (lon < -180 || lon > 180))
     {
       if (options.debug)
-        std::cerr
-            << "Warning: BUFR message contains a station with longitude out of bounds [-180,180]: "
-            << lon << std::endl;
+        std::cerr << "Warning: BUFR message contains a station with longitude out of bounds "
+                     "[-180,180]: "
+                  << lon << std::endl;
     }
     else if (lat != kFloatMissing && (lat < -90 || lat > 90))
     {
@@ -1734,7 +1744,8 @@ void copy_records_buoy_ship(NFmiFastQueryInfo &info,
 
     if (laststation != name)
     {
-      // Find the station based on the name. If there's no match, the station is invalid and we skip
+      // Find the station based on the name. If there's no match, the station is invalid and we
+      // skip
       // it
       if (!info.Location(name)) continue;
     }
@@ -1754,9 +1765,9 @@ void copy_records_buoy_ship(NFmiFastQueryInfo &info,
     if (lon != kFloatMissing && (lon < -180 || lon > 180))
     {
       if (options.debug)
-        std::cerr
-            << "Warning: BUFR message contains a station with longitude out of bounds [-180,180]: "
-            << lon << std::endl;
+        std::cerr << "Warning: BUFR message contains a station with longitude out of bounds "
+                     "[-180,180]: "
+                  << lon << std::endl;
     }
     else if (lat != kFloatMissing && (lat < -90 || lat > 90))
     {
@@ -1958,8 +1969,8 @@ int run(int argc, char *argv[])
   {
     std::ofstream out(options.outfile.c_str(),
                       std::ios::out | std::ios::binary);  // VC++ vaatii ett‰ tiedosto avataan
-                                                          // bin‰‰risen‰ (Linuxissa se on default
-                                                          // optio)
+    // bin‰‰risen‰ (Linuxissa se on default
+    // optio)
     out << *data;
   }
 

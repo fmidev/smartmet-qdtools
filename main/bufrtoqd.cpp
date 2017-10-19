@@ -833,6 +833,8 @@ void read_message(const std::string &filename,
                 << "'" << std::endl;
     }
   }
+
+  fclose(bufr);
 }
 
 // ----------------------------------------------------------------------
@@ -888,6 +890,11 @@ std::pair<BufrDataCategory, Messages> read_messages(const std::list<std::string>
     {
       read_message(file, messages, file_tables, tables_list, datacategories);
       succesful_parse_events++;
+    }
+    catch (std::exception &e)
+    {
+      errorneous_parse_events++;
+      std::cerr << "Warning: " << e.what() << std::endl;
     }
     catch (...)
     {

@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.10.18
+Version: 17.10.19
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -185,6 +185,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Oct 19 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.10.19-1.fmi
+- bufrtoqd now fcloses the files to avoid reaching limits on the number of open files
+
 * Wed Oct 18 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.10.18-1.fmi
 - bufrtoqd now skips bad messages in individual files instead of skipping the rest of the file
 

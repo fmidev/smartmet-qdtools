@@ -108,6 +108,7 @@
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiGrid.h>
+#include <newbase/NFmiMultiQueryInfo.h>
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
 #include <newbase/NFmiStringTools.h>
@@ -140,7 +141,7 @@ void usage()
 {
   cout << "Usage: qdcrop [options] [inputquerydata] [outputquerydata]" << endl
        << endl
-       << "Qdcrop extracts a subgrid from the original gridded querydata." << endl
+       << "qdcrop extracts a subgrid from the original gridded querydata." << endl
        << "Simultaneously one may extract only a subset of the available" << endl
        << "parameters and levels." << endl
        << endl
@@ -151,6 +152,9 @@ void usage()
        << endl
        << "-V" << endl
        << "\tPreserve querydata version number." << endl
+       << endl
+       << "-R" << endl
+       << "\tRead all files in the input directory." << endl
        << endl
        << "-g <geometry>" << endl
        << endl
@@ -919,11 +923,13 @@ int run(int argc, const char* argv[])
   double opt_missing_limit = -1;      // allowed percentage of missing values
   std::string opt_missing_parameter;  // parameter to be checked (default = all)
 
+  bool opt_multifile = false;  // -R enables multifile input
+
   vector<NFmiTime> opt_crops;  // -S option
 
   // Read command line arguments
 
-  NFmiCmdLine cmdline(argc, argv, "hVg!G!P!p!r!a!A!l!t!T!d!w!W!i!I!z!Z!S!m!M!");
+  NFmiCmdLine cmdline(argc, argv, "hVg!G!P!p!r!a!A!l!t!T!d!w!W!i!I!z!Z!S!m!M!R");
   if (cmdline.Status().IsError()) throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
 
   // help option must be checked before checking the number
@@ -1062,6 +1068,8 @@ int run(int argc, const char* argv[])
       opt_crops.push_back(ParseDate(*it));
   }
 
+  if (cmdline.isOption('R')) opt_multifile = !opt_multifile;
+
   if (!opt_parameters.empty() && !opt_delparameters.empty())
     throw runtime_error("Options -p and -r are mutually exclusive");
 
@@ -1080,18 +1088,29 @@ int run(int argc, const char* argv[])
 
   // read the querydata
 
-  NFmiQueryData qd(opt_infile);
-  NFmiFastQueryInfo srcinfo(&qd);
+  NFmiQueryData* qd = nullptr;
+  NFmiFastQueryInfo* srcinfo = nullptr;
+
+  if (opt_multifile)
+  {
+    srcinfo = new NFmiMultiQueryInfo(opt_infile);
+    std::cout << "MultiQueryInfo" << std::endl;
+  }
+  else
+  {
+    qd = new NFmiQueryData(opt_infile);
+    srcinfo = new NFmiFastQueryInfo(qd);
+  }
 
   // Cannot extract stations from grid data
 
-  if ((!opt_stations.empty() || !opt_nostations.empty()) && srcinfo.IsGrid())
+  if ((!opt_stations.empty() || !opt_nostations.empty()) && srcinfo->IsGrid())
     throw runtime_error("Cannot extract stations from gridded data");
 
   // Establish the querydata version to be produced
 
   double version = FmiInfoVersion;
-  if (opt_preserve_version) version = srcinfo.InfoVersion();
+  if (opt_preserve_version) version = srcinfo->InfoVersion();
 
   // Special optimization for fast removal of missing timesteps only. This is
   // mainly useful to remove invalid timesteps produced by model post processing
@@ -1099,31 +1118,32 @@ int run(int argc, const char* argv[])
 
   if (cmdline.NumberofOptions() == 1 && opt_missing_limit > 0)
   {
-    set<NFmiMetTime> badtimes = FindBadTimes(srcinfo, opt_missing_limit, opt_missing_parameter);
+    set<NFmiMetTime> badtimes = FindBadTimes(*srcinfo, opt_missing_limit, opt_missing_parameter);
     if (badtimes.empty())
-      qd.Write(opt_outfile);  // just copy as is to output
+      qd->Write(opt_outfile);  // just copy as is to output
     else
     {
       // Filter out the bad timesteps
-      NFmiTimeDescriptor tdesc(MakeTimeDescriptor(srcinfo, badtimes));
-      NFmiFastQueryInfo tmpinfo(srcinfo.ParamDescriptor(),
+      NFmiTimeDescriptor tdesc(MakeTimeDescriptor(*srcinfo, badtimes));
+      NFmiFastQueryInfo tmpinfo(srcinfo->ParamDescriptor(),
                                 tdesc,
-                                srcinfo.HPlaceDescriptor(),
-                                srcinfo.VPlaceDescriptor(),
+                                srcinfo->HPlaceDescriptor(),
+                                srcinfo->VPlaceDescriptor(),
                                 version);
       NFmiQueryData* data2 = NFmiQueryDataUtil::CreateEmptyData(tmpinfo);
       if (data2 == 0) throw runtime_error("Could not allocate memory for result data");
       NFmiFastQueryInfo dstinfo(data2);
 
-      for (dstinfo.ResetParam(), srcinfo.ResetParam(); dstinfo.NextParam() && srcinfo.NextParam();)
-        for (dstinfo.ResetLevel(), srcinfo.ResetLevel();
-             dstinfo.NextLevel() && srcinfo.NextLevel();)
+      for (dstinfo.ResetParam(), srcinfo->ResetParam();
+           dstinfo.NextParam() && srcinfo->NextParam();)
+        for (dstinfo.ResetLevel(), srcinfo->ResetLevel();
+             dstinfo.NextLevel() && srcinfo->NextLevel();)
           for (dstinfo.ResetTime(); dstinfo.NextTime();)
           {
-            srcinfo.Time(dstinfo.ValidTime());
-            for (dstinfo.ResetLocation(), srcinfo.ResetLocation();
-                 dstinfo.NextLocation() && srcinfo.NextLocation();)
-              dstinfo.FloatValue(srcinfo.FloatValue());
+            srcinfo->Time(dstinfo.ValidTime());
+            for (dstinfo.ResetLocation(), srcinfo->ResetLocation();
+                 dstinfo.NextLocation() && srcinfo->NextLocation();)
+              dstinfo.FloatValue(srcinfo->FloatValue());
           }
 
       data2->Write(opt_outfile);
@@ -1136,7 +1156,7 @@ int run(int argc, const char* argv[])
   // create new descriptors for the new data
 
   int x1, y1, dx, dy;
-  NFmiHPlaceDescriptor hdesc(MakeHPlaceDescriptor(srcinfo,
+  NFmiHPlaceDescriptor hdesc(MakeHPlaceDescriptor(*srcinfo,
                                                   opt_stations,
                                                   opt_nostations,
                                                   opt_geometry,
@@ -1147,10 +1167,10 @@ int run(int argc, const char* argv[])
                                                   y1,
                                                   dx,
                                                   dy));
-  NFmiVPlaceDescriptor vdesc(MakeVPlaceDescriptor(srcinfo, opt_levels));
+  NFmiVPlaceDescriptor vdesc(MakeVPlaceDescriptor(*srcinfo, opt_levels));
   NFmiParamDescriptor pdesc(MakeParamDescriptor(
-      srcinfo, opt_parameters, opt_delparameters, opt_newparameters, opt_analysisparameters));
-  NFmiTimeDescriptor tdesc(MakeTimeDescriptor(srcinfo,
+      *srcinfo, opt_parameters, opt_delparameters, opt_newparameters, opt_analysisparameters));
+  NFmiTimeDescriptor tdesc(MakeTimeDescriptor(*srcinfo,
                                               opt_crops,
                                               opt_times,
                                               opt_utc,
@@ -1172,38 +1192,38 @@ int run(int argc, const char* argv[])
 
   if (dstinfo.Grid())
   {
-    NFmiQueryDataUtil::FillGridData(&qd, data.get(), 0, gMissingIndex, NULL, true);
+    NFmiQueryDataUtil::FillGridData(qd, data.get(), 0, gMissingIndex, NULL, true);
   }
   else
   {
     for (dstinfo.ResetParam(); dstinfo.NextParam();)
     {
-      if (srcinfo.Param(dstinfo.Param()))
+      if (srcinfo->Param(dstinfo.Param()))
       {
         for (dstinfo.ResetLevel(); dstinfo.NextLevel();)
         {
-          if (!srcinfo.Level(*dstinfo.Level()))
+          if (!srcinfo->Level(*dstinfo.Level()))
             throw runtime_error("Level not available in querydata");
 
           for (dstinfo.ResetTime(); dstinfo.NextTime();)
           {
-            if (!srcinfo.Time(dstinfo.ValidTime()))
+            if (!srcinfo->Time(dstinfo.ValidTime()))
               throw runtime_error("Time not available in querydata");
 
             // copy point data quickly if all stations are kept
             if (opt_stations.empty() && opt_nostations.empty())
             {
-              for (dstinfo.ResetLocation(), srcinfo.ResetLocation();
-                   dstinfo.NextLocation() && srcinfo.NextLocation();)
-                dstinfo.FloatValue(srcinfo.FloatValue());
+              for (dstinfo.ResetLocation(), srcinfo->ResetLocation();
+                   dstinfo.NextLocation() && srcinfo->NextLocation();)
+                dstinfo.FloatValue(srcinfo->FloatValue());
             }
             else
             {
               // slower version if stations are kept & removed
               for (dstinfo.ResetLocation(); dstinfo.NextLocation();)
               {
-                srcinfo.Location(dstinfo.Location()->GetIdent());
-                dstinfo.FloatValue(srcinfo.FloatValue());
+                srcinfo->Location(dstinfo.Location()->GetIdent());
+                dstinfo.FloatValue(srcinfo->FloatValue());
               }
             }
           }
@@ -1219,37 +1239,38 @@ int run(int argc, const char* argv[])
        ++it)
   {
     FmiParameterName paramnum = parse_param(*it);
-    if (!srcinfo.Param(paramnum) || !dstinfo.Param(paramnum))
+    if (!srcinfo->Param(paramnum) || !dstinfo.Param(paramnum))
       throw runtime_error("Error copy parameter " + *it +
                           " from origin time, parameter not available");
 
     for (dstinfo.ResetLevel(); dstinfo.NextLevel();)
     {
-      if (!srcinfo.Level(*dstinfo.Level())) throw runtime_error("Level not available in querydata");
+      if (!srcinfo->Level(*dstinfo.Level()))
+        throw runtime_error("Level not available in querydata");
 
       // copy point data
       if (opt_stations.empty() && opt_nostations.empty())
       {
-        for (dstinfo.ResetLocation(), srcinfo.ResetLocation();
-             dstinfo.NextLocation() && srcinfo.NextLocation();)
+        for (dstinfo.ResetLocation(), srcinfo->ResetLocation();
+             dstinfo.NextLocation() && srcinfo->NextLocation();)
         {
           // We assume first time is origin time
-          srcinfo.FirstTime();
+          srcinfo->FirstTime();
           for (dstinfo.ResetTime(); dstinfo.NextTime();)
-            dstinfo.FloatValue(srcinfo.FloatValue());
+            dstinfo.FloatValue(srcinfo->FloatValue());
         }
       }
       else
       {
         for (dstinfo.ResetLocation(); dstinfo.NextLocation();)
         {
-          if (srcinfo.Location(dstinfo.Location()->GetIdent()))
+          if (srcinfo->Location(dstinfo.Location()->GetIdent()))
           {
             // We assume first time is origin time
-            srcinfo.FirstTime();
+            srcinfo->FirstTime();
             for (dstinfo.ResetTime(); dstinfo.NextTime();)
             {
-              dstinfo.FloatValue(srcinfo.FloatValue());
+              dstinfo.FloatValue(srcinfo->FloatValue());
             }
           }
         }
@@ -1290,6 +1311,9 @@ int run(int argc, const char* argv[])
   // finish up by printing the result
 
   data->Write(opt_outfile);
+
+  delete srcinfo;
+  delete qd;
 
   return 0;
 }

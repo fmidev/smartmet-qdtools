@@ -397,7 +397,8 @@ void parse_time_units(NcVar* t, boost::posix_time::ptime* origintime, long* time
 
   *origintime = Fmi::TimeParser::parse_iso(datestr + "T" + timestr);
 
-  if (parts.size() == 5) *origintime += boost::posix_time::duration_from_string(parts[4]);
+  if (parts.size() == 5 && boost::iequals(parts[4], "UTC") == false)
+    *origintime += boost::posix_time::duration_from_string(parts[4]);
 }
 
 // ----------------------------------------------------------------------

@@ -5,7 +5,14 @@ $results = "results";
 
 %usednames = ();
 
-# DoTest("myocean","myocean.sqd","-c ../cnf/netcdf.conf data/myocean.nc");
+foreach my $input (glob "data/*.nc") {
+	my $output=$input ;
+	$output =~ s%^data/%% ;
+	$output =~ s%[.]nc$%.sqd% ;
+	my $name=$output ;
+	$name=~ s%[.]sqd%% ;
+	DoTest("$name","$output","-c ../cnf/netcdf.conf $input");
+}
 
 print "Done\n";
 
@@ -19,12 +26,12 @@ sub DoTest
 
     if(exists($usednames{$name}))
     {
-	print "Virhe regressiotesteissä: $name käytössä useamman kerran\n";
+	print "Virhe regressiotesteissï¿½: $name kï¿½ytï¿½ssï¿½ useamman kerran\n";
 	exit(1);
     }
     $usednames{$name} = 1;
 
-    # Halutut tulokset ovat täällä
+    # Halutut tulokset ovat tï¿½ï¿½llï¿½
 
     my($resultfile) = "nctoqd_$name";
 
@@ -34,7 +41,7 @@ sub DoTest
     # Korjaa komento lopulliseen muotoon
     $cmd = "$program $arguments $results/$tmpfile";
 
-    # Aja käsky
+    # Aja kï¿½sky
     
     # print "$cmd\n";
     # $output = `$cmd 2>/dev/null`;

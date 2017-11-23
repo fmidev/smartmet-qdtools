@@ -5,13 +5,20 @@ $results = "results";
 
 %usednames = ();
 
-foreach my $input (glob "data/*.nc") {
-	my $output=$input ;
-	$output =~ s%^data/%% ;
-	$output =~ s%[.]nc$%.sqd% ;
-	my $name=$output ;
-	$name=~ s%[.]sqd%% ;
-	DoTest("$name","$output","-c ../cnf/netcdf.conf $input");
+# Keep temporaries: useful to produce new result files
+$keeptmp = "";
+if ( scalar @ARGV > 0 && $ARGV[0] eq "keeptmp" ) {
+	$keeptmp = "yes";
+	print "Keeping temporary files\n";
+}
+
+foreach my $input ( glob "data/*.nc" ) {
+	my $output = $input;
+	$output =~ s%^data/%%;
+	$output =~ s%[.]nc$%.sqd%;
+	my $name = $output;
+	$name =~ s%[.]sqd%%;
+	DoTest( "$name", "$output", "-c ../cnf/netcdf.conf $input" );
 }
 
 print "Done\n";
@@ -20,82 +27,71 @@ print "Done\n";
 # Run a single test
 # ----------------------------------------------------------------------
 
-sub DoTest
-{
-    my($text,$name,$arguments) = @_;
+sub DoTest {
+	my ( $text, $name, $arguments ) = @_;
 
-    if(exists($usednames{$name}))
-    {
-	print "Virhe regressiotesteiss�: $name k�yt�ss� useamman kerran\n";
-	exit(1);
-    }
-    $usednames{$name} = 1;
-
-    # Halutut tulokset ovat t��ll�
-
-    my($resultfile) = "nctoqd_$name";
-
-    # Saadut tulokset
-    my($tmpfile) = "${resultfile}.tmp";
-
-    # Korjaa komento lopulliseen muotoon
-    $cmd = "$program $arguments $results/$tmpfile";
-
-    # Aja k�sky
-    
-    # print "$cmd\n";
-    # $output = `$cmd 2>/dev/null`;
-    $output = `$cmd`;
-
-    # Vertaa tuloksia
-
-    print padname($text);
-
-    if(! -e "results/$tmpfile")
-    {
-	print " FAILED TO PRODUCE OUTPUT FILE\n";
-    }
-    elsif(! -e "results/$resultfile")
-    {
-	print " FAILED: TRUE RESULT MISSING\n";
-	unlink("$results/$tmpfile");
-    }
-    else
-    {
-	my($difference) = `../qddifference results/$resultfile results/$tmpfile`;
-
-	$difference =~ s/^\s+//;
-	$difference =~ s/\s+$//;
-	
-	if($difference < 0.0001)
-	{
-	    if($difference <= 0)
-	    { print " ok\n"; }
-	    else
-	    { print " ok (diff <= $difference)\n"; }
-	    unlink("$results/$tmpfile");
+	if ( exists( $usednames{$name} ) ) {
+		print "Virhe regressiotesteissä: $name käytössä useamman kerran\n";
+		exit(1);
 	}
-	else
-	{
-	    print " FAILED! (maxdiff = $difference)\n";
-	    print "( $resultfile <> $tmpfile in $results/ )\n";
+	$usednames{$name} = 1;
+
+	# Halutut tulokset ovat täällä
+	my ($resultfile) = "nctoqd_$name";
+
+	# Saadut tulokset
+	my ($tmpfile) = "${resultfile}.tmp";
+
+	# Korjaa komento lopulliseen muotoon
+	$cmd = "$program $arguments $results/$tmpfile";
+
+	# Aja k�sky
+
+	# print "$cmd\n";
+	# $output = `$cmd 2>/dev/null`;
+	$output = `$cmd`;
+
+	# Vertaa tuloksia
+
+	print padname($text);
+
+	if ( !-e "results/$tmpfile" ) {
+		print " FAILED TO PRODUCE OUTPUT FILE\n";
 	}
-    }
+	elsif ( !-e "results/$resultfile" ) {
+		print " FAILED: TRUE RESULT MISSING\n";
+		if ( !$keeptmp ) { unlink("$results/$tmpfile"); }
+	}
+	else {
+		my ($difference) =
+		  `../qddifference results/$resultfile results/$tmpfile`;
+
+		$difference =~ s/^\s+//;
+		$difference =~ s/\s+$//;
+
+		if ( $difference < 0.0001 ) {
+			if   ( $difference <= 0 ) { print " ok\n"; }
+			else                      { print " ok (diff <= $difference)\n"; }
+			if ( !$keeptmp ) { unlink("$results/$tmpfile"); }
+		}
+		else {
+			print " FAILED! (maxdiff = $difference)\n";
+			print "( $resultfile <> $tmpfile in $results/ )\n";
+		}
+	}
 }
 
 # ----------------------------------------------------------------------
 # Pad the given string to 70 characters with dots
 # ----------------------------------------------------------------------
 
-sub padname
-{
-    my($str) = @_[0];
+sub padname {
+	my ($str) = @_[0];
 
-    while(length($str) < 70)
-    {
-	$str .= ".";
-    }
-    return $str;
+	while ( length($str) < 70 ) {
+		$str .= ".";
+	}
+	return $str;
 }
 
 # ----------------------------------------------------------------------

@@ -575,6 +575,7 @@ std::string find_projection(const NcFile& ncfile, double& longitudeOfProjectionO
 NFmiParamDescriptor create_pdesc(const NcFile& ncfile, const nctools::ParamConversions& paramconvs)
 {
   NFmiParamBag pbag;
+  unsigned int known_variables = 0;
 
   const float minvalue = kFloatMissing;
   const float maxvalue = kFloatMissing;
@@ -609,7 +610,13 @@ NFmiParamDescriptor create_pdesc(const NcFile& ncfile, const nctools::ParamConve
                     interpolation);
     NFmiDataIdent ident(param);
     pbag.Add(ident);
+    known_variables++;
   }
+
+  if (known_variables == 0)
+    throw std::runtime_error(
+        "input does not contain any convertable variables. Do you need to define some conversion "
+        "in config?");
 
   return NFmiParamDescriptor(pbag);
 }

@@ -21,10 +21,10 @@ BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: smartmet-library-calculator-devel >= 17.8.28
-BuildRequires: smartmet-library-gis-devel >= 17.10.31
+BuildRequires: smartmet-library-gis-devel >= 17.11.22
 BuildRequires: smartmet-library-imagine-devel >= 17.9.22
 BuildRequires: smartmet-library-macgyver-devel >= 17.8.28
-BuildRequires: smartmet-library-newbase-devel >= 17.10.29
+BuildRequires: smartmet-library-newbase-devel >= 17.11.16
 BuildRequires: smartmet-library-smarttools-devel >= 17.8.28
 BuildRequires: mdsplib >= 16.4.8
 BuildRequires: netcdf-devel >= 4.3.3.1
@@ -35,10 +35,10 @@ BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
 Requires: smartmet-timezones >= 17.10.26
 Requires: smartmet-library-calculator >= 17.8.28
-Requires: smartmet-library-gis >= 17.10.31
+Requires: smartmet-library-gis >= 17.11.22
 Requires: smartmet-library-imagine >= 17.9.22
 Requires: smartmet-library-macgyver >= 17.8.28
-Requires: smartmet-library-newbase >= 17.10.29
+Requires: smartmet-library-newbase >= 17.11.16
 Requires: smartmet-library-smarttools >= 17.8.28
 Requires: eccodes
 Requires: hdf5 >= 1.8.12

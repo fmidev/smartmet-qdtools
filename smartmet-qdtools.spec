@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.11.1
+Version: 17.11.23
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -185,6 +185,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Nov 23 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.11.23-1.fmi
+- nctoqd is now able to handle more model data
+
 * Wed Nov  1 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.11.1-1.fmi
 - Rubuilt due to GIS-library API change
 

@@ -22,28 +22,18 @@ sub DoTest
 
     if(exists($usednames{$name}))
     {
-	print "Virhe regressiotesteissä: $name käytössä useamman kerran\n";
+	print "Error: $name used more than once\n";
 	exit(1);
     }
     $usednames{$name} = 1;
 
-    # Halutut tulokset ovat täällä
-
     my($resultfile) = "radartoqd_$name";
-
-    # Saadut tulokset
     my($tmpfile) = "${resultfile}.tmp";
-
-    # Korjaa komento lopulliseen muotoon
     $cmd = "$program $arguments $results/$tmpfile";
-
-    # Aja käsky
     
     # print "$cmd\n";
     # $output = `$cmd 2>/dev/null`;
     $output = `$cmd`;
-
-    # Vertaa tuloksia
 
     print padname($text);
 

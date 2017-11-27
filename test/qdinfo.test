@@ -2,120 +2,120 @@
 
 $program = "../qdinfo";
 $results = "results";
-$hiladata = "data/hiladata.sqd";
-$pistedata = "data/pistedata.fqd";
+$griddata = "data/griddata.sqd";
+$pointdata = "data/pointdata.sqd";
 
 %usednames = ();
 
 # option -q
 
-DoTest("argumentti -q onnistuu",
-       "argument_q_succeeds",
-       "-q $pistedata");
+DoTest("option -q succeeds",
+       "option_q_succeeds",
+       "-q $pointdata");
 
-DoTest("argumentti -q epäonnistuu",
-       "argument_q_fails",
+DoTest("option -q fails",
+       "option_q_fails",
        "-q foobar");
 
 # option -l
 
-DoTest("argumentti -l",
-       "argument_l",
+DoTest("option -l",
+       "option_l",
        "-l");
 
 # option -v
 
-DoTest("argumentti -v pistedatalle",
-       "argument_v_piste",
-       "-v -q $pistedata");
+DoTest("option -v for point data",
+       "option_v_point",
+       "-v -q $pointdata");
 
 # option -p
 
-DoTest("argumentti -p pistedatalle",
-       "argument_p_piste",
-       "-p -q $pistedata");
+DoTest("option -p for point data",
+       "option_p_point",
+       "-p -q $pointdata");
 
-DoTest("argumentti -p hiladatalle",
-       "argument_p_hila",
-       "-p -q $hiladata");
+DoTest("option -p for grid data",
+       "option_p_grid",
+       "-p -q $griddata");
 
 # option -P
 
-DoTest("argumentti -P pistedatalle",
-       "argument_iso_p_piste",
-       "-P -q $pistedata");
+DoTest("option -P for point data",
+       "option_capital_p_point",
+       "-P -q $pointdata");
 
-DoTest("argumentti -P hiladatalle",
-       "argument_iso_p_hila",
-       "-P -q $hiladata");
+DoTest("option -P for grid data",
+       "option_capital_p_grid",
+       "-P -q $griddata");
 
 # option -t
 
-DoTest("argumentti -t pistedatalle",
-       "argument_t_piste",
-       "-t -q $pistedata");
+DoTest("option -t for point data",
+       "option_t_point",
+       "-t -q $pointdata");
 
-DoTest("argumentti -t hiladatalle",
-       "argument_t_hila",
-       "-t -q $hiladata");
+DoTest("option -t for grid data",
+       "option_t_grid",
+       "-t -q $griddata");
 
-DoTest("argumentti -t formaatin kera",
-       "argument_t_format",
-       "-t %A%Y%m%d%H%M%S -q $hiladata");
+DoTest("option -t formaatin kera",
+       "option_t_format",
+       "-t %A%Y%m%d%H%M%S -q $griddata");
 
 # option -T
 
-DoTest("argumentti -T pistedatalle",
-       "argument_iso_t_piste",
-       "-T -q $pistedata");
+DoTest("option -T for point data",
+       "option_capital_t_point",
+       "-T -q $pointdata");
 
-DoTest("argumentti -T hiladatalle",
-       "argument_iso_t_hila",
-       "-T -q $hiladata");
+DoTest("option -T for grid data",
+       "option_capital_t_grid",
+       "-T -q $griddata");
 
-DoTest("argumentti -T formaatin kera",
-       "argument_iso_t_format",
-       "-T %A%Y%m%d%H%M%S -q $hiladata");
+DoTest("option -T formaatin kera",
+       "option_capital_t_format",
+       "-T %A%Y%m%d%H%M%S -q $griddata");
 
 # option -z
 
-DoTest("argumentti -z pistedatalle",
-       "argument_z_piste",
-       "-z -q $pistedata");
+DoTest("option -z for point data",
+       "option_z_point",
+       "-z -q $pointdata");
 
-DoTest("argumentti -z hiladatalle",
-       "argument_z_hila",
-       "-z -q $hiladata");
+DoTest("option -z for grid data",
+       "option_z_grid",
+       "-z -q $griddata");
 
 # option -r
 
-DoTest("argumentti -r pistedatalle",
-       "argument_r_piste",
-       "-r -q $pistedata");
+DoTest("option -r for point data",
+       "option_r_point",
+       "-r -q $pointdata");
 
-DoTest("argumentti -r hiladatalle",
-       "argument_r_hila",
-       "-r -q $hiladata");
+DoTest("option -r for grid data",
+       "option_r_grid",
+       "-r -q $griddata");
 
 # option -x
 
-DoTest("argumentti -x pistedatalle",
-       "argument_x_piste",
-       "-x -q $pistedata");
+DoTest("option -x for point data",
+       "option_x_point",
+       "-x -q $pointdata");
 
-DoTest("argumentti -x hiladatalle",
-       "argument_x_hila",
-       "-x -q $hiladata");
+DoTest("option -x for grid data",
+       "option_x_grid",
+       "-x -q $griddata");
 
 # option -X
 
-DoTest("argumentti -X pistedatalle",
-       "argument_iso_x_piste",
-       "-X -q $pistedata");
+DoTest("option -X for point data",
+       "option_capital_x_point",
+       "-X -q $pointdata");
 
-DoTest("argumentti -X hiladatalle",
-       "argument_iso_x_hila",
-       "-X -q $hiladata");
+DoTest("option -X for grid data",
+       "option_capital_x_grid",
+       "-X -q $griddata");
 
 print "Done\n";
 
@@ -129,26 +129,15 @@ sub DoTest
 
     if(exists($usednames{$name}))
     {
-	print "Virhe regressiotesteissä: $name käytössä useamman kerran\n";
+	print "Error: $name used more than once\n";
 	exit(1);
     }
     $usednames{$name} = 1;
 
-    # Halutut tulokset ovat täällä
-
     my($resultfile) = "qdinfo_$name";
-
-    # Saadut tulokset
     my($tmpfile) = "${resultfile}.tmp";
-
-    # Korjaa komento lopulliseen muotoon
     $cmd = "$program $arguments 2>&1";
-
-    # Aja käsky
-    
     $output = `$cmd`;
-
-    # Vertaa tuloksia
 
     print padname($text);
     if(equalcontent("$results/$resultfile",$output))

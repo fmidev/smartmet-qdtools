@@ -83,31 +83,21 @@ sub DoTest
 
     if(exists($usednames{$name}))
     {
-	print "Virhe regressiotesteissä: $name käytössä useamman kerran\n";
+	print "Error: $name used more than once\n";
 	exit(1);
     }
     $usednames{$name} = 1;
 
-    # Halutut tulokset ovat täällä
-
     my($resultfile) = "qdarea_$name";
-
-    # Saadut tulokset
     my($tmpfile) = "${resultfile}.tmp";
-
-    # Korjaa komento lopulliseen muotoon
     $cmd = "$qdarea -c $coordinatefile $arguments -q $data 2>&1";
 
-    # Aja käsky
-    
     $output = `$cmd`;
-
-    # Vertaa tuloksia
 
     print padname($text);
     if(equalcontent("$results/$resultfile",$output))
     {
-	print " ok\n";
+	print " OK\n";
 	unlink($tmpfile);
     }
     else

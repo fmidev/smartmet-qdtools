@@ -31,27 +31,18 @@ sub DoTest {
 	my ( $text, $name, $arguments ) = @_;
 
 	if ( exists( $usednames{$name} ) ) {
-		print "Virhe regressiotesteissä: $name käytössä useamman kerran\n";
+		print "Error: $name used more than once\n";
 		exit(1);
 	}
 	$usednames{$name} = 1;
 
-	# Halutut tulokset ovat täällä
 	my ($resultfile) = "nctoqd_$name";
-
-	# Saadut tulokset
 	my ($tmpfile) = "${resultfile}.tmp";
-
-	# Korjaa komento lopulliseen muotoon
 	$cmd = "$program $arguments $results/$tmpfile";
-
-	# Aja k�sky
 
 	# print "$cmd\n";
 	# $output = `$cmd 2>/dev/null`;
 	$output = `$cmd`;
-
-	# Vertaa tuloksia
 
 	print padname($text);
 
@@ -70,8 +61,8 @@ sub DoTest {
 		$difference =~ s/\s+$//;
 
 		if ( $difference < 0.0001 ) {
-			if   ( $difference <= 0 ) { print " ok\n"; }
-			else                      { print " ok (diff <= $difference)\n"; }
+			if   ( $difference <= 0 ) { print " OK\n"; }
+			else                      { print " OK (diff <= $difference)\n"; }
 			if ( !$keeptmp ) { unlink("$results/$tmpfile"); }
 		}
 		else {

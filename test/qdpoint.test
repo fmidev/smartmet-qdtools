@@ -3,223 +3,188 @@
 $qdpoint = "../qdpoint";
 $coordinatefile = "conf/coordinates.txt";
 $results = "results";
-$hiladata = "data/hiladata.sqd";
-$pistedata = "data/pistedata.fqd";
+$griddata = "data/griddata.sqd";
+$pointdata = "data/pointdata.sqd";
 $synopdata = "data/synop.sqd";
 
 %usednames = ();
 
 
-# Paikannimi optio -p
-
-DoTest("default querydata toimii",
+DoTest("default querydata works",
        "default_data",
-       "-p Helsinki > /dev/null && echo Toimii || echo Ei toimi");
+       "-p Helsinki > /dev/null && echo works || echo does not work");
 
-DoTest("pistedatan tulostus Helsinkiin",
+DoTest("poindata Helsinki",
        "piste_data_helsinki",
-       "-p Helsinki -q $pistedata");
+       "-p Helsinki -q $pointdata");
 
-DoTest("hiladatan tulostus Helsinkiin",
+DoTest("griddata Helsinki",
        "hila_data_helsinki",
-       "-p Helsinki -q $pistedata");
+       "-p Helsinki -q $pointdata");
 
-DoTest("pistedata Helsinki ja Tampere",
+DoTest("pointdata Helsinki and Tampere",
        "piste_data_helsinki_tampere",
-       "-p Helsinki,Tampere -q $pistedata");
+       "-p Helsinki,Tampere -q $pointdata");
 
-DoTest("hiladata Helsinki ja Tampere",
+DoTest("griddata Helsinki and Tampere",
        "hila_data_helsinki_tampere",
-       "-p Helsinki,Tampere -q $hiladata");
+       "-p Helsinki,Tampere -q $griddata");
 
-DoTest("pistedata Neverlandiin",
+DoTest("pointdata Neverland",
        "piste_data_neverland",
-       "-p Neverland -q $pistedata");
+       "-p Neverland -q $pointdata");
 
-# Paikkalista optio -l
-
-DoTest("paikkakuntien tulostus -l optiolla",
+DoTest("locations with -l",
        "paikkakunnat_hki_tampere_turku",
-       "-l data/asemalista.dat -q $hiladata");
+       "-l data/asemalista.dat -q $griddata");
 
-# Parametri optio -P
-
-DoTest("lämpötilan poimiminen -P optiolla pistedatasta",
+DoTest("pointdata -P Temperature",
        "lampotila_piste_data_helsinki",
-       "-P Temperature -p Helsinki -q $pistedata");
+       "-P Temperature -p Helsinki -q $pointdata");
 
-DoTest("lämpötilan poimiminen -P optiolla hiladatasta",
+DoTest("griddata -P Temperature",
        "lampotila_hila_data_helsinki",
-       "-P Temperature -p Helsinki -q $hiladata");
+       "-P Temperature -p Helsinki -q $griddata");
 
-# Useampi parametri kerrallaan
-
-DoTest("usean parametrin poimiminen -P optiolla pistedatasta",
+DoTest("pointdata -P Temeprature,Pressure",
        "lampotila_paine_piste_data_helsinki",
-       "-P Temperature,Pressure -p Helsinki -q $pistedata");
+       "-P Temperature,Pressure -p Helsinki -q $pointdata");
 
-DoTest("usean parametrin poimiminen -P optiolla hiladatasta",
+DoTest("griddata -P Temperature,Pressure",
        "lampotila_paine_hila_data_helsinki",
-       "-P Temperature,Pressure -p Helsinki -q $hiladata");
+       "-P Temperature,Pressure -p Helsinki -q $griddata");
 
-# Haluttu koordinaatti
-
-DoTest("halutun latlongin poimiminen -x -y optiolla pistedatasta",
+DoTest("pointdata -x -y",
        "latlong_piste_data_helsinki",
-       "-x 25 -y 60 -P Temperature -q $pistedata");
+       "-x 25 -y 60 -P Temperature -q $pointdata");
 
-DoTest("halutun latlongin poimiminen -x -y optiolla hiladatasta",
+DoTest("griddata -x -y",
        "latlong_hila_data_helsinki",
-       "-x 25 -y 60 -P Temperature -q $hiladata");
+       "-x 25 -y 60 -P Temperature -q $griddata");
 
-# Rivien lukumääräoptio -n
-
-DoTest("yhden rivin poimiminen -n optiolla pistedatasta",
+DoTest("pointdata -n",
        "yksirivi_piste_data_helsinki",
-       "-n -p Helsinki -q $pistedata");
+       "-n -p Helsinki -q $pointdata");
 
-DoTest("yhden rivin poimiminen -n optiolla hiladatasta",
+DoTest("griddata -n",
        "yksirivi_hila_data_helsinki",
-       "-n -p Helsinki -q $hiladata");
+       "-n -p Helsinki -q $griddata");
 
-DoTest("usean rivin poimiminen -n optiolla pistedatasta",
+DoTest("pointdata -n 3",
        "usearivi_piste_data_helsinki",
-       "-n 3 -p Helsinki -q $pistedata");
+       "-n 3 -p Helsinki -q $pointdata");
 
-DoTest("usean rivin poimiminen -n optiolla hiladatasta",
+DoTest("griddata -n 3",
        "usearivi_hila_data_helsinki",
-       "-n 3 -p Helsinki -q $hiladata");
+       "-n 3 -p Helsinki -q $griddata");
 
-# WMO asemanumero optio -w
-
-DoTest("WMO asemien poimiminen -w optiolla",
+DoTest("-w",
        "wmoasemat_piste",
-       "-w -q $pistedata");
+       "-w -q $pointdata");
 
-DoTest("WMO asemista viimeisin rivi -w -n optiolla",
+DoTest("-w -n",
        "wmoasemat_yksirivi_piste",
-       "-w -n -q $pistedata");
+       "-w -n -q $pointdata");
 
-DoTest("Yhden WMO aseman poimiminen -w optiolla",
+DoTest("-w 2978",
        "wmoasema_kaisaniemi",
-       "-w 2978 -q $pistedata");
+       "-w 2978 -q $pointdata");
 
-DoTest("Usean WMO aseman poimiminen -w optiolla",
+DoTest("-w 2978,2974",
        "wmoasema_kaisaniemi_ja_vantaa",
-       "-w 2978,2974 -q $pistedata");
+       "-w 2978,2974 -q $pointdata");
 
-# Asemien luettelointioptio -s
-
-DoTest("WMO asemien luettelointi -s optiolla",
+DoTest("-s -w -n",
        "wmoasemat_luettelo",
-       "-s -w -n -q $pistedata");
+       "-s -w -n -q $pointdata");
 
-DoTest("WMO asemien luettelointi -s -N optioilla",
+DoTest("-s -N 10",
        "wmoasemat_luettelo_lahimmat",
-       "-s -N 10 -p Helsinki -q $pistedata");
+       "-s -N 10 -p Helsinki -q $pointdata");
 
-DoTest("WMO asemien luettelointi -s -N 1 optioilla",
+DoTest("-s -N 1",
        "wmoasemat_luettelo_lahin",
-       "-s -N 1 -p Helsinki -q $pistedata");
+       "-s -N 1 -p Helsinki -q $pointdata");
 
-# Testataan etäisyysmaksimi -d
-
-DoTest("oletusarvoinen maksimietäisyys",
+DoTest("default -d",
        "oletus_maksimietaisyys",
-       "-p Helsinki -q $pistedata");
+       "-p Helsinki -q $pointdata");
 
-DoTest("liian pieni maksimietäisyys",
+DoTest("-d 1",
        "pieni_maksimietaisyys",
-       "-p Helsinki -d 1 -q $pistedata");
+       "-p Helsinki -d 1 -q $pointdata");
 
-DoTest("tarpeeksi iso maksimietäisyys",
+DoTest("-d 10",
        "iso_maksimietaisyys",
-       "-p Helsinki -d 10 -q $pistedata");
+       "-p Helsinki -d 10 -q $pointdata");
 
-# Testataan metafunktio MetaIsDark
-
-DoTest("metafunktio MetaIsDark Helsinkiin",
+DoTest("-P MetaIsDark Helsinki",
        "metaisdark_helsinki_piste",
-       "-P MetaIsDark -p Helsinki -q $pistedata");
+       "-P MetaIsDark -p Helsinki -q $pointdata");
 
-DoTest("metafunktio MetaIsDark Utsjoelle",
+DoTest("-P MetaIsDark Utsjoki",
        "metaisdark_utsjoki_hila",
-       "-P MetaIsDark -p Utsjoki -q $hiladata");
+       "-P MetaIsDark -p Utsjoki -q $griddata");
 
-# Testataan metafunktiot MetaN ja MetaNN
-
-DoTest("metafunktio MetaN ja MetaNN Helsinkiin",
+DoTest("-P MetaN,MetaNN",
        "metan_metann_helsinki_hila",
-       "-P TotalCloudCover,MiddleAndLowCloudCover,MetaN,MetaNN -p Helsinki -q $hiladata");
+       "-P TotalCloudCover,MiddleAndLowCloudCover,MetaN,MetaNN -p Helsinki -q $griddata");
 
-# Testataan metafunktio MetaSnowProb
-
-DoTest("metafunktio MetaSnowProb Helsinkiin",
+DoTest("-P MetaSnowProb",
        "metasnowprob_helsinki_piste",
-       "-P MetaSnowProb -p Helsinki -q $pistedata");
+       "-P MetaSnowProb -p Helsinki -q $pointdata");
 
-# Testataan metafunktio MetaSurfaceRadiation
-
-DoTest("metafunktio MetaSurfaceRadiation Helsinkiin",
+DoTest("-P MetaSurfaceRadiation",
        "metasurfaceradiation_helsinki_hila",
-       "-P MetaSurfaceRadiation -p Helsinki -q $hiladata");
+       "-P MetaSurfaceRadiation -p Helsinki -q $griddata");
 
-# Testataan metafunktio MetaThetaE
-
-DoTest("metafunktio MetaThetaE Helsinkiin",
+DoTest("-P MetaThetaE",
        "metathetae_helsinki_piste",
-       "-P Temperature,Pressure,Humidity,MetaThetaE -p Helsinki -q $pistedata");
+       "-P Temperature,Pressure,Humidity,MetaThetaE -p Helsinki -q $pointdata");
 
-# Testataan -q optio monella datalla
-
-DoTest("-q pistedata,hiladata",
+DoTest("-q pointdata,griddata",
        "piste_hila_jarjestys",
-       "-P Temperature -p Helsinki -q $pistedata,$hiladat");
+       "-P Temperature -p Helsinki -q $pointdata,$hiladat");
 
-DoTest("-q hiladata,pistedata",
+DoTest("-q griddata,pointdata",
        "hila_piste_jarjestys",
-       "-P Temperature -p Helsinki -q $hiladata,$pistedata");
+       "-P Temperature -p Helsinki -q $griddata,$pointdata");
 
-# < 5 km etaisyys loytyy vain pistedatasta
-DoTest("-q pistedata,hiladata -d 5",
+DoTest("-q pointdata,griddata -d 5",
        "piste_hila_jarjestys_etaisyys",
-       "-d 5 -P Temperature -p Helsinki -q $pistedata,$hiladata");
+       "-d 5 -P Temperature -p Helsinki -q $pointdata,$griddata");
 
-DoTest("-q hiladata,pistedata -d 5",
+DoTest("-q griddata,pointdata -d 5",
        "hila_piste_jarjestys_etaisyys",
-       "-d 5 -P Temperature -p Helsinki -q $hiladata,$pistedata");
+       "-d 5 -P Temperature -p Helsinki -q $griddata,$pointdata");
 
-# Puuttuvien arvojen käsittely
-
-DoTest("puuttuvien arvojen korvaus halutulla merkkijonolla",
+DoTest("-m NULL",
        "puuttuvien_korvaus",
        "-q $synopdata -w 2889 -m NULL");
 
-DoTest("puuttuvien arvojen interpolointi rajalla 60",
+DoTest("-i 60",
        "puuttuvien_interpolointi_60",
        "-q $synopdata -i 60 -w 2889 -P DewPoint");
 
-DoTest("puuttuvien arvojen interpolointi rajalla 120",
+DoTest("-i 120",
        "puuttuvien_interpolointi_120",
        "-q $synopdata -i 120 -w 2889 -P DewPoint");
 
-DoTest("puuttuvien arvojen interpolointi rajalla 180",
+DoTest("-i 180",
        "puuttuvien_interpolointi_180",
        "-q $synopdata -i 180 -w 2889 -P DewPoint");
 
-# Testataan -N optio
-
-DoTest("-N optio hakee lähimmät pisteet",
+DoTest("-N 5",
        "piste_N_lahinta",
-       "-N 5 -P Temperature -p Helsinki -q $pistedata");
+       "-N 5 -P Temperature -p Helsinki -q $pointdata");
 
-DoTest("-N optio hakee lähimmän yhden pisteen",
+DoTest("-N 1",
        "piste_1_lahin",
-       "-N 1 -P Temperature -p Helsinki -q $pistedata");
+       "-N 1 -P Temperature -p Helsinki -q $pointdata");
 
-DoTest("-N optio rajoittuu -d optiolla",
+DoTest("-N 100 -d 20",
        "piste_N_lahinta_etaisyydella",
-       "-N 100 -d 20 -P Temperature -p Helsinki -q $pistedata");
+       "-N 100 -d 20 -P Temperature -p Helsinki -q $pointdata");
 
 print "Done\n";
 
@@ -233,31 +198,20 @@ sub DoTest
 
     if(exists($usednames{$name}))
     {
-	print "Virhe regressiotesteissä: $name käytössä useamman kerran\n";
+	print "Error: $name used more than once\n";
 	exit(1);
     }
     $usednames{$name} = 1;
 
-    # Halutut tulokset ovat täällä
-
     my($resultfile) = "qdpoint_$name";
-
-    # Saadut tulokset
     my($tmpfile) = "${resultfile}.tmp";
-
-    # Korjaa komento lopulliseen muotoon
     $cmd = "$qdpoint -c $coordinatefile $arguments 2>&1";
-
-    # Aja käsky
-    
     $output = `$cmd`;
-
-    # Vertaa tuloksia
 
     print padname($text);
     if(equalcontent("$results/$resultfile",$output))
     {
-	print " ok\n";
+	print " OK\n";
 	unlink($tmpfile);
     }
     else

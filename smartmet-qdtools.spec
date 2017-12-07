@@ -23,8 +23,8 @@ BuildRequires: libpng-devel
 BuildRequires: smartmet-library-calculator-devel >= 17.8.28
 BuildRequires: smartmet-library-gis-devel >= 17.11.22
 BuildRequires: smartmet-library-imagine-devel >= 17.9.22
-BuildRequires: smartmet-library-macgyver-devel >= 17.8.28
-BuildRequires: smartmet-library-newbase-devel >= 17.11.16
+BuildRequires: smartmet-library-macgyver-devel >= 17.11.27
+BuildRequires: smartmet-library-newbase-devel >= 17.11.29
 BuildRequires: smartmet-library-smarttools-devel >= 17.8.28
 BuildRequires: smartmet-timezones
 BuildRequires: mdsplib >= 16.4.8
@@ -38,8 +38,8 @@ Requires: smartmet-timezones >= 17.10.26
 Requires: smartmet-library-calculator >= 17.8.28
 Requires: smartmet-library-gis >= 17.11.22
 Requires: smartmet-library-imagine >= 17.9.22
-Requires: smartmet-library-macgyver >= 17.8.28
-Requires: smartmet-library-newbase >= 17.11.16
+Requires: smartmet-library-macgyver >= 17.11.27
+Requires: smartmet-library-newbase >= 17.11.29
 Requires: smartmet-library-smarttools >= 17.8.28
 Requires: smartmet-timezones
 Requires: eccodes

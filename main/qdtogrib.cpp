@@ -593,16 +593,27 @@ void copy_values(NFmiFastQueryInfo &theInfo,
   get_conversion(param.GetIdent(), &scale, &offset);
 
   int i = 0;
+  bool missingValuesExist = false;
+
   for (theInfo.ResetLocation(); theInfo.NextLocation();)
   {
     float value = theInfo.FloatValue();
     if (value != kFloatMissing)
+    {
       theValueArray[i] = (value - offset) / scale;
+    }
     else
+    {
       theValueArray[i] = 9999;  // GRIB1 missing value by default
+      missingValuesExist = true;
+    }
     i++;
   }
 
+  if (missingValuesExist)
+  {
+    grib_set_long(gribHandle, "bitmapPresent", 1);
+  }
   grib_set_double_array(gribHandle, "values", &theValueArray[0], theValueArray.size());
 }
 

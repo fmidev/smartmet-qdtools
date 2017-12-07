@@ -114,6 +114,7 @@ NcVar* find_x_axis(const NcFile& ncfile)
   if (x == 0) x = find_axis(ncfile, "100  km");
   if (x == 0) x = find_axis(ncfile, "m");
   if (x == 0) x = find_axis(ncfile, "projection_x_coordinate");
+  if (x == 0) throw std::runtime_error("X-axis type unsupported");
 
   return x;
 }
@@ -134,8 +135,8 @@ NcVar* find_y_axis(const NcFile& ncfile)
   if (y == 0) y = find_axis(ncfile, "degreesN");
   if (y == 0) y = find_axis(ncfile, "100  km");
   if (y == 0) y = find_axis(ncfile, "m");
-
   if (y == 0) y = find_axis(ncfile, "projection_y_coordinate");
+  if (y == 0) throw std::runtime_error("Y-axis type unsupported");
 
   return y;
 }
@@ -170,22 +171,32 @@ void find_axis_bounds(NcVar* var, int n, double* x1, double* x2, const char* nam
   if (var == NULL) return;
 
   NcValues* values = var->values();
+  bool desc = false;  // Set to true if we detect decreasing instead of increasing values
 
   // Verify monotonous coordinates
+  if (var->num_vals() >= 2 && values->as_double(1) < values->as_double(0)) desc = true;
 
   for (int i = 1; i < var->num_vals(); i++)
   {
-    if (values->as_double(i) <= values->as_double(i - 1))
+    if (desc == false && values->as_double(i) <= values->as_double(i - 1))
       throw std::runtime_error(std::string(name) + "-axis is not monotonously increasing");
+    if (desc == true && values->as_double(i) >= values->as_double(i - 1))
+      throw std::runtime_error(std::string(name) + "-axis is not monotonously decreasing");
   }
 
   // Min&max is now easy
-
-  *x1 = values->as_double(0);
-  *x2 = values->as_double(var->num_vals() - 1);
+  if (desc == false)
+  {
+    *x1 = values->as_double(0);
+    *x2 = values->as_double(var->num_vals() - 1);
+  }
+  else
+  {
+    *x2 = values->as_double(0);
+    *x1 = values->as_double(var->num_vals() - 1);
+  }
 
   // Verify stepsize is even
-
   if (n <= 2) return;
 
   double step = ((*x2) - (*x1)) / (n - 1);
@@ -193,7 +204,11 @@ void find_axis_bounds(NcVar* var, int n, double* x1, double* x2, const char* nam
 
   for (int i = 1; i < var->num_vals(); i++)
   {
-    double s = values->as_double(i) - values->as_double(i - 1);
+    double s;
+    if (desc == false)
+      s = values->as_double(i) - values->as_double(i - 1);
+    else
+      s = values->as_double(i - 1) - values->as_double(i);
 
     if (std::abs(s - step) > tolerance * step)
       throw std::runtime_error(std::string(name) + "-axis is not regular with tolerance 1e-3");
@@ -252,6 +267,7 @@ void check_xaxis_units(NcVar* var)
   if (units == "degreesE") return;
   if (units == "100  km") return;
   if (units == "m") return;
+  if (units == "km") return;
 
   throw std::runtime_error("X-axis has unknown units: " + units);
 }
@@ -278,6 +294,7 @@ void check_yaxis_units(NcVar* var)
   if (units == "degreesN") return;
   if (units == "100  km") return;
   if (units == "m") return;
+  if (units == "km") return;
 
   throw std::runtime_error("Y-axis has unknown units: " + units);
 }
@@ -380,7 +397,8 @@ void parse_time_units(NcVar* t, boost::posix_time::ptime* origintime, long* time
 
   *origintime = Fmi::TimeParser::parse_iso(datestr + "T" + timestr);
 
-  if (parts.size() == 5) *origintime += boost::posix_time::duration_from_string(parts[4]);
+  if (parts.size() == 5 && boost::iequals(parts[4], "UTC") == false)
+    *origintime += boost::posix_time::duration_from_string(parts[4]);
 }
 
 // ----------------------------------------------------------------------
@@ -557,6 +575,7 @@ std::string find_projection(const NcFile& ncfile, double& longitudeOfProjectionO
 NFmiParamDescriptor create_pdesc(const NcFile& ncfile, const nctools::ParamConversions& paramconvs)
 {
   NFmiParamBag pbag;
+  unsigned int known_variables = 0;
 
   const float minvalue = kFloatMissing;
   const float maxvalue = kFloatMissing;
@@ -591,7 +610,13 @@ NFmiParamDescriptor create_pdesc(const NcFile& ncfile, const nctools::ParamConve
                     interpolation);
     NFmiDataIdent ident(param);
     pbag.Add(ident);
+    known_variables++;
   }
+
+  if (known_variables == 0)
+    throw std::runtime_error(
+        "input does not contain any convertable variables. Do you need to define some conversion "
+        "in config?");
 
   return NFmiParamDescriptor(pbag);
 }

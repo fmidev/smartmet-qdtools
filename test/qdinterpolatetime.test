@@ -32,19 +32,11 @@ sub DoTest
 {
     my($title,$command,$dataname) = @_;
 
-    # Halutut tulokset ovat t‰‰ll‰
-
     my($resultfile) = "results/$dataname";
-
-    # Saadut tulokset
     my($tmpfile) = "/tmp/$dataname";
-
-    # Aja k‰sky
     
     print padname($title);
     system("$command");
-
-    # Vertaa tuloksia
 
     if(equalcontent($resultfile,$tmpfile))
     {

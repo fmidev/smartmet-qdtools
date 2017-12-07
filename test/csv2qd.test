@@ -67,27 +67,17 @@ sub DoTest
 
     if(exists($usednames{$name}))
     {
-	print "Virhe regressiotesteissä: $name käytössä useamman kerran\n";
+	print "Error: $name used more than once\n";
 	exit(1);
     }
     $usednames{$name} = 1;
 
-    # Halutut tulokset ovat täällä
-
     my($resultfile) = "csv2qd_$name";
-
-    # Saadut tulokset
     my($tmpfile) = "${resultfile}.tmp";
-
-    # Korjaa komento lopulliseen muotoon
     $cmd = "$program $arguments $results/$tmpfile";
-
-    # Aja käsky
     
     # print "$cmd\n";
     $output = `$cmd`;
-
-    # Vertaa tuloksia
 
     print padname($text);
 

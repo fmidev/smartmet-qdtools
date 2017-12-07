@@ -2,142 +2,142 @@
 
 $program = "../qdcrop";
 $results = "results";
-$data = "data/hiladata.sqd";
-$pistedata = "data/pistedata.fqd";
+$data = "data/griddata.sqd";
+$pointdata = "data/pointdata.sqd";
 
 %usednames = ();
 
 # option -w
 
-DoTest("argument -w 2974,2944,2845 succeeds",
-       "argument_w_3_stations_succeeds",
-       "-w 2974,2944,2845 $pistedata");
+DoTest("option -w 2974,2944,2845 succeeds",
+       "w_3_stations_succeeds",
+       "-w 2974,2944,2845 $pointdata");
 
-DoTest("argument -w 2845-2944,2980 succeeds",
-       "argument_w_ok_ranges_succeeds",
-       "-w 2845-2944,2980 $pistedata");
+DoTest("option -w 2845-2944,2980 succeeds",
+       "w_ok_ranges_succeeds",
+       "-w 2845-2944,2980 $pointdata");
 
-DoTest("argument -W 0-2801,2836,2864-99999 succeeds",
-       "argument_W_discard_ranges_succeeds",
-       "-W 0-2801,2836,2864-99999 $pistedata");
+DoTest("option -W 0-2801,2836,2864-99999 succeeds",
+       "W_discard_ranges_succeeds",
+       "-W 0-2801,2836,2864-99999 $pointdata");
 
-DoTest("argument -w 2845-2944 -W 2900-2940 succeeds",
-       "argument_w_W_ranges_succeeds",
-       "-w 2845-2944 -W 2900-2940 $pistedata");
+DoTest("option -w 2845-2944 -W 2900-2940 succeeds",
+       "w_W_ranges_succeeds",
+       "-w 2845-2944 -W 2900-2940 $pointdata");
 
 # option -t
 
-DoTest("argument -i 18 succeeds",
-       "argument_i_18_succeeds",
+DoTest("option -i 18 succeeds",
+       "i_18_succeeds",
        "-i 18 $data");
 
-DoTest("argument -I 18 succeeds",
-       "argument_iso_i_18_succeeds",
+DoTest("option -I 18 succeeds",
+       "iso_i_18_succeeds",
        "-I 18 $data");
 
-DoTest("argument -t 0,48 -i 18 succeeds",
-       "argument_t_0_48_i_18_succeeds",
+DoTest("option -t 0,48 -i 18 succeeds",
+       "t_0_48_i_18_succeeds",
        "-t 0,48 -i 18 $data");
 
-DoTest("argument -T 0,48 -I 18 succeeds",
-       "argument_iso_t_0_48_iso_i_18_succeeds",
+DoTest("option -T 0,48 -I 18 succeeds",
+       "iso_t_0_48_iso_i_18_succeeds",
        "-T 0,48 -I 18 $data");
 
-DoTest("argument -t 10 succeeds",
-       "argument_t_10_succeeds",
+DoTest("option -t 10 succeeds",
+       "t_10_succeeds",
        "-t 10 $data");
 
-DoTest("argument -t 5,10 succeeds",
-       "argument_t_5_10_succeeds",
+DoTest("option -t 5,10 succeeds",
+       "t_5_10_succeeds",
        "-t 5,10 $data");
 
-DoTest("argument -t 1,10,3 succeeds",
-       "argument_t_1_10_3_succeeds",
+DoTest("option -t 1,10,3 succeeds",
+       "t_1_10_3_succeeds",
        "-t 1,10,3 $data");
 
-DoTest("argument -T 1,10,3 succeeds",
-       "argument_iso_t_1_10_3_succeeds",
+DoTest("option -T 1,10,3 succeeds",
+       "iso_t_1_10_3_succeeds",
        "-T 1,10,3 $data");
 
 # option -p
 
-DoTest("argument -p Temperature,Precipitation1h succeeds",
-       "argument_p_succeeds",
+DoTest("option -p Temperature,Precipitation1h succeeds",
+       "p_succeeds",
        "-p Temperature,Precipitation1h $data");
 
 # option -r
 
-DoTest("argument -r Temperature,TotalWindMS succeeds",
-       "argument_r_succeeds",
+DoTest("option -r Temperature,TotalWindMS succeeds",
+       "r_succeeds",
        "-r Temperature,TotalWindMS $data");
 
 # option -A
 
-DoTest("argument -A DewPoint,Temperature succeeds",
-       "argument_a_succeeds",
+DoTest("option -A DewPoint,Temperature succeeds",
+       "a_succeeds",
        "-A DewPoint,Temperature $data");
 
-DoTest("argument -p Temperature -A DewPoint succeeds",
-       "argument_p_a_succeeds",
+DoTest("option -p Temperature -A DewPoint succeeds",
+       "p_a_succeeds",
        "-p Temperature -A DewPoint $data");
 
 # option -g
 
-DoTest("argument -g 10x20+5+15 succeeds",
-       "argument_g_pos_succeeds",
+DoTest("option -g 10x20+5+15 succeeds",
+       "g_pos_succeeds",
        "-g 10x20+5+15 $data");
 
-DoTest("argument -g 10x20-10-20 succeeds",
-       "argument_g_minus_succeeds",
+DoTest("option -g 10x20-10-20 succeeds",
+       "g_minus_succeeds",
        "-g 10x20-10-20 $data");
 
 # option -G
 
-DoTest("argument -G 25,60,40,71 succeeds",
-       "argument_iso_g_succeeds",
+DoTest("option -G 25,60,40,71 succeeds",
+       "iso_g_succeeds",
        "-G 25,60,40,71 $data");
 
 # option -d
 
-DoTest("argument -d 2x1 succeeds",
-       "argument_g_2_1_succeeds",
+DoTest("option -d 2x1 succeeds",
+       "g_2_1_succeeds",
        "-d 2x1 $data");
 
-DoTest("argument -d 1x2 succeeds",
-       "argument_g_1_2_succeeds",
+DoTest("option -d 1x2 succeeds",
+       "g_1_2_succeeds",
        "-d 1x2 $data");
 
-DoTest("argument -d 2x2 succeeds",
-       "argument_g_2_2_succeeds",
+DoTest("option -d 2x2 succeeds",
+       "g_2_2_succeeds",
        "-d 2x2 $data");
 
 # option -g and -d simultaneously
 
-DoTest("argument -g 10x10+10+10 -d 2x2 succeeds",
-       "argument_gd_succeeds",
+DoTest("option -g 10x10+10+10 -d 2x2 succeeds",
+       "gd_succeeds",
        "-g 10x10+10+10 -d 2x2 $data");
 
 # Option -S
 
-DoTest("argument -S succeeds",
-       "argument_iso_s_succeeds",
+DoTest("option -S succeeds",
+       "iso_s_succeeds",
        "-S 200210111000,200210112000,200210120500 $data");
 
 # Option -P
 
-DoTest("argument -P succeeds",
-       "argument_iso_p_succeeds",
+DoTest("option -P succeeds",
+       "iso_p_succeeds",
        "-P latlon:20,60,40,70:50x50km $data");
 
 # Option -m
 
-DoTest("argument -m 60 succeeds",
-       "argument_m_60_succeeds",
-       "-m 60 $pistedata");
+DoTest("option -m 60 succeeds",
+       "m_60_succeeds",
+       "-m 60 $pointdata");
 
-DoTest("argument -m Temperature,60 succeeds",
-       "argument_m_temperature_60_succeeds",
-       "-m Temperature,60 $pistedata");
+DoTest("option -m Temperature,60 succeeds",
+       "m_temperature_60_succeeds",
+       "-m Temperature,60 $pointdata");
 
 print "Done\n";
 
@@ -151,26 +151,15 @@ sub DoTest
 
     if(exists($usednames{$name}))
     {
-	print "Virhe regressiotesteissä: $name käytössä useamman kerran\n";
+	print "Error: $name used more than once\n";
 	exit(1);
     }
     $usednames{$name} = 1;
 
-    # Halutut tulokset ovat täällä
-
     my($resultfile) = "qdcrop_$name";
-
-    # Saadut tulokset
     my($tmpfile) = "${resultfile}.tmp";
-
-    # Korjaa komento lopulliseen muotoon
     $cmd = "$program -V $arguments $results/$tmpfile";
-
-    # Aja käsky
-    
     $output = `$cmd`;
-
-    # Vertaa tuloksia
 
     print padname($text);
     if(equalcontent("$results/$resultfile","$results/$tmpfile"))

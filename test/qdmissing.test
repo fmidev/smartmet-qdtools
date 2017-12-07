@@ -2,128 +2,128 @@
 
 $qdmissing = "../qdmissing";
 $results = "results";
-$hiladata = "data/hiladata.sqd";
-$pistedata = "data/pistedata.fqd";
+$griddata = "data/griddata.sqd";
+$pointdata = "data/pointdata.sqd";
 $synopdata = "data/synop.sqd";
 
 %usednames = ();
 
-# Ilman optioita
+# Without options
 
-DoTest("pistedatan testi ilman optioita",
-       "pistedata",
-       "$pistedata");
+DoTest("pointdata without options",
+       "pointdata",
+       "$pointdata");
 
-DoTest("hiladatan testi ilman optioita",
-       "hiladata",
-       "$hiladata");
+DoTest("griddata without options",
+       "griddata",
+       "$griddata");
 
-DoTest("synopdatan testi ilman optioita",
+DoTest("synopdata without options",
        "synopdata",
        "$synopdata");
 
-# Optio -n
+# Option -n
 
-DoTest("pistedatan -n testi",
-       "pistedata_n",
-       "-n $pistedata");
+DoTest("pointdata -n",
+       "pointdata_n",
+       "-n $pointdata");
 
-DoTest("hiladatan -n testi",
-       "hiladata_n",
-       "-n $hiladata");
+DoTest("griddata -n",
+       "griddata_n",
+       "-n $griddata");
 
-DoTest("synopdatan -n testi",
+DoTest("synopdata -n",
        "synopdata_n",
        "-n $synopdata");
 
-# Optio -N
+# Option -N
 
-DoTest("pistedatan -N testi",
-       "pistedata_iso_n",
-       "-N $pistedata");
+DoTest("pointdata -N",
+       "pointdata_capital_n",
+       "-N $pointdata");
 
-DoTest("hiladatan -N testi",
-       "hiladata_iso_n",
-       "-N $hiladata");
+DoTest("griddata -N",
+       "griddata_capital_n",
+       "-N $griddata");
 
-DoTest("synopdatan -N testi",
-       "synopdata_iso_n",
+DoTest("synopdata -N",
+       "synopdata_capital_n",
        "-N $synopdata");
 
-# Optio -t
+# Option -t
 
-DoTest("pistedatan -t testi",
-       "pistedata_t",
-       "-t $pistedata");
+DoTest("pointdata -t",
+       "pointdata_t",
+       "-t $pointdata");
 
-DoTest("hiladatan -t testi",
-       "hiladata_t",
-       "-t $hiladata");
+DoTest("griddata -t",
+       "griddata_t",
+       "-t $griddata");
 
-DoTest("synopdatan -t testi",
+DoTest("synopdata -t",
        "synopdata_t",
        "-t $synopdata");
 
-# Optio -T UTC
+# Option -T UTC
 
-DoTest("pistedatan -T UTC testi",
-       "pistedata_T_UTC",
-       "-T UTC $pistedata");
+DoTest("pointdata -T UTC",
+       "pointdata_T_UTC",
+       "-T UTC $pointdata");
 
-DoTest("hiladatan -T UTC testi",
-       "hiladata_T_UTC",
-       "-T UTC $hiladata");
+DoTest("griddata -T UTC",
+       "griddata_T_UTC",
+       "-T UTC $griddata");
 
-DoTest("synopdatan -T testi",
+DoTest("synopdata -T",
        "synopdata_T_UTC",
        "-T UTC $synopdata");
 
-# Optio -P
+# Option -P
 
-DoTest("pistedatan -P Temperature,WindSpeedMS testi",
-       "pistedata_P_Temperature_WindSpeedMS",
-       "-P Temperature,WindSpeedMS $pistedata");
+DoTest("pointdata -P Temperature,WindSpeedMS",
+       "pointdata_P_Temperature_WindSpeedMS",
+       "-P Temperature,WindSpeedMS $pointdata");
 
-DoTest("hiladatan -P Temperature,WindSpeedMS testi",
-       "hiladata_P_Temperature_WindSpeedMS",
-       "-P Temperature,WindSpeedMS $hiladata");
+DoTest("griddata -P Temperature,WindSpeedMS",
+       "griddata_P_Temperature_WindSpeedMS",
+       "-P Temperature,WindSpeedMS $griddata");
 
-DoTest("synopdatan -P Temperature,WindSpeedMS testi",
+DoTest("synopdata -P Temperature,WindSpeedMS",
        "synopdata_P_Temperature_WindSpeedMS",
        "-P Temperature,WindSpeedMS $synopdata");
 
-# Optio -w
+# Option -w
 
-DoTest("pistedatan -w testi",
-       "pistedata_w",
-       "-w -P Temperature $pistedata");
+DoTest("pointdata -w",
+       "pointdata_w",
+       "-w -P Temperature $pointdata");
 
-DoTest("synopdatan -w testi",
+DoTest("synopdata -w",
        "synopdata_w",
        "-w -P Temperature $synopdata");
 
-# Optiot -w -Z
+# Options -w -Z
 
-DoTest("pistedatan -w -Z testi",
-       "pistedata_w_z",
-       "-w -Z -P Temperature $pistedata");
+DoTest("pointdata -w -Z",
+       "pointdata_w_z",
+       "-w -Z -P Temperature $pointdata");
 
-DoTest("synopdatan -w -Z testi",
+DoTest("synopdata -w -Z test",
        "synopdata_w_z",
        "-w -Z -P Temperature $synopdata");
 
-# Monta optiota
+# Several options
 
-DoTest("pistedatan optiokokoelma",
-       "pistedata_optiokokoelma",
-       "-P Temperature,WindSpeedMS -T Europe/Stockholm -N -t $pistedata");
+DoTest("pointdata several_options",
+       "pointdata_several_options",
+       "-P Temperature,WindSpeedMS -T Europe/Stockholm -N -t $pointdata");
 
-DoTest("hiladatan optiokokoelma",
-       "hiladata_optiokokoelma",
-       "-P Temperature,WindSpeedMS -T Europe/Stockholm -N -t $hiladata");
+DoTest("griddata several_options",
+       "griddata_several_options",
+       "-P Temperature,WindSpeedMS -T Europe/Stockholm -N -t $griddata");
 
-DoTest("synopdatan optiokokoelma",
-       "synopdata_optiokokoelma",
+DoTest("synopdata several_options",
+       "synopdata_several_options",
        "-P Temperature,WindSpeedMS -T Europe/Stockholm -N -t $synopdata");
 
 
@@ -139,26 +139,15 @@ sub DoTest
 
     if(exists($usednames{$name}))
     {
-	print "Virhe regressiotesteissä: $name käytössä useamman kerran\n";
+	print "Error: $name used more than once\n";
 	exit(1);
     }
     $usednames{$name} = 1;
 
-    # Halutut tulokset ovat täällä
-
     my($resultfile) = "qdmissing_$name";
-
-    # Saadut tulokset
     my($tmpfile) = "${resultfile}.tmp";
-
-    # Korjaa komento lopulliseen muotoon
     $cmd = "$qdmissing $arguments 2>&1";
-
-    # Aja käsky
-    
     $output = `$cmd`;
-
-    # Vertaa tuloksia
 
     print padname($text);
     if(equalcontent("$results/$resultfile",$output))

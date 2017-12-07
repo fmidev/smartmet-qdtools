@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.10.19
+Version: 17.11.23
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -21,11 +21,12 @@ BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: smartmet-library-calculator-devel >= 17.8.28
-BuildRequires: smartmet-library-gis-devel >= 17.9.12
+BuildRequires: smartmet-library-gis-devel >= 17.11.22
 BuildRequires: smartmet-library-imagine-devel >= 17.9.22
 BuildRequires: smartmet-library-macgyver-devel >= 17.8.28
-BuildRequires: smartmet-library-newbase-devel >= 17.10.5
+BuildRequires: smartmet-library-newbase-devel >= 17.11.16
 BuildRequires: smartmet-library-smarttools-devel >= 17.8.28
+BuildRequires: smartmet-timezones
 BuildRequires: mdsplib >= 16.4.8
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: zlib-devel
@@ -33,13 +34,14 @@ BuildRequires: gdal-devel >= 1.11.4
 BuildRequires: jasper-devel
 BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
-Requires: smartmet-timezones >= 17.4.12
+Requires: smartmet-timezones >= 17.10.26
 Requires: smartmet-library-calculator >= 17.8.28
-Requires: smartmet-library-gis >= 17.9.12
+Requires: smartmet-library-gis >= 17.11.22
 Requires: smartmet-library-imagine >= 17.9.22
 Requires: smartmet-library-macgyver >= 17.8.28
-Requires: smartmet-library-newbase >= 17.10.5
+Requires: smartmet-library-newbase >= 17.11.16
 Requires: smartmet-library-smarttools >= 17.8.28
+Requires: smartmet-timezones
 Requires: eccodes
 Requires: hdf5 >= 1.8.12
 Requires: jasper-libs >= 1.900.1
@@ -185,6 +187,12 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Nov 23 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.11.23-1.fmi
+- nctoqd is now able to handle more model data
+
+* Wed Nov  1 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.11.1-1.fmi
+- Rubuilt due to GIS-library API change
+
 * Thu Oct 19 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.10.19-1.fmi
 - bufrtoqd now fcloses the files to avoid reaching limits on the number of open files
 

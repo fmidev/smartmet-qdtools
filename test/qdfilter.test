@@ -2,8 +2,8 @@
 
 $program = "../qdfilter";
 $results = "results";
-$hiladata = "data/hiladata.sqd";
-$pistedata = "data/pistedata.fqd";
+$griddata = "data/griddata.sqd";
+$pointdata = "data/pointdata.sqd";
 
 %usednames = ();
 
@@ -11,135 +11,135 @@ $PARAMS = "Temperature,WindSpeedMS,WindDirection";
 
 # available functions
 
-DoTest("min hiladata 24h",
-       "min_hiladata",
-       "-p $PARAMS 0 1440 min $hiladata");
+DoTest("min griddata 24h",
+       "min_griddata",
+       "-p $PARAMS 0 1440 min $griddata");
 
-DoTest("max hiladata 24h",
-       "max_hiladata",
-       "-p $PARAMS 0 1440 max $hiladata");
+DoTest("max griddata 24h",
+       "max_griddata",
+       "-p $PARAMS 0 1440 max $griddata");
 
-DoTest("mean hiladata 24h",
-       "mean_hiladata",
-       "-p $PARAMS 0 1440 mean $hiladata");
+DoTest("mean griddata 24h",
+       "mean_griddata",
+       "-p $PARAMS 0 1440 mean $griddata");
 
-DoTest("meanabs hiladata 24h",
-       "meanabs_hiladata",
-       "-p $PARAMS 0 1440 meanabs $hiladata");
+DoTest("meanabs griddata 24h",
+       "meanabs_griddata",
+       "-p $PARAMS 0 1440 meanabs $griddata");
 
-DoTest("sum hiladata 24h",
-       "sum_hiladata",
-       "-p $PARAMS 0 1440 sum $hiladata");
+DoTest("sum griddata 24h",
+       "sum_griddata",
+       "-p $PARAMS 0 1440 sum $griddata");
 
-DoTest("median hiladata 24h",
-       "median_hiladata",
-       "-p $PARAMS 0 1440 median $hiladata");
+DoTest("median griddata 24h",
+       "median_griddata",
+       "-p $PARAMS 0 1440 median $griddata");
 
-DoTest("maxmean hiladata 24h",
-       "maxmean_hiladata",
-       "-p $PARAMS 0 1440 maxmean $hiladata");
+DoTest("maxmean griddata 24h",
+       "maxmean_griddata",
+       "-p $PARAMS 0 1440 maxmean $griddata");
 
-DoTest("min pistedata 24h",
-       "min_pistedata",
-       "-p $PARAMS 0 1440 min $pistedata");
+DoTest("min pointdata 24h",
+       "min_pointdata",
+       "-p $PARAMS 0 1440 min $pointdata");
 
-DoTest("max pistedata 24h",
-       "max_pistedata",
-       "-p $PARAMS 0 1440 max $pistedata");
+DoTest("max pointdata 24h",
+       "max_pointdata",
+       "-p $PARAMS 0 1440 max $pointdata");
 
-DoTest("mean pistedata 24h",
-       "mean_pistedata",
-       "-p $PARAMS 0 1440 mean $pistedata");
+DoTest("mean pointdata 24h",
+       "mean_pointdata",
+       "-p $PARAMS 0 1440 mean $pointdata");
 
-DoTest("meanabs pistedata 24h",
-       "meanabs_pistedata",
-       "-p $PARAMS 0 1440 meanabs $pistedata");
+DoTest("meanabs pointdata 24h",
+       "meanabs_pointdata",
+       "-p $PARAMS 0 1440 meanabs $pointdata");
 
-DoTest("sum pistedata 3h",
-       "sum_pistedata",
-       "-p $PARAMS 0 180 sum $pistedata");
+DoTest("sum pointdata 3h",
+       "sum_pointdata",
+       "-p $PARAMS 0 180 sum $pointdata");
 
-DoTest("median pistedata 3h",
-       "median_pistedata",
-       "-p $PARAMS 0 180 median $pistedata");
+DoTest("median pointdata 3h",
+       "median_pointdata",
+       "-p $PARAMS 0 180 median $pointdata");
 
-DoTest("maxmean pistedata 3h",
-       "maxmean_pistedata",
-       "-p $PARAMS 0 180 maxmean $pistedata");
+DoTest("maxmean pointdata 3h",
+       "maxmean_pointdata",
+       "-p $PARAMS 0 180 maxmean $pointdata");
 
 # Option -a
 
-DoTest("sum hiladata 24h -a",
-       "sum_hiladata_a",
-       "-a -p $PARAMS 0 1440 sum $hiladata");
+DoTest("sum griddata 24h -a",
+       "sum_griddata_a",
+       "-a -p $PARAMS 0 1440 sum $griddata");
 
-DoTest("sum pistedata 24h -a",
-       "sum_pistedata_a",
-       "-a -p $PARAMS 0 1440 sum $pistedata");
+DoTest("sum pointdata 24h -a",
+       "sum_pointdata_a",
+       "-a -p $PARAMS 0 1440 sum $pointdata");
 
 # Option -t
 
-DoTest("sum hiladata 24h -t 24,48",
-       "sum_hiladata_t_24_48",
-       "-t 24,48 -p $PARAMS 0 1440 sum $hiladata");
+DoTest("sum griddata 24h -t 24,48",
+       "sum_griddata_t_24_48",
+       "-t 24,48 -p $PARAMS 0 1440 sum $griddata");
 
-DoTest("sum pistedata 3h -t -18,-6",
-       "sum_pistedata_t_18_6",
-       "-t -18,-6 -p $PARAMS 0 180 sum $pistedata");
+DoTest("sum pointdata 3h -t -18,-6",
+       "sum_pointdata_t_18_6",
+       "-t -18,-6 -p $PARAMS 0 180 sum $pointdata");
 
-DoTest("sum hiladata 24h -t 24,48,3",
-       "sum_hiladata_t_24_48_3",
-       "-t 24,48,3 -p $PARAMS 0 1440 sum $hiladata");
+DoTest("sum griddata 24h -t 24,48,3",
+       "sum_griddata_t_24_48_3",
+       "-t 24,48,3 -p $PARAMS 0 1440 sum $griddata");
 
-DoTest("sum pistedata 3h -t -18,-6,3",
-       "sum_pistedata_t_18_6_3",
-       "-t -18,-6,3 -p $PARAMS 0 180 sum $pistedata");
+DoTest("sum pointdata 3h -t -18,-6,3",
+       "sum_pointdata_t_18_6_3",
+       "-t -18,-6,3 -p $PARAMS 0 180 sum $pointdata");
 
 # Option -T
 
-DoTest("sum hiladata 24h -T 24,48",
-       "sum_hiladata_T_24_48",
-       "-T 24,48 -p $PARAMS 0 1440 sum $hiladata");
+DoTest("sum griddata 24h -T 24,48",
+       "sum_griddata_T_24_48",
+       "-T 24,48 -p $PARAMS 0 1440 sum $griddata");
 
-DoTest("sum pistedata 3h -T -18,-6",
-       "sum_pistedata_T_18_6",
-       "-T -18,-6 -p $PARAMS 0 180 sum $pistedata");
+DoTest("sum pointdata 3h -T -18,-6",
+       "sum_pointdata_T_18_6",
+       "-T -18,-6 -p $PARAMS 0 180 sum $pointdata");
 
-DoTest("sum hiladata 24h -T 24,48,3",
-       "sum_hiladata_T_24_48_3",
-       "-T 24,48,3 -p $PARAMS 0 1440 sum $hiladata");
+DoTest("sum griddata 24h -T 24,48,3",
+       "sum_griddata_T_24_48_3",
+       "-T 24,48,3 -p $PARAMS 0 1440 sum $griddata");
 
-DoTest("sum pistedata 3h -T -18,-6,3",
-       "sum_pistedata_T_18_6_3",
-       "-T -18,-6,3 -p $PARAMS 0 180 sum $pistedata");
+DoTest("sum pointdata 3h -T -18,-6,3",
+       "sum_pointdata_T_18_6_3",
+       "-T -18,-6,3 -p $PARAMS 0 180 sum $pointdata");
 
 # Option -i
 
-DoTest("sum hiladata 24h -i 18",
-       "sum_hiladata_i_18",
-       "-i 18 -p $PARAMS 0 1440 sum $hiladata");
+DoTest("sum griddata 24h -i 18",
+       "sum_griddata_i_18",
+       "-i 18 -p $PARAMS 0 1440 sum $griddata");
 
-DoTest("sum pistedata 3h -i 18",
-       "sum_pistedata_i_18",
-       "-i 18 -p $PARAMS 0 180 sum $pistedata");
+DoTest("sum pointdata 3h -i 18",
+       "sum_pointdata_i_18",
+       "-i 18 -p $PARAMS 0 180 sum $pointdata");
 
-DoTest("sum hiladata 24h -i 6,12,18",
-       "sum_hiladata_i_6_12_18",
-       "-i 6,12,18 -p $PARAMS 0 1440 sum $hiladata");
+DoTest("sum griddata 24h -i 6,12,18",
+       "sum_griddata_i_6_12_18",
+       "-i 6,12,18 -p $PARAMS 0 1440 sum $griddata");
 
 # Option -I
 
-DoTest("sum hiladata 24h -I 18",
-       "sum_hiladata_iso_i_18",
-       "-I 18 -p $PARAMS 0 1440 sum $hiladata");
+DoTest("sum griddata 24h -I 18",
+       "sum_griddata_iso_i_18",
+       "-I 18 -p $PARAMS 0 1440 sum $griddata");
 
-DoTest("sum pistedata 3h -I 18",
-       "sum_pistedata_iso_i_18",
-       "-I 18 -p $PARAMS 0 180 sum $pistedata");
+DoTest("sum pointdata 3h -I 18",
+       "sum_pointdata_iso_i_18",
+       "-I 18 -p $PARAMS 0 180 sum $pointdata");
 
-DoTest("sum pistedata 3h -I 6,12,18",
-       "sum_pistedata_iso_i_5_12_18",
-       "-I 6,12,18 -p $PARAMS 0 180 sum $pistedata");
+DoTest("sum pointdata 3h -I 6,12,18",
+       "sum_pointdata_iso_i_5_12_18",
+       "-I 6,12,18 -p $PARAMS 0 180 sum $pointdata");
 
 
 print "Done\n";
@@ -154,27 +154,17 @@ sub DoTest
 
     if(exists($usednames{$name}))
     {
-	print "Virhe regressiotesteissä: $name käytössä useamman kerran\n";
+	print "Error: $name used more than once\n";
 	exit(1);
     }
     $usednames{$name} = 1;
 
-    # Halutut tulokset ovat täällä
-
     my($resultfile) = "qdfilter_$name";
-
-    # Saadut tulokset
     my($tmpfile) = "${resultfile}.tmp";
-
-    # Korjaa komento lopulliseen muotoon
     $cmd = "$program $arguments > $results/$tmpfile";
     # print("\n$cmd\n");
 
-    # Aja käsky
-    
     $output = `$cmd`;
-
-    # Vertaa tuloksia
 
     print padname($text);
 

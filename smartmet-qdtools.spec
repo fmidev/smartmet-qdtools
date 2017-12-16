@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.12.7
+Version: 17.12.16
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -187,6 +187,11 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Sat Dec 16 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.12.16-1.fmi
+- Added handling of PotentialPrecipitationType and PotentialPrecipitationForm
+- Added sandstorm as a potential value for FogIntensity
+- Added automatic scaling for binning
+
 * Thu Dec  7 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.12.7-1.fmi
 - qdtogrib now produces a missing value bitmap if the data contains missing values
 

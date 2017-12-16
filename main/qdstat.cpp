@@ -327,6 +327,7 @@ const char* Stats::desc(double value) const
   switch (itsParam)
   {
     case kFmiPrecipitationForm:
+    case kFmiPotentialPrecipitationForm:
     {
       switch (static_cast<int>(value))
       {
@@ -360,6 +361,20 @@ const char* Stats::desc(double value) const
           return "";
       }
     }
+    case kFmiPotentialPrecipitationType:
+    {
+      switch (static_cast<int>(value))
+      {
+        case 0:
+          return " large scale or convective";
+        case 1:
+          return " large scale";
+        case 2:
+          return " convetive";
+        default:
+          return "";
+      }
+    }
     case kFmiFogIntensity:
     {
       switch (static_cast<int>(value))
@@ -370,6 +385,8 @@ const char* Stats::desc(double value) const
           return " moderate fog";
         case 2:
           return " dense fog";
+        case 3:
+          return " sandstorm";
         default:
           return "";
       }
@@ -1115,7 +1132,7 @@ int main(int argc, char* argv[]) try
 {
   return run(argc, argv);
 }
-catch (std::exception& e)
+catch (const std::exception& e)
 {
   std::cerr << "Error: " << e.what() << std::endl;
   return 1;

@@ -770,6 +770,68 @@ const char* Stats::desc(double value) const
   }
 }
 
+// Select nice step size for binning
+
+void autotick(double theRange, std::size_t maxbins, double& tick, int& precision)
+{
+  if (theRange == 0)
+  {
+    tick = 0;
+    precision = 0;
+  }
+  else
+  {
+    double xx = theRange / maxbins;
+    double xlog = log10(xx);
+    int ilog = static_cast<int>(xlog);
+    if (xlog < 0) --ilog;
+    precision = -ilog;
+
+    double pwr = pow(10, ilog);
+    double frac = xx / pwr;
+    if (frac <= 2)
+      tick = 2 * pwr;
+    else if (frac <= 5)
+      tick = 5 * pwr;
+    else
+    {
+      tick = 10 * pwr;
+      --precision;
+    }
+    // Handle tick >= 10
+    precision = std::max(0, precision);
+  }
+}
+
+// Autoscale binning to get nice min/max values
+void autoscale(const double theMin,
+               const double theMax,
+               std::size_t maxbins,
+               double& newmin,
+               double& newmax,
+               double& tick,
+               int& precision)
+{
+  newmin = theMin;
+  newmax = theMax;
+
+  if (theMin == theMax)
+  {
+    newmin = std::floor(theMin);
+    if (newmin == theMin) newmin -= 1;
+    newmax = std::ceil(theMax);
+    if (newmax == theMax) newmax += 1;
+    tick = 1;
+    precision = 0;
+  }
+  else
+  {
+    autotick(newmax - newmin, maxbins, tick, precision);
+    newmin = tick * std::floor(newmin / tick);
+    newmax = tick * std::ceil(newmax / tick);
+  }
+}
+
 std::string Stats::report() const
 {
   std::ostringstream out;
@@ -803,58 +865,36 @@ std::string Stats::report() const
   {
     out << std::endl << std::endl;
 
-    if (itsCounts.size() < options.bins)
+    double binmin, binmax, tick;
+    int precision;
+    autoscale(itsMin, itsMax, options.bins, binmin, binmax, tick, precision);
+
+    for (std::size_t i = 0;; i++)
     {
+      double minvalue = binmin + i * tick;
+      if (minvalue > itsMax) break;
+      double maxvalue = minvalue + tick;
+      std::size_t count = 0;
       BOOST_FOREACH (const auto& value_count, itsCounts)
       {
         double value = value_count.first;
-        std::size_t count = value_count.second;
-
-        if (options.percentages)
-        {
-          out << std::fixed << std::setprecision(2) << std::setw(column_width) << std::right
-              << value << std::setw(column_width) << std::right << 100.0 * count / itsValidCount;
-        }
-        else
-        {
-          out << std::fixed << std::setprecision(2) << std::setw(column_width) << std::right
-              << value << std::setw(column_width) << std::right << count;
-        }
-
-        int w = static_cast<int>(std::round(options.barsize * count / itsValidCount));
-        out << std::setw(5) << std::right << '|' << std::string(w, '=')
-            << std::setw(options.barsize - w) << std::right << '|' << desc(value) << std::endl;
+        // The latter condition can be valid only in the final range
+        if ((value >= minvalue && value < maxvalue) || (value == itsMax))
+          count += value_count.second;
       }
-    }
-    else
-    {
-      double delta = (itsMax - itsMin) / options.bins;
 
-      for (std::size_t i = 0; i < options.bins; i++)
-      {
-        double minvalue = itsMin + i * delta;
-        double maxvalue = minvalue + delta;
-        std::size_t count = 0;
-        BOOST_FOREACH (const auto& value_count, itsCounts)
-        {
-          double value = value_count.first;
-          if ((value >= minvalue && value < maxvalue) || (i + 1 == options.bins && value == itsMax))
-            count += value_count.second;
-        }
+      std::ostringstream range;
+      range << std::fixed << std::setprecision(precision) << minvalue << "..." << maxvalue;
 
-        std::ostringstream range;
-        range << std::fixed << std::setprecision(2) << minvalue << "..." << maxvalue;
+      out << std::setw(20) << std::right << range.str();
+      if (options.percentages)
+        out << std::setw(column_width) << std::right << 100.0 * count / itsValidCount;
+      else
+        out << std::setw(column_width) << std::right << count;
 
-        out << std::setw(20) << std::right << range.str();
-        if (options.percentages)
-          out << std::setw(column_width) << std::right << 100.0 * count / itsValidCount;
-        else
-          out << std::setw(column_width) << std::right << count;
-
-        int w = static_cast<int>(std::round(options.barsize * count / itsValidCount));
-        out << std::setw(5) << std::right << '|' << std::string(w, '=')
-            << std::setw(options.barsize - w) << std::right << '|' << std::endl;
-      }
+      int w = static_cast<int>(std::round(options.barsize * count / itsValidCount));
+      out << std::setw(5) << std::right << '|' << std::string(w, '=')
+          << std::setw(options.barsize - w) << std::right << '|' << std::endl;
     }
   }
 

@@ -832,6 +832,27 @@ void autoscale(const double theMin,
   }
 }
 
+// Estimate precision for a parameter with a small number of different values
+int estimate_precision(const std::map<double, std::size_t>& theCounts)
+{
+  int precision = 0;
+  for (const auto& value_count : theCounts)
+  {
+    double value = value_count.first;
+    if (std::floor(value) != value)
+    {
+      // We assume some parameters may have values with steps of 0.1 or 0.01, but nothing
+      // smaller than that. This assumption works also for Precipitation1h when packed
+      // into a WeatherAndCloudiness parameter - all the printed values are unique.
+      // Checking whether the accuracy is 10**N for some negative N does not seem to
+      // be worth the trouble.
+      precision = 2;
+    }
+  }
+
+  return precision;
+}
+
 std::string Stats::report() const
 {
   std::ostringstream out;
@@ -865,36 +886,70 @@ std::string Stats::report() const
   {
     out << std::endl << std::endl;
 
-    double binmin, binmax, tick;
-    int precision;
-    autoscale(itsMin, itsMax, options.bins, binmin, binmax, tick, precision);
+    // We need special handling if the number of unique values is smallish. Usually this
+    // happens only for enumerated values. 50 is enough for example to cover wind direction
+    // in steps of 10 degrees.
 
-    for (std::size_t i = 0;; i++)
+    const int max_parameter_values = 50;
+
+    if (itsCounts.size() < options.bins || itsCounts.size() < max_parameter_values)
     {
-      double minvalue = binmin + i * tick;
-      if (minvalue > itsMax) break;
-      double maxvalue = minvalue + tick;
-      std::size_t count = 0;
+      const int precision = estimate_precision(itsCounts);
+
       BOOST_FOREACH (const auto& value_count, itsCounts)
       {
         double value = value_count.first;
-        // The latter condition can be valid only in the final range
-        if ((value >= minvalue && value < maxvalue) || (value == itsMax))
-          count += value_count.second;
+        std::size_t count = value_count.second;
+
+        if (options.percentages)
+        {
+          out << std::fixed << std::setprecision(precision) << std::setw(10) << std::right << value
+              << std::setw(10) << std::right << 100.0 * count / itsValidCount;
+        }
+        else
+        {
+          out << std::fixed << std::setprecision(precision) << std::setw(10) << std::right << value
+              << std::setw(10) << std::right << count;
+        }
+
+        int w = static_cast<int>(std::round(options.barsize * count / itsValidCount));
+        out << std::setw(5) << std::right << '|' << std::string(w, '=')
+            << std::setw(options.barsize - w) << std::right << '|' << desc(value) << std::endl;
       }
+    }
+    else
+    {
+      double binmin, binmax, tick;
+      int precision;
+      autoscale(itsMin, itsMax, options.bins, binmin, binmax, tick, precision);
 
-      std::ostringstream range;
-      range << std::fixed << std::setprecision(precision) << minvalue << "..." << maxvalue;
+      for (std::size_t i = 0;; i++)
+      {
+        double minvalue = binmin + i * tick;
+        if (minvalue > itsMax) break;
+        double maxvalue = minvalue + tick;
+        std::size_t count = 0;
+        BOOST_FOREACH (const auto& value_count, itsCounts)
+        {
+          double value = value_count.first;
+          // The latter condition can be valid only in the final range
+          if ((value >= minvalue && value < maxvalue) || (value == itsMax))
+            count += value_count.second;
+        }
 
-      out << std::setw(20) << std::right << range.str();
-      if (options.percentages)
-        out << std::setw(column_width) << std::right << 100.0 * count / itsValidCount;
-      else
-        out << std::setw(column_width) << std::right << count;
+        std::ostringstream range;
+        range << std::fixed << std::setprecision(precision) << minvalue << "..." << maxvalue;
 
-      int w = static_cast<int>(std::round(options.barsize * count / itsValidCount));
-      out << std::setw(5) << std::right << '|' << std::string(w, '=')
-          << std::setw(options.barsize - w) << std::right << '|' << std::endl;
+        out << std::setw(20) << std::right << range.str();
+        if (options.percentages)
+          out << std::setw(column_width) << std::right << 100.0 * count / itsValidCount;
+        else
+          out << std::setw(column_width) << std::right << count;
+
+        int w = static_cast<int>(std::round(options.barsize * count / itsValidCount));
+        out << std::setw(5) << std::right << '|' << std::string(w, '=')
+            << std::setw(options.barsize - w) << std::right << '|' << std::endl;
+      }
     }
   }
 

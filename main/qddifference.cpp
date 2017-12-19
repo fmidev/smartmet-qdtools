@@ -387,8 +387,11 @@ void validate_comparison(NFmiFastQueryInfo& q1, NFmiFastQueryInfo& q2)
 
   if (q1.IsArea() && q2.IsArea())
   {
-    if (*q1.Area() != *q2.Area()) throw runtime_error("Data not comparable: areas differ");
+    if (*q1.Area() != *q2.Area()) throw runtime_error("Data not comparable, areas differ");
   }
+
+  if (q1.GridHashValue() != q2.GridHashValue())
+    throw runtime_error("Data not comparable, grids differ");
 }
 
 // ----------------------------------------------------------------------

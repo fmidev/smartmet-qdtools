@@ -3,7 +3,7 @@
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
 Version: 17.12.19
-Release: 1%{?dist}.fmi
+Release: 2%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -187,6 +187,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Dec 19 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.12.19-2.fmi
+- qddifference now detects different grids in the input files
+
 * Tue Dec 19 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.12.19-1.fmi
 - Fixed handling of the last bin in qdstat
 

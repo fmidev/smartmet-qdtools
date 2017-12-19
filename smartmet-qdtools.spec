@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.12.16
+Version: 17.12.19
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -187,6 +187,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Dec 19 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.12.19-1.fmi
+- Fixed handling of the last bin in qdstat
+
 * Sat Dec 16 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.12.16-1.fmi
 - Added handling of PotentialPrecipitationType and PotentialPrecipitationForm
 - Added sandstorm as a potential value for FogIntensity

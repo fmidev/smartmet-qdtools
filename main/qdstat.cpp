@@ -926,14 +926,16 @@ std::string Stats::report() const
       for (std::size_t i = 0;; i++)
       {
         double minvalue = binmin + i * tick;
-        if (minvalue > itsMax) break;
+        if (minvalue >= itsMax) break;
         double maxvalue = minvalue + tick;
         std::size_t count = 0;
         BOOST_FOREACH (const auto& value_count, itsCounts)
         {
           double value = value_count.first;
-          // The latter condition can be valid only in the final range
-          if ((value >= minvalue && value < maxvalue) || (value == itsMax))
+          // The max value must be counted into the last bin
+          if ((value >= minvalue && value < maxvalue))
+            count += value_count.second;
+          else if (value == itsMax && value == maxvalue)
             count += value_count.second;
         }
 

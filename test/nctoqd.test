@@ -5,6 +5,10 @@ $results = "results";
 
 %usednames = ();
 
+my $dir = $0;
+$dir =~ s%[^/]*$%%;
+if ($dir) { chdir "$dir" or die "Unable to change to $dir: $!" }
+
 # Keep temporaries: useful to produce new result files
 $keeptmp = "";
 if ( scalar @ARGV > 0 && $ARGV[0] eq "keeptmp" ) {
@@ -37,7 +41,7 @@ sub DoTest {
 	$usednames{$name} = 1;
 
 	my ($resultfile) = "nctoqd_$name";
-	my ($tmpfile) = "${resultfile}.tmp";
+	my ($tmpfile)    = "${resultfile}.tmp";
 	$cmd = "$program $arguments $results/$tmpfile";
 
 	# print "$cmd\n";
@@ -56,18 +60,24 @@ sub DoTest {
 	else {
 		my ($difference) =
 		  `../qddifference results/$resultfile results/$tmpfile`;
-
-		$difference =~ s/^\s+//;
-		$difference =~ s/\s+$//;
-
-		if ( $difference < 0.0001 ) {
-			if   ( $difference <= 0 ) { print " OK\n"; }
-			else                      { print " OK (diff <= $difference)\n"; }
-			if ( !$keeptmp ) { unlink("$results/$tmpfile"); }
+		my $ret = $?;
+		if ( $ret != 0 ) {
+			print " FAILED!\nqdifference says:\n$difference";
+			print "( $resultfile <> $tmpfile in $results/ )\n";
 		}
 		else {
-			print " FAILED! (maxdiff = $difference)\n";
-			print "( $resultfile <> $tmpfile in $results/ )\n";
+			$difference =~ s/^\s+//;
+			$difference =~ s/\s+$//;
+
+			if ( $difference < 0.0001 ) {
+				if ( $difference <= 0 ) { print " ok\n"; }
+				else                    { print " ok (diff <= $difference)\n"; }
+				if ( !$keeptmp ) { unlink("$results/$tmpfile"); }
+			}
+			else {
+				print " FAILED! (maxdiff = $difference)\n";
+				print "( $resultfile <> $tmpfile in $results/ )\n";
+			}
 		}
 	}
 }

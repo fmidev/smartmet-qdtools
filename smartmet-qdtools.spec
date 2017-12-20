@@ -2,8 +2,8 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.12.19
-Release: 2%{?dist}.fmi
+Version: 17.12.20
+Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -24,9 +24,10 @@ BuildRequires: smartmet-library-calculator-devel >= 17.8.28
 BuildRequires: smartmet-library-gis-devel >= 17.11.22
 BuildRequires: smartmet-library-imagine-devel >= 17.9.22
 BuildRequires: smartmet-library-macgyver-devel >= 17.11.27
-BuildRequires: smartmet-library-newbase-devel >= 17.11.29
+BuildRequires: smartmet-library-newbase-devel >= 17.12.11
 BuildRequires: smartmet-library-smarttools-devel >= 17.8.28
 BuildRequires: smartmet-timezones
+BuildRequires: smartmet-library-spine-devel
 BuildRequires: mdsplib >= 16.4.8
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: zlib-devel
@@ -39,9 +40,9 @@ Requires: smartmet-library-calculator >= 17.8.28
 Requires: smartmet-library-gis >= 17.11.22
 Requires: smartmet-library-imagine >= 17.9.22
 Requires: smartmet-library-macgyver >= 17.11.27
-Requires: smartmet-library-newbase >= 17.11.29
+Requires: smartmet-library-newbase >= 17.12.11
 Requires: smartmet-library-smarttools >= 17.8.28
-Requires: smartmet-timezones
+Requires: smartmet-library-spine
 Requires: eccodes
 Requires: hdf5 >= 1.8.12
 Requires: jasper-libs >= 1.900.1
@@ -187,6 +188,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Dec 20 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.12.20-1.fmi
+- nctoqd improvements
+
 * Tue Dec 19 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.12.19-2.fmi
 - qddifference now detects different grids in the input files
 

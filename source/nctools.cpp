@@ -1118,6 +1118,69 @@ double NcFileExtended::z_scale()
   return zscale;
 }
 
+/**
+ * Miscellaneous
+ */
+bool NcFileExtended::joinable(NcFileExtended &ncfile, std::vector<std::string> *failreasons)
+{
+  bool ok = true;
+  if (failreasons != nullptr) failreasons->clear();
+
+  if (this->grid_mapping() != ncfile.grid_mapping())
+  {
+    ok = false;
+    failreasons->push_back("projection is different");
+  }
+  if (this->xsize() != ncfile.xsize())
+  {
+    ok = false;
+    failreasons->push_back("x-axis dimension is different");
+  }
+  if (this->ysize() != ncfile.ysize())
+  {
+    ok = false;
+    failreasons->push_back("y-axis dimension is different");
+  }
+  if (this->zsize() != ncfile.zsize())
+  {
+    ok = false;
+    failreasons->push_back("z-axis dimension is different");
+  }
+  if (this->longitudeOfProjectionOrigin != ncfile.longitudeOfProjectionOrigin)
+  {
+    ok = false;
+    failreasons->push_back("origin(longitude) is different");
+  }
+  if (this->latitudeOfProjectionOrigin != ncfile.latitudeOfProjectionOrigin)
+  {
+    ok = false;
+    failreasons->push_back("origin(latitude) is different");
+  }
+  if (this->xinverted() != ncfile.xinverted())
+  {
+    ok = false;
+    failreasons->push_back("x-axis inversion is different");
+  }
+  if (this->yinverted() != ncfile.yinverted())
+  {
+    ok = false;
+    failreasons->push_back("y-axis inversion is different");
+  }
+  if (this->x_scale() != ncfile.x_scale())
+  {
+    ok = false;
+    failreasons->push_back("x-axis units are different");
+  }
+  if (this->y_scale() != ncfile.y_scale())
+  {
+    ok = false;
+    failreasons->push_back("y-axis units are different");
+  }
+
+  // TODO: Possibly z-axis units , stepping ? , whatever, time formats etc .
+  return ok;
+}
+
 // namespace nctools
 
 #if DEBUG_PRINT

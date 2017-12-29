@@ -154,10 +154,15 @@ bool parse_options(int argc, char *argv[], Options &options)
 
   if (strstr(argv[0], "wrftoqd") != NULL)
   {
+    // Running wrftoqd
     if (opt.count("infile") == 0) throw std::runtime_error("Expecting input file as parameter 1");
+
+    if (!fs::exists(options.infile))
+      throw std::runtime_error("Input file '" + options.infile + "' does not exist");
   }
   else
   {
+    // Running nctoqd
     if (opt.count("infiles") == 0) throw std::runtime_error("Expecting input file as parameter 1");
 
     if (opt.count("infiles") > 2)
@@ -174,16 +179,15 @@ bool parse_options(int argc, char *argv[], Options &options)
         throw std::runtime_error(
             "Must specify output file either with the -o option or as the last parameter");
       options.outfile = options.infiles[1];
-      options.infile = options.infiles[0];
-      options.infiles.clear();
+      options.infiles.pop_back();  // Remove the output element which was the last argument
     }
-    else
+
+    for (auto infile : options.infiles)
     {
+      if (!fs::exists(infile))
+        throw std::runtime_error("Input file '" + infile + "' does not exist");
     }
   }
-
-  if (!fs::exists(options.infile))
-    throw std::runtime_error("Input file '" + options.infile + "' does not exist");
 
   if (options.memorymap && options.outfile == "-")
     throw std::runtime_error("Cannot memory map standard output");
@@ -1211,6 +1215,11 @@ bool NcFileExtended::joinable(NcFileExtended &ncfile, std::vector<std::string> *
   {
     ok = false;
     failreasons->push_back("y-axis units are different");
+  }
+  if (this->isStereographic() != ncfile.isStereographic())
+  {
+    ok = false;
+    failreasons->push_back("both files are not stereographic");
   }
 
   // TODO: Possibly z-axis units , stepping ? , whatever, time formats etc .

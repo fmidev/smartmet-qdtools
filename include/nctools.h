@@ -28,14 +28,15 @@ struct Options
 {
   Options();
 
-  bool verbose;              // -v
-  std::string infile;        // -i
-  std::string outfile;       // -o
-  std::string configfile;    // -c
-  std::string producername;  // --producername
-  long producernumber;       // --producernumber
-  long timeshift;            // -t <minutes>
-  bool memorymap;            // --mmap
+  bool verbose;                      // -v
+  std::string infile;                // -i
+  std::vector<std::string> infiles;  // Multiple input files
+  std::string outfile;               // -o
+  std::string configfile;            // -c
+  std::string producername;          // --producername
+  long producernumber;               // --producernumber
+  long timeshift;                    // -t <minutes>
+  bool memorymap;                    // --mmap
   bool fixstaggered;  // -s (muuttaa staggered datat perusdatan muotoon, interpoloi datan perus
                       // hilaan)
   bool experimental;  // -x enable features which are known to be not work in all situations

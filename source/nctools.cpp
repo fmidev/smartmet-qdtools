@@ -86,6 +86,7 @@ bool parse_options(int argc, char *argv[], Options &options)
       "version,V", "display version number")(
       "experimental,x", po::bool_switch(&options.experimental), "enable experimental features")(
       "infile,i", po::value(&options.infile), "input netcdf file")(
+      "infiles,f", po::value(&options.infiles), "multiple input netcdf files")(
       "outfile,o", po::value(&options.outfile), "output querydata file")(
       "mmap", po::bool_switch(&options.memorymap), "memory map output file to save RAM")(
       "config,c", po::value(&options.configfile), msg1.c_str())(
@@ -105,8 +106,16 @@ bool parse_options(int argc, char *argv[], Options &options)
       "netCdf data's cmd-line given global attributes");
 
   po::positional_options_description p;
-  p.add("infile", 1);
-  p.add("outfile", 1);
+  if (strstr(argv[0], "wrftoqd") != nullptr)
+  {
+    p.add("infile", 1);
+    p.add("outfile", 1);
+  }
+  else
+  {
+    // We don't know beforehand whether there is an output file or multiple inputs
+    p.add("infiles", -1);
+  }
 
   po::variables_map opt;
   po::store(po::command_line_parser(argc, argv).options(desc).positional(p).run(), opt);
@@ -115,7 +124,7 @@ bool parse_options(int argc, char *argv[], Options &options)
 
   if (opt.count("version") != 0)
   {
-    std::cout << "nctoqd v1.2 (" << __DATE__ << ' ' << __TIME__ << ')' << std::endl;
+    std::cout << argv[0] << " v1.3 (" << __DATE__ << ' ' << __TIME__ << ')' << std::endl;
   }
 
   if (opt.count("help"))
@@ -131,8 +140,9 @@ bool parse_options(int argc, char *argv[], Options &options)
     }
     else
     {
-      std::cout << "Usage: nctoqd [options] infile outfile" << std::endl
-                << std::endl
+      std::cout << "Usage: " << std::endl
+                << "  nctoqd[options] infile outfile " << std::endl
+                << "  nctoqd [options] -o outfile infile ..." << std::endl
                 << "Converts CF-1.4 conforming NetCDF to querydata." << std::endl
                 << "Only features in known use are supported." << std::endl
                 << std::endl
@@ -142,9 +152,35 @@ bool parse_options(int argc, char *argv[], Options &options)
     return false;
   }
 
-  if (opt.count("infile") == 0) throw std::runtime_error("Expecting input file as parameter 1");
+  if (strstr(argv[0], "wrftoqd") != NULL)
+  {
+    if (opt.count("infile") == 0) throw std::runtime_error("Expecting input file as parameter 1");
+  }
+  else
+  {
+    if (opt.count("infiles") == 0) throw std::runtime_error("Expecting input file as parameter 1");
 
-  if (opt.count("outfile") == 0) throw std::runtime_error("Expecting output file as parameter 2");
+    if (opt.count("infiles") > 2)
+      throw std::runtime_error("Multiple inputs (has " + std::to_string(opt.count("inoutfile")) +
+                               ") not supported yet");
+
+    if (opt.count("outfile") == 0)
+    {
+      // Output file not explicitly specified
+      if (options.infiles.size() > 2)
+        throw std::runtime_error(
+            "You must specifify desired output file with -o parameter for multiple inputs");
+      if (options.infiles.size() == 1)
+        throw std::runtime_error(
+            "Must specify output file either with the -o option or as the last parameter");
+      options.outfile = options.infiles[1];
+      options.infile = options.infiles[0];
+      options.infiles.clear();
+    }
+    else
+    {
+    }
+  }
 
   if (!fs::exists(options.infile))
     throw std::runtime_error("Input file '" + options.infile + "' does not exist");
@@ -168,13 +204,13 @@ bool parse_options(int argc, char *argv[], Options &options)
   if (!tmpIgnoreUnitChangeParamsStr.empty())
   {
     options.ignoreUnitChangeParams =
-        NFmiStringTools::Split<std::list<std::string> >(tmpIgnoreUnitChangeParamsStr, ",");
+        NFmiStringTools::Split<std::list<std::string>>(tmpIgnoreUnitChangeParamsStr, ",");
   }
 
   if (!tmpExcludeParamsStr.empty())
   {
     options.excludeParams =
-        NFmiStringTools::Split<std::list<std::string> >(tmpExcludeParamsStr, ",");
+        NFmiStringTools::Split<std::list<std::string>>(tmpExcludeParamsStr, ",");
   }
 
   if (!tmpCmdLineGlobalAttributesStr.empty())
@@ -182,13 +218,13 @@ bool parse_options(int argc, char *argv[], Options &options)
     // globaalit attribuutit annetaan muodossa -a DX=1356.3;DY=1265.3, eli eri attribuutit on
     // erotelty ;-merkeill� ja avain/arvot on eroteltu = -merkeill�
     std::list<std::string> attributeListParts =
-        NFmiStringTools::Split<std::list<std::string> >(tmpCmdLineGlobalAttributesStr, ";");
+        NFmiStringTools::Split<std::list<std::string>>(tmpCmdLineGlobalAttributesStr, ";");
     for (std::list<std::string>::iterator it = attributeListParts.begin();
          it != attributeListParts.end();
          ++it)
     {
       std::vector<std::string> attributeParts =
-          NFmiStringTools::Split<std::vector<std::string> >(*it, "=");
+          NFmiStringTools::Split<std::vector<std::string>>(*it, "=");
       if (attributeParts.size() == 2)
       {
         options.cmdLineGlobalAttributes.insert(

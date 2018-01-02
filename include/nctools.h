@@ -97,7 +97,8 @@ struct ParamInfo
 class NcFileExtended : public NcFile
 {
  public:
-  NcFileExtended(const char *path,
+  std::string path;
+  NcFileExtended(std::string path,
                  FileMode = ReadOnly,
                  size_t *bufrsizeptr = NULL,  // optional tuning parameters
                  size_t initialsize = 0,

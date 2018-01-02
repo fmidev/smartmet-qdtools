@@ -15,6 +15,8 @@
 #include <newbase/NFmiHPlaceDescriptor.h>
 #include <newbase/NFmiLambertEqualArea.h>
 #include <newbase/NFmiLatLonArea.h>
+#include <newbase/NFmiParam.h>
+#include <newbase/NFmiParamBag.h>
 #include <newbase/NFmiParamDescriptor.h>
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
@@ -458,91 +460,137 @@ int run(int argc, char* argv[])
     // Prepare empty target querydata
     std::unique_ptr<NFmiQueryData> data;
 
+    int counter = 0;
+    NFmiHPlaceDescriptor hdesc;
+    NFmiVPlaceDescriptor vdesc;
+    NFmiTimeDescriptor tdesc;
+    NFmiParamDescriptor pdesc;
+    std::shared_ptr<nctools::NcFileExtended> ncfile1;
+
+    // Loop through the files once to check and to prepare the descriptors first
     for (std::string infile : options.infiles)
     {
       try
       {
-        // Default is to exit in some non fatal situations
         NcError errormode(NcError::silent_nonfatal);
-        nctools::NcFileExtended ncfile(infile.c_str(), NcFile::ReadOnly);
+        std::shared_ptr<nctools::NcFileExtended> ncfile =
+            std::make_shared<nctools::NcFileExtended>(infile, NcFile::ReadOnly);
 
-        if (!ncfile.is_valid())
+        if (!ncfile->is_valid())
           throw SmartMet::Spine::Exception(
               BCP, "File '" + infile + "' does not contain valid NetCDF", NULL);
 
-#if DEBUG_PRINT
-        debug_output(ncfile);
-#endif
+        require_conventions(*ncfile, "CF-1.0", 3);
+        std::string grid_mapping(ncfile->grid_mapping());
+        NcVar* x = ncfile->x_axis();
+        NcVar* y = ncfile->y_axis();
+        NcVar* z = ncfile->z_axis();
+        NcVar* t = ncfile->t_axis();
 
-        require_conventions(ncfile, "CF-1.0", 3);
-        std::string grid_mapping(ncfile.grid_mapping());
-
-        NcVar* x = ncfile.x_axis();
-        NcVar* y = ncfile.y_axis();
-
-        NcVar* z = ncfile.z_axis();
-        NcVar* t = ncfile.t_axis();
-
-        /* pernu 2017-12-07: These are not necessary - it is not possible for x/y fetching to return
-        NULL . That already causes exception to be thrown.
-        // if (x == nullptr) throw SmartMet::Spine::Exception(BCP, "Failed to find X-axis
-        variable");
-        // if (y == nullptr) throw SmartMet::Spine::Exception(BCP, "Failed to find Y-axis
-        variable");
-        */
-        // if (z == 0) throw SmartMet::Spine::Exception(BCP,"Failed to find Z-axis variable");
-        if (!ncfile.isStereographic() && t == nullptr)
+        if (!ncfile->isStereographic() && t == nullptr)
           throw SmartMet::Spine::Exception(BCP, "Failed to find T-axis variable");
-
         if (x->num_vals() < 1) throw SmartMet::Spine::Exception(BCP, "X-axis has no values");
         if (y->num_vals() < 1) throw SmartMet::Spine::Exception(BCP, "Y-axis has no values");
         if (z != nullptr && z->num_vals() < 1)
           throw SmartMet::Spine::Exception(BCP, "Z-axis has no values");
-        if (!ncfile.isStereographic() && t->num_vals() < 1)
+        if (!ncfile->isStereographic() && t->num_vals() < 1)
           throw SmartMet::Spine::Exception(BCP, "T-axis has no values");
 
         check_xaxis_units(x);
         check_yaxis_units(y);
 
-        unsigned long nx = ncfile.xsize();
-        unsigned long ny = ncfile.ysize();
-        unsigned long nz = ncfile.zsize();
-        unsigned long nt = ncfile.tsize();
+        unsigned long nx = ncfile->xsize();
+        unsigned long ny = ncfile->ysize();
+        unsigned long nz = ncfile->zsize();
+        unsigned long nt = ncfile->tsize();
 
         if (nx == 0) throw SmartMet::Spine::Exception(BCP, "X-dimension is of size zero");
         if (ny == 0) throw SmartMet::Spine::Exception(BCP, "Y-dimension is of size zero");
         if (nz == 0) throw SmartMet::Spine::Exception(BCP, "Z-dimension is of size zero");
-        if (!ncfile.isStereographic() && nt == 0)
+        if (!ncfile->isStereographic() && nt == 0)
           throw SmartMet::Spine::Exception(BCP, "T-dimension is of size zero");
 
         if (nz != 1)
           throw SmartMet::Spine::Exception(
               BCP, "Z-dimension <> 1 is not supported (yet), sample file is needed first");
 
-        double z1 = ncfile.zmin(), z2 = ncfile.zmax();
-        NFmiHPlaceDescriptor hdesc = create_hdesc(ncfile);
-        NFmiVPlaceDescriptor vdesc = create_vdesc(ncfile, z1, z2, nz);
-        NFmiTimeDescriptor tdesc =
-            (ncfile.isStereographic() ? create_tdesc(ncfile) : create_tdesc(ncfile, t));
-        NFmiParamDescriptor pdesc = create_pdesc(ncfile, paramconvs);
-
-        NFmiFastQueryInfo qi(pdesc, tdesc, hdesc, vdesc);
-        if (options.memorymap)
+        // We don't do comparison for the first one but instead initialize the param descriptors
+        if (counter == 0)
         {
-          data.reset(NFmiQueryDataUtil::CreateEmptyData(qi, options.outfile, true));
+          ncfile1 = ncfile;
+
+          hdesc = create_hdesc(*ncfile);
+          vdesc = create_vdesc(*ncfile, ncfile->zmin(), ncfile->zmax(), nz);
+          tdesc = (ncfile->isStereographic() ? create_tdesc(*ncfile) : create_tdesc(*ncfile, t));
+          pdesc = create_pdesc(*ncfile, paramconvs);
         }
         else
         {
-          data.reset(NFmiQueryDataUtil::CreateEmptyData(qi));
+          std::vector<std::string> failreasons;
+          if (ncfile->joinable(*ncfile1, &failreasons) == false)
+          {
+            std::cerr << "Unable to combine " << ncfile1->path << " and " << infile << ":"
+                      << std::endl;
+            for (auto error : failreasons)
+            {
+              std::cerr << "  " << error << std::endl;
+            }
+            throw SmartMet::Spine::Exception(BCP, "Files not joinable", NULL);
+          }
+
+          NFmiHPlaceDescriptor newhdesc = create_hdesc(*ncfile);
+          NFmiVPlaceDescriptor newvdesc = create_vdesc(*ncfile, ncfile->zmin(), ncfile->zmax(), nz);
+          NFmiTimeDescriptor newtdesc =
+              (ncfile->isStereographic() ? create_tdesc(*ncfile) : create_tdesc(*ncfile, t));
+          NFmiParamDescriptor newpdesc = create_pdesc(*ncfile, paramconvs);
+          if (!(newhdesc == hdesc))
+            throw SmartMet::Spine::Exception(BCP, "Hdesc differs from " + ncfile1->path);
+          if (!(newvdesc == vdesc))
+            throw SmartMet::Spine::Exception(BCP, "Vdesc differs from " + ncfile1->path);
+          if (!(newtdesc == tdesc))
+            throw SmartMet::Spine::Exception(BCP, "Tdesc differs from " + ncfile1->path);
+          if (!(newpdesc == pdesc))
+            throw SmartMet::Spine::Exception(BCP, "Pdesc differs from " + ncfile1->path);
         }
-        NFmiFastQueryInfo info(data.get());
-        info.SetProducer(NFmiProducer(options.producernumber, options.producername));
+      }
+      catch (...)
+      {
+        throw SmartMet::Spine::Exception(BCP, "File check failed on input " + infile, NULL);
+      }
+      counter++;
+    }
+
+    NFmiFastQueryInfo qi(pdesc, tdesc, hdesc, vdesc);
+    if (options.memorymap)
+    {
+      data.reset(NFmiQueryDataUtil::CreateEmptyData(qi, options.outfile, true));
+    }
+    else
+    {
+      data.reset(NFmiQueryDataUtil::CreateEmptyData(qi));
+    }
+    NFmiFastQueryInfo info(data.get());
+    info.SetProducer(NFmiProducer(options.producernumber, options.producername));
+    counter = 0;
+
+    for (std::string infile : options.infiles)
+    {
+      try
+      {
+        // Default is to exit in some non fatal situations
+        NcError errormode(NcError::silent_nonfatal);
+        nctools::NcFileExtended ncfile(infile, NcFile::ReadOnly);
+
+#if DEBUG_PRINT
+        debug_output(ncfile);
+#endif
         ncfile.copy_values(options, info, paramconvs);
       }
       catch (...)
       {
         throw SmartMet::Spine::Exception(BCP, "Operation failed on input " + infile, NULL);
       }
+      counter++;
     }
 
     if (options.outfile == "-")

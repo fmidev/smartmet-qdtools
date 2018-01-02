@@ -393,11 +393,11 @@ ParamInfo parse_parameter(NcVar *var, const ParamConversions &paramconvs, bool u
  */
 // ----------------------------------------------------------------------
 
-NcVar *find_variable(const NcFile &ncfile, const std::string &name)
+NcVar *NcFileExtended::find_variable(const std::string &name)
 {
-  for (int i = 0; i < ncfile.num_vars(); i++)
+  for (int i = 0; i < this->num_vars(); i++)
   {
-    NcVar *var = ncfile.get_var(i);
+    NcVar *var = this->get_var(i);
     if (var == nullptr) continue;
     if (get_name(var) == name) return var;
   }
@@ -614,8 +614,8 @@ void NcFileExtended::copy_values(NFmiFastQueryInfo &info,
 {
   const float pi = 3.14159265358979326f;
 
-  NcVar *xvar = find_variable(*this, pinfo.x_component);
-  NcVar *yvar = find_variable(*this, pinfo.y_component);
+  NcVar *xvar = find_variable(pinfo.x_component);
+  NcVar *yvar = find_variable(pinfo.y_component);
 
   if (xvar == NULL || yvar == NULL) return;
 

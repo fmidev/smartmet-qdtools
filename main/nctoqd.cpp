@@ -391,10 +391,11 @@ NFmiTimeDescriptor create_tdesc(const NcFile& /* ncfile */, NcVar* t)
  */
 // ----------------------------------------------------------------------
 
-NFmiParamDescriptor create_pdesc(const NcFile& ncfile, const nctools::ParamConversions& paramconvs)
+int add_to_pbag(const NcFile& ncfile,
+                const nctools::ParamConversions& paramconvs,
+                NFmiParamBag& pbag)
 {
-  NFmiParamBag pbag;
-  unsigned int known_variables = 0;
+  unsigned int added_variables = 0;
 
   const float minvalue = kFloatMissing;
   const float maxvalue = kFloatMissing;
@@ -428,17 +429,10 @@ NFmiParamDescriptor create_pdesc(const NcFile& ncfile, const nctools::ParamConve
                     precision,
                     interpolation);
     NFmiDataIdent ident(param);
-    pbag.Add(ident);
-    known_variables++;
+    if (pbag.Add(ident, true)) added_variables++;
   }
 
-  if (known_variables == 0)
-    throw SmartMet::Spine::Exception(
-        BCP,
-        "input does not contain any convertable variables. Do you need to define some conversion "
-        "in config?");
-
-  return NFmiParamDescriptor(pbag);
+  return added_variables;
 }
 
 // ----------------------------------------------------------------------
@@ -464,8 +458,9 @@ int run(int argc, char* argv[])
     NFmiHPlaceDescriptor hdesc;
     NFmiVPlaceDescriptor vdesc;
     NFmiTimeDescriptor tdesc;
-    NFmiParamDescriptor pdesc;
+    NFmiParamBag pbag;
     std::shared_ptr<nctools::NcFileExtended> ncfile1;
+    unsigned int known_variables = 0;
 
     // Loop through the files once to check and to prepare the descriptors first
     for (std::string infile : options.infiles)
@@ -522,7 +517,6 @@ int run(int argc, char* argv[])
           hdesc = create_hdesc(*ncfile);
           vdesc = create_vdesc(*ncfile, ncfile->zmin(), ncfile->zmax(), nz);
           tdesc = (ncfile->isStereographic() ? create_tdesc(*ncfile) : create_tdesc(*ncfile, t));
-          pdesc = create_pdesc(*ncfile, paramconvs);
         }
         else
         {
@@ -542,16 +536,14 @@ int run(int argc, char* argv[])
           NFmiVPlaceDescriptor newvdesc = create_vdesc(*ncfile, ncfile->zmin(), ncfile->zmax(), nz);
           NFmiTimeDescriptor newtdesc =
               (ncfile->isStereographic() ? create_tdesc(*ncfile) : create_tdesc(*ncfile, t));
-          NFmiParamDescriptor newpdesc = create_pdesc(*ncfile, paramconvs);
           if (!(newhdesc == hdesc))
             throw SmartMet::Spine::Exception(BCP, "Hdesc differs from " + ncfile1->path);
           if (!(newvdesc == vdesc))
             throw SmartMet::Spine::Exception(BCP, "Vdesc differs from " + ncfile1->path);
           if (!(newtdesc == tdesc))
             throw SmartMet::Spine::Exception(BCP, "Tdesc differs from " + ncfile1->path);
-          if (!(newpdesc == pdesc))
-            throw SmartMet::Spine::Exception(BCP, "Pdesc differs from " + ncfile1->path);
         }
+        known_variables += add_to_pbag(*ncfile, paramconvs, pbag);
       }
       catch (...)
       {
@@ -560,6 +552,14 @@ int run(int argc, char* argv[])
       counter++;
     }
 
+    // Check parameters
+    if (known_variables == 0)
+      throw SmartMet::Spine::Exception(BCP,
+                                       "inputs do not contain any convertible variables. Do you "
+                                       "need to define some conversion in config?");
+
+    // Create querydata structures and target file
+    NFmiParamDescriptor pdesc(pbag);
     NFmiFastQueryInfo qi(pdesc, tdesc, hdesc, vdesc);
     if (options.memorymap)
     {
@@ -571,8 +571,9 @@ int run(int argc, char* argv[])
     }
     NFmiFastQueryInfo info(data.get());
     info.SetProducer(NFmiProducer(options.producernumber, options.producername));
-    counter = 0;
 
+    // Copy data from input files
+    counter = 0;
     for (std::string infile : options.infiles)
     {
       try

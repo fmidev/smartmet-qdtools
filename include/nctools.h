@@ -29,7 +29,6 @@ struct Options
   Options();
 
   bool verbose;                      // -v
-  std::string infile;                // -i
   std::vector<std::string> infiles;  // Multiple input files
   std::string outfile;               // -o
   std::string configfile;            // -c

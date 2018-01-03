@@ -1284,10 +1284,10 @@ int run(int argc, char *argv[])
 
   // Default is to exit in some non fatal situations
   NcError errormode(NcError::silent_nonfatal);
-  nctools::NcFileExtended ncfile(options.infile.c_str(), NcFile::ReadOnly);
+  nctools::NcFileExtended ncfile(options.infiles[0], NcFile::ReadOnly);
 
   if (!ncfile.is_valid())
-    throw std::runtime_error("File '" + options.infile + "' does not contain valid NetCDF");
+    throw std::runtime_error("File '" + options.infiles[0] + "' does not contain valid NetCDF");
 
   // Parameter conversions
 

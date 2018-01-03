@@ -85,8 +85,7 @@ bool parse_options(int argc, char *argv[], Options &options)
       "verbose,v", po::bool_switch(&options.verbose), "set verbose mode on")(
       "version,V", "display version number")(
       "experimental,x", po::bool_switch(&options.experimental), "enable experimental features")(
-      "infile,i", po::value(&options.infile), "input netcdf file")(
-      "infiles,f", po::value(&options.infiles), "multiple input netcdf files")(
+      "infile,i", po::value(&options.infiles), "input netcdf file")(
       "outfile,o", po::value(&options.outfile), "output querydata file")(
       "mmap", po::bool_switch(&options.memorymap), "memory map output file to save RAM")(
       "config,c", po::value(&options.configfile), msg1.c_str())(
@@ -114,7 +113,7 @@ bool parse_options(int argc, char *argv[], Options &options)
   else
   {
     // We don't know beforehand whether there is an output file or multiple inputs
-    p.add("infiles", -1);
+    p.add("infile", -1);
   }
 
   po::variables_map opt;
@@ -141,7 +140,7 @@ bool parse_options(int argc, char *argv[], Options &options)
     else
     {
       std::cout << "Usage: " << std::endl
-                << "  nctoqd[options] infile outfile " << std::endl
+                << "  nctoqd [options] infile outfile " << std::endl
                 << "  nctoqd [options] -o outfile infile ..." << std::endl
                 << "Converts CF-1.4 conforming NetCDF to querydata." << std::endl
                 << "Only features in known use are supported." << std::endl
@@ -157,17 +156,16 @@ bool parse_options(int argc, char *argv[], Options &options)
     // Running wrftoqd
     if (opt.count("infile") == 0) throw std::runtime_error("Expecting input file as parameter 1");
 
-    if (!fs::exists(options.infile))
-      throw std::runtime_error("Input file '" + options.infile + "' does not exist");
+    if (opt.count("infile") > 2)
+      throw std::runtime_error("Multiple input files for wrtoqd not supported");
+
+    if (!fs::exists(options.infiles[0]))
+      throw std::runtime_error("Input file '" + options.infiles[0] + "' does not exist");
   }
   else
   {
     // Running nctoqd
-    if (opt.count("infiles") == 0) throw std::runtime_error("Expecting input file as parameter 1");
-
-    if (opt.count("infiles") > 2)
-      throw std::runtime_error("Multiple inputs (has " + std::to_string(opt.count("inoutfile")) +
-                               ") not supported yet");
+    if (opt.count("infile") == 0) throw std::runtime_error("Expecting input file as parameter 1");
 
     if (opt.count("outfile") == 0)
     {

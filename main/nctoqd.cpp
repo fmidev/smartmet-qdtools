@@ -536,12 +536,13 @@ int run(int argc, char* argv[])
           NFmiVPlaceDescriptor newvdesc = create_vdesc(*ncfile, ncfile->zmin(), ncfile->zmax(), nz);
           NFmiTimeDescriptor newtdesc =
               (ncfile->isStereographic() ? create_tdesc(*ncfile) : create_tdesc(*ncfile, t));
+
           if (!(newhdesc == hdesc))
             throw SmartMet::Spine::Exception(BCP, "Hdesc differs from " + ncfile1->path);
           if (!(newvdesc == vdesc))
             throw SmartMet::Spine::Exception(BCP, "Vdesc differs from " + ncfile1->path);
-          if (!(newtdesc == tdesc))
-            throw SmartMet::Spine::Exception(BCP, "Tdesc differs from " + ncfile1->path);
+
+          tdesc = tdesc.Combine(newtdesc);
         }
         known_variables += add_to_pbag(*ncfile, paramconvs, pbag);
       }

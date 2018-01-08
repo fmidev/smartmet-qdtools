@@ -22,7 +22,6 @@
 #include <newbase/NFmiQueryDataUtil.h>
 #include <newbase/NFmiStereographicArea.h>
 #include <newbase/NFmiTimeDescriptor.h>
-#include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiVPlaceDescriptor.h>
 #include <spine/Exception.h>
 
@@ -31,7 +30,6 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/bind.hpp>
-#include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
@@ -262,76 +260,6 @@ void parse_time_units(NcVar* t, boost::posix_time::ptime* origintime, long* time
 
 // ----------------------------------------------------------------------
 /*!
- * \brief Construct NFmiMetTime from posix time
- */
-// ----------------------------------------------------------------------
-
-NFmiMetTime tomettime(const boost::posix_time::ptime& t)
-{
-  return NFmiMetTime(static_cast<short>(t.date().year()),
-                     static_cast<short>(t.date().month()),
-                     static_cast<short>(t.date().day()),
-                     static_cast<short>(t.time_of_day().hours()),
-                     static_cast<short>(t.time_of_day().minutes()),
-                     static_cast<short>(t.time_of_day().seconds()),
-                     1);
-}
-
-unsigned long get_units_in_seconds(std::string unit_str)
-{
-  if (unit_str == "day" || unit_str == "days" || unit_str == "d")
-    return 86400;
-  else if (unit_str == "hour" || unit_str == "hours" || unit_str == "h")
-    return 3600;
-  else if (unit_str == "minute" || unit_str == "minutes" || unit_str == "min" || unit_str == "mins")
-    return 60;
-  else if (unit_str == "second" || unit_str == "seconds" || unit_str == "sec" ||
-           unit_str == "secs" || unit_str == "s")
-    return 1;
-  else
-  {
-    throw SmartMet::Spine::Exception(BCP, "Invalid time unit used: " + unit_str);
-  }
-}
-
-NFmiTimeList get_tlist(const NcFile& ncfile,
-                       std::string varName = "time",
-                       std::string unitAttrName = "units")
-{
-  NcVar* ncvar = ncfile.get_var(varName.c_str());
-  NcAtt* units_att = ncvar->get_att(unitAttrName.c_str());
-
-  std::string unit_val_value(units_att->as_string(0));
-  delete units_att;
-
-  std::vector<std::string> tokens;
-  boost::split(tokens, unit_val_value, boost::algorithm::is_any_of(" "));
-
-  // convert unit to seconds: day == 86400, hour == 3600, ...
-  unsigned long unit_secs(get_units_in_seconds(tokens[0]));
-  std::string date_str(tokens[2]);
-  if (date_str.find('-') != std::string::npos)
-  {
-    if (isdigit(date_str[5]) && !isdigit(date_str[6])) date_str.insert(5, "0");
-    if (isdigit(date_str[8]) && !isdigit(date_str[9])) date_str.insert(8, "0");
-  }
-
-  boost::posix_time::ptime t = Fmi::TimeParser::parse(date_str);
-
-  NFmiTimeList tlist;
-  NcValues* ncvals = ncvar->values();
-  for (int k = 0; k < ncvar->num_vals(); k++)
-  {
-    boost::posix_time::ptime timestep(t +
-                                      boost::posix_time::seconds(ncvals->as_long(k) * unit_secs));
-    tlist.Add(new NFmiMetTime(tomettime(timestep)));
-  }
-
-  return tlist;
-}
-
-// ----------------------------------------------------------------------
-/*!
  * Create time descriptor
  *
  * CF reference "4.4. Time Coordinate" is crap. We support only
@@ -340,9 +268,9 @@ NFmiTimeList get_tlist(const NcFile& ncfile,
  */
 // ----------------------------------------------------------------------
 
-NFmiTimeDescriptor create_tdesc(const NcFile& ncFile)
+NFmiTimeDescriptor create_tdesc(nctools::NcFileExtended& ncFile)
 {
-  NFmiTimeList tlist(get_tlist(ncFile));
+  NFmiTimeList tlist(ncFile.timeList());
 
   return NFmiTimeDescriptor(tlist.FirstTime(), tlist);
 }
@@ -377,7 +305,7 @@ NFmiTimeDescriptor create_tdesc(const NcFile& /* ncfile */, NcVar* t)
     else
       validtime += boost::posix_time::seconds(timeoffset * timeunit);
 
-    tlist.Add(new NFmiMetTime(tomettime(validtime)));
+    tlist.Add(new NFmiMetTime(nctools::tomettime(validtime)));
   }
 
   return NFmiTimeDescriptor(tlist.FirstTime(), tlist);

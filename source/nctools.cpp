@@ -1,6 +1,7 @@
 
 #include "nctools.h"
 
+#include <macgyver/TimeParser.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiStringTools.h>
 #include <spine/Exception.h>
@@ -554,6 +555,8 @@ void NcFileExtended::copy_values(const Options &options, NcVar *var, NFmiFastQue
   for (info.ResetTime(); info.NextTime(); ++timeindex)
   {
     unsigned long level = 0;
+    NFmiMetTime time = info.Time();
+
     // must delete
     NcValues *vals = var->get_rec(timeindex);
     for (info.ResetLevel(); info.NextLevel(); ++level)
@@ -729,7 +732,8 @@ NcFileExtended::NcFileExtended(
       z_units(nullptr),
       xscale(0),
       yscale(0),
-      zscale(0)
+      zscale(0),
+      timelist(nullptr)
 {
 }
 
@@ -929,6 +933,80 @@ unsigned long NcFileExtended::zsize()
 }
 
 unsigned long NcFileExtended::tsize() { return (isStereographic() ? 0 : axis_size(t_axis())); }
+
+/*
+ * Get list of times in this NetCDF file
+ */
+NFmiTimeList NcFileExtended::timeList(std::string varName, std::string unitAttrName)
+{
+  if (this->timelist != nullptr) return *(this->timelist);
+
+  NcVar *ncvar = get_var(varName.c_str());
+  NcAtt *units_att = ncvar->get_att(unitAttrName.c_str());
+
+  std::string unit_val_value(units_att->as_string(0));
+  delete units_att;
+
+  std::vector<std::string> tokens;
+  boost::split(tokens, unit_val_value, boost::algorithm::is_any_of(" "));
+
+  // convert unit to seconds: day == 86400, hour == 3600, ...
+  unsigned long unit_secs(get_units_in_seconds(tokens[0]));
+  std::string date_str(tokens[2]);
+  if (date_str.find('-') != std::string::npos)
+  {
+    if (isdigit(date_str[5]) && !isdigit(date_str[6])) date_str.insert(5, "0");
+    if (isdigit(date_str[8]) && !isdigit(date_str[9])) date_str.insert(8, "0");
+  }
+
+  boost::posix_time::ptime t = Fmi::TimeParser::parse(date_str);
+
+  std::shared_ptr<NFmiTimeList> tlist = std::make_shared<NFmiTimeList>();
+  NcValues *ncvals = ncvar->values();
+  for (int k = 0; k < ncvar->num_vals(); k++)
+  {
+    boost::posix_time::ptime timestep(t +
+                                      boost::posix_time::seconds(ncvals->as_long(k) * unit_secs));
+    tlist->Add(new NFmiMetTime(tomettime(timestep)));
+  }
+
+  this->timelist = tlist;
+  return *this->timelist;
+}
+
+unsigned long get_units_in_seconds(std::string unit_str)
+{
+  if (unit_str == "day" || unit_str == "days" || unit_str == "d")
+    return 86400;
+  else if (unit_str == "hour" || unit_str == "hours" || unit_str == "h")
+    return 3600;
+  else if (unit_str == "minute" || unit_str == "minutes" || unit_str == "min" || unit_str == "mins")
+    return 60;
+  else if (unit_str == "second" || unit_str == "seconds" || unit_str == "sec" ||
+           unit_str == "secs" || unit_str == "s")
+    return 1;
+  else
+  {
+    throw SmartMet::Spine::Exception(BCP, "Invalid time unit used: " + unit_str);
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Construct NFmiMetTime from posix time
+ */
+// ----------------------------------------------------------------------
+
+NFmiMetTime tomettime(const boost::posix_time::ptime &t)
+{
+  return NFmiMetTime(static_cast<short>(t.date().year()),
+                     static_cast<short>(t.date().month()),
+                     static_cast<short>(t.date().day()),
+                     static_cast<short>(t.time_of_day().hours()),
+                     static_cast<short>(t.time_of_day().minutes()),
+                     static_cast<short>(t.time_of_day().seconds()),
+                     1);
+}
 
 // ----------------------------------------------------------------------
 /*!

@@ -212,54 +212,6 @@ NFmiVPlaceDescriptor create_vdesc(const NcFile& /* ncfile */,
 
 // ----------------------------------------------------------------------
 /*!
- * Parse unit information from time attributes
- */
-// ----------------------------------------------------------------------
-
-void parse_time_units(NcVar* t, boost::posix_time::ptime* origintime, long* timeunit)
-{
-  NcAtt* att = t->get_att("units");
-  if (att == 0) throw SmartMet::Spine::Exception(BCP, "Time axis has no defined units");
-  if (att->type() != ncChar)
-    throw SmartMet::Spine::Exception(BCP, "Time axis units must be a string");
-
-  // "units since date [time] [tz]"
-
-  std::string units = att->values()->as_string(0);
-
-  std::vector<std::string> parts;
-  boost::algorithm::split(parts, units, boost::algorithm::is_any_of(" "));
-
-  if (parts.size() < 3 || parts.size() > 5)
-    throw SmartMet::Spine::Exception(BCP, "Invalid time units string: '" + units + "'");
-
-  std::string unit = boost::algorithm::to_lower_copy(parts[0]);
-
-  if (unit == "second" || unit == "seconds" || unit == "sec" || unit == "secs" || unit == "s")
-    *timeunit = 1;
-  else if (unit == "minute" || unit == "minutes" || unit == "min" || unit == "mins")
-    *timeunit = 60;
-  else if (unit == "hour" || unit == "hours" || unit == "hr" || unit == "h")
-    *timeunit = 60 * 60;
-  else if (unit == "day" || unit == "days" || unit == "d")
-    *timeunit = 24 * 60 * 60;
-  else
-    throw SmartMet::Spine::Exception(BCP, "Unknown unit in time axis: '" + unit + "'");
-
-  if (boost::algorithm::to_lower_copy(parts[1]) != "since")
-    throw SmartMet::Spine::Exception(BCP, "Invalid time units string: '" + units + "'");
-
-  std::string datestr = parts[2];
-  std::string timestr = (parts.size() >= 4 ? parts[3] : "00:00:00");
-
-  *origintime = Fmi::TimeParser::parse_iso(datestr + "T" + timestr);
-
-  if (parts.size() == 5 && boost::iequals(parts[4], "UTC") == false)
-    *origintime += boost::posix_time::duration_from_string(parts[4]);
-}
-
-// ----------------------------------------------------------------------
-/*!
  * Create time descriptor
  *
  * CF reference "4.4. Time Coordinate" is crap. We support only
@@ -271,42 +223,6 @@ void parse_time_units(NcVar* t, boost::posix_time::ptime* origintime, long* time
 NFmiTimeDescriptor create_tdesc(nctools::NcFileExtended& ncFile)
 {
   NFmiTimeList tlist(ncFile.timeList());
-
-  return NFmiTimeDescriptor(tlist.FirstTime(), tlist);
-}
-
-NFmiTimeDescriptor create_tdesc(const NcFile& /* ncfile */, NcVar* t)
-{
-  using boost::posix_time::ptime;
-
-  ptime origintime;
-  long timeunit;
-  parse_time_units(t, &origintime, &timeunit);
-
-  // Note the use of longs and units greater than seconds when possible
-  // to avoid integer arithmetic overflows.
-
-  NFmiTimeList tlist;
-  NcValues* values = t->values();
-  for (int i = 0; i < t->num_vals(); i++)
-  {
-    long timeoffset = values->as_int(i);
-
-    ptime validtime = origintime + boost::posix_time::minutes(options.timeshift);
-
-    if (timeunit == 1)
-      validtime += boost::posix_time::seconds(timeoffset);
-    else if (timeunit == 60)
-      validtime += boost::posix_time::minutes(timeoffset);
-    else if (timeunit == 60 * 60)
-      validtime += boost::posix_time::hours(timeoffset);
-    else if (timeunit == 24 * 60 * 60)
-      validtime += boost::posix_time::hours(24 * timeoffset);
-    else
-      validtime += boost::posix_time::seconds(timeoffset * timeunit);
-
-    tlist.Add(new NFmiMetTime(nctools::tomettime(validtime)));
-  }
 
   return NFmiTimeDescriptor(tlist.FirstTime(), tlist);
 }
@@ -397,7 +313,7 @@ int run(int argc, char* argv[])
       {
         NcError errormode(NcError::silent_nonfatal);
         std::shared_ptr<nctools::NcFileExtended> ncfile =
-            std::make_shared<nctools::NcFileExtended>(infile, NcFile::ReadOnly);
+            std::make_shared<nctools::NcFileExtended>(infile, options.timeshift);
 
         if (!ncfile->is_valid())
           throw SmartMet::Spine::Exception(
@@ -444,7 +360,7 @@ int run(int argc, char* argv[])
 
           hdesc = create_hdesc(*ncfile);
           vdesc = create_vdesc(*ncfile, ncfile->zmin(), ncfile->zmax(), nz);
-          tdesc = (ncfile->isStereographic() ? create_tdesc(*ncfile) : create_tdesc(*ncfile, t));
+          tdesc = create_tdesc(*ncfile);
         }
         else
         {
@@ -462,8 +378,7 @@ int run(int argc, char* argv[])
 
           NFmiHPlaceDescriptor newhdesc = create_hdesc(*ncfile);
           NFmiVPlaceDescriptor newvdesc = create_vdesc(*ncfile, ncfile->zmin(), ncfile->zmax(), nz);
-          NFmiTimeDescriptor newtdesc =
-              (ncfile->isStereographic() ? create_tdesc(*ncfile) : create_tdesc(*ncfile, t));
+          NFmiTimeDescriptor newtdesc = create_tdesc(*ncfile);
 
           if (!(newhdesc == hdesc))
             throw SmartMet::Spine::Exception(BCP, "Hdesc differs from " + ncfile1->path);
@@ -509,7 +424,7 @@ int run(int argc, char* argv[])
       {
         // Default is to exit in some non fatal situations
         NcError errormode(NcError::silent_nonfatal);
-        nctools::NcFileExtended ncfile(infile, NcFile::ReadOnly);
+        nctools::NcFileExtended ncfile(infile, options.timeshift);
 
 #if DEBUG_PRINT
         debug_output(ncfile);

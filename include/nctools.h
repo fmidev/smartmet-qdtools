@@ -101,6 +101,7 @@ class NcFileExtended : public NcFile
  public:
   std::string path;
   NcFileExtended(std::string path,
+                 long timeshift,
                  FileMode = ReadOnly,
                  size_t *bufrsizeptr = NULL,  // optional tuning parameters
                  size_t initialsize = 0,
@@ -145,6 +146,7 @@ class NcFileExtended : public NcFile
   bool joinable(NcFileExtended &ncfile, std::vector<std::string> *failreasons = nullptr);
   NcVar *find_variable(const std::string &name);
   NFmiTimeList timeList(std::string varName = "time", std::string unitAttrName = "units");
+  long timeshift;  // Desired timeshift in minutes for time axis reading
 
  private:
   std::shared_ptr<std::string> projectionName;
@@ -190,6 +192,7 @@ ParamConversions read_netcdf_config(const Options &options);
 bool is_name_in_list(const std::list<std::string> &nameList, const std::string name);
 unsigned long get_units_in_seconds(std::string unit_str);
 NFmiMetTime tomettime(const boost::posix_time::ptime &t);
+void parse_time_units(NcVar *t, boost::posix_time::ptime *origintime, long *timeunit);
 
 #if DEBUG_PRINT
 void print_att(const NcAtt &att);

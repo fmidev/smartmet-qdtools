@@ -1288,10 +1288,7 @@ double NcFileExtended::get_axis_scale(NcVar *axis,
   if (**source_units == "100  km") return 100 * 1000;
   if (**source_units == "m") return 1;
   if (**source_units == "km") return 1000;
-
-  throw SmartMet::Spine::Exception(
-      BCP,
-      "Sorry: do not know how to convert " + **source_units + " to meters on axis " + axis->name());
+  return 1;
 }
 
 double NcFileExtended::x_scale()

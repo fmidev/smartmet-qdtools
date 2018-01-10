@@ -151,11 +151,8 @@ NFmiHPlaceDescriptor create_hdesc(nctools::NcFileExtended& ncfile)
     std::cout << "ny => " << ny << std::endl;
     if (ncfile.xinverted()) std::cout << "x-axis is inverted" << std::endl;
     if (ncfile.yinverted()) std::cout << "y-axis is inverted" << std::endl;
-    // Disable printing out of scaling factor. It is not defined for some projections and printing
-    // it may cause an exception. Or should we just return 1 if it is not needed?
-    // TODO: Figure out what to do with unknown scaling
-    //    std::cout << "x-scaling multiplier to meters => " << ncfile.x_scale() << std::endl;
-    //    std::cout << "y-scaling multiplier to meters => " << ncfile.y_scale() << std::endl;
+    std::cout << "x-scaling multiplier to meters => " << ncfile.x_scale() << std::endl;
+    std::cout << "y-scaling multiplier to meters => " << ncfile.y_scale() << std::endl;
     std::cout << "latitude_origin => " << ncfile.latitudeOfProjectionOrigin << std::endl;
     std::cout << "longitude_origin => " << ncfile.longitudeOfProjectionOrigin << std::endl;
     std::cout << "grid_mapping => " << ncfile.grid_mapping() << std::endl;

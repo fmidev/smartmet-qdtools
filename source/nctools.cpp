@@ -555,51 +555,53 @@ void NcFileExtended::copy_values(const Options &options, NcVar *var, NFmiFastQue
   for (info.ResetTime(); info.NextTime(); ++timeindex)
   {
     unsigned long level = 0;
-    NFmiMetTime time = info.Time();
 
-    // must delete
-    NcValues *vals = var->get_rec(timeindex);
-    for (info.ResetLevel(); info.NextLevel(); ++level)
+    // Only copy to correct time index
+    if (*timeList().Time(timeindex) == info.Time())
     {
-      // Outer loop is just the level - multiple levels are not supported yet
-      unsigned long xcounter = (this->xinverted() ? xsize() - 1 : 0);  // Current x-coordinate
-      // Calculating every point by multiplication is slow so saving the starting point of current
-      // row Further improvement when both axises are non-inverted does not improve performance
-      unsigned long ystart = (this->yinverted() ? (ysize() - 1) * xsize() : 0);
-
-      if (options.debug)
-        std::cerr << "debug: before copy loop, timeindex=" << timeindex << " level=" << level
-                  << " xcounter=" << xcounter << " ystart=" << ystart << std::endl;
-
-      // Inner loop contains all of the x,y values on this level
-      for (info.ResetLocation(); info.NextLocation();)
+      // must delete
+      NcValues *vals = var->get_rec(timeindex);
+      for (info.ResetLevel(); info.NextLevel(); ++level)
       {
-        float value = vals->as_float(ystart + xcounter);
-        if (!IsMissingValue(value, missingvalue))
-        {
-          if (!ignoreUnitChange) value = normalize_units(scale * value + offset, units);
-          info.FloatValue(value);
-        }
+        // Outer loop is just the level - multiple levels are not supported yet
+        unsigned long xcounter = (this->xinverted() ? xsize() - 1 : 0);  // Current x-coordinate
+        // Calculating every point by multiplication is slow so saving the starting point of current
+        // row Further improvement when both axises are non-inverted does not improve performance
+        unsigned long ystart = (this->yinverted() ? (ysize() - 1) * xsize() : 0);
 
-        // Next row?
-        if (xcounter == (xinverted() ? 0 : xsize() - 1))
+        if (options.debug)
+          std::cerr << "debug: before copy loop, timeindex=" << timeindex << " level=" << level
+                    << " xcounter=" << xcounter << " ystart=" << ystart << std::endl;
+
+        // Inner loop contains all of the x,y values on this level
+        for (info.ResetLocation(); info.NextLocation();)
         {
-          // Yes, increase the y counter and reset x
-          ystart += (yinverted() ? -xsize() : +xsize());
-          xcounter = (xinverted() ? xsize() - 1 : 0);
+          float value = vals->as_float(ystart + xcounter);
+          if (!IsMissingValue(value, missingvalue))
+          {
+            if (!ignoreUnitChange) value = normalize_units(scale * value + offset, units);
+            info.FloatValue(value);
+          }
+
+          // Next row?
+          if (xcounter == (xinverted() ? 0 : xsize() - 1))
+          {
+            // Yes, increase the y counter and reset x
+            ystart += (yinverted() ? -xsize() : +xsize());
+            xcounter = (xinverted() ? xsize() - 1 : 0);
+          }
+          else
+          {
+            // No, just increase x (or decrease if inverted )
+            (this->xinverted() ? xcounter-- : xcounter++);
+          }
         }
-        else
-        {
-          // No, just increase x (or decrease if inverted )
-          (this->xinverted() ? xcounter-- : xcounter++);
-        }
+        if (options.debug)
+          std::cerr << "debug: after copy loop, timeindex=" << timeindex << " level=" << level
+                    << " xcounter=" << xcounter << " ystart=" << ystart << std::endl;
       }
-      if (options.debug)
-        std::cerr << "debug: after copy loop, timeindex=" << timeindex << " level=" << level
-                  << " xcounter=" << xcounter << " ystart=" << ystart << std::endl;
+      delete vals;
     }
-
-    delete vals;
   }
 }
 
@@ -632,44 +634,47 @@ void NcFileExtended::copy_values(NFmiFastQueryInfo &info,
   int timeindex = 0;
   for (info.ResetTime(); info.NextTime(); ++timeindex)
   {
-    // must delete
-    NcValues *xvals = xvar->get_rec(timeindex);
-    NcValues *yvals = yvar->get_rec(timeindex);
-    if (options != nullptr && options->debug)
+    if (*timeList().Time(timeindex) == info.Time())
     {
-      std::cerr << (std::string) "debug: x-component has " + std::to_string(xvals->num()) +
-                       " elements\n";
-      std::cerr << (std::string) "debug: y-component has " + std::to_string(yvals->num()) +
-                       " elements\n";
-    }
-    long counter = 0;
-    for (info.ResetLevel(); info.NextLevel();)
-      for (info.ResetLocation(); info.NextLocation();)
+      // must delete
+      NcValues *xvals = xvar->get_rec(timeindex);
+      NcValues *yvals = yvar->get_rec(timeindex);
+      if (options != nullptr && options->debug)
       {
-        if (xinverted() || yinverted())
-          throw SmartMet::Spine::Exception(BCP,
-                                           std::string("Inverted axises not implemented here yet"));
-        float x = xvals->as_float(counter);
-        float y = yvals->as_float(counter);
-        if (x != xmissingvalue && y != ymissingvalue)
-        {
-          x = xscale * x + xoffset;
-          y = yscale * y + yoffset;
-
-          // We assume everything is in m/s here and all is fine
-
-          if (pinfo.isspeed)
-            info.FloatValue(sqrt(x * x + y * y));
-          else
-            info.FloatValue(180 * atan2(x, y) / pi);
-        }
-        ++counter;
+        std::cerr << (std::string) "debug: x-component has " + std::to_string(xvals->num()) +
+                         " elements\n";
+        std::cerr << (std::string) "debug: y-component has " + std::to_string(yvals->num()) +
+                         " elements\n";
       }
-    if (options != nullptr && options->debug)
-      std::cerr << "debug: counter went through " + std::to_string(counter) + " elements\n";
+      long counter = 0;
+      for (info.ResetLevel(); info.NextLevel();)
+        for (info.ResetLocation(); info.NextLocation();)
+        {
+          if (xinverted() || yinverted())
+            throw SmartMet::Spine::Exception(
+                BCP, std::string("Inverted axises not implemented here yet"));
+          float x = xvals->as_float(counter);
+          float y = yvals->as_float(counter);
+          if (x != xmissingvalue && y != ymissingvalue)
+          {
+            x = xscale * x + xoffset;
+            y = yscale * y + yoffset;
 
-    delete xvals;
-    delete yvals;
+            // We assume everything is in m/s here and all is fine
+
+            if (pinfo.isspeed)
+              info.FloatValue(sqrt(x * x + y * y));
+            else
+              info.FloatValue(180 * atan2(x, y) / pi);
+          }
+          ++counter;
+        }
+      if (options != nullptr && options->debug)
+        std::cerr << "debug: counter went through " + std::to_string(counter) + " elements\n";
+
+      delete xvals;
+      delete yvals;
+    }
   }
 }
 

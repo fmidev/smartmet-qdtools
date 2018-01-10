@@ -11,9 +11,17 @@ if ($dir) { chdir "$dir" or die "Unable to change to $dir: $!" }
 
 # Keep temporaries: useful to produce new result files
 $keeptmp = "";
-if ( scalar @ARGV > 0 && $ARGV[0] eq "keeptmp" ) {
-	$keeptmp = "yes";
-	print "Keeping temporary files\n";
+$cmp     = "";
+while ( scalar @ARGV > 0 ) {
+	if ( $ARGV[0] eq "keeptmp" ) {
+		$keeptmp = "yes";
+		print "Keeping temporary files.\n";
+	}
+	if ( $ARGV[0] eq "cmp" ) {
+		$cmp = "yes";
+		print "Using system cmp instead of qddifference.\n";
+	}
+	shift @ARGV;
 }
 
 foreach my $input ( glob "data/*.nc" ) {
@@ -46,13 +54,13 @@ sub DoTest {
 
 	# print "$cmd\n";
 	# $output = `$cmd 2>/dev/null`;
-	$output = `$cmd`;
-	$retcode=$? ;
-	if ($retcode!=0) {
+	$output  = `$cmd`;
+	$retcode = $?;
+	if ( $retcode != 0 ) {
 		print $output ;
-		die ("Failed to run $cmd: $!");	
+		die("Failed to run $cmd: $!");
 	}
-	
+
 	print padname($text);
 
 	if ( !-e "results/$tmpfile" ) {
@@ -63,25 +71,39 @@ sub DoTest {
 		if ( !$keeptmp ) { unlink("$results/$tmpfile"); }
 	}
 	else {
-		my ($difference) =
-		  `../qddifference results/$resultfile results/$tmpfile`;
-		my $ret = $?;
-		if ( $ret != 0 ) {
-			print " FAILED!\nqdifference says:\n$difference";
-			print "( $resultfile <> $tmpfile in $results/ )\n";
-		}
-		else {
-			$difference =~ s/^\s+//;
-			$difference =~ s/\s+$//;
-
-			if ( $difference < 0.0001 ) {
-				if ( $difference <= 0 ) { print " ok\n"; }
-				else                    { print " ok (diff <= $difference)\n"; }
-				if ( !$keeptmp ) { unlink("$results/$tmpfile"); }
+		if ($cmp) {
+			my $cmp     = `cmp results/$resultfile results/$tmpfile`;
+			my $retcode = $?;
+			if ( $retcode != 0 ) {
+				print $cmp ;
+				print " FAILED!";
 			}
 			else {
-				print " FAILED! (maxdiff = $difference)\n";
+				print " ok\n";
+				if ( !$keeptmp ) { unlink("$results/$tmpfile"); }
+			}
+		}
+		else {
+			my ($difference) =
+			  `../qddifference results/$resultfile results/$tmpfile`;
+			my $ret = $?;
+			if ( $ret != 0 ) {
+				print " FAILED!\nqdifference says:\n$difference";
 				print "( $resultfile <> $tmpfile in $results/ )\n";
+			}
+			else {
+				$difference =~ s/^\s+//;
+				$difference =~ s/\s+$//;
+
+				if ( $difference < 0.0001 ) {
+					if ( $difference <= 0 ) { print " ok\n"; }
+					else { print " ok (diff <= $difference)\n"; }
+					if ( !$keeptmp ) { unlink("$results/$tmpfile"); }
+				}
+				else {
+					print " FAILED! (maxdiff = $difference)\n";
+					print "( $resultfile <> $tmpfile in $results/ )\n";
+				}
 			}
 		}
 	}

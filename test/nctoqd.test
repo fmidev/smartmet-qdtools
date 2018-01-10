@@ -47,7 +47,12 @@ sub DoTest {
 	# print "$cmd\n";
 	# $output = `$cmd 2>/dev/null`;
 	$output = `$cmd`;
-
+	$retcode=$? ;
+	if ($retcode!=0) {
+		print $output ;
+		die ("Failed to run $cmd: $!");	
+	}
+	
 	print padname($text);
 
 	if ( !-e "results/$tmpfile" ) {

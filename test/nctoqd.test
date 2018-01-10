@@ -84,8 +84,7 @@ sub DoTest {
 			}
 		}
 		else {
-			my ($difference) =
-			  `../qddifference results/$resultfile results/$tmpfile`;
+			my ($difference) = `../qddifference results/$resultfile results/$tmpfile`;
 			my $ret = $?;
 			if ( $ret != 0 ) {
 				print " FAILED!\nqdifference says:\n$difference";
@@ -96,15 +95,45 @@ sub DoTest {
 				$difference =~ s/\s+$//;
 
 				if ( $difference < 0.0001 ) {
-					if ( $difference <= 0 ) { print " ok\n"; }
-					else { print " ok (diff <= $difference)\n"; }
-					if ( !$keeptmp ) { unlink("$results/$tmpfile"); }
+					if   ( $difference <= 0 ) { print " ok\n"; }
+					else                      { print " ok (diff <= $difference)\n"; }
+
+					# Test with qdinfo as well
+					print padname($text);
+					my $qdinfo1 = `../qdinfo -a -q $results/$resultfile > results/$resultfile.qdinfo`;
+					my $ret1    = $?;
+					if ( $ret1 != 0 ) {
+						print " FAILED!\nqdinfo failed on original result file\n";
+					}
+					else {
+						my $qdinfo2 = `../qdinfo -a -q results/$tmpfile > results/$tmpfile.qdinfo`;
+						my $ret2    = $?;
+						if ( $ret2 != 0 ) {
+							print " FAILED!\nqdinfo failed on generated test file\n";
+						}
+						else {
+							my $qddiff = `diff --unified results/$resultfile.qdinfo results/$tmpfile.qdinfo`;
+							my $ret3   = $?;
+							if ( $ret3 != 0 ) {
+								print " FAILED!\nquerydata header mismatch\n$qddiff";
+							}
+							else {
+								print " metadata match ok\n";
+								if ( !$keeptmp ) {
+									unlink("$results/$tmpfile");
+									unlink("$results/$resultfile.qdinfo");
+									unlink("$results/$tmpfile.qdinfo");
+								}
+							}
+						}
+					}
 				}
 				else {
 					print " FAILED! (maxdiff = $difference)\n";
 					print "( $resultfile <> $tmpfile in $results/ )\n";
 				}
 			}
+
 		}
 	}
 }
@@ -114,7 +143,7 @@ sub DoTest {
 # ----------------------------------------------------------------------
 
 sub padname {
-	my ($str) = @_[0];
+	my ($str) = $_[0];
 
 	while ( length($str) < 70 ) {
 		$str .= ".";

@@ -6,6 +6,7 @@
  */
 // ======================================================================
 
+#include "NcFileExtended.h"
 #include "nctools.h"
 
 #include <newbase/NFmiAreaFactory.h>
@@ -18,8 +19,6 @@
 #include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiVPlaceDescriptor.h>
-
-#include <netcdfcpp.h>
 
 #include <boost/algorithm/string.hpp>
 

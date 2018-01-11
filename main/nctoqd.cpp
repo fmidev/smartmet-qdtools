@@ -44,6 +44,7 @@
 #include <string>
 #include <utility>
 
+#include "NcFileExtended.h"
 #include "nctools.h"
 
 nctools::Options options;

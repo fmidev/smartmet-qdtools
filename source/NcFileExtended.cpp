@@ -210,16 +210,39 @@ void NcFileExtended::copy_values(const Options &options, NcVar *var, NFmiFastQue
   // NetCDF data ordering: time, level, rows from bottom row to top row, left-right order in row, if
   // none of the axises are inverted We have to calculate the actual position for inverted axises.
   // They will be non-inverted in the result data.
-  int timeindex = 0;
-  for (info.ResetTime(); info.NextTime(); ++timeindex)
+  int sourcetimeindex = 0;
+  int targettimeindex = 0;
+
+  for (info.ResetTime(); info.NextTime(); ++targettimeindex)
   {
     unsigned long level = 0;
 
     // Only copy to correct time index
-    if (*timeList().Time(timeindex) == info.Time())
+    NFmiTime targettime = info.Time();
+    const NFmiTime *sourcetimeptr = timeList().Time(sourcetimeindex);
+
+    if (options.debug)
+      std::cerr << "debug: targettimeindex=" << targettimeindex << " targettime=" << targettime
+                << " sourcetimeindex= " << sourcetimeindex << " sourcetimeptr=" << sourcetimeptr
+                << std::endl;
+
+    // Skip to next targettimeindex or drop out(to next file possibly) if source does not have this
+    // index at all (we are at end of source times?)
+    if (sourcetimeptr == nullptr)
+    {
+      if (options.debug)
+        std::cerr << "debug: source has no more times, skipping rest of target indexes"
+                  << std::endl;
+      break;  // Pointless to go through the rest of list, there are none
+    }
+
+    NFmiTime sourcetime = *sourcetimeptr;
+    if (options.debug) std::cerr << "debug: sourcetime=" << sourcetime << std::endl;
+
+    if (sourcetime == targettime)
     {
       // must delete
-      NcValues *vals = var->get_rec(timeindex);
+      NcValues *vals = var->get_rec(sourcetimeindex);
       for (info.ResetLevel(); info.NextLevel(); ++level)
       {
         // Outer loop is just the level - multiple levels are not supported yet
@@ -229,8 +252,8 @@ void NcFileExtended::copy_values(const Options &options, NcVar *var, NFmiFastQue
         unsigned long ystart = (this->yinverted() ? (ysize() - 1) * xsize() : 0);
 
         if (options.debug)
-          std::cerr << "debug: before copy loop, timeindex=" << timeindex << " level=" << level
-                    << " xcounter=" << xcounter << " ystart=" << ystart << std::endl;
+          std::cerr << "debug: starting copy loop, level=" << level << " xcounter=" << xcounter
+                    << " ystart=" << ystart << std::endl;
 
         // Inner loop contains all of the x,y values on this level
         for (info.ResetLocation(); info.NextLocation();)
@@ -256,11 +279,15 @@ void NcFileExtended::copy_values(const Options &options, NcVar *var, NFmiFastQue
           }
         }
         if (options.debug)
-          std::cerr << "debug: after copy loop, timeindex=" << timeindex << " level=" << level
-                    << " xcounter=" << xcounter << " ystart=" << ystart << std::endl;
+          std::cerr << "debug: after copy loop, level=" << level << " xcounter=" << xcounter
+                    << " ystart=" << ystart << std::endl;
       }
+      sourcetimeindex++;
       delete vals;
     }
+    else if (options.debug)
+      std::cerr << "debug: sourcetime and targettime mismatch, advancing to next targettimeindex"
+                << std::endl;
   }
 }
 
@@ -290,14 +317,37 @@ void NcFileExtended::copy_values(NFmiFastQueryInfo &info,
   float yoffset = get_offset(yvar);
 
   // NetCDF data ordering: time, level, y, x
-  int timeindex = 0;
-  for (info.ResetTime(); info.NextTime(); ++timeindex)
+  int sourcetimeindex = 0;
+  int targettimeindex = 0;
+  for (info.ResetTime(); info.NextTime(); ++targettimeindex)
   {
-    if (*timeList().Time(timeindex) == info.Time())
+    // Only copy to correct time index
+    NFmiTime targettime = info.Time();
+    const NFmiTime *sourcetimeptr = timeList().Time(sourcetimeindex);
+
+    if (options->debug)
+      std::cerr << "debug: targettimeindex=" << targettimeindex << " targettime=" << targettime
+                << " sourcetimeindex= " << sourcetimeindex << " sourcetimeptr=" << sourcetimeptr
+                << std::endl;
+
+    // Skip to next targettimeindex or drop out(to next file possibly) if source does not have this
+    // index at all (we are at end of source times?)
+    if (sourcetimeptr == nullptr)
+    {
+      if (options->debug)
+        std::cerr << "debug: source has no more times, skipping rest of target indexes"
+                  << std::endl;
+      break;  // Pointless to go through the rest of list, there are none
+    }
+
+    NFmiTime sourcetime = *sourcetimeptr;
+    if (options->debug) std::cerr << "debug: sourcetime=" << sourcetime << std::endl;
+
+    if (sourcetime == targettime)
     {
       // must delete
-      NcValues *xvals = xvar->get_rec(timeindex);
-      NcValues *yvals = yvar->get_rec(timeindex);
+      NcValues *xvals = xvar->get_rec(sourcetimeindex);
+      NcValues *yvals = yvar->get_rec(sourcetimeindex);
       if (options != nullptr && options->debug)
       {
         std::cerr << (std::string) "debug: x-component has " + std::to_string(xvals->num()) +
@@ -331,11 +381,15 @@ void NcFileExtended::copy_values(NFmiFastQueryInfo &info,
       if (options != nullptr && options->debug)
         std::cerr << "debug: counter went through " + std::to_string(counter) + " elements\n";
 
+      sourcetimeindex++;
       delete xvals;
       delete yvals;
     }
+    else if (options->debug)
+      std::cerr << "debug: sourcetime and targettime mismatch, advancing to next targettimeindex"
+                << std::endl;
   }
-}
+}  // namespace nctools
 
 // ----------------------------------------------------------------------
 /*!

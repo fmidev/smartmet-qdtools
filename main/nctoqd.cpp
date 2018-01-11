@@ -144,19 +144,21 @@ NFmiHPlaceDescriptor create_hdesc(nctools::NcFileExtended& ncfile)
 
   if (options.verbose)
   {
-    std::cout << "x1 => " << x1 << std::endl;
-    std::cout << "y1 => " << y1 << std::endl;
-    std::cout << "x2 => " << x2 << std::endl;
-    std::cout << "y2 => " << y2 << std::endl;
-    std::cout << "nx => " << nx << std::endl;
-    std::cout << "ny => " << ny << std::endl;
-    if (ncfile.xinverted()) std::cout << "x-axis is inverted" << std::endl;
-    if (ncfile.yinverted()) std::cout << "y-axis is inverted" << std::endl;
-    std::cout << "x-scaling multiplier to meters => " << ncfile.x_scale() << std::endl;
-    std::cout << "y-scaling multiplier to meters => " << ncfile.y_scale() << std::endl;
-    std::cout << "latitude_origin => " << ncfile.latitudeOfProjectionOrigin << std::endl;
-    std::cout << "longitude_origin => " << ncfile.longitudeOfProjectionOrigin << std::endl;
-    std::cout << "grid_mapping => " << ncfile.grid_mapping() << std::endl;
+    if (options.infiles.size() > 1) std::cout << std::endl;
+    std::cout << "Input file: " << ncfile.path << std::endl;
+    std::cout << "  x1 => " << x1 << std::endl;
+    std::cout << "  y1 => " << y1 << std::endl;
+    std::cout << "  x2 => " << x2 << std::endl;
+    std::cout << "  y2 => " << y2 << std::endl;
+    std::cout << "  nx => " << nx << std::endl;
+    std::cout << "  ny => " << ny << std::endl;
+    if (ncfile.xinverted()) std::cout << "  x-axis is inverted" << std::endl;
+    if (ncfile.yinverted()) std::cout << "  y-axis is inverted" << std::endl;
+    std::cout << "  x-scaling multiplier to meters => " << ncfile.x_scale() << std::endl;
+    std::cout << "  y-scaling multiplier to meters => " << ncfile.y_scale() << std::endl;
+    std::cout << "  latitude_origin => " << ncfile.latitudeOfProjectionOrigin << std::endl;
+    std::cout << "  longitude_origin => " << ncfile.longitudeOfProjectionOrigin << std::endl;
+    std::cout << "  grid_mapping => " << ncfile.grid_mapping() << std::endl;
   }
 
   NFmiArea* area;

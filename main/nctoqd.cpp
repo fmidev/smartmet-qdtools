@@ -425,6 +425,10 @@ int run(int argc, char* argv[])
     {
       try
       {
+        if (options.verbose)
+        {
+          std::cout << "Copying data from input " << infile << std::endl;
+        }
         // Default is to exit in some non fatal situations
         NcError errormode(NcError::silent_nonfatal);
         nctools::NcFileExtended ncfile(infile, options.timeshift);

@@ -33,6 +33,8 @@ foreach my $input ( glob "data/*.nc" ) {
 	DoTest( "$name", "$output", "-c ../cnf/netcdf.conf $input" );
 }
 
+DoTest("merge","merge.sqd","-c ../cnf/netcdf.conf ".join(' ',sort glob "data/*.merge-nc"));
+
 print "Done\n";
 
 # ----------------------------------------------------------------------
@@ -51,7 +53,10 @@ sub DoTest {
 	my ($resultfile) = "nctoqd_$name";
 	my ($tmpfile)    = "${resultfile}.tmp";
 	$cmd = "$program $arguments $results/$tmpfile";
-
+	if ("$text" =~ m/^merge/ ) {
+		$cmd =  "$program -o results/$tmpfile $arguments" ;	
+	}
+	
 	# print "$cmd\n";
 	# $output = `$cmd 2>/dev/null`;
 	$output  = `$cmd`;

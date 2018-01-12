@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 17.12.20
+Version: 18.1.12
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -188,6 +188,10 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Fri Jan 12 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.1.12-1.fmi
+- Fixed qdtogrib to handle times before origin time correctly
+- Fixed qdtogrib to be able to handle minute level data
+
 * Wed Dec 20 2017 Mika Heiskanen <mika.heiskanen@fmi.fi> - 17.12.20-1.fmi
 - nctoqd improvements
 

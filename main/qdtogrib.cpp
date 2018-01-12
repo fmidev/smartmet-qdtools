@@ -15,6 +15,7 @@
 
 #include <boost/filesystem/operations.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 
 #include <cassert>
@@ -208,6 +209,30 @@ double fix_longitude(double lon)
   if (options.grib1) return lon;
   if (lon < 0) return 360 + lon;
   return lon;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Find smallest timestep in the data (or return 0 if there is no step)
+ */
+// ----------------------------------------------------------------------
+
+long get_smallest_timestep(NFmiFastQueryInfo &theInfo)
+{
+  boost::optional<NFmiMetTime> last_time;
+  long timestep = 0;
+
+  for (theInfo.ResetTime(); theInfo.NextTime();)
+  {
+    if (last_time)
+    {
+      long diff = theInfo.ValidTime().DifferenceInMinutes(*last_time);
+      if (timestep == 0 || diff < timestep) timestep = diff;
+    }
+    last_time = theInfo.ValidTime();
+  }
+
+  return timestep;
 }
 
 // ----------------------------------------------------------------------
@@ -458,13 +483,26 @@ static void set_geometry(NFmiFastQueryInfo &theInfo,
 
 // ----------------------------------------------------------------------
 
-static void set_times(NFmiFastQueryInfo &theInfo, grib_handle *gribHandle)
+static void set_times(NFmiFastQueryInfo &theInfo, grib_handle *gribHandle, bool use_minutes)
 {
   const NFmiMetTime &vTime = theInfo.OriginTime();
   long dateLong = vTime.GetYear() * 10000 + vTime.GetMonth() * 100 + vTime.GetDay();
-  long timeLong = vTime.GetHour() * 100 + vTime.GetMin();
+
+  long timeLong = vTime.GetHour() * 100;
+  if (use_minutes) timeLong += vTime.GetMin();
+
   gset(gribHandle, "dataDate", dateLong);
   gset(gribHandle, "dataTime", timeLong);
+
+  // P1 max 255 minutes is not enough, we need to enable P2
+  if (use_minutes && options.grib1) gset(gribHandle, "timeRangeIndicator", 10);
+
+  // step units in stepUnits.table: m h D M Y 10Y 30Y C 3h 6h 12h s 15m 30m
+
+  if (use_minutes)
+    gset(gribHandle, "indicatorOfUnitOfTimeRange", 0);
+  else
+    gset(gribHandle, "indicatorOfUnitOfTimeRange", 1);
 }
 
 // ----------------------------------------------------------------------
@@ -559,14 +597,19 @@ void set_level(grib_handle *gribHandle, const NFmiLevel &theLevelFromData)
 // ----------------------------------------------------------------------
 
 // kopioidaan kurrentti aika/param/level hila annettuun grib-handeliin.
-void copy_values(NFmiFastQueryInfo &theInfo,
+bool copy_values(NFmiFastQueryInfo &theInfo,
                  grib_handle *gribHandle,
-                 std::vector<double> &theValueArray)
+                 std::vector<double> &theValueArray,
+                 bool use_minutes)
 {
   // NOTE: This froecastTime part is not edition independent
   const NFmiMetTime &oTime = theInfo.OriginTime();
   const NFmiMetTime &vTime = theInfo.ValidTime();
-  long diff = vTime.DifferenceInHours(oTime);
+
+  long mdiff = vTime.DifferenceInMinutes(oTime);
+
+  // Note that we round up and origin time is rounded down in set_times
+  long diff = (use_minutes ? mdiff : std::ceil(mdiff / 60.0));
 
   // Forecast time cannot be negative. This may happen for example
   // when using the SmartMet Editor. We simply ignore such lines.
@@ -575,11 +618,20 @@ void copy_values(NFmiFastQueryInfo &theInfo,
   {
     if (options.verbose)
       std::cout << "Ignoring timestep " << vTime << " for having a negative lead time" << std::endl;
-    return;
+    return false;
   }
 
   if (options.grib1)
-    gset(gribHandle, "P1", diff);
+  {
+    if (!use_minutes)
+      gset(gribHandle, "P1", diff);
+    else
+    {
+      // timeRangeIndicator=10 was set by set_times
+      gset(gribHandle, "P1", diff >> 8);
+      gset(gribHandle, "P2", diff % 256);
+    }
+  }
   else
     gset(gribHandle, "forecastTime", diff);
 
@@ -615,6 +667,8 @@ void copy_values(NFmiFastQueryInfo &theInfo,
     grib_set_long(gribHandle, "bitmapPresent", 1);
   }
   grib_set_double_array(gribHandle, "values", &theValueArray[0], theValueArray.size());
+
+  return true;
 }
 
 // ----------------------------------------------------------------------
@@ -652,7 +706,7 @@ void write_grib(NFmiFastQueryInfo &theInfo, grib_handle *gribHandle, const std::
   size_t mesg_len;
   grib_get_message(gribHandle, &mesg, &mesg_len);
   fwrite(mesg, 1, mesg_len, out);
-  fclose(out);  // suljetaan outputfile
+  fclose(out);
 }
 
 // ----------------------------------------------------------------------
@@ -703,7 +757,11 @@ int run(const int argc, char *argv[])
     std::vector<double> valueArray;  // t‰t‰ vektoria k‰ytet‰‰n siirt‰m‰‰n dataa querydatasta
                                      // gribiin (aina saman kokoinen)
     set_geometry(qi, gribHandle, valueArray);
-    set_times(qi, gribHandle);
+    const long timestep = get_smallest_timestep(qi);
+    const bool use_minutes = (timestep < 60);
+    set_times(qi, gribHandle, use_minutes);
+
+    if (options.verbose) std::cout << "Smallest timestep = " << timestep << std::endl;
 
     for (qi.ResetLevel(); qi.NextLevel();)
     {
@@ -719,19 +777,15 @@ int run(const int argc, char *argv[])
         {
           for (qi.ResetTime(); qi.NextTime();)
           {
-            copy_values(qi, gribHandle, valueArray);
-            if (options.dump)
-#if (GRIB_API_MAJOR_VERSION < 1)  // jos versio esim. 0.8.2, grib_dump_content-rajapinta erilainen
-                                  // kuin uusilla grib_api versioilla
-              // grib_dump_content(gribHandle, stdout, "serialize", option_flags);
-              grib_dump_content(gribHandle, stdout, "serialize", option_flags, NULL);
-#else
-              grib_dump_content(gribHandle, stdout, "serialize", option_flags, NULL);
-#endif
-            if (!options.split)
-              write_grib(out, gribHandle);
-            else
-              write_grib(qi, gribHandle, options.outfile);
+            if (copy_values(qi, gribHandle, valueArray, use_minutes))
+            {
+              if (options.dump)
+                grib_dump_content(gribHandle, stdout, "serialize", option_flags, NULL);
+              if (!options.split)
+                write_grib(out, gribHandle);
+              else
+                write_grib(qi, gribHandle, options.outfile);
+            }
           }
         }
       }

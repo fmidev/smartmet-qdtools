@@ -3,7 +3,7 @@
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
 Version: 18.1.12
-Release: 1%{?dist}.fmi
+Release: 2%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -188,6 +188,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Fri Jan 12 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.1.12-2.fmi
+- nctoqd improvements
+
 * Fri Jan 12 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.1.12-1.fmi
 - Fixed qdtogrib to handle times before origin time correctly
 - Fixed qdtogrib to be able to handle minute level data

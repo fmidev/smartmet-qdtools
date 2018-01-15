@@ -40,46 +40,26 @@ const int column_width = 10;
 
 struct Options
 {
-  Options();
+  Options() = default;
 
-  std::string infile;
+  std::string infile = "-";
 
-  bool all_times;
-  bool all_stations;
-  bool percentages;
-  bool distribution;
-  std::size_t bins;
-  std::size_t barsize;
-  double ignored_value;
+  bool all_times = false;
+  bool all_stations = false;
+  bool all_levels = false;
+  bool percentages = false;
+  bool distribution = false;
+  std::size_t bins = 20;
+  std::size_t barsize = 60;
+  double ignored_value = std::numeric_limits<double>::quiet_NaN();  // never compares ==
 
   std::set<boost::posix_time::ptime> these_times;
   std::set<FmiParameterName> these_params;
   std::set<int> these_stations;
+  std::set<float> these_levels;
 };
 
 Options options;
-
-// ----------------------------------------------------------------------
-/*!
- * \brief Default options
- */
-// ----------------------------------------------------------------------
-
-Options::Options()
-    : infile("-"),
-      all_times(false),
-      all_stations(false),
-      percentages(false),
-      distribution(false),
-      bins(20),
-      barsize(60),
-      ignored_value(std::numeric_limits<double>::quiet_NaN())  // never compares ==
-      ,
-      these_times(),
-      these_params(),
-      these_stations()
-{
-}
 
 // ----------------------------------------------------------------------
 /*!
@@ -154,6 +134,29 @@ std::set<int> parse_stations(const std::string& str)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Parse a list of levels
+ */
+// ----------------------------------------------------------------------
+
+std::set<float> parse_levels(const std::string& str)
+{
+  std::set<float> ret;
+
+  if (str.empty()) return ret;
+
+  std::list<std::string> parts;
+  boost::algorithm::split(parts, str, boost::is_any_of(","));
+
+  BOOST_FOREACH (const auto& str, parts)
+  {
+    ret.insert(Fmi::stof(str));
+  }
+
+  return ret;
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Parse command line options
  * \return True, if execution may continue as usual
  */
@@ -167,12 +170,14 @@ bool parse_options(int argc, char* argv[])
   std::string opt_stamps;
   std::string opt_params;
   std::string opt_stations;
+  std::string opt_levels;
 
   po::options_description desc("Available options");
   desc.add_options()("help,h", "print out help message")("version,V", "display version number")(
       "infile,i", po::value(&options.infile), "input querydata")(
       "alltimes,T", po::bool_switch(&options.all_times), "for all times")(
       "allstations,W", po::bool_switch(&options.all_stations), "for all stations")(
+      "allevels,Z", po::bool_switch(&options.all_levels), "for all levels")(
       "percentages,r",
       po::bool_switch(&options.percentages),
       "print percentages instead of counts")(
@@ -182,7 +187,8 @@ bool parse_options(int argc, char* argv[])
       "barsize,B", po::value(&options.barsize), "width of the bar distribution")(
       "times,t", po::value(&opt_stamps), "times to process")(
       "params,p", po::value(&opt_params), "parameters to process")(
-      "stations,w", po::value(&opt_stations), "stations to process");
+      "stations,w", po::value(&opt_stations), "stations to process")(
+      "levels,z", po::value(&opt_levels), "levels to process");
 
   po::positional_options_description p;
   p.add("infile", 1);
@@ -194,7 +200,7 @@ bool parse_options(int argc, char* argv[])
 
   if (opt.count("version") != 0)
   {
-    std::cout << "qdstat v1.0 (" << __DATE__ << ' ' << __TIME__ << ')' << std::endl;
+    std::cout << "qdstat v1.1 (" << __DATE__ << ' ' << __TIME__ << ')' << std::endl;
   }
 
   if (opt.count("help"))
@@ -221,6 +227,7 @@ bool parse_options(int argc, char* argv[])
   options.these_times = parse_times(opt_stamps);
   options.these_params = parse_params(opt_params);
   options.these_stations = parse_stations(opt_stations);
+  options.these_levels = parse_levels(opt_levels);
 
   // Check invalid values
 
@@ -235,6 +242,9 @@ bool parse_options(int argc, char* argv[])
 
   if (options.all_stations && !options.these_stations.empty())
     throw std::runtime_error("Cannot use options -W and -w simultaneously");
+
+  if (options.all_levels && !options.these_levels.empty())
+    throw std::runtime_error("Cannot use options -Z and -z simultaneously");
 
   return true;
 }
@@ -1010,6 +1020,22 @@ std::size_t max_station_width(NFmiFastQueryInfo& qi)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Set the desired level
+ */
+// ----------------------------------------------------------------------
+
+void set_level(NFmiFastQueryInfo& qi, float levelvalue)
+{
+  for (qi.ResetLevel(); qi.NextLevel();)
+  {
+    if (qi.Level()->LevelValue() == levelvalue) return;
+  }
+  throw std::runtime_error("Level value " + Fmi::to_string(levelvalue) +
+                           " not available in the data");
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Analysis over all locations and times
  */
 // ----------------------------------------------------------------------
@@ -1018,22 +1044,46 @@ void stat_locations_times(NFmiFastQueryInfo& qi)
 {
   int param_width = max_param_width(qi);
 
-  std::cout << std::setw(param_width) << std::right << "Parameter" << Stats::header() << std::endl;
+  if (options.these_levels.empty())
+    std::cout << std::setw(param_width) << std::right << "Parameter" << Stats::header()
+              << std::endl;
+  else
+    std::cout << std::setw(param_width) << std::right << "Parameter" << std::setw(column_width)
+              << "Level" << Stats::header() << std::endl;
+
   BOOST_FOREACH (auto p, options.these_params)
   {
     qi.Param(p);
     std::string name = converter.ToString(qi.Param().GetParam()->GetIdent());
     if (name.empty()) name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
 
-    Stats stats;
-    stats.param(p);
+    if (options.these_levels.empty())
+    {
+      Stats stats;
+      stats.param(p);
 
-    for (qi.ResetLocation(); qi.NextLocation();)
-      for (qi.ResetLevel(); qi.NextLevel();)
-        for (qi.ResetTime(); qi.NextTime();)
-          stats(qi.FloatValue());
+      for (qi.ResetLocation(); qi.NextLocation();)
+        for (qi.ResetLevel(); qi.NextLevel();)
+          for (qi.ResetTime(); qi.NextTime();)
+            stats(qi.FloatValue());
+      std::cout << std::setw(param_width) << name << stats.report() << std::endl;
+    }
+    else
+    {
+      for (auto levelvalue : options.these_levels)
+      {
+        set_level(qi, levelvalue);
 
-    std::cout << std::setw(param_width) << name << stats.report() << std::endl;
+        Stats stats;
+        stats.param(p);
+
+        for (qi.ResetLocation(); qi.NextLocation();)
+          for (qi.ResetTime(); qi.NextTime();)
+            stats(qi.FloatValue());
+        std::cout << std::setw(param_width) << name << std::setw(column_width) << levelvalue
+                  << stats.report() << std::endl;
+      }
+    }
   }
 }
 
@@ -1053,23 +1103,47 @@ void stat_locations_these_times(NFmiFastQueryInfo& qi)
     std::string name = converter.ToString(qi.Param().GetParam()->GetIdent());
     if (name.empty()) name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
 
-    std::cout << std::setw(param_width) << std::right << "Parameter" << std::setw(18) << std::right
-              << "Time" << Stats::header() << std::endl;
+    if (options.these_levels.empty())
+      std::cout << std::setw(param_width) << std::right << "Parameter" << std::setw(18)
+                << std::right << "Time" << Stats::header() << std::endl;
+    else
+      std::cout << std::setw(param_width) << std::right << "Parameter" << std::setw(column_width)
+                << "Level" << std::setw(18) << std::right << "Time" << Stats::header() << std::endl;
 
     BOOST_FOREACH (const auto& pt, options.these_times)
     {
       NFmiMetTime t = pt;
       qi.Time(t);
 
-      Stats stats;
-      stats.param(p);
+      if (options.these_levels.empty())
+      {
+        Stats stats;
+        stats.param(p);
 
-      for (qi.ResetLocation(); qi.NextLocation();)
-        for (qi.ResetLevel(); qi.NextLevel();)
-          stats(qi.FloatValue());
+        for (qi.ResetLocation(); qi.NextLocation();)
+          for (qi.ResetLevel(); qi.NextLevel();)
+            stats(qi.FloatValue());
 
-      std::cout << std::setw(param_width) << std::right << name << std::setw(18) << std::right
-                << to_iso_string(t.PosixTime()) << stats.report() << std::endl;
+        std::cout << std::setw(param_width) << std::right << name << std::setw(18) << std::right
+                  << to_iso_string(t.PosixTime()) << stats.report() << std::endl;
+      }
+      else
+      {
+        for (auto levelvalue : options.these_levels)
+        {
+          set_level(qi, levelvalue);
+
+          Stats stats;
+          stats.param(p);
+
+          for (qi.ResetLocation(); qi.NextLocation();)
+            stats(qi.FloatValue());
+
+          std::cout << std::setw(param_width) << std::right << name << std::setw(column_width)
+                    << levelvalue << std::setw(18) << std::right << to_iso_string(t.PosixTime())
+                    << stats.report() << std::endl;
+        }
+      }
     }
     std::cout << std::endl;
   }
@@ -1105,7 +1179,6 @@ void stat_these_stations_these_times(NFmiFastQueryInfo& qi)
 
         Stats stats;
         stats.param(p);
-
         for (qi.ResetLevel(); qi.NextLevel();)
           stats(qi.FloatValue());
         std::cout << "    " << to_iso_string(t.PosixTime()) << ' ' << stats.report() << std::endl;
@@ -1187,6 +1260,11 @@ int run(int argc, char* argv[])
     }
   }
 
+  // Validate levels
+
+  for (auto levelvalue : options.these_levels)
+    set_level(qi, levelvalue);
+
   // If all times were requested, update the specific list
 
   if (options.all_times)
@@ -1199,10 +1277,19 @@ int run(int argc, char* argv[])
     for (qi.ResetLocation(); qi.NextLocation();)
       options.these_stations.insert(qi.Location()->GetIdent());
 
+  // If all levels were requested, update the specific list
+
+  if (options.all_levels)
+    for (qi.ResetLevel(); qi.NextLevel();)
+      options.these_levels.insert(qi.Level()->LevelValue());
+
   // We can never summarize parameters collectively, there is always a loop
 
   if (!options.these_stations.empty())
   {
+    if (!options.these_levels.empty())
+      throw std::runtime_error("Levels options not supported for station data");
+
     if (!options.these_times.empty())
       stat_these_stations_these_times(qi);
     else

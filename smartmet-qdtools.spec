@@ -2,8 +2,8 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 18.1.12
-Release: 2%{?dist}.fmi
+Version: 18.1.15
+Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -188,6 +188,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Mon Jan 15 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.1.15-1.fmi
+- Added options -Z (--allevels) and -z (--levels) to qdstat
+
 * Fri Jan 12 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.1.12-2.fmi
 - nctoqd improvements
 

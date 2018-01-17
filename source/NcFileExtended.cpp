@@ -530,7 +530,7 @@ NcVar *NcFileExtended::axis(const std::string &axisname)
       }
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 // ----------------------------------------------------------------------
@@ -627,7 +627,7 @@ bool NcFileExtended::isStereographic()
  */
 // ----------------------------------------------------------------------
 
-unsigned long NcFileExtended::axis_size(NcVar *axis)
+unsigned long NcFileExtended::axis_size(NcVar *axis, int fallbackindex)
 {
   if (axis == nullptr)
     throw SmartMet::Spine::Exception(BCP,
@@ -642,12 +642,14 @@ unsigned long NcFileExtended::axis_size(NcVar *axis)
     boost::algorithm::to_lower(name);
     if (name == dimname) return dim->size();
   }
+  if (fallbackindex >= 0 || fallbackindex < num_dims()) return get_dim(fallbackindex)->size();
+
   throw SmartMet::Spine::Exception(BCP, std::string("Could not find dimension of axis ") + varname);
 }
 
-unsigned long NcFileExtended::xsize() { return axis_size(x_axis()); }
+unsigned long NcFileExtended::xsize() { return axis_size(x_axis(), 0); }
 
-unsigned long NcFileExtended::ysize() { return axis_size(y_axis()); }
+unsigned long NcFileExtended::ysize() { return axis_size(y_axis(), 1); }
 
 unsigned long NcFileExtended::zsize()
 {

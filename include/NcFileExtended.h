@@ -22,11 +22,13 @@ class NcFileExtended : public NcFile
                  size_t initialsize = 0,
                  FileFormat = Classic);
   std::string grid_mapping();
-  unsigned long xsize();                 // Count of elements on x-axis
-  unsigned long ysize();                 // Count of elements on y-axis
-  unsigned long zsize();                 // Count of elements on z-axis
-  unsigned long tsize();                 // Count of elements on t-axis
-  unsigned long axis_size(NcVar *axis);  // Generic dimension of an axis(=count of elements)
+  unsigned long xsize();  // Count of elements on x-axis
+  unsigned long ysize();  // Count of elements on y-axis
+  unsigned long zsize();  // Count of elements on z-axis
+  unsigned long tsize();  // Count of elements on t-axis
+  unsigned long axis_size(
+      NcVar *axis, int fallbackindex = -1);  // Generic dimension of an axis(=count of elements)
+  // Use fallbackindex to take nth index if properly named dimension is not found
   std::shared_ptr<std::string> get_axis_units(
       NcVar *axis);  // String presentation of a particular units on an axis
   double get_axis_scale(NcVar *axis,

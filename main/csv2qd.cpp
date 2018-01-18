@@ -33,11 +33,11 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/filesystem/operations.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/program_options.hpp>
-#include <boost/filesystem/operations.hpp>
 
 #include <iostream>
 #include <list>
@@ -62,62 +62,34 @@ const string default_producer_name = "SYNOP";
 
 struct Options
 {
-  Options();
+  bool verbose = false;
+  bool quiet = false;
 
-  bool verbose;
-
-  string order;
-  int timecolumn;
-  int stationcolumn;
-  int levelcolumn;
-  int datacolumn;
+  string order = "idtime";
+  int timecolumn = 1;
+  int stationcolumn = 0;
+  int levelcolumn = -1;
+  int datacolumn = 2;
 
   vector<string> files;
   string infile;
   string outfile;
 
-  string missingvalue;
-  int producernumber;
-  string producername;
+  string missingvalue = default_missingvalue;
+  int producernumber = default_producer_number;
+  string producername = default_producer_name;
   vector<int> params;
 
-  string paramsfile;
-  string stationsfile;
+  string paramsfile = default_paramsfile;
+  string stationsfile = default_stationsfile;
   string origintime;
-  string timezone;
+  string timezone = "UTC";
 
-  int leveltype;
+  int leveltype = 5000;
 };
 
 Options options;
 
-// ----------------------------------------------------------------------
-/*!
- * \brief Default options
- */
-// ----------------------------------------------------------------------
-
-Options::Options()
-    : verbose(false),
-      order("idtime"),
-      timecolumn(1),
-      stationcolumn(0),
-      levelcolumn(-1),
-      datacolumn(2),
-      files(),
-      infile(),
-      outfile(),
-      missingvalue(default_missingvalue),
-      producernumber(default_producer_number),
-      producername(default_producer_name),
-      params(),
-      paramsfile(default_paramsfile),
-      stationsfile(default_stationsfile),
-      origintime(),
-      timezone("UTC"),
-      leveltype(5000)
-{
-}
 // ----------------------------------------------------------------------
 /*!
  * \brief Parse command line options
@@ -141,6 +113,7 @@ bool parse_options(int argc, char* argv[], Options& options)
   po::options_description desc("Allowed options");
   desc.add_options()("help,h", "print out help message")(
       "verbose,v", po::bool_switch(&options.verbose), "set verbose mode on")(
+      "quiet,q", po::bool_switch(&options.quiet), "set quiet mode on")(
       "version,V", "display version number")("missing,m",
                                              po::value(&options.missingvalue),
                                              "missing value string (default is empty string)")(
@@ -187,6 +160,9 @@ bool parse_options(int argc, char* argv[], Options& options)
          << desc << endl;
     return false;
   }
+
+  if (options.verbose && options.quiet)
+    throw std::runtime_error("Cannot use --verbose and --quiet simultaneously");
 
   if (opt.count("files") == 0)
   {
@@ -477,10 +453,14 @@ NFmiHPlaceDescriptor create_hdesc(const CsvTable& csv, const Stations& stations)
   {
     Stations::const_iterator it = stations.find(id);
     if (it == stations.end())
-      throw runtime_error("No information found for station id '" + id + "'");
-
-    NFmiStation station(it->second.number, it->second.name, it->second.lon, it->second.lat);
-    lbag.AddLocation(station);
+    {
+      if (!options.quiet) std::cerr << "Warning: Unknown station id '" << id << "'" << std::endl;
+    }
+    else
+    {
+      NFmiStation station(it->second.number, it->second.name, it->second.lon, it->second.lat);
+      lbag.AddLocation(station);
+    }
   }
 
   return NFmiHPlaceDescriptor(lbag);

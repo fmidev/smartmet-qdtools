@@ -34,6 +34,10 @@
  * <dd>
  * Display help on command line options.
  * </dd>
+ * <dt>-Q</dt>
+ * <dd>
+ * Use all files in the directory (newbase multifile)
+ * </dd>
  * <dt>-p [param1,param2,...]</dt>
  * <dd>
  * Define the parameters to be extracted. Normally all parameters
@@ -82,6 +86,7 @@
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiGrid.h>
+#include <newbase/NFmiMultiQueryInfo.h>
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
 #include <newbase/NFmiStringTools.h>
@@ -107,7 +112,7 @@ void usage()
 {
   cout << "Usage: qdfilter [options] startoffset endoffset function querydata" << endl
        << endl
-       << "Qdfilter filters out data from the given querydata." << endl
+       << "qdfilter filters out data from the given querydata." << endl
        << endl
        << "Usage:" << endl
        << endl
@@ -125,6 +130,8 @@ void usage()
        << endl
        << "Available options:" << endl
        << endl
+       << "-Q" << endl
+       << "\tUse all files in the directory (multifile mode)" << endl
        << "-o <outfile>" << endl
        << "\tThe output filename instead of standard output" << endl
        << endl
@@ -330,8 +337,8 @@ NFmiTimeDescriptor MakeTimeDescriptor(NFmiFastQueryInfo& theQ,
     t1.ChangeByMinutes(startoffset);
     t2.ChangeByMinutes(endoffset);
 
-    ok = theQ.TimeDescriptor().IsInside(t1);
-    ok &= theQ.TimeDescriptor().IsInside(t2);
+    ok = theQ.IsInside(t1);
+    ok &= theQ.IsInside(t2);
 
     if (!ok) continue;
 
@@ -381,6 +388,7 @@ int run(int argc, const char* argv[])
   list<int> opt_times;  // the times to extract
   bool opt_utc = false;
 
+  bool opt_multifile = false;        // option -Q
   bool opt_lasttime = false;         // option -a
   std::vector<int> opt_local_hours;  // the local hours to extract
   std::vector<int> opt_utc_hours;    // the UTC hours to extract
@@ -392,7 +400,7 @@ int run(int argc, const char* argv[])
 
   // Read command line arguments
 
-  NFmiCmdLine cmdline(argc, argv, "hap!t!T!i!I!o!");
+  NFmiCmdLine cmdline(argc, argv, "hQap!t!T!i!I!o!");
   if (cmdline.Status().IsError()) throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
 
   // help option must be checked before checking the number
@@ -418,6 +426,8 @@ int run(int argc, const char* argv[])
   if (opt_infile.empty()) throw runtime_error("Input querydata filename cannot be empty");
 
   // extract command line options
+
+  if (cmdline.isOption('Q')) opt_multifile = !opt_multifile;
 
   if (cmdline.isOption('p')) opt_parameters = NFmiStringTools::Split(cmdline.OptionValue('p'));
 
@@ -460,15 +470,25 @@ int run(int argc, const char* argv[])
 
   // read the querydata
 
-  NFmiQueryData qd(opt_infile);
-  NFmiFastQueryInfo srcinfo(&qd);
+  std::unique_ptr<NFmiQueryData> qd;
+  std::unique_ptr<NFmiFastQueryInfo> srcinfo;
+
+  if (!opt_multifile)
+  {
+    qd.reset(new NFmiQueryData(opt_infile));
+    srcinfo.reset(new NFmiFastQueryInfo(qd.get()));
+  }
+  else
+  {
+    srcinfo.reset(new NFmiMultiQueryInfo(opt_infile));
+  }
 
   // create new descriptors for the new data
 
-  NFmiHPlaceDescriptor hdesc(srcinfo.HPlaceDescriptor());
-  NFmiVPlaceDescriptor vdesc(srcinfo.VPlaceDescriptor());
-  NFmiParamDescriptor pdesc(MakeParamDescriptor(srcinfo, opt_parameters));
-  NFmiTimeDescriptor tdesc(MakeTimeDescriptor(srcinfo,
+  NFmiHPlaceDescriptor hdesc(srcinfo->HPlaceDescriptor());
+  NFmiVPlaceDescriptor vdesc(srcinfo->VPlaceDescriptor());
+  NFmiParamDescriptor pdesc(MakeParamDescriptor(*srcinfo, opt_parameters));
+  NFmiTimeDescriptor tdesc(MakeTimeDescriptor(*srcinfo,
                                               opt_lasttime,
                                               opt_times,
                                               opt_utc,
@@ -498,10 +518,10 @@ int run(int argc, const char* argv[])
 
   if (opt_lasttime)
   {
-    srcinfo.LastTime();
-    NFmiTime t2 = srcinfo.ValidTime();
-    srcinfo.FirstTime();
-    NFmiTime t1 = srcinfo.ValidTime();
+    srcinfo->LastTime();
+    NFmiTime t2 = srcinfo->ValidTime();
+    srcinfo->FirstTime();
+    NFmiTime t1 = srcinfo->ValidTime();
     int minutes = t2.DifferenceInMinutes(t1);
     if (opt_startoffset < -minutes) opt_startoffset = -minutes;
   }
@@ -519,17 +539,17 @@ int run(int argc, const char* argv[])
 
     for (dstinfo.ResetParam(); dstinfo.NextParam();)
     {
-      if (!srcinfo.Param(dstinfo.Param())) throw runtime_error("Internal error in parameter loop");
+      if (!srcinfo->Param(dstinfo.Param())) throw runtime_error("Internal error in parameter loop");
 
       // We assume levels and locations are identical
 
-      for (dstinfo.ResetLocation(), srcinfo.ResetLocation();
-           dstinfo.NextLocation() && srcinfo.NextLocation();)
-        for (dstinfo.ResetLevel(), srcinfo.ResetLevel();
-             dstinfo.NextLevel() && srcinfo.NextLevel();)
+      for (dstinfo.ResetLocation(), srcinfo->ResetLocation();
+           dstinfo.NextLocation() && srcinfo->NextLocation();)
+        for (dstinfo.ResetLevel(), srcinfo->ResetLevel();
+             dstinfo.NextLevel() && srcinfo->NextLevel();)
         {
           modifier->Clear();
-          float value = NFmiDataIntegrator::Integrate(srcinfo, starttime, endtime, *modifier);
+          float value = NFmiDataIntegrator::Integrate(*srcinfo, starttime, endtime, *modifier);
           dstinfo.FloatValue(value);
         }
     }

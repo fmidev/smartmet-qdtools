@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 18.1.18
+Version: 18.1.19
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -188,6 +188,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Fri Jan 19 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.1.19-1.fmi
+- qdfilter -Q will process all querydata in the given directory as a multifile
+
 * Thu Jan 18 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.1.18-1.fmi
 - csv2qd now only warns if it encounters an unknown station
 - added option csv2qd --quiet

@@ -67,6 +67,8 @@ void Usage(void)
        << "   -Z <value>\t\tNew level value" << endl
        << "   -L <value>\t\tNew level type" << endl
        << "   -T <time>\tNew UTC origin time in ISO, SQL or timestamp format" << endl
+       << "   -w stationId\t\tNew station id" << endl
+       << "   -W stationName\t\tNew station name" << endl
        << endl
        << "Example usage: qdset -n 'Temperature' dataFile Temperature" << endl
        << endl;
@@ -74,7 +76,7 @@ void Usage(void)
 
 void run(int argc, const char* argv[])
 {
-  NFmiCmdLine cmdline(argc, argv, "n!d!N!D!l!u!i!t!s!b!p!Z!L!T!");
+  NFmiCmdLine cmdline(argc, argv, "n!d!N!D!l!u!i!t!s!b!p!Z!L!T!w!W!");
   // Tarkistetaan optioiden oikeus:
   if (cmdline.Status().IsError())
   {
@@ -99,7 +101,7 @@ void run(int argc, const char* argv[])
   }
   else if (!producerChange && !levelChange && !originChange && cmdline.NumberofParameters() != 2)
   {
-    cerr << "Error: 2 parameters expected, dataFile 'parameter-id/name'\n\n";
+    cerr << "Error: 2 parameters expected, dataFile 'parameter-id/name or station id'\n\n";
     Usage();
     throw runtime_error("");  // tässä piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
@@ -114,7 +116,7 @@ void run(int argc, const char* argv[])
 
   // Katsotaan ensin onko 2. parametrina annettu parametri-tunniste nimi (esim. Temperature), vai
   // identti (esim. 4)
-  bool paramFound = false;
+  bool paramFound = false || cmdline.isOption('w') || cmdline.isOption('W');
   string paramIdOrName(cmdline.Parameter(2));
   NFmiEnumConverter eConv;
   FmiParameterName parNameId = static_cast<FmiParameterName>(eConv.ToEnum(paramIdOrName));
@@ -211,6 +213,35 @@ void run(int argc, const char* argv[])
   {
     std::string stamp = cmdline.OptionValue('T');
     info->OriginTime(Fmi::TimeParser::parse(stamp));
+  }
+
+  if (cmdline.isOption('w') || cmdline.isOption('W'))
+  {
+    if (info->IsGrid()) throw runtime_error("Querydata is in grid format");
+
+    long oldId;
+
+    try
+    {
+      oldId = stol(paramIdOrName);
+    }
+    catch (const invalid_argument& e)
+    {
+      throw runtime_error("Station id must be all numbers");
+    }
+
+    if (!info->Location(oldId)) throw runtime_error("station " + paramIdOrName + " not found from data");
+
+    if (cmdline.isOption('w'))
+    {
+      const long newId = stol(cmdline.OptionValue('w'));
+
+      info->EditStation().SetIdent(newId);
+    }
+    if (cmdline.isOption('W'))
+    {
+      info->EditStation().SetName(cmdline.OptionValue('W'));
+    }
   }
 
   // Copied from NFmiStreamQueryData::WriteData for backward compatibility

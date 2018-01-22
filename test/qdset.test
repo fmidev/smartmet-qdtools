@@ -20,6 +20,9 @@ DoSqdTest("qdset name and id",
 	  "cp data/pal_xh.sqd /tmp/qdset_palxh.sqd ; $path/qdset -n foobar -d 5 /tmp/qdset_palxh.sqd Temperature",
 	  "qdset_palxh.sqd");
 
+DoSqdTest("qdset station name and id",
+	  "cp data/synop.sqd /tmp/qdset_synop.sqd ; $path/qdset -w 2701 -W \"testi asema\" /tmp/qdset_synop.sqd 5115",
+	  "qdset_synop.sqd");
 
 # ----------------------------------------------------------------------
 # Run a single test

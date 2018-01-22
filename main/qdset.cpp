@@ -66,9 +66,9 @@ void Usage(void)
        << "   -p precisionString\tNew parameter precision string (e.g. %0.1f)" << endl
        << "   -Z <value>\t\tNew level value" << endl
        << "   -L <value>\t\tNew level type" << endl
-       << "   -T <time>\tNew UTC origin time in ISO, SQL or timestamp format" << endl
+       << "   -T <time>\t\tNew UTC origin time in ISO, SQL or timestamp format" << endl
        << "   -w stationId\t\tNew station id" << endl
-       << "   -W stationName\t\tNew station name" << endl
+       << "   -W stationName\tNew station name" << endl
        << endl
        << "Example usage: qdset -n 'Temperature' dataFile Temperature" << endl
        << endl;
@@ -230,7 +230,8 @@ void run(int argc, const char* argv[])
       throw runtime_error("Station id must be all numbers");
     }
 
-    if (!info->Location(oldId)) throw runtime_error("station " + paramIdOrName + " not found from data");
+    if (!info->Location(oldId))
+      throw runtime_error("station " + paramIdOrName + " not found from data");
 
     if (cmdline.isOption('w'))
     {

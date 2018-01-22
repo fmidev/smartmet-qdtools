@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 18.1.19
+Version: 18.1.22
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -21,10 +21,10 @@ BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: smartmet-library-calculator-devel >= 17.8.28
-BuildRequires: smartmet-library-gis-devel >= 17.11.22
+BuildRequires: smartmet-library-gis-devel >= 18.1.15
 BuildRequires: smartmet-library-imagine-devel >= 17.9.22
 BuildRequires: smartmet-library-macgyver-devel >= 17.11.27
-BuildRequires: smartmet-library-newbase-devel >= 17.12.11
+BuildRequires: smartmet-library-newbase-devel >= 18.1.13
 BuildRequires: smartmet-library-smarttools-devel >= 17.8.28
 BuildRequires: smartmet-timezones
 BuildRequires: smartmet-library-spine-devel
@@ -37,10 +37,10 @@ BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
 Requires: smartmet-timezones >= 17.10.26
 Requires: smartmet-library-calculator >= 17.8.28
-Requires: smartmet-library-gis >= 17.11.22
+Requires: smartmet-library-gis >= 18.1.15
 Requires: smartmet-library-imagine >= 17.9.22
 Requires: smartmet-library-macgyver >= 17.11.27
-Requires: smartmet-library-newbase >= 17.12.11
+Requires: smartmet-library-newbase >= 18.1.13
 Requires: smartmet-library-smarttools >= 17.8.28
 Requires: smartmet-library-spine
 Requires: eccodes
@@ -188,6 +188,10 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Mon Jan 22 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.1.22-1.fmi
+- qdset -w changes station id to a new one
+- qdset -W changes station name to a new one
+
 * Fri Jan 19 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.1.19-1.fmi
 - qdfilter -Q will process all querydata in the given directory as a multifile
 

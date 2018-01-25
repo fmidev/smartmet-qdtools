@@ -21,18 +21,18 @@
 //**********************************************************
 
 #include "NFmiQueryDataChecker.h"
-#include "NFmiParamCheckData.h"
 #include "NFmiDataModifierDataChecking.h"
+#include "NFmiParamCheckData.h"
 
-#include <newbase/NFmiQueryData.h>
-#include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiDataModifier.h>
 #include <newbase/NFmiDataModifierMinMax.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiQueryData.h>
 
-#include <time.h>
-#include <set>
 #include <algorithm>
 #include <fstream>
+#include <set>
+#include <time.h>
 
 //--------------------------------------------------------
 // Constructor/Destructor
@@ -416,7 +416,7 @@ void NFmiQueryDataChecker::MakeRandomLocationIndexies(void)
     else
     {
       // muista set avuksi!!
-      srand(static_cast<unsigned>(time(NULL)));
+      srand(static_cast<unsigned>(time(nullptr)));
       std::set<int> helpSet;
       int index = 0;
       for (; static_cast<int>(helpSet.size()) < itsRandomlyCheckedLocationCount;)

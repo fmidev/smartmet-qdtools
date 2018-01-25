@@ -19,8 +19,8 @@
 // ======================================================================
 
 #include <iostream>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiStreamQueryData.h>

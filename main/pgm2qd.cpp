@@ -8,13 +8,13 @@
 #include "Pgm2QueryData.h"
 
 #include <newbase/NFmiCmdLine.h>
-#include <newbase/NFmiStringTools.h>
 #include <newbase/NFmiFileSystem.h>
 #include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiStringTools.h>
 
-#include <list>
 #include <fstream>
 #include <iostream>
+#include <list>
 #include <string>
 
 using namespace std;

@@ -23,16 +23,16 @@
  *
  */
 
-#include <newbase/NFmiQueryData.h>
-#include <newbase/NFmiStreamQueryData.h>
 #include <newbase/NFmiCmdLine.h>
-#include <newbase/NFmiValueString.h>
-#include <newbase/NFmiTimeList.h>
-#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiStreamQueryData.h>
+#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiTimeList.h>
+#include <newbase/NFmiValueString.h>
 
-#include <stdexcept>
 #include <fstream>
+#include <stdexcept>
 
 bool ReadFlashFile(const std::string &theFileName,
                    int theSkipLines,

@@ -24,8 +24,8 @@
 
 #include "NFmiParamCheckData.h"
 
-#include <newbase/NFmiParamBag.h>
 #include <newbase/NFmiLocationBag.h>
+#include <newbase/NFmiParamBag.h>
 #include <newbase/NFmiTimeDescriptor.h>
 
 #include <vector>
@@ -86,6 +86,7 @@ class NFmiQueryDataChecker
   const std::vector<int>& RandomLocationIndexies(void) const { return itsRandomLocationIndexies; }
   void DoIndexRandomizing(bool value) { fDoIndexRandomizing = value; }
   bool DoIndexRandomizing(void) { return fDoIndexRandomizing; }
+
  private:
   bool DoMissingDataCheck(void);
   bool DoStraightDataCheck(void);

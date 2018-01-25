@@ -31,12 +31,12 @@
 // Usage: type inputTiedosto | QDVersionFilter.exe [infoversion=7] [keepCloudSymbol=0=false] >
 // outputTiedosto
 
-#include <newbase/NFmiStreamQueryData.h>
-#include <newbase/NFmiQueryDataUtil.h>
 #include <newbase/NFmiCmdLine.h>
-#include <newbase/NFmiValueString.h>
-#include <newbase/NFmiStringTools.h>
 #include <newbase/NFmiMilliSecondTimer.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiStreamQueryData.h>
+#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiValueString.h>
 
 #include <stdexcept>
 
@@ -62,58 +62,62 @@ int main(int argc, const char *argv[])
 
 static std::vector<int> GetOptionalParamIdList(const NFmiCmdLine &cmdline, char option)
 {
-    std::vector<int> paramIdVector;
-    if(cmdline.isOption(option))
+  std::vector<int> paramIdVector;
+  if (cmdline.isOption(option))
+  {
+    std::string precipFromIdListStr = cmdline.OptionValue(option);
+    try
     {
-        std::string precipFromIdListStr = cmdline.OptionValue(option);
-        try
-        {
-            paramIdVector = NFmiStringTools::Split<std::vector<int> >(precipFromIdListStr);
-        }
-        catch(...)
-        {
-            std::string errorString("-");
-            errorString += option;
-            errorString += " was not correctly formatted, there should be an integer or list\nof integers "
-                "separated by commas, e.g.\"123\" or \"123,-28\", given option was:\n";
-            errorString += precipFromIdListStr;
-            throw std::runtime_error(errorString);
-        }
+      paramIdVector = NFmiStringTools::Split<std::vector<int> >(precipFromIdListStr);
     }
-    return paramIdVector;
+    catch (...)
+    {
+      std::string errorString("-");
+      errorString += option;
+      errorString +=
+          " was not correctly formatted, there should be an integer or list\nof integers "
+          "separated by commas, e.g.\"123\" or \"123,-28\", given option was:\n";
+      errorString += precipFromIdListStr;
+      throw std::runtime_error(errorString);
+    }
+  }
+  return paramIdVector;
 }
 
-// Transform N octas to %: 
-// one octa is 12.5 % (result will be rounded *later* to nearest 10 %, due to WeatherAndCloudiness limitation)
+// Transform N octas to %:
+// one octa is 12.5 % (result will be rounded *later* to nearest 10 %, due to WeatherAndCloudiness
+// limitation)
 //    E.g. 0 -> 0 %, 4 -> 50 %, 8 -> 100 %
-//    9 -> 100 % (9 = can't observe cloudines due e.g. fog, how should we really put this, missing? )
-//    all other values -> missing
+//    9 -> 100 % (9 = can't observe cloudines due e.g. fog, how should we really put this, missing?
+//    ) all other values -> missing
 static float convertOctaToProcent(float octas)
 {
-    if(octas >= 0 && octas <= 8)
-        return octas * 12.5f;
-    else if(octas == 9)
-        return 100.f;
-    else
-        return kFloatMissing;
+  if (octas >= 0 && octas <= 8)
+    return octas * 12.5f;
+  else if (octas == 9)
+    return 100.f;
+  else
+    return kFloatMissing;
 }
 
-static void ConvertNfromOctasToProcent(std::unique_ptr<NFmiQueryData> &data, NFmiFastQueryInfo &sourceInfo)
+static void ConvertNfromOctasToProcent(std::unique_ptr<NFmiQueryData> &data,
+                                       NFmiFastQueryInfo &sourceInfo)
 {
-    NFmiFastQueryInfo info(data.get());
-    if(info.Param(kFmiTotalCloudCover) && sourceInfo.Param(kFmiTotalCloudCover))
+  NFmiFastQueryInfo info(data.get());
+  if (info.Param(kFmiTotalCloudCover) && sourceInfo.Param(kFmiTotalCloudCover))
+  {
+    for (info.ResetLocation(), sourceInfo.ResetLocation();
+         info.NextLocation() && sourceInfo.NextLocation();)
     {
-        for(info.ResetLocation(), sourceInfo.ResetLocation(); info.NextLocation() && sourceInfo.NextLocation(); )
+      for (info.ResetLevel(), sourceInfo.ResetLevel(); info.NextLevel() && sourceInfo.NextLevel();)
+      {
+        for (info.ResetTime(), sourceInfo.ResetTime(); info.NextTime() && sourceInfo.NextTime();)
         {
-            for(info.ResetLevel(), sourceInfo.ResetLevel(); info.NextLevel() && sourceInfo.NextLevel(); )
-            {
-                for(info.ResetTime(), sourceInfo.ResetTime(); info.NextTime() && sourceInfo.NextTime(); )
-                {
-                    info.FloatValue(::convertOctaToProcent(sourceInfo.FloatValue()));
-                }
-            }
+          info.FloatValue(::convertOctaToProcent(sourceInfo.FloatValue()));
         }
+      }
     }
+  }
 }
 
 void run(int argc, const char *argv[])
@@ -171,15 +175,15 @@ void run(int argc, const char *argv[])
   if (cmdline.isOption('b')) buildTimeBag = true;
 
   bool doAccuratePrecip = false;
-  if(cmdline.isOption('p')) doAccuratePrecip = true;
-  if(cmdline.isOption('N')) convertNfromOctasToProcent = true;
+  if (cmdline.isOption('p')) doAccuratePrecip = true;
+  if (cmdline.isOption('N')) convertNfromOctasToProcent = true;
 
-  // -f optiolla voidaan antaa lista parId:t‰, joita k‰ytet‰‰n Weather-parametrin 
+  // -f optiolla voidaan antaa lista parId:t‰, joita k‰ytet‰‰n Weather-parametrin
   // precipForm -aliparametrin t‰ytt‰misess‰.
   // Parametrit annetaan pilkulla eroteltuina ja ne ovat prioriteetti j‰rjestyksess‰. Jos 1. lˆytyy
-  // arvo johonkin aikaan ja paikkaan, sit‰ k‰ytet‰‰n, jos 1. arvo on puuttuvaa, k‰ytet‰‰n 2. arvoa jne.
-  // Jos parId on positiivinen, kyseinen parametri poistetaan tulosdatan p‰‰tason parametrilistasta,
-  // jos se on negatiivinen, j‰tet‰‰n se sinne.
+  // arvo johonkin aikaan ja paikkaan, sit‰ k‰ytet‰‰n, jos 1. arvo on puuttuvaa, k‰ytet‰‰n 2. arvoa
+  // jne. Jos parId on positiivinen, kyseinen parametri poistetaan tulosdatan p‰‰tason
+  // parametrilistasta, jos se on negatiivinen, j‰tet‰‰n se sinne.
   std::vector<int> precipFormParIds = ::GetOptionalParamIdList(cmdline, 'f');
   std::vector<int> fogParIds = ::GetOptionalParamIdList(cmdline, 'F');
   std::vector<int> potParIds = ::GetOptionalParamIdList(cmdline, 'P');
@@ -192,21 +196,21 @@ void run(int argc, const char *argv[])
   NFmiQueryData qd(inputfile);
   NFmiFastQueryInfo sourceInfo(&qd);
 
-  std::unique_ptr<NFmiQueryData> uusiData(NFmiQueryDataUtil::MakeCombineParams(sourceInfo,
-                                                                 infoVersion,
-                                                                 keepCloudSymbolParameter,
-                                                                 doTotalWind,
-                                                                 doWeatherAndCloudiness,
-                                                                 windGustParId,
-                                                                 precipFormParIds,
-                                                                 fogParIds,
-                                                                 potParIds,
-                                                                 allowLessParamsWhenCreatingWeather,
-                                                                 maxUsedThreadCount,
-                                                                 doAccuratePrecip,
-                                                                 buildTimeBag));
-  if(convertNfromOctasToProcent)
-      ::ConvertNfromOctasToProcent(uusiData, sourceInfo);
+  std::unique_ptr<NFmiQueryData> uusiData(
+      NFmiQueryDataUtil::MakeCombineParams(sourceInfo,
+                                           infoVersion,
+                                           keepCloudSymbolParameter,
+                                           doTotalWind,
+                                           doWeatherAndCloudiness,
+                                           windGustParId,
+                                           precipFormParIds,
+                                           fogParIds,
+                                           potParIds,
+                                           allowLessParamsWhenCreatingWeather,
+                                           maxUsedThreadCount,
+                                           doAccuratePrecip,
+                                           buildTimeBag));
+  if (convertNfromOctasToProcent) ::ConvertNfromOctasToProcent(uusiData, sourceInfo);
   uusiData->Write();
 }
 
@@ -228,10 +232,13 @@ void Usage(void)
        << "\t-g windGust-parId Add windGust param to totalWind using param" << endl
        << "\t\twith given parId." << endl
        << "\t-f precipForm-parId-list <id1[,id2,...]> Add precipForm param values to Weather using "
-          "param(s)" << endl
-       << "\t-F fog-parId-list <id1[,id2,...]> Add fog param values to Weather using param(s)" << endl
+          "param(s)"
+       << endl
+       << "\t-F fog-parId-list <id1[,id2,...]> Add fog param values to Weather using param(s)"
+       << endl
        << "\t-P pot-parId-list <id1[,id2,...]> Add pot param (probability of thunder) values "
-          "to Weather using param(s)" << endl
+          "to Weather using param(s)"
+       << endl
        << "\t\twith given parId(s). If parId is positive, param will be removed from result data."
        << endl
        << "\t\tIf parId is negative, param will be left in result data." << endl
@@ -239,8 +246,8 @@ void Usage(void)
        << "\t\tN and rr(1h|3h|6h) parameters." << endl
        << "\t-m <thread-count>\tMax used worker threads, default all" << endl
        << "\t-p  add accurate precip param and calcs snowFall param per 1h" << endl
-      << "\t-b  build time bag instead of time list if possible (required by TAF editor)" << endl
-      << "\t-N  Convert (observed) N parameter from octas to %, default = not" << endl
+       << "\t-b  build time bag instead of time list if possible (required by TAF editor)" << endl
+       << "\t-N  Convert (observed) N parameter from octas to %, default = not" << endl
        << "\tExample usage: qdversionchange -t 1 -w 0 7 < input > output" << endl
        << endl;
 }

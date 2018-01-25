@@ -152,7 +152,7 @@ void run(int argc, const char *argv[])
   NFmiQueryData qd(inputfile);
 
   boost::shared_ptr<NFmiQueryData> newData(
-      NFmiQueryDataUtil::Interpolate2OtherGrid(&qd, wantedGrid, NULL));
+      NFmiQueryDataUtil::Interpolate2OtherGrid(&qd, wantedGrid, nullptr));
 
   newData->Write(outputfile);
 }

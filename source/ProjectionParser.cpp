@@ -188,7 +188,7 @@ void ProjectionParser::parse(std::istream& is, ProjectionStore& theStore)
 
   theStore.add(proj_name, projection);
 }
-}
-}  // namespace FMI::RadContour
+}  // namespace RadContour
+}  // namespace FMI
 
 // ======================================================================

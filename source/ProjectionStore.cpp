@@ -7,8 +7,8 @@
 
 #include "ProjectionStore.h"
 #include "Projection.h"
-#include <newbase/NFmiArea.h>
 #include <imagine/NFmiPath.h>
+#include <newbase/NFmiArea.h>
 #include <map>
 #include <stdexcept>
 
@@ -117,7 +117,7 @@ const Projection& ProjectionStore::projection(const std::string& theName) const
   }
   return pos->second;
 }
-}
-}  // namespace FMI::RadContour
+}  // namespace RadContour
+}  // namespace FMI
 
 // ======================================================================

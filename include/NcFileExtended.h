@@ -18,7 +18,7 @@ class NcFileExtended : public NcFile
   NcFileExtended(std::string path,
                  long timeshift,
                  FileMode = ReadOnly,
-                 size_t *bufrsizeptr = NULL,  // optional tuning parameters
+                 size_t *bufrsizeptr = nullptr,  // optional tuning parameters
                  size_t initialsize = 0,
                  FileFormat = Classic);
   std::string grid_mapping();
@@ -31,12 +31,13 @@ class NcFileExtended : public NcFile
       NcVar *axis);  // String presentation of a particular units on an axis
   double get_axis_scale(NcVar *axis,
                         std::shared_ptr<std::string> *source_units,
-                        std::string *target_units = nullptr);  // Get scaling multiplier to convert
-                                                               // axis to target units, default
-                                                               // target being meters
-  double x_scale();                                            // x scaling multiplier to meters
-  double y_scale();                                            // y scaling multiplier to meters
-  double z_scale();                                            // z scaling multiplier to meters
+                        const std::string *target_units = nullptr);  // Get scaling multiplier to
+                                                                     // convert axis to target
+                                                                     // units, default target being
+                                                                     // meters
+  double x_scale();  // x scaling multiplier to meters
+  double y_scale();  // y scaling multiplier to meters
+  double z_scale();  // z scaling multiplier to meters
   double xmin();
   double xmax();
   double ymin();
@@ -75,7 +76,7 @@ class NcFileExtended : public NcFile
   std::shared_ptr<std::string> x_units, y_units, z_units;
   double xscale, yscale, zscale;
   void find_axis_bounds(
-      NcVar *, int n, double *x1, double *x2, const char *name, bool *isdescending);
+      NcVar *, int n, double &x1, double &x2, const char *name, bool &isdescending);
   void find_lonlat_bounds(double &lon1, double &lat1, double &lon2, double &lat2);
   void find_bounds();
   void copy_values(NFmiFastQueryInfo &info,

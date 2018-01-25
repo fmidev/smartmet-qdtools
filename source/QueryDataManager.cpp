@@ -47,7 +47,7 @@ bool locationvalid(NFmiFastQueryInfo& theQD)
   }
   return false;
 }
-}
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

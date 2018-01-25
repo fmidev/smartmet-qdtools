@@ -18,14 +18,14 @@
 
 void DUMP(grib_handle *grib, const char *ns)
 {
-  if (ns == NULL)
+  if (ns == nullptr)
     std::cout << "\nValues in global namespace:" << std::endl;
   else
     std::cout << "\nValues for namespace " << ns << ":" << std::endl << std::endl;
 
   grib_keys_iterator *kiter;
-  if (ns == NULL)
-    kiter = grib_keys_iterator_new(grib, GRIB_KEYS_ITERATOR_ALL_KEYS, NULL);
+  if (ns == nullptr)
+    kiter = grib_keys_iterator_new(grib, GRIB_KEYS_ITERATOR_ALL_KEYS, nullptr);
   else
     kiter = grib_keys_iterator_new(grib, GRIB_KEYS_ITERATOR_ALL_KEYS, const_cast<char *>(ns));
 
@@ -84,7 +84,7 @@ void DUMP(grib_handle *grib, const char *ns)
 
 void DUMP(grib_handle *grib)
 {
-  DUMP(grib, NULL);
+  DUMP(grib, nullptr);
   DUMP(grib, "geography");
   DUMP(grib, "parameter");
   DUMP(grib, "time");

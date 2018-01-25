@@ -124,7 +124,7 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
 {
   const char *pszFormat = "gtiff";
   GDALDriver *poDriver;
-  // char **papszMetadata = NULL;
+  // char **papszMetadata = nullptr;
   NFmiFastQueryInfo *theData = orginData;
 
   // bool makeInt32 = true;  //false=Float32, true=Int32
@@ -155,7 +155,7 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
   double aLat = (tlLat - brLat) / height;
 
   OGRSpatialReference oSRS;
-  // char *pszSRS_WKT = NULL;
+  // char *pszSRS_WKT = nullptr;
 
   // Data
   GDALRasterBand *poBand;
@@ -165,7 +165,7 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
 
   poDriver = GetGDALDriverManager()->GetDriverByName(pszFormat);
 
-  if (poDriver == NULL) exit(1);
+  if (poDriver == nullptr) exit(1);
 
   // papszMetadata = poDriver->GetMetadata();
 
@@ -179,7 +179,7 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
   int paramSize = 1;  // theData->ParamBag().GetSize();
   if (theExternal != 0) paramSize = 2;
 
-  char **papszOptions = NULL;
+  char **papszOptions = nullptr;
   // papszOptions = CSLSetNameValue( papszOptions, "COMPRESS", "PACKBITS" );
 
   // GDT_Int32 -or- GDT_Float32  1/4
@@ -267,7 +267,7 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
   NFmiTime timeNow = NFmiTime();
   poDstDS->SetMetadataItem("SourceDate", timeNow.ToStr(kYYYYMMDDHHMM));
 
-  char *pszWKT = NULL;
+  char *pszWKT = nullptr;
   // oSRS.SetFromUserInput(area->WKT().c_str());
   oSRS.exportToWkt(&pszWKT);
   poDstDS->SetProjection(pszWKT);
@@ -908,10 +908,10 @@ int main(int argc, char *argv[])
 
       char *pch;
       pch = strtok(argv[i], ",");
-      while (pch != NULL)
+      while (pch != nullptr)
       {
         paramStrs.push_back(pch);
-        pch = strtok(NULL, ",");
+        pch = strtok(nullptr, ",");
       }
 
       for (std::vector<char *>::iterator it = paramStrs.begin(); it != paramStrs.end(); ++it)
@@ -936,14 +936,14 @@ int main(int argc, char *argv[])
         te.scale = 1.0;
         te.dataType = noneGDL;
 
-        while (pch_scale != NULL)
+        while (pch_scale != nullptr)
         {
           if (i == 0) te.param = atoi(pch_scale);
           if (i == 1) te.external = atoi(pch_scale);
           if (i == 2) te.scale = atof(pch_scale);
           i++;
 
-          pch_scale = strtok(NULL, ":");
+          pch_scale = strtok(nullptr, ":");
         }
         params.push_back(te);
       }
@@ -951,7 +951,7 @@ int main(int argc, char *argv[])
       /*
                               char * pch;
                               pch = strtok (argv[i],",");
-                               while (pch != NULL)
+                               while (pch != nullptr)
                                 {
                                       //int te = atoi(pch);
                                   int * te = new int[3] ;
@@ -985,10 +985,10 @@ int main(int argc, char *argv[])
                                       char * pch_scale = strtok (pch_scale_str,":");
                                       int i=0;
 
-                                      while (pch_scale != NULL)
+                                      while (pch_scale != nullptr)
                                       {
                                               te[i++] = atoi(pch_scale);
-                                              pch_scale = strtok (NULL, ":");
+                                              pch_scale = strtok (nullptr, ":");
                                       }
 
                                       te[0] = atoi(pch);
@@ -996,7 +996,7 @@ int main(int argc, char *argv[])
                                       te[2] = 0;
 
                                       params.push_back(te);
-                                      pch = strtok (NULL, ",");
+                                      pch = strtok (nullptr, ",");
                                 }
       */
     }
@@ -1006,11 +1006,11 @@ int main(int argc, char *argv[])
 
       char *pch;
       pch = strtok(argv[i], ",");
-      while (pch != NULL)
+      while (pch != nullptr)
       {
         int te = atoi(pch);
         levels.push_back(te);
-        pch = strtok(NULL, ",");
+        pch = strtok(nullptr, ",");
       }
     }
     else if (EQUAL(argv[i], "-t_srs"))
@@ -1253,7 +1253,7 @@ void spawn_new_process(char *const *argv,
   gdalDel += tempFile;
 
   system(gdalWrap.c_str());
-// system(gdalDel.c_str());
+  // system(gdalDel.c_str());
 
 #endif
 

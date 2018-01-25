@@ -44,8 +44,15 @@
 #define MAXBLOCK 65534
 
 // libbufr
-extern "C" {
+extern "C"
+{
 #include <bufrlib.h>
+}
+
+// Bufr_io must be loaded after bufrlib.h
+// Keep them in different extern block to prevent autoformatter from redordering them
+extern "C"
+{
 #include <bufr_io.h>
 }
 
@@ -765,7 +772,7 @@ static int bufr_callback(varfl val, int ind)
       /* read bitmap and run length decode */
 
       bufrval_t *vals = bufr_open_val_array();
-      if (vals == (bufrval_t *)NULL) return 0;
+      if (vals == nullptr) return 0;
 
       if (!bufr_parse_out(des[ind]->seq->del, 0, des[ind]->seq->nel - 1, bufr_val_to_global, 0))
       {
@@ -871,7 +878,7 @@ void read_bufr()
 
   // Allocate memory and read data descriptors from bitstream
 
-  dd *dds = NULL;
+  dd *dds = nullptr;
   if (ok) ok = bufr_in_descsec(&dds, ndescs, desch);
 
   if (!ok)
@@ -885,7 +892,7 @@ void read_bufr()
 
   // Close bitstreams and free descriptor array
 
-  if (dds != NULL) free(dds);
+  if (dds != nullptr) free(dds);
   bufr_close_descsec_r(desch);
   bufr_close_datasect_r();
 
@@ -1141,7 +1148,8 @@ float decode_value(unsigned short value)
 
 void copy_data(NFmiFastQueryInfo &info)
 {
-  if (radar_data.img.data == NULL) throw std::runtime_error("No radar data found from the image");
+  if (radar_data.img.data == nullptr)
+    throw std::runtime_error("No radar data found from the image");
 
   // Horizontal descriptor has been made so this is safe
 
@@ -1253,7 +1261,7 @@ boost::shared_ptr<NFmiQueryData> make_querydata()
 
     NFmiGrid grid(area.get(), width, height);
     boost::shared_ptr<NFmiQueryData> tmp(
-        NFmiQueryDataUtil::Interpolate2OtherGrid(qd.get(), &grid, NULL));
+        NFmiQueryDataUtil::Interpolate2OtherGrid(qd.get(), &grid, nullptr));
     std::swap(qd, tmp);
   }
 

@@ -67,7 +67,8 @@ This file is part of libECBUFR.
 #include <stdexcept>
 #include <string>
 
-extern "C" {
+extern "C"
+{
 #include <bufr_api.h>
 #include <bufr_local.h>
 #include <bufr_value.h>
@@ -713,7 +714,7 @@ void read_message(const std::string &filename,
 
   FILE *bufr = fopen(filename.c_str(),
                      "rb");  // VC++ vaatii ett‰ avataan bin‰‰risen‰ (Linuxissa se on default)
-  if (bufr == NULL)
+  if (bufr == nullptr)
   {
     throw std::runtime_error("Could not open BUFR file '" + filename + "' reading");
   }
@@ -779,7 +780,7 @@ void read_message(const std::string &filename,
       BUFR_Dataset *dts = nullptr;
       if (use_tables == nullptr)
       {
-        // dts = NULL;  // is already null
+        // dts = nullptr;  // is already null
         std::cerr << "Warning: No BUFR table version " << msg->s1.master_table_version
                   << " available" << std::endl;
       }

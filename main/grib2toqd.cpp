@@ -67,12 +67,12 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
 
-#include <stdlib.h>
 #include <functional>
 #include <iomanip>
 #include <set>
 #include <sstream>
 #include <stdexcept>
+#include <stdlib.h>
 
 using namespace std;
 
@@ -143,8 +143,8 @@ struct GribFilterOptions
 
   string itsOutputFileName;  // -o optio tai sitten tulostetann cout:iin
   bool fUseOutputFile;
-  size_t itsMaxQDataSizeInBytes;  // default max koko 1 GB
-  int itsReturnStatus;            // 0 = ok
+  size_t itsMaxQDataSizeInBytes;     // default max koko 1 GB
+  int itsReturnStatus;               // 0 = ok
   NFmiLevelBag itsIgnoredLevelList;  // lista miss‰ yksitt‰isi‰ leveleit‰, mitk‰ halutaan j‰tt‰‰
                                      // pois laskuista
   vector<boost::shared_ptr<NFmiQueryData> > itsGeneratedDatas;
@@ -193,6 +193,7 @@ class TotalQDataCollector
 
   Container &TotalGeneratedQDatas(void) { return itsTotalGeneratedQDatas; }
   int AddCount(void) const { return itsAddCount; }
+
  private:
   MutexType itsMutex;
   int itsAddCount;                    // kuinka monta 'onnistunutta' data lis‰yst‰ on tehty
@@ -1078,7 +1079,7 @@ static void ConvertSingleGribFile(const GribFilterOptions &theGribFilterOptionsI
   GribFilterOptions gribFilterOptionsLocal = theGribFilterOptionsIn;
   gribFilterOptionsLocal.itsInputFileNameStr = theGribFileName;
   if ((gribFilterOptionsLocal.itsInputFile =
-           ::fopen(gribFilterOptionsLocal.itsInputFileNameStr.c_str(), "rb")) == NULL)
+           ::fopen(gribFilterOptionsLocal.itsInputFileNameStr.c_str(), "rb")) == nullptr)
   {
     cerr << "could not open input file: " << gribFilterOptionsLocal.itsInputFileNameStr << endl;
     return;
@@ -2213,7 +2214,7 @@ static void ChangeParamSettingsIfNeeded(vector<ParamChangeItem> &theParamChangeT
       }
       else if (paramChangeItem.itsOriginalParamId ==
                    static_cast<long>(theGribData->itsParam.GetParamIdent()) &&
-               paramChangeItem.itsLevel == NULL)
+               paramChangeItem.itsLevel == nullptr)
       {
         if (verbose)
         {
@@ -2323,7 +2324,7 @@ void ConvertGrib2QData(GribFilterOptions &theGribFilterOptions)
 
   try
   {
-    grib_handle *gribHandle = NULL;
+    grib_handle *gribHandle = nullptr;
     grib_context *gribContext = grib_context_get_default();
 
     int err = 0;
@@ -2333,7 +2334,7 @@ void ConvertGrib2QData(GribFilterOptions &theGribFilterOptions)
     NFmiMetTime firstValidTime;
 
     while ((gribHandle = grib_handle_new_from_file(
-                gribContext, theGribFilterOptions.itsInputFile, &err)) != NULL)
+                gribContext, theGribFilterOptions.itsInputFile, &err)) != nullptr)
     {
       if (err != GRIB_SUCCESS)
         throw runtime_error("Failed to open grib handle in file  " +

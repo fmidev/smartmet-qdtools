@@ -37,8 +37,8 @@
 #include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiTimeList.h>
 
-#include <boost/lexical_cast.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <fstream>
 #include <stdexcept>

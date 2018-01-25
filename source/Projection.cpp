@@ -311,7 +311,7 @@ boost::shared_ptr<NFmiArea> Projection::area(unsigned int theWidth, unsigned int
 
   return proj;
 }
-}
-}  // namespace FMI::RadContour
+}  // namespace RadContour
+}  // namespace FMI
 
 // ======================================================================

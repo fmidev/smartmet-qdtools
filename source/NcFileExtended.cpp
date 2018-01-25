@@ -59,7 +59,7 @@ NcVar *NcFileExtended::find_variable(const std::string &name)
     if (var == nullptr) continue;
     if (get_name(var) == name) return var;
   }
-  return NULL;
+  return nullptr;
 }
 
 // ----------------------------------------------------------------------
@@ -306,7 +306,7 @@ void NcFileExtended::copy_values(NFmiFastQueryInfo &info,
   NcVar *xvar = find_variable(pinfo.x_component);
   NcVar *yvar = find_variable(pinfo.y_component);
 
-  if (xvar == NULL || yvar == NULL) return;
+  if (xvar == nullptr || yvar == nullptr) return;
 
   float xmissingvalue = get_missingvalue(xvar);
   float xscale = get_scale(xvar);
@@ -530,7 +530,7 @@ NcVar *NcFileExtended::axis(const std::string &axisname)
       }
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 // ----------------------------------------------------------------------
@@ -817,48 +817,48 @@ NFmiMetTime tomettime(const boost::posix_time::ptime &t)
 // ----------------------------------------------------------------------
 
 void NcFileExtended::find_axis_bounds(
-    NcVar *var, int n, double *x1, double *x2, const char *name, bool *isdescending)
+    NcVar *var, int n, double &x1, double &x2, const char *name, bool &isdescending)
 {
-  if (var == NULL) return;
+  if (var == nullptr) return;
 
   NcValues *values = var->values();
-  *isdescending = false;  // Set to true if we detect decreasing instead of increasing values
+  isdescending = false;  // Set to true if we detect decreasing instead of increasing values
 
   // Verify monotonous coordinates
-  if (var->num_vals() >= 2 && values->as_double(1) < values->as_double(0)) *isdescending = true;
+  if (var->num_vals() >= 2 && values->as_double(1) < values->as_double(0)) isdescending = true;
 
   for (int i = 1; i < var->num_vals(); i++)
   {
-    if (*isdescending == false && values->as_double(i) <= values->as_double(i - 1))
+    if (isdescending == false && values->as_double(i) <= values->as_double(i - 1))
       throw SmartMet::Spine::Exception(BCP,
                                        std::string(name) + "-axis is not monotonously increasing");
-    if (*isdescending == true && values->as_double(i) >= values->as_double(i - 1))
+    if (isdescending == true && values->as_double(i) >= values->as_double(i - 1))
       throw SmartMet::Spine::Exception(BCP,
                                        std::string(name) + "-axis is not monotonously decreasing");
   }
 
   // Min&max is now easy
-  if (*isdescending == false)
+  if (isdescending == false)
   {
-    *x1 = values->as_double(0);
-    *x2 = values->as_double(var->num_vals() - 1);
+    x1 = values->as_double(0);
+    x2 = values->as_double(var->num_vals() - 1);
   }
   else
   {
-    *x2 = values->as_double(0);
-    *x1 = values->as_double(var->num_vals() - 1);
+    x2 = values->as_double(0);
+    x1 = values->as_double(var->num_vals() - 1);
   }
 
   // Verify stepsize is even
   if (n <= 2) return;
 
-  double step = ((*x2) - (*x1)) / (n - 1);
+  double step = (x2 - x1) / (n - 1);
   double tolerance = 1e-3;
 
   for (int i = 1; i < var->num_vals(); i++)
   {
     double s;
-    if (*isdescending == false)
+    if (isdescending == false)
       s = values->as_double(i) - values->as_double(i - 1);
     else
       s = values->as_double(i - 1) - values->as_double(i);
@@ -906,10 +906,10 @@ void NcFileExtended::find_bounds()
   }
   else
   {
-    find_axis_bounds(x, xsize(), &_xmin, &_xmax, "x", &_xinverted);
-    find_axis_bounds(y, ysize(), &_ymin, &_ymax, "y", &_yinverted);
+    find_axis_bounds(x, xsize(), _xmin, _xmax, "x", _xinverted);
+    find_axis_bounds(y, ysize(), _ymin, _ymax, "y", _yinverted);
   }
-  find_axis_bounds(z, zsize(), &_zmin, &_zmax, "z", &_zinverted);
+  find_axis_bounds(z, zsize(), _zmin, _zmax, "z", _zinverted);
   if (_zinverted == true && _zmin != _zmax)
     throw SmartMet::Spine::Exception(BCP, "z-axis is inverted: this is not supported(yet?)");
   minmaxfound = true;
@@ -989,7 +989,7 @@ std::shared_ptr<std::string> NcFileExtended::get_axis_units(NcVar *axis)
 
 double NcFileExtended::get_axis_scale(NcVar *axis,
                                       std::shared_ptr<std::string> *source_units,
-                                      std::string *target_units)
+                                      const std::string *target_units)
 {  // Get scaling multiplier for target
    // units, default target being meters
   *source_units = get_axis_units(axis);

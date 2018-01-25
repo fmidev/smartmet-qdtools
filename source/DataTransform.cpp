@@ -185,8 +185,8 @@ double offset(const std::string& theParam)
   else
     return 0.0;
 }
-}
-}
-}  // namespace FMI::RadContour::DataTransform
+}  // namespace DataTransform
+}  // namespace RadContour
+}  // namespace FMI
 
 // ======================================================================

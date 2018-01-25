@@ -109,7 +109,7 @@ void print_gds(unsigned char *gds, int print_GDS, int print_GDS10, int verbose)
  * buffer[buf_len] = buffer for reading/writing
  *
  * returns (char *) to start of GRIB header+PDS
- *         NULL if not found
+ *         nullptr if not found
  *
  * adapted from SKGB (Mark Iredell)
  *
@@ -167,7 +167,7 @@ unsigned char *seek_grib(
   }
 
   *len_grib = 0;
-  return (unsigned char *)NULL;
+  return (unsigned char *)nullptr;
 }
 
 /* ibm2flt       wesley ebisuzaki
@@ -413,7 +413,7 @@ const char *k5_comments(unsigned char *pds) { return (Parm_Table(pds) + PDS_PARA
  * Unpack BDS section
  *
  * input: *bits, pointer to packed integer data
- *        *bitmap, pointer to bitmap (undefined data), NULL if none
+ *        *bitmap, pointer to bitmap (undefined data), nullptr if none
  *        n_bits, number of bits per packed integer
  *        n, number of data points (includes undefined data)
  *        ref, scale: flt[] = ref + scale*packed_int
@@ -1161,7 +1161,7 @@ int missing_points(unsigned char *bitmap, int n)
 {
   int count;
   unsigned int tmp;
-  if (bitmap == NULL) return 0;
+  if (bitmap == nullptr) return 0;
 
   count = 0;
   while (n >= 8)
@@ -5240,7 +5240,7 @@ void GDS_winds(unsigned char *gds, int verbose)
 {
   int scan = -1, mode = -1;
 
-  if (gds != NULL)
+  if (gds != nullptr)
   {
     if (GDS_LatLon(gds))
     {
@@ -5319,14 +5319,7 @@ void GDS_winds(unsigned char *gds, int verbose)
 #define START -1
 
 static int user_center = 0, user_subcenter = 0, user_ptable = 0;
-static enum
-{
-  filled,
-  not_found,
-  not_checked,
-  no_file,
-  init
-} status = init;
+static enum { filled, not_found, not_checked, no_file, init } status = init;
 
 struct ParmTable parm_table_user[256];
 
@@ -5345,7 +5338,7 @@ int setup_user_table(int center, int subcenter, int ptable)
   {
     for (i = 0; i < 256; i++)
     {
-      parm_table_user[i].name = parm_table_user[i].comment = NULL;
+      parm_table_user[i].name = parm_table_user[i].comment = nullptr;
     }
     status = not_checked;
   }
@@ -5363,10 +5356,10 @@ int setup_user_table(int center, int subcenter, int ptable)
   /* open gribtab file */
 
   filename = getenv("GRIBTAB");
-  if (filename == NULL) filename = getenv("gribtab");
-  if (filename == NULL) filename = "gribtab";
+  if (filename == nullptr) filename = getenv("gribtab");
+  if (filename == nullptr) filename = "gribtab";
 
-  if ((input = fopen(filename, "r")) == NULL)
+  if ((input = fopen(filename, "r")) == nullptr)
   {
     status = no_file;
     return 0;
@@ -5379,7 +5372,7 @@ int setup_user_table(int center, int subcenter, int ptable)
   /* scan for center & subcenter and ptable */
   for (;;)
   {
-    if (fgets(line, 299, input) == NULL)
+    if (fgets(line, 299, input) == nullptr)
     {
       status = not_found;
       return 0;
@@ -5401,7 +5394,7 @@ int setup_user_table(int center, int subcenter, int ptable)
   user_ptable = ptable;
 
   /* free any used memory */
-  if (parm_table_user[i].name != NULL)
+  if (parm_table_user[i].name != nullptr)
   {
     for (i = 0; i < 256; i++)
     {
@@ -5414,7 +5407,7 @@ int setup_user_table(int center, int subcenter, int ptable)
 
   for (;;)
   {
-    if (fgets(line, 299, input) == NULL) break;
+    if (fgets(line, 299, input) == nullptr) break;
     if ((i = atoi(line)) == START) break;
     line[299] = 0;
 
@@ -5445,7 +5438,7 @@ int setup_user_table(int center, int subcenter, int ptable)
   /* now to fill in undefined blanks */
   for (i = 0; i < 255; i++)
   {
-    if (parm_table_user[i].name == NULL)
+    if (parm_table_user[i].name == nullptr)
     {
       parm_table_user[i].name = (char *)malloc(7);
       sprintf(const_cast<char *>(parm_table_user[i].name), "var%d", i);
@@ -6568,8 +6561,8 @@ struct ParmTable parm_table_dwd_202[256] = {
     /* 242 */ {"var242", "undefined"},
     /* 243 */ {"UV-IndmaxF", "UV-Index, cloudless (wolkenlos=F) Maximum [1]"},
     /* 244 */ {"SB-Index", "Sonnenbrand-Index [(W*10**(-3))/m**2]"},
-    /* 245 */ {"SB-Index W",
-               "Sonnenbrand-Index bei mittl. Bewoelkung (08z-12z) [(W*10**(-3))/m**2]"},
+    /* 245 */
+    {"SB-Index W", "Sonnenbrand-Index bei mittl. Bewoelkung (08z-12z) [(W*10**(-3))/m**2]"},
     /* 246 */ {"Kan.UVB-WI", "Kanadischer UVB-Warnindex (bew|lkungsreduziert) [(W*10**(-3))/m**2]"},
     /* 247 */ {"gesamt O3", "total column ozone (Gesamtozon) [Dobson]"},
     /* 248 */ {"UV-IndmaxW", "UV-Index, clouded (bewoelkt=W) Maximum [1]"},

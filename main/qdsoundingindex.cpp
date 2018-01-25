@@ -1,15 +1,15 @@
 
 
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiFileString.h>
+#include <newbase/NFmiMilliSecondTimer.h>
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
-#include <newbase/NFmiCmdLine.h>
-#include <newbase/NFmiMilliSecondTimer.h>
-#include <newbase/NFmiFileString.h>
-#include <smarttools/NFmiSoundingIndexCalculator.h>
 #include <smarttools/NFmiSoundingFunctions.h>
+#include <smarttools/NFmiSoundingIndexCalculator.h>
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 
 static void Usage(const std::string& theExecutableName)
 {

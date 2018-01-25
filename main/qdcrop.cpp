@@ -1192,7 +1192,7 @@ int run(int argc, const char* argv[])
 
   if (dstinfo.Grid())
   {
-    NFmiQueryDataUtil::FillGridData(qd, data.get(), 0, gMissingIndex, NULL, true);
+    NFmiQueryDataUtil::FillGridData(qd, data.get(), 0, gMissingIndex, nullptr, true);
   }
   else
   {

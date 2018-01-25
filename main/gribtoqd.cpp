@@ -155,8 +155,8 @@ struct GribFilterOptions
 
   string itsOutputFileName;  // -o optio tai sitten tulostetann cout:iin
   bool fUseOutputFile;
-  size_t itsMaxQDataSizeInBytes;  // default max koko 1 GB
-  int itsReturnStatus;            // 0 = ok
+  size_t itsMaxQDataSizeInBytes;     // default max koko 1 GB
+  int itsReturnStatus;               // 0 = ok
   NFmiLevelBag itsIgnoredLevelList;  // lista missä yksittäisiä leveleitä, mitkä halutaan jättää
                                      // pois laskuista
   vector<boost::shared_ptr<NFmiQueryData> > itsGeneratedDatas;
@@ -2257,7 +2257,7 @@ static void ChangeParamSettingsIfNeeded(vector<ParamChangeItem> &theParamChangeT
       if (paramChangeItem.itsOriginalParamId ==
           static_cast<long>(theGribData->itsParam.GetParamIdent()))
       {
-        if (paramChangeItem.itsLevel != NULL)
+        if (paramChangeItem.itsLevel != nullptr)
         {
           if ((*paramChangeItem.itsLevel) == theGribData->itsLevel)
           {
@@ -3304,7 +3304,7 @@ void ConvertGrib2QData(GribFilterOptions &theGribFilterOptions)
 
   try
   {
-    grib_handle *gribHandle = NULL;
+    grib_handle *gribHandle = nullptr;
     grib_context *gribContext = grib_context_get_default();
     grib_multi_support_on(0);
 
@@ -3315,7 +3315,7 @@ void ConvertGrib2QData(GribFilterOptions &theGribFilterOptions)
     NFmiMetTime firstValidTime;
 
     while ((gribHandle = grib_handle_new_from_file(
-                gribContext, theGribFilterOptions.itsInputFile, &err)) != NULL)
+                gribContext, theGribFilterOptions.itsInputFile, &err)) != nullptr)
     {
       if (err != GRIB_SUCCESS)
         throw runtime_error("Failed to open grib handle in file  " +
@@ -3445,7 +3445,7 @@ static void ConvertSingleGribFile(const GribFilterOptions &theGribFilterOptionsI
   GribFilterOptions gribFilterOptionsLocal = theGribFilterOptionsIn;
   gribFilterOptionsLocal.itsInputFileNameStr = theGribFileName;
   if ((gribFilterOptionsLocal.itsInputFile =
-           ::fopen(gribFilterOptionsLocal.itsInputFileNameStr.c_str(), "rb")) == NULL)
+           ::fopen(gribFilterOptionsLocal.itsInputFileNameStr.c_str(), "rb")) == nullptr)
   {
     cerr << "could not open input file: " << gribFilterOptionsLocal.itsInputFileNameStr << endl;
     return;
@@ -4424,7 +4424,7 @@ void ConvertGrib2QData(GribFilterOptions &theGribFilterOptions)
 
   vector<GridRecordData *> gribRecordDatas;
 
-  if ((buffer = (unsigned char *)malloc(BUFF_ALLOC0)) == NULL)
+  if ((buffer = (unsigned char *)malloc(BUFF_ALLOC0)) == nullptr)
     throw runtime_error("buffer 0, not enough memory\n");
   buffer_size = BUFF_ALLOC0;
 
@@ -4440,14 +4440,14 @@ void ConvertGrib2QData(GribFilterOptions &theGribFilterOptions)
     for (;;)
     {
       msg = seek_grib(theGribFilterOptions.itsInputFile, &pos, &len_grib, buffer, MSEEK);
-      if (msg == NULL) break;  // tultiin recordien loppuun
+      if (msg == nullptr) break;  // tultiin recordien loppuun
 
       /* read all whole grib record */
       if (len_grib + msg - buffer > buffer_size)
       {
         buffer_size = static_cast<long>(len_grib + msg - buffer + 1000);
         buffer = (unsigned char *)realloc((void *)buffer, buffer_size);
-        if (buffer == NULL) throw runtime_error("ran out of memory");
+        if (buffer == nullptr) throw runtime_error("ran out of memory");
       }
       read_grib(theGribFilterOptions.itsInputFile, pos, len_grib, buffer);
 
@@ -4463,7 +4463,7 @@ void ConvertGrib2QData(GribFilterOptions &theGribFilterOptions)
       }
       else
       {
-        gds = NULL;
+        gds = nullptr;
       }
 
       if (PDS_HAS_BMS(pds))
@@ -4478,7 +4478,7 @@ void ConvertGrib2QData(GribFilterOptions &theGribFilterOptions)
       }
       else
       {
-        bms = NULL;
+        bms = nullptr;
       }
 
       bds = pointer;
@@ -4504,11 +4504,11 @@ void ConvertGrib2QData(GribFilterOptions &theGribFilterOptions)
       }
 
       // figure out size of array
-      if (gds != NULL)
+      if (gds != nullptr)
       {
         GDS_grid(gds, bds, &nx, &ny, &nxny, variableLengthRows, &usedOutputGridRowLength);
       }
-      else if (bms != NULL)
+      else if (bms != nullptr)
       {
         nxny = nx = BMS_nxny(bms);
         ny = 1;
@@ -4531,7 +4531,7 @@ void ConvertGrib2QData(GribFilterOptions &theGribFilterOptions)
       if (nxny > last_nxny)  // tarkistetaan pitääkö varata isompi taulukko
       {
         if (array) free(array);
-        if ((array = (float *)malloc(sizeof(float) * nxny)) == NULL)
+        if ((array = (float *)malloc(sizeof(float) * nxny)) == nullptr)
           throw runtime_error("End of memory, exiting...");
         last_nxny = nxny;
       }
@@ -4644,7 +4644,7 @@ void ConvertSingleGribFile(const GribFilterOptions &theGribFilterOptionsIn,
   GribFilterOptions gribFilterOptionsLocal = theGribFilterOptionsIn;
   gribFilterOptionsLocal.itsInputFileNameStr = theGribFileName;
   if ((gribFilterOptionsLocal.itsInputFile =
-           ::fopen(gribFilterOptionsLocal.itsInputFileNameStr.c_str(), "rb")) == NULL)
+           ::fopen(gribFilterOptionsLocal.itsInputFileNameStr.c_str(), "rb")) == nullptr)
   {
     cerr << "could not open input file: " << gribFilterOptionsLocal.itsInputFileNameStr << endl;
     return;
@@ -4668,7 +4668,7 @@ void ConvertSingleGribFile(const GribFilterOptions &theGribFilterOptionsIn,
   }
 }
 
-}  // wgrib2qd -namespace ends
+}  // namespace wgrib2qd
 // **************************************************************************
 
 static void MakeTotalCombineQDatas(

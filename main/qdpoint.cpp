@@ -29,19 +29,19 @@
 #include "QueryDataManager.h"
 #include "TimeTools.h"
 
-#include <newbase/NFmiStringTools.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiDataIntegrator.h>
 #include <newbase/NFmiDataModifierProb.h>
 #include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiFileSystem.h>
 #include <newbase/NFmiIndexMask.h>
 #include <newbase/NFmiIndexMaskTools.h>
-#include <newbase/NFmiFileSystem.h>
 #include <newbase/NFmiLocation.h>
 #include <newbase/NFmiLocationFinder.h>
 #include <newbase/NFmiMetMath.h>
 #include <newbase/NFmiPreProcessor.h>
 #include <newbase/NFmiSettings.h>
+#include <newbase/NFmiStringTools.h>
 #include <newbase/NFmiValueString.h>
 
 #include <macgyver/StringConversion.h>

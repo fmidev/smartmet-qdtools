@@ -3,16 +3,16 @@
 // aikojen/parametrien/leveleiden mukaan ja tuottaa niistä yksi
 // yhteinen data tiedosto.
 
-#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiArea.h>
 #include <newbase/NFmiAreaFactory.h>
-#include <newbase/NFmiStringTools.h>
-#include <newbase/NFmiQueryData.h>
-#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileSystem.h>
-#include <newbase/NFmiTimeList.h>
-#include <newbase/NFmiArea.h>
 #include <newbase/NFmiGrid.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiTotalWind.h>
 #include <newbase/NFmiWeatherAndCloudiness.h>
 

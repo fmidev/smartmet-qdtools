@@ -44,10 +44,11 @@ RJTT 242030Z 36010KT 6000 -RA FEW007 SCT010 BKN015 12/11 Q1008 RMK
 #include <newbase/NFmiTimeList.h>
 #include <smarttools/NFmiAviationStationInfoSystem.h>
 
-extern "C" {
+extern "C"
+{
 #include "metar_structs.h"
-void print_decoded_metar(Decoded_METAR *);
-int decode_metar(char *, Decoded_METAR *);
+  void print_decoded_metar(Decoded_METAR *);
+  int decode_metar(char *, Decoded_METAR *);
 }
 
 using namespace std;

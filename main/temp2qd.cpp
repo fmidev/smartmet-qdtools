@@ -5,18 +5,18 @@
 
 #include <iostream>
 
-#include <newbase/NFmiCmdLine.h>
-#include <newbase/NFmiAreaFactory.h>
-#include <newbase/NFmiStringTools.h>
-#include <newbase/NFmiStreamQueryData.h>
-#include <newbase/NFmiQueryDataUtil.h>
-#include <newbase/NFmiFileSystem.h>
-#include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiArea.h>
-#include <newbase/NFmiGrid.h>
-#include <smarttools/NFmiTEMPCode.h>
+#include <newbase/NFmiAreaFactory.h>
+#include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiFileString.h>
+#include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiGrid.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiStreamQueryData.h>
+#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiTimeList.h>
 #include <smarttools/NFmiAviationStationInfoSystem.h>
+#include <smarttools/NFmiTEMPCode.h>
 
 using namespace std;
 

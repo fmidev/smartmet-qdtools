@@ -2,9 +2,9 @@
 #ifndef NFMIPARAMCHECKDATA_H
 #define NFMIPARAMCHECKDATA_H
 
-#include <newbase/NFmiGlobals.h>
-#include <newbase/NFmiEnumConverter.h>
 #include <boost/lexical_cast.hpp>
+#include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiGlobals.h>
 
 static NFmiEnumConverter converter;
 

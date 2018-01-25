@@ -14,12 +14,12 @@
 #include <string>
 #include <vector>
 
-#include <newbase/NFmiFileString.h>
-#include <newbase/NFmiProducer.h>
-#include <newbase/NFmiStringTools.h>
 #include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiFileString.h>
 #include <newbase/NFmiMilliSecondTimer.h>
+#include <newbase/NFmiProducer.h>
 #include <newbase/NFmiStreamQueryData.h>
+#include <newbase/NFmiStringTools.h>
 
 static void Usage(const std::string &theExecutableName)
 {

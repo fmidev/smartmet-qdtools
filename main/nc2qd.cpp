@@ -1,9 +1,6 @@
 
 // nc2qd : netCDF -> queryData -filter
 
-#include <iostream>
-#include <string>
-#include <vector>
 #include "FmiNetCdfQueryData.h"
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiFileString.h>
@@ -11,6 +8,9 @@
 #include <newbase/NFmiProducer.h>
 #include <newbase/NFmiStreamQueryData.h>
 #include <newbase/NFmiStringTools.h>
+#include <iostream>
+#include <string>
+#include <vector>
 
 static void Usage(const std::string &theExecutableName)
 {

@@ -780,7 +780,7 @@ int run(const int argc, char *argv[])
             if (copy_values(qi, gribHandle, valueArray, use_minutes))
             {
               if (options.dump)
-                grib_dump_content(gribHandle, stdout, "serialize", option_flags, NULL);
+                grib_dump_content(gribHandle, stdout, "serialize", option_flags, nullptr);
               if (!options.split)
                 write_grib(out, gribHandle);
               else

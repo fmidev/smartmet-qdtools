@@ -5,19 +5,19 @@
  */
 // ======================================================================
 
-#include "ProjectionStore.h"
-#include "ProjectionParser.h"
+#include "Pgm2QueryData.h"
 #include "DataTransform.h"
 #include "Projection.h"
-#include "Pgm2QueryData.h"
+#include "ProjectionParser.h"
+#include "ProjectionStore.h"
 
-#include <newbase/NFmiStringTools.h>
-#include <newbase/NFmiFileSystem.h>
 #include <newbase/NFmiEnumConverter.h>
-#include <newbase/NFmiQueryData.h>
-#include <newbase/NFmiGrid.h>
-#include <newbase/NFmiQueryDataUtil.h>
 #include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiGrid.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiStringTools.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -288,7 +288,7 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
   {
     std::time_t modtime = NFmiFileSystem::FileModificationTime(theFileName);
 
-    if (::time(NULL) - modtime >= 60 * theOptions.agelimit)
+    if (::time(nullptr) - modtime >= 60 * theOptions.agelimit)
     {
       if (theOptions.verbose)
         theReportStream << "Skipping " << theFileName << " as too old" << endl;
@@ -427,7 +427,7 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
 
   return data;
 }
-}
-}  // namespace FMI::RadContour
+}  // namespace RadContour
+}  // namespace FMI
 
 // ======================================================================

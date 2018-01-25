@@ -825,7 +825,7 @@ int domain(int argc, const char *argv[])
 
   if (cmdline.isOption('q'))
   {
-    if (cmdline.OptionValue('q') != NULL)
+    if (cmdline.OptionValue('q') != nullptr)
     {
       opt_queryfile = cmdline.OptionValue('q');
       opt_queryfile = NFmiFileSystem::FileComplete(opt_queryfile, datapath);
@@ -888,7 +888,7 @@ int domain(int argc, const char *argv[])
 
   if (cmdline.isOption('t') || opt_all)
   {
-    if (cmdline.OptionValue('t') == NULL)
+    if (cmdline.OptionValue('t') == nullptr)
       dateFormat = "%Y%m%d%H";
     else
       dateFormat = cmdline.OptionValue('t');
@@ -899,7 +899,7 @@ int domain(int argc, const char *argv[])
 
   if (cmdline.isOption('T') || opt_all_extended)
   {
-    if (cmdline.OptionValue('T') == NULL)
+    if (cmdline.OptionValue('T') == nullptr)
       dateFormat = "%Y%m%d%H";
     else
       dateFormat = cmdline.OptionValue('T');

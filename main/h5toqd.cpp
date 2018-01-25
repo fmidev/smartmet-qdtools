@@ -1455,7 +1455,7 @@ void copy_dataset(const hid_t &hid, NFmiFastQueryInfo &info, int datanum)
     if (!info.Param(id))
       throw std::runtime_error("Failed to activate product " + product +
                                " in output querydata with id " + converter.ToString(id));
-// Copy the values
+      // Copy the values
 
 #if 0
 	  // Crashes in RHEL6
@@ -1473,9 +1473,9 @@ void copy_dataset(const hid_t &hid, NFmiFastQueryInfo &info, int datanum)
     if (H5Lite::readVectorDataset(hid, prefix + "/data", values) != 0)
       throw std::runtime_error("Failed to read " + prefix + "/data");
 
-// Copy values into querydata. Unfortunately a simple loop
-// will not do, the data would go upside down. Hence we need
-// to index the data directly.
+      // Copy values into querydata. Unfortunately a simple loop
+      // will not do, the data would go upside down. Hence we need
+      // to index the data directly.
 
 #if 1
     const unsigned long width = info.Grid()->XNumber();
@@ -1574,7 +1574,7 @@ void copy_dataset_pvol(const hid_t &hid, NFmiFastQueryInfo &info, int datanum)
   double rscale = get_attribute_value<double>(hid, prefix + "/where", "rscale");
   double rstart = get_attribute_value<double>(hid, prefix + "/where", "rstart");
 
-// Copy the values
+  // Copy the values
 
 #if 0
   // Crashes in RHEL6
@@ -1718,7 +1718,7 @@ int run(int argc, char *argv[])
 
     NFmiGrid grid(area.get(), width, height);
     boost::shared_ptr<NFmiQueryData> tmp(
-        NFmiQueryDataUtil::Interpolate2OtherGrid(data.get(), &grid, NULL));
+        NFmiQueryDataUtil::Interpolate2OtherGrid(data.get(), &grid, nullptr));
     std::swap(data, tmp);
   }
 

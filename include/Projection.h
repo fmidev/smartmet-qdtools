@@ -34,15 +34,15 @@
 #ifndef FMI_RADCONTOUR_PROJECTION_H
 #define FMI_RADCONTOUR_PROJECTION_H
 
-#include <newbase/NFmiArea.h>
 #include <boost/shared_ptr.hpp>
+#include <newbase/NFmiArea.h>
 #include <string>
 
 namespace Imagine
 {
 class NFmiImage;
 class NFmiPath;
-}
+}  // namespace Imagine
 
 namespace FMI
 {

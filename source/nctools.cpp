@@ -132,7 +132,7 @@ bool parse_options(int argc, char *argv[], Options &options)
 
   if (opt.count("help"))
   {
-    if (strstr(argv[0], "wrftoqd") != NULL)
+    if (strstr(argv[0], "wrftoqd") != nullptr)
     {
       std::cout << "Usage: wrfoqd [options] infile outfile" << std::endl
                 << std::endl
@@ -155,7 +155,7 @@ bool parse_options(int argc, char *argv[], Options &options)
     return false;
   }
 
-  if (strstr(argv[0], "wrftoqd") != NULL)
+  if (strstr(argv[0], "wrftoqd") != nullptr)
   {
     // Running wrftoqd
     if (opt.count("infile") == 0) throw std::runtime_error("Expecting input file as parameter 1");

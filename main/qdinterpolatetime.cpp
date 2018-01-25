@@ -22,10 +22,10 @@
  *  parametreille.
  */
 
+#include <boost/lexical_cast.hpp>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
-#include <boost/lexical_cast.hpp>
 //#include "NFmiMilliSecondTimer.h"
 
 using namespace std;  // tätä ei saa sitten laittaa headeriin, eikä ennen includeja!!!!

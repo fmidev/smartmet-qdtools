@@ -7,35 +7,36 @@
                                       // joka johtuu 'puretuista' STL-template nimistä)
 #endif
 
-#include <newbase/NFmiStreamQueryData.h>
-#include <newbase/NFmiGrid.h>
-#include <newbase/NFmiStereographicArea.h>
-#include <newbase/NFmiRotatedLatLonArea.h>
-#include <newbase/NFmiMercatorArea.h>
-#include <newbase/NFmiLatLonArea.h>
-#include <newbase/NFmiCmdLine.h>
-#include <newbase/NFmiTimeList.h>
-#include <newbase/NFmiQueryDataUtil.h>
-#include <newbase/NFmiValueString.h>
-#include <newbase/NFmiTotalWind.h>
-#include <newbase/NFmiStringTools.h>
-#include <newbase/NFmiInterpolation.h>
-#include <newbase/NFmiSettings.h>
-#include <newbase/NFmiCommentStripper.h>
 #include <newbase/NFmiAreaFactory.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiCommentStripper.h>
+#include <newbase/NFmiGrid.h>
+#include <newbase/NFmiInterpolation.h>
+#include <newbase/NFmiLatLonArea.h>
+#include <newbase/NFmiMercatorArea.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiRotatedLatLonArea.h>
+#include <newbase/NFmiSettings.h>
+#include <newbase/NFmiStereographicArea.h>
+#include <newbase/NFmiStreamQueryData.h>
+#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiTimeList.h>
+#include <newbase/NFmiTotalWind.h>
+#include <newbase/NFmiValueString.h>
 
 #include <grib_api.h>
 //#include "grib_api_internal.h"
 
-extern "C" {
+extern "C"
+{
 #include <jpeglib.h>
 }
 
 #include <cstdio>
-#include <sstream>
-#include <stdexcept>
 #include <functional>
 #include <set>
+#include <sstream>
+#include <stdexcept>
 
 using namespace std;
 
@@ -412,7 +413,7 @@ int main(int argc, const char **argv)
 
     bool verbose = false;
 
-    if ((input = fopen(inputFileName.c_str(), "rb")) == NULL)
+    if ((input = fopen(inputFileName.c_str(), "rb")) == nullptr)
     {
       cerr << "could not open input file: " << inputFileName << endl;
       return 7;
@@ -435,7 +436,7 @@ int main(int argc, const char **argv)
                               wantedGrid,
                               pressureDataGridSize,
                               hybridDataGridSize);
-//		auto_ptr<NFmiQueryData> dataPtr(data);
+    //		auto_ptr<NFmiQueryData> dataPtr(data);
 
 #if 0
 		if(!datas.empty())
@@ -573,7 +574,7 @@ static void FreeDatas(vector<GridRecordData *> &theGribRecordDatas)
 /*
 static void printAccessorNames(grib_section* s)
 {
-        grib_accessor* a = s ? s->block->first : NULL;
+        grib_accessor* a = s ? s->block->first : nullptr;
 //	grib_accessor* b;
 
         while(a)
@@ -1275,7 +1276,7 @@ vector<NFmiQueryData *> ConvertGrib2QData(FILE *theInput,
 
   try
   {
-    grib_handle *gribHandle = NULL;
+    grib_handle *gribHandle = nullptr;
     grib_context *gribContext = grib_context_get_default();
     int err = 0;
     //		char *mode = "serialize";
@@ -1284,8 +1285,8 @@ vector<NFmiQueryData *> ConvertGrib2QData(FILE *theInput,
     int counter = 0;
     NFmiMetTime firstValidTime;
     cerr << endl << "Reading and intepreting grib fields." << endl;
-    //		while((gribHandle = grib_handle_new_from_file(0, theInput, &err)) != NULL)
-    while ((gribHandle = grib_handle_new_from_file(gribContext, theInput, &err)) != NULL ||
+    //		while((gribHandle = grib_handle_new_from_file(0, theInput, &err)) != nullptr)
+    while ((gribHandle = grib_handle_new_from_file(gribContext, theInput, &err)) != nullptr ||
            err != GRIB_SUCCESS)
     {
       counter++;
@@ -1701,7 +1702,7 @@ bool FillQDataWithGribRecords(vector<GridRecordData *> &theGribRecordDatas)
     cinfo.err = jpeg_std_error(&jerr);
     jpeg_create_compress(&cinfo);
 
-    if ((jpeg = fopen(jpegFilename, "wb")) == NULL)
+    if ((jpeg = fopen(jpegFilename, "wb")) == nullptr)
     {
       std::cerr << "Unable to create output file " << jpegFilename << std::endl;
       return filledGridCount > 0;

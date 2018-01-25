@@ -24,16 +24,16 @@
 // ======================================================================
 
 #include <macgyver/StringConversion.h>
-#include <macgyver/TimeParser.h>
 #include <macgyver/TimeFormatter.h>
+#include <macgyver/TimeParser.h>
 
 #include <newbase/NFmiArea.h>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiGrid.h>
+#include <newbase/NFmiHPlaceDescriptor.h>
 #include <newbase/NFmiIndexMask.h>
 #include <newbase/NFmiIndexMaskTools.h>
-#include <newbase/NFmiHPlaceDescriptor.h>
 #include <newbase/NFmiLevelType.h>
 #include <newbase/NFmiParamDescriptor.h>
 #include <newbase/NFmiQueryData.h>
@@ -46,12 +46,12 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <cmath>
 #include <fstream>

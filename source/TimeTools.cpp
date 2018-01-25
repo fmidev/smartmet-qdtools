@@ -77,4 +77,4 @@ const NFmiTime timezone_time(const NFmiTime &theUTCTime, const string &theZone)
 
   return toLocalTime(theUTCTime);
 }
-}
+}  // namespace TimeTools

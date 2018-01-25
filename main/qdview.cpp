@@ -12,7 +12,6 @@
 #include <newbase/NFmiFileSystem.h>
 #include <newbase/NFmiLatLonArea.h>
 #include <newbase/NFmiQueryData.h>
-#include <newbase/NFmiFastQueryInfo.h>
 
 #include <imagine/NFmiGshhsTools.h>
 #include <imagine/NFmiImage.h>

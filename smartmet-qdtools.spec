@@ -192,6 +192,7 @@ make test
 - qdtogrib -C/--centre sets the centre name or number
 - qdtogrib -S/--subcentre sets the subcentre number
 - qdtogrib -L/--list-centres list the known centre names and numbers
+- Fixed qdtogrib generation of dx/dy values for polar stereographic data
 
 * Mon Jan 22 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.1.22-1.fmi
 - qdset -w changes station id to a new one

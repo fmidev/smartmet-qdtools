@@ -534,8 +534,8 @@ void set_stereographic_geometry(NFmiFastQueryInfo &theInfo,
   gset(gribHandle, "Ni", nx);
   gset(gribHandle, "Nj", ny);
 
-  double dx = theInfo.Area()->WorldXYWidth() / nx;
-  double dy = theInfo.Area()->WorldXYHeight() / ny;
+  double dx = theInfo.Area()->WorldXYWidth() / (nx - 1);
+  double dy = theInfo.Area()->WorldXYHeight() / (ny - 1);
 
   gset(gribHandle, "DxInMetres", dx);
   gset(gribHandle, "DyInMetres", dy);

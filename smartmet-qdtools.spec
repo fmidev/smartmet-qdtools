@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 18.1.22
+Version: 18.1.25
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -188,6 +188,11 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Jan 25 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.1.25-1.fmi
+- qdtogrib -C/--centre sets the centre name or number
+- qdtogrib -S/--subcentre sets the subcentre number
+- qdtogrib -L/--list-centres list the known centre names and numbers
+
 * Mon Jan 22 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.1.22-1.fmi
 - qdset -w changes station id to a new one
 - qdset -W changes station name to a new one

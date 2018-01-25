@@ -11,6 +11,8 @@
 #include <newbase/NFmiRotatedLatLonArea.h>
 #include <newbase/NFmiStereographicArea.h>
 
+#include <macgyver/StringConversion.h>
+
 #include <grib_api.h>
 
 #include <boost/filesystem/operations.hpp>
@@ -39,35 +41,186 @@ typedef std::vector<ParamChangeItem> ParamChangeTable;
 
 struct Options
 {
-  Options();
+  Options() = default;
 
-  std::string infile;       // -i --infile
-  std::string outfile;      // -o --outfile
-  bool grib1;               // -1, --grib1
-  bool grib2;               // -2, --grib2
-  bool split;               // -s --split
-  bool crop;                // -d --delete
-  bool verbose;             // -v --verbose
-  bool dump;                // -D --dump ; generate a grib_api dump
-  NFmiLevel level;          // -l --level
-  ParamChangeTable ptable;  // -c --config
+  std::string infile = "-";     // -i --infile
+  std::string outfile = "-";    // -o --outfile
+  bool grib1 = false;           // -1, --grib1
+  bool grib2 = false;           // -2, --grib2
+  bool split = false;           // -s --split
+  bool crop = false;            // -d --delete
+  bool verbose = false;         // -v --verbose
+  bool dump = false;            // -D --dump ; generate a grib_api dump
+  std::string centre = "efkl";  // -C --centre
+  int subcentre = 0;            // -S --subcentre
+  bool list_centres = false;    // -L --list-centres
+  NFmiLevel level;              // -l --level
+  ParamChangeTable ptable;      // -c --config
 };
 
 Options options;
 
-Options::Options()
-    : infile("-"),
-      outfile("-"),
-      grib1(false),
-      grib2(false),
-      split(false),
-      crop(false),
-      verbose(false),
-      dump(false),
-      level(),
-      ptable()
-{
-}
+// ----------------------------------------------------------------------
+/*!
+ * \brief Known centres
+ */
+// ----------------------------------------------------------------------
+
+std::map<std::string, int> centres = {{"WMO", 0},
+                                      {"ammc", 1},
+                                      {"Melbourne", 2},
+                                      {"rums", 4},
+                                      {"Moscow", 5},
+                                      {"kwbc", 7},
+                                      {"NCEP", 7},
+                                      {"NWSTG", 8},
+                                      {"Cairo", 10},
+                                      {"Dakar", 12},
+                                      {"Nairobi", 14},
+                                      {"Atananarivo", 16},
+                                      {"Tunis", 18},
+                                      {"Casablanca", 18},
+                                      {"Las Palmas", 20},
+                                      {"Algiers", 21},
+                                      {"Lagos", 22},
+                                      {"fapr", 24},
+                                      {"Pretoria", 24},
+                                      {"Khabarovsk", 26},
+                                      {"vabb", 28},
+                                      {"dems", 29},
+                                      {"Novosibirsk", 30},
+                                      {"Tashkent", 32},
+                                      {"Jeddah", 33},
+                                      {"rjtd", 34},
+                                      {"Tokyo", 34},
+                                      {"Bankok", 36},
+                                      {"Ulan Bator", 37},
+                                      {"babj", 38},
+                                      {"Beijing", 38},
+                                      {"rksl", 40},
+                                      {"Seoul", 40},
+                                      {"Buenos Aires", 41},
+                                      {"Brasilia", 43},
+                                      {"Santiago", 45},
+                                      {"sbsj", 46},
+                                      {"Miami", 51},
+                                      {"cwao", 54},
+                                      {"Montreal", 54},
+                                      {"San Francisco", 55},
+                                      {"fnmo", 58},
+                                      {"NOAA", 59},
+                                      {"NCAR", 60},
+                                      {"Honolulu", 64},
+                                      {"Darwin", 65},
+                                      {"Melbourne", 67},
+                                      {"Wellington", 69},
+                                      {"egrr", 74},
+                                      {"Exeter", 74},
+                                      {"edzw", 78},
+                                      {"Offenbach", 78},
+                                      {"cnmc", 80},
+                                      {"Rome", 80},
+                                      {"eswi", 82},
+                                      {"Norrkoping", 82},
+                                      {"lfpw", 84},
+                                      {"efkl", 86},
+                                      {"Helsinki", 86},
+                                      {"Belgrade", 87},
+                                      {"enmi", 88},
+                                      {"Oslo", 88},
+                                      {"Prague", 89},
+                                      {"Episkopi", 90},
+                                      {"Ankara", 91},
+                                      {"Frankfurt", 92},
+                                      {"London", 93},
+                                      {"WAFC", 93},
+                                      {"ekmi", 94},
+                                      {"Copenhagen", 94},
+                                      {"Rota", 95},
+                                      {"Athens", 96},
+                                      {"ESA", 97},
+                                      {"ecmf", 98},
+                                      {"DeBilt", 99},
+                                      {"Hong-Kong", 110},
+                                      {"wiix", 195},
+                                      {"Frascati", 210},
+                                      {"Lannion", 211},
+                                      {"Lisboa", 212},
+                                      {"Reykjavik", 213},
+                                      {"lemm", 214},
+                                      {"lssw", 215},
+                                      {"Zurich", 215},
+                                      {"Bratislava", 217},
+                                      {"habp", 218},
+                                      {"Budapest", 218},
+                                      {"Ljubljana", 219},
+                                      {"Warsaw", 220},
+                                      {"Zagreb", 221},
+                                      {"Albania", 222},
+                                      {"Armenia", 223},
+                                      {"lowm", 224},
+                                      {"Austria", 224},
+                                      {"ebum", 227},
+                                      {"Belgium", 227},
+                                      {"Bosnia and Herzegovina", 228},
+                                      {"Bulgaria", 229},
+                                      {"Cyprus", 230},
+                                      {"Estonia", 231},
+                                      {"Georgia", 232},
+                                      {"eidb", 233},
+                                      {"Dublin", 233},
+                                      {"Israel", 234},
+                                      {"ingv", 235},
+                                      {"crfc", 239},
+                                      {"Malta", 240},
+                                      {"Monaco", 241},
+                                      {"Romania", 242},
+                                      {"vuwien", 244},
+                                      {"knmi", 245},
+                                      {"ifmk", 246},
+                                      {"Kiel  ", 246},
+                                      {"hadc", 247},
+                                      {"Hadley", 247},
+                                      {"cosmo", 250},
+                                      {"MetCoOp", 251},
+                                      {"mpim", 252},
+                                      {"eums", 254},
+                                      {"consensus", 255},
+                                      {"Angola", 256},
+                                      {"Benin", 257},
+                                      {"Botswana", 258},
+                                      {"Burkina Faso", 259},
+                                      {"Burundi", 260},
+                                      {"Cameroon", 261},
+                                      {"Cabo Verde", 262},
+                                      {"Central African Republic", 263},
+                                      {"Chad", 264},
+                                      {"Comoros", 265},
+                                      {"Congo", 266},
+                                      {"Djibouti", 267},
+                                      {"Eritrea", 268},
+                                      {"Ethiopia", 269},
+                                      {"Gabon", 270},
+                                      {"Gambia", 271},
+                                      {"Ghana", 272},
+                                      {"Guinea", 273},
+                                      {"Guinea-Bissau", 274},
+                                      {"Lesotho", 275},
+                                      {"Liberia", 276},
+                                      {"Malawi", 277},
+                                      {"Mali", 278},
+                                      {"Mauritania", 279},
+                                      {"Namibia", 280},
+                                      {"Nigeria", 281},
+                                      {"Rwanda", 282},
+                                      {"Sao Tome and Principe", 283},
+                                      {"Sierra Leone", 284},
+                                      {"Somalia", 285},
+                                      {"Sudan", 286},
+                                      {"Swaziland", 287},
+                                      {"Togo", 288},
+                                      {"Zambia", 289},
+                                      {"Missing", 65535}};
 
 // ----------------------------------------------------------------------
 
@@ -125,6 +278,9 @@ bool parse_options(int argc, char *argv[])
       "outfile,o", po::value(&options.outfile), "output grib file")(
       "grib1,1", po::bool_switch(&options.grib1), "output GRIB1")(
       "grib2,2", po::bool_switch(&options.grib2), "output GRIB2 (the default)")(
+      "centre,C", po::value(&options.centre), "originating centre (default = efkl)")(
+      "subcentre,S", po::value(&options.subcentre), "subcentre (default = 0)")(
+      "list-centres,L", po::bool_switch(&options.list_centres), "list known centres")(
       "delete,d",
       po::bool_switch(&options.crop),
       "ignore parameters which are not listed in the config")(
@@ -143,7 +299,7 @@ bool parse_options(int argc, char *argv[])
 
   if (opt.count("version") != 0)
   {
-    std::cout << "qdtogrib v1.0 (" << __DATE__ << ' ' << __TIME__ << ')' << std::endl;
+    std::cout << "qdtogrib v1.1 (" << __DATE__ << ' ' << __TIME__ << ')' << std::endl;
   }
 
   if (opt.count("help"))
@@ -153,6 +309,14 @@ bool parse_options(int argc, char *argv[])
               << "Converts querydata to GRIB format." << std::endl
               << std::endl
               << desc << std::endl;
+    return false;
+  }
+
+  if (options.list_centres)
+  {
+    std::cout << "Known centres:\n";
+    for (const auto &name_value : centres)
+      std::cout << name_value.second << "\t= " << name_value.first << "\n";
     return false;
   }
 
@@ -446,8 +610,41 @@ void set_mercator_geometry(NFmiFastQueryInfo &theInfo,
 }
 
 // ----------------------------------------------------------------------
+/*!
+ * \brief Set the producer
+ */
+// ----------------------------------------------------------------------
 
-// T‰t‰ kutsutaan vain kerran, koska querydatassa kaikki hilat ja areat ovat samoja
+static void set_producer(grib_handle *gribHandle)
+{
+  auto it = centres.find(options.centre);
+
+  int centre = 0;
+
+  if (it != centres.end())
+    centre = it->second;
+  else
+  {
+    try
+    {
+      centre = Fmi::stoi(options.centre);
+    }
+    catch (...)
+    {
+      throw std::runtime_error("Unknown centre: '" + options.centre + "'");
+    }
+  }
+
+  gset(gribHandle, "centre", centre);
+  gset(gribHandle, "subCentre", options.subcentre);
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Set the geometry. Called only once since in querydata all geometries are equal
+ */
+// ----------------------------------------------------------------------
+
 static void set_geometry(NFmiFastQueryInfo &theInfo,
                          grib_handle *gribHandle,
                          std::vector<double> &theValueArray)
@@ -756,6 +953,7 @@ int run(const int argc, char *argv[])
     qi.First();
     std::vector<double> valueArray;  // t‰t‰ vektoria k‰ytet‰‰n siirt‰m‰‰n dataa querydatasta
                                      // gribiin (aina saman kokoinen)
+    set_producer(gribHandle);
     set_geometry(qi, gribHandle, valueArray);
     const long timestep = get_smallest_timestep(qi);
     const bool use_minutes = (timestep < 60);

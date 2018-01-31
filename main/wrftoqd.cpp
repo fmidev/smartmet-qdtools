@@ -1290,7 +1290,7 @@ int run(int argc, char *argv[])
 
   // Parameter conversions
 
-  nctools::ParamConversions paramconvs = nctools::read_netcdf_config(options);
+  nctools::ParamConversions paramconvs = nctools::read_netcdf_configs(options);
 
 #if DEBUG_PRINT
   nctools::debug_output(ncfile);

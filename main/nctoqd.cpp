@@ -259,13 +259,21 @@ int add_to_pbag(const NcFile& ncfile,
     if (var == 0) continue;
 
     // Here we need to know only the id
-    nctools::ParamInfo pinfo = nctools::parse_parameter(var, paramconvs);
-    if (pinfo.id == kFmiBadParameter)
+    nctools::ParamInfo pinfo = nctools::parse_parameter(var, paramconvs, options.autoid);
+    if (pinfo.id < 1)
+    /*   	== kFmiBadParameter && pinfo.id < nctools::unknownParIdCounterBegin &&
+           pinfo.id < 1) */
     {
       if (options.verbose)
-        std::cout << "Skipping unknown variable '" << nctools::get_name(var) << "'" << std::endl;
+        std::cout << "  Skipping unknown variable '" << nctools::get_name(var) << "'" << std::endl;
       continue;
     }
+    else if (options.verbose)
+      std::cout << "  Variable " << nctools::get_name(var) << " has id " << pinfo.id << " and name "
+                << (nctools::get_enumconverter().ToString(pinfo.id).empty()
+                        ? "undefined"
+                        : nctools::get_enumconverter().ToString(pinfo.id))
+                << std::endl;
 
     NFmiParam param(pinfo.id,
                     nctools::get_enumconverter().ToString(pinfo.id),
@@ -296,7 +304,7 @@ int run(int argc, char* argv[])
     if (!parse_options(argc, argv, options)) return 0;
 
     // Parameter conversions
-    const nctools::ParamConversions paramconvs = nctools::read_netcdf_config(options);
+    const nctools::ParamConversions paramconvs = nctools::read_netcdf_configs(options);
 
     // Prepare empty target querydata
     std::unique_ptr<NFmiQueryData> data;

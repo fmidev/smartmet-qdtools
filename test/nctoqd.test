@@ -24,7 +24,8 @@ while ( scalar @ARGV > 0 ) {
 	shift @ARGV;
 }
 
-foreach my $input ( glob "data/*.nc" ) {
+@inputs = glob "data/*.nc" ;
+foreach my $input ( @inputs ) {
 	my $output = $input;
 	$output =~ s%^data/%%;
 	$output =~ s%[.]nc$%.sqd%;
@@ -34,6 +35,8 @@ foreach my $input ( glob "data/*.nc" ) {
 }
 
 DoTest("merge","merge.sqd","-c ../cnf/netcdf.conf ".join(' ',sort glob "data/*.merge-nc"));
+DoTest("fixid","fixid.sqd","-m sm_uncertainty,15000 -c ../cnf/netcdf.conf ".$inputs[0]);
+DoTest("unknownids","unknownids.sqd","-U -c ../cnf/netcdf.conf ".$inputs[0]);
 
 print "Done\n";
 

@@ -15,6 +15,9 @@
 #include <macgyver/CsvReader.h>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiStringTools.h>
+#include <spine/Exception.h>
+
+int nctools::unknownParIdCounterBegin = 30000;
 
 namespace
 {
@@ -27,8 +30,9 @@ namespace
 NFmiEnumConverter converter;
 std::map<std::string, int>
     unknownParIdMap;  // jos sallitaan tuntemattomien parametrien k�ytt�, ne talletetaan t�h�n
-int unknownParIdCounter = 1200;  // jos tuntematon paramtri, aloitetaan niiden id:t t�st� ja
-                                 // kasvatetaan aina yhdell� kun tulee uusia
+int unknownParIdCounter = nctools::unknownParIdCounterBegin;  // jos tuntematon paramtri, aloitetaan
+                                                              // niiden id:t t�st� ja kasvatetaan
+                                                              // aina yhdell� kun tulee uusia
 }  // namespace
 
 namespace nctools
@@ -52,6 +56,8 @@ Options::Options()
       timeshift(0),
       memorymap(false),
       fixstaggered(false),
+      autoid(false),
+      parameters(),
       ignoreUnitChangeParams(),
       excludeParams(),
       projection(),
@@ -78,13 +84,17 @@ bool parse_options(int argc, char *argv[], Options &options)
   std::string producerinfo;
 
   std::string msg1 =
-      "NetCDF CF standard name conversion table (default='" + options.configfile + "')";
+      "Replacement NetCDF CF standard name conversion table (default='" + options.configfile + "')";
   std::string tmpIgnoreUnitChangeParamsStr;
   std::string tmpExcludeParamsStr;
   std::string tmpCmdLineGlobalAttributesStr;
 
   po::options_description desc("Allowed options");
   desc.add_options()("help,h", "print out help message")(
+      "autoids,U",
+      po::bool_switch(&options.autoid),
+      "generate ids automatically for unknown parameters starting from id " +
+          nctools::unknownParIdCounterBegin)(
       "debug,d", po::bool_switch(&options.debug), "enable debugging output")(
       "verbose,v", po::bool_switch(&options.verbose), "set verbose mode on")(
       "version,V", "display version number")(
@@ -93,10 +103,16 @@ bool parse_options(int argc, char *argv[], Options &options)
       "outfile,o", po::value(&options.outfile), "output querydata file")(
       "mmap", po::bool_switch(&options.memorymap), "memory map output file to save RAM")(
       "config,c", po::value(&options.configfile), msg1.c_str())(
-      "timeshift,t", po::value(&options.timeshift), "additional time shift in minutes")(
+      "configs,C",
+      po::value(&options.configs),
+      "Extra NetCDF name conversions (take precedence over standard names)")(
+      "parameter,m",
+      po::value(&options.parameters),
+      "define parameter conversion(same format as in config)")(
       "producer,p", po::value(&producerinfo), "producer number,name")(
       "producernumber", po::value(&options.producernumber), "producer number")(
       "producername", po::value(&options.producername), "producer name")(
+      "timeshift,t", po::value(&options.timeshift), "additional time shift in minutes")(
       "fixstaggered,s",
       po::bool_switch(&options.fixstaggered),
       "modifies staggered data to base form")("ignoreunitchangeparams,u",
@@ -252,14 +268,62 @@ bool parse_options(int argc, char *argv[], Options &options)
  */
 // ----------------------------------------------------------------------
 
-ParamConversions read_netcdf_config(const Options &options)
+ParamConversions read_netcdf_configs(const Options &options)
 {
   CsvParams csv(options);
-  if (!options.configfile.empty())
-  {
-    if (options.verbose) std::cout << "Reading " << options.configfile << std::endl;
-    Fmi::CsvReader::read(options.configfile, boost::bind(&CsvParams::add, &csv, _1));
-  }
+  //  Parameter list is read starting from beginning so put most important ones first
+
+  // Command line
+  if (options.parameters.size() > 0)
+    for (auto line : options.parameters)
+      try
+      {
+        if (line.length() < 1)
+          throw SmartMet::Spine::Exception(BCP,
+                                           "A parameter given on command line is of zero length");
+        if (options.verbose) std::cout << "Adding parameter mapping " << line << std::endl;
+        std::vector<std::string> row;
+        std::size_t delimpos = line.find(',');
+        if (delimpos < 1 || delimpos >= line.length() - 1)
+          throw SmartMet::Spine::Exception(
+              BCP, "Parameter from command line is not of correct format: " + line);
+        row.push_back(line.substr(0, delimpos));
+        row.push_back(line.substr(delimpos + 1));
+        csv.paramconvs.push_back(row);
+      }
+      catch (...)
+      {
+        throw SmartMet::Spine::Exception(
+            BCP, "Adding parameter conversion " + line + " from command line failed", nullptr);
+      }
+
+  // Additional config files
+  if (options.configs.size() > 0)
+    for (auto file : options.configs)
+      try
+      {
+        if (options.verbose) std::cout << "Reading " << file << std::endl;
+
+        Fmi::CsvReader::read(file, boost::bind(&CsvParams::add, &csv, _1));
+      }
+      catch (...)
+      {
+        throw SmartMet::Spine::Exception(BCP, "Reading config file " + file + " failed", nullptr);
+      }
+
+  // Base config file
+  if (!options.configfile.empty()) try
+    {
+      if (options.verbose) std::cout << "Reading " << options.configfile << std::endl;
+
+      Fmi::CsvReader::read(options.configfile, boost::bind(&CsvParams::add, &csv, _1));
+    }
+    catch (...)
+    {
+      throw SmartMet::Spine::Exception(
+          BCP, "Reading base config file " + options.configfile + " failed", nullptr);
+    }
+
   return csv.paramconvs;
 }
 
@@ -270,13 +334,9 @@ void CsvParams::add(const Fmi::CsvReader::row_type &row)
   if (row[0].substr(0, 1) == "#") return;
 
   if (row.size() != 2 && row.size() != 4)
-  {
-    std::ostringstream msg;
-    msg << "Invalid row of size " << row.size() << " in '" << options.configfile << "':";
-    std::ostream_iterator<std::string> out_it(msg, ",");
-    std::copy(row.begin(), row.end(), out_it);
-    throw std::runtime_error(msg.str());
-  }
+    throw SmartMet::Spine::Exception(
+        BCP,
+        (std::string) "Invalid config row of size " + std::to_string(row.size()) + ": " + row[0]);
 
   paramconvs.push_back(row);
 }
@@ -292,6 +352,19 @@ void CsvParams::add(const Fmi::CsvReader::row_type &row)
  */
 // ----------------------------------------------------------------------
 
+static FmiParameterName getIdFromString(NFmiEnumConverter &converter, const std::string &name)
+{
+  // Convert numbers directly to int, other through the converter
+  if (name.empty()) return kFmiBadParameter;
+
+  // Is it a name?
+  if (name.find_first_not_of("012345678") != std::string::npos)
+    return FmiParameterName(converter.ToEnum(name));
+
+  // Fully numeric, just return the id
+  return static_cast<FmiParameterName>(std::stoi(name));
+}
+
 ParamInfo parse_parameter(const std::string &name,
                           const ParamConversions &paramconvs,
                           bool useAutoGeneratedIds)
@@ -304,7 +377,7 @@ ParamInfo parse_parameter(const std::string &name,
     {
       if (name == vt[0])
       {
-        info.id = FmiParameterName(converter.ToEnum(vt[1]));
+        info.id = getIdFromString(converter, vt[1]);
         info.name = vt[1];
         return info;
       }
@@ -313,14 +386,14 @@ ParamInfo parse_parameter(const std::string &name,
     {
       if (name == vt[0])
       {
-        info.id = FmiParameterName(converter.ToEnum(vt[2]));
+        info.id = getIdFromString(converter, vt[2]);
         info.name = vt[2];
         info.isregular = false;
         info.isspeed = true;
       }
       else if (name == vt[1])
       {
-        info.id = FmiParameterName(converter.ToEnum(vt[3]));
+        info.id = getIdFromString(converter, vt[3]);
         info.name = vt[3];
         info.isregular = false;
         info.isspeed = false;
@@ -335,23 +408,26 @@ ParamInfo parse_parameter(const std::string &name,
   }
 
   // Try newbase as fail safe
-  info.id = FmiParameterName(converter.ToEnum(name));
-  if (info.id != kFmiBadParameter) info.name = converter.ToString(info.id);
-
-  if (info.id == kFmiBadParameter && useAutoGeneratedIds)
-  {  // Lis�t��n haluttaessa my�s automaattisesti generoitu par-id
+  info.id = getIdFromString(converter, name);
+  if (info.id != kFmiBadParameter)
+    info.name = converter.ToString(info.id);
+  else
+  {
+    // We either have a numeric conversion done or should use autogenerated ids
+    // Let's first check for already encountered ids
     std::map<std::string, int>::iterator it = unknownParIdMap.find(name);
     if (it != unknownParIdMap.end())
     {
       info.name = name;
       info.id = static_cast<FmiParameterName>(it->second);
     }
-    else
+    else if (info.id > 0 || useAutoGeneratedIds)
     {
-      unknownParIdMap.insert(std::make_pair(name, unknownParIdCounter));
+      // We either had a straight fixed numeric conversion or want autogenerated
+      if (info.id < 1)  // Predefined(on cli or in config) have larger id, this is autogenerated
+        info.id = static_cast<FmiParameterName>(unknownParIdCounter++);
+      unknownParIdMap.insert(std::make_pair(name, info.id));
       info.name = name;
-      info.id = static_cast<FmiParameterName>(unknownParIdCounter);
-      unknownParIdCounter++;
     }
   }
 

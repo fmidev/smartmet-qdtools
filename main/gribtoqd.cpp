@@ -155,8 +155,8 @@ struct GribFilterOptions
 
   string itsOutputFileName;  // -o optio tai sitten tulostetann cout:iin
   bool fUseOutputFile;
-  size_t itsMaxQDataSizeInBytes;     // default max koko 1 GB
-  int itsReturnStatus;               // 0 = ok
+  size_t itsMaxQDataSizeInBytes;  // default max koko 1 GB
+  int itsReturnStatus;            // 0 = ok
   NFmiLevelBag itsIgnoredLevelList;  // lista miss‰ yksitt‰isi‰ leveleit‰, mitk‰ halutaan j‰tt‰‰
                                      // pois laskuista
   vector<boost::shared_ptr<NFmiQueryData> > itsGeneratedDatas;
@@ -475,7 +475,7 @@ static long GetUsedLevelType(grib_handle *theGribHandle)
     return 119;
   else if (name == "depthBelowSea")
     return 160;
-  else if (name == "entireAtmosphere")
+  else if (name == "entireAtmosphere" || name == "atmosphere")
     return 200;
   else if (name == "entireOcean")
     return 201;

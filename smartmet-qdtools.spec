@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 18.1.25
+Version: 18.1.31
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -24,7 +24,7 @@ BuildRequires: smartmet-library-calculator-devel >= 17.8.28
 BuildRequires: smartmet-library-gis-devel >= 18.1.15
 BuildRequires: smartmet-library-imagine-devel >= 17.9.22
 BuildRequires: smartmet-library-macgyver-devel >= 17.11.27
-BuildRequires: smartmet-library-newbase-devel >= 18.1.13
+BuildRequires: smartmet-library-newbase-devel >= 18.1.22
 BuildRequires: smartmet-library-smarttools-devel >= 17.8.28
 BuildRequires: smartmet-timezones
 BuildRequires: smartmet-library-spine-devel
@@ -35,12 +35,12 @@ BuildRequires: gdal-devel >= 1.11.4
 BuildRequires: jasper-devel
 BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
-Requires: smartmet-timezones >= 17.10.26
+Requires: smartmet-timezones >= 18.1.31
 Requires: smartmet-library-calculator >= 17.8.28
 Requires: smartmet-library-gis >= 18.1.15
 Requires: smartmet-library-imagine >= 17.9.22
 Requires: smartmet-library-macgyver >= 17.11.27
-Requires: smartmet-library-newbase >= 18.1.13
+Requires: smartmet-library-newbase >= 18.1.22
 Requires: smartmet-library-smarttools >= 17.8.28
 Requires: smartmet-library-spine
 Requires: eccodes
@@ -188,6 +188,10 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Jan 31 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.1.31-1.fmi
+- nctoqd improvements
+- gribtoqd now accepts levels of type 'atmosphere'
+
 * Thu Jan 25 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.1.25-1.fmi
 - qdtogrib -C/--centre sets the centre name or number
 - qdtogrib -S/--subcentre sets the subcentre number

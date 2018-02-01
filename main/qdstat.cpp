@@ -775,6 +775,104 @@ const char* Stats::desc(double value) const
           return "";
       }
     }
+    case kFmiSmartSymbol:
+    {
+      switch (static_cast<int>(value))
+      {
+        case 10000000:
+          return "clear";
+        case 10000020:
+          return "mostly clear";
+        case 10000030:
+          return "partly cloudy";
+        case 10000060:
+          return "mostly cloudy";
+        case 10000080:
+          return "overcast";
+        case 10000100:
+          return "fog";
+        case 11000000:
+          return "isolated thundershowers";
+        case 11000060:
+          return "scattered thundershowers";
+        case 11000080:
+          return "thundershowers";
+        case 10121000:
+          return "isolated showers";
+        case 10121060:
+          return "scattered showers";
+        case 10121080:
+          return "showers";
+        case 10401000:
+          return "freezing drizzle";
+        case 10501000:
+          return "freezing rain";
+        case 10001000:
+          return "drizzle";
+        case 10111000:
+          return "periods of light rain";
+        case 10111060:
+          return "periods of light rain";
+        case 10111080:
+          return "light rain";
+        case 10113000:
+          return "periods of moderate rain";
+        case 10113060:
+          return "periods of moderate rain";
+        case 10113080:
+          return "moderate rain";
+        case 10116000:
+          return "periods of heavy rain";
+        case 10116060:
+          return "periods of heavy rain";
+        case 10116080:
+          return "heavy rain";
+        case 10201000:
+          return "isolated light sleet showers";
+        case 10201060:
+          return "scattered light sleet showers";
+        case 10201080:
+          return "light sleet";
+        case 10203000:
+          return "isolated moderate sleet showers";
+        case 10203060:
+          return "scattered moderate sleet showers";
+        case 10203080:
+          return "moderate sleet";
+        case 10204000:
+          return "isolated heavy sleet showers";
+        case 10204060:
+          return "scattered heavy sleet showers";
+        case 10204080:
+          return "heavy sleet";
+        case 10301000:
+          return "isolated light snow showers";
+        case 10301060:
+          return "scattered light snow showers";
+        case 10301080:
+          return "light snowfall";
+        case 10303000:
+          return "isolated moderate snow showers";
+        case 10303060:
+          return "scattered moderate snow showers";
+        case 10303080:
+          return "moderate snowfall";
+        case 10304000:
+          return "isolated heavy snow showers";
+        case 10304060:
+          return "scattered heavy snow showers";
+        case 10304080:
+          return "heavy snowfall";
+        case 10601000:
+          return "isolated hail showers";
+        case 10601060:
+          return "scattered hail showers";
+        case 10601080:
+          return "hail showers";
+        default:
+          return "";
+      }
+    }
     default:
       return "";
   }

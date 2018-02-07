@@ -35,6 +35,7 @@ struct Options
   std::string configfile;            // -c Config, replace standard config
   std::vector<std::string> configs;  // -C extra configs, take precedence over standard
   std::string producername;          // --producername
+  std::string conventions;           // -n Name of Conventions to use
   long producernumber;               // --producernumber
   long timeshift;                    // -t <minutes>
   bool memorymap;                    // --mmap

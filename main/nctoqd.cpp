@@ -51,82 +51,6 @@ nctools::Options options;
 
 // ----------------------------------------------------------------------
 /*!
- * Validate the data conforms to CF
- */
-// ----------------------------------------------------------------------
-
-static int compare_versions(const std::string& v1, const std::string& v2)
-{
-  size_t v1pos = 0;
-  size_t v2pos = 0;
-
-  while (v1pos < v1.size())
-  {
-    size_t v1pe = v1.find('.', v1pos);
-    size_t v2pe = v2.find('.', v2pos);
-    // In the case that there are no subsequent dots, just point to end of string
-    if (v1pe == std::string::npos) v1pe = v1.size();
-    if (v2pe == std::string::npos) v2pe = v2.size();
-    int v1part = 0;
-    int v2part = 0;
-    try
-    {
-      v1part = boost::lexical_cast<int>(v1.substr(v1pos, v1pe - v1pos));
-    }
-    catch (boost::bad_lexical_cast const&)
-    {
-      throw SmartMet::Spine::Exception(BCP,
-                                       "Unable to convert " + v1 + " to integer version parts");
-    }
-    try
-    {
-      v2part = boost::lexical_cast<int>(v2.substr(v2pos, v2pe - v2pos));
-    }
-    catch (boost::bad_lexical_cast const&)
-    {
-      throw SmartMet::Spine::Exception(BCP,
-                                       "Unable to convert " + v2 + " to integer version parts");
-    }
-    if (v1part != v2part)  // Version parts differ, no need to compare farther
-      return v1part - v2part;
-    v1pos = v1pe + 1;
-    v2pos = v2pe + 1;
-  }
-
-  if (v2pos < v2.size())
-    // If there is still something in v2, the versions match up to this point. It must be extra
-    // parts after dot.
-    return -1;
-  // Nothing left on either one, they match fully
-  return 0;
-}
-
-void require_conventions(const NcFile& ncfile, const std::string& reference)
-{
-  NcAtt* att = ncfile.get_att("Conventions");
-  if (att == 0)
-    throw SmartMet::Spine::Exception(BCP, "The NetCDF file is missing the Conventions attribute");
-
-  if (att->type() != ncChar)
-    throw SmartMet::Spine::Exception(BCP, "The Conventions attribute must be a string");
-
-  // pernu 2018-02-07: We use to have sz parameter which limits the comparison like this:
-  //  if (ref.substr(0, sz) != reference.substr(0, sz))
-  // I don't get it: it just compares CF- !
-  // Here we compare the actual version numbers and assume that larget is compliant with smaller one
-  std::string ref = att->values()->as_string(0);
-  std::string cmp = reference;
-  std::string refsub = ref;
-
-  if (refsub.substr(0, 3) == "CF-") refsub = ref.substr(3);
-  if (cmp.substr(0, 3) == "CF-") cmp = reference.substr(3);
-
-  if (compare_versions(refsub, cmp) <= 0)
-    throw SmartMet::Spine::Exception(BCP,
-                                     "The file must conform to " + reference + ", not to " + ref);
-}
-// ----------------------------------------------------------------------
-/*!
  * Check X-axis units
  */
 // ----------------------------------------------------------------------
@@ -382,7 +306,7 @@ int run(int argc, char* argv[])
           throw SmartMet::Spine::Exception(
               BCP, "File '" + infile + "' does not contain valid NetCDF", nullptr);
 
-        require_conventions(*ncfile, options.conventions);
+        ncfile->require_conventions(&(options.conventions));
         std::string grid_mapping(ncfile->grid_mapping());
         NcVar* x = ncfile->x_axis();
         NcVar* y = ncfile->y_axis();

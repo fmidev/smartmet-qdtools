@@ -93,9 +93,9 @@ bool parse_options(int argc, char *argv[], Options &options)
   desc.add_options()("help,h", "print out help message")(
       "autoids,U",
       po::bool_switch(&options.autoid),
-      "generate ids automatically for unknown parameters starting from id " +
-          nctools::unknownParIdCounterBegin)(
-      "debug,d", po::bool_switch(&options.debug), "enable debugging output")(
+      ((std::string) "generate ids automatically for unknown parameters starting from id " +
+       std::to_string((int)nctools::unknownParIdCounterBegin))
+          .c_str())("debug,d", po::bool_switch(&options.debug), "enable debugging output")(
       "verbose,v", po::bool_switch(&options.verbose), "set verbose mode on")(
       "version,V", "display version number")(
       "experimental,x", po::bool_switch(&options.experimental), "enable experimental features")(

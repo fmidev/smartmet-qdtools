@@ -97,8 +97,10 @@ bool parse_options(int argc, char *argv[], Options &options)
       po::value(&options.configs),
       "Extra NetCDF name conversions (take precedence over standard names)")(
       "conventions,n",
-      ("Name of NetCDF conventions to use (default: " + options.conventions + ")").c_str())(
-      "debug,d", po::bool_switch(&options.debug), "enable debugging output")(
+      po::value(&options.conventions),
+      ("Minimum NetCDF conventions to verify or empty string if no check wanted (default: " +
+       options.conventions + ")")
+          .c_str())("debug,d", po::bool_switch(&options.debug), "enable debugging output")(
       "experimental", po::bool_switch(&options.experimental), "enable experimental features")(
       "infile,i", po::value(&options.infiles), "input netcdf file")(
       "globalAttributes,a",

@@ -52,6 +52,7 @@ Options::Options()
       configfile("netcdf.conf"),
 #endif
       producername("UNKNOWN"),
+      conventions("CF-1.0"),
       producernumber(0),
       timeshift(0),
       memorymap(false),
@@ -91,38 +92,40 @@ bool parse_options(int argc, char *argv[], Options &options)
 
   po::options_description desc("Allowed options");
   desc.add_options()("help,h", "print out help message")(
-      "autoids,U",
-      po::bool_switch(&options.autoid),
-      ((std::string) "generate ids automatically for unknown parameters starting from id " +
-       std::to_string((int)nctools::unknownParIdCounterBegin))
-          .c_str())("debug,d", po::bool_switch(&options.debug), "enable debugging output")(
-      "verbose,v", po::bool_switch(&options.verbose), "set verbose mode on")(
-      "version,V", "display version number")(
-      "experimental,x", po::bool_switch(&options.experimental), "enable experimental features")(
-      "infile,i", po::value(&options.infiles), "input netcdf file")(
-      "outfile,o", po::value(&options.outfile), "output querydata file")(
-      "mmap", po::bool_switch(&options.memorymap), "memory map output file to save RAM")(
       "config,c", po::value(&options.configfile), msg1.c_str())(
       "configs,C",
       po::value(&options.configs),
       "Extra NetCDF name conversions (take precedence over standard names)")(
+      "conventions,n",
+      ("Name of NetCDF conventions to use (default: " + options.conventions + ")").c_str())(
+      "debug,d", po::bool_switch(&options.debug), "enable debugging output")(
+      "experimental", po::bool_switch(&options.experimental), "enable experimental features")(
+      "infile,i", po::value(&options.infiles), "input netcdf file")(
+      "globalAttributes,a",
+      po::value(&tmpCmdLineGlobalAttributesStr),
+      "netCdf data's cmd-line given global attributes")(
+      "mmap", po::bool_switch(&options.memorymap), "memory map output file to save RAM")(
+      "outfile,o", po::value(&options.outfile), "output querydata file")(
       "parameter,m",
       po::value(&options.parameters),
       "define parameter conversion(same format as in config)")(
       "producer,p", po::value(&producerinfo), "producer number,name")(
+      "projection,P", po::value(&options.projection), "final data area projection")(
       "producernumber", po::value(&options.producernumber), "producer number")(
       "producername", po::value(&options.producername), "producer name")(
-      "timeshift,t", po::value(&options.timeshift), "additional time shift in minutes")(
       "fixstaggered,s",
       po::bool_switch(&options.fixstaggered),
       "modifies staggered data to base form")("ignoreunitchangeparams,u",
                                               po::value(&tmpIgnoreUnitChangeParamsStr),
                                               "ignore unit change params")(
-      "excludeparams,x", po::value(&tmpExcludeParamsStr), "exclude params")(
-      "projection,P", po::value(&options.projection), "final data area projection")(
-      "globalAttributes,a",
-      po::value(&tmpCmdLineGlobalAttributesStr),
-      "netCdf data's cmd-line given global attributes");
+      "timeshift,t", po::value(&options.timeshift), "additional time shift in minutes")(
+      "autoids,U",
+      po::bool_switch(&options.autoid),
+      ((std::string) "generate ids automatically for unknown parameters starting from id " +
+       std::to_string((int)nctools::unknownParIdCounterBegin))
+          .c_str())("verbose,v", po::bool_switch(&options.verbose), "set verbose mode on")(
+      "version,V", "display version number")(
+      "excludeparams,x", po::value(&tmpExcludeParamsStr), "exclude params");
 
   po::positional_options_description p;
   if (strstr(argv[0], "wrftoqd") != nullptr)

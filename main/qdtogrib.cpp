@@ -43,19 +43,20 @@ struct Options
 {
   Options() = default;
 
-  std::string infile = "-";     // -i --infile
-  std::string outfile = "-";    // -o --outfile
-  bool grib1 = false;           // -1, --grib1
-  bool grib2 = false;           // -2, --grib2
-  bool split = false;           // -s --split
-  bool crop = false;            // -d --delete
-  bool verbose = false;         // -v --verbose
-  bool dump = false;            // -D --dump ; generate a grib_api dump
-  std::string centre = "efkl";  // -C --centre
-  int subcentre = 0;            // -S --subcentre
-  bool list_centres = false;    // -L --list-centres
-  NFmiLevel level;              // -l --level
-  ParamChangeTable ptable;      // -c --config
+  std::string infile = "-";        // -i --infile
+  std::string outfile = "-";       // -o --outfile
+  bool grib1 = false;              // -1, --grib1
+  bool grib2 = false;              // -2, --grib2
+  bool split = false;              // -s --split
+  bool crop = false;               // -d --delete
+  bool ignore_origintime = false;  // -I --ignore-origintime
+  bool verbose = false;            // -v --verbose
+  bool dump = false;               // -D --dump ; generate a grib_api dump
+  std::string centre = "efkl";     // -C --centre
+  int subcentre = 0;               // -S --subcentre
+  bool list_centres = false;       // -L --list-centres
+  NFmiLevel level;                 // -l --level
+  ParamChangeTable ptable;         // -c --config
 };
 
 Options options;
@@ -284,6 +285,9 @@ bool parse_options(int argc, char *argv[])
       "delete,d",
       po::bool_switch(&options.crop),
       "ignore parameters which are not listed in the config")(
+      "ignore-origintime,I",
+      po::bool_switch(&options.ignore_origintime),
+      "use first valid time instead of origin time as the forecast time")(
       "split,s", po::bool_switch(&options.split), "split individual timesteps")(
       "level,l", po::value(&level), "level to extract")(
       "config,c", po::value(&config), msg1.c_str());
@@ -299,7 +303,7 @@ bool parse_options(int argc, char *argv[])
 
   if (opt.count("version") != 0)
   {
-    std::cout << "qdtogrib v1.1 (" << __DATE__ << ' ' << __TIME__ << ')' << std::endl;
+    std::cout << "qdtogrib v1.2 (" << __DATE__ << ' ' << __TIME__ << ')' << std::endl;
   }
 
   if (opt.count("help"))
@@ -680,13 +684,28 @@ static void set_geometry(NFmiFastQueryInfo &theInfo,
 
 // ----------------------------------------------------------------------
 
+static NFmiMetTime get_origintime(NFmiFastQueryInfo &theInfo)
+{
+  if (!options.ignore_origintime) return theInfo.OriginTime();
+
+  // Get first time without altering the time index
+  auto idx = theInfo.TimeIndex();
+  theInfo.FirstTime();
+  auto t = theInfo.ValidTime();
+  theInfo.TimeIndex(idx);
+  return t;
+}
+
+// ----------------------------------------------------------------------
+
 static void set_times(NFmiFastQueryInfo &theInfo, grib_handle *gribHandle, bool use_minutes)
 {
-  const NFmiMetTime &vTime = theInfo.OriginTime();
-  long dateLong = vTime.GetYear() * 10000 + vTime.GetMonth() * 100 + vTime.GetDay();
+  NFmiMetTime orig_time = get_origintime(theInfo);
 
-  long timeLong = vTime.GetHour() * 100;
-  if (use_minutes) timeLong += vTime.GetMin();
+  long dateLong = orig_time.GetYear() * 10000 + orig_time.GetMonth() * 100 + orig_time.GetDay();
+
+  long timeLong = orig_time.GetHour() * 100;
+  if (use_minutes) timeLong += orig_time.GetMin();
 
   gset(gribHandle, "dataDate", dateLong);
   gset(gribHandle, "dataTime", timeLong);
@@ -800,7 +819,7 @@ bool copy_values(NFmiFastQueryInfo &theInfo,
                  bool use_minutes)
 {
   // NOTE: This froecastTime part is not edition independent
-  const NFmiMetTime &oTime = theInfo.OriginTime();
+  const NFmiMetTime oTime = get_origintime(theInfo);
   const NFmiMetTime &vTime = theInfo.ValidTime();
 
   long mdiff = vTime.DifferenceInMinutes(oTime);

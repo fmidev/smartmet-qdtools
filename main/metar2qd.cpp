@@ -638,8 +638,21 @@ static NFmiMetTime GetTime2(const Decoded_METAR &theMetarStruct,
                             const NFmiMetTime &theHeaderTime,
                             int theTimeRoundingResolution)
 {
-  NFmiMetTime aTime(theHeaderTime);  // otetaan pohjat tästä ja loput metarStructista. Periaatteessa
-                                     // headertimen pitäisi olla jo oikea aika
+  NFmiMetTime aTime;
+
+  if (theHeaderTime != missingTime)
+  {
+    NFmiMetTime aTime(theHeaderTime);  // otetaan pohjat tasta ja loput metarStructista. Periaatteessa
+                                       // headertimen pitaisi olla jo oikea aika
+  }
+  else
+  {
+    // header time was not found; use the metar time and assume current month and year
+    // (as metar does not contain them)
+    aTime = NFmiMetTime::now();
+    aTime.SetSec(0);
+  }
+
   if (theMetarStruct.ob_date != MDSP_missing_int)
     aTime.SetDay(static_cast<short>(theMetarStruct.ob_date));
   if (theMetarStruct.ob_hour != MDSP_missing_int)

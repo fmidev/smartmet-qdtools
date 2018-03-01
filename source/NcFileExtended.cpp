@@ -1172,7 +1172,7 @@ void NcFileExtended::require_conventions(const std::string *reference)
   // pernu 2018-02-07: We use to have sz parameter which limits the comparison like this:
   //  if (ref.substr(0, sz) != reference.substr(0, sz))
   // I don't get it: it just compares CF- !
-  // Here we compare the actual version numbers and assume that larget is compliant with smaller one
+  // Here we compare the actual version numbers and assume that larger is compliant with smaller one
   std::string ref = att->values()->as_string(0);
   std::string cmp = *reference;
   std::string refsub = ref;
@@ -1180,7 +1180,7 @@ void NcFileExtended::require_conventions(const std::string *reference)
   if (refsub.substr(0, 3) == "CF-") refsub = ref.substr(3);
   if (cmp.substr(0, 3) == "CF-") cmp = reference->substr(3);
 
-  if (compare_versions(refsub, cmp) <= 0)
+  if (compare_versions(refsub, cmp) < 0)
     throw SmartMet::Spine::Exception(BCP,
                                      "The file must conform to " + *reference + ", not to " + ref);
 }

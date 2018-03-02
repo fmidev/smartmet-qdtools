@@ -292,15 +292,19 @@ int run(int argc, char* argv[])
     NFmiParamBag pbag;
     std::shared_ptr<nctools::NcFileExtended> ncfile1;
     unsigned int known_variables = 0;
+    std::vector<std::shared_ptr<nctools::NcFileExtended>> ncfiles;
+
+    // Default is to exit in some non fatal situations
+    NcError errormode(NcError::silent_nonfatal);
 
     // Loop through the files once to check and to prepare the descriptors first
     for (std::string infile : options.infiles)
     {
       try
       {
-        NcError errormode(NcError::silent_nonfatal);
         std::shared_ptr<nctools::NcFileExtended> ncfile =
             std::make_shared<nctools::NcFileExtended>(infile, options.timeshift);
+        ncfiles.push_back(ncfile);
 
         if (!ncfile->is_valid())
           throw SmartMet::Spine::Exception(
@@ -343,8 +347,6 @@ int run(int argc, char* argv[])
         // We don't do comparison for the first one but instead initialize the param descriptors
         if (counter == 0)
         {
-          ncfile1 = ncfile;
-
           hdesc = create_hdesc(*ncfile);
           vdesc = create_vdesc(*ncfile, ncfile->zmin(), ncfile->zmax(), nz);
           tdesc = create_tdesc(*ncfile);
@@ -352,9 +354,9 @@ int run(int argc, char* argv[])
         else
         {
           std::vector<std::string> failreasons;
-          if (ncfile->joinable(*ncfile1, &failreasons) == false)
+          if (ncfile->joinable(*ncfiles[0], &failreasons) == false)
           {
-            std::cerr << "Unable to combine " << ncfile1->path << " and " << infile << ":"
+            std::cerr << "Unable to combine " << ncfiles[0]->path << " and " << infile << ":"
                       << std::endl;
             for (auto error : failreasons)
             {
@@ -405,26 +407,19 @@ int run(int argc, char* argv[])
 
     // Copy data from input files
     counter = 0;
-    for (std::string infile : options.infiles)
+    for (std::shared_ptr<nctools::NcFileExtended> ncfile : ncfiles)
     {
       try
       {
-        if (options.verbose)
-        {
-          std::cout << "Copying data from input " << infile << std::endl;
-        }
-        // Default is to exit in some non fatal situations
-        NcError errormode(NcError::silent_nonfatal);
-        nctools::NcFileExtended ncfile(infile, options.timeshift);
-
+        if (options.verbose) std::cout << "Copying data from input " << ncfile->path << std::endl;
 #if DEBUG_PRINT
-        debug_output(ncfile);
+        debug_output(*ncfile);
 #endif
-        ncfile.copy_values(options, info, paramconvs);
+        ncfile->copy_values(options, info, paramconvs);
       }
       catch (...)
       {
-        throw SmartMet::Spine::Exception(BCP, "Operation failed on input " + infile, nullptr);
+        throw SmartMet::Spine::Exception(BCP, "Operation failed on input " + ncfile->path, nullptr);
       }
       counter++;
     }

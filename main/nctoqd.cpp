@@ -301,6 +301,7 @@ int run(int argc, char* argv[])
         NcError errormode(NcError::silent_nonfatal);
         std::shared_ptr<nctools::NcFileExtended> ncfile =
             std::make_shared<nctools::NcFileExtended>(infile, options.timeshift);
+        ncfile->tolerance = options.tolerance;
 
         if (!ncfile->is_valid())
           throw SmartMet::Spine::Exception(
@@ -416,6 +417,7 @@ int run(int argc, char* argv[])
         // Default is to exit in some non fatal situations
         NcError errormode(NcError::silent_nonfatal);
         nctools::NcFileExtended ncfile(infile, options.timeshift);
+        ncfile.tolerance = options.tolerance;
 
 #if DEBUG_PRINT
         debug_output(ncfile);

@@ -62,7 +62,8 @@ Options::Options()
       ignoreUnitChangeParams(),
       excludeParams(),
       projection(),
-      cmdLineGlobalAttributes()
+      cmdLineGlobalAttributes(),
+      tolerance(1e-3)
 {
   debug = false;
   experimental = false;
@@ -121,6 +122,7 @@ bool parse_options(int argc, char *argv[], Options &options)
                                               po::value(&tmpIgnoreUnitChangeParamsStr),
                                               "ignore unit change params")(
       "timeshift,t", po::value(&options.timeshift), "additional time shift in minutes")(
+      "tolerance,T", po::value(&options.tolerance), "axis stepping tolerance")(
       "autoids,U",
       po::bool_switch(&options.autoid),
       ((std::string) "generate ids automatically for unknown parameters starting from id " +

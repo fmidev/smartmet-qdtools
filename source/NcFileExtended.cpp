@@ -434,6 +434,7 @@ NcFileExtended::NcFileExtended(std::string path,
       path(path),
       longitudeOfProjectionOrigin(0),
       latitudeOfProjectionOrigin(0),
+      tolerance(1e-3),
       projectionName(nullptr),
       x(nullptr),
       y(nullptr),
@@ -853,7 +854,6 @@ void NcFileExtended::find_axis_bounds(
   if (n <= 2) return;
 
   double step = (x2 - x1) / (n - 1);
-  double tolerance = 1e-3;
 
   for (int i = 1; i < var->num_vals(); i++)
   {
@@ -865,7 +865,8 @@ void NcFileExtended::find_axis_bounds(
 
     if (std::abs(s - step) > tolerance * step)
       throw SmartMet::Spine::Exception(
-          BCP, std::string(name) + "-axis is not regular with tolerance 1e-3");
+          BCP,
+          std::string(name) + "-axis is not regular with tolerance " + std::to_string(tolerance));
   }
 }
 

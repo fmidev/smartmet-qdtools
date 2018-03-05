@@ -50,6 +50,7 @@ struct Options
   std::string projection;  // -P // data konvertoidaan haluttuun projektioon ja alueeseen
   attributesMap cmdLineGlobalAttributes;  // -a optiolla voidaan antaa dataan liittyvi� globaali
                                           // attribuutteja (esim. -a DX=1356.3;DY=1265.3)
+  double tolerance;                       // Axis stepping tolerance
 };
 
 // ----------------------------------------------------------------------

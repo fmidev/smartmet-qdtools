@@ -63,9 +63,10 @@ class NcFileExtended : public NcFile
   NcVar *find_variable(const std::string &name);
   NFmiTimeList timeList(std::string varName = "time", std::string unitAttrName = "units");
   long timeshift;  // Desired timeshift in minutes for time axis reading
-  void require_conventions(
-      const std::string *reference);  // Validate data conforms to the reference in string(nullptr
-                                      // or empty string=always validates)
+  void require_conventions(const std::string *reference);  // Validate data conforms to the
+                                                           // reference in string(nullptr or empty
+                                                           // string=always validates)
+  double tolerance;  // Axis stepping tolerance
 
  private:
   std::shared_ptr<std::string> projectionName;

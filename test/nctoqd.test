@@ -24,19 +24,24 @@ while ( scalar @ARGV > 0 ) {
 	shift @ARGV;
 }
 
-@inputs = glob "data/*.nc" ;
-foreach my $input ( @inputs ) {
+@inputs = glob "data/*.nc";
+foreach my $input (@inputs) {
 	my $output = $input;
 	$output =~ s%^data/%%;
 	$output =~ s%[.]nc$%.sqd%;
 	my $name = $output;
 	$name =~ s%[.]sqd%%;
-	DoTest( "$name", "$output", "-c ../cnf/netcdf.conf $input" );
+	if ( $input =~ m/(T[0-9]+)[.]/ ) {
+		DoTest( "$name", "$output", "-U -" . $1 . " -c ../cnf/netcdf.conf $input" );
+	}
+	else {
+		DoTest( "$name", "$output", "-c ../cnf/netcdf.conf $input" );
+	}
 }
 
-DoTest("merge","merge.sqd","-c ../cnf/netcdf.conf ".join(' ',sort glob "data/*.merge-nc"));
-DoTest("fixid","fixid.sqd","-m sm_uncertainty,15000 -c ../cnf/netcdf.conf ".$inputs[0]);
-DoTest("unknownids","unknownids.sqd","-U -c ../cnf/netcdf.conf ".$inputs[0]);
+DoTest( "merge", "merge.sqd", "-c ../cnf/netcdf.conf " . join( ' ', sort glob "data/*.merge-nc" ) );
+DoTest( "fixid", "fixid.sqd", "-m sm_uncertainty,15000 -c ../cnf/netcdf.conf " . $inputs[0] );
+DoTest( "unknownids", "unknownids.sqd", "-U -c ../cnf/netcdf.conf " . $inputs[0] );
 
 print "Done\n";
 
@@ -56,10 +61,10 @@ sub DoTest {
 	my ($resultfile) = "nctoqd_$name";
 	my ($tmpfile)    = "${resultfile}.tmp";
 	$cmd = "$program $arguments $results/$tmpfile";
-	if ("$text" =~ m/^merge/ ) {
-		$cmd =  "$program -o results/$tmpfile $arguments" ;	
+	if ( "$text" =~ m/^merge/ ) {
+		$cmd = "$program -o results/$tmpfile $arguments";
 	}
-	
+
 	# print "$cmd\n";
 	# $output = `$cmd 2>/dev/null`;
 	$output  = `$cmd`;

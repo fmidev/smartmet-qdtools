@@ -456,10 +456,12 @@ void set_rotated_latlon_geometry(NFmiFastQueryInfo &theInfo,
                                  grib_handle *gribHandle,
                                  std::vector<double> &theValueArray)
 {
+  const NFmiRotatedLatLonArea &a = *dynamic_cast<const NFmiRotatedLatLonArea *>(theInfo.Area());
+
   gset(gribHandle, "typeOfGrid", "rotated_ll");
 
-  NFmiPoint bl(theInfo.Area()->BottomLeftLatLon());
-  NFmiPoint tr(theInfo.Area()->TopRightLatLon());
+  NFmiPoint bl(a.ToRotLatLon(theInfo.Area()->BottomLeftLatLon()));
+  NFmiPoint tr(a.ToRotLatLon(theInfo.Area()->TopRightLatLon()));
 
   gset(gribHandle, "longitudeOfFirstGridPointInDegrees", fix_longitude(bl.X()));
   gset(gribHandle, "latitudeOfFirstGridPointInDegrees", bl.Y());
@@ -479,13 +481,12 @@ void set_rotated_latlon_geometry(NFmiFastQueryInfo &theInfo,
   gset(gribHandle, "iDirectionIncrementInDegrees", gridCellWidthInDegrees);
   gset(gribHandle, "jDirectionIncrementInDegrees", gridCellHeightInDegrees);
 
-  const NFmiRotatedLatLonArea *a = dynamic_cast<const NFmiRotatedLatLonArea *>(theInfo.Area());
-
-  if (a->SouthernPole().X() != 0)
+  if (a.SouthernPole().X() != 0)
     throw std::runtime_error(
         "GRIB does not support rotated latlon areas where longitude is also rotated");
 
-  gset(gribHandle, "angleOfRotationInDegrees", a->SouthernPole().Y());
+  gset(gribHandle, "longitudeOfSouthernPoleInDegrees", a.SouthernPole().X());
+  gset(gribHandle, "latitudeOfSouthernPoleInDegrees", a.SouthernPole().Y());
 
   gset(gribHandle, "jScansPositively", 1);
   gset(gribHandle, "iScansNegatively", 0);

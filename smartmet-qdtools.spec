@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 18.2.15
+Version: 18.3.5
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -188,6 +188,11 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Mon Mar  5 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.3.5-1.fmi
+- nctoqd: Added tolerance option
+- nctoqd: Fix NetCDF version comparison for exactly matching conventions
+- metar2qd: use current time as header if metar data is not in NOAA format
+
 * Thu Feb 15 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.2.15-1.fmi
 - qdtogrib -I (--ignore-origintime) sets forecast time to first valid time instead of origin time
 

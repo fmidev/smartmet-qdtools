@@ -77,6 +77,7 @@
  */
 // ======================================================================
 
+#include <macgyver/StringConversion.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiEquidistArea.h>
@@ -105,28 +106,6 @@
 #include <string>
 
 using namespace std;
-
-// ----------------------------------------------------------------------
-/*!
- * This pads the given string to the given width, using tab if possible
- *
- * \param theString The string to pad
- * \param theWidth The width to pad to
- * \return The padded string
- */
-// ----------------------------------------------------------------------
-
-string TabularPad(const string &theString, unsigned int theWidth)
-{
-  string out = theString;
-
-  int tabcount = (theWidth / 8) - theString.size() / 8;
-  for (int i = 0; i < tabcount; i++)
-    out += '\t';
-  for (unsigned int j = 0; j < theWidth % 8; j++)
-    out += ' ';
-  return out;
-}
 
 // ----------------------------------------------------------------------
 /*!
@@ -210,11 +189,12 @@ void ReportParameters(NFmiFastQueryInfo *q, bool ignoresubs)
 
   unsigned int count = 0;
 
-  cout << endl
-       << "The parameters stored in the querydata are:" << endl
-       << endl
-       << "Number\tName\t\t\t\t\tDescription\t\t\tInterpolation\tPrecision" << endl
-       << "======\t====\t\t\t\t\t===========\t\t\t=============\t=========" << endl;
+  cout << "\n"
+       << "The parameters stored in the querydata are:\n\n"
+       << "Number  Name                                    Description                     "
+          "Interpolation   Precision  Lolimit  Hilimit\n"
+       << "======  ====                                    ===========                     "
+          "=============   =========  =======  =======\n";
 
   q->ResetParam();
   while (q->NextParam(ignoresubs))
@@ -234,9 +214,12 @@ void ReportParameters(NFmiFastQueryInfo *q, bool ignoresubs)
     else
       paramtype = "";
 
-    cout << id << '\t' << TabularPad(paramtype + name, 40) << TabularPad(description.CharPtr(), 32)
-         << TabularPad(interpolation_name(q->Param().GetParam()->InterpolationMethod()), 16)
-         << q->Param().GetParam()->Precision().CharPtr() << endl;
+    cout << setw(8) << left << id << setw(40) << paramtype + name << setw(32)
+         << description.CharPtr() << setw(16)
+         << interpolation_name(q->Param().GetParam()->InterpolationMethod()) << setw(9) << right
+         << q->Param().GetParam()->Precision().CharPtr() << setw(9)
+         << Fmi::to_string(q->Param().GetParam()->MinValue()) << setw(9)
+         << Fmi::to_string(q->Param().GetParam()->MaxValue()) << endl;
   }
   cout << endl << "There are " << count << " stored parameters in total" << endl;
   return;
@@ -682,7 +665,7 @@ void ReportLocations(NFmiFastQueryInfo *q)
   {
     const NFmiLocation *loc = q->Location();
 
-    cout << loc->GetIdent() << '\t' << TabularPad(loc->GetName().CharPtr(), 24) << '\t'
+    cout << setw(8) << left << loc->GetIdent() << setw(32) << loc->GetName().CharPtr()
          << loc->GetLongitude() << ',' << loc->GetLatitude() << endl;
   }
 

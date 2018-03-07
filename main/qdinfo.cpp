@@ -191,10 +191,10 @@ void ReportParameters(NFmiFastQueryInfo *q, bool ignoresubs)
 
   cout << "\n"
        << "The parameters stored in the querydata are:\n\n"
-       << "Number  Name                                    Description                     "
-          "Interpolation   Precision  Lolimit  Hilimit\n"
-       << "======  ====                                    ===========                     "
-          "=============   =========  =======  =======\n";
+       << "Number  Name                                    Description                             "
+          "Interpolation      Precision  Lolimit  Hilimit\n"
+       << "======  ====                                    ===========                             "
+          "=============      =========  =======  =======\n";
 
   q->ResetParam();
   while (q->NextParam(ignoresubs))
@@ -214,9 +214,9 @@ void ReportParameters(NFmiFastQueryInfo *q, bool ignoresubs)
     else
       paramtype = "";
 
-    cout << setw(8) << left << id << setw(40) << paramtype + name << setw(32)
+    cout << setw(8) << left << id << setw(40) << paramtype + name << setw(40)
          << description.CharPtr() << setw(16)
-         << interpolation_name(q->Param().GetParam()->InterpolationMethod()) << setw(9) << right
+         << interpolation_name(q->Param().GetParam()->InterpolationMethod()) << setw(12) << right
          << q->Param().GetParam()->Precision().CharPtr() << setw(9)
          << Fmi::to_string(q->Param().GetParam()->MinValue()) << setw(9)
          << Fmi::to_string(q->Param().GetParam()->MaxValue()) << endl;

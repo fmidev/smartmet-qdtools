@@ -3,7 +3,7 @@
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
 Version: 18.3.7
-Release: 2%{?dist}.fmi
+Release: 3%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -188,6 +188,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Mar  7 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.3.7-3.fmi
+- qdtogrib no longer has a default producer, the default tables will be used instead
+
 * Wed Mar  7 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.3.7-2.fmi
 - Fixed RPM requirements
 

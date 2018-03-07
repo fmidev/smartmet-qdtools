@@ -52,7 +52,7 @@ struct Options
   bool ignore_origintime = false;  // -I --ignore-origintime
   bool verbose = false;            // -v --verbose
   bool dump = false;               // -D --dump ; generate a grib_api dump
-  std::string centre = "efkl";     // -C --centre
+  std::string centre = "";         // -C --centre
   int subcentre = 0;               // -S --subcentre
   bool list_centres = false;       // -L --list-centres
   NFmiLevel level;                 // -l --level
@@ -279,7 +279,7 @@ bool parse_options(int argc, char *argv[])
       "outfile,o", po::value(&options.outfile), "output grib file")(
       "grib1,1", po::bool_switch(&options.grib1), "output GRIB1")(
       "grib2,2", po::bool_switch(&options.grib2), "output GRIB2 (the default)")(
-      "centre,C", po::value(&options.centre), "originating centre (default = efkl)")(
+      "centre,C", po::value(&options.centre), "originating centre (default = none)")(
       "subcentre,S", po::value(&options.subcentre), "subcentre (default = 0)")(
       "list-centres,L", po::bool_switch(&options.list_centres), "list known centres")(
       "delete,d",
@@ -303,7 +303,7 @@ bool parse_options(int argc, char *argv[])
 
   if (opt.count("version") != 0)
   {
-    std::cout << "qdtogrib v1.2 (" << __DATE__ << ' ' << __TIME__ << ')' << std::endl;
+    std::cout << "qdtogrib v1.3 (" << __DATE__ << ' ' << __TIME__ << ')' << std::endl;
   }
 
   if (opt.count("help"))
@@ -622,8 +622,9 @@ void set_mercator_geometry(NFmiFastQueryInfo &theInfo,
 
 static void set_producer(grib_handle *gribHandle)
 {
-  auto it = centres.find(options.centre);
+  if (options.centre.empty()) return;
 
+  auto it = centres.find(options.centre);
   int centre = 0;
 
   if (it != centres.end())

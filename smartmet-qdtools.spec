@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 18.3.6
+Version: 18.3.7
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -188,6 +188,10 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Mar  7 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.3.7-1.fmi
+- qdinfo: improved tabular layout for parameter info
+- qdcheck: memory map input data for improved speed
+
 * Tue Mar  6 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.3.6-1.fmi
 - qdinfo: -p and -P options now report the allowed parameter range
 

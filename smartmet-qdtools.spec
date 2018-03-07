@@ -21,10 +21,10 @@ BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: smartmet-library-calculator-devel >= 17.8.28
-BuildRequires: smartmet-library-gis-devel >= 18.1.15
+BuildRequires: smartmet-library-gis-devel >= 18.3.7
 BuildRequires: smartmet-library-imagine-devel >= 17.9.22
-BuildRequires: smartmet-library-macgyver-devel >= 17.11.27
-BuildRequires: smartmet-library-newbase-devel >= 18.1.22
+BuildRequires: smartmet-library-macgyver-devel >= 18.2.12
+BuildRequires: smartmet-library-newbase-devel >= 18.2.8
 BuildRequires: smartmet-library-smarttools-devel >= 17.8.28
 BuildRequires: smartmet-timezones
 BuildRequires: smartmet-library-spine-devel
@@ -37,10 +37,10 @@ BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
 Requires: smartmet-timezones >= 18.1.31
 Requires: smartmet-library-calculator >= 17.8.28
-Requires: smartmet-library-gis >= 18.1.15
+Requires: smartmet-library-gis >= 18.3.7
 Requires: smartmet-library-imagine >= 17.9.22
-Requires: smartmet-library-macgyver >= 17.11.27
-Requires: smartmet-library-newbase >= 18.1.22
+Requires: smartmet-library-macgyver >= 18.2.12
+Requires: smartmet-library-newbase >= 18.2.8
 Requires: smartmet-library-smarttools >= 17.8.28
 Requires: smartmet-library-spine
 Requires: eccodes

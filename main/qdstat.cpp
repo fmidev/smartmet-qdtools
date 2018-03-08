@@ -355,6 +355,10 @@ const char* Stats::desc(double value) const
           return " freezing rain";
         case 6:
           return " hail";
+        case 7:
+          return " snow grains";
+        case 8:
+          return " ice pellets";
         default:
           return "";
       }

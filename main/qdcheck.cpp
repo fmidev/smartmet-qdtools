@@ -84,7 +84,7 @@ bool ParseOptions(int argc, char *argv[], Options &options)
 
   if (opt.count("version") != 0)
   {
-    std::cout << "qdcheck v1.1 (" << __DATE__ << ' ' << __TIME__ << ')' << std::endl;
+    std::cout << "qdcheck v1.2 (" << __DATE__ << ' ' << __TIME__ << ')' << std::endl;
   }
 
   if (opt.count("help"))
@@ -177,7 +177,7 @@ bool CheckErrorLevelAndProduceStatusTextAndUpdateErrorCode(const std::vector<flo
       {
         case 1:  // FATAL
         {
-          theText = "###FATAL ERROR###: raja oli ";
+          theText = "###FATAL ERROR###: limit was ";
           NFmiValueString valueStr(theErrorLimits[i], "%0.1f");
           theText += valueStr;
           theText += "%";
@@ -185,7 +185,7 @@ bool CheckErrorLevelAndProduceStatusTextAndUpdateErrorCode(const std::vector<flo
         break;
         case 2:  // ERROR
         {
-          theText = "#ERROR#: raja oli ";
+          theText = "#ERROR#: limit was ";
           NFmiValueString valueStr(theErrorLimits[i], "%0.1f");
           theText += valueStr;
           theText += "%";
@@ -193,7 +193,7 @@ bool CheckErrorLevelAndProduceStatusTextAndUpdateErrorCode(const std::vector<flo
         break;
         case 3:  // WARNING
         {
-          theText = "Warning: raja oli ";
+          theText = "#WARNING#: limit was ";
           NFmiValueString valueStr(theErrorLimits[i], "%0.1f");
           theText += valueStr;
           theText += "%";
@@ -354,10 +354,10 @@ int run(int argc, char *argv[])
         SetErrorStatus(returnValue, 2);
       }
       if (ohjausData.itsParamIdCheckList[i].itsCheckedParamMissingDataMaxProcent == kFloatMissing)
-        out << "Dataa missing: No inspection." << endl;
+        out << "Data missing: No inspection." << endl;
       else
       {
-        out << "Dataa missing: "
+        out << "Data missing: "
             << ohjausData.itsParamIdCheckList[i].itsCheckedParamMissingDataMaxProcent << " %. ";
         NFmiString errorText;
         static_cast<void>(CheckErrorLevelAndProduceStatusTextAndUpdateErrorCode(

@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 18.3.8
+Version: 18.3.15
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -188,6 +188,10 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Mar 15 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.3.15-1.fmi
+- qdcheck: warnings is now in caps for easier detection
+- qdcheck: fixed some messages to be in English
+
 * Thu Mar  8 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.3.8-1.fmi
 - qdstat now recognizes precipitation form values for snow grains and ice pellets
 

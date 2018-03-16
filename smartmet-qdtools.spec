@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 18.3.15
+Version: 18.3.16
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -188,6 +188,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Fri Mar 16 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.3.16-1.fmi
+- csv2qd: added option --allstations (-A) to generate output with all listed stations
+
 * Thu Mar 15 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.3.15-1.fmi
 - qdcheck: warnings is now in caps for easier detection
 - qdcheck: fixed some messages to be in English

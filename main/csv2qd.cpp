@@ -64,7 +64,7 @@ struct Options
 {
   bool verbose = false;
   bool quiet = false;
-
+  bool allstations = false;
   string order = "idtime";
   int timecolumn = 1;
   int stationcolumn = 0;
@@ -111,31 +111,27 @@ bool parse_options(int argc, char* argv[], Options& options)
   string prodnamedesc = "producer name (default=" + string(default_producer_name + ")");
 
   po::options_description desc("Allowed options");
-  desc.add_options()("help,h", "print out help message")(
-      "verbose,v", po::bool_switch(&options.verbose), "set verbose mode on")(
-      "quiet,q", po::bool_switch(&options.quiet), "set quiet mode on")(
-      "version,V", "display version number")("missing,m",
-                                             po::value(&options.missingvalue),
-                                             "missing value string (default is empty string)")(
-      "prodnum", po::value(&options.producernumber), prodnumdesc.c_str())(
-      "prodname", po::value(&options.producername), prodnamedesc.c_str())(
-      "infile,i", po::value(&options.infile), "input csv file")(
-      "outfile,o", po::value(&options.outfile), "output querydata file")(
-      "files", po::value<vector<string> >(&options.files), "all input files and the output file")(
-      "params,p", po::value(&params), "parameter names of csv columns")(
-      "paramsfile,P",
-      po::value(&options.paramsfile),
-      ("parameter configuration file (" + default_paramsfile + ")").c_str())(
-      "order,O",
-      po::value(&options.order),
-      "column ordering "
-      "(idtime|timeid|idtimelevel|idleveltime|timeidlevel|timelevelid|levelidtime|leveltimeid")(
-      "stationsfile,S",
-      po::value(&options.stationsfile),
-      ("station configuration file (" + default_stationsfile + ")").c_str())(
-      "origintime", po::value(&options.origintime), "origin time")("timezone,t",
-                                                                   po::value(&options.timezone))(
-      "leveltype", po::value(&options.leveltype), "leveltype as number");
+  // clang-format off
+  desc.add_options()
+      ("help,h", "print out help message")
+      ("verbose,v", po::bool_switch(&options.verbose), "set verbose mode on")
+      ("quiet,q", po::bool_switch(&options.quiet), "set quiet mode on")
+      ("version,V", "display version number")
+      ("missing,m", po::value(&options.missingvalue),"missing value string (default is empty string)")
+      ("prodnum", po::value(&options.producernumber), prodnumdesc.c_str() )
+      ("prodname", po::value(&options.producername), prodnamedesc.c_str() )
+      ("infile,i", po::value(&options.infile), "input csv file")
+      ("outfile,o", po::value(&options.outfile), "output querydata file")
+      ("files", po::value<vector<string> >(&options.files), "all input files and the output file")
+      ("params,p", po::value(&params), "parameter names of csv columns")
+      ("paramsfile,P", po::value(&options.paramsfile), ("parameter configuration file (" + default_paramsfile + ")").c_str() )
+      ("order,O", po::value(&options.order), "column ordering (idtime|timeid|idtimelevel|idleveltime|timeidlevel|timelevelid|levelidtime|leveltimeid")
+      ("stationsfile,S", po::value(&options.stationsfile), ("station configuration file (" + default_stationsfile + ")").c_str() )
+      ("allstations,A",po::bool_switch(&options.allstations),"store all stations in station file into output")
+      ("origintime", po::value(&options.origintime), "origin time")
+      ("timezone,t", po::value(&options.timezone))
+      ("leveltype", po::value(&options.leveltype), "leveltype as number");
+  // clang-format on
 
   po::positional_options_description p;
   p.add("files", -1);
@@ -449,16 +445,29 @@ NFmiHPlaceDescriptor create_hdesc(const CsvTable& csv, const Stations& stations)
   // Build LocationBag
 
   NFmiLocationBag lbag;
-  BOOST_FOREACH (const string& id, used)
+  if (!options.allstations)
   {
-    Stations::const_iterator it = stations.find(id);
-    if (it == stations.end())
+    BOOST_FOREACH (const string& id, used)
     {
-      if (!options.quiet) std::cerr << "Warning: Unknown station id '" << id << "'" << std::endl;
+      Stations::const_iterator it = stations.find(id);
+      if (it == stations.end())
+      {
+        if (!options.quiet) std::cerr << "Warning: Unknown station id '" << id << "'" << std::endl;
+      }
+      else
+      {
+        NFmiStation station(it->second.number, it->second.name, it->second.lon, it->second.lat);
+        lbag.AddLocation(station);
+      }
     }
-    else
+  }
+  else
+  {
+    std::cout << "Generating " << stations.size() << " stations" << endl;
+    for (const auto& name_station : stations)
     {
-      NFmiStation station(it->second.number, it->second.name, it->second.lon, it->second.lat);
+      const auto& s = name_station.second;
+      NFmiStation station(s.number, s.name, s.lon, s.lat);
       lbag.AddLocation(station);
     }
   }

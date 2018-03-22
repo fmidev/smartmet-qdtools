@@ -692,19 +692,7 @@ float North(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
   auto area = qd.Area();
   if (!area) return kFloatMissing;
 
-  // Safety against polar regions just in case
-
-  if (theLatLon.Y() < -89.99 || theLatLon.Y() > 89.99) return 0;
-
-  const NFmiPoint origo = area->ToXY(theLatLon);
-
-  const float pi = 3.141592658979323f;
-  const double latstep = 0.01;  // degrees to north
-
-  const double lat = theLatLon.Y() + latstep;
-  const NFmiPoint north = area->ToXY(NFmiPoint(theLatLon.X(), lat));
-  const float alpha = atan2(north.Y() - origo.Y(), north.X() - origo.X());
-  return fmod(90 + alpha * 180 / pi, 360);
+  return qd.Area()->TrueNorthAzimuth(theLatLon).ToDeg();
 }
 
 // ----------------------------------------------------------------------

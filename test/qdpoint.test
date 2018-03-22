@@ -186,6 +186,10 @@ DoTest("-N 100 -d 20",
        "piste_N_lahinta_etaisyydella",
        "-N 100 -d 20 -P Temperature -p Helsinki -q $pointdata");
 
+DoTest("-n 1 -p Helsinki,Turku -P MetaNorth -q",
+       "north_Helsinki_Turku",
+       "-n 1 -p Helsinki,Turku -P MetaNorth -q $griddata");
+
 print "Done\n";
 
 # ----------------------------------------------------------------------

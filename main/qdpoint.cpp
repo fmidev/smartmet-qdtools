@@ -28,7 +28,14 @@
 #include "MoonPhase.h"
 #include "QueryDataManager.h"
 #include "TimeTools.h"
-
+#include <boost/algorithm/string.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/optional.hpp>
+#include <boost/program_options.hpp>
+#include <macgyver/StringConversion.h>
+#include <macgyver/WorldTimeZones.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiDataIntegrator.h>
 #include <newbase/NFmiDataModifierProb.h>
@@ -43,17 +50,6 @@
 #include <newbase/NFmiSettings.h>
 #include <newbase/NFmiStringTools.h>
 #include <newbase/NFmiValueString.h>
-
-#include <macgyver/StringConversion.h>
-#include <macgyver/WorldTimeZones.h>
-
-#include <boost/algorithm/string.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <boost/foreach.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/optional.hpp>
-#include <boost/program_options.hpp>
-
 #include <list>
 #include <sstream>
 #include <stdexcept>

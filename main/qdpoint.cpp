@@ -288,7 +288,26 @@ bool parse_options(int argc, char* argv[])
               << std::endl
               << "Extract a timeseries from the input data" << std::endl
               << std::endl
-              << desc << std::endl;
+              << desc << std::endl
+              << std::endl
+              << "Available meta parameters:" << std::endl
+              << std::endl
+              << " * MetaDST - 1/0 depending on whether daylight savings is on or not" << std::endl
+              << " * MetaElevationAngle - sun elevation angle" << std::endl
+              << " * MetaFeelsLike - feels like temperature" << std::endl
+              << " * MetaIsDark - 1/0 depending on the sun elevation angle" << std::endl
+              << " * MetaMoonIlluminatedFraction - fraction of moon visible to earth" << std::endl
+              << " * MetaN - total cloudiness in 8ths" << std::endl
+              << " * MetaNN - bottom/middle level cloudiness in 8ths" << std::endl
+              << " * MetaNorth - grid north direction" << std::endl
+              << " * MetaRainProbability - crude estimate of probability of precipitation"
+              << std::endl
+              << " * MetaSnowProb - crude estimate of probability of snow" << std::endl
+              << " * MetaSummerSimmer - the summer simmer index" << std::endl
+              << " * MetaSurfaceRadiation - estimated solar radiation" << std::endl
+              << " * MetaThetaE - theta-E from temperature, pressure and humidity" << std::endl
+              << " * MetaWindChill - wind chill factor" << std::endl
+              << std::endl;
   }
 
   if (!options.locationfile.empty()) options.locations = read_locationlist(options.locationfile);

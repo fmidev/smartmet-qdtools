@@ -2,8 +2,8 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 18.3.22
-Release: 2%{?dist}.fmi
+Version: 18.3.27
+Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -188,6 +188,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Mar 27 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.3.27-1.fmi
+- qdpoint -h now lists the available meta parameters
+
 * Thu Mar 22 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.3.22-2.fmi
 - Changed MetaNorth calculation to use NFmiArea::TrueNorthAzimuth
 

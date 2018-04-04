@@ -651,6 +651,15 @@ static NFmiMetTime GetTime2(const Decoded_METAR &theMetarStruct,
     // (as metar does not contain them)
     aTime = NFmiMetTime::now();
     aTime.SetSec(0);
+
+    // If metar day is bigger than current day, it must come from last month so
+    // subtract our current time by one month. The actual *day* that we have after month
+    // change doesn't matter, as the day is set later in this function anyway.
+    if (theMetarStruct.ob_date > aTime.GetDay())
+    {
+      aTime.ChangeByDays(-32);
+    }
+
   }
 
   if (theMetarStruct.ob_date != MDSP_missing_int)

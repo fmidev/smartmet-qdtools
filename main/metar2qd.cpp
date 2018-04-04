@@ -657,7 +657,7 @@ static NFmiMetTime GetTime2(const Decoded_METAR &theMetarStruct,
     // change doesn't matter, as the day is set later in this function anyway.
     if (theMetarStruct.ob_date > aTime.GetDay())
     {
-      aTime.ChangeByDays(-32);
+      aTime.ChangeByDays(-aTime.GetDay());
     }
 
   }

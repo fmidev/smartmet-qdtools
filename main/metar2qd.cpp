@@ -642,8 +642,8 @@ static NFmiMetTime GetTime2(const Decoded_METAR &theMetarStruct,
 
   if (theHeaderTime != missingTime)
   {
-    NFmiMetTime aTime(theHeaderTime);  // otetaan pohjat tasta ja loput metarStructista. Periaatteessa
-                                       // headertimen pitaisi olla jo oikea aika
+    NFmiMetTime aTime(theHeaderTime);  // otetaan pohjat tasta ja loput metarStructista.
+                                       // Periaatteessa headertimen pitaisi olla jo oikea aika
   }
   else
   {
@@ -659,7 +659,6 @@ static NFmiMetTime GetTime2(const Decoded_METAR &theMetarStruct,
     {
       aTime.ChangeByDays(-aTime.GetDay());
     }
-
   }
 
   if (theMetarStruct.ob_date != MDSP_missing_int)

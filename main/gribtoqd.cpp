@@ -155,8 +155,8 @@ struct GribFilterOptions
 
   string itsOutputFileName;  // -o optio tai sitten tulostetann cout:iin
   bool fUseOutputFile;
-  size_t itsMaxQDataSizeInBytes;  // default max koko 1 GB
-  int itsReturnStatus;            // 0 = ok
+  size_t itsMaxQDataSizeInBytes;     // default max koko 1 GB
+  int itsReturnStatus;               // 0 = ok
   NFmiLevelBag itsIgnoredLevelList;  // lista miss‰ yksitt‰isi‰ leveleit‰, mitk‰ halutaan j‰tt‰‰
                                      // pois laskuista
   vector<boost::shared_ptr<NFmiQueryData> > itsGeneratedDatas;

@@ -66,7 +66,7 @@ class NcFileExtended : public NcFile
   void require_conventions(const std::string *reference);  // Validate data conforms to the
                                                            // reference in string(nullptr or empty
                                                            // string=always validates)
-  double tolerance;  // Axis stepping tolerance
+  double tolerance;                                        // Axis stepping tolerance
 
  private:
   std::shared_ptr<std::string> projectionName;

@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 18.4.4
+Version: 18.4.7
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -20,12 +20,12 @@ BuildRequires: libbufr >= 3.2
 BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
-BuildRequires: smartmet-library-calculator-devel >= 17.8.28
-BuildRequires: smartmet-library-gis-devel >= 18.4.3
-BuildRequires: smartmet-library-imagine-devel >= 17.9.22
-BuildRequires: smartmet-library-macgyver-devel >= 18.2.12
-BuildRequires: smartmet-library-newbase-devel >= 18.4.4
-BuildRequires: smartmet-library-smarttools-devel >= 17.8.28
+BuildRequires: smartmet-library-calculator-devel >= 18.4.7
+BuildRequires: smartmet-library-gis-devel >= 18.4.7
+BuildRequires: smartmet-library-imagine-devel >= 18.4.7
+BuildRequires: smartmet-library-macgyver-devel >= 18.4.7
+BuildRequires: smartmet-library-newbase-devel >= 18.4.7
+BuildRequires: smartmet-library-smarttools-devel >= 18.4.7
 BuildRequires: smartmet-timezones
 BuildRequires: smartmet-library-spine-devel
 BuildRequires: mdsplib >= 16.4.8
@@ -36,12 +36,12 @@ BuildRequires: jasper-devel
 BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
 Requires: smartmet-timezones >= 18.4.3
-Requires: smartmet-library-calculator >= 17.8.28
-Requires: smartmet-library-gis >= 18.4.3
-Requires: smartmet-library-imagine >= 17.9.22
-Requires: smartmet-library-macgyver >= 18.2.12
-Requires: smartmet-library-newbase >= 18.4.4
-Requires: smartmet-library-smarttools >= 17.8.28
+Requires: smartmet-library-calculator >= 18.4.7
+Requires: smartmet-library-gis >= 18.4.7
+Requires: smartmet-library-imagine >= 18.4.7
+Requires: smartmet-library-macgyver >= 18.4.7
+Requires: smartmet-library-newbase >= 18.4.7
+Requires: smartmet-library-smarttools >= 18.4.7
 Requires: smartmet-library-spine
 Requires: eccodes
 Requires: hdf5 >= 1.8.12
@@ -188,6 +188,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Sat Apr  7 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.4.7-1.fmi
+- Upgrade to boost 1.66
+
 * Wed Apr  4 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.4.4-1.fmi
 - metar2qd now handles month changes better for non-NOAA type METARs
 

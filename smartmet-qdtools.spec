@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 18.4.7
+Version: 18.4.11
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -188,6 +188,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Apr 11 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.4.11-1.fmi
+- Removed obsolete Oslo Fornebu from the stations list
+
 * Sat Apr  7 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.4.7-1.fmi
 - Upgrade to boost 1.66
 

@@ -887,6 +887,258 @@ NFmiTimeDescriptor MakeTimeDescriptor(NFmiFastQueryInfo& theQ, const set<NFmiMet
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Remove bad times from the querydata and write the result
+ */
+// ----------------------------------------------------------------------
+
+void RemoveBadTimes(NFmiQueryData& theQD,
+                    NFmiFastQueryInfo& theQ,
+                    double theVersion,
+                    double theMissingLimit,
+                    const string& theParam,
+                    const string& theOutFile)
+{
+  set<NFmiMetTime> badtimes = FindBadTimes(theQ, theMissingLimit, theParam);
+  if (badtimes.empty())
+  {
+    theQD.Write(theOutFile);  // just copy as is to output
+    return;
+  }
+
+  // Filter out the bad timesteps
+  NFmiTimeDescriptor tdesc(MakeTimeDescriptor(theQ, badtimes));
+  NFmiFastQueryInfo tmpinfo(
+      theQ.ParamDescriptor(), tdesc, theQ.HPlaceDescriptor(), theQ.VPlaceDescriptor(), theVersion);
+  NFmiQueryData* data2 = NFmiQueryDataUtil::CreateEmptyData(tmpinfo);
+  if (data2 == 0) throw runtime_error("Could not allocate memory for result data");
+  NFmiFastQueryInfo dstinfo(data2);
+
+  for (dstinfo.ResetParam(), theQ.ResetParam(); dstinfo.NextParam() && theQ.NextParam();)
+    for (dstinfo.ResetLevel(), theQ.ResetLevel(); dstinfo.NextLevel() && theQ.NextLevel();)
+      for (dstinfo.ResetTime(); dstinfo.NextTime();)
+      {
+        theQ.Time(dstinfo.ValidTime());
+        for (dstinfo.ResetLocation(), theQ.ResetLocation();
+             dstinfo.NextLocation() && theQ.NextLocation();)
+          dstinfo.FloatValue(theQ.FloatValue());
+      }
+
+  data2->Write(theOutFile);
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Copy point data to output info
+ */
+// ----------------------------------------------------------------------
+
+void CopyNonGridData(NFmiFastQueryInfo& theSrc, NFmiFastQueryInfo& theDst, bool samePoints)
+{
+  for (theDst.ResetParam(); theDst.NextParam();)
+  {
+    if (theSrc.Param(theDst.Param()))
+    {
+      for (theDst.ResetLevel(); theDst.NextLevel();)
+      {
+        if (!theSrc.Level(*theDst.Level())) throw runtime_error("Level not available in querydata");
+
+        for (theDst.ResetTime(); theDst.NextTime();)
+        {
+          if (!theSrc.Time(theDst.ValidTime()))
+            throw runtime_error("Time not available in querydata");
+
+          // copy point data quickly if all stations are kept
+          if (samePoints)
+          {
+            for (theDst.ResetLocation(), theSrc.ResetLocation();
+                 theDst.NextLocation() && theSrc.NextLocation();)
+              theDst.FloatValue(theSrc.FloatValue());
+          }
+          else
+          {
+            // slower version if stations are kept & removed
+            for (theDst.ResetLocation(); theDst.NextLocation();)
+            {
+              theSrc.Location(theDst.Location()->GetIdent());
+              theDst.FloatValue(theSrc.FloatValue());
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Copy grid data to similar area output info
+ */
+// ----------------------------------------------------------------------
+
+void CopySameGridData(NFmiFastQueryInfo& theSrc, NFmiFastQueryInfo& theDst)
+{
+  // Establish output timeindexes up front for speed. -1 implies time is not available
+  // We assume there are no time interpolations.
+
+  unsigned long ntimes = theDst.SizeTimes();
+  std::vector<long> timeindexes(ntimes, -1);
+  for (unsigned long i = 0; i < ntimes; i++)
+  {
+    if (theDst.TimeIndex(i) && theSrc.Time(theDst.Time())) timeindexes[i] = theSrc.TimeIndex();
+  }
+
+  for (theDst.ResetParam(); theDst.NextParam();)
+  {
+    if (theSrc.Param(theDst.Param()))
+    {
+      for (theDst.ResetLevel(); theDst.NextLevel();)
+      {
+        if (!theSrc.Level(*theDst.Level())) throw runtime_error("Level not available in querydata");
+
+        for (theDst.ResetLocation(), theSrc.ResetLocation();
+             theDst.NextLocation() && theSrc.NextLocation();)
+        {
+          for (unsigned long i = 0; i < ntimes; i++)
+          {
+            if (timeindexes[i] >= 0)
+            {
+              theDst.TimeIndex(i);
+              theSrc.TimeIndex(timeindexes[i]);
+              theDst.FloatValue(theSrc.FloatValue());
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Copy grid data to output info with a different area
+ */
+// ----------------------------------------------------------------------
+
+void CopyDifferentGridData(NFmiFastQueryInfo& theSrc, NFmiFastQueryInfo& theDst)
+{
+  // Copied from NFmiQueryDatautil::FillGridData
+
+  NFmiDataMatrix<NFmiLocationCache> locationCacheMatrix;
+  theSrc.CalcLatlonCachePoints(theDst, locationCacheMatrix);
+  checkedVector<NFmiTimeCache> timeCacheVector;
+  theSrc.CalcTimeCache(theDst, timeCacheVector);
+
+  unsigned long startTimeIndex = 0;
+  unsigned long endTimeIndex = theDst.SizeTimes() - 1;
+
+  unsigned long targetXSize = theDst.GridXNumber();
+
+  for (theDst.ResetParam(); theDst.NextParam();)
+  {
+    if (theSrc.Param(static_cast<FmiParameterName>(theDst.Param().GetParamIdent())))
+    {
+      for (theDst.ResetLevel(); theDst.NextLevel();)
+      {
+        if (theSrc.Level(*theDst.Level()))
+        {
+          for (unsigned long i = startTimeIndex; i <= endTimeIndex; i++)
+          {
+            if (theDst.TimeIndex(i) == false) continue;
+            NFmiMetTime targetTime = theDst.Time();
+            // jos aikaa ei löydy suoraan, tarvittaessa tehdään aikainterpolaatio
+            bool doTimeInterpolation = false;
+            if (theSrc.Time(theDst.Time()) ||
+                (doTimeInterpolation = theSrc.TimeDescriptor().IsInside(theDst.Time())) == true)
+            {
+              NFmiTimeCache& timeCache = timeCacheVector[theDst.TimeIndex()];
+              for (theDst.ResetLocation(); theDst.NextLocation();)
+              {
+                float value = kFloatMissing;
+                NFmiLocationCache& locCache =
+                    locationCacheMatrix[theDst.LocationIndex() % targetXSize]
+                                       [theDst.LocationIndex() / targetXSize];
+                value = theSrc.CachedInterpolation(locCache, timeCache);
+                theDst.FloatValue(value);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Copy grid data to output info
+ */
+// ----------------------------------------------------------------------
+
+void CopyGridData(NFmiFastQueryInfo& theSrc, NFmiFastQueryInfo& theDst, bool same_area)
+{
+  if (same_area)
+    CopySameGridData(theSrc, theDst);
+  else
+    CopyDifferentGridData(theSrc, theDst);
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Copy given parameters from the first time to all subsequent times
+ *
+ * Mainly used for copying topography and similar information
+ */
+// ----------------------------------------------------------------------
+
+void CopyAnalysisParameters(NFmiFastQueryInfo& theSrc,
+                            NFmiFastQueryInfo& theDst,
+                            const vector<string>& theParams,
+                            bool same_stations)
+{
+  for (const auto& paramname : theParams)
+  {
+    FmiParameterName paramnum = parse_param(paramname);
+    if (!theSrc.Param(paramnum) || !theDst.Param(paramnum))
+      throw runtime_error("Error copy parameter " + paramname +
+                          " from origin time, parameter not available");
+
+    for (theDst.ResetLevel(); theDst.NextLevel();)
+    {
+      if (!theSrc.Level(*theDst.Level())) throw runtime_error("Level not available in querydata");
+
+      // copy point data
+      if (same_stations)
+      {
+        for (theDst.ResetLocation(), theSrc.ResetLocation();
+             theDst.NextLocation() && theSrc.NextLocation();)
+        {
+          // We assume first time is origin time
+          theSrc.FirstTime();
+          for (theDst.ResetTime(); theDst.NextTime();)
+            theDst.FloatValue(theSrc.FloatValue());
+        }
+      }
+      else
+      {
+        for (theDst.ResetLocation(); theDst.NextLocation();)
+        {
+          if (theSrc.Location(theDst.Location()->GetIdent()))
+          {
+            // We assume first time is origin time
+            theSrc.FirstTime();
+            for (theDst.ResetTime(); theDst.NextTime();)
+            {
+              theDst.FloatValue(theSrc.FloatValue());
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief The main work subroutine for the main program
  *
  * The main program traps all exceptions throw in here.
@@ -1094,7 +1346,6 @@ int run(int argc, const char* argv[])
   if (opt_multifile)
   {
     srcinfo = new NFmiMultiQueryInfo(opt_infile);
-    std::cout << "MultiQueryInfo" << std::endl;
   }
   else
   {
@@ -1114,40 +1365,11 @@ int run(int argc, const char* argv[])
 
   // Special optimization for fast removal of missing timesteps only. This is
   // mainly useful to remove invalid timesteps produced by model post processing
-  // which must not get into production.
+  // which must not get into production. Cannot handle multifiles quickly yet.
 
-  if (cmdline.NumberofOptions() == 1 && opt_missing_limit > 0)
+  if (cmdline.NumberofOptions() == 1 && opt_missing_limit > 0 && !opt_multifile)
   {
-    set<NFmiMetTime> badtimes = FindBadTimes(*srcinfo, opt_missing_limit, opt_missing_parameter);
-    if (badtimes.empty())
-      qd->Write(opt_outfile);  // just copy as is to output
-    else
-    {
-      // Filter out the bad timesteps
-      NFmiTimeDescriptor tdesc(MakeTimeDescriptor(*srcinfo, badtimes));
-      NFmiFastQueryInfo tmpinfo(srcinfo->ParamDescriptor(),
-                                tdesc,
-                                srcinfo->HPlaceDescriptor(),
-                                srcinfo->VPlaceDescriptor(),
-                                version);
-      NFmiQueryData* data2 = NFmiQueryDataUtil::CreateEmptyData(tmpinfo);
-      if (data2 == 0) throw runtime_error("Could not allocate memory for result data");
-      NFmiFastQueryInfo dstinfo(data2);
-
-      for (dstinfo.ResetParam(), srcinfo->ResetParam();
-           dstinfo.NextParam() && srcinfo->NextParam();)
-        for (dstinfo.ResetLevel(), srcinfo->ResetLevel();
-             dstinfo.NextLevel() && srcinfo->NextLevel();)
-          for (dstinfo.ResetTime(); dstinfo.NextTime();)
-          {
-            srcinfo->Time(dstinfo.ValidTime());
-            for (dstinfo.ResetLocation(), srcinfo->ResetLocation();
-                 dstinfo.NextLocation() && srcinfo->NextLocation();)
-              dstinfo.FloatValue(srcinfo->FloatValue());
-          }
-
-      data2->Write(opt_outfile);
-    }
+    RemoveBadTimes(*qd, *srcinfo, version, opt_missing_limit, opt_missing_parameter, opt_outfile);
     return 0;
   }
 
@@ -1190,93 +1412,21 @@ int run(int argc, const char* argv[])
 
   // finally fill the new data with values
 
+  bool same_stations = (opt_stations.empty() && opt_nostations.empty());
+
   if (dstinfo.Grid())
   {
-    NFmiQueryDataUtil::FillGridData(qd, data.get(), 0, gMissingIndex, nullptr, true);
+    bool same_area =
+        (opt_geometry.empty() && opt_bounds.empty() && opt_steps.empty() && opt_proj.empty());
+    CopyGridData(*srcinfo, dstinfo, same_area);
   }
   else
-  {
-    for (dstinfo.ResetParam(); dstinfo.NextParam();)
-    {
-      if (srcinfo->Param(dstinfo.Param()))
-      {
-        for (dstinfo.ResetLevel(); dstinfo.NextLevel();)
-        {
-          if (!srcinfo->Level(*dstinfo.Level()))
-            throw runtime_error("Level not available in querydata");
-
-          for (dstinfo.ResetTime(); dstinfo.NextTime();)
-          {
-            if (!srcinfo->Time(dstinfo.ValidTime()))
-              throw runtime_error("Time not available in querydata");
-
-            // copy point data quickly if all stations are kept
-            if (opt_stations.empty() && opt_nostations.empty())
-            {
-              for (dstinfo.ResetLocation(), srcinfo->ResetLocation();
-                   dstinfo.NextLocation() && srcinfo->NextLocation();)
-                dstinfo.FloatValue(srcinfo->FloatValue());
-            }
-            else
-            {
-              // slower version if stations are kept & removed
-              for (dstinfo.ResetLocation(); dstinfo.NextLocation();)
-              {
-                srcinfo->Location(dstinfo.Location()->GetIdent());
-                dstinfo.FloatValue(srcinfo->FloatValue());
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+    CopyNonGridData(*srcinfo, dstinfo, same_stations);
 
   // Copy parameter values from origin time if necessary
 
-  for (vector<string>::const_iterator it = opt_analysisparameters.begin();
-       it != opt_analysisparameters.end();
-       ++it)
-  {
-    FmiParameterName paramnum = parse_param(*it);
-    if (!srcinfo->Param(paramnum) || !dstinfo.Param(paramnum))
-      throw runtime_error("Error copy parameter " + *it +
-                          " from origin time, parameter not available");
-
-    for (dstinfo.ResetLevel(); dstinfo.NextLevel();)
-    {
-      if (!srcinfo->Level(*dstinfo.Level()))
-        throw runtime_error("Level not available in querydata");
-
-      // copy point data
-      if (opt_stations.empty() && opt_nostations.empty())
-      {
-        for (dstinfo.ResetLocation(), srcinfo->ResetLocation();
-             dstinfo.NextLocation() && srcinfo->NextLocation();)
-        {
-          // We assume first time is origin time
-          srcinfo->FirstTime();
-          for (dstinfo.ResetTime(); dstinfo.NextTime();)
-            dstinfo.FloatValue(srcinfo->FloatValue());
-        }
-      }
-      else
-      {
-        for (dstinfo.ResetLocation(); dstinfo.NextLocation();)
-        {
-          if (srcinfo->Location(dstinfo.Location()->GetIdent()))
-          {
-            // We assume first time is origin time
-            srcinfo->FirstTime();
-            for (dstinfo.ResetTime(); dstinfo.NextTime();)
-            {
-              dstinfo.FloatValue(srcinfo->FloatValue());
-            }
-          }
-        }
-      }
-    }
-  }
+  if (!opt_analysisparameters.empty())
+    CopyAnalysisParameters(*srcinfo, dstinfo, opt_analysisparameters, same_stations);
 
   // Remove timesteps with too much missing data
 

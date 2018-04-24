@@ -45,6 +45,7 @@ struct Options
 
   std::string infile = "-";        // -i --infile
   std::string outfile = "-";       // -o --outfile
+  std::string packing = "";        // -p --packing, empty implies use ECCODES default
   bool grib1 = false;              // -1, --grib1
   bool grib2 = false;              // -2, --grib2
   bool split = false;              // -s --split
@@ -272,6 +273,7 @@ bool parse_options(int argc, char *argv[])
   std::string msg1 = "configuration file with conversion information (default='" + config + "')";
 
   po::options_description desc("Allowed options");
+  // clang-format off
   desc.add_options()("help,h", "print out help message")("version,V", "display version number")(
       "verbose,v", po::bool_switch(&options.verbose), "set verbose mode on")(
       "dump,D", po::bool_switch(&options.dump), "dump GRIB contents using grib_api dumper")(
@@ -279,6 +281,7 @@ bool parse_options(int argc, char *argv[])
       "outfile,o", po::value(&options.outfile), "output grib file")(
       "grib1,1", po::bool_switch(&options.grib1), "output GRIB1")(
       "grib2,2", po::bool_switch(&options.grib2), "output GRIB2 (the default)")(
+      "packing,p", po::value(&options.packing), "packing method (grid_simple, grid_ieee, grid_second_order, grid_jpeg etc)")(
       "centre,C", po::value(&options.centre), "originating centre (default = none)")(
       "subcentre,S", po::value(&options.subcentre), "subcentre (default = 0)")(
       "list-centres,L", po::bool_switch(&options.list_centres), "list known centres")(
@@ -291,6 +294,7 @@ bool parse_options(int argc, char *argv[])
       "split,s", po::bool_switch(&options.split), "split individual timesteps")(
       "level,l", po::value(&level), "level to extract")(
       "config,c", po::value(&config), msg1.c_str());
+  // clang-format on
 
   po::positional_options_description p;
   p.add("infile", 1);
@@ -303,7 +307,7 @@ bool parse_options(int argc, char *argv[])
 
   if (opt.count("version") != 0)
   {
-    std::cout << "qdtogrib v1.3 (" << __DATE__ << ' ' << __TIME__ << ')' << std::endl;
+    std::cout << "qdtogrib v1.4 (" << __DATE__ << ' ' << __TIME__ << ')' << std::endl;
   }
 
   if (opt.count("help"))
@@ -647,6 +651,19 @@ static void set_producer(grib_handle *gribHandle)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Set packing method (grid_simple, grid_jpeg etc)
+ */
+// ----------------------------------------------------------------------
+
+static void set_packing(grib_handle *gribHandle)
+{
+  if (options.packing.empty()) return;
+
+  gset(gribHandle, "packingType", options.packing);
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Set the geometry. Called only once since in querydata all geometries are equal
  */
 // ----------------------------------------------------------------------
@@ -975,6 +992,7 @@ int run(const int argc, char *argv[])
     std::vector<double> valueArray;  // t‰t‰ vektoria k‰ytet‰‰n siirt‰m‰‰n dataa querydatasta
                                      // gribiin (aina saman kokoinen)
     set_producer(gribHandle);
+    set_packing(gribHandle);
     set_geometry(qi, gribHandle, valueArray);
     const long timestep = get_smallest_timestep(qi);
     const bool use_minutes = (timestep < 60);

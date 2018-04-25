@@ -1,29 +1,3 @@
-/*!
- *  \file
- *  Tekij‰: Marko (19.8.2003)
- *
- *  T‰m‰ ohjelma lukee grib-tiedoston (hallitsee myˆs grib2-formaatin) ja konvertoi sen
- *fqd-tiedostoksi.
- *
- * \code
- * Optiot:
- *
- *  -o output-tiedosto      Oletusarvoisesti tulostetaan sdtout:iin.
- *	-m max-data-size-MB [200] Kuinka suuri data paketti tehd‰‰n
- *                              maksimissaan megatavuissa (vahinkojen varalle)
- *  -l t105v3,t109v255,...   J‰t‰ pois laskuista seuraavat yksitt‰iset levelit (1. type 105, value
- *3, jne.)
- *  -g printed-grid-info-count Eli kuinka monesta ensimm‰isest‰ hilasta haluat tulostaa cerr:iin.
- *Jos count -1, tulostaa kaikista.
- *
- * Esimerkkeja:
- *
- *	grib2ToQD.cpp -o output.fqd input.grib
- *
- *	grib2ToQD.cpp input.grib > output.fqd
- * \endcode
- */
-
 #ifdef _MSC_VER
 #pragma warning(disable : 4786 4996)  // poistaa n kpl VC++ k‰‰nt‰j‰n varoitusta (liian pitk‰ nimi
                                       // >255 merkki‰
@@ -66,6 +40,16 @@
 #include <stdlib.h>
 
 using namespace std;
+
+void check_jscan_direction(grib_handle *theGribHandle)
+{
+  long direction = 0;
+  int status = grib_get_long(theGribHandle, "jScansPositively", &direction);
+  if (status != 0) return;
+  if (direction == 0)
+    throw std::runtime_error("GRIBs with a negative j-scan direction are not supported");
+  return;
+}
 
 // template<typename T>
 struct PointerDestroyer
@@ -155,8 +139,8 @@ struct GribFilterOptions
 
   string itsOutputFileName;  // -o optio tai sitten tulostetann cout:iin
   bool fUseOutputFile;
-  size_t itsMaxQDataSizeInBytes;     // default max koko 1 GB
-  int itsReturnStatus;               // 0 = ok
+  size_t itsMaxQDataSizeInBytes;  // default max koko 1 GB
+  int itsReturnStatus;            // 0 = ok
   NFmiLevelBag itsIgnoredLevelList;  // lista miss‰ yksitt‰isi‰ leveleit‰, mitk‰ halutaan j‰tt‰‰
                                      // pois laskuista
   vector<boost::shared_ptr<NFmiQueryData> > itsGeneratedDatas;
@@ -1900,6 +1884,8 @@ static NFmiArea *CreateLatlonArea(grib_handle *theGribHandle,
     // Fix BAM data which uses zero for both longitudes
     if (Lo1 == 0 && Lo2 == 0) Lo2 = 360;
 
+    check_jscan_direction(theGribHandle);
+
     long iScansNegatively = 0;
     int iScansNegativelyStatus =
         grib_get_long(theGribHandle, "iScansNegatively", &iScansNegatively);
@@ -1956,6 +1942,8 @@ static NFmiArea *CreateRotatedLatlonArea(grib_handle *theGribHandle,
 
     if (Lo1 > Lo2) std::swap(Lo1, Lo2);
 
+    check_jscan_direction(theGribHandle);
+
     NFmiPoint bottomleft(Lo1, FmiMin(La1, La2));
     NFmiPoint topright(Lo2, FmiMax(La1, La2));
     NFmiPoint pole(PoleLon, PoleLat);
@@ -2001,6 +1989,8 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
 
     if (status9 == 0 && status6 == 0 && status7 == 0 && status8 == 0)
     {
+      check_jscan_direction(theGribHandle);
+
       NFmiPoint bottomLeft(Lo1, La1);
       NFmiPoint dummyTopRight(Lo1 + 5, La1 + 5);
       NFmiMercatorArea dummyArea(bottomLeft, dummyTopRight);
@@ -2042,6 +2032,8 @@ static NFmiArea *CreatePolarStereographicArea(grib_handle *theGribHandle)
 
   if (!badLa1 && !badLo1 && !badLov && !badLad && !badNx && !badNy && !badDx && !badDy)
   {
+    check_jscan_direction(theGribHandle);
+
     NFmiPoint bottom_left(Lo1, La1);
     NFmiPoint top_left_xy(0, 0);
     NFmiPoint top_right_xy(1, 1);
@@ -4952,7 +4944,8 @@ static int GetOptions(NFmiCmdLine &theCmdLine, GribFilterOptions &theGribFilterO
   if (theCmdLine.isOption('A')) theGribFilterOptions.fDoPacificFix = true;
   if (theGribFilterOptions.fDoAtlanticFix && theGribFilterOptions.fDoPacificFix)
     throw runtime_error(
-        "Error with pacific and atlantic fix options, both 'a' and 'A' options can't be on at the "
+        "Error with pacific and atlantic fix options, both 'a' and 'A' options can't be on at "
+        "the "
         "same time");
 
   if (theCmdLine.isOption('y')) theGribFilterOptions.fDoYAxisFlip = true;

@@ -76,6 +76,16 @@
 
 using namespace std;
 
+void check_jscan_direction(grib_handle *theGribHandle)
+{
+  long direction = 0;
+  int status = grib_get_long(theGribHandle, "jScansPositively", &direction);
+  if (status != 0) return;
+  if (direction == 0)
+    throw std::runtime_error("GRIBs with a negative j-scan direction are not supported");
+  return;
+}
+
 // template<typename T>
 struct PointerDestroyer
 {
@@ -143,8 +153,8 @@ struct GribFilterOptions
 
   string itsOutputFileName;  // -o optio tai sitten tulostetann cout:iin
   bool fUseOutputFile;
-  size_t itsMaxQDataSizeInBytes;     // default max koko 1 GB
-  int itsReturnStatus;               // 0 = ok
+  size_t itsMaxQDataSizeInBytes;  // default max koko 1 GB
+  int itsReturnStatus;            // 0 = ok
   NFmiLevelBag itsIgnoredLevelList;  // lista miss‰ yksitt‰isi‰ leveleit‰, mitk‰ halutaan j‰tt‰‰
                                      // pois laskuista
   vector<boost::shared_ptr<NFmiQueryData> > itsGeneratedDatas;
@@ -1319,6 +1329,8 @@ static NFmiArea *CreateLatlonArea(grib_handle *theGribHandle, bool doAtlanticFix
     int iScansNegativelyStatus =
         grib_get_long(theGribHandle, "iScansNegatively", &iScansNegatively);
 
+    check_jscan_direction(theGribHandle);
+
     if (doAtlanticFix && Lo1 == 0 && (Lo2 < 0 || Lo2 > 350))
     {
       Lo1 = -180;
@@ -1396,6 +1408,8 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
 
   else if (status1 == 0 && status2 == 0)
   {
+    check_jscan_direction(theGribHandle);
+
     long nx = 0;
     long ny = 0;
     int status9 = ::grib_get_long(theGribHandle, "numberOfPointsAlongAParallel", &nx);
@@ -1464,6 +1478,8 @@ static NFmiArea *CreatePolarStereographicArea(grib_handle *theGribHandle)
 
   if (!badLa1 && !badLo1 && !badLov && !usedBadLad && !badNx && !badNy && !badDx && !badDy)
   {
+    check_jscan_direction(theGribHandle);
+
     NFmiPoint bottom_left(Lo1, La1);
     NFmiPoint top_left_xy(0, 0);
     NFmiPoint top_right_xy(1, 1);

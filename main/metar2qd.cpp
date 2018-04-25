@@ -688,8 +688,8 @@ static void InitWWSymbols(map<string, float> &ww_symbols)
   ww_symbols.insert(make_pair(string("BCFG"), 11.f));
   ww_symbols.insert(make_pair(string("PRFG"), 41.f));
   ww_symbols.insert(make_pair(string("VCFG"), 40.f));
-  ww_symbols.insert(make_pair(string("FG"), 49.f));
-  ww_symbols.insert(make_pair(string("+FG"), 49.f));
+  ww_symbols.insert(make_pair(string("FG"), 45.f));
+  ww_symbols.insert(make_pair(string("+FG"), 45.f));
   ww_symbols.insert(make_pair(string("FZFG"), 49.f));
   ww_symbols.insert(make_pair(string("-DRRASN"), 68.f));
   ww_symbols.insert(make_pair(string("DRRASN"), 68.f));

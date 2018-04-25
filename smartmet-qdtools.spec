@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 18.4.24
+Version: 18.4.25
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -188,6 +188,10 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Apr 25 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.4.25-1.fmi
+- Fixed metar2qd to handle fog correctly
+- gribtoqd and grib2toqd now error if j-scan direction is negative, required projection calculations are not implemented
+
 * Tue Apr 24 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.4.24-1.fmi
 - qdtogrib -p or --packing can now be used to set the packing method
 

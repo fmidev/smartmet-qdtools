@@ -43,6 +43,9 @@
 #include <string>
 #include <vector>
 
+#pragma message("Remove prettyprint")
+#include <prettyprint.hpp>
+
 // Global to get better error messages outside param descriptor builder
 
 NFmiEnumConverter converter;
@@ -57,7 +60,8 @@ struct Options
 {
   Options();
 
-  bool verbose;              // -v --verbose
+  bool verbose = false;      // -v --verbose
+  bool prodparfix = false;   // --prodparfix
   std::string projection;    // -P --projection
   std::string infile;        // -i --infile
   std::string outfile;       // -o --outfile
@@ -100,16 +104,19 @@ bool parse_options(int argc, char *argv[])
   std::string producerinfo;
 
   po::options_description desc("Allowed options");
+  // clang-format off
   desc.add_options()("help,h", "print out help message")(
       "verbose,v", po::bool_switch(&options.verbose), "set verbose mode on")(
       "version,V", "display version number")(
       "projection,P", po::value(&options.projection), "projection")(
       "infile,i", po::value(&options.infile), "input HDF5 file")(
       "outfile,o", po::value(&options.outfile), "output querydata file")(
+      "prodparfix", po::bool_switch(&options.prodparfix), "take last number from prodpar array")(
       "datasetname", po::value(&options.datasetname), "dataset name prefix (default=dataset)")(
       "producer,p", po::value(&producerinfo), "producer number,name")(
       "producernumber", po::value(&options.producernumber), "producer number (default: 1014)")(
       "producername", po::value(&options.producername), "producer name (default: RADAR)");
+  // clang-format on
 
   po::positional_options_description p;
   p.add("infile", 1);
@@ -204,15 +211,24 @@ std::string get_string(const std::string &name, IMXAArray &attr)
 {
   std::ostringstream out;
 
-  hsize_t n = attr.getNumberOfElements();
+  size_t n = attr.getNumberOfElements();
 
-  if (n != 1)
-    throw std::runtime_error("Element " + name + " is not of size 1, but " +
-                             boost::lexical_cast<std::string>(n));
-
-  T *value = static_cast<T *>(attr.getVoidPointer(0));
-
-  out << value[0];
+  if (n == 1)
+  {
+    T *value = static_cast<T *>(attr.getVoidPointer(0));
+    out << value[0];
+  }
+  else if (n > 1)
+  {
+    out << "[ ";
+    for (int i = 0; i < n; i++)
+    {
+      if (i > 0) out << ", ";
+      T *value = static_cast<T *>(attr.getVoidPointer(i));
+      out << value[0];
+    }
+    out << " ]";
+  }
 
   return out.str();
 }
@@ -253,12 +269,39 @@ std::string get_attribute_string(const std::string &name, IMXAArray &attr)
 template <typename T>
 T get_attribute_value(const hid_t &hid, const std::string &path, const std::string &name)
 {
-  T value;
+  // copied from /usr/include/MXA/HDF5/H5Lite.h readVectorAttribute()
+  H5T_class_t type_class;
+  size_t type_size;
+  std::vector<hsize_t> dims;
+  hid_t attr_type;
+  auto err = H5Lite::getAttributeInfo(hid, path, name, dims, type_class, type_size, attr_type);
+  if (err) throw std::runtime_error("Failed to read attribute info for " + path + "/" + name);
+  // H5Tclose(attr_type); needed??
 
-  if (H5Lite::readScalarAttribute(hid, path, name, value) != 0)
-    throw std::runtime_error("Failed to read attribute " + path + "/" + name);
+  bool is_array = (!dims.empty());
 
-  return value;
+  if (name == "prodpar" && options.prodparfix && is_array)
+  {
+    // There was a bug in ODIM 2.2 radar data where prodpar is a vector whose
+    // last element was the actually desired value.
+    std::vector<T> values;
+    if (H5Lite::readVectorAttribute(hid, path, name, values) != 0)
+      throw std::runtime_error("Failed to read vector attributes " + path + "/" + name);
+    if (values.empty())
+      throw std::runtime_error("Vector attribute " + path + "/" + name + " is empty");
+    return values.back();
+  }
+  else if (is_array)
+  {
+    throw std::runtime_error("Expecting " + path + "/" + name + " to be a scalar, not an array");
+  }
+  else
+  {
+    T value;
+    if (H5Lite::readScalarAttribute(hid, path, name, value) != 0)
+      throw std::runtime_error("Failed to read attribute " + path + "/" + name);
+    return value;
+  }
 }
 
 // ----------------------------------------------------------------------

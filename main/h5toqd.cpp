@@ -43,9 +43,6 @@
 #include <string>
 #include <vector>
 
-#pragma message("Remove prettyprint")
-#include <prettyprint.hpp>
-
 // Global to get better error messages outside param descriptor builder
 
 NFmiEnumConverter converter;
@@ -658,6 +655,8 @@ NFmiTimeDescriptor create_tdesc(const hid_t &hid)
 
   const int n = count_datasets(hid);
 
+  std::set<NFmiMetTime> validtimes;
+
   NFmiTimeList tlist;
 
   if (n > 0)
@@ -665,9 +664,11 @@ NFmiTimeDescriptor create_tdesc(const hid_t &hid)
     // Valid dataset specs
     for (int i = 1; i <= n; i++)
     {
-      t = extract_valid_time(hid, i);
-      tlist.Add(new NFmiMetTime(tomettime(t)));
+      t = tomettime(extract_valid_time(hid, i));
+      validtimes.insert(t);
     }
+    for (const auto &validtime : validtimes)
+      tlist.Add(new NFmiMetTime(validtime));
   }
   else
   {

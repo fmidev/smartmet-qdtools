@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 18.4.25
+Version: 18.4.27
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -189,6 +189,11 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Fri Apr 27 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.4.27-1.fmi
+- Fixed h5toqd to generate a compact time descriptor
+- Added option --prodparfix to h5toqd
+- Added possibility to format output filename based on data contents
+
 * Wed Apr 25 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.4.25-1.fmi
 - Fixed metar2qd to handle fog correctly
 - gribtoqd and grib2toqd now error if j-scan direction is negative, required projection calculations are not implemented

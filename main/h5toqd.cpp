@@ -8,10 +8,18 @@
 
 #include <MXA/HDF5/H5Lite.h>
 #include <MXA/HDF5/H5Utilities.h>
-
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/optional.hpp>
+#include <boost/program_options.hpp>
+#include <boost/shared_ptr.hpp>
 #include <macgyver/StringConversion.h>
 #include <macgyver/TimeParser.h>
-
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiEquidistArea.h>
@@ -27,17 +35,6 @@
 #include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiVPlaceDescriptor.h>
-
-#include <boost/algorithm/string.hpp>
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <boost/foreach.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/optional.hpp>
-#include <boost/program_options.hpp>
-#include <boost/shared_ptr.hpp>
-
 #include <iostream>
 #include <numeric>
 #include <string>
@@ -55,36 +52,20 @@ NFmiEnumConverter converter;
 
 struct Options
 {
-  Options();
-
-  bool verbose = false;      // -v --verbose
-  bool prodparfix = false;   // --prodparfix
-  std::string projection;    // -P --projection
-  std::string infile;        // -i --infile
-  std::string outfile;       // -o --outfile
-  std::string datasetname;   // --datasetname
-  std::string producername;  // --producername
-  long producernumber;       // --producernumber
+  bool verbose = false;                 // -v --verbose
+  bool prodparfix = false;              // --prodparfix
+  bool lowercase = false;               // --lowercase
+  bool uppercase = false;               // --uppercase
+  std::string projection;               // -P --projection
+  std::string infile = "-";             // -i --infile
+  std::string outfile = "-";            // -o --outfile
+  std::string datasetname = "dataset";  // --datasetname
+  std::string producername = "RADAR";   // --producername
+  long producernumber = 1014;           // --producernumber
 };
 
 Options options;
 
-// ----------------------------------------------------------------------
-/*!
- * \brief Default options
- */
-// ----------------------------------------------------------------------
-
-Options::Options()
-    : verbose(false),
-      projection(""),
-      infile("-"),
-      outfile("-"),
-      datasetname("dataset"),
-      producername("RADAR"),
-      producernumber(1014)
-{
-}
 // ----------------------------------------------------------------------
 /*!
  * \brief Parse command line options
@@ -109,6 +90,8 @@ bool parse_options(int argc, char *argv[])
       "infile,i", po::value(&options.infile), "input HDF5 file")(
       "outfile,o", po::value(&options.outfile), "output querydata file")(
       "prodparfix", po::bool_switch(&options.prodparfix), "take last number from prodpar array")(
+      "lowercase", po::bool_switch(&options.lowercase), "convert output filename to lower case")(
+      "uppercase", po::bool_switch(&options.uppercase), "convert output filename to upper case")(
       "datasetname", po::value(&options.datasetname), "dataset name prefix (default=dataset)")(
       "producer,p", po::value(&producerinfo), "producer number,name")(
       "producernumber", po::value(&options.producernumber), "producer number (default: 1014)")(
@@ -146,6 +129,9 @@ bool parse_options(int argc, char *argv[])
 
   if (!fs::exists(options.infile))
     throw std::runtime_error("Input file '" + options.infile + "' does not exist");
+
+  if (options.lowercase && options.uppercase)
+    throw std::runtime_error("Cannot use --lowercase and --uppercase simultaneously");
 
   // Handle the alternative ways to define the producer
 
@@ -290,7 +276,8 @@ T get_attribute_value(const hid_t &hid, const std::string &path, const std::stri
   }
   else if (is_array)
   {
-    throw std::runtime_error("Expecting " + path + "/" + name + " to be a scalar, not an array");
+    throw std::runtime_error("Expecting " + path + "/" + name +
+                             " to be a scalar, not an array. Consider using --prodparfix");
   }
   else
   {
@@ -1709,6 +1696,144 @@ void copy_datasets(const hid_t &hid, NFmiFastQueryInfo &info)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Collect unique products
+ */
+// ----------------------------------------------------------------------
+
+std::set<std::string> collect_attributes(const hid_t &hid, const std::string &name)
+{
+  std::set<std::string> ret;
+
+  const int n = count_datasets(hid);
+  for (int i = 1; i <= n; i++)
+  {
+    auto product = get_attribute_value<std::string>(hid, dataset(i) + "/what", name);
+    ret.insert(product);
+  }
+
+  return ret;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Get source settings
+ */
+// ----------------------------------------------------------------------
+
+std::map<std::string, std::string> get_source_settings(const hid_t &hid)
+{
+  std::map<std::string, std::string> ret;
+
+  // Collect unique source settings
+  std::string source;
+  try
+  {
+    source = get_attribute_value<std::string>(hid, "/what", "source");
+  }
+  catch (...)
+  {
+    std::cout << "Found no source\n";
+    return {};
+  }
+
+  if (source.empty()) return {};
+
+  // Split for example "WMO:78073,PLC:Nassau,ORG:100" into parts
+  std::vector<std::string> parts;
+  boost::algorithm::split(parts, source, boost::is_any_of(","));
+
+  // Store the key-value pairs into a map
+  for (const auto &part : parts)
+  {
+    auto pos = part.find(':');
+    if (pos != std::string::npos)
+    {
+      auto key = part.substr(0, pos);
+      auto value = part.substr(pos + 1);
+      ret[key] = value;
+    }
+  }
+
+  return ret;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Join set of strings with a separator
+ */
+// ----------------------------------------------------------------------
+
+std::string join(const std::set<std::string> &strings, const std::string &separator)
+{
+  std::string ret;
+  for (const auto &str : strings)
+  {
+    if (!ret.empty()) ret += separator;
+    ret += str;
+  }
+  return ret;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Generate final outfile name
+ *
+ * Patterns substituted:
+ *
+ *   - %ORIGINTIME
+ *   - %PRODUCT     - taken from "product"
+ *   - %QUANTITY    - taken from "quantity"
+ *   - %WMO         - taken from "source" WMO component (Opera v2.2 table 3)
+ *   - %RAD         - taken from "source" RAD component
+ *   - %PLC         - taken from "source" PLC component
+ *   - %NOD         - taken from "source" NOD component
+ *   - %ORG         - taken from "source" ORG component
+ *   - %CTY         - taken from "source" CTY component
+ *   - ... whatever is in the source setting
+ */
+// ----------------------------------------------------------------------
+
+std::string make_filename(const hid_t &hid, NFmiFastQueryInfo &info)
+{
+  auto filename = options.outfile;
+  if (filename.find("%ORIGINTIME") != std::string::npos)
+  {
+    auto otime = info.OriginTime();
+    std::string stime = otime.ToStr(kYYYYMMDDHHMM).CharPtr();
+    boost::replace_all(filename, "%ORIGINTIME", stime);
+  }
+  if (filename.find("%PRODUCT") != std::string::npos)
+  {
+    auto tmp = join(collect_attributes(hid, "product"), "_");
+    boost::replace_all(filename, "%PRODUCT", tmp);
+  }
+  if (filename.find("%QUANTITY") != std::string::npos)
+  {
+    auto tmp = join(collect_attributes(hid, "quantity"), "_");
+    boost::replace_all(filename, "%QUANTITY", tmp);
+  }
+
+  auto source_settings = get_source_settings(hid);
+  for (const auto &name_value : source_settings)
+  {
+    boost::replace_all(filename, "%" + name_value.first, name_value.second);
+  }
+
+  // These must be done last
+  if (options.lowercase)
+  {
+    boost::algorithm::to_lower(filename);
+  }
+  if (options.uppercase)
+  {
+    boost::algorithm::to_upper(filename);
+  }
+
+  return filename;
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Main program without exception handling
  */
 // ----------------------------------------------------------------------
@@ -1770,7 +1895,8 @@ int run(int argc, char *argv[])
     std::cout << *data;
   else
   {
-    std::ofstream out(options.outfile.c_str());
+    auto filename = make_filename(hid, info);
+    std::ofstream out(filename.c_str());
     out << *data;
   }
 

@@ -1885,6 +1885,15 @@ std::string expand_name(const std::string &theName, const hid_t &hid, NFmiFastQu
     boost::replace_all(name, "%" + name_value.first, name_value.second);
   }
 
+  return name;
+}
+
+std::string expand_name_and_case(const std::string &theName,
+                                 const hid_t &hid,
+                                 NFmiFastQueryInfo &info)
+{
+  auto name = expand_name(theName, hid, info);
+
   // These must be done last
   if (options.lowercase)
   {
@@ -1962,7 +1971,7 @@ int run(int argc, char *argv[])
     std::cout << *data;
   else
   {
-    auto filename = expand_name(options.outfile, hid, info);
+    auto filename = expand_name_and_case(options.outfile, hid, info);
     if (options.verbose) std::cout << "Writing " << filename << std::endl;
     std::ofstream out(filename.c_str());
     out << *data;

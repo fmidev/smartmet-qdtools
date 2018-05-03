@@ -722,6 +722,8 @@ FmiParameterName opera_name_to_newbase(const std::string &product,
       return kFmiRadialVelocity;
     else if (quantity == "WRAD" || quantity == "W")  // W is used by Latvians
       return kFmiSpectralWidth;
+    else if (quantity == "RATE")
+      return kFmiPrecipitationRate;
   }
   else if (product == "ETOP")
   {

@@ -1836,7 +1836,7 @@ std::string join(const std::set<std::string> &strings, const std::string &separa
 
 // ----------------------------------------------------------------------
 /*!
- * \brief Generate final outfile name
+ * \brief Expand a name based on HDF5 contents
  *
  * Patterns substituted:
  *
@@ -1854,48 +1854,48 @@ std::string join(const std::set<std::string> &strings, const std::string &separa
  */
 // ----------------------------------------------------------------------
 
-std::string make_filename(const hid_t &hid, NFmiFastQueryInfo &info)
+std::string expand_name(const std::string &theName, const hid_t &hid, NFmiFastQueryInfo &info)
 {
-  auto filename = options.outfile;
-  if (filename.find("%ORIGINTIME") != std::string::npos)
+  auto name = theName;
+  if (name.find("%ORIGINTIME") != std::string::npos)
   {
     auto otime = info.OriginTime();
     std::string stime = otime.ToStr(kYYYYMMDDHHMM).CharPtr();
-    boost::replace_all(filename, "%ORIGINTIME", stime);
+    boost::replace_all(name, "%ORIGINTIME", stime);
   }
-  if (filename.find("%PRODUCT") != std::string::npos)
+  if (name.find("%PRODUCT") != std::string::npos)
   {
     auto tmp = join(collect_attributes(hid, "product"), "_");
-    boost::replace_all(filename, "%PRODUCT", tmp);
+    boost::replace_all(name, "%PRODUCT", tmp);
   }
-  if (filename.find("%QUANTITY") != std::string::npos)
+  if (name.find("%QUANTITY") != std::string::npos)
   {
     auto tmp = join(collect_attributes(hid, "quantity"), "_");
-    boost::replace_all(filename, "%QUANTITY", tmp);
+    boost::replace_all(name, "%QUANTITY", tmp);
   }
-  if (filename.find("%INTERVAL") != std::string::npos)
+  if (name.find("%INTERVAL") != std::string::npos)
   {
     auto interval = get_interval(hid);  // may be empty string too
-    boost::replace_all(filename, "%INTERVAL", interval);
+    boost::replace_all(name, "%INTERVAL", interval);
   }
 
   auto source_settings = get_source_settings(hid);
   for (const auto &name_value : source_settings)
   {
-    boost::replace_all(filename, "%" + name_value.first, name_value.second);
+    boost::replace_all(name, "%" + name_value.first, name_value.second);
   }
 
   // These must be done last
   if (options.lowercase)
   {
-    boost::algorithm::to_lower(filename);
+    boost::algorithm::to_lower(name);
   }
   if (options.uppercase)
   {
-    boost::algorithm::to_upper(filename);
+    boost::algorithm::to_upper(name);
   }
 
-  return filename;
+  return name;
 }
 
 // ----------------------------------------------------------------------
@@ -1940,7 +1940,8 @@ int run(int argc, char *argv[])
 
   if (data.get() == 0) throw std::runtime_error("Could not allocate memory for result data");
 
-  info.SetProducer(NFmiProducer(options.producernumber, options.producername));
+  info.SetProducer(
+      NFmiProducer(options.producernumber, expand_name(options.producername, hid, info)));
 
   copy_datasets(hid, info);
 
@@ -1961,7 +1962,7 @@ int run(int argc, char *argv[])
     std::cout << *data;
   else
   {
-    auto filename = make_filename(hid, info);
+    auto filename = expand_name(options.outfile, hid, info);
     if (options.verbose) std::cout << "Writing " << filename << std::endl;
     std::ofstream out(filename.c_str());
     out << *data;

@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 18.5.2
+Version: 18.5.3
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -189,6 +189,10 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu May  3 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.5.3-1.fmi
+- h5toqd now allows PCAPPI + RATE combination, output will be PrecipitationRate
+- h5toqd now recognizes %INTERVAL as a valid output filename pattern
+
 * Wed May  2 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.5.2-1.fmi
 - Repackaged since newbase NFmiEnumConverter ABI changed
 

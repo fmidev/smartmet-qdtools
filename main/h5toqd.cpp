@@ -631,6 +631,21 @@ boost::posix_time::ptime extract_valid_time(const hid_t &hid, int i)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Extract start time
+ */
+// ----------------------------------------------------------------------
+
+boost::posix_time::ptime extract_start_time(const hid_t &hid, int i)
+{
+  std::string name = dataset(i) + "/what";
+  auto strdate = get_attribute_value<std::string>(hid, name, "startdate");
+  auto strtime = get_attribute_value<std::string>(hid, name, "starttime");
+  auto stamp = (strdate + strtime).substr(0, 12);
+  return Fmi::TimeParser::parse(stamp);
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Create time descriptor for the HDF data
  */
 // ----------------------------------------------------------------------
@@ -1759,6 +1774,49 @@ std::map<std::string, std::string> get_source_settings(const hid_t &hid)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Establish product time interval string
+ */
+// ----------------------------------------------------------------------
+
+std::string get_interval(const hid_t &hid)
+{
+  try
+  {
+    const int n = count_datasets(hid);
+
+    // Extract all intervals
+
+    std::set<boost::posix_time::time_duration> intervals;
+
+    for (int i = 1; i <= n; i++)
+    {
+      auto starttime = extract_start_time(hid, i);
+      auto endtime = extract_valid_time(hid, i);
+      intervals.insert(endtime - starttime);
+    }
+
+    // The interval must be unique
+    if (intervals.empty() || intervals.size() > 1) return {};
+
+    // Interval must be nonzero. Negative is probably a data error, we handle it simultaenously.
+    auto interval = *intervals.begin();
+    auto seconds = interval.total_seconds();
+    if (seconds <= 0) return {};
+
+    // Format the interval
+    if (seconds % 3600 == 0) return std::to_string(seconds / 3600) + "h";
+    if (seconds % 60 == 0) return std::to_string(seconds / 60) + "m";
+    return std::to_string(seconds) + "s";
+  }
+  catch (...)
+  {
+    // Return empty string if required attributes are not available
+    return {};
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Join set of strings with a separator
  */
 // ----------------------------------------------------------------------
@@ -1790,6 +1848,7 @@ std::string join(const std::set<std::string> &strings, const std::string &separa
  *   - %ORG         - taken from "source" ORG component
  *   - %CTY         - taken from "source" CTY component
  *   - ... whatever is in the source setting
+ *   - %INTERVAL    - enddate,endtime - starttime,starttime or empty if not available or zero
  */
 // ----------------------------------------------------------------------
 
@@ -1811,6 +1870,11 @@ std::string make_filename(const hid_t &hid, NFmiFastQueryInfo &info)
   {
     auto tmp = join(collect_attributes(hid, "quantity"), "_");
     boost::replace_all(filename, "%QUANTITY", tmp);
+  }
+  if (filename.find("%INTERVAL") != std::string::npos)
+  {
+    auto interval = get_interval(hid);  // may be empty string too
+    boost::replace_all(filename, "%INTERVAL", interval);
   }
 
   auto source_settings = get_source_settings(hid);
@@ -1896,6 +1960,7 @@ int run(int argc, char *argv[])
   else
   {
     auto filename = make_filename(hid, info);
+    if (options.verbose) std::cout << "Writing " << filename << std::endl;
     std::ofstream out(filename.c_str());
     out << *data;
   }

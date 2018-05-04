@@ -2,8 +2,8 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 18.5.3
-Release: 3%{?dist}.fmi
+Version: 18.5.4
+Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -189,6 +189,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Fri May  4 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.5.4-1.fmi
+- For now gribtoqd and gribt2toqd error on flipped data only for stereographic projections
+
 * Thu May  3 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.5.3-3.fmi
 - h5toqd case options now have an effect on output filename only, not on producername
 

@@ -1884,7 +1884,8 @@ static NFmiArea *CreateLatlonArea(grib_handle *theGribHandle,
     // Fix BAM data which uses zero for both longitudes
     if (Lo1 == 0 && Lo2 == 0) Lo2 = 360;
 
-    check_jscan_direction(theGribHandle);
+    // Not needed:
+    // check_jscan_direction(theGribHandle);
 
     long iScansNegatively = 0;
     int iScansNegativelyStatus =
@@ -1942,7 +1943,8 @@ static NFmiArea *CreateRotatedLatlonArea(grib_handle *theGribHandle,
 
     if (Lo1 > Lo2) std::swap(Lo1, Lo2);
 
-    check_jscan_direction(theGribHandle);
+    // Not needed:
+    // check_jscan_direction(theGribHandle);
 
     NFmiPoint bottomleft(Lo1, FmiMin(La1, La2));
     NFmiPoint topright(Lo2, FmiMax(La1, La2));
@@ -1989,7 +1991,8 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
 
     if (status9 == 0 && status6 == 0 && status7 == 0 && status8 == 0)
     {
-      check_jscan_direction(theGribHandle);
+      // Not needed:
+      // check_jscan_direction(theGribHandle);
 
       NFmiPoint bottomLeft(Lo1, La1);
       NFmiPoint dummyTopRight(Lo1 + 5, La1 + 5);
@@ -2032,6 +2035,7 @@ static NFmiArea *CreatePolarStereographicArea(grib_handle *theGribHandle)
 
   if (!badLa1 && !badLo1 && !badLov && !badLad && !badNx && !badNy && !badDx && !badDy)
   {
+    // Has to be checked:
     check_jscan_direction(theGribHandle);
 
     NFmiPoint bottom_left(Lo1, La1);

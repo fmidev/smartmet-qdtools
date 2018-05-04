@@ -1329,7 +1329,8 @@ static NFmiArea *CreateLatlonArea(grib_handle *theGribHandle, bool doAtlanticFix
     int iScansNegativelyStatus =
         grib_get_long(theGribHandle, "iScansNegatively", &iScansNegatively);
 
-    check_jscan_direction(theGribHandle);
+    // Not needed:
+    // check_jscan_direction(theGribHandle);
 
     if (doAtlanticFix && Lo1 == 0 && (Lo2 < 0 || Lo2 > 350))
     {
@@ -1408,7 +1409,8 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
 
   else if (status1 == 0 && status2 == 0)
   {
-    check_jscan_direction(theGribHandle);
+    // Not needed:
+    // check_jscan_direction(theGribHandle);
 
     long nx = 0;
     long ny = 0;
@@ -1478,7 +1480,8 @@ static NFmiArea *CreatePolarStereographicArea(grib_handle *theGribHandle)
 
   if (!badLa1 && !badLo1 && !badLov && !usedBadLad && !badNx && !badNy && !badDx && !badDy)
   {
-    check_jscan_direction(theGribHandle);
+    // Has to be done, or corners should be recalculated:
+    // check_jscan_direction(theGribHandle);
 
     NFmiPoint bottom_left(Lo1, La1);
     NFmiPoint top_left_xy(0, 0);

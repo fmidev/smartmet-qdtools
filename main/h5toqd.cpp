@@ -263,19 +263,21 @@ T get_attribute_value(const hid_t &hid, const std::string &path, const std::stri
 
   bool is_array = (!dims.empty());
 
-  if (name == "prodpar" && options.prodparfix && is_array)
+  if (is_array)
   {
     // There was a bug in ODIM 2.2 radar data where prodpar is a vector whose
-    // last element was the actually desired value.
+    // last element was the actually desired value. Also, RaVaKe stores some
+    // scalars into one element vectors.
+
     std::vector<T> values;
     if (H5Lite::readVectorAttribute(hid, path, name, values) != 0)
       throw std::runtime_error("Failed to read vector attributes " + path + "/" + name);
+
     if (values.empty())
       throw std::runtime_error("Vector attribute " + path + "/" + name + " is empty");
-    return values.back();
-  }
-  else if (is_array)
-  {
+
+    if (options.prodparfix || values.size() == 1) return values.back();
+
     throw std::runtime_error("Expecting " + path + "/" + name +
                              " to be a scalar, not an array. Consider using --prodparfix");
   }

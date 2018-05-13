@@ -2,8 +2,8 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 18.5.4
-Release: 2%{?dist}.fmi
+Version: 18.5.12
+Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -24,7 +24,7 @@ BuildRequires: libpng-devel
 BuildRequires: smartmet-library-calculator-devel >= 18.5.2
 BuildRequires: smartmet-library-gis-devel >= 18.4.7
 BuildRequires: smartmet-library-imagine-devel >= 18.4.7
-BuildRequires: smartmet-library-macgyver-devel >= 18.4.7
+BuildRequires: smartmet-library-macgyver-devel >= 18.4.11
 BuildRequires: smartmet-library-newbase-devel >= 18.5.2
 BuildRequires: smartmet-library-smarttools-devel >= 18.5.2
 BuildRequires: smartmet-timezones
@@ -36,11 +36,11 @@ BuildRequires: gdal-devel >= 1.11.4
 BuildRequires: jasper-devel
 BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
-Requires: smartmet-timezones >= 18.4.3
+Requires: smartmet-timezones >= 18.5.9
 Requires: smartmet-library-calculator >= 18.5.2
 Requires: smartmet-library-gis >= 18.4.7
 Requires: smartmet-library-imagine >= 18.4.7
-Requires: smartmet-library-macgyver >= 18.4.7
+Requires: smartmet-library-macgyver >= 18.4.11
 Requires: smartmet-library-newbase >= 18.5.2
 Requires: smartmet-library-smarttools >= 18.5.2
 Requires: smartmet-library-spine
@@ -189,6 +189,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Sat May 12 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.5.12-1.fmi
+- gribtoqd -y is now deprecated and j-coordinate scan direction is detected automatically
+
 * Fri May  4 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.5.4-2.fmi
 - h5toqd now works for RaVaKe data which may store scalars into one element vectors
 

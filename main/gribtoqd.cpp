@@ -41,6 +41,14 @@
 
 using namespace std;
 
+bool jscan_is_negative(grib_handle *theGribHandle)
+{
+  long direction = 0;
+  int status = grib_get_long(theGribHandle, "jScansPositively", &direction);
+  if (status != 0) return false;
+  return (direction == 0);
+}
+
 void check_jscan_direction(grib_handle *theGribHandle)
 {
   long direction = 0;
@@ -48,7 +56,6 @@ void check_jscan_direction(grib_handle *theGribHandle)
   if (status != 0) return;
   if (direction == 0)
     throw std::runtime_error("GRIBs with a negative j-scan direction are not supported");
-  return;
 }
 
 // template<typename T>
@@ -3321,6 +3328,9 @@ void ConvertGrib2QData(GribFilterOptions &theGribFilterOptions)
 
       if (theGribFilterOptions.fVerbose) cerr << counter << " ";
       GridRecordData *tmpData = new GridRecordData;
+
+      theGribFilterOptions.fDoYAxisFlip = jscan_is_negative(gribHandle);
+
       tmpData->itsLatlonCropRect = theGribFilterOptions.itsLatlonCropRect;
       try
       {
@@ -4798,7 +4808,6 @@ void Usage(void)
        << "\t-n   Names output files by level type. E.g. output.sqd_levelType_100" << endl
        << "\t-t   Reports run-time to the stderr at the end of execution" << endl
        << "\t-v   verbose mode" << endl
-       << "\t-y   do y-axis flip" << endl
        << "\t-C   try to combine larger areas" << endl
        << "\t-z   read data lines in zig-zag fashion, starting left to rigth" << endl
        << "\t-i   Ignore reduced_ll data, keep using grib_api for conversion" << endl
@@ -4952,7 +4961,12 @@ static int GetOptions(NFmiCmdLine &theCmdLine, GribFilterOptions &theGribFilterO
         "the "
         "same time");
 
-  if (theCmdLine.isOption('y')) theGribFilterOptions.fDoYAxisFlip = true;
+  if (theCmdLine.isOption('y'))
+  {
+    std::cerr << "Warning: Option -y is deprecated. The need to flip grib data is now detected "
+                 "automatically from 'jScansPositively' setting"
+              << std::endl;
+  }
 
   if (theCmdLine.isOption('S')) theGribFilterOptions.fDoLeftRightSwap = true;
 

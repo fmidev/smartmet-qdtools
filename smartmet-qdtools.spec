@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 18.5.12
+Version: 18.5.16
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -189,6 +189,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed May 16 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.5.16-1.fmi
+- Added option qdcrop -n for renaming parameters
+
 * Sat May 12 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.5.12-1.fmi
 - gribtoqd -y is now deprecated and j-coordinate scan direction is detected automatically
 

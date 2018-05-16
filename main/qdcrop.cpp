@@ -57,6 +57,10 @@
  * Define parameters to be kept, but so that the values for all timesteps
  * will be copied from the origintime.
  * </dd>
+ * <dt>-n [oldparam1,newid1,newname1,,oldparam2,newid2,newname2,...]</dt>
+ * <dd>
+ * Rename parameters using either numbers of names.
+ * </dd>
  * <dt>-l [level1,level2,...]</dt>
  * <dd>
  * Define the levels to be extracted. Normally all levels will be
@@ -190,6 +194,10 @@ void usage()
        << "-A <param1,param2,...,paramN>" << endl
        << endl
        << "\tThe parameters to be copied from the origin time to all timesteps." << endl
+       << endl
+       << "-n <oldparam1,newid1,newname1,oldparam2,newid2,newname2,...>" << endl
+       << endl
+       << "\tRename parameters using either numbers of names." << endl
        << endl
        << "-l <level1,level2,...,levelN>" << endl
        << endl
@@ -550,6 +558,7 @@ NFmiVPlaceDescriptor MakeVPlaceDescriptor(NFmiFastQueryInfo& theQ, const list<in
  * \param theDelParams The parameters to delete
  * \param theNewParams The parameters to be added to the data
  * \param theAnalysisParams The analysis parameters to extracted
+ * \param TheRenamedParams The parameter rename rules
  * \return The new descriptor
  */
 // ----------------------------------------------------------------------
@@ -569,6 +578,7 @@ NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo& theQ,
       FmiParameterName paramnum = parse_param(*it);
       if (!theQ.Param(paramnum))
         throw runtime_error("Source data does not contain parameter " + *it);
+
       pbag.Add(theQ.Param());
     }
   }
@@ -1157,6 +1167,7 @@ int run(int argc, const char* argv[])
   vector<string> opt_delparameters;       // the parameters to remove
   vector<string> opt_newparameters;       // the parameters to be added
   vector<string> opt_analysisparameters;  // the parameters to be extracted from origin time
+  vector<string> opt_renamedparameters;   // the parameter rename commands
   set<int> opt_stations;                  // the stations to extract
   set<int> opt_nostations;                // the stations to remove
   list<int> opt_levels;                   // the levels to extract
@@ -1181,7 +1192,7 @@ int run(int argc, const char* argv[])
 
   // Read command line arguments
 
-  NFmiCmdLine cmdline(argc, argv, "hVg!G!P!p!r!a!A!l!t!T!d!w!W!i!I!z!Z!S!m!M!R");
+  NFmiCmdLine cmdline(argc, argv, "hVg!G!P!p!r!a!A!l!t!T!d!w!W!i!I!z!Z!S!m!M!Rn!");
   if (cmdline.Status().IsError()) throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
 
   // help option must be checked before checking the number
@@ -1229,6 +1240,13 @@ int run(int argc, const char* argv[])
 
   if (cmdline.isOption('A'))
     opt_analysisparameters = NFmiStringTools::Split(cmdline.OptionValue('A'));
+
+  if (cmdline.isOption('n'))
+  {
+    opt_renamedparameters = NFmiStringTools::Split(cmdline.OptionValue('n'));
+    if (opt_renamedparameters.size() % 3 != 0)
+      throw runtime_error("Option -n argument list must have 3 elements for each rename task");
+  }
 
   if (cmdline.isOption('l'))
     opt_levels = NFmiStringTools::Split<list<int> >(cmdline.OptionValue('l'));
@@ -1458,7 +1476,29 @@ int run(int argc, const char* argv[])
     }
   }
 
-  // finish up by printing the result
+  // Perform parameter replacements
+
+  if (!opt_renamedparameters.empty())
+  {
+    // Manipulate querydata directly
+    NFmiQueryInfo* realinfo = data->Info();
+
+    for (std::size_t i = 0; i < opt_renamedparameters.size(); i += 3)
+    {
+      FmiParameterName oldparam = parse_param(opt_renamedparameters[i]);
+      FmiParameterName newparam = parse_param(opt_renamedparameters[i + 1]);
+      auto newname = opt_renamedparameters[i + 2];
+
+      if (!realinfo->Param(oldparam))
+        throw runtime_error("No parameter " + opt_renamedparameters[i] + " to rename in the data");
+
+      NFmiDataIdent newident(
+          realinfo->Param());  // default values for attributes from old parameter
+      newident.GetParam()->SetIdent(newparam);
+      newident.GetParam()->SetName(newname);
+      realinfo->Param() = newident;
+    }
+  }
 
   data->Write(opt_outfile);
 

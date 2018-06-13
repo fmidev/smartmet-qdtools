@@ -56,6 +56,7 @@ struct Options
   bool prodparfix = false;              // --prodparfix
   bool lowercase = false;               // --lowercase
   bool uppercase = false;               // --uppercase
+  bool startepochs = false;             // --startepochs
   std::string projection;               // -P --projection
   std::string infile = "-";             // -i --infile
   std::string outfile = "-";            // -o --outfile
@@ -95,7 +96,8 @@ bool parse_options(int argc, char *argv[])
       "datasetname", po::value(&options.datasetname), "dataset name prefix (default=dataset)")(
       "producer,p", po::value(&producerinfo), "producer number,name")(
       "producernumber", po::value(&options.producernumber), "producer number (default: 1014)")(
-      "producername", po::value(&options.producername), "producer name (default: RADAR)");
+      "producername", po::value(&options.producername), "producer name (default: RADAR)")(
+      "startepochs", po::bool_switch(&options.startepochs), "store HDF5 startepochs as the valid time");
   // clang-format on
 
   po::positional_options_description p;
@@ -109,7 +111,7 @@ bool parse_options(int argc, char *argv[])
 
   if (opt.count("version") != 0)
   {
-    std::cout << "h52qd v1.2 (" << __DATE__ << ' ' << __TIME__ << ')' << std::endl;
+    std::cout << "h52qd v1.3 (" << __DATE__ << ' ' << __TIME__ << ')' << std::endl;
   }
 
   if (opt.count("help"))
@@ -603,7 +605,24 @@ boost::posix_time::ptime extract_origin_time(const hid_t &hid)
 
 boost::posix_time::ptime extract_valid_time(const hid_t &hid, int i)
 {
-  std::string name = dataset(i) + "/what", strdate, strtime;
+  if (options.startepochs)
+  {
+    std::string name = dataset(i) + "/how";
+    try
+    {
+      double epochs = get_attribute_value<double>(hid, name, "startepochs");
+      std::time_t t = static_cast<std::time_t>(epochs);
+      return boost::posix_time::from_time_t(t);
+    }
+    catch (...)
+    {
+      // continue without startepochs setting
+    }
+  }
+
+  std::string name = dataset(i) + "/what";
+  std::string strdate;
+  std::string strtime;
   try
   {
     strdate = get_attribute_value<std::string>(hid, name, "enddate");
@@ -627,6 +646,10 @@ boost::posix_time::ptime extract_valid_time(const hid_t &hid, int i)
   std::string stamp = (strdate + strtime).substr(0, 12);
 
   boost::posix_time::ptime t = Fmi::TimeParser::parse(stamp);
+
+  if (!options.startepochs) return t;
+
+  // Check whether we must extract an interval
 
   return t;
 }

@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 18.5.16
+Version: 18.6.13
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -189,6 +189,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Jun 13 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.6.13-1.fmi
+- Added option h5toqd --startepochs to use the interval start time as the valid time
+
 * Wed May 16 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.5.16-1.fmi
 - Added option qdcrop -n for renaming parameters
 

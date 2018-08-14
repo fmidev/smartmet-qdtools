@@ -611,11 +611,12 @@ bool message_is_significant(const Message &msg)
  */
 // ----------------------------------------------------------------------
 
+static bool replicating = false;    // set to true if FLAG_CLASS31 is encountered
+
 void append_message(Messages &messages, BUFR_Dataset *dts, BUFR_Tables *tables)
 {
   int nsubsets = bufr_count_datasubset(dts);
 
-  bool replicating = false;    // set to true if FLAG_CLASS31 is encountered
   int replication_count = -1;  // value of that descriptor
   int replicating_desc = -1;   // the id of the descriptor following above
   Message replicated_message;  // the message when replication starts
@@ -670,7 +671,8 @@ void append_message(Messages &messages, BUFR_Dataset *dts, BUFR_Tables *tables)
       {
         if (!message.empty() && message_looks_valid(message))
         {
-          if (message_is_significant(message)) messages.push_back(message);
+          if (message_is_significant(message))
+            messages.push_back(message);
         }
 
         message = replicated_message;
@@ -887,6 +889,9 @@ std::pair<BufrDataCategory, Messages> read_messages(const std::list<std::string>
 
   BOOST_FOREACH (const std::string &file, files)
   {
+    // Reset for each file
+    replicating = false;
+    
     try
     {
       read_message(file, messages, file_tables, tables_list, datacategories);
@@ -1032,12 +1037,12 @@ NameMap read_bufr_config()
 
 NFmiAviationStationInfoSystem read_station_csv()
 {
+  if (options.verbose) std::cout << "Reading " << options.stationsfile << std::endl;
+
   bool wmostations = true;
   NFmiAviationStationInfoSystem stations(wmostations, options.verbose);
 
   if (options.stationsfile.empty()) return stations;
-
-  if (options.verbose) std::cout << "Reading " << options.stationsfile << std::endl;
 
   stations.InitFromMasterTableCsv(options.stationsfile);
 
@@ -1946,6 +1951,7 @@ int run(int argc, char *argv[])
   // Build a list of all parameter names
 
   std::set<std::string> names = collect_names(messages);
+
   NameMap namemap = map_names(names, parammap);
 
   // Build the querydata descriptors from the file names etc

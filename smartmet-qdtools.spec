@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 18.6.14
+Version: 18.8.22
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -22,9 +22,9 @@ BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: smartmet-library-calculator-devel >= 18.8.1
-BuildRequires: smartmet-library-gis-devel >= 18.8.2
+BuildRequires: smartmet-library-gis-devel >= 18.8.15
 BuildRequires: smartmet-library-imagine-devel >= 18.7.26
-BuildRequires: smartmet-library-macgyver-devel >= 18.8.4
+BuildRequires: smartmet-library-macgyver-devel >= 18.8.20
 BuildRequires: smartmet-library-newbase-devel >= 18.8.6
 BuildRequires: smartmet-library-smarttools-devel >= 18.5.2
 BuildRequires: smartmet-timezones
@@ -38,9 +38,9 @@ BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
 Requires: smartmet-timezones >= 18.5.9
 Requires: smartmet-library-calculator >= 18.8.1
-Requires: smartmet-library-gis >= 18.8.2
+Requires: smartmet-library-gis >= 18.8.15
 Requires: smartmet-library-imagine >= 18.7.26
-Requires: smartmet-library-macgyver >= 18.8.4
+Requires: smartmet-library-macgyver >= 18.8.20
 Requires: smartmet-library-newbase >= 18.8.6
 Requires: smartmet-library-smarttools >= 18.5.2
 Requires: smartmet-library-spine
@@ -189,6 +189,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Aug 22 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.8.22-1.fmi
+- Fixed typo in bufrtoqd help text
+
 * Tue Aug 14 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.6.14-1.fmi
 - Fixed bufr replication flag to be persistent across messages in a single file
 

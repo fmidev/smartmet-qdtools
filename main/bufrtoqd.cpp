@@ -611,7 +611,7 @@ bool message_is_significant(const Message &msg)
  */
 // ----------------------------------------------------------------------
 
-static bool replicating = false;    // set to true if FLAG_CLASS31 is encountered
+static bool replicating = false;  // set to true if FLAG_CLASS31 is encountered
 
 void append_message(Messages &messages, BUFR_Dataset *dts, BUFR_Tables *tables)
 {
@@ -671,8 +671,7 @@ void append_message(Messages &messages, BUFR_Dataset *dts, BUFR_Tables *tables)
       {
         if (!message.empty() && message_looks_valid(message))
         {
-          if (message_is_significant(message))
-            messages.push_back(message);
+          if (message_is_significant(message)) messages.push_back(message);
         }
 
         message = replicated_message;
@@ -891,7 +890,7 @@ std::pair<BufrDataCategory, Messages> read_messages(const std::list<std::string>
   {
     // Reset for each file
     replicating = false;
-    
+
     try
     {
       read_message(file, messages, file_tables, tables_list, datacategories);
@@ -921,7 +920,7 @@ std::pair<BufrDataCategory, Messages> read_messages(const std::list<std::string>
       names.push_back(data_category_name(BufrDataCategory(tmp)));
     throw std::runtime_error("BURF messages contain multiple data categories (" +
                              boost::algorithm::join(names, ",") +
-                             "), plase use the -C or --category option to select one");
+                             "), please use the -C or --category option to select one");
   }
 
   if (options.verbose)

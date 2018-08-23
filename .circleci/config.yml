@@ -16,7 +16,7 @@ jobs:
           name: Install dependencies
           command: sudo yum-builddep -y *.spec 
       - run:
-          name: Make rpm
+          name: make rpm
           command: make rpm
       - run:
           name: Move artifacts

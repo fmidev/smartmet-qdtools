@@ -7,14 +7,11 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install SmartMet Open repository
-          command: sudo rpm -ivh https://download.fmi.fi/smartmet-open/rhel/7/x86_64/smartmet-open-release-17.9.28-1.el7.fmi.noarch.rpm
-      - run:
           name: Create local repo
           command: createrepo /home/rpmbuild/rpmbuild/RPMS/x86_64
       - run:
           name: Install dependencies
-          command: sudo yum-builddep -y *.spec 
+          command: sudo yum-builddep --disableexcludes=smartmet-open -y *.spec 
       - run:
           name: make rpm
           command: make rpm

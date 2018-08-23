@@ -8,7 +8,7 @@ jobs:
       - checkout
       - run:
           name: Install SmartMet Open repository
-          command: rpm -ivh sudo https://download.fmi.fi/smartmet-open/rhel/7/x86_64/smartmet-open-release-17.9.28-1.el7.fmi.noarch.rpm
+          command: sudo rpm -ivh https://download.fmi.fi/smartmet-open/rhel/7/x86_64/smartmet-open-release-17.9.28-1.el7.fmi.noarch.rpm
       - run:
           name: Create local repo
           command: createrepo /home/rpmbuild/rpmbuild/RPMS/x86_64

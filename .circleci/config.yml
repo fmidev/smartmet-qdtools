@@ -1,0 +1,25 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: fmidev/rpmbuild:el7
+        entrypoint: bash
+    steps:
+      - checkout
+      - run:
+          name: Install SmartMet Open repository
+          command: rpm -ivh sudo https://download.fmi.fi/smartmet-open/rhel/7/x86_64/smartmet-open-release-17.9.28-1.el7.fmi.noarch.rpm
+      - run:
+          name: Create local repo
+          command: createrepo /home/rpmbuild/rpmbuild/RPMS/x86_64
+      - run:
+          name: Install dependencies
+          command: sudo yum-builddep -y *.spec 
+      - run:
+          name: Make rpm
+          command: make rpm
+      - run:
+          name: Move artifacts
+          command: sudo cp -av /home/rpmbuild/rpmbuild/RPMS /
+      - store_artifacts:
+          path: /RPMS

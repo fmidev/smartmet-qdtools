@@ -28,7 +28,6 @@ BuildRequires: smartmet-library-macgyver-devel >= 18.8.20
 BuildRequires: smartmet-library-newbase-devel >= 18.8.6
 BuildRequires: smartmet-library-smarttools-devel >= 18.5.2
 BuildRequires: smartmet-timezones
-BuildRequires: smartmet-library-spine-devel
 BuildRequires: mdsplib >= 16.4.8
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: zlib-devel
@@ -43,7 +42,6 @@ Requires: smartmet-library-imagine >= 18.7.26
 Requires: smartmet-library-macgyver >= 18.8.20
 Requires: smartmet-library-newbase >= 18.8.6
 Requires: smartmet-library-smarttools >= 18.5.2
-Requires: smartmet-library-spine
 Requires: eccodes
 Requires: hdf5 >= 1.8.12
 Requires: jasper-libs >= 1.900.1

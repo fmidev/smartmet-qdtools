@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 18.9.16
+Version: 18.11.13
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -21,12 +21,12 @@ BuildRequires: libbufr >= 3.2
 BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
-BuildRequires: smartmet-library-calculator-devel >= 18.9.16
-BuildRequires: smartmet-library-gis-devel >= 18.9.16
+BuildRequires: smartmet-library-calculator-devel >= 18.10.1
+BuildRequires: smartmet-library-gis-devel >= 18.9.29
 BuildRequires: smartmet-library-imagine-devel >= 18.7.26
-BuildRequires: smartmet-library-macgyver-devel >= 18.9.5
-BuildRequires: smartmet-library-newbase-devel >= 18.9.11
-BuildRequires: smartmet-library-smarttools-devel >= 18.5.2
+BuildRequires: smartmet-library-macgyver-devel >= 18.11.12
+BuildRequires: smartmet-library-newbase-devel >= 18.10.23
+BuildRequires: smartmet-library-smarttools-devel >= 18.10.1
 BuildRequires: smartmet-timezones
 BuildRequires: smartmet-library-spine-devel
 BuildRequires: mdsplib >= 16.4.8
@@ -36,13 +36,13 @@ BuildRequires: gdal-devel >= 1.11.4
 BuildRequires: jasper-devel
 BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
-Requires: smartmet-timezones >= 18.9.10
-Requires: smartmet-library-calculator >= 18.9.16
-Requires: smartmet-library-gis >= 18.9.16
+Requires: smartmet-timezones >= 18.11.8
+Requires: smartmet-library-calculator >= 18.10.1
+Requires: smartmet-library-gis >= 18.9.29
 Requires: smartmet-library-imagine >= 18.7.26
-Requires: smartmet-library-macgyver >= 18.9.5
-Requires: smartmet-library-newbase >= 18.9.11
-Requires: smartmet-library-smarttools >= 18.5.2
+Requires: smartmet-library-macgyver >= 18.11.12
+Requires: smartmet-library-newbase >= 18.10.23
+Requires: smartmet-library-smarttools >= 18.10.1
 Requires: smartmet-library-spine
 Requires: eccodes
 Requires: hdf5 >= 1.8.12
@@ -189,6 +189,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Nov 13 2018 Pertti Kinnia <pertti.kinnia@fmi.fi> - 18.11.13-1.fmi
+- Adjust invalid NFmiMetTime timestamps (stepped forward to nonexistent date, e.g. 31.9) to 1'st day of next month
+
 * Sun Sep 16 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.9.16-1.fmi
 - Repackaged since calculator library API changed
 

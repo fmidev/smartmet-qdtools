@@ -67,6 +67,8 @@ This file is part of libECBUFR.
 #include <stdexcept>
 #include <string>
 
+#include <prettyprint.hpp>
+
 extern "C"
 {
 #include <bufr_api.h>
@@ -467,6 +469,12 @@ struct record
 
   record() : name(), units(), value(std::numeric_limits<double>::quiet_NaN()), svalue() {}
 };
+
+std::ostream &operator<<(std::ostream &out, const record &rec)
+{
+  out << rec.name << "=" << rec.svalue << " (" << rec.value << ") " << rec.units;
+  return out;
+}
 
 typedef std::map<int, record> Message;
 typedef std::list<Message> Messages;
@@ -1402,24 +1410,37 @@ NFmiHPlaceDescriptor create_hdesc(const Messages &messages,
 
 NFmiMetTime get_validtime(const Message &msg)
 {
-  Message::const_iterator yy = msg.find(4001);
-  Message::const_iterator mm = msg.find(4002);
-  Message::const_iterator dd = msg.find(4003);
-  Message::const_iterator hh = msg.find(4004);
-  Message::const_iterator mi = msg.find(4005);
+  Message::const_iterator yy_i = msg.find(4001);
+  Message::const_iterator mm_i = msg.find(4002);
+  Message::const_iterator dd_i = msg.find(4003);
+  Message::const_iterator hh_i = msg.find(4004);
+  Message::const_iterator mi_i = msg.find(4005);
 
-  if (yy == msg.end() || mm == msg.end() || dd == msg.end() || hh == msg.end() || mi == msg.end())
+  if (yy_i == msg.end() || mm_i == msg.end() || dd_i == msg.end() || hh_i == msg.end() ||
+      mi_i == msg.end())
     throw std::runtime_error("Message does not contain all required date/time fields");
+
+  auto yy = yy_i->second.value;
+  auto mm = mm_i->second.value;
+  auto dd = dd_i->second.value;
+  auto hh = hh_i->second.value;
+  auto mi = mi_i->second.value;
 
   const int timeresolution = 1;
 
-  return NFmiMetTime(static_cast<short>(yy->second.value),
-                     static_cast<short>(mm->second.value),
-                     static_cast<short>(dd->second.value),
-                     static_cast<short>(hh->second.value),
-                     static_cast<short>(mi->second.value),
-                     0,
-                     timeresolution);
+  NFmiMetTime t(static_cast<short>(yy),
+                static_cast<short>(mm),
+                static_cast<short>(dd),
+                static_cast<short>(hh),
+                static_cast<short>(mi),
+                0,
+                timeresolution);
+
+  if (yy < 1900 || mm < 1 || mm > 12 || dd < 1 || dd > 31 || hh < 0 || hh > 23 || mi < 0 ||
+      mi > 60 || dd > t.DaysInMonth(mm, yy))
+    throw std::runtime_error("Message contains a date whose components are out of range");
+
+  return t;
 }
 
 // ----------------------------------------------------------------------
@@ -1549,7 +1570,16 @@ NFmiTimeDescriptor create_tdesc(const Messages &messages, BufrDataCategory categ
 
   std::set<NFmiMetTime> validtimes;
   BOOST_FOREACH (const Message &msg, messages)
-    validtimes.insert(get_validtime(msg));
+  {
+    try
+    {
+      validtimes.insert(get_validtime(msg));
+    }
+    catch (const std::exception &e)
+    {
+      std::cerr << "Skipping errorneous valid time: " << e.what() << std::endl;
+    }
+  }
 
   NFmiTimeList tlist;
   BOOST_FOREACH (const NFmiMetTime &t, validtimes)
@@ -1624,23 +1654,29 @@ void copy_records_sounding(NFmiFastQueryInfo &info,
 
   BOOST_FOREACH (const Message &msg, messages)
   {
-    if (!info.Time(get_validtime(msg)))
-      throw std::runtime_error("Internal error in handling valid times of the messages");
-
-    NFmiStation station = get_station(msg);
-
-    // We ignore stations with invalid coordinates
-    if (!info.Location(station.GetIdent())) continue;
-
-    if (laststation != station)
+    try
     {
-      info.ResetLevel();
-      laststation = station;
+      if (!info.Time(get_validtime(msg)))
+        throw std::runtime_error("Internal error in copying soundings");
+
+      NFmiStation station = get_station(msg);
+
+      // We ignore stations with invalid coordinates
+      if (!info.Location(station.GetIdent())) continue;
+
+      if (laststation != station)
+      {
+        info.ResetLevel();
+        laststation = station;
+      }
+
+      if (!info.NextLevel()) throw std::runtime_error("Changing to next level failed");
+
+      copy_params(info, msg, namemap);
     }
-
-    if (!info.NextLevel()) throw std::runtime_error("Changing to next level failed");
-
-    copy_params(info, msg, namemap);
+    catch (...)
+    {
+    }
   }
 }
 
@@ -1828,15 +1864,21 @@ void copy_records(NFmiFastQueryInfo &info,
 
   BOOST_FOREACH (const Message &msg, messages)
   {
-    if (!info.Time(get_validtime(msg)))
-      throw std::runtime_error("Internal error in handling valid times of the messages");
+    try
+    {
+      if (!info.Time(get_validtime(msg)))
+        throw std::runtime_error("Internal error in handling valid times of the messages");
 
-    NFmiStation station = get_station(msg);
+      NFmiStation station = get_station(msg);
 
-    // We ignore stations with bad coordinates
-    if (!info.Location(station.GetIdent())) continue;
+      // We ignore stations with bad coordinates
+      if (!info.Location(station.GetIdent())) continue;
 
-    copy_params(info, msg, namemap);
+      copy_params(info, msg, namemap);
+    }
+    catch (...)
+    {
+    }
   }
 }
 
@@ -1958,6 +2000,7 @@ int run(int argc, char *argv[])
   NFmiParamDescriptor pdesc = create_pdesc(namemap, category);
   NFmiVPlaceDescriptor vdesc = create_vdesc(messages, category);
   NFmiTimeDescriptor tdesc = create_tdesc(messages, category);
+
   NFmiHPlaceDescriptor hdesc = create_hdesc(messages, stations, category);
 
   // Initialize the data to missing values

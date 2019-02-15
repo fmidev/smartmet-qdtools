@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 19.2.7
+Version: 19.2.15
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -189,6 +189,10 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Fri Feb 15 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.2.15-1.fmi
+- h5toqd now has default filename replacements for "%PLC" etc, and the defaults can be modified from the command line
+- option -h now documents the available filename replacements
+
 * Thu Feb  7 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.2.7-1.fmi
 - Improved bufrtoqd error checking on bad message dates
 

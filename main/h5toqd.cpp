@@ -63,6 +63,12 @@ struct Options
   std::string datasetname = "dataset";  // --datasetname
   std::string producername = "RADAR";   // --producername
   long producernumber = 1014;           // --producernumber
+  std::string default_wmo;              // --default-wmo
+  std::string default_rad;              // --default-rad
+  std::string default_plc;              // --default-plc
+  std::string default_nod;              // --default-nod
+  std::string default_org;              // --default-org
+  std::string default_cty;              // --default-cty
 };
 
 Options options;
@@ -97,7 +103,13 @@ bool parse_options(int argc, char *argv[])
       "producer,p", po::value(&producerinfo), "producer number,name")(
       "producernumber", po::value(&options.producernumber), "producer number (default: 1014)")(
       "producername", po::value(&options.producername), "producer name (default: RADAR)")(
-      "startepochs", po::bool_switch(&options.startepochs), "store HDF5 startepochs as the valid time");
+      "startepochs", po::bool_switch(&options.startepochs), "store HDF5 startepochs as the valid time")(
+      "default-plc", po::value(&options.default_plc)->default_value("comp"), "default replacement for %PLC")(
+      "default-wmo", po::value(&options.default_wmo)->default_value("wmo"), "default replacement for %WMO")(
+      "default-rad", po::value(&options.default_rad)->default_value("rad"), "default replacement for %RAD")(
+      "default-nod", po::value(&options.default_nod)->default_value("nod"), "default replacement for %NOD")(
+      "default-org", po::value(&options.default_org)->default_value("org"), "default replacement for %ORG")(
+      "default-cty", po::value(&options.default_cty)->default_value("cty"), "default replacement for %CTY");
   // clang-format on
 
   po::positional_options_description p;
@@ -116,12 +128,31 @@ bool parse_options(int argc, char *argv[])
 
   if (opt.count("help"))
   {
-    std::cout << "Usage: h5toqd [options] infile outfile" << std::endl
-              << std::endl
-              << "Converts EUMETNET OPERA radar files to querydata." << std::endl
-              << "Only features in known use are supported." << std::endl
-              << std::endl
-              << desc << std::endl;
+    std::cout
+        << "Usage: h5toqd [options] infile outfile\n\n"
+           "Converts EUMETNET OPERA radar files to querydata.\n"
+           "Only features in known use are supported.\n\n"
+        << desc
+        << "\n"
+           "The output filename may contain the following strings, which will be replaced by\n"
+           "the respective settings according to ODIM specs:\n\n"
+           "   - %ORIGINTIME\n"
+           "   - %PRODUCT     - taken from product\n"
+           "   - %QUANTITY    - taken from quantity\n"
+           "   - %WMO         - taken from source WMO component (Opera v2.2 table 3)\n"
+           "   - %RAD         - taken from source RAD component\n"
+           "   - %PLC         - taken from source PLC component\n"
+           "   - %NOD         - taken from source NOD component\n"
+           "   - %ORG         - taken from source ORG component\n"
+           "   - %CTY         - taken from source CTY component\n"
+           "   - ... whatever is in the source setting\n"
+           "   - %INTERVAL    - enddate,endtime - starttime,starttime or empty if not available or "
+           "zero\n\n"
+           "If the ODIM setting is missing, a default replacement will be used for the most\n"
+           "important settings. The defaults can be changed using --default-plc and similar\n"
+           "options."
+        << std::endl;
+
     return false;
   }
 
@@ -1909,6 +1940,15 @@ std::string expand_name(const std::string &theName, const hid_t &hid, NFmiFastQu
   {
     boost::replace_all(name, "%" + name_value.first, name_value.second);
   }
+
+  // Finally make default changes if some ODIM settings are missing
+
+  boost::replace_all(name, "%WMO", options.default_wmo);
+  boost::replace_all(name, "%RAD", options.default_rad);
+  boost::replace_all(name, "%PLC", options.default_plc);
+  boost::replace_all(name, "%NOD", options.default_nod);
+  boost::replace_all(name, "%ORG", options.default_org);
+  boost::replace_all(name, "%CTY", options.default_cty);
 
   return name;
 }

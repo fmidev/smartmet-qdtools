@@ -17,6 +17,7 @@
 355,Precipitation6h,0,1000,linear,%.1f
 356,Precipitation12h,0,1000,linear,%.1f
 357,Precipitation24h,0,1000,linear,%.1f
+407,Visibility,0,32700,linear,%.0f
 416,MaximumWind,0,1000,linear,%.1f
 417,WindGust,0,1000,linear,%.1f
 427,DailyMeanTemperature,-300,1000,linear,%.1f

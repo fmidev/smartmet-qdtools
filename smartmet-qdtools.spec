@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 19.2.15
+Version: 19.2.20
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -25,7 +25,7 @@ BuildRequires: smartmet-library-calculator-devel >= 18.11.24
 BuildRequires: smartmet-library-gis-devel >= 18.12.10
 BuildRequires: smartmet-library-imagine-devel >= 18.11.24
 BuildRequires: smartmet-library-macgyver-devel >= 18.11.24
-BuildRequires: smartmet-library-newbase-devel >= 19.2.6
+BuildRequires: smartmet-library-newbase-devel >= 19.2.14
 BuildRequires: smartmet-library-smarttools-devel >= 18.10.1
 BuildRequires: smartmet-timezones
 BuildRequires: smartmet-library-spine-devel
@@ -41,7 +41,7 @@ Requires: smartmet-library-calculator >= 18.11.24
 Requires: smartmet-library-gis >= 18.12.10
 Requires: smartmet-library-imagine >= 18.11.24
 Requires: smartmet-library-macgyver >= 18.11.24
-Requires: smartmet-library-newbase >= 19.2.6
+Requires: smartmet-library-newbase >= 19.2.14
 Requires: smartmet-library-smarttools >= 18.10.1
 Requires: smartmet-library-spine
 Requires: eccodes
@@ -189,6 +189,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Feb 20 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.2.20-1.fmi
+- Added Visibility to parameters.csv
+
 * Fri Feb 15 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.2.15-1.fmi
 - h5toqd now has default filename replacements for "%PLC" etc, and the defaults can be modified from the command line
 - option -h now documents the available filename replacements

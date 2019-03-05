@@ -33,9 +33,16 @@ This file is part of libECBUFR.
                                            // warnings that e.g. MSVC++ 2012 generates
 #endif
 
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/erase.hpp>
+#include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/bind.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/foreach.hpp>
+#include <boost/program_options.hpp>
 #include <macgyver/CsvReader.h>
 #include <macgyver/StringConversion.h>
-
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiGlobals.h>
@@ -50,24 +57,11 @@ This file is part of libECBUFR.
 #include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiVPlaceDescriptor.h>
-
 #include <smarttools/NFmiAviationStationInfoSystem.h>
-
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/erase.hpp>
-#include <boost/algorithm/string/join.hpp>
-#include <boost/algorithm/string/split.hpp>
-#include <boost/bind.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <boost/foreach.hpp>
-#include <boost/program_options.hpp>
-
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <string>
-
-#include <prettyprint.hpp>
 
 extern "C"
 {

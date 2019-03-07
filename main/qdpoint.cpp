@@ -34,6 +34,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
+#include <gdal/ogr_geometry.h>
 #include <macgyver/StringConversion.h>
 #include <macgyver/WorldTimeZones.h>
 #include <newbase/NFmiCmdLine.h>
@@ -59,6 +60,9 @@ using namespace std;
 
 //! Must be one single global instance for speed, constructing is expensive
 static NFmiEnumConverter converter;
+
+// WGS84 to FMI sphere conversion
+std::unique_ptr<OGRCoordinateTransformation> wgs84_to_latlon;
 
 // ----------------------------------------------------------------------
 // -l optiolla annetut sijainnit
@@ -208,6 +212,7 @@ bool parse_options(int argc, char* argv[])
       "places,p", po::value(&opt_places), "place name list")(
       "longitude,x", po::value(&options.longitude), "longitude")(
       "latitude,y", po::value(&options.latitude), "latitude")(
+      "wgs84", po::bool_switch(&options.wgs84), "coordinates are in WGS84")(
       "rows,n",
       po::value(&options.rows)->default_value(-1)->implicit_value(1),
       "number of data rows for each location")(
@@ -284,6 +289,29 @@ bool parse_options(int argc, char* argv[])
   options.params = NFmiStringTools::Split(opt_params);
   options.places = NFmiStringTools::Split(opt_places);
 
+  // Create WGS84 to latlon conversion only if necessary
+  if (options.wgs84)
+  {
+    std::unique_ptr<OGRSpatialReference> wgs84_crs;
+    std::unique_ptr<OGRSpatialReference> fmi_crs;
+
+    wgs84_crs.reset(new OGRSpatialReference);
+    OGRErr err = wgs84_crs->SetFromUserInput("+proj=longlat +ellps=WGS84 +towgs84=0,0,0");
+    if (err != OGRERR_NONE) throw std::runtime_error("Failed to setup WGS84 spatial reference");
+
+    // TODO: WGS84 center may be 100 meters off, according to Wikipedia. Perhaps should not have
+    // zeros here?
+    fmi_crs.reset(new OGRSpatialReference);
+    err = fmi_crs->SetFromUserInput("+proj=longlat +a=6371220 +b=6371220 +towgs84=0,0,0 +no_defs");
+    if (err != OGRERR_NONE)
+      throw std::runtime_error("Failed to setup FMI sphere spatial reference");
+
+    // copies crs's
+    wgs84_to_latlon.reset(OGRCreateCoordinateTransformation(wgs84_crs.get(), fmi_crs.get()));
+    if (!wgs84_to_latlon)
+      throw std::runtime_error("Failed to create WGS84 to FMI Sphere coordinate conversion");
+  }
+
   return true;
 }
 
@@ -294,6 +322,27 @@ bool parse_options(int argc, char* argv[])
 bool IsBad(const NFmiPoint& thePoint)
 {
   return (thePoint.X() == kFloatMissing || thePoint.Y() == kFloatMissing);
+}
+
+// ----------------------------------------------------------------------
+// Convert from WGS84 to FMi Sphere if necessary
+// ----------------------------------------------------------------------
+
+NFmiPoint FixCoordinate(const NFmiPoint& thePoint)
+{
+  if (!options.wgs84) return thePoint;
+
+  double x = thePoint.X();
+  double y = thePoint.Y();
+  if (!wgs84_to_latlon->Transform(1, &x, &y))
+    throw std::runtime_error("Failed to transform input coordinate from WGS84 to FMI Sphere");
+
+  if (options.verbose)
+    std::cout << "# Converted from " << thePoint.X() << "," << thePoint.Y() << " to " << x << ","
+              << y << " distance = "
+              << NFmiGeoTools::GeoDistance(thePoint.X(), thePoint.Y(), x, y) / 1000 << " km\n";
+
+  return NFmiPoint(x, y);
 }
 
 // ----------------------------------------------------------------------
@@ -1360,7 +1409,7 @@ int run(int argc, char* argv[])
 
       if (!qi->Location(*iter)) continue;
 
-      NFmiPoint lonlat = qi->Location()->GetLocation();
+      NFmiPoint lonlat = FixCoordinate(qi->Location()->GetLocation());
 
       if (options.rows < 0)
       {
@@ -1401,7 +1450,7 @@ int run(int argc, char* argv[])
     for (LocationList::const_iterator it = options.locations.begin(); it != options.locations.end();
          ++it)
     {
-      NFmiPoint lonlat = it->latlon;
+      NFmiPoint lonlat = FixCoordinate(it->latlon);
       try
       {
         qmgr.setpoint(lonlat, 1000 * options.max_distance);
@@ -1451,7 +1500,7 @@ int run(int argc, char* argv[])
     {
       if (places.size() > 1) cout << "Location: " << it->first << endl;
 
-      NFmiPoint lonlat = it->second;
+      NFmiPoint lonlat = FixCoordinate(it->second);
       try
       {
         qmgr.setpoint(lonlat, 1000 * options.max_distance);

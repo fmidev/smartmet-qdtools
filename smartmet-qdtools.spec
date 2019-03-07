@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 19.2.20
+Version: 19.3.7
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -189,6 +189,9 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Mar  7 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.3.7-1.fmi
+- Added qdpoint --wgs84 option
+
 * Wed Feb 20 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.2.20-1.fmi
 - Added Visibility to parameters.csv
 

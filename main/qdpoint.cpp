@@ -122,72 +122,36 @@ LocationList read_locationlist(const string& theFile)
 
 struct Options
 {
-  Options();
-
-  bool verbose;
-  string timezonefile;
-  string timezone;
-  string queryfile;
-  string coordinatefile;
-  double longitude;
-  double latitude;
-  int rows;
-  int max_missing_gap;
+  bool verbose = false;
+  string timezonefile = NFmiSettings::Optional<string>(
+      "qdpoint::tzfile", "/usr/share/smartmet/timezones/timezone.shz");
+  string timezone = NFmiSettings::Optional<string>("qdpoint::timezone", "local");
+  string queryfile = NFmiSettings::Optional<string>("qdpoint::querydata_file", "");
+  string coordinatefile = NFmiSettings::Optional<string>("qdpoint::coordinates",
+                                                         "/smartmet/share/coordinates/default.txt");
+  double longitude = kFloatMissing;
+  double latitude = kFloatMissing;
+  int rows = -1;
+  int max_missing_gap = -1;
   vector<string> params;
   vector<string> places;
   vector<int> stations;
-  bool all_stations;
-  bool list_stations;
-  bool force;
-  bool validate;
-  bool future;
-  bool multimode;
-  double max_distance;
-  int nearest_stations;
-  string locationfile;
+  bool all_stations = false;
+  bool list_stations = false;
+  bool force = false;
+  bool validate = false;
+  bool future = false;
+  bool multimode = false;
+  bool wgs84 = false;
+  double max_distance = 100;  // km
+  int nearest_stations = 1;
+  string locationfile = "";
   LocationList locations;
-  string missingvalue;
+  string missingvalue = "-";
   string uid;
 };
 
 Options options;
-
-// ----------------------------------------------------------------------
-/*!
- * \brief Default options
- */
-// ----------------------------------------------------------------------
-
-Options::Options()
-    : verbose(false),
-      timezonefile(NFmiSettings::Optional<string>("qdpoint::tzfile",
-                                                  "/usr/share/smartmet/timezones/timezone.shz")),
-      timezone(NFmiSettings::Optional<string>("qdpoint::timezone", "local")),
-      queryfile(NFmiSettings::Optional<string>("qdpoint::querydata_file", "")),
-      coordinatefile(NFmiSettings::Optional<string>("qdpoint::coordinates",
-                                                    "/smartmet/share/coordinates/default.txt")),
-      longitude(kFloatMissing),
-      latitude(kFloatMissing),
-      rows(-1),
-      max_missing_gap(-1),
-      params(),
-      places(),
-      stations(),
-      all_stations(false),
-      list_stations(false),
-      force(false),
-      validate(false),
-      future(false),
-      multimode(false),
-      max_distance(100)  // km
-      ,
-      nearest_stations(1),
-      locationfile(""),
-      locations(),
-      missingvalue("-"),
-      uid()
-{
-}
 
 // ----------------------------------------------------------------------
 /*!

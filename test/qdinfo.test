@@ -17,12 +17,6 @@ DoTest("option -q fails",
        "option_q_fails",
        "-q foobar");
 
-# option -l
-
-DoTest("option -l",
-       "option_l",
-       "-l");
-
 # option -v
 
 DoTest("option -v for point data",

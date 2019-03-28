@@ -84,12 +84,9 @@
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileString.h>
 #include <newbase/NFmiFileSystem.h>
-#include <newbase/NFmiGnomonicArea.h>
 #include <newbase/NFmiGrid.h>
 #include <newbase/NFmiKKJArea.h>
 #include <newbase/NFmiLatLonArea.h>
-#include <newbase/NFmiMercatorArea.h>
-#include <newbase/NFmiPKJArea.h>
 #include <newbase/NFmiRotatedLatLonArea.h>
 #include <newbase/NFmiSettings.h>
 #include <newbase/NFmiStereographicArea.h>
@@ -590,7 +587,9 @@ void ReportProjection(NFmiFastQueryInfo *q)
   switch (classid)
   {
     case kNFmiEquiDistArea:
+#ifdef WGS84
     case kNFmiGnomonicArea:
+#endif
     case kNFmiStereographicArea:
 #if 0
 	case kNFmiPerspectiveArea:
@@ -614,7 +613,9 @@ void ReportProjection(NFmiFastQueryInfo *q)
       break;
     }
     case kNFmiKKJArea:
+#ifdef WGS84
     case kNFmiPKJArea:
+#endif
     case kNFmiYKJArea:
     {
       break;
@@ -626,12 +627,14 @@ void ReportProjection(NFmiFastQueryInfo *q)
       cout << "xscale\t\t= " << a->XScale() << endl << "yscale\t\t= " << a->YScale() << endl;
       break;
     }
+#ifdef WGS84
     case kNFmiMercatorArea:
     {
       const NFmiMercatorArea *a = dynamic_cast<const NFmiMercatorArea *>(area);
       cout << "xscale\t\t= " << a->XScale() << endl << "yscale\t\t= " << a->YScale() << endl;
       break;
     }
+#endif
     default:
       cout << "The projection is unknown to qdinfo" << endl;
       break;

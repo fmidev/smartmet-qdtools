@@ -1,7 +1,11 @@
 // Example encoding program.
 
 #include "GribTools.h"
-
+#include <boost/filesystem/operations.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/optional.hpp>
+#include <boost/program_options.hpp>
+#include <macgyver/StringConversion.h>
 #include <newbase/NFmiArea.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiFastQueryInfo.h>
@@ -10,19 +14,10 @@
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiRotatedLatLonArea.h>
 #include <newbase/NFmiStereographicArea.h>
-
-#include <macgyver/StringConversion.h>
-
-#include <grib_api.h>
-
-#include <boost/filesystem/operations.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/optional.hpp>
-#include <boost/program_options.hpp>
-
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
+#include <grib_api.h>
 #include <map>
 #include <string>
 
@@ -683,15 +678,17 @@ static void set_geometry(NFmiFastQueryInfo &theInfo,
     case kNFmiStereographicArea:
       set_stereographic_geometry(theInfo, gribHandle, theValueArray);
       break;
+#ifdef WGS84
     case kNFmiMercatorArea:
       set_mercator_geometry(theInfo, gribHandle, theValueArray);
       break;
-    case kNFmiEquiDistArea:
-      throw std::runtime_error("Equidistant projection is not supported by GRIB");
     case kNFmiGnomonicArea:
       throw std::runtime_error("Gnomonic projection is not supported by GRIB");
     case kNFmiPKJArea:
       throw std::runtime_error("PKJ projection is not supported by GRIB");
+#endif
+    case kNFmiEquiDistArea:
+      throw std::runtime_error("Equidistant projection is not supported by GRIB");
     case kNFmiYKJArea:
       throw std::runtime_error("YKJ projection is not supported by GRIB");
     case kNFmiKKJArea:

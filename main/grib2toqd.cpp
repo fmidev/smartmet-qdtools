@@ -39,7 +39,10 @@
 #endif
 
 #include "GribTools.h"
-
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/thread.hpp>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiCommentStripper.h>
@@ -48,7 +51,6 @@
 #include <newbase/NFmiGrid.h>
 #include <newbase/NFmiInterpolation.h>
 #include <newbase/NFmiLatLonArea.h>
-#include <newbase/NFmiMercatorArea.h>
 #include <newbase/NFmiMilliSecondTimer.h>
 #include <newbase/NFmiQueryDataUtil.h>
 #include <newbase/NFmiRotatedLatLonArea.h>
@@ -59,15 +61,8 @@
 #include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiTotalWind.h>
 #include <newbase/NFmiValueString.h>
-
-#include <grib_api.h>
-
-#include <boost/foreach.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/thread.hpp>
-
 #include <functional>
+#include <grib_api.h>
 #include <iomanip>
 #include <set>
 #include <sstream>
@@ -153,8 +148,8 @@ struct GribFilterOptions
 
   string itsOutputFileName;  // -o optio tai sitten tulostetann cout:iin
   bool fUseOutputFile;
-  size_t itsMaxQDataSizeInBytes;     // default max koko 1 GB
-  int itsReturnStatus;               // 0 = ok
+  size_t itsMaxQDataSizeInBytes;  // default max koko 1 GB
+  int itsReturnStatus;            // 0 = ok
   NFmiLevelBag itsIgnoredLevelList;  // lista miss‰ yksitt‰isi‰ leveleit‰, mitk‰ halutaan j‰tt‰‰
                                      // pois laskuista
   vector<boost::shared_ptr<NFmiQueryData> > itsGeneratedDatas;
@@ -1391,6 +1386,7 @@ grib.");
 }
 */
 
+#ifdef WGS84
 static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
 {
   double La1 = 0;
@@ -1442,6 +1438,7 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
   }
   throw runtime_error("Error: Unable to retrieve mercator-projection information from grib.");
 }
+#endif
 
 static NFmiArea *CreatePolarStereographicArea(grib_handle *theGribHandle)
 {
@@ -1572,12 +1569,14 @@ static void FillGridInfoFromGribHandle(grib_handle *theGribHandle,
       case 0:
         area = ::CreateLatlonArea(theGribHandle, doGlobeFix);
         break;
+#ifdef WGS84
       case 10:
         doGlobeFix = false;  // T‰m‰ doGlobeFix -systeemi on rakennettu v‰‰rin. Pit‰isi olla
                              // allowGlobeFix-optio ja t‰m‰ doGlobeFix olisi muuten false, paitsi
                              // jos allowGlobeFix=true ja latlon area, jossa 0-360-maailma.
         area = ::CreateMercatorArea(theGribHandle);
         break;
+#endif
       case 20:
         doGlobeFix = false;  // T‰m‰ doGlobeFix -systeemi on rakennettu v‰‰rin. Pit‰isi olla
                              // allowGlobeFix-optio ja t‰m‰ doGlobeFix olisi muuten false, paitsi

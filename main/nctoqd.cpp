@@ -13,7 +13,6 @@
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiHPlaceDescriptor.h>
-#include <newbase/NFmiLambertEqualArea.h>
 #include <newbase/NFmiLatLonArea.h>
 #include <newbase/NFmiParam.h>
 #include <newbase/NFmiParamBag.h>
@@ -142,6 +141,7 @@ NFmiHPlaceDescriptor create_hdesc(nctools::NcFileExtended& ncfile)
     area = new NFmiStereographicArea(NFmiPoint(x1, y1), NFmiPoint(x2, y2), centralLongitude);
   else if (ncfile.grid_mapping() == LAMBERT_CONFORMAL_CONIC)
     throw SmartMet::Spine::Exception(BCP, "Lambert conformal conic projection not supported");
+#ifdef WGS84
   else if (ncfile.grid_mapping() == LAMBERT_AZIMUTHAL)
   {
     NFmiLambertEqualArea tmp(NFmiPoint(-90, 0),
@@ -161,6 +161,7 @@ NFmiHPlaceDescriptor create_hdesc(nctools::NcFileExtended& ncfile)
                                     NFmiPoint(1, 1),
                                     ncfile.latitudeOfProjectionOrigin);
   }
+#endif
   else if (ncfile.grid_mapping() == LATITUDE_LONGITUDE)
     area = new NFmiLatLonArea(NFmiPoint(x1, y1), NFmiPoint(x2, y2));
   else

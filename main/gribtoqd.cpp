@@ -5,7 +5,10 @@
 #endif
 
 #include "GribTools.h"
-
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/thread.hpp>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiFileString.h>
@@ -13,7 +16,6 @@
 #include <newbase/NFmiGrid.h>
 #include <newbase/NFmiInterpolation.h>
 #include <newbase/NFmiLatLonArea.h>
-#include <newbase/NFmiMercatorArea.h>
 #include <newbase/NFmiMilliSecondTimer.h>
 #include <newbase/NFmiQueryDataUtil.h>
 #include <newbase/NFmiRotatedLatLonArea.h>
@@ -24,15 +26,8 @@
 #include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiTotalWind.h>
 #include <newbase/NFmiValueString.h>
-
-#include <grib_api.h>
-
-#include <boost/foreach.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/thread.hpp>
-
 #include <functional>
+#include <grib_api.h>
 #include <iomanip>
 #include <set>
 #include <sstream>
@@ -146,8 +141,8 @@ struct GribFilterOptions
 
   string itsOutputFileName;  // -o optio tai sitten tulostetann cout:iin
   bool fUseOutputFile;
-  size_t itsMaxQDataSizeInBytes;     // default max koko 1 GB
-  int itsReturnStatus;               // 0 = ok
+  size_t itsMaxQDataSizeInBytes;  // default max koko 1 GB
+  int itsReturnStatus;            // 0 = ok
   NFmiLevelBag itsIgnoredLevelList;  // lista miss‰ yksitt‰isi‰ leveleit‰, mitk‰ halutaan j‰tt‰‰
                                      // pois laskuista
   vector<boost::shared_ptr<NFmiQueryData> > itsGeneratedDatas;
@@ -1966,6 +1961,7 @@ static NFmiArea *CreateRotatedLatlonArea(grib_handle *theGribHandle,
         "Error: Unable to retrieve rotated latlon-projection information from grib.");
 }
 
+#ifdef WGS84
 static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
 {
   double La1 = 0;
@@ -2017,6 +2013,7 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
   }
   throw runtime_error("Error: Unable to retrieve mercator-projection information from grib.");
 }
+#endif
 
 static NFmiArea *CreatePolarStereographicArea(grib_handle *theGribHandle)
 {
@@ -2131,9 +2128,11 @@ static void FillGridInfoFromGribHandle(grib_handle *theGribHandle,
       case 1:
         area = ::CreateRotatedLatlonArea(theGribHandle, theGribFilterOptions);
         break;
+#ifdef WGS84
       case 10:
         area = ::CreateMercatorArea(theGribHandle);
         break;
+#endif
       case 20:
         area = ::CreatePolarStereographicArea(theGribHandle);
         break;
@@ -3883,6 +3882,7 @@ NFmiArea *CreateRotatedLatlonArea(unsigned char *gds, unsigned char * /* bds */,
   return area;
 }
 
+#ifdef WGS84
 NFmiArea *CreateMercatorArea(unsigned char *gds, unsigned char * /* bds */, bool fDoYAxisFlip)
 {
   // ************************************************************************
@@ -3899,6 +3899,7 @@ NFmiArea *CreateMercatorArea(unsigned char *gds, unsigned char * /* bds */, bool
   NFmiMercatorArea *area = new NFmiMercatorArea(bl, tr);
   return area;
 }
+#endif
 
 NFmiArea *CreateArea(unsigned char *gds,
                      unsigned char *bds,
@@ -3917,8 +3918,10 @@ NFmiArea *CreateArea(unsigned char *gds,
       area = wgrib2qd::CreateStereographicArea(gds, bds);
     else if (GDS_RotLL(gds))
       area = wgrib2qd::CreateRotatedLatlonArea(gds, bds, fDoYAxisFlip);
+#ifdef WGS84
     else if (GDS_Mercator(gds))
       area = wgrib2qd::CreateMercatorArea(gds, bds, fDoYAxisFlip);
+#endif
     //		else if(GDS_Lambert(gds)) // HUOM! t‰m‰ on kokeilu feikki‰, ota t‰m‰ pois ja
     // lambertin
     // projektio pit‰isi hanskata

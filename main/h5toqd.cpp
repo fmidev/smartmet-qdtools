@@ -27,7 +27,6 @@
 #include <newbase/NFmiGrid.h>
 #include <newbase/NFmiHPlaceDescriptor.h>
 #include <newbase/NFmiLevelType.h>
-#include <newbase/NFmiMercatorArea.h>
 #include <newbase/NFmiParamDescriptor.h>
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>

@@ -12,9 +12,7 @@
 
 #include <newbase/NFmiEquidistArea.h>
 #include <newbase/NFmiGlobals.h>
-#include <newbase/NFmiGnomonicArea.h>
 #include <newbase/NFmiLatLonArea.h>
-#include <newbase/NFmiMercatorArea.h>
 #include <newbase/NFmiPoint.h>
 #include <newbase/NFmiStereographicArea.h>
 #include <newbase/NFmiYKJArea.h>
@@ -260,9 +258,6 @@ boost::shared_ptr<NFmiArea> Projection::area(unsigned int theWidth, unsigned int
   else if (itsPimple->itsType == "ykj")
     proj.reset(new NFmiYKJArea(bottomleft, topright, topleftxy, bottomrightxy));
 
-  else if (itsPimple->itsType == "mercator")
-    proj.reset(new NFmiMercatorArea(bottomleft, topright, topleftxy, bottomrightxy));
-
   else if (itsPimple->itsType == "stereographic")
     proj.reset(new NFmiStereographicArea(bottomleft,
                                          topright,
@@ -271,15 +266,6 @@ boost::shared_ptr<NFmiArea> Projection::area(unsigned int theWidth, unsigned int
                                          bottomrightxy,
                                          itsPimple->itsCentralLatitude,
                                          itsPimple->itsTrueLatitude));
-  else if (itsPimple->itsType == "gnomonic")
-    proj.reset(new NFmiGnomonicArea(bottomleft,
-                                    topright,
-                                    itsPimple->itsCentralLongitude,
-                                    topleftxy,
-                                    bottomrightxy,
-                                    itsPimple->itsCentralLatitude,
-                                    itsPimple->itsTrueLatitude));
-
   else if (itsPimple->itsType == "equidist")
     proj.reset(new NFmiEquidistArea(bottomleft,
                                     topright,

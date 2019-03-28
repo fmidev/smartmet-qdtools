@@ -13,7 +13,6 @@
 #include <newbase/NFmiGrid.h>
 #include <newbase/NFmiInterpolation.h>
 #include <newbase/NFmiLatLonArea.h>
-#include <newbase/NFmiMercatorArea.h>
 #include <newbase/NFmiQueryDataUtil.h>
 #include <newbase/NFmiRotatedLatLonArea.h>
 #include <newbase/NFmiSettings.h>
@@ -622,6 +621,7 @@ static NFmiArea *CreateLatlonArea(grib_handle *theGribHandle, bool &doGlobeFix)
     throw runtime_error("Error: Unable to retrieve latlon-projection information from grib.");
 }
 
+#ifdef WGS84
 static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
 {
   double La1 = 0;
@@ -681,6 +681,7 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
   }
   throw runtime_error("Error: Unable to retrieve mercator-projection information from grib.");
 }
+#endif
 
 // laske sellainen gridi, joka menee originaali hilan hilapisteikön mukaan, mutta peittää sen
 // alueen,
@@ -744,9 +745,11 @@ static void FillGridInfoFromGribHandle(grib_handle *theGribHandle,
       case 0:  // 0 = latlonArea
         area = ::CreateLatlonArea(theGribHandle, doGlobeFix);
         break;
+#ifdef WGS84
       case 20:  // 0 = mercatorArea
         area = ::CreateMercatorArea(theGribHandle);
         break;
+#endif
       default:
         throw runtime_error(
             "Error: Handling of projection found from grib is not implemented yet.");

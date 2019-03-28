@@ -6,24 +6,6 @@
  */
 // ======================================================================
 
-#include <macgyver/StringConversion.h>
-
-#include <newbase/NFmiAreaFactory.h>
-#include <newbase/NFmiEnumConverter.h>
-#include <newbase/NFmiEquidistArea.h>
-#include <newbase/NFmiFastQueryInfo.h>
-#include <newbase/NFmiGnomonicArea.h>
-#include <newbase/NFmiGrid.h>
-#include <newbase/NFmiHPlaceDescriptor.h>
-#include <newbase/NFmiLambertEqualArea.h>
-#include <newbase/NFmiMercatorArea.h>
-#include <newbase/NFmiQueryData.h>
-#include <newbase/NFmiQueryDataUtil.h>
-#include <newbase/NFmiStereographicArea.h>
-#include <newbase/NFmiTimeDescriptor.h>
-#include <newbase/NFmiTimeList.h>
-#include <newbase/NFmiVPlaceDescriptor.h>
-
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/bind.hpp>
@@ -32,7 +14,19 @@
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 #include <boost/shared_ptr.hpp>
-
+#include <macgyver/StringConversion.h>
+#include <newbase/NFmiAreaFactory.h>
+#include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiEquidistArea.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiGrid.h>
+#include <newbase/NFmiHPlaceDescriptor.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiStereographicArea.h>
+#include <newbase/NFmiTimeDescriptor.h>
+#include <newbase/NFmiTimeList.h>
+#include <newbase/NFmiVPlaceDescriptor.h>
 #include <fstream>
 #include <limits>
 #include <stdexcept>
@@ -1005,6 +999,7 @@ NFmiHPlaceDescriptor create_hdesc()
   {
     case 0:
     {
+#ifdef WGS84
       // throw std::runtime_error("Gnomonic projection is not supported");
       // true latitude = 90 makes this a tangential case!!
       // See comments in NFmiAzimuthalArea::LatLonToWorldXY!
@@ -1017,6 +1012,9 @@ NFmiHPlaceDescriptor create_hdesc()
                                             *radar_data.meta.radar.lat,
                                             90);
       return NFmiHPlaceDescriptor(NFmiGrid(area, nx, ny));
+#else
+      throw std::runtime_error("Gnomonic projection is not supported");
+#endif
     }
     case 1:
     {
@@ -1028,9 +1026,13 @@ NFmiHPlaceDescriptor create_hdesc()
       throw std::runtime_error("Lambert's conic projection is not supported");
     case 3:
     {
+#ifdef WGS84
       if (central_lon != 0) throw std::runtime_error("Oblique Mercator is not supported");
       NFmiArea *area = new NFmiMercatorArea(bottomleft, topright, corner1, corner2, pacific_view);
       return NFmiHPlaceDescriptor(NFmiGrid(area, nx, ny));
+#else
+      throw std::runtime_error("Mercator projection is not supported");
+#endif
     }
     case 4:
     {
@@ -1041,9 +1043,13 @@ NFmiHPlaceDescriptor create_hdesc()
     }
     case 5:
     {
+#ifdef WGS84
       NFmiArea *area = new NFmiLambertEqualArea(
           bottomleft, topright, central_lon, corner1, corner2, central_lat, true_lat, pacific_view);
       return NFmiHPlaceDescriptor(NFmiGrid(area, nx, ny));
+#else
+      throw std::runtime_error("Mercator projection is not supported");
+#endif
     }
     default:
       throw std::runtime_error("Unknown projection type " +

@@ -71,40 +71,44 @@ using namespace std;
 
 void usage()
 {
-  cout << "Usage: qdproject [options] x1,y1 x2,y2 x3,y3 ..." << endl
-       << endl
-       << "Available options:" << endl
-       << endl
-       << "  -h\t\tPrint this usage information" << endl
-       << "  -v\t\tVerbose mode - the original coordinates are also printed" << endl
-       << "  -d desc\tThe projection description" << endl
-       << "  -c conf\tFile containing the projection description" << endl
-       << "  -q querydata\tQuerydata in the desired projection" << endl
-       << "  -l\t\tConvert lon-lat pairs to pixel coordinates" << endl
-       << "  -L\t\tConvert lon-lat pairs to world coordinates" << endl
-       << "  -i\t\tConvert pixel coordinates to lon-lat coordinates" << endl
-       << "  -I\t\tConvert world coordinates to lon-lat coordinates" << endl
-       << endl
-       << "The projection descriptions are given in the same form as for" << endl
-       << "qdcontour and qdprojection, for example" << endl
-       << endl
-       << "   stereographic,20:6,51.3,49,70.2:600,-1" << endl
-       << endl
-       << "In the case of the -c option the projection description is expected to reside" << endl
-       << "in a configuration file and to be preceded by a 'projection' command." << endl
-       << "This permits qdproject to read the files used by shape2ps when creating maps." << endl
-       << endl
-       << "As a special case, if there are no command line arguments, the standard input" << endl
-       << "is read for whitespace separated coordinate pairs. This enables one to" << endl
-       << "project coordinates from a file by using a command like" << endl
-       << endl
-       << "   qdproject -d stereographic,20:6,51.3,49,70.2:600,-1 -l < filename" << endl
-       << endl
-       << "Examples:" << endl
-       << endl
-       << "   qdproject -d stereographic,20:6,51.3,49,70.2:600,-1 -L 25,60" << endl
-       << "   qdproject -q referencedata.sqd -L 25,60" << endl
-       << "   qdproject -c area.cnf -L 25,60" << endl
+  cout << "Usage: qdproject [options] x1,y1 x2,y2 x3,y3 ...\n"
+       << "\n"
+       << "Available options:\n"
+       << "\n"
+       << "  -h\t\tPrint this usage information\n"
+       << "  -v\t\tVerbose mode - the original coordinates are also printed\n"
+       << "  -d desc\tThe projection description\n"
+       << "  -c conf\tFile containing the projection description\n"
+       << "  -q querydata\tQuerydata in the desired projection\n"
+       << "  -l\t\tConvert lon-lat pairs to pixel coordinates\n"
+       << "  -L\t\tConvert lon-lat pairs to world coordinates\n"
+       << "  -i\t\tConvert pixel coordinates to lon-lat coordinates\n"
+       << "  -I\t\tConvert world coordinates to lon-lat coordinates\n"
+       << "  -g\t\tConvert WGS84 coordinates to lon-lat coordinates\n"
+       << "  -G\t\tConvert lon-lat coordinates to WGS84 coordinates\n"
+       << "  -w\t\tConvert WGS84 coordinates to world coordinates\n"
+       << "  -W\t\tConvert world coordinates to WGS84 coordinates\n"
+       << "\n"
+       << "The projection descriptions are given in the same form as for\n"
+       << "qdcontour and qdprojection, for example\n"
+       << "\n"
+       << "   stereographic,20:6,51.3,49,70.2:600,-1\n"
+       << "\n"
+       << "In the case of the -c option the projection description is expected to reside\n"
+       << "in a configuration file and to be preceded by a 'projection' command.\n"
+       << "This permits qdproject to read the files used by shape2ps when creating maps.\n"
+       << "\n"
+       << "As a special case, if there are no command line arguments, the standard input\n"
+       << "is read for whitespace separated coordinate pairs. This enables one to\n"
+       << "project coordinates from a file by using a command like\n"
+       << "\n"
+       << "   qdproject -d stereographic,20:6,51.3,49,70.2:600,-1 -l < filename\n"
+       << "\n"
+       << "Examples:\n"
+       << "\n"
+       << "   qdproject -d stereographic,20:6,51.3,49,70.2:600,-1 -L 25,60\n"
+       << "   qdproject -q referencedata.sqd -L 25,60\n"
+       << "   qdproject -c area.cnf -L 25,60\n"
        << endl;
 }
 
@@ -220,6 +224,18 @@ void project_coordinates(bool verbose,
       case 'I':
         result = theArea.WorldXYToLatLon(*it);
         break;
+      case 'g':
+        result = theArea.Wgs84ToLatLon(*it);
+        break;
+      case 'G':
+        result = theArea.LatLonToWgs84(*it);
+        break;
+      case 'w':
+        result = theArea.Wgs84ToWorldXY(*it);
+        break;
+      case 'W':
+        result = theArea.WorldXYToWgs84(*it);
+        break;
       default:
         throw runtime_error("Internal error - unhandled projection while projecting");
     }
@@ -239,7 +255,7 @@ int run(int argc, const char* argv[])
 {
   // Parse the command line
 
-  NFmiCmdLine cmdline(argc, argv, "hvd!c!q!lLiI");
+  NFmiCmdLine cmdline(argc, argv, "hvd!c!q!lLiIgGwW");
 
   if (cmdline.Status().IsError()) throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
 
@@ -273,12 +289,15 @@ int run(int argc, const char* argv[])
   // Check how many of the conversion options are given
 
   int opts = (cmdline.isOption('l') + cmdline.isOption('L') + cmdline.isOption('i') +
-              cmdline.isOption('I'));
+              cmdline.isOption('I') + cmdline.isOption('g') + cmdline.isOption('G') +
+              cmdline.isOption('w') + cmdline.isOption('W'));
 
-  if (opts == 0) throw runtime_error("Atleast one of options -l -L -i -I must be given");
+  if (opts == 0)
+    throw runtime_error("Atleast one of options -l -L -i -I -g -G -w -W must be given");
 
   if (opts > 1)
-    throw runtime_error("Only one of options -l -L -i -I can be given at the same time");
+    throw runtime_error(
+        "Only one of options -l -L -i -I -g -G -w -W can be given at the same time");
 
   // Call proper projection handlers
 
@@ -290,6 +309,14 @@ int run(int argc, const char* argv[])
     project_coordinates(verbose, cmdline, 'i', *area);
   else if (cmdline.isOption('I'))
     project_coordinates(verbose, cmdline, 'I', *area);
+  else if (cmdline.isOption('g'))
+    project_coordinates(verbose, cmdline, 'g', *area);
+  else if (cmdline.isOption('G'))
+    project_coordinates(verbose, cmdline, 'G', *area);
+  else if (cmdline.isOption('w'))
+    project_coordinates(verbose, cmdline, 'w', *area);
+  else if (cmdline.isOption('W'))
+    project_coordinates(verbose, cmdline, 'W', *area);
   else
     throw runtime_error("Internal error - unhandled projection selection");
 

@@ -2105,14 +2105,11 @@ static void FillGridInfoFromGribHandle(grib_handle *theGribHandle,
                                        GribFilterOptions &theGribFilterOptions,
                                        GridSettingsPackage &theGridSettings)
 {
-  long gridDefinitionTemplateNumber =
-      0;  // tähän tulee projektio tyyppi, ks. qooglesta (grib2 Table 3.1)
-  int status =
-      ::grib_get_long(theGribHandle, "gridDefinitionTemplateNumber", &gridDefinitionTemplateNumber);
-  if (status == 0)
-  {
-    NFmiArea *area = 0;
+  // version independent string from 'gridType'
+  std::string proj_type;
 
+  if (GetGribStringValue(theGribHandle, "gridType", proj_type))
+  {
     // From: definitions/grib2/section.3.def
     //
     // "regular_ll"            = { gridDefinitionTemplateNumber=0;  PLPresent=0;  }
@@ -2120,26 +2117,21 @@ static void FillGridInfoFromGribHandle(grib_handle *theGribHandle,
     // "mercator"              = { gridDefinitionTemplateNumber=10; PLPresent=0;  }
     // "polar_stereographic"   = { gridDefinitionTemplateNumber=20; PLPresent=0;  }
 
-    switch (gridDefinitionTemplateNumber)
-    {
-      case 0:
-        area = ::CreateLatlonArea(theGribHandle, theGribFilterOptions);
-        break;
-      case 1:
-        area = ::CreateRotatedLatlonArea(theGribHandle, theGribFilterOptions);
-        break;
+    NFmiArea *area = nullptr;
+
+    if (proj_type == "regular_ll")
+      area = ::CreateLatlonArea(theGribHandle, theGribFilterOptions);
+    else if (proj_type == "rotated_ll")
+      area = ::CreateRotatedLatlonArea(theGribHandle, theGribFilterOptions);
 #ifdef WGS84
-      case 10:
-        area = ::CreateMercatorArea(theGribHandle);
-        break;
+    else if (proj_type == "mercator")
+      area = ::CreateMercatorArea(theGribHandle);
 #endif
-      case 20:
-        area = ::CreatePolarStereographicArea(theGribHandle);
-        break;
-      default:
-        throw runtime_error(
-            "Error: Handling of projection found from grib is not implemented yet.");
-    }
+    else if (proj_type == "polar_stereographic")
+      area = ::CreatePolarStereographicArea(theGribHandle);
+    else
+      throw std::runtime_error("Error: Handling of projection " + proj_type +
+                               " found from grib is not implemented yet.");
 
     long numberOfPointsAlongAParallel = 0;
     int status1 = ::grib_get_long(

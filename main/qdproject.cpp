@@ -47,15 +47,13 @@
  */
 // ======================================================================
 
+#include <boost/shared_ptr.hpp>
 #include <newbase/NFmiArea.h>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiPreProcessor.h>
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiStringTools.h>
-
-#include <boost/shared_ptr.hpp>
-
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -84,10 +82,6 @@ void usage()
        << "  -L\t\tConvert lon-lat pairs to world coordinates\n"
        << "  -i\t\tConvert pixel coordinates to lon-lat coordinates\n"
        << "  -I\t\tConvert world coordinates to lon-lat coordinates\n"
-       << "  -g\t\tConvert WGS84 coordinates to lon-lat coordinates\n"
-       << "  -G\t\tConvert lon-lat coordinates to WGS84 coordinates\n"
-       << "  -w\t\tConvert WGS84 coordinates to world coordinates\n"
-       << "  -W\t\tConvert world coordinates to WGS84 coordinates\n"
        << "\n"
        << "The projection descriptions are given in the same form as for\n"
        << "qdcontour and qdprojection, for example\n"
@@ -223,18 +217,6 @@ void project_coordinates(bool verbose,
         break;
       case 'I':
         result = theArea.WorldXYToLatLon(*it);
-        break;
-      case 'g':
-        result = theArea.Wgs84ToLatLon(*it);
-        break;
-      case 'G':
-        result = theArea.LatLonToWgs84(*it);
-        break;
-      case 'w':
-        result = theArea.Wgs84ToWorldXY(*it);
-        break;
-      case 'W':
-        result = theArea.WorldXYToWgs84(*it);
         break;
       default:
         throw runtime_error("Internal error - unhandled projection while projecting");

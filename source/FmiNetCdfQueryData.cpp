@@ -1,15 +1,10 @@
-// FmiNetCdfQueryData.cpp
-
 #include "FmiNetCdfQueryData.h"
+#include <boost/algorithm/string/case_conv.hpp>
+#include <fmt/format.h>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiFastQueryInfo.h>
-#include <newbase/NFmiLatLonArea.h>
 #include <newbase/NFmiQueryDataUtil.h>
-#include <newbase/NFmiStereographicArea.h>
-
 #include <netcdfcpp.h>
-
-#include <boost/algorithm/string/case_conv.hpp>
 
 void FmiTDimVarInfo::CalcTimeList(void)
 {
@@ -248,7 +243,11 @@ void FmiNetCdfQueryData::MakeWantedGrid(void)
     // aluksi tämä hanskaa vain latlon-areat, ja hilat pakotetaan tasavälisiksi
     NFmiPoint bottomLeft(itsXInfo.itsValues[0], itsYInfo.itsValues[0]);
     NFmiPoint topRight(itsXInfo.itsValues[xSize - 1], itsYInfo.itsValues[ySize - 1]);
+#ifdef WGS84
+    auto *area = NFmiArea::CreateFromCorners("FMI", "FMI", bottomLeft, topRight);
+#else
     NFmiArea *area = new NFmiLatLonArea(bottomLeft, topRight);
+#endif
     itsGrid = NFmiGrid(area, static_cast<unsigned long>(xSize), static_cast<unsigned long>(ySize));
   }
   else
@@ -709,49 +708,39 @@ static FmiNcProjectionType GetProjectionType(NcVar &theVar)
 
 void FmiNetCdfQueryData::InitializeStreographicGrid(void)
 {
-  if (itsProjectionInfo.La1 != kFloatMissing && itsProjectionInfo.Lo1 != kFloatMissing &&
-      itsProjectionInfo.LoV != kFloatMissing && itsProjectionInfo.Dx != kFloatMissing &&
-      itsProjectionInfo.Dy != kFloatMissing)
-  {
-    NFmiPoint bottomLeftLatlon(itsProjectionInfo.Lo1, itsProjectionInfo.La1);
-    NFmiPoint topRightLatlon(itsProjectionInfo.Lo1 + 1,
-                             itsProjectionInfo.La1 + 1);  // pitää tehdä väliaikainen feikki
-                                                          // top-right piste, että voimme laskea
-                                                          // oikean top-right-kulman
-    double usedCentralLatitude =
-        (itsProjectionInfo.Latin2 != kFloatMissing) ? itsProjectionInfo.Latin2 : 90;
-    double usedTrueLatitude =
-        (itsProjectionInfo.Latin1 != kFloatMissing) ? itsProjectionInfo.Latin1 : 60;
-    NFmiStereographicArea tmpArea1(bottomLeftLatlon,
-                                   topRightLatlon,
-                                   itsProjectionInfo.LoV,
-                                   NFmiPoint(0, 0),
-                                   NFmiPoint(1, 1),
-                                   usedCentralLatitude,
-                                   usedTrueLatitude);
-    if (itsProjectionInfo.Nx > 1 && itsProjectionInfo.Ny > 1)
-    {
-      double gridWidth = (itsProjectionInfo.Nx - 1) * itsProjectionInfo.Dx;
-      double gridHeight = (itsProjectionInfo.Ny - 1) * itsProjectionInfo.Dy;
-      NFmiPoint worldXyBottomLeft = tmpArea1.WorldXYPlace();
-      NFmiPoint worldXyTopRight(worldXyBottomLeft);
-      worldXyTopRight.X(worldXyTopRight.X() + gridWidth);
-      worldXyTopRight.Y(worldXyTopRight.Y() + gridHeight);
-      NFmiPoint realTopRightLatlon = tmpArea1.WorldXYToLatLon(worldXyTopRight);
-      NFmiStereographicArea realArea(bottomLeftLatlon,
-                                     realTopRightLatlon,
-                                     itsProjectionInfo.LoV,
-                                     NFmiPoint(0, 0),
-                                     NFmiPoint(1, 1),
-                                     usedCentralLatitude,
-                                     usedTrueLatitude);
-      itsGrid = NFmiGrid(&realArea, itsProjectionInfo.Nx, itsProjectionInfo.Ny);
-      return;
-    }
-  }
-  throw std::runtime_error(
-      "Error in FmiNetCdfQueryData::InitializeStreographicGrid - unable to make grid or projection "
-      "for data.");
+  if (itsProjectionInfo.La1 == kFloatMissing || itsProjectionInfo.Lo1 == kFloatMissing ||
+      itsProjectionInfo.LoV == kFloatMissing || itsProjectionInfo.Dx == kFloatMissing ||
+      itsProjectionInfo.Dy == kFloatMissing || itsProjectionInfo.Nx <= 1 ||
+      itsProjectionInfo.Ny <= 1)
+    throw std::runtime_error(
+        "Error in FmiNetCdfQueryData::InitializeStreographicGrid - unable to make grid or "
+        "projection "
+        "for data.");
+
+  const double clat = (itsProjectionInfo.Latin2 != kFloatMissing) ? itsProjectionInfo.Latin2 : 90;
+  const double tlat = (itsProjectionInfo.Latin1 != kFloatMissing) ? itsProjectionInfo.Latin1 : 60;
+  const double clon = itsProjectionInfo.LoV;
+
+  double gridWidth = (itsProjectionInfo.Nx - 1) * itsProjectionInfo.Dx;
+  double gridHeight = (itsProjectionInfo.Ny - 1) * itsProjectionInfo.Dy;
+
+  NFmiPoint bottomLeftLatlon(itsProjectionInfo.Lo1, itsProjectionInfo.La1);
+
+  auto proj = fmt::format(
+      "+proj=stere +lat_0={} +lat_ts={} +lon_0={} +k=1 +x_0=0 +y_0=0 +a={:.0f} +b={:.0f} "
+      "+units=m +wktext +towgs84=0,0,0 +no_defs",
+      clat,
+      tlat,
+      clon,
+      kRearth,
+      kRearth);
+
+#ifdef WGS84
+  // TODO: should extract correct sphere from the NetCDF metadata
+#endif
+  auto *area =
+      NFmiArea::CreateFromCornerAndSize(proj, "FMI", bottomLeftLatlon, gridWidth, gridHeight);
+  itsGrid = NFmiGrid(area, itsProjectionInfo.Nx, itsProjectionInfo.Ny);
 }
 
 // Jos ei löytynyt lat-lon asetuksia, pitää etsiä, löytyykö muita projektio määrityksiä.

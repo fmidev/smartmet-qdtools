@@ -12,8 +12,6 @@
 #include <newbase/NFmiFileString.h>
 #include <newbase/NFmiGrid.h>
 #include <newbase/NFmiQueryData.h>
-#include <newbase/NFmiRotatedLatLonArea.h>
-#include <newbase/NFmiStereographicArea.h>
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
@@ -455,12 +453,11 @@ void set_rotated_latlon_geometry(NFmiFastQueryInfo &theInfo,
                                  grib_handle *gribHandle,
                                  std::vector<double> &theValueArray)
 {
-  const NFmiRotatedLatLonArea &a = *dynamic_cast<const NFmiRotatedLatLonArea *>(theInfo.Area());
-
   gset(gribHandle, "typeOfGrid", "rotated_ll");
 
-  NFmiPoint bl(a.ToRotLatLon(theInfo.Area()->BottomLeftLatLon()));
-  NFmiPoint tr(a.ToRotLatLon(theInfo.Area()->TopRightLatLon()));
+  const auto &a = *theInfo.Area();
+  NFmiPoint bl(a.LatLonToWorldXY(a.BottomLeftLatLon()));
+  NFmiPoint tr(a.LatLonToWorldXY(a.TopRightLatLon()));
 
   gset(gribHandle, "longitudeOfFirstGridPointInDegrees", fix_longitude(bl.X()));
   gset(gribHandle, "latitudeOfFirstGridPointInDegrees", bl.Y());
@@ -480,9 +477,15 @@ void set_rotated_latlon_geometry(NFmiFastQueryInfo &theInfo,
   gset(gribHandle, "iDirectionIncrementInDegrees", gridCellWidthInDegrees);
   gset(gribHandle, "jDirectionIncrementInDegrees", gridCellHeightInDegrees);
 
-  if (a.SouthernPole().X() != 0)
-    throw std::runtime_error(
-        "GRIB does not support rotated latlon areas where longitude is also rotated");
+  // Get equator points
+  double lon1 = a.SpatialReference().GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_1, 0);
+  double lat1 = a.SpatialReference().GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_1, 0);
+  double lon2 = a.SpatialReference().GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_2, 0);
+  double lat2 = a.SpatialReference().GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_2, 0);
+
+  // Calculate respective south pole location
+
+  TODO();
 
   gset(gribHandle, "longitudeOfSouthernPoleInDegrees", a.SouthernPole().X());
   gset(gribHandle, "latitudeOfSouthernPoleInDegrees", a.SouthernPole().Y());
@@ -544,7 +547,7 @@ void set_stereographic_geometry(NFmiFastQueryInfo &theInfo,
   gset(gribHandle, "DxInMetres", dx);
   gset(gribHandle, "DyInMetres", dy);
 
-  const NFmiStereographicArea *a = dynamic_cast<const NFmiStereographicArea *>(theInfo.Area());
+  auto *a = theInfo.Area();
 
   double lon_0 = a->CentralLongitude();
   double lat_0 = a->CentralLatitude();

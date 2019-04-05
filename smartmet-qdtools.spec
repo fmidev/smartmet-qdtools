@@ -36,6 +36,7 @@ BuildRequires: gdal-devel >= 1.11.4
 BuildRequires: jasper-devel
 BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
+BuildRequires: fmt-devel
 Requires: smartmet-timezones >= 19.1.25
 Requires: smartmet-library-calculator >= 18.11.24
 Requires: smartmet-library-gis >= 18.12.10
@@ -45,6 +46,7 @@ Requires: smartmet-library-newbase >= 19.2.14
 Requires: smartmet-library-smarttools >= 18.10.1
 Requires: smartmet-library-spine
 Requires: eccodes
+Requires: fmt
 Requires: hdf5 >= 1.8.12
 Requires: jasper-libs >= 1.900.1
 Requires: libecbufr

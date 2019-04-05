@@ -4,11 +4,7 @@
 #include <gdal/ogr_spatialref.h>
 #include <newbase/NFmiArea.h>
 #include <newbase/NFmiAreaFactory.h>
-#include <newbase/NFmiLatLonArea.h>
 #include <newbase/NFmiQueryData.h>
-#include <newbase/NFmiRotatedLatLonArea.h>
-#include <newbase/NFmiStereographicArea.h>
-#include <newbase/NFmiYKJArea.h>
 #include <iomanip>
 #include <iostream>
 #include <stdio.h>

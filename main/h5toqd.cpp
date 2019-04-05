@@ -18,11 +18,11 @@
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 #include <boost/shared_ptr.hpp>
+#include <fmt/format.h>
 #include <macgyver/StringConversion.h>
 #include <macgyver/TimeParser.h>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiEnumConverter.h>
-#include <newbase/NFmiEquidistArea.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiGrid.h>
 #include <newbase/NFmiHPlaceDescriptor.h>
@@ -30,7 +30,6 @@
 #include <newbase/NFmiParamDescriptor.h>
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
-#include <newbase/NFmiStereographicArea.h>
 #include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiVPlaceDescriptor.h>
@@ -1323,7 +1322,17 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
     const double range_m = calculate_pvol_range(hid);
     const double range_km = std::ceil(range_m / 1000);
 
-    NFmiArea *area = new NFmiEquidistArea(1000 * range_km, NFmiPoint(lon, lat), xy0, xy1);
+    auto proj4 = fmt::format(
+        "+proj=aeqd +lat_0={} +lon_0={} +x_0=0 +y_0=0 +a={:.0f} +b={:.0f} +units=m +wktext "
+        "+towgs84=0,0,0 +no_defs",
+        lat,
+        lon,
+        kRearth,
+        kRearth);
+
+    // WGS84: Not sure if we should multiply by 2 for legacy reasons
+    NFmiArea *area = NFmiArea::CreateFromCenter(
+        proj4, "FMI", NFmiPoint(lon, lat), 1000 * range_km, 1000 * range_km);
 
     // We set the grid resolution based on the number of bins in the data
 

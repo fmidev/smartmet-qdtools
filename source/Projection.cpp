@@ -6,17 +6,11 @@
 // ======================================================================
 
 #include "Projection.h"
-
+#include <fmt/format.h>
 #include <imagine/NFmiImage.h>
 #include <imagine/NFmiPath.h>
-
-#include <newbase/NFmiEquidistArea.h>
 #include <newbase/NFmiGlobals.h>
-#include <newbase/NFmiLatLonArea.h>
 #include <newbase/NFmiPoint.h>
-#include <newbase/NFmiStereographicArea.h>
-#include <newbase/NFmiYKJArea.h>
-
 #include <stdexcept>
 
 using namespace Imagine;
@@ -252,27 +246,41 @@ boost::shared_ptr<NFmiArea> Projection::area(unsigned int theWidth, unsigned int
   NFmiPoint topleftxy = NFmiPoint(0, 0);
   NFmiPoint bottomrightxy = NFmiPoint(theWidth, theHeight);
 
+  std::string sphere = "FMI";
+  std::string proj4;
+
   if (itsPimple->itsType == "latlon")
-    proj.reset(new NFmiLatLonArea(bottomleft, topright, topleftxy, bottomrightxy));
+    proj4 = "FMI";
 
   else if (itsPimple->itsType == "ykj")
-    proj.reset(new NFmiYKJArea(bottomleft, topright, topleftxy, bottomrightxy));
+  {
+    proj4 =
+        "+proj=tmerc +lat_0=0 +lon_0=27 +k=1 +x_0=3500000 +y_0=0 +ellps=intl +units=m +wktext "
+        "+towgs84=-96.0617,-82.4278,-121.7535,4.80107,0.34543,-1.37646,1.4964 +no_defs";
+    sphere = "+proj=longlat +ellps=intl +no_defs";
+  }
 
   else if (itsPimple->itsType == "stereographic")
-    proj.reset(new NFmiStereographicArea(bottomleft,
-                                         topright,
-                                         itsPimple->itsCentralLongitude,
-                                         topleftxy,
-                                         bottomrightxy,
-                                         itsPimple->itsCentralLatitude,
-                                         itsPimple->itsTrueLatitude));
+  {
+    proj4 = fmt::format(
+        "+proj=stere +lat_0={} +lat_ts={} +lon_0={} +k=1 +x_0=0 +y_0=0 +a={:.0f} +b={:.0f} "
+        "+units=m +wktext +towgs84=0,0,0 +no_defs",
+        itsPimple->itsCentralLatitude,
+        itsPimple->itsTrueLatitude,
+        itsPimple->itsCentralLongitude,
+        kRearth,
+        kRearth);
+  }
   else if (itsPimple->itsType == "equidist")
-    proj.reset(new NFmiEquidistArea(bottomleft,
-                                    topright,
-                                    itsPimple->itsCentralLongitude,
-                                    topleftxy,
-                                    bottomrightxy,
-                                    itsPimple->itsCentralLatitude));
+  {
+    proj4 = fmt::format(
+        "+proj=aeqd +lat_0={} +lon_0={} +x_0=0 +y_0=0 +a={:.0f} +b={:.0f} +units=m +wktext "
+        "+towgs84=0,0,0 +no_defs",
+        itsPimple->itsCentralLatitude,
+        itsPimple->itsCentralLongitude,
+        kRearth,
+        kRearth);
+  }
   else
   {
     std::string msg = "Unrecognized projection type ";
@@ -281,19 +289,17 @@ boost::shared_ptr<NFmiArea> Projection::area(unsigned int theWidth, unsigned int
     throw std::runtime_error(msg);
   }
 
-  // Recalculate topleft and bottom right if center was set
-  if (has_center)
+  if (!has_center)
+    proj.reset(NFmiArea::CreateFromCorners(proj4, sphere, bottomleft, topright));
+  else
   {
-    const float pscale = 1000 * itsPimple->itsScale;
-    const NFmiPoint c = proj->LatLonToWorldXY(itsPimple->itsCenter);
-    const NFmiPoint bl(c.X() - pscale * theWidth, c.Y() - pscale * theHeight);
-    const NFmiPoint tr(c.X() + pscale * theWidth, c.Y() + pscale * theHeight);
-
-    const NFmiPoint BL = proj->WorldXYToLatLon(bl);
-    const NFmiPoint TR = proj->WorldXYToLatLon(tr);
-
-    proj.reset(proj->NewArea(BL, TR));
+    // 2 is for a handling legacy coding mistake
+    auto pscale = 2 * 1000 * itsPimple->itsScale;
+    proj.reset(NFmiArea::CreateFromCenter(
+        proj4, sphere, itsPimple->itsCenter, pscale * theWidth, pscale * theHeight));
   }
+
+  proj->SetXYArea(NFmiRect(topleftxy, bottomrightxy));
 
   return proj;
 }

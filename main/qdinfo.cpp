@@ -80,18 +80,12 @@
 #include <macgyver/StringConversion.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiEnumConverter.h>
-#include <newbase/NFmiEquidistArea.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileString.h>
 #include <newbase/NFmiFileSystem.h>
 #include <newbase/NFmiGrid.h>
-#include <newbase/NFmiKKJArea.h>
-#include <newbase/NFmiLatLonArea.h>
-#include <newbase/NFmiRotatedLatLonArea.h>
 #include <newbase/NFmiSettings.h>
-#include <newbase/NFmiStereographicArea.h>
 #include <newbase/NFmiStringList.h>
-#include <newbase/NFmiYKJArea.h>
 
 #ifdef UNIX
 #include <gdal/ogr_spatialref.h>
@@ -555,12 +549,8 @@ void ReportProjection(NFmiFastQueryInfo *q)
        << std::setprecision(6) << endl
        << endl;
 
-  cout << "fmiarea\t= " << area->AreaStr() << endl;
 #ifdef UNIX
-  char *proj4 = nullptr;
-  crs.exportToProj4(&proj4);
-  cout << "wktarea\t= " << area->WKT() << endl << "proj4\t= " << proj4 << endl;
-  OGRFree(proj4);
+  cout << "wktarea\t=" << area->PrettyWKT() << endl << "proj4\t=" << area->Proj() << endl;
 #endif
 
   cout << endl
@@ -583,62 +573,6 @@ void ReportProjection(NFmiFastQueryInfo *q)
        << "xyheight\t= " << area->WorldXYHeight() / 1000.0 << " km" << endl
        << "aspectratio\t= " << area->WorldXYAspectRatio() << endl
        << endl;
-
-  switch (classid)
-  {
-    case kNFmiEquiDistArea:
-#ifdef WGS84
-    case kNFmiGnomonicArea:
-#endif
-    case kNFmiStereographicArea:
-#if 0
-	case kNFmiPerspectiveArea:
-#endif
-    {
-      const NFmiAzimuthalArea *a = dynamic_cast<const NFmiAzimuthalArea *>(area);
-      cout << "central longitude\t= " << a->CentralLongitude() << endl
-           << "central latitude\t= " << a->CentralLatitude() << endl
-           << "true latitude\t\t= " << a->TrueLatitude() << endl;
-
-#if 0
-		if(classid == kFmiPerspectiveArea)
-		  {
-			NFmiPerspectiveArea * b = dynamic_cast<const NFmiAzimuthalArea *>(area);
-			cout << "distancetosurface\t= " << b->DistanceToSurface() << endl
-				 << "viewangle\t\t= " << b->ViewAngle() << endl
-				 << "zoomfactor\t\t= " << b->ZoomFactor() << endl
-				 << "globeradius\t\t= " << b->GlobeRadius() << endl;
-		  }
-#endif
-      break;
-    }
-    case kNFmiKKJArea:
-#ifdef WGS84
-    case kNFmiPKJArea:
-#endif
-    case kNFmiYKJArea:
-    {
-      break;
-    }
-    case kNFmiLatLonArea:
-    case kNFmiRotatedLatLonArea:
-    {
-      const NFmiLatLonArea *a = dynamic_cast<const NFmiLatLonArea *>(area);
-      cout << "xscale\t\t= " << a->XScale() << endl << "yscale\t\t= " << a->YScale() << endl;
-      break;
-    }
-#ifdef WGS84
-    case kNFmiMercatorArea:
-    {
-      const NFmiMercatorArea *a = dynamic_cast<const NFmiMercatorArea *>(area);
-      cout << "xscale\t\t= " << a->XScale() << endl << "yscale\t\t= " << a->YScale() << endl;
-      break;
-    }
-#endif
-    default:
-      cout << "The projection is unknown to qdinfo" << endl;
-      break;
-  }
 
   return;
 }

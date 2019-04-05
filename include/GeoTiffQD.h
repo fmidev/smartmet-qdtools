@@ -3,14 +3,11 @@
 #ifndef GeoTiffQD_H
 #define GeoTiffQD_H
 
-#include <cstdio>
-#include <string>
-
+#include <boost/optional.hpp>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiQueryData.h>
-#include <newbase/NFmiRotatedLatLonArea.h>
-
-#include <boost/optional.hpp>
+#include <cstdio>
+#include <string>
 
 using namespace std;
 
@@ -45,7 +42,9 @@ class GeoTiffQD
   void SetTestMode(bool testMode);
 
  private:
+#ifndef WGS84
   void getregllbbox(const NFmiRotatedLatLonArea *a);
+#endif
   NFmiFastQueryInfo *generateLatLonInfo(NFmiFastQueryInfo *orginData);
   int *fillIntRasterByQD(NFmiFastQueryInfo *theData,
                          NFmiFastQueryInfo *theSecondData,

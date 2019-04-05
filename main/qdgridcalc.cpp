@@ -95,7 +95,7 @@ static void PrintGridSizeInfo(const NFmiArea *area,
 
   string verbiStr("would be");
   if (fActualGridUsed) verbiStr = "is";
-  if (fActualGridUsed) cout << "Given querydata projection: " << area->AreaStr() << endl;
+  if (fActualGridUsed) cout << "Given querydata projection: " << area->Proj() << endl;
   cout << "Grid size " << verbiStr << ": " << closestXGridSize << " x " << closestYGridSize << endl;
   cout << "Grid size " << verbiStr << " at center of bottom edge: " << alaMidX << " x " << alaMidY
        << " km" << endl;
@@ -115,7 +115,7 @@ static void DoQdDataGridSizePrint(const string &theFileName)
 
     if (info.Grid())
     {
-      string projStr = info.Area()->AreaStr();
+      // string projStr = info.Area()->AreaStr();
       ::PrintGridSizeInfo(info.Area(), info.Grid()->XNumber(), info.Grid()->YNumber(), true);
     }
     else

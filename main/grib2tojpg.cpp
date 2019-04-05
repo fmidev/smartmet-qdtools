@@ -12,11 +12,8 @@
 #include <newbase/NFmiCommentStripper.h>
 #include <newbase/NFmiGrid.h>
 #include <newbase/NFmiInterpolation.h>
-#include <newbase/NFmiLatLonArea.h>
 #include <newbase/NFmiQueryDataUtil.h>
-#include <newbase/NFmiRotatedLatLonArea.h>
 #include <newbase/NFmiSettings.h>
-#include <newbase/NFmiStereographicArea.h>
 #include <newbase/NFmiStreamQueryData.h>
 #include <newbase/NFmiStringTools.h>
 #include <newbase/NFmiTimeList.h>

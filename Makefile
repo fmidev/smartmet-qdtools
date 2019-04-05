@@ -41,7 +41,7 @@ CC = g++
 
 # Default compiler flags
 
-DEFINES = -DUNIX
+DEFINES = -DUNIX -DWGS84
 
 CFLAGS = $(DEFINES) -O2 -DNDEBUG $(MAINFLAGS)
 LDFLAGS = 
@@ -76,6 +76,7 @@ LIBS = -L$(libdir) \
 	-lboost_thread \
 	-lboost_filesystem \
         -lboost_system \
+	-lfmt \
 	-lgdal \
 	-lmetar \
 	-ljasper \

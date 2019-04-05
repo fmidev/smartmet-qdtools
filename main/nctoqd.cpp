@@ -6,26 +6,8 @@
  */
 // ======================================================================
 
-#include <macgyver/CsvReader.h>
-#include <macgyver/StringConversion.h>
-#include <macgyver/TimeParser.h>
-#include <newbase/NFmiAreaFactory.h>
-#include <newbase/NFmiEnumConverter.h>
-#include <newbase/NFmiFastQueryInfo.h>
-#include <newbase/NFmiHPlaceDescriptor.h>
-#include <newbase/NFmiLatLonArea.h>
-#include <newbase/NFmiParam.h>
-#include <newbase/NFmiParamBag.h>
-#include <newbase/NFmiParamDescriptor.h>
-#include <newbase/NFmiQueryData.h>
-#include <newbase/NFmiQueryDataUtil.h>
-#include <newbase/NFmiStereographicArea.h>
-#include <newbase/NFmiTimeDescriptor.h>
-#include <newbase/NFmiVPlaceDescriptor.h>
-#include <spine/Exception.h>
-
-#include <netcdfcpp.h>
-
+#include "NcFileExtended.h"
+#include "nctools.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/bind.hpp>
@@ -33,18 +15,31 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
-
+#include <fmt/format.h>
+#include <macgyver/CsvReader.h>
+#include <macgyver/StringConversion.h>
+#include <macgyver/TimeParser.h>
+#include <newbase/NFmiAreaFactory.h>
+#include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiHPlaceDescriptor.h>
+#include <newbase/NFmiParam.h>
+#include <newbase/NFmiParamBag.h>
+#include <newbase/NFmiParamDescriptor.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiTimeDescriptor.h>
+#include <newbase/NFmiVPlaceDescriptor.h>
+#include <spine/Exception.h>
 #include <cmath>
 #include <fstream>
 #include <functional>
 #include <iostream>
 #include <limits>
+#include <netcdfcpp.h>
 #include <stdexcept>
 #include <string>
 #include <utility>
-
-#include "NcFileExtended.h"
-#include "nctools.h"
 
 nctools::Options options;
 
@@ -138,32 +133,33 @@ NFmiHPlaceDescriptor create_hdesc(nctools::NcFileExtended& ncfile)
 
   NFmiArea* area;
   if (ncfile.grid_mapping() == POLAR_STEREOGRAPHIC)
-    area = new NFmiStereographicArea(NFmiPoint(x1, y1), NFmiPoint(x2, y2), centralLongitude);
-  else if (ncfile.grid_mapping() == LAMBERT_CONFORMAL_CONIC)
-    throw SmartMet::Spine::Exception(BCP, "Lambert conformal conic projection not supported");
-#ifdef WGS84
+  {
+    auto proj4 = fmt::format(
+        "+proj=stere +lat_0={} +lon_0={} +k=1 +x_0=0 +y_0=0 +a={:.0f} +b={:.0f} +units=m +wktext "
+        "+towgs84=0,0,0 +no_defs",
+        ncfile.latitudeOfProjectionOrigin,
+        ncfile.longitudeOfProjectionOrigin,
+        kRearth,
+        kRearth);
+    area = NFmiArea::CreateFromCorners(proj4, "FMI", NFmiPoint(x1, y1), NFmiPoint(x2, y2));
+  }
   else if (ncfile.grid_mapping() == LAMBERT_AZIMUTHAL)
   {
-    NFmiLambertEqualArea tmp(NFmiPoint(-90, 0),
-                             NFmiPoint(90, 0),
-                             ncfile.longitudeOfProjectionOrigin,
-                             NFmiPoint(0, 0),
-                             NFmiPoint(1, 1),
-                             ncfile.latitudeOfProjectionOrigin);
-    NFmiPoint bottomleft =
-        tmp.WorldXYToLatLon(NFmiPoint(ncfile.x_scale() * x1, ncfile.y_scale() * y1));
-    NFmiPoint topright =
-        tmp.WorldXYToLatLon(NFmiPoint(ncfile.x_scale() * x2, ncfile.y_scale() * y2));
-    area = new NFmiLambertEqualArea(bottomleft,
-                                    topright,
-                                    ncfile.longitudeOfProjectionOrigin,
-                                    NFmiPoint(0, 0),
-                                    NFmiPoint(1, 1),
-                                    ncfile.latitudeOfProjectionOrigin);
+    auto proj4 = fmt::format(
+        "+proj=laea +lat_0={} +lon_0={} +k=1 +x_0=0 +y_0=0 +a={:.0f} +b={:.0f} +units=m +wktext "
+        "+towgs84=0,0,0 +no_defs",
+        ncfile.latitudeOfProjectionOrigin,
+        ncfile.longitudeOfProjectionOrigin,
+        kRearth,
+        kRearth);
+    area = NFmiArea::CreateFromBBox(proj4,
+                                    NFmiPoint(ncfile.x_scale() * x1, ncfile.y_scale() * y1),
+                                    NFmiPoint(ncfile.x_scale() * x2, ncfile.y_scale() * y2));
   }
-#endif
   else if (ncfile.grid_mapping() == LATITUDE_LONGITUDE)
-    area = new NFmiLatLonArea(NFmiPoint(x1, y1), NFmiPoint(x2, y2));
+  {
+    area = NFmiArea::CreateFromCorners("FMI", "FMI", NFmiPoint(x1, y1), NFmiPoint(x2, y2));
+  }
   else
     throw SmartMet::Spine::Exception(BCP,
                                      "Projection " + ncfile.grid_mapping() + " is not supported");

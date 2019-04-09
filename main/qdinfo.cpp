@@ -522,15 +522,8 @@ void ReportProjection(NFmiFastQueryInfo *q)
     return;
   }
 
-  unsigned long classid = area->ClassId();
+  // unsigned long classid = area->ClassId();
   const auto rect = area->WorldRect();
-
-#ifdef UNIX
-  const auto wkt = area->WKT();
-  OGRSpatialReference crs;
-  if (crs.SetFromUserInput(wkt.c_str()) != OGRERR_NONE)
-    throw std::runtime_error("GDAL does not understand the WKT in the data");
-#endif
 
   cout << "projection\t\t= " << area->ClassName() << endl;
 
@@ -549,9 +542,68 @@ void ReportProjection(NFmiFastQueryInfo *q)
        << std::setprecision(6) << endl
        << endl;
 
-#ifdef UNIX
-  cout << "wktarea\t=" << area->PrettyWKT() << endl << "proj4\t=" << area->Proj() << endl;
+  auto *sr = const_cast<NFmiArea *>(area)->SpatialReference();
+  cout << "proj4\t= " << area->Proj() << endl
+       << "wkt\t= " << area->WKT() << endl
+       << endl
+       << "prettywkt =\n"
+       << area->PrettyWKT() << endl
+       << endl
+       << "EPSGTreatsAsLatLong\t\t= " << sr->EPSGTreatsAsLatLong() << endl
+       << "EPSGTreatsAsNorthingEasting\t= " << sr->EPSGTreatsAsNorthingEasting() << endl
+       << "PrimeMeridian\t\t\t= " << sr->GetPrimeMeridian() << endl
+       << "IsGeographic\t\t\t= " << sr->IsGeographic() << endl
+       << "IsProjected\t\t\t= " << sr->IsProjected() << endl
+       << "IsGeocentric\t\t\t= " << sr->IsGeocentric() << endl
+       << "IsLocal\t\t\t\t= " << sr->IsLocal() << endl
+       << "IsVertical\t\t\t= " << sr->IsVertical() << endl
+       << "IsCompound\t\t\t= " << sr->IsCompound() << endl
+       << std::setprecision(10) << "SemiMajor\t\t\t= " << sr->GetSemiMajor() << endl
+       << "SemiMinor\t\t\t= " << sr->GetSemiMinor() << endl
+       << "InvFlattening\t\t\t= " << sr->GetInvFlattening() << endl
+       << "EPSG\t\t\t\t= " << sr->GetEPSGGeogCS() << endl;
+
+  std::list<std::string> srs_params{SRS_PP_CENTRAL_MERIDIAN,
+                                    SRS_PP_SCALE_FACTOR,
+                                    SRS_PP_STANDARD_PARALLEL_1,
+                                    SRS_PP_STANDARD_PARALLEL_2,
+                                    SRS_PP_PSEUDO_STD_PARALLEL_1,
+                                    SRS_PP_LONGITUDE_OF_CENTER,
+                                    SRS_PP_LATITUDE_OF_CENTER,
+                                    SRS_PP_LONGITUDE_OF_ORIGIN,
+                                    SRS_PP_LATITUDE_OF_ORIGIN,
+                                    SRS_PP_FALSE_EASTING,
+                                    SRS_PP_FALSE_NORTHING,
+                                    SRS_PP_AZIMUTH,
+                                    SRS_PP_LONGITUDE_OF_POINT_1,
+                                    SRS_PP_LATITUDE_OF_POINT_1,
+                                    SRS_PP_LONGITUDE_OF_POINT_2,
+                                    SRS_PP_LATITUDE_OF_POINT_2,
+                                    SRS_PP_LONGITUDE_OF_POINT_3,
+                                    SRS_PP_LATITUDE_OF_POINT_3,
+                                    SRS_PP_RECTIFIED_GRID_ANGLE,
+                                    SRS_PP_LANDSAT_NUMBER,
+                                    SRS_PP_PATH_NUMBER,
+                                    SRS_PP_PERSPECTIVE_POINT_HEIGHT,
+                                    SRS_PP_SATELLITE_HEIGHT,
+                                    SRS_PP_FIPSZONE,
+                                    SRS_PP_ZONE,
+                                    SRS_PP_LATITUDE_OF_1ST_POINT,
+                                    SRS_PP_LONGITUDE_OF_1ST_POINT,
+                                    SRS_PP_LATITUDE_OF_2ND_POINT,
+                                    SRS_PP_LONGITUDE_OF_2ND_POINT};
+
+  std::cout << endl;
+  for (const auto &param : srs_params)
+  {
+    OGRErr err = OGRERR_NONE;
+    auto value = sr->GetNormProjParm(param.c_str(), -999, &err);
+    if (err == OGRERR_NONE) std::cout << param << "\t= " << value << endl;
+#if 0
+    else
+      std::cout << param << "\t= NaN" << endl;
 #endif
+  }
 
   cout << endl
        << "top\t= " << area->Top() << endl
@@ -562,19 +614,29 @@ void ReportProjection(NFmiFastQueryInfo *q)
 
   if (grid)
   {
-    cout << "xnumber\t\t= " << grid->XNumber() << endl
-         << "ynumber\t\t= " << grid->YNumber() << endl
-         << "dx\t\t= " << area->WorldXYWidth() / grid->XNumber() / 1000.0 << " km" << endl
-         << "dy\t\t= " << area->WorldXYHeight() / grid->YNumber() / 1000.0 << " km" << endl
-         << endl;
+    if (sr->IsGeographic())
+    {
+      cout << "xnumber\t\t= " << grid->XNumber() << endl
+           << "ynumber\t\t= " << grid->YNumber() << endl
+           << "dx\t\t= " << area->WorldXYWidth() / grid->XNumber() << " deg" << endl
+           << "dy\t\t= " << area->WorldXYHeight() / grid->YNumber() << " deg" << endl
+           << endl
+           << "xywidth\t\t= " << area->WorldXYWidth() << " deg" << endl
+           << "xyheight\t= " << area->WorldXYHeight() << " deg" << endl
+           << "aspectratio\t= " << area->WorldXYAspectRatio() << endl;
+    }
+    else
+    {
+      cout << "xnumber\t\t= " << grid->XNumber() << endl
+           << "ynumber\t\t= " << grid->YNumber() << endl
+           << "dx\t\t= " << area->WorldXYWidth() / grid->XNumber() / 1000.0 << " km" << endl
+           << "dy\t\t= " << area->WorldXYHeight() / grid->YNumber() / 1000.0 << " km" << endl
+           << endl
+           << "xywidth\t\t= " << area->WorldXYWidth() / 1000.0 << " km" << endl
+           << "xyheight\t= " << area->WorldXYHeight() / 1000.0 << " km" << endl
+           << "aspectratio\t= " << area->WorldXYAspectRatio() << endl;
+    }
   }
-
-  cout << "xywidth\t\t= " << area->WorldXYWidth() / 1000.0 << " km" << endl
-       << "xyheight\t= " << area->WorldXYHeight() / 1000.0 << " km" << endl
-       << "aspectratio\t= " << area->WorldXYAspectRatio() << endl
-       << endl;
-
-  return;
 }
 
 // ----------------------------------------------------------------------

@@ -543,7 +543,7 @@ void ReportProjection(NFmiFastQueryInfo *q)
        << endl;
 
   auto *sr = const_cast<NFmiArea *>(area)->SpatialReference();
-  cout << "proj4\t= " << area->Proj() << endl
+  cout << "projstr\t= " << area->ProjStr() << endl
        << "wkt\t= " << area->WKT() << endl
        << endl
        << "prettywkt =\n"
@@ -605,6 +605,9 @@ void ReportProjection(NFmiFastQueryInfo *q)
 #endif
   }
 
+  std::cout << "proj options:\n";
+  area->Proj().Dump(std::cout);
+
   cout << endl
        << "top\t= " << area->Top() << endl
        << "left\t= " << area->Left() << endl
@@ -614,11 +617,22 @@ void ReportProjection(NFmiFastQueryInfo *q)
 
   if (grid)
   {
+    cout << "xnumber\t\t= " << grid->XNumber() << endl
+         << "ynumber\t\t= " << grid->YNumber() << endl;
+
     if (sr->IsGeographic())
     {
-      cout << "xnumber\t\t= " << grid->XNumber() << endl
-           << "ynumber\t\t= " << grid->YNumber() << endl
-           << "dx\t\t= " << area->WorldXYWidth() / grid->XNumber() << " deg" << endl
+      cout << "dx\t\t= " << area->WorldXYWidth() / grid->XNumber() << " deg" << endl
+           << "dy\t\t= " << area->WorldXYHeight() / grid->YNumber() << " deg" << endl
+           << endl
+           << "xywidth\t\t= " << area->WorldXYWidth() << " deg" << endl
+           << "xyheight\t= " << area->WorldXYHeight() << " deg" << endl
+           << "aspectratio\t= " << area->WorldXYAspectRatio() << endl;
+    }
+    else if (*area->Proj().GetString("proj") == "ob_tran" &&
+             *area->Proj().GetString("o_proj") == "latlon")
+    {
+      cout << "dx\t\t= " << area->WorldXYWidth() / grid->XNumber() << " deg" << endl
            << "dy\t\t= " << area->WorldXYHeight() / grid->YNumber() << " deg" << endl
            << endl
            << "xywidth\t\t= " << area->WorldXYWidth() << " deg" << endl
@@ -627,9 +641,7 @@ void ReportProjection(NFmiFastQueryInfo *q)
     }
     else
     {
-      cout << "xnumber\t\t= " << grid->XNumber() << endl
-           << "ynumber\t\t= " << grid->YNumber() << endl
-           << "dx\t\t= " << area->WorldXYWidth() / grid->XNumber() / 1000.0 << " km" << endl
+      cout << "dx\t\t= " << area->WorldXYWidth() / grid->XNumber() / 1000.0 << " km" << endl
            << "dy\t\t= " << area->WorldXYHeight() / grid->YNumber() / 1000.0 << " km" << endl
            << endl
            << "xywidth\t\t= " << area->WorldXYWidth() / 1000.0 << " km" << endl

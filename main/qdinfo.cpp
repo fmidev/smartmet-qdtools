@@ -629,8 +629,8 @@ void ReportProjection(NFmiFastQueryInfo *q)
            << "xyheight\t= " << area->WorldXYHeight() << " deg" << endl
            << "aspectratio\t= " << area->WorldXYAspectRatio() << endl;
     }
-    else if (*area->Proj().GetString("proj") == "ob_tran" &&
-             *area->Proj().GetString("o_proj") == "latlon")
+    else if (area->Proj().GetString("proj") == std::string("ob_tran") &&
+             area->Proj().GetString("o_proj") == std::string("latlon"))
     {
       cout << "dx\t\t= " << area->WorldXYWidth() / grid->XNumber() << " deg" << endl
            << "dy\t\t= " << area->WorldXYHeight() / grid->YNumber() << " deg" << endl

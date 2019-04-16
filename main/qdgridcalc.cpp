@@ -95,7 +95,7 @@ static void PrintGridSizeInfo(const NFmiArea *area,
 
   string verbiStr("would be");
   if (fActualGridUsed) verbiStr = "is";
-  if (fActualGridUsed) cout << "Given querydata projection: " << area->Proj() << endl;
+  if (fActualGridUsed) cout << "Given querydata projection: " << area->ProjStr() << endl;
   cout << "Grid size " << verbiStr << ": " << closestXGridSize << " x " << closestYGridSize << endl;
   cout << "Grid size " << verbiStr << " at center of bottom edge: " << alaMidX << " x " << alaMidY
        << " km" << endl;

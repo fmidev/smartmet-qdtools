@@ -110,7 +110,6 @@ NFmiHPlaceDescriptor create_hdesc(nctools::NcFileExtended& ncfile)
   double y2 = ncfile.ymax();
   double nx = ncfile.xsize();
   double ny = ncfile.ysize();
-  double centralLongitude = ncfile.longitudeOfProjectionOrigin;
 
   if (options.verbose)
   {

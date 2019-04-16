@@ -39,10 +39,12 @@
 #endif
 
 #include "GribTools.h"
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
+#include <fmt/format.h>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiCommentStripper.h>
@@ -58,13 +60,13 @@
 #include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiTotalWind.h>
 #include <newbase/NFmiValueString.h>
+#include <cstdlib>
 #include <functional>
 #include <grib_api.h>
 #include <iomanip>
 #include <set>
 #include <sstream>
 #include <stdexcept>
-#include <stdlib.h>
 
 using namespace std;
 
@@ -240,16 +242,21 @@ static const unsigned long gMissLevelValue =
 static string GetFileNameAreaStr(const NFmiArea *theArea)
 {
   string str("_area_");
-  str += theArea->AreaStr();
-  return str;
-}
+  str += theArea->ProjStr();
+  str += "_bbox_";
+  str += std::to_string(theArea->WorldRect().Left());
+  str += "_";
+  str += std::to_string(theArea->WorldRect().Bottom());
+  str += "_";
+  str += std::to_string(theArea->WorldRect().Right());
+  str += "_";
+  str += std::to_string(theArea->WorldRect().Top());
 
-static void ReplaceChar(string &theFileName, char replaceThis, char toThis)
-{
-  for (string::size_type i = 0; i < theFileName.size(); i++)
-  {
-    if (theFileName[i] == replaceThis) theFileName[i] = toThis;
-  }
+  boost::algorithm::replace_all(str, "+", "");
+  boost::algorithm::replace_all(str, " ", "_");
+  boost::algorithm::replace_all(str, ".", "_");
+
+  return str;
 }
 
 static NFmiRect GetLatlonCropRect(const string &theBoundsStr)
@@ -624,7 +631,6 @@ static void StoreQueryDatas(GribFilterOptions &theGribFilterOptions)
           {
             string areaStr =
                 GetFileNameAreaStr(theGribFilterOptions.itsGeneratedDatas[i]->Info()->Area());
-            ::ReplaceChar(areaStr, ':', '_');
             usedFileName += areaStr;
           }
         }
@@ -1291,6 +1297,7 @@ static void FreeDatas(vector<GridRecordData *> &theGribRecordDatas)
     delete *it;
 }
 
+#ifndef WGS84
 void FixPacificLongitude(NFmiPoint &lonLat)
 {
   if (lonLat.X() < 0)
@@ -1299,6 +1306,7 @@ void FixPacificLongitude(NFmiPoint &lonLat)
     lonLat.X(lon.Value());
   }
 }
+#endif
 
 static NFmiArea *CreateLatlonArea(grib_handle *theGribHandle, bool doAtlanticFix)
 {
@@ -1343,47 +1351,22 @@ static NFmiArea *CreateLatlonArea(grib_handle *theGribHandle, bool doAtlanticFix
 
     NFmiPoint bl(Lo1, La1);
     NFmiPoint tr(Lo2, La2);
+#ifdef WGS84
+    auto proj =
+        fmt::format("+proj=longlat +a={:.0f} +b={:.0f} +wktext +over +no_defs +towgs84=0,0,0",
+                    kRearth,
+                    kRearth);
+    return NFmiArea::CreateFromBBox(proj, bl, tr);
+#else
     bool usePacificView = NFmiArea::IsPacificView(bl, tr);
     if (usePacificView) ::FixPacificLongitude(tr);
-
     return new NFmiLatLonArea(bl, tr, NFmiPoint(0, 0), NFmiPoint(1, 1), usePacificView);
+#endif
   }
   else
     throw runtime_error("Error: Unable to retrieve latlon-projection information from grib.");
 }
 
-/*
-static NFmiArea* CreateLatlonArea(grib_handle *theGribHandle, bool &doGlobeFix)
-{
-        double La1 = 0;
-        int status1 = grib_get_double(theGribHandle, "latitudeOfFirstGridPointInDegrees", &La1);
-        double Lo1 = 0;
-        int status2 = grib_get_double(theGribHandle, "longitudeOfFirstGridPointInDegrees", &Lo1);
-        double La2 = 0;
-        int status3 = grib_get_double(theGribHandle, "latitudeOfLastGridPointInDegrees", &La2);
-        double Lo2 = 0;
-        int status4 = grib_get_double(theGribHandle, "longitudeOfLastGridPointInDegrees", &Lo2);
-
-        if(status1 == 0 && status2 == 0 && status3 == 0 && status4 == 0)
-        {
-                if(doGlobeFix && Lo1 == 0 && (Lo2 < 0 || Lo2 > 350))
-                {
-                        Lo1 = -180;
-                        Lo2 = 180;
-                }
-                else
-                        doGlobeFix = false;
-
-                return new NFmiLatLonArea(NFmiPoint(Lo1, FmiMin(La1, La2)), NFmiPoint(Lo2,
-FmiMax(La1, La2)));
-        }
-        else
-                throw runtime_error("Error: Unable to retrieve latlon-projection information from
-grib.");
-}
-*/
-
-#ifdef WGS84
 static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
 {
   double La1 = 0;
@@ -1397,10 +1380,14 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
 
   if (status1 == 0 && status2 == 0 && status3 == 0 && status4 == 0)
   {
-    return new NFmiMercatorArea(NFmiPoint(Lo1, FmiMin(La1, La2)), NFmiPoint(Lo2, FmiMax(La1, La2)));
+    auto proj =
+        fmt::format("+proj=merc +a={:.0f} +b={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs",
+                    kRearth,
+                    kRearth);
+    return NFmiArea::CreateFromCorners(proj, "FMI", NFmiPoint(Lo1, La1), NFmiPoint(Lo2, La2));
   }
 
-  else if (status1 == 0 && status2 == 0)
+  if (status1 == 0 && status2 == 0)
   {
     // Not needed:
     // check_jscan_direction(theGribHandle);
@@ -1420,22 +1407,17 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
     if (status9 == 0 && status6 == 0 && status7 == 0 && status8 == 0)
     {
       NFmiPoint bottomLeft(Lo1, La1);
-      NFmiPoint dummyTopRight(Lo1 + 5, La1 + 5);
-      NFmiMercatorArea dummyArea(bottomLeft, dummyTopRight);
-      NFmiPoint xyBottomLeft = dummyArea.LatLonToWorldXY(dummyArea.BottomLeftLatLon());
-      NFmiPoint xyTopRight(xyBottomLeft);
-      xyTopRight.X(xyTopRight.X() + (nx - 1) * dx / 1000.);
-      xyTopRight.Y(xyTopRight.Y() + (ny - 1) * dy / 1000.);
 
-      NFmiPoint topRight(dummyArea.WorldXYToLatLon(xyTopRight));
-      NFmiArea *area = new NFmiMercatorArea(bottomLeft, topRight);
-
-      return area;
+      auto proj =
+          fmt::format("+proj=merc +a={:.0f} +b={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs",
+                      kRearth,
+                      kRearth);
+      return NFmiArea::CreateFromCornerAndSize(
+          proj, "FMI", bottomLeft, (nx - 1) * dx / 1000, (ny - 1) * dy / 1000);
     }
   }
   throw runtime_error("Error: Unable to retrieve mercator-projection information from grib.");
 }
-#endif
 
 static NFmiArea *CreatePolarStereographicArea(grib_handle *theGribHandle)
 {
@@ -1478,21 +1460,19 @@ static NFmiArea *CreatePolarStereographicArea(grib_handle *theGribHandle)
     // check_jscan_direction(theGribHandle);
 
     NFmiPoint bottom_left(Lo1, La1);
-    NFmiPoint top_left_xy(0, 0);
-    NFmiPoint top_right_xy(1, 1);
-
     double width_in_meters = (nx - 1) * dx / 1000.0;
     double height_in_meters = (ny - 1) * dy / 1000.0;
 
-    NFmiArea *area = new NFmiStereographicArea(bottom_left,
-                                               width_in_meters,
-                                               height_in_meters,
-                                               Lov,
-                                               top_left_xy,
-                                               top_right_xy,
-                                               90,
-                                               usedLad);
-    return area;
+    auto proj = fmt::format(
+        "+proj=stere +lat_0={} +lon_0={} +a={:.0f} +b={:.0f} +units=m +wktext "
+        "+towgs84=0,0,0 +no_defs",
+        usedLad,
+        Lov,
+        kRearth,
+        kRearth);
+
+    return NFmiArea::CreateFromCornerAndSize(
+        proj, "FMI", bottom_left, width_in_meters, height_in_meters);
   }
 
   throw runtime_error("Error: Unable to retrieve polster-projection information from grib.");
@@ -1528,7 +1508,11 @@ static void CalcCroppedGrid(GridRecordData *theGridRecordData)
   NFmiArea *newArea = 0;
   if (theGridRecordData->itsOrigGrid.itsArea->ClassId() == kNFmiLatLonArea)
   {
-    newArea = new NFmiLatLonArea(latlon1, latlon2);
+    auto proj =
+        fmt::format("+proj=longlat +a={:.0f} +b={:.0f} +wktext +over +no_defs +towgs84=0,0,0",
+                    kRearth,
+                    kRearth);
+    newArea = NFmiArea::CreateFromBBox(proj, latlon1, latlon2);
   }
   else
     throw runtime_error("Error: CalcCroppedGrid doesn't support this projection yet.");
@@ -2062,7 +2046,7 @@ static void CropData(GridRecordData *theGridRecordData,
 static std::string MakeGridStr(const NFmiGrid &theGrid)
 {
   std::string str;
-  str += theGrid.Area()->AreaStr();
+  str += theGrid.Area()->ProjStr();
   str += ":";
   str += NFmiStringTools::Convert(theGrid.XNumber());
   str += ",";

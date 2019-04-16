@@ -410,7 +410,7 @@ void set_latlon_geometry(NFmiFastQueryInfo &theInfo,
                          grib_handle *gribHandle,
                          std::vector<double> &theValueArray)
 {
-  gset(gribHandle, "typeOfGrid", "regular_ll");
+  gset(gribHandle, "gridType", "regular_ll");
 
   NFmiPoint bl(theInfo.Area()->BottomLeftLatLon());
   NFmiPoint tr(theInfo.Area()->TopRightLatLon());
@@ -453,7 +453,7 @@ void set_rotated_latlon_geometry(NFmiFastQueryInfo &theInfo,
                                  grib_handle *gribHandle,
                                  std::vector<double> &theValueArray)
 {
-  gset(gribHandle, "typeOfGrid", "rotated_ll");
+  gset(gribHandle, "gridType", "rotated_ll");
 
   const auto &a = *theInfo.Area();
   NFmiPoint bl(a.LatLonToWorldXY(a.BottomLeftLatLon()));
@@ -477,18 +477,17 @@ void set_rotated_latlon_geometry(NFmiFastQueryInfo &theInfo,
   gset(gribHandle, "iDirectionIncrementInDegrees", gridCellWidthInDegrees);
   gset(gribHandle, "jDirectionIncrementInDegrees", gridCellHeightInDegrees);
 
-  // Get equator points
-  double lon1 = a.SpatialReference().GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_1, 0);
-  double lat1 = a.SpatialReference().GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_1, 0);
-  double lon2 = a.SpatialReference().GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_2, 0);
-  double lat2 = a.SpatialReference().GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_2, 0);
+  // Get north pole location
+
+  auto plat = a.Proj().GetDouble("o_lat_p");
+  auto plon = a.Proj().GetDouble("o_lon_p");
+
+  if (!plat || !plon) throw std::runtime_error("Rotated latlon north pole location not set");
 
   // Calculate respective south pole location
 
-  TODO();
-
-  gset(gribHandle, "longitudeOfSouthernPoleInDegrees", a.SouthernPole().X());
-  gset(gribHandle, "latitudeOfSouthernPoleInDegrees", a.SouthernPole().Y());
+  gset(gribHandle, "longitudeOfSouthernPoleInDegrees", *plon);
+  gset(gribHandle, "latitudeOfSouthernPoleInDegrees", -(*plat));
 
   gset(gribHandle, "jScansPositively", 1);
   gset(gribHandle, "iScansNegatively", 0);
@@ -527,7 +526,7 @@ void set_stereographic_geometry(NFmiFastQueryInfo &theInfo,
                                 grib_handle *gribHandle,
                                 std::vector<double> &theValueArray)
 {
-  gset(gribHandle, "typeOfGrid", "polar_stereographic");
+  gset(gribHandle, "gridType", "polar_stereographic");
 
   NFmiPoint bl(theInfo.Area()->BottomLeftLatLon());
   NFmiPoint tr(theInfo.Area()->TopRightLatLon());
@@ -549,24 +548,37 @@ void set_stereographic_geometry(NFmiFastQueryInfo &theInfo,
 
   auto *a = theInfo.Area();
 
-  double lon_0 = a->CentralLongitude();
-  double lat_0 = a->CentralLatitude();
-  double lat_ts = a->TrueLatitude();
+  auto clon = a->Proj().GetDouble("lon_0");
+  auto clat = a->Proj().GetDouble("lat_0");
+  auto tlat = a->Proj().GetDouble("lat_ts");
 
-  gset(gribHandle, "orientationOfTheGridInDegrees", lon_0);
+  if (!clon) clon = 0;
+  if (!clat) clat = 90;
+  if (!tlat) tlat = 90;
 
-  if (options.grib2)
-    gset(gribHandle, "LaDInDegrees", lat_ts);
-  else if (lat_ts != 60)
-    throw std::runtime_error(
-        "GRIB1 true latitude can only be 60 for polar stereographic projections with grib_api "
-        "library");
-
-  if (lat_0 != 90 && lat_0 != -90)
+  if (*clat == 90)
+    gset(gribHandle, "projecionCenterFlag", 0);
+  else if (*clat == -90)
+    gset(gribHandle, "projectionCenterFlag", 1);
+  else
     throw std::runtime_error("GRIB format supports only polar stereographic projections");
 
-  if (lat_0 != 90)
-    throw std::runtime_error("Only N-pole polar stereographic projections are supported");
+  gset(gribHandle, "orientationOfTheGridInDegrees", *clon);
+
+  if (!options.grib2)
+  {
+  }
+  else
+  {
+    gset(gribHandle, "LaDInDegrees", *clat);
+    // "shapeOfTheEarth"
+    // "scaleFactorOfRadiusOfSphericalEarth"
+    // "scaledValueOfRadiusOfSphericalEarth"
+    // "scaleFactorOfMajorAxisOfOblateSpheroidEarth"
+    // "scaledValueOfMajorAxisOfOblateSpheroidEarth"
+    // "scaleFactorOfMinorAxisOfOblateSpheroidEarth"
+    // "scaledValueOfMinorAxisOfOblateSpheroidEarth"
+  }
 
   gset(gribHandle, "jScansPositively", 1);
   gset(gribHandle, "iScansNegatively", 0);
@@ -587,7 +599,7 @@ void set_mercator_geometry(NFmiFastQueryInfo &theInfo,
                            grib_handle *gribHandle,
                            std::vector<double> &theValueArray)
 {
-  gset(gribHandle, "typeOfGrid", "mercator");
+  gset(gribHandle, "gridType", "mercator");
 
   NFmiPoint bl(theInfo.Area()->BottomLeftLatLon());
   NFmiPoint tr(theInfo.Area()->TopRightLatLon());
@@ -670,35 +682,23 @@ static void set_geometry(NFmiFastQueryInfo &theInfo,
                          grib_handle *gribHandle,
                          std::vector<double> &theValueArray)
 {
-  switch (theInfo.Area()->ClassId())
-  {
-    case kNFmiLatLonArea:
-      set_latlon_geometry(theInfo, gribHandle, theValueArray);
-      break;
-    case kNFmiRotatedLatLonArea:
-      set_rotated_latlon_geometry(theInfo, gribHandle, theValueArray);
-      break;
-    case kNFmiStereographicArea:
-      set_stereographic_geometry(theInfo, gribHandle, theValueArray);
-      break;
-#ifdef WGS84
-    case kNFmiMercatorArea:
-      set_mercator_geometry(theInfo, gribHandle, theValueArray);
-      break;
-    case kNFmiGnomonicArea:
-      throw std::runtime_error("Gnomonic projection is not supported by GRIB");
-    case kNFmiPKJArea:
-      throw std::runtime_error("PKJ projection is not supported by GRIB");
-#endif
-    case kNFmiEquiDistArea:
-      throw std::runtime_error("Equidistant projection is not supported by GRIB");
-    case kNFmiYKJArea:
-      throw std::runtime_error("YKJ projection is not supported by GRIB");
-    case kNFmiKKJArea:
-      throw std::runtime_error("KKJ projection is not supported by GRIB");
-    default:
-      throw std::runtime_error("Unsupported projection in input data");
-  }
+  auto &proj = theInfo.Area()->Proj();
+  auto opt_name = proj.GetString("proj");
+  if (!opt_name) throw std::runtime_error("Projection not set in querydata!");
+
+  auto name = *opt_name;
+
+  if (name == "longlat")
+    set_latlon_geometry(theInfo, gribHandle, theValueArray);
+  else if (name == "ob_tran" && proj.GetString("o_proj") == std::string("longlat") &&
+           proj.GetString("towgs84") == std::string("0,0,0"))
+    set_rotated_latlon_geometry(theInfo, gribHandle, theValueArray);
+  else if (name == "stere")
+    set_stereographic_geometry(theInfo, gribHandle, theValueArray);
+  else if (name == "merc")
+    set_mercator_geometry(theInfo, gribHandle, theValueArray);
+  else
+    throw std::runtime_error("Projection '" + name + "' is not supported");
 }
 
 // ----------------------------------------------------------------------

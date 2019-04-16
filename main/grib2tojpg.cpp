@@ -7,6 +7,7 @@
                                       // joka johtuu 'puretuista' STL-template nimistä)
 #endif
 
+#include <fmt/format.h>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiCommentStripper.h>
@@ -19,20 +20,17 @@
 #include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiTotalWind.h>
 #include <newbase/NFmiValueString.h>
-
+#include <cstdio>
+#include <functional>
 #include <grib_api.h>
-//#include "grib_api_internal.h"
+#include <set>
+#include <sstream>
+#include <stdexcept>
 
 extern "C"
 {
 #include <jpeglib.h>
 }
-
-#include <cstdio>
-#include <functional>
-#include <set>
-#include <sstream>
-#include <stdexcept>
 
 using namespace std;
 
@@ -612,13 +610,16 @@ static NFmiArea *CreateLatlonArea(grib_handle *theGribHandle, bool &doGlobeFix)
     else
       doGlobeFix = false;
 
-    return new NFmiLatLonArea(NFmiPoint(Lo1, FmiMin(La1, La2)), NFmiPoint(Lo2, FmiMax(La1, La2)));
+    auto proj =
+        fmt::format("+proj=longlat +a={:.0f} +b={:.0f} +wktext +over +no_defs +towgs84=0,0,0",
+                    kRearth,
+                    kRearth);
+    return NFmiArea::CreateFromBBox(proj, NFmiPoint(Lo1, La1), NFmiPoint(Lo2, La2));
   }
   else
     throw runtime_error("Error: Unable to retrieve latlon-projection information from grib.");
 }
 
-#ifdef WGS84
 static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
 {
   double La1 = 0;
@@ -639,7 +640,12 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
     La2 /= grib1divider;
     Lo2 /= grib1divider;
 
-    return new NFmiMercatorArea(NFmiPoint(Lo1, FmiMin(La1, La2)), NFmiPoint(Lo2, FmiMax(La1, La2)));
+    auto proj =
+        fmt::format("+proj=merc +a={:.0f} +b={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs",
+                    kRearth,
+                    kRearth);
+
+    return NFmiArea::CreateFromCorners(proj, "FMI", NFmiPoint(Lo1, La1), NFmiPoint(Lo2, La2));
   }
   else if (status1 == 0 && status2 == 0 && status5 == 0)
   {
@@ -660,25 +666,16 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
 
     if (status9 == 0 && status6 == 0 && status7 == 0 && status8 == 0)
     {
-      NFmiPoint bottomLeft(Lo1, La1);
-      NFmiPoint dummyTopRight(Lo1 + 5, La1 + 5);
-      NFmiMercatorArea dummyArea(bottomLeft, dummyTopRight);
-      NFmiPoint xyBottomLeft = dummyArea.LatLonToWorldXY(dummyArea.BottomLeftLatLon());
-      NFmiPoint xyTopRight(xyBottomLeft);
-      xyTopRight.X(xyTopRight.X() + (nx - 1) * dx / 1000.);
-      xyTopRight.Y(xyTopRight.Y() + (ny - 1) * dy / 1000.);
-
-      NFmiPoint topRight(dummyArea.WorldXYToLatLon(xyTopRight));
-
-      NFmiArea *area = new NFmiMercatorArea(bottomLeft, topRight);
-      //			double w = area->WorldXYWidth();
-      //			double h = area->WorldXYHeight();
-      return area;
+      auto proj =
+          fmt::format("+proj=merc +a={:.0f} +b={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs",
+                      kRearth,
+                      kRearth);
+      return NFmiArea::CreateFromCornerAndSize(
+          proj, "FMI", NFmiPoint(Lo1, La1), (nx - 1) * dx / 1000, (ny - 1) * dy + 1000);
     }
   }
   throw runtime_error("Error: Unable to retrieve mercator-projection information from grib.");
 }
-#endif
 
 // laske sellainen gridi, joka menee originaali hilan hilapisteikön mukaan, mutta peittää sen
 // alueen,
@@ -710,7 +707,11 @@ static void CalcCroppedGrid(GridRecordData *theGridRecordData)
   NFmiArea *newArea = 0;
   if (theGridRecordData->itsOrigGrid.itsArea->ClassId() == kNFmiLatLonArea)
   {
-    newArea = new NFmiLatLonArea(latlon1, latlon2);
+    auto proj =
+        fmt::format("+proj=longlat +a={:.0f} +b={:.0f} +wktext +over +no_defs +towgs84=0,0,0",
+                    kRearth,
+                    kRearth);
+    newArea = NFmiArea::CreateFromBBox(proj, latlon1, latlon2);
   }
   else
     throw runtime_error("Error: CalcCroppedGrid doesn't support this projection yet.");
@@ -1624,7 +1625,7 @@ void CheckInfoSize(const NFmiQueryInfo &theInfo, int theMaxQDataSizeInBytes)
 }
 
 /* The following code taken from pnmgamma and editor to support our needs */
-#define MIN(a, b) (a < b ? a : b)
+
 static void buildPowGamma(unsigned char table[],
                           unsigned char const maxval,
                           unsigned char const newMaxval,
@@ -1648,7 +1649,7 @@ static void buildPowGamma(unsigned char table[],
     /* sample value normalized to 0..1 */
 
     double const v = pow(normalized, oneOverGamma);
-    table[i] = MIN(static_cast<unsigned char>(v * newMaxval + 0.5), newMaxval);
+    table[i] = std::min(static_cast<unsigned char>(v * newMaxval + 0.5), newMaxval);
     /* denormalize, round and clip */
   }
 }

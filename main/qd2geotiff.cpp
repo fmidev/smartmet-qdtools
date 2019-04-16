@@ -27,45 +27,29 @@ GeomDefinedType GeoTiffQD::ConverQD2GeoTiff(string aNameVersion,
   GeomDefinedType geomDefinedType = kUndefinedGeom;
 
   const NFmiArea *area = theData->HPlaceDescriptor().Area();
+  auto &proj = area->Proj();
+  auto name = proj.GetString("proj");
+  if (!name) throw std::runtime_error("Querydata has no projection!");
 
-  const NFmiArea *supportedArea = dynamic_cast<const NFmiRotatedLatLonArea *>(area);
-
-  if (supportedArea != 0)
+  if (*name == "longlat")
+    ConvertToGeoTiff(aNameVersion, theData, theExternal, geomDefinedType = kLatLonGeom);
+  else if (*name == "tmerc" && proj.GetString("ellps") == std::string("intl") &&
+           proj.GetDouble("x_0") == 350000.0 && proj.GetDouble("lat_0") == 0.0 &&
+           proj.GetDouble("lon_0") == 27.0 &&
+           proj.GetString("towgs84") ==
+               std::string("-96.0617,-82.4278,-121.7535,4.80107,0.34543,-1.37646,1.4964"))
+    ConvertToGeoTiff(aNameVersion, theData, theExternal, geomDefinedType = kYkjGeom);
+  else if (*name == "stere")
   {
+    ConvertToGeoTiff(aNameVersion, theData, theExternal, geomDefinedType = kStereoGeom);
+    if (proj.GetDouble("lat_0") == 10.0) geomDefinedType = kStereoGeom10;
+    if (proj.GetDouble("lat_0") == 20.0) geomDefinedType = kStereoGeom20;
+  }
+  else if (*name == "ob_tran" && proj.GetString("o_proj") == std::string("longlat") &&
+           proj.GetString("towgs84") == std::string("0,0,0"))
     ConvertToGeoTiff(aNameVersion, theData, theExternal, geomDefinedType = kRotatedGeom);
-  }
   else
-  {
-    supportedArea = dynamic_cast<const NFmiLatLonArea *>(area);
-    if (supportedArea != 0)
-    {
-      ConvertToGeoTiff(aNameVersion, theData, theExternal, geomDefinedType = kLatLonGeom);
-    }
-    else
-    {
-      supportedArea = dynamic_cast<const NFmiYKJArea *>(area);
-      if (supportedArea != 0)
-      {
-        ConvertToGeoTiff(aNameVersion, theData, theExternal, geomDefinedType = kYkjGeom);
-      }
-      else
-      {
-        const NFmiStereographicArea *supportedStereoArea =
-            dynamic_cast<const NFmiStereographicArea *>(area);
-        if (supportedStereoArea != 0)
-        {
-          ConvertToGeoTiff(aNameVersion, theData, theExternal, geomDefinedType = kStereoGeom);
-
-          if (supportedStereoArea->CentralLongitude() == 10) geomDefinedType = kStereoGeom10;
-          if (supportedStereoArea->CentralLongitude() == 20) geomDefinedType = kStereoGeom20;
-        }
-        else
-        {
-          printf("\n%s\n", "Not supported Projection");
-        }
-      }
-    }
-  }
+    printf("\n%s\n", "Not supported Projection");
 
   return geomDefinedType;
 }
@@ -200,10 +184,8 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
   }
   else if (geomDefinedType == kYkjGeom)
   {
-    const NFmiYKJArea *ykj = dynamic_cast<const NFmiYKJArea *>(area);
-
-    NFmiPoint tlWorldXY = ykj->LatLonToWorldXY(area->TopLeftLatLon());
-    NFmiPoint brWorldXY = ykj->LatLonToWorldXY(area->BottomRightLatLon());
+    NFmiPoint tlWorldXY = area->LatLonToWorldXY(area->TopLeftLatLon());
+    NFmiPoint brWorldXY = area->LatLonToWorldXY(area->BottomRightLatLon());
 
     double aLon = (brWorldXY.X() - tlWorldXY.X()) / width;
     double aLat = (tlWorldXY.Y() - brWorldXY.Y()) / height;
@@ -219,12 +201,11 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
   {
     if (geomDefinedType == kRotatedGeom)
     {
-      const NFmiRotatedLatLonArea *rotLatLon = dynamic_cast<const NFmiRotatedLatLonArea *>(area);
-      double tlLon = rotLatLon->ToRotLatLon(rotLatLon->TopLeftLatLon()).X();
-      double tlLat = rotLatLon->ToRotLatLon(rotLatLon->TopLeftLatLon()).Y();
+      double tlLon = area->WorldRect().Left();
+      double tlLat = area->WorldRect().Top();
 
-      double aLon = rotLatLon->XScale() / width;
-      double aLat = rotLatLon->YScale() / height;
+      double aLon = area->XScale() / width;
+      double aLat = area->YScale() / height;
 
       // double adfGeoTransformTmp[6] = {tlLon, aLon, 0, tlLat, 0, aLat};  // decree
       // adfGeoTransform = adfGeoTransformTmp;
@@ -237,10 +218,8 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
     {
       if (geomDefinedType == kStereoGeom)
       {
-        const NFmiAzimuthalArea *ykj = dynamic_cast<const NFmiAzimuthalArea *>(area);
-
-        NFmiPoint tlWorldXY = ykj->LatLonToWorldXY(area->TopLeftLatLon());
-        NFmiPoint brWorldXY = ykj->LatLonToWorldXY(area->BottomRightLatLon());
+        NFmiPoint tlWorldXY = area->WorldRect().TopLeft();
+        NFmiPoint brWorldXY = area->WorldRect().BottomRight();
 
         double aLon = (brWorldXY.X() - tlWorldXY.X()) / width;
         double aLat = (tlWorldXY.Y() - brWorldXY.Y()) / height;
@@ -337,8 +316,6 @@ int *GeoTiffQD::fillIntRasterByQD(NFmiFastQueryInfo *theData,
 
   NFmiArea *destArea = itsDestProjection;  //  CreteEpsgArea("EPSG:3035");
 
-  const NFmiArea *rotArea = dynamic_cast<const NFmiRotatedLatLonArea *>(area);
-
   const string def = "latlon:-179.0,-89.0,179.0,89.0";
   // NFmiArea *latLonArea = NFmiAreaFactory::Create(def)->Clone();
 
@@ -357,6 +334,10 @@ int *GeoTiffQD::fillIntRasterByQD(NFmiFastQueryInfo *theData,
     theSecondData->FirstLocation();
     theSecondData->Values(dataSecond);
   }
+
+  bool is_rotlatlon = (area->Proj().GetString("proj") == std::string("ob_tran") &&
+                       area->Proj().GetString("o_proj") == std::string("longlat") &&
+                       area->Proj().GetString("towgs84") == std::string("0,0,0"));
 
   printf("Processing (int) with scale %f , QD to Gtiff raster convert for parameter %li\n",
          itsScale,
@@ -385,7 +366,7 @@ int *GeoTiffQD::fillIntRasterByQD(NFmiFastQueryInfo *theData,
 
             double valueSecond = (dataSecond[x][height - y - 1]);  // ok
 
-            if (rotArea != 0)
+            if (is_rotlatlon)
             {  // rotated project to destination
               // double azimuth1 = rotArea->TrueNorthAzimuth(latLon).ToRad();
               // double azimuth2 = destArea->TrueNorthAzimuth(latLon).ToRad();
@@ -416,7 +397,7 @@ int *GeoTiffQD::fillIntRasterByQD(NFmiFastQueryInfo *theData,
 
           const NFmiPoint latLon = area->ToLatLon(*xy);
 
-          // if(rotArea != 0){
+          // if(is_rotlatlon){
           //	value = calculateTrueNorthAzimuthValue(value , rotArea, &latLon );
           //}
 
@@ -465,8 +446,6 @@ float *GeoTiffQD::fillFloatRasterByQD(NFmiFastQueryInfo *theData,
 
   NFmiArea *destArea = itsDestProjection;  //  CreteEpsgArea("EPSG:3035");
 
-  const NFmiArea *rotArea = dynamic_cast<const NFmiRotatedLatLonArea *>(area);
-
   const string def = "latlon:-179.0,-89.0,179.0,89.0";
   // NFmiArea *latLonArea = NFmiAreaFactory::Create(def)->Clone();
 
@@ -492,6 +471,10 @@ float *GeoTiffQD::fillFloatRasterByQD(NFmiFastQueryInfo *theData,
   int ref = height / 10;
   int refCount = 0;
 
+  bool is_rotlatlon = (area->Proj().GetString("proj") == std::string("ob_tran") &&
+                       area->Proj().GetString("o_proj") == std::string("longlat") &&
+                       area->Proj().GetString("towgs84") == std::string("0,0,0"));
+
   // const NFmiRotatedLatLonArea *rotArea = dynamic_cast<const NFmiRotatedLatLonArea*>(area);
 
   for (int y = 0; y < height; y++)
@@ -513,7 +496,7 @@ float *GeoTiffQD::fillFloatRasterByQD(NFmiFastQueryInfo *theData,
 
             double valueSecond = (dataSecond[x][height - y - 1]);  // ok
 
-            if (rotArea != 0)
+            if (is_rotlatlon)
             {  // rotated project to destination
               // double azimuth1 = rotArea->TrueNorthAzimuth(latLon).ToRad();
               // double azimuth2 = destArea->TrueNorthAzimuth(latLon).ToRad();
@@ -544,7 +527,7 @@ float *GeoTiffQD::fillFloatRasterByQD(NFmiFastQueryInfo *theData,
 
           const NFmiPoint latLon = area->ToLatLon(*xy);
 
-          // if(rotArea != 0){
+          // if(is_rotlatlon != 0){
           //	value = calculateTrueNorthAzimuthValue(value , rotArea, &latLon );
           //}
 

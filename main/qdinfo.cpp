@@ -599,13 +599,9 @@ void ReportProjection(NFmiFastQueryInfo *q)
     OGRErr err = OGRERR_NONE;
     auto value = sr->GetNormProjParm(param.c_str(), -999, &err);
     if (err == OGRERR_NONE) std::cout << param << "\t= " << value << endl;
-#if 0
-    else
-      std::cout << param << "\t= NaN" << endl;
-#endif
   }
 
-  std::cout << "proj options:\n";
+  std::cout << "\nproj options:\n";
   area->Proj().Dump(std::cout);
 
   cout << endl

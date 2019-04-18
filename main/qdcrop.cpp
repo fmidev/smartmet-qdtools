@@ -458,8 +458,12 @@ NFmiHPlaceDescriptor MakeHPlaceDescriptor(NFmiFastQueryInfo& theQ,
     const double lon2 = coords[2];
     const double lat2 = coords[3];
 
-    const NFmiPoint bottomleft(lon1, lat1);
-    const NFmiPoint topright(lon2, lat2);
+    NFmiPoint bottomleft(lon1, lat1);
+    NFmiPoint topright(lon2, lat2);
+
+    // If we wanted input to be legacy sphere geodetic coordinates:
+    // bottomleft = NFmiArea::SphereToWGS84(bottomleft);
+    // topright = NFmiArea::SphereToWGS84(topright);
 
     const NFmiPoint xy1 = theQ.Grid()->LatLonToGrid(bottomleft);
     const NFmiPoint xy2 = theQ.Grid()->LatLonToGrid(topright);
@@ -494,23 +498,31 @@ NFmiHPlaceDescriptor MakeHPlaceDescriptor(NFmiFastQueryInfo& theQ,
     height = ny / dy;
   }
 
+  // Note that the grid is flipped for NFmiRect
+
   x1 = (xoff >= 0 ? xoff : nx + xoff - 1);
-  y1 = (yoff >= 0 ? yoff : ny + yoff - 1);
+  int y2 = (yoff >= 0 ? yoff : ny + yoff - 1);
 
   int x2 = x1 + (width - 1) * dx;
-  int y2 = y1 + (height - 1) * dy;
+  y1 = y2 + (height - 1) * dy;
 
   if (width <= 0 || height <= 0)
     throw runtime_error("Geometry width and height must be greater than zero");
 
+#if 0
+  // We allow cropping outside the box, user's responsibility. Note that the grid fill
+  // code will use InterpolateValue for cropped grids, which will return kFloatMissing
+  // outside the original bbox
+  
   if (x1 < 0 || y1 < 0) throw runtime_error("Geometry starts from negative coordinates");
-
   if (x2 >= nx || y2 >= ny) throw runtime_error("Geometry exceeds grid bounds");
+#endif
 
-  NFmiPoint bl(theQ.Grid()->GridToLatLon(NFmiPoint(x1, y1)));
-  NFmiPoint tr(theQ.Grid()->GridToLatLon(NFmiPoint(x2, y2)));
+  NFmiPoint bl(theQ.Grid()->GridToWorldXY(NFmiPoint(x1, y1)));
+  NFmiPoint tr(theQ.Grid()->GridToWorldXY(NFmiPoint(x2, y2)));
 
-  boost::shared_ptr<NFmiArea> area(theQ.Grid()->Area()->CreateNewArea(bl, tr));
+  boost::shared_ptr<NFmiArea> area(
+      NFmiArea::CreateFromBBox(*theQ.Grid()->Area()->SpatialReference(), bl, tr));
 
   if (area.get() == 0) throw runtime_error("Failed to create the new projection");
 

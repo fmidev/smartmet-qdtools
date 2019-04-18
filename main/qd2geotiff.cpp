@@ -31,7 +31,7 @@ GeomDefinedType GeoTiffQD::ConverQD2GeoTiff(string aNameVersion,
   auto name = proj.GetString("proj");
   if (!name) throw std::runtime_error("Querydata has no projection!");
 
-  if (*name == "longlat")
+  if (*name == "eqc")
     ConvertToGeoTiff(aNameVersion, theData, theExternal, geomDefinedType = kLatLonGeom);
   else if (*name == "tmerc" && proj.GetString("ellps") == std::string("intl") &&
            proj.GetDouble("x_0") == 350000.0 && proj.GetDouble("lat_0") == 0.0 &&
@@ -45,7 +45,7 @@ GeomDefinedType GeoTiffQD::ConverQD2GeoTiff(string aNameVersion,
     if (proj.GetDouble("lat_0") == 10.0) geomDefinedType = kStereoGeom10;
     if (proj.GetDouble("lat_0") == 20.0) geomDefinedType = kStereoGeom20;
   }
-  else if (*name == "ob_tran" && proj.GetString("o_proj") == std::string("longlat") &&
+  else if (*name == "ob_tran" && proj.GetString("o_proj") == std::string("eqc") &&
            proj.GetString("towgs84") == std::string("0,0,0"))
     ConvertToGeoTiff(aNameVersion, theData, theExternal, geomDefinedType = kRotatedGeom);
   else
@@ -336,7 +336,7 @@ int *GeoTiffQD::fillIntRasterByQD(NFmiFastQueryInfo *theData,
   }
 
   bool is_rotlatlon = (area->Proj().GetString("proj") == std::string("ob_tran") &&
-                       area->Proj().GetString("o_proj") == std::string("longlat") &&
+                       area->Proj().GetString("o_proj") == std::string("eqc") &&
                        area->Proj().GetString("towgs84") == std::string("0,0,0"));
 
   printf("Processing (int) with scale %f , QD to Gtiff raster convert for parameter %li\n",
@@ -472,7 +472,7 @@ float *GeoTiffQD::fillFloatRasterByQD(NFmiFastQueryInfo *theData,
   int refCount = 0;
 
   bool is_rotlatlon = (area->Proj().GetString("proj") == std::string("ob_tran") &&
-                       area->Proj().GetString("o_proj") == std::string("longlat") &&
+                       area->Proj().GetString("o_proj") == std::string("eqc") &&
                        area->Proj().GetString("towgs84") == std::string("0,0,0"));
 
   // const NFmiRotatedLatLonArea *rotArea = dynamic_cast<const NFmiRotatedLatLonArea*>(area);

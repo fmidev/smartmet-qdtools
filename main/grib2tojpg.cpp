@@ -610,10 +610,8 @@ static NFmiArea *CreateLatlonArea(grib_handle *theGribHandle, bool &doGlobeFix)
     else
       doGlobeFix = false;
 
-    auto proj =
-        fmt::format("+proj=longlat +a={:.0f} +b={:.0f} +wktext +over +no_defs +towgs84=0,0,0",
-                    kRearth,
-                    kRearth);
+    auto proj = fmt::format(
+        "+proj=lonlat +a={:.0f} +b={:.0f} +wktext +over +no_defs +towgs84=0,0,0", kRearth, kRearth);
     return NFmiArea::CreateFromBBox(proj, NFmiPoint(Lo1, La1), NFmiPoint(Lo2, La2));
   }
   else
@@ -707,10 +705,8 @@ static void CalcCroppedGrid(GridRecordData *theGridRecordData)
   NFmiArea *newArea = 0;
   if (theGridRecordData->itsOrigGrid.itsArea->ClassId() == kNFmiLatLonArea)
   {
-    auto proj =
-        fmt::format("+proj=longlat +a={:.0f} +b={:.0f} +wktext +over +no_defs +towgs84=0,0,0",
-                    kRearth,
-                    kRearth);
+    auto proj = fmt::format(
+        "+proj=eqc +a={:.0f} +b={:.0f} +wktext +over +no_defs +towgs84=0,0,0", kRearth, kRearth);
     newArea = NFmiArea::CreateFromBBox(proj, latlon1, latlon2);
   }
   else

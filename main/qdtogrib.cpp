@@ -688,9 +688,9 @@ static void set_geometry(NFmiFastQueryInfo &theInfo,
 
   auto name = *opt_name;
 
-  if (name == "longlat")
+  if (name == "eqc")
     set_latlon_geometry(theInfo, gribHandle, theValueArray);
-  else if (name == "ob_tran" && proj.GetString("o_proj") == std::string("longlat") &&
+  else if (name == "ob_tran" && proj.GetString("o_proj") == std::string("eqc") &&
            proj.GetString("towgs84") == std::string("0,0,0"))
     set_rotated_latlon_geometry(theInfo, gribHandle, theValueArray);
   else if (name == "stere")

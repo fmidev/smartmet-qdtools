@@ -11,10 +11,9 @@
  *  -o output-tiedosto      Oletusarvoisesti tulostetaan sdtout:iin.
  *	-m max-data-size-MB [200] Kuinka suuri data paketti tehdään
  *                              maksimissaan megatavuissa (vahinkojen varalle)
- *  -l t105v3,t109v255,...   Jätä pois laskuista seuraavat yksittäiset levelit (1. type 105, value
- *3, jne.)
- *  -g printed-grid-info-count Eli kuinka monesta ensimmäisestä hilasta haluat tulostaa cerr:iin.
- *Jos count -1, tulostaa kaikista.
+ *  -l t105v3,t109v255,...   Jätä pois laskuista seuraavat yksittäiset levelit (1. type 105,
+ *value 3, jne.) -g printed-grid-info-count Eli kuinka monesta ensimmäisestä hilasta haluat
+ *tulostaa cerr:iin. Jos count -1, tulostaa kaikista.
  *
  * Esimerkkeja:
  *
@@ -1352,10 +1351,8 @@ static NFmiArea *CreateLatlonArea(grib_handle *theGribHandle, bool doAtlanticFix
     NFmiPoint bl(Lo1, La1);
     NFmiPoint tr(Lo2, La2);
 #ifdef WGS84
-    auto proj =
-        fmt::format("+proj=longlat +a={:.0f} +b={:.0f} +wktext +over +no_defs +towgs84=0,0,0",
-                    kRearth,
-                    kRearth);
+    auto proj = fmt::format(
+        "+proj=eqc +a={:.0f} +b={:.0f} +wktext +over +no_defs +towgs84=0,0,0", kRearth, kRearth);
     return NFmiArea::CreateFromBBox(proj, bl, tr);
 #else
     bool usePacificView = NFmiArea::IsPacificView(bl, tr);
@@ -1508,10 +1505,8 @@ static void CalcCroppedGrid(GridRecordData *theGridRecordData)
   NFmiArea *newArea = 0;
   if (theGridRecordData->itsOrigGrid.itsArea->ClassId() == kNFmiLatLonArea)
   {
-    auto proj =
-        fmt::format("+proj=longlat +a={:.0f} +b={:.0f} +wktext +over +no_defs +towgs84=0,0,0",
-                    kRearth,
-                    kRearth);
+    auto proj = fmt::format(
+        "+proj=eqc +a={:.0f} +b={:.0f} +wktext +over +no_defs +towgs84=0,0,0", kRearth, kRearth);
     newArea = NFmiArea::CreateFromBBox(proj, latlon1, latlon2);
   }
   else

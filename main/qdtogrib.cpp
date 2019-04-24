@@ -682,23 +682,18 @@ static void set_geometry(NFmiFastQueryInfo &theInfo,
                          grib_handle *gribHandle,
                          std::vector<double> &theValueArray)
 {
-  auto &proj = theInfo.Area()->Proj();
-  auto opt_name = proj.GetString("proj");
-  if (!opt_name) throw std::runtime_error("Projection not set in querydata!");
+  auto id = theInfo.Area()->Proj().DetectClassId();
 
-  auto name = *opt_name;
-
-  if (name == "eqc")
+  if (id == kNFmiLatLonArea)
     set_latlon_geometry(theInfo, gribHandle, theValueArray);
-  else if (name == "ob_tran" && proj.GetString("o_proj") == std::string("eqc") &&
-           proj.GetString("towgs84") == std::string("0,0,0"))
+  else if (id == kNFmiRotatedLatLonArea)
     set_rotated_latlon_geometry(theInfo, gribHandle, theValueArray);
-  else if (name == "stere")
+  else if (id == kNFmiStereographicArea)
     set_stereographic_geometry(theInfo, gribHandle, theValueArray);
-  else if (name == "merc")
+  else if (id == kNFmiMercatorArea)
     set_mercator_geometry(theInfo, gribHandle, theValueArray);
   else
-    throw std::runtime_error("Projection '" + name + "' is not supported");
+    throw std::runtime_error("Projection '" + theInfo.Area()->ProjStr() + "' is not supported");
 }
 
 // ----------------------------------------------------------------------

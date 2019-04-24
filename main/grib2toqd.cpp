@@ -45,6 +45,7 @@
 #include <boost/thread.hpp>
 #include <fmt/format.h>
 #include <newbase/NFmiAreaFactory.h>
+#include <newbase/NFmiAreaTools.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiCommentStripper.h>
 #include <newbase/NFmiFileString.h>
@@ -1351,9 +1352,7 @@ static NFmiArea *CreateLatlonArea(grib_handle *theGribHandle, bool doAtlanticFix
     NFmiPoint bl(Lo1, La1);
     NFmiPoint tr(Lo2, La2);
 #ifdef WGS84
-    auto proj = fmt::format(
-        "+proj=eqc +a={:.0f} +b={:.0f} +wktext +over +no_defs +towgs84=0,0,0", kRearth, kRearth);
-    return NFmiArea::CreateFromBBox(proj, bl, tr);
+    return NFmiAreaTools::CreateLegacyLatLonArea(bl, tr);
 #else
     bool usePacificView = NFmiArea::IsPacificView(bl, tr);
     if (usePacificView) ::FixPacificLongitude(tr);
@@ -1376,13 +1375,7 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
   int status4 = grib_get_double(theGribHandle, "longitudeOfLastGridPointInDegrees", &Lo2);
 
   if (status1 == 0 && status2 == 0 && status3 == 0 && status4 == 0)
-  {
-    auto proj =
-        fmt::format("+proj=merc +a={:.0f} +b={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs",
-                    kRearth,
-                    kRearth);
-    return NFmiArea::CreateFromCorners(proj, "FMI", NFmiPoint(Lo1, La1), NFmiPoint(Lo2, La2));
-  }
+    return NFmiAreaTools::CreateLegacyMercatorArea(NFmiPoint(Lo1, La1), NFmiPoint(Lo2, La2));
 
   if (status1 == 0 && status2 == 0)
   {
@@ -1406,9 +1399,7 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
       NFmiPoint bottomLeft(Lo1, La1);
 
       auto proj =
-          fmt::format("+proj=merc +a={:.0f} +b={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs",
-                      kRearth,
-                      kRearth);
+          fmt::format("+proj=merc +R={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs", kRearth);
       return NFmiArea::CreateFromCornerAndSize(
           proj, "FMI", bottomLeft, (nx - 1) * dx / 1000, (ny - 1) * dy / 1000);
     }
@@ -1461,11 +1452,10 @@ static NFmiArea *CreatePolarStereographicArea(grib_handle *theGribHandle)
     double height_in_meters = (ny - 1) * dy / 1000.0;
 
     auto proj = fmt::format(
-        "+proj=stere +lat_0={} +lon_0={} +a={:.0f} +b={:.0f} +units=m +wktext "
+        "+proj=stere +lat_0={} +lon_0={} +R={:.0f}  +units=m +wktext "
         "+towgs84=0,0,0 +no_defs",
         usedLad,
         Lov,
-        kRearth,
         kRearth);
 
     return NFmiArea::CreateFromCornerAndSize(
@@ -1504,11 +1494,7 @@ static void CalcCroppedGrid(GridRecordData *theGridRecordData)
   NFmiPoint latlon2 = grid.GridToLatLon(xy2);
   NFmiArea *newArea = 0;
   if (theGridRecordData->itsOrigGrid.itsArea->ClassId() == kNFmiLatLonArea)
-  {
-    auto proj = fmt::format(
-        "+proj=eqc +a={:.0f} +b={:.0f} +wktext +over +no_defs +towgs84=0,0,0", kRearth, kRearth);
-    newArea = NFmiArea::CreateFromBBox(proj, latlon1, latlon2);
-  }
+    newArea = NFmiAreaTools::CreateLegacyLatLonArea(latlon1, latlon2);
   else
     throw runtime_error("Error: CalcCroppedGrid doesn't support this projection yet.");
 

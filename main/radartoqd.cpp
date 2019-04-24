@@ -997,12 +997,11 @@ NFmiHPlaceDescriptor create_hdesc()
     case 0:
     {
       auto proj = fmt::format(
-          "+proj=gnom +lat_0={} +lat_ts={} +lon_0={} +k=1 +x_0=0 +y_0=0 +a={:.0f} +b={:.0f} "
+          "+proj=gnom +lat_0={} +lat_ts={} +lon_0={} +k=1 +x_0=0 +y_0=0 +R={:.0f} "
           "+units=m +wktext +towgs84=0,0,0 +no_defs",
           central_lat,
           true_lat,
           central_lon,
-          kRearth,
           kRearth);
       auto *area = NFmiArea::CreateFromCorners(proj, "FMI", bottomleft, topright);
       return NFmiHPlaceDescriptor(NFmiGrid(area, nx, ny));
@@ -1010,12 +1009,11 @@ NFmiHPlaceDescriptor create_hdesc()
     case 1:
     {
       auto proj = fmt::format(
-          "+proj=stere +lat_0={} +lat_ts={} +lon_0={} +k=1 +x_0=0 +y_0=0 +a={:.0f} +b={:.0f} "
+          "+proj=stere +lat_0={} +lat_ts={} +lon_0={} +k=1 +x_0=0 +y_0=0 +R={:.0f} "
           "+units=m +wktext +towgs84=0,0,0 +no_defs",
           central_lat,
           true_lat,
           central_lon,
-          kRearth,
           kRearth);
       auto *area = NFmiArea::CreateFromCorners(proj, "FMI", bottomleft, topright);
       return NFmiHPlaceDescriptor(NFmiGrid(area, nx, ny));
@@ -1023,11 +1021,10 @@ NFmiHPlaceDescriptor create_hdesc()
     case 2:
     {
       auto proj = fmt::format(
-          "+proj=lcc +lat_0={} +lon_0={} +x_0=0 +y_0=0 +a={:.0f} +b={:.0f} +units=m +wktext "
+          "+proj=lcc +lat_0={} +lon_0={} +x_0=0 +y_0=0 +R={:.0f} +units=m +wktext "
           "+towgs84=0,0,0 +no_defs",
           central_lat,
           central_lon,
-          kRearth,
           kRearth);
       auto *area = NFmiArea::CreateFromCorners(proj, "FMI", bottomleft, topright);
       return NFmiHPlaceDescriptor(NFmiGrid(area, nx, ny));
@@ -1042,11 +1039,10 @@ NFmiHPlaceDescriptor create_hdesc()
     case 4:
     {
       auto proj = fmt::format(
-          "+proj=aeqd +lat_0={} +lon_0={} +x_0=0 +y_0=0 +a={:.0f} +b={:.0f} +units=m +wktext "
+          "+proj=aeqd +lat_0={} +lon_0={} +x_0=0 +y_0=0 +R={:.0f} +units=m +wktext "
           "+towgs84=0,0,0 +no_defs",
           central_lat,
           central_lon,
-          kRearth,
           kRearth);
       auto *area = NFmiArea::CreateFromCorners(proj, "FMI", bottomleft, topright);
       return NFmiHPlaceDescriptor(NFmiGrid(area, nx, ny));
@@ -1054,11 +1050,10 @@ NFmiHPlaceDescriptor create_hdesc()
     case 5:
     {
       auto proj = fmt::format(
-          "+proj=laea +lat_0={} +lon_0={} +x_0=0 +y_0=0 +a={:.0f} +b={:.0f} +units=m +wktext "
+          "+proj=laea +lat_0={} +lon_0={} +x_0=0 +y_0=0 +R={:.0f} +units=m +wktext "
           "+towgs84=0,0,0 +no_defs",
           central_lat,
           central_lon,
-          kRearth,
           kRearth);
       auto *area = NFmiArea::CreateFromCorners(proj, "FMI", bottomleft, topright);
       return NFmiHPlaceDescriptor(NFmiGrid(area, nx, ny));

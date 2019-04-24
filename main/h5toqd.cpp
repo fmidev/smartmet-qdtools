@@ -1307,11 +1307,10 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
     const double range_km = std::ceil(range_m / 1000);
 
     auto proj4 = fmt::format(
-        "+proj=aeqd +lat_0={} +lon_0={} +x_0=0 +y_0=0 +a={:.0f} +b={:.0f} +units=m +wktext "
+        "+proj=aeqd +lat_0={} +lon_0={} +x_0=0 +y_0=0 +R={:.0f} +units=m +wktext "
         "+towgs84=0,0,0 +no_defs",
         lat,
         lon,
-        kRearth,
         kRearth);
 
     // WGS84: Not sure if we should multiply by 2 for legacy reasons

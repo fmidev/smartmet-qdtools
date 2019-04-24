@@ -134,22 +134,20 @@ NFmiHPlaceDescriptor create_hdesc(nctools::NcFileExtended& ncfile)
   if (ncfile.grid_mapping() == POLAR_STEREOGRAPHIC)
   {
     auto proj4 = fmt::format(
-        "+proj=stere +lat_0={} +lon_0={} +k=1 +x_0=0 +y_0=0 +a={:.0f} +b={:.0f} +units=m +wktext "
+        "+proj=stere +lat_0={} +lon_0={} +k=1 +x_0=0 +y_0=0 +R={:.0f} +units=m +wktext "
         "+towgs84=0,0,0 +no_defs",
         ncfile.latitudeOfProjectionOrigin,
         ncfile.longitudeOfProjectionOrigin,
-        kRearth,
         kRearth);
     area = NFmiArea::CreateFromCorners(proj4, "FMI", NFmiPoint(x1, y1), NFmiPoint(x2, y2));
   }
   else if (ncfile.grid_mapping() == LAMBERT_AZIMUTHAL)
   {
     auto proj4 = fmt::format(
-        "+proj=laea +lat_0={} +lon_0={} +k=1 +x_0=0 +y_0=0 +a={:.0f} +b={:.0f} +units=m +wktext "
+        "+proj=laea +lat_0={} +lon_0={} +k=1 +x_0=0 +y_0=0 +R={:.0f} +units=m +wktext "
         "+towgs84=0,0,0 +no_defs",
         ncfile.latitudeOfProjectionOrigin,
         ncfile.longitudeOfProjectionOrigin,
-        kRearth,
         kRearth);
     area = NFmiArea::CreateFromBBox(proj4,
                                     NFmiPoint(ncfile.x_scale() * x1, ncfile.y_scale() * y1),

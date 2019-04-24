@@ -9,6 +9,7 @@
 
 #include <fmt/format.h>
 #include <newbase/NFmiAreaFactory.h>
+#include <newbase/NFmiAreaTools.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiCommentStripper.h>
 #include <newbase/NFmiGrid.h>
@@ -610,9 +611,7 @@ static NFmiArea *CreateLatlonArea(grib_handle *theGribHandle, bool &doGlobeFix)
     else
       doGlobeFix = false;
 
-    auto proj = fmt::format(
-        "+proj=lonlat +a={:.0f} +b={:.0f} +wktext +over +no_defs +towgs84=0,0,0", kRearth, kRearth);
-    return NFmiArea::CreateFromBBox(proj, NFmiPoint(Lo1, La1), NFmiPoint(Lo2, La2));
+    return NFmiAreaTools::CreateLegacyLatLonArea(NFmiPoint(Lo1, La1), NFmiPoint(Lo2, La2));
   }
   else
     throw runtime_error("Error: Unable to retrieve latlon-projection information from grib.");
@@ -638,12 +637,7 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
     La2 /= grib1divider;
     Lo2 /= grib1divider;
 
-    auto proj =
-        fmt::format("+proj=merc +a={:.0f} +b={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs",
-                    kRearth,
-                    kRearth);
-
-    return NFmiArea::CreateFromCorners(proj, "FMI", NFmiPoint(Lo1, La1), NFmiPoint(Lo2, La2));
+    return NFmiAreaTools::CreateLegacyMercatorArea(NFmiPoint(Lo1, La1), NFmiPoint(Lo2, La2));
   }
   else if (status1 == 0 && status2 == 0 && status5 == 0)
   {
@@ -665,9 +659,7 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
     if (status9 == 0 && status6 == 0 && status7 == 0 && status8 == 0)
     {
       auto proj =
-          fmt::format("+proj=merc +a={:.0f} +b={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs",
-                      kRearth,
-                      kRearth);
+          fmt::format("+proj=merc +R={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs", kRearth);
       return NFmiArea::CreateFromCornerAndSize(
           proj, "FMI", NFmiPoint(Lo1, La1), (nx - 1) * dx / 1000, (ny - 1) * dy + 1000);
     }
@@ -704,11 +696,7 @@ static void CalcCroppedGrid(GridRecordData *theGridRecordData)
   NFmiPoint latlon2 = grid.GridToLatLon(xy2);
   NFmiArea *newArea = 0;
   if (theGridRecordData->itsOrigGrid.itsArea->ClassId() == kNFmiLatLonArea)
-  {
-    auto proj = fmt::format(
-        "+proj=eqc +a={:.0f} +b={:.0f} +wktext +over +no_defs +towgs84=0,0,0", kRearth, kRearth);
-    newArea = NFmiArea::CreateFromBBox(proj, latlon1, latlon2);
-  }
+    newArea = NFmiAreaTools::CreateLegacyLatLonArea(latlon1, latlon2);
   else
     throw runtime_error("Error: CalcCroppedGrid doesn't support this projection yet.");
 

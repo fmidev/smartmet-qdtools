@@ -769,7 +769,7 @@ static void writeRotatedLatLonWKT(const std::string &name)
       << "PARAMETER[\"central_meridian\","
       << "-30"
       << "],"
-      << "EXTENSION[\"PROJ4\",\"+proj=ob_tran +o_proj=eqc +lon_0=0 +o_lat_p=30 +a=57.29578 "
+      << "EXTENSION[\"PROJ4\",\"+proj=ob_tran +o_proj=eqc +lon_0=0 +o_lat_p=30 +R=57.29578 "
          "+wktext\"],"
       << "UNIT[\"Meter\",1.0]]";
 

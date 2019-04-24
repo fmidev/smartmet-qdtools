@@ -1437,8 +1437,7 @@ static vector<pair<NFmiGrid, FmiLevelType> > CalcGrids2(
       ::CalcAreaConnection(connectionEdgeInfo, bottomLeft, topRight, xSize, ySize);
     }
 
-    auto proj = fmt::format(
-        "+proj=eqc +a={:.0f} +b={:.0f} +wktext +over +no_defs +towgs84=0,0,0", kRearth, kRearth);
+    auto proj = fmt::format("+proj=eqc +R={:.0f} +wktext +over +no_defs +towgs84=0,0,0", kRearth);
 
     auto *area = NFmiArea::CreateFromBBox(proj, bottomLeft, topRight);
 
@@ -1920,8 +1919,7 @@ static NFmiArea *CreateLatlonArea(grib_handle *theGribHandle,
     NFmiPoint bl(Lo1, La1);
     NFmiPoint tr(Lo2, La2);
 #ifdef WGS84
-    auto proj = fmt::format(
-        "+proj=eqc +a={:.0f} +b={:.0f} +wktext +over +no_defs +towgs84=0,0,0", kRearth, kRearth);
+    auto proj = fmt::format("+proj=eqc +R={:.0f} +wktext +over +no_defs +towgs84=0,0,0", kRearth);
     return NFmiArea::CreateFromBBox(proj, bl, tr);
 
 #else
@@ -1971,10 +1969,9 @@ static NFmiArea *CreateRotatedLatlonArea(grib_handle *theGribHandle,
 #ifdef WGS84
     auto proj = fmt::format(
         "+to_meter=.0174532925199433 +proj=ob_tran +o_proj=eqc +o_lon_p={} +o_lat_p={} "
-        "+a={:.0f} +b={:.0f} +wktext +over +towgs84=0,0,0 +no_defs",
+        "+R={:.0f} +wktext +over +towgs84=0,0,0 +no_defs",
         PoleLon,
         -PoleLat,
-        kRearth,
         kRearth);
     return NFmiArea::CreateFromBBox(proj, bottomleft, topright);
 #else
@@ -2002,9 +1999,7 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
   if (status1 == 0 && status2 == 0 && status3 == 0 && status4 == 0)
   {
     auto proj =
-        fmt::format("+proj=merc +a={:.0f} +b={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs",
-                    kRearth,
-                    kRearth);
+        fmt::format("+proj=merc +R={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs", kRearth);
     return NFmiArea::CreateFromCorners(proj, "FMI", NFmiPoint(Lo1, La1), NFmiPoint(Lo2, La2));
   }
 
@@ -2028,9 +2023,7 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
       // check_jscan_direction(theGribHandle);
 
       auto proj =
-          fmt::format("+proj=merc +a={:.0f} +b={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs",
-                      kRearth,
-                      kRearth);
+          fmt::format("+proj=merc +R={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs", kRearth);
       return NFmiArea::CreateFromCornerAndSize(
           proj, "FMI", NFmiPoint(Lo1, La1), (nx - 1) * dx / 1000, (ny - 1) * dy / 1000);
     }
@@ -2071,11 +2064,10 @@ static NFmiArea *CreatePolarStereographicArea(grib_handle *theGribHandle)
     double height_in_meters = (ny - 1) * dy / 1000.0;
 
     auto proj = fmt::format(
-        "+proj=stere +lat_0={} +lon_0={} +a={:.0f} +b={:.0f} +units=m +wktext "
+        "+proj=stere +lat_0={} +lon_0={} +R={:.0f} +units=m +wktext "
         "+towgs84=0,0,0 +no_defs",
         Lad,
         Lov,
-        kRearth,
         kRearth);
 
     return NFmiArea::CreateFromCornerAndSize(
@@ -2115,8 +2107,7 @@ static void CalcCroppedGrid(GridRecordData *theGridRecordData)
   NFmiArea *newArea = 0;
   if (theGridRecordData->itsOrigGrid.itsArea->ClassId() == kNFmiLatLonArea)
   {
-    auto proj = fmt::format(
-        "+proj=eqc +a={:.0f} +b={:.0f} +wktext +over +no_defs +towgs84=0,0,0", kRearth, kRearth);
+    auto proj = fmt::format("+proj=eqc +R={:.0f} +wktext +over +no_defs +towgs84=0,0,0", kRearth);
     newArea = NFmiArea::CreateFromBBox(proj, latlon1, latlon2);
   }
   else
@@ -3850,8 +3841,7 @@ NFmiArea *CreateLatlonArea(unsigned char *gds,
   NFmiPoint tr(lo2, la2);
 
 #ifdef WGS84
-  auto proj = fmt::format(
-      "+proj=eqc +a={:.0f} +b={:.0f} +wktext +over +no_defs +towgs84=0,0,0", kRearth, kRearth);
+  auto proj = fmt::format("+proj=eqc +R={:.0f} +wktext +over +no_defs +towgs84=0,0,0", kRearth);
   return NFmiArea::CreateFromBBox(proj, bl, tr);
 #else
   bool usePacificView = NFmiArea::IsPacificView(bl, tr);
@@ -3879,12 +3869,11 @@ NFmiArea *CreateStereographicArea(unsigned char *gds, unsigned char *bds)
   double trueLatitude = GDS_Polar_pole(gds) == 0 ? 60. : -60;
 
   auto proj = fmt::format(
-      "+proj=stere +lat_0={} +lat_ts={} +lon_0={} +a={:.0f} +b={:.0f} +units=m +wktext "
+      "+proj=stere +lat_0={} +lat_ts={} +lon_0={} +R={:.0f} +units=m +wktext "
       "+towgs84=0,0,0 +no_defs",
       centralLatitude,
       trueLatitude,
       orientation,
-      kRearth,
       kRearth);
 
   return NFmiArea::CreateFromCornerAndSize(proj, "FMI", bl, widthInMeters, heightInMeters);
@@ -3903,10 +3892,9 @@ NFmiArea *CreateRotatedLatlonArea(unsigned char *gds, unsigned char * /* bds */,
 
   auto proj = fmt::format(
       "+to_meter=.0174532925199433 +proj=ob_tran +o_proj=eqc +o_lon_p={} +o_lat_p={} "
-      "+a={:.0f} +b={:.0f} +wktext +over +towgs84=0,0,0 +no_defs",
+      "+R={:.0f} +wktext +over +towgs84=0,0,0 +no_defs",
       southernPole.X(),
       -southernPole.Y(),
-      kRearth,
       kRearth);
 
   return NFmiArea::CreateFromBBox(proj, bl, tr);
@@ -3925,8 +3913,7 @@ NFmiArea *CreateMercatorArea(unsigned char *gds, unsigned char * /* bds */, bool
   NFmiPoint bl(lo1, la1);
   NFmiPoint tr(lo2, la2);
 
-  auto proj = fmt::format(
-      "+proj=merc +a={:.0f} +b={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs", kRearth, kRearth);
+  auto proj = fmt::format("+proj=merc +R={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs", kRearth);
   return NFmiArea::CreateFromCorners(proj, "FMI", bl, tr);
 }
 

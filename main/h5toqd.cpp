@@ -1272,25 +1272,9 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
       double LR_lat = get_attribute_value<double>(hid, "/where", "LR_lat");
       double UL_lon = get_attribute_value<double>(hid, "/where", "UL_lon");
       double UL_lat = get_attribute_value<double>(hid, "/where", "UL_lat");
-      boost::shared_ptr<NFmiArea> tmparea = NFmiAreaFactory::CreateProj(
-          projdef, NFmiPoint(UL_lon, LR_lat), NFmiPoint(LR_lon, UL_lat));
+      boost::shared_ptr<NFmiArea> area(NFmiArea::CreateFromReverseCorners(
+          projdef, "WGS84", NFmiPoint(UL_lon, UL_lat), NFmiPoint(LR_lon, LR_lat)));
 
-      // Convert real corners to world xy
-
-      NFmiPoint ul = tmparea->LatLonToWorldXY(NFmiPoint(UL_lon, UL_lat));
-      NFmiPoint lr = tmparea->LatLonToWorldXY(NFmiPoint(LR_lon, LR_lat));
-
-      // Switched corners
-
-      NFmiPoint ll = NFmiPoint(ul.X(), lr.Y());
-      NFmiPoint ur = NFmiPoint(lr.X(), ul.Y());
-
-      // Back to lat lon
-
-      NFmiPoint LL = tmparea->WorldXYToLatLon(ll);
-      NFmiPoint UR = tmparea->WorldXYToLatLon(ur);
-
-      boost::shared_ptr<NFmiArea> area = NFmiAreaFactory::CreateProj(projdef, LL, UR);
       NFmiGrid grid(area->Clone(), xsize, ysize);
       return NFmiHPlaceDescriptor(grid);
     }
@@ -1303,8 +1287,8 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
       double UR_lon = get_attribute_value<double>(hid, "/where", "UR_lon");
       double UR_lat = get_attribute_value<double>(hid, "/where", "UR_lat");
 
-      boost::shared_ptr<NFmiArea> area = NFmiAreaFactory::CreateProj(
-          projdef, NFmiPoint(LL_lon, LL_lat), NFmiPoint(UR_lon, UR_lat));
+      boost::shared_ptr<NFmiArea> area(NFmiArea::CreateFromWGS84Corners(
+          projdef, NFmiPoint(LL_lon, LL_lat), NFmiPoint(UR_lon, UR_lat)));
 
       NFmiGrid grid(area->Clone(), xsize, ysize);
       return NFmiHPlaceDescriptor(grid);

@@ -27,26 +27,19 @@ GeomDefinedType GeoTiffQD::ConverQD2GeoTiff(string aNameVersion,
   GeomDefinedType geomDefinedType = kUndefinedGeom;
 
   const NFmiArea *area = theData->HPlaceDescriptor().Area();
-  auto &proj = area->Proj();
-  auto name = proj.GetString("proj");
-  if (!name) throw std::runtime_error("Querydata has no projection!");
+  auto id = area->Proj().DetectClassId();
 
-  if (*name == "eqc")
+  if (id == kNFmiLatLonArea)
     ConvertToGeoTiff(aNameVersion, theData, theExternal, geomDefinedType = kLatLonGeom);
-  else if (*name == "tmerc" && proj.GetString("ellps") == std::string("intl") &&
-           proj.GetDouble("x_0") == 350000.0 && proj.GetDouble("lat_0") == 0.0 &&
-           proj.GetDouble("lon_0") == 27.0 &&
-           proj.GetString("towgs84") ==
-               std::string("-96.0617,-82.4278,-121.7535,4.80107,0.34543,-1.37646,1.4964"))
+  else if (id == kNFmiRotatedLatLonArea)
     ConvertToGeoTiff(aNameVersion, theData, theExternal, geomDefinedType = kYkjGeom);
-  else if (*name == "stere")
+  else if (id == kNFmiStereographicArea)
   {
     ConvertToGeoTiff(aNameVersion, theData, theExternal, geomDefinedType = kStereoGeom);
-    if (proj.GetDouble("lat_0") == 10.0) geomDefinedType = kStereoGeom10;
-    if (proj.GetDouble("lat_0") == 20.0) geomDefinedType = kStereoGeom20;
+    if (area->Proj().GetDouble("lat_0") == 10.0) geomDefinedType = kStereoGeom10;
+    if (area->Proj().GetDouble("lat_0") == 20.0) geomDefinedType = kStereoGeom20;
   }
-  else if (*name == "ob_tran" && proj.GetString("o_proj") == std::string("eqc") &&
-           proj.GetString("towgs84") == std::string("0,0,0"))
+  else if (id == kNFmiRotatedLatLonArea)
     ConvertToGeoTiff(aNameVersion, theData, theExternal, geomDefinedType = kRotatedGeom);
   else
     printf("\n%s\n", "Not supported Projection");

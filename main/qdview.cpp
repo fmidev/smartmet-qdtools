@@ -10,6 +10,7 @@
 #include <imagine/NFmiImage.h>
 #include <imagine/NFmiPath.h>
 #include <newbase/NFmiArea.h>
+#include <newbase/NFmiAreaTools.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiFastQueryInfo.h>
@@ -209,9 +210,9 @@ NFmiArea* create_bbox(NFmiFastQueryInfo& q)
       maxlat = max(maxlat, q.LatLon().Y());
     }
   }
-  auto* tmp = NFmiArea::CreateFromCorners(
-      "FMI", "FMI", NFmiPoint(minlon, minlat), NFmiPoint(maxlon, maxlat));
-  return tmp;
+
+  return NFmiAreaTools::CreateLegacyLatLonArea(NFmiPoint(minlon, minlat),
+                                               NFmiPoint(maxlon, maxlat));
 }
 
 // ----------------------------------------------------------------------

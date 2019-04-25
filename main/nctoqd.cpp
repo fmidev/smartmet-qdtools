@@ -155,7 +155,8 @@ NFmiHPlaceDescriptor create_hdesc(nctools::NcFileExtended& ncfile)
   }
   else if (ncfile.grid_mapping() == LATITUDE_LONGITUDE)
   {
-    area = NFmiArea::CreateFromCorners("FMI", "FMI", NFmiPoint(x1, y1), NFmiPoint(x2, y2));
+    auto proj4 = fmt::format("+proj=eqc +R={:.0f} +wktext +over +no_defs +towgs84=0,0,0", kRearth);
+    area = NFmiArea::CreateFromCorners(proj4, "FMI", NFmiPoint(x1, y1), NFmiPoint(x2, y2));
   }
   else
     throw SmartMet::Spine::Exception(BCP,

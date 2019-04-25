@@ -79,3 +79,5 @@ Dependencies*
 /wrftoqd
 compile_commands.json
 .gdb_history
+test/*.tmp
+test/*.qdinfo

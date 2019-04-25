@@ -414,8 +414,8 @@ NFmiHPlaceDescriptor MakeHPlaceDescriptor(NFmiFastQueryInfo& theQ,
   if (!theProj.empty())
   {
     boost::shared_ptr<NFmiArea> area = NFmiAreaFactory::Create(theProj);
-    int width = static_cast<int>(round(area->XYArea(area.get()).Width()));
-    int height = static_cast<int>(round(area->XYArea(area.get()).Height()));
+    auto width = static_cast<int>(round(area->Width()));
+    auto height = static_cast<int>(round(area->Height()));
     NFmiGrid grid(area.get(), width, height);
     NFmiHPlaceDescriptor hdesc(grid);
     return hdesc;

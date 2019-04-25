@@ -263,22 +263,20 @@ boost::shared_ptr<NFmiArea> Projection::area(unsigned int theWidth, unsigned int
   else if (itsPimple->itsType == "stereographic")
   {
     proj4 = fmt::format(
-        "+proj=stere +lat_0={} +lat_ts={} +lon_0={} +k=1 +x_0=0 +y_0=0 +a={:.0f} +b={:.0f} "
+        "+proj=stere +lat_0={} +lat_ts={} +lon_0={} +k=1 +x_0=0 +y_0=0 +R={:.0f} "
         "+units=m +wktext +towgs84=0,0,0 +no_defs",
         itsPimple->itsCentralLatitude,
         itsPimple->itsTrueLatitude,
         itsPimple->itsCentralLongitude,
-        kRearth,
         kRearth);
   }
   else if (itsPimple->itsType == "equidist")
   {
     proj4 = fmt::format(
-        "+proj=aeqd +lat_0={} +lon_0={} +x_0=0 +y_0=0 +a={:.0f} +b={:.0f} +units=m +wktext "
+        "+proj=aeqd +lat_0={} +lon_0={} +x_0=0 +y_0=0 +R={:.0f} +units=m +wktext "
         "+towgs84=0,0,0 +no_defs",
         itsPimple->itsCentralLatitude,
         itsPimple->itsCentralLongitude,
-        kRearth,
         kRearth);
   }
   else

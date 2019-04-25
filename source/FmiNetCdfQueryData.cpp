@@ -727,12 +727,11 @@ void FmiNetCdfQueryData::InitializeStreographicGrid(void)
   NFmiPoint bottomLeftLatlon(itsProjectionInfo.Lo1, itsProjectionInfo.La1);
 
   auto proj = fmt::format(
-      "+proj=stere +lat_0={} +lat_ts={} +lon_0={} +k=1 +x_0=0 +y_0=0 +a={:.0f} +b={:.0f} "
+      "+proj=stere +lat_0={} +lat_ts={} +lon_0={} +k=1 +x_0=0 +y_0=0 +R={:.0f} "
       "+units=m +wktext +towgs84=0,0,0 +no_defs",
       clat,
       tlat,
       clon,
-      kRearth,
       kRearth);
 
 #ifdef WGS84

@@ -1,82 +1,3 @@
-// ======================================================================
-/*!
- * \file qdinfo.cpp
- * \brief Implementation of the qdinfo program
- */
-// ======================================================================
-/*!
- * \page qdinfo
- *
- * The qdinfo program prints information relating to newbase, or
- * the given querydata.
- *
- * The known options are
- *
- * <dl>
- * <dt>-q [queryfile]</dt>
- * <dd>
- * Specifies the name of the queryfile.
- * </dd>
- * <dt>-A</dt>
- * <dd>
- * All the options below combined.
- * </dd>
- * <dt>-l</dt>
- * <dd>
- * Produces a listing of recognized parameternames. This option
- * does not require a queryfile to be specified.
- * <dt>-p</dt>
- * <dd>
- * Produces a listing of parameters in the given queryfile.
- * </dd>
- * <dt>-T</dt>
- * <dd>
- * Shows querydata origin time and data times in UTC.
- * </dd>
- * <dt>-a</dt>
- * <dd>
- * All the options below combined.
- * </dd>
- * <dt>-v</dt>
- * <dd>
- * Display the queryinfo version number.
- * </dd>
- * <dt>-P</dt>
- * <dd>
- * Produces a listing of parameters in the given queryfile.
- * The difference to -p is that subparameters are also listed.
- * </dd>
- * <dt>-t</dt>
- * <dd>
- * Shows querydata origin time and data times in local time.
- * </dd>
- * <dt>-x</dt>
- * <dd>
- * Shows information of querydata projection.
- * <dt>-X</dt>
- * <dd>
- * Shows information of querydata locations.
- * </dd>
- * <dt>-z</dt>
- * <dd>
- * Shows querydata level information.
- * </dd>
- * <dt>-r</dt>
- * <dd>
- * Shows querydata producer information.
- * </dd>
- * <dt>-m key</dt>
- * <dd>
- * Shows the metadata value for the given key
- * </dd>
- * <dt>-M</dt>
- * <dd>
- * Shows the metadata values for all keys in the data.
- * </dd>
- * </dl>
- */
-// ======================================================================
-
 #include <macgyver/StringConversion.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiEnumConverter.h>
@@ -613,6 +534,9 @@ void ReportProjection(NFmiFastQueryInfo *q)
 
   if (grid)
   {
+    auto opt_to_meter = area->Proj().GetDouble("to_meter");
+    auto to_meter = (opt_to_meter ? *opt_to_meter : 1.0);
+
     cout << "xnumber\t\t= " << grid->XNumber() << endl
          << "ynumber\t\t= " << grid->YNumber() << endl;
 
@@ -637,11 +561,13 @@ void ReportProjection(NFmiFastQueryInfo *q)
     }
     else
     {
-      cout << "dx\t\t= " << area->WorldXYWidth() / grid->XNumber() / 1000.0 << " km" << endl
-           << "dy\t\t= " << area->WorldXYHeight() / grid->YNumber() / 1000.0 << " km" << endl
+      cout << "dx\t\t= " << area->WorldXYWidth() / grid->XNumber() / 1000.0 * to_meter << " km"
            << endl
-           << "xywidth\t\t= " << area->WorldXYWidth() / 1000.0 << " km" << endl
-           << "xyheight\t= " << area->WorldXYHeight() / 1000.0 << " km" << endl
+           << "dy\t\t= " << area->WorldXYHeight() / grid->YNumber() / 1000.0 * to_meter << " km"
+           << endl
+           << endl
+           << "xywidth\t\t= " << area->WorldXYWidth() / 1000.0 * to_meter << " km" << endl
+           << "xyheight\t= " << area->WorldXYHeight() / 1000.0 * to_meter << " km" << endl
            << "aspectratio\t= " << area->WorldXYAspectRatio() << endl;
     }
   }

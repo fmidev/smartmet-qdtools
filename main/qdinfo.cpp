@@ -448,16 +448,30 @@ void ReportProjection(NFmiFastQueryInfo *q)
 
   cout << "projection\t\t= " << area->ClassName() << endl;
 
-  cout << "top left lonlat\t\t= " << area->TopLeftLatLon().X() << ',' << area->TopLeftLatLon().Y()
-       << endl;
-  cout << "top right lonlat\t= " << area->TopRightLatLon().X() << ',' << area->TopRightLatLon().Y()
-       << endl;
-  cout << "bottom left lonlat\t= " << area->BottomLeftLatLon().X() << ','
-       << area->BottomLeftLatLon().Y() << endl;
-  cout << "bottom right lonlat\t= " << area->BottomRightLatLon().X() << ','
-       << area->BottomRightLatLon().Y() << endl;
-  cout << "center lonlat\t\t= " << area->CenterLatLon().X() << ',' << area->CenterLatLon().Y()
-       << endl
+  auto tl = area->ToNativeLatLon(area->TopLeft());
+  auto tr = area->ToNativeLatLon(area->TopRight());
+  auto bl = area->ToNativeLatLon(area->BottomLeft());
+  auto br = area->ToNativeLatLon(area->BottomRight());
+
+  cout << "top left lonlat\t\t= " << tl.X() << ',' << tl.Y() << endl;
+  cout << "top right lonlat\t= " << tr.X() << ',' << tr.Y() << endl;
+  cout << "bottom left lonlat\t= " << bl.X() << ',' << bl.Y() << endl;
+  cout << "bottom right lonlat\t= " << br.X() << ',' << br.Y() << endl;
+
+  tl = area->TopLeftLatLon();
+  tr = area->TopRightLatLon();
+  bl = area->BottomLeftLatLon();
+  br = area->BottomRightLatLon();
+
+  cout << "\n";
+
+  cout << "top left WGS84\t\t= " << tl.X() << ',' << tl.Y() << endl;
+  cout << "top right WGS84\t\t= " << tr.X() << ',' << tr.Y() << endl;
+  cout << "bottom left WGS84\t= " << bl.X() << ',' << bl.Y() << endl;
+  cout << "bottom right WGS84\t= " << br.X() << ',' << br.Y() << endl;
+
+  cout << "center WGS84\t\t= " << area->CenterLatLon().X() << ',' << area->CenterLatLon().Y()
+       << "\n\n"
        << std::setprecision(9) << "bbox\t\t\t= [" << rect.Left() << " " << rect.Right() << " "
        << std::min(rect.Bottom(), rect.Top()) << " " << std::max(rect.Bottom(), rect.Top()) << "]"
        << std::setprecision(6) << endl

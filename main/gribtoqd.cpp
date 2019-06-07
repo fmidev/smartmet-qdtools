@@ -5,13 +5,17 @@
 #endif
 
 #include "GribTools.h"
-
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/thread.hpp>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiFileString.h>
 #include <newbase/NFmiFileSystem.h>
 #include <newbase/NFmiGrid.h>
 #include <newbase/NFmiInterpolation.h>
+#include <newbase/NFmiLambertConformalConicArea.h>
 #include <newbase/NFmiLatLonArea.h>
 #include <newbase/NFmiMercatorArea.h>
 #include <newbase/NFmiMilliSecondTimer.h>
@@ -24,20 +28,13 @@
 #include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiTotalWind.h>
 #include <newbase/NFmiValueString.h>
-
-#include <grib_api.h>
-
-#include <boost/foreach.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/thread.hpp>
-
+#include <cstdlib>
 #include <functional>
+#include <grib_api.h>
 #include <iomanip>
 #include <set>
 #include <sstream>
 #include <stdexcept>
-#include <stdlib.h>
 
 using namespace std;
 
@@ -2060,6 +2057,54 @@ static NFmiArea *CreatePolarStereographicArea(grib_handle *theGribHandle)
   throw runtime_error("Error: Unable to retrieve polster-projection information from grib.");
 }
 
+static NFmiArea *CreateLambertArea(grib_handle *theGribHandle)
+{
+  double La1 = 0, Lo1 = 0, Lov = 0, Lad = 0, Lad1 = 0, Lad2 = 0;
+  int badLa1 = grib_get_double(theGribHandle, "latitudeOfFirstGridPointInDegrees", &La1);
+  int badLo1 = grib_get_double(theGribHandle, "longitudeOfFirstGridPointInDegrees", &Lo1);
+  int badLov = grib_get_double(theGribHandle, "LoVInDegrees", &Lov);
+  int badLad = grib_get_double(theGribHandle, "LaDInDegrees", &Lad);
+  int badLad1 = grib_get_double(theGribHandle, "Latin1InDegrees", &Lad1);
+  int badLad2 = grib_get_double(theGribHandle, "Latin2InDegrees", &Lad2);
+
+  long pcentre = 0;
+  int badPcentre = grib_get_long(theGribHandle, "projectionCentreFlag", &pcentre);
+
+  if (!badPcentre && pcentre != 0)
+    throw runtime_error("Error: South pole not supported for lambert");
+
+  long nx = 0, ny = 0;
+  int badNx = ::grib_get_long(theGribHandle, "numberOfPointsAlongXAxis", &nx);
+  int badNy = ::grib_get_long(theGribHandle, "numberOfPointsAlongYAxis", &ny);
+
+  double dx = 0, dy = 0;
+  int badDx = grib_get_double(theGribHandle, "DxInMetres", &dx);
+  int badDy = grib_get_double(theGribHandle, "DyInMetres", &dy);
+
+  if (!badLa1 && !badLo1 && !badLov && !badLad && !badLad1 && !badLad2 && !badNx && !badNy &&
+      !badDx && !badDy)
+  {
+    // Has to be checked:
+    check_jscan_direction(theGribHandle);
+
+    NFmiPoint bottom_left(Lo1, La1);
+
+    // TODO: Handle the sphere radius
+    std::unique_ptr<NFmiArea> tmparea(new NFmiLambertConformalConicArea(
+        bottom_left, bottom_left + NFmiPoint(1, 1), Lov, Lad, Lad1, Lad2));
+    auto worldxy1 = tmparea->LatLonToWorldXY(bottom_left);
+    auto worldxy2 = worldxy1 + NFmiPoint((nx - 1) * dx, (ny - 1) * dy);
+    auto top_right = tmparea->WorldXYToLatLon(worldxy2);
+
+    // Todo: Establish sphere from GRIB data
+    NFmiArea *area =
+        new NFmiLambertConformalConicArea(bottom_left, top_right, Lov, Lad, Lad1, Lad2);
+    return area;
+  }
+
+  throw runtime_error("Error: Unable to retrieve lambert-projection information from grib.");
+}
+
 // laske sellainen gridi, joka menee originaali hilan hilapisteikön mukaan, mutta peittää sen
 // alueen,
 // joka on annettu itsLatlonCropRect:issä siten että uusi hila menee juuri seuraaviin hilapisteisiin
@@ -2130,6 +2175,8 @@ static void FillGridInfoFromGribHandle(grib_handle *theGribHandle,
       area = ::CreateMercatorArea(theGribHandle);
     else if (proj_type == "polar_stereographic")
       area = ::CreatePolarStereographicArea(theGribHandle);
+    else if (proj_type == "lambert")
+      area = ::CreateLambertArea(theGribHandle);
     else
       throw std::runtime_error("Error: Handling of projection " + proj_type +
                                " found from grib is not implemented yet.");

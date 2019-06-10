@@ -128,9 +128,6 @@ make %{_smp_mflags}
 %install
 %makeinstall
 
-%check
-make test
-
 %clean
 
 %files

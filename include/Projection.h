@@ -36,6 +36,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <newbase/NFmiArea.h>
+
 #include <string>
 
 namespace Imagine
@@ -69,6 +70,8 @@ class Projection
 
   void center(float theLon, float theLat);
   void scale(float theScale);
+
+  void ellipsoid(const std::string& theEllipsoid);
 
   boost::shared_ptr<NFmiArea> area(unsigned int theWidth, unsigned int theHeight) const;
   Imagine::NFmiPath project(const Imagine::NFmiPath& thePath,

@@ -55,19 +55,21 @@ FMI::RadContour::PgmReadOptions options;
 
 void usage()
 {
-  cout << "Usage: pgm2qd [options] inputdata outputdata" << endl
-       << endl
-       << "pgm2qd converts RADAR formatted pgm files into querydata" << endl
-       << endl
-       << "The available options are:" << endl
-       << endl
-       << "  -h\t\tprint this usage information" << endl
-       << "  -v\t\tverbose mode" << endl
-       << "  -f\t\tforce rewrite if already converted" << endl
-       << "  -t dir\ttemporary work directory to use (default is /tmp)" << endl
-       << "  -p int,name\tset producer id and name (default = 1014,NRD)" << endl
-       << "  -l minutes\tset age limit for input files (default = none)" << endl
-       << endl;
+  cout << "Usage: pgm2qd [options] inputdata outputdata\n"
+          "\n"
+          "pgm2qd converts RADAR formatted pgm files into querydata\n"
+          "\n"
+          "The available options are:\n"
+          "\n"
+          "  -h\t\tprint this usage information\n"
+          "  -v\t\tverbose mode\n"
+          "  -f\t\tforce rewrite if already converted\n"
+          "  -e ellipsoid\treference ellipsoid, default=intl (see 'cs2cs -le' for a list of "
+          "ellipsoids)\n"
+          "  -t dir\ttemporary work directory to use (default is /tmp)\n"
+          "  -p int,name\tset producer id and name (default = 1014,NRD)\n"
+          "  -l minutes\tset age limit for input files (default = none)\n"
+          "\n";
 }
 
 // ----------------------------------------------------------------------
@@ -114,6 +116,8 @@ int parse_command_line(int argc, const char *argv[])
     if (options.agelimit <= 0) throw runtime_error("Age limit given by -l must be positive");
   }
 
+  if (cmdline.isOption('e')) options.ellipsoid = cmdline.OptionValue('e');
+
   return true;
 }
 
@@ -127,7 +131,7 @@ int parse_command_line(int argc, const char *argv[])
  */
 // ----------------------------------------------------------------------
 
-int domain(int argc, const char *argv[])
+int run(int argc, const char *argv[])
 {
   // Parse the command line arguments
   if (!parse_command_line(argc, argv)) return 0;
@@ -207,9 +211,10 @@ int domain(int argc, const char *argv[])
  */
 // ----------------------------------------------------------------------
 
-int main(int argc, const char *argv[]) try
+int main(int argc, const char *argv[])
+try
 {
-  return domain(argc, argv);
+  return run(argc, argv);
 }
 catch (exception &e)
 {

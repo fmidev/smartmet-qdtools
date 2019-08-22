@@ -43,8 +43,7 @@
  */
 // ======================================================================
 
-#ifndef FMI_RADCONTOUR_PROJECTIONPARSER_H
-#define FMI_RADCONTOUR_PROJECTIONPARSER_H
+#pragma once
 
 #include <iosfwd>
 
@@ -58,7 +57,7 @@ class ProjectionStore;
 class ProjectionParser
 {
  public:
-  static void parse(std::istream& is, ProjectionStore& theStore);
+  static void parse(std::istream& is, ProjectionStore& theStore, const std::string& theEllipsoid);
 
  private:
   ~ProjectionParser(void);
@@ -67,7 +66,5 @@ class ProjectionParser
 };  // class ProjectionParser
 }  // namespace RadContour
 }  // namespace FMI
-
-#endif  // FMI_RADCONTOUR_PROJECTIONPARSER_H
 
 // ======================================================================

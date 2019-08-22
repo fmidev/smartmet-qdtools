@@ -6,11 +6,13 @@
 // ======================================================================
 
 #include "Pgm2QueryData.h"
+
 #include "DataTransform.h"
 #include "Projection.h"
 #include "ProjectionParser.h"
 #include "ProjectionStore.h"
 
+#include <boost/shared_ptr.hpp>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileSystem.h>
@@ -18,8 +20,6 @@
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
 #include <newbase/NFmiStringTools.h>
-
-#include <boost/shared_ptr.hpp>
 
 #include <fstream>
 
@@ -32,28 +32,15 @@ namespace RadContour
 class PgmHeaderInfo
 {
  public:
-  PgmHeaderInfo(void)
-      : projections(),
-        obstime(),
-        fortime(),
-        param(),
-        partnum(0),
-        totalparts(0),
-        scale(1.0f),
-        base(0.0f),
-        level()  // alustamaton level tieto jätetään huomiotta
-  {
-  }
-
   ProjectionStore projections;
   std::string obstime;
   std::string fortime;
   std::string param;
-  int partnum;
-  int totalparts;
-  float scale;
-  float base;
-  NFmiLevel level;
+  int partnum = 0;
+  int totalparts = 0;
+  float scale = 1;
+  float base = 0;
+  NFmiLevel level;  // ignored when uninitialized
 };
 
 static void ReadPgmHeader(std::istream &input,
@@ -72,7 +59,7 @@ static void ReadPgmHeader(std::istream &input,
     else if (token == "fortime")
       input >> thePgmHeaderInfo.fortime;
     else if (token == "projection")
-      ProjectionParser::parse(input, thePgmHeaderInfo.projections);
+      ProjectionParser::parse(input, thePgmHeaderInfo.projections, theOptions.ellipsoid);
     else if (token == "param")
     {
       input >> thePgmHeaderInfo.param;

@@ -6,10 +6,13 @@
 // ======================================================================
 
 #include "ProjectionParser.h"
+
 #include "Projection.h"
 #include "ProjectionStore.h"
+
 #include <newbase/NFmiArea.h>
 #include <newbase/NFmiPoint.h>
+
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -31,7 +34,9 @@ namespace RadContour
  */
 // ----------------------------------------------------------------------
 
-void ProjectionParser::parse(std::istream& is, ProjectionStore& theStore)
+void ProjectionParser::parse(std::istream& is,
+                             ProjectionStore& theStore,
+                             const std::string& theEllipsoid)
 {
   // An initial safety check
   if (!is.good())
@@ -49,6 +54,8 @@ void ProjectionParser::parse(std::istream& is, ProjectionStore& theStore)
   // The projection info
 
   Projection projection;
+  projection.ellipsoid(theEllipsoid);
+
   std::string proj_type = "";
   bool got_type = false;
   bool got_bottomleft = false;

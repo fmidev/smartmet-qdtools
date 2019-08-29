@@ -1,0 +1,92 @@
+#!/usr/bin/perl
+
+$program = "../qdproject";
+$results = "results";
+$griddata = "data/griddata.sqd";
+
+%usednames = ();
+
+DoTest("option -d -L ", "option_d_big_l", "-d stereographic,20:6,51.3,49,70.2:600,-1 -L 25,60");
+DoTest("option -q -L ", "option_q_big_l", "-q $griddata -L 25,60");
+DoTest("option -l", "option_l", "-d stereographic,20:6,51.3,49,70.2:600,-1 -L 25,60");
+DoTest("option -I", "option_big_i", "-d stereographic,20:6,51.3,49,70.2:600,-1 -I 277644.2057,-3173487.792");
+
+
+print "Done\n";
+
+# ----------------------------------------------------------------------
+# Run a single test
+# ----------------------------------------------------------------------
+
+sub DoTest
+{
+    my($text,$name,$arguments) = @_;
+
+    if(exists($usednames{$name}))
+    {
+	print "Error: $name used more than once\n";
+	exit(1);
+    }
+    $usednames{$name} = 1;
+
+    my($resultfile) = "qdproject_$name";
+    my($tmpfile) = "${resultfile}.tmp";
+    $cmd = "$program $arguments 2>&1";
+    $output = `$cmd`;
+
+    print padname($text);
+    if(equalcontent("$results/$resultfile",$output))
+    {
+	print " OK\n";
+	unlink($tmpfile);
+    }
+    else
+    {
+	print " FAILED!\n";
+	print "( $resultfile <> $tmpfile in $results/ )\n";
+
+	open(OUT,">$results/$tmpfile")
+	    or die "Could not open $results/$tmpfile for writing\n";
+	print OUT $output;
+	close(OUT);
+    }
+}
+
+# ----------------------------------------------------------------------
+# Pad the given string to 70 characters with dots
+# ----------------------------------------------------------------------
+
+sub padname
+{
+    my($str) = @_[0];
+
+    while(length($str) < 70)
+    {
+	$str .= ".";
+    }
+    return $str;
+}
+
+# ----------------------------------------------------------------------
+# Compare two files
+# ----------------------------------------------------------------------
+
+sub equalcontent
+{
+    my($file,$text) = @_;
+
+    # File must exits
+
+    if(!(-e $file))
+    { return 0; }
+
+    # Read binary file and compare results
+
+    open(FILE,"$file");
+    binmode(FILE);
+    read(FILE,$buffer,(stat(FILE))[7]);
+    close(FILE);
+    return ($buffer eq $text);
+}
+
+# ----------------------------------------------------------------------

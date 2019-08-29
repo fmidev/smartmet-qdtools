@@ -1,0 +1,99 @@
+#!/usr/bin/perl
+
+$program = "../qdstat";
+$results = "results";
+$griddata = "data/griddata.sqd";
+$pointdata = "data/pointdata.sqd";
+
+%usednames = ();
+
+DoTest("default options", "default_options", "$griddata");
+DoTest("option -T", "option_big_t", "-T $griddata");
+DoTest("option -W", "option_big_w", "-W $pointdata");
+DoTest("option -Z", "option_big_z", "-Z $griddata");
+DoTest("option -d", "option_d", "-d $griddata");
+DoTest("option -d -r", "option_d_r", "-d -r $griddata");
+DoTest("option -d -b 5", "option_d_b_5", "-d -b 5 $griddata");
+DoTest("option -d -b 10", "option_d_b_10", "-d -b 10 $griddata");
+DoTest("option -d -B 80", "option_d_big_b_80", "-d -B 80 $griddata");
+DoTest("option -p Temperature,WindSpeedMS", "option_p", "-p Temperature,WindSpeedMS $griddata");
+DoTest("option -w 2974,2978", "option_w", "-w 2974,2978 $pointdata");
+
+print "Done\n";
+
+# ----------------------------------------------------------------------
+# Run a single test
+# ----------------------------------------------------------------------
+
+sub DoTest
+{
+    my($text,$name,$arguments) = @_;
+
+    if(exists($usednames{$name}))
+    {
+	print "Error: $name used more than once\n";
+	exit(1);
+    }
+    $usednames{$name} = 1;
+
+    my($resultfile) = "qdstat_$name";
+    my($tmpfile) = "${resultfile}.tmp";
+    $cmd = "$program $arguments 2>&1";
+    $output = `$cmd`;
+
+    print padname($text);
+    if(equalcontent("$results/$resultfile",$output))
+    {
+	print " OK\n";
+	unlink($tmpfile);
+    }
+    else
+    {
+	print " FAILED!\n";
+	print "( $resultfile <> $tmpfile in $results/ )\n";
+
+	open(OUT,">$results/$tmpfile")
+	    or die "Could not open $results/$tmpfile for writing\n";
+	print OUT $output;
+	close(OUT);
+    }
+}
+
+# ----------------------------------------------------------------------
+# Pad the given string to 70 characters with dots
+# ----------------------------------------------------------------------
+
+sub padname
+{
+    my($str) = @_[0];
+
+    while(length($str) < 70)
+    {
+	$str .= ".";
+    }
+    return $str;
+}
+
+# ----------------------------------------------------------------------
+# Compare two files
+# ----------------------------------------------------------------------
+
+sub equalcontent
+{
+    my($file,$text) = @_;
+
+    # File must exits
+
+    if(!(-e $file))
+    { return 0; }
+
+    # Read binary file and compare results
+
+    open(FILE,"$file");
+    binmode(FILE);
+    read(FILE,$buffer,(stat(FILE))[7]);
+    close(FILE);
+    return ($buffer eq $text);
+}
+
+# ----------------------------------------------------------------------

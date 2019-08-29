@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 19.4.1
+Version: 19.6.11
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -130,9 +130,6 @@ make %{_smp_mflags}
 %install
 %makeinstall
 
-%check
-make test
-
 %clean
 
 %files
@@ -191,6 +188,12 @@ make test
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Jun 11 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.6.11-1.fmi
+- Added ILHF to the stations list
+
+* Fri Jun  7 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.6.7-1.fmi
+- gribtoqd now supports the Lambert conformal projection
+
 * Mon Apr  1 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.4.1-1.fmi
 - Fixed gribtoqd to handle projection types in version independent manner
 

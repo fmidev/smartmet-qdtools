@@ -1262,6 +1262,7 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
   if (object == "COMP" || object == "IMAGE" || object == "CVOL")
   {
     std::string projdef = get_attribute_value<std::string>(hid, "/where", "projdef");
+    std::string sphere = NFmiProj(projdef).InverseProjStr();
     long xsize = get_attribute_value<long>(hid, "/where", "xsize");
     long ysize = get_attribute_value<long>(hid, "/where", "ysize");
 
@@ -1273,7 +1274,7 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
       double UL_lon = get_attribute_value<double>(hid, "/where", "UL_lon");
       double UL_lat = get_attribute_value<double>(hid, "/where", "UL_lat");
       boost::shared_ptr<NFmiArea> area(NFmiArea::CreateFromReverseCorners(
-          projdef, "WGS84", NFmiPoint(UL_lon, UL_lat), NFmiPoint(LR_lon, LR_lat)));
+          projdef, sphere, NFmiPoint(UL_lon, UL_lat), NFmiPoint(LR_lon, LR_lat)));
 
       NFmiGrid grid(area->Clone(), xsize, ysize);
       return NFmiHPlaceDescriptor(grid);
@@ -1287,8 +1288,8 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
       double UR_lon = get_attribute_value<double>(hid, "/where", "UR_lon");
       double UR_lat = get_attribute_value<double>(hid, "/where", "UR_lat");
 
-      boost::shared_ptr<NFmiArea> area(NFmiArea::CreateFromWGS84Corners(
-          projdef, NFmiPoint(LL_lon, LL_lat), NFmiPoint(UR_lon, UR_lat)));
+      boost::shared_ptr<NFmiArea> area(NFmiArea::CreateFromCorners(
+          projdef, sphere, NFmiPoint(LL_lon, LL_lat), NFmiPoint(UR_lon, UR_lat)));
 
       NFmiGrid grid(area->Clone(), xsize, ysize);
       return NFmiHPlaceDescriptor(grid);

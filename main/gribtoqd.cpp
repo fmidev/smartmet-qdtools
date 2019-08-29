@@ -2038,11 +2038,10 @@ static NFmiArea *CreatePolarStereographicArea(grib_handle *theGribHandle)
   int badLov = grib_get_double(theGribHandle, "orientationOfTheGridInDegrees", &Lov);
   int badLad = grib_get_double(theGribHandle, "LaDInDegrees", &Lad);
 
-  long pcentre = 0;
+  long pcentre = -999;
   int badPcentre = grib_get_long(theGribHandle, "projectionCentreFlag", &pcentre);
 
-  if (!badPcentre && pcentre != 0)
-    throw runtime_error("Error: South pole not supported for polster-projection");
+  if (badPcentre) throw runtime_error("Error: Failed to extract projectionCentreFlag");
 
   long nx = 0, ny = 0;
   int badNx = ::grib_get_long(theGribHandle, "numberOfPointsAlongXAxis", &nx);
@@ -2063,8 +2062,9 @@ static NFmiArea *CreatePolarStereographicArea(grib_handle *theGribHandle)
     double height_in_meters = (ny - 1) * dy / 1000.0;
 
     auto proj = fmt::format(
-        "+proj=stere +lat_0={} +lon_0={} +R={:.0f} +units=m +wktext "
+        "+proj=stere +lat_0={} +lat_ts={} +lon_0={} +R={:.0f} +units=m +wktext "
         "+towgs84=0,0,0 +no_defs",
+        (pcentre == 0 ? 90 : -90),
         Lad,
         Lov,
         kRearth);
@@ -2108,17 +2108,20 @@ static NFmiArea *CreateLambertArea(grib_handle *theGribHandle)
 
     NFmiPoint bottom_left(Lo1, La1);
 
-    // TODO: Handle the sphere radius
-    std::unique_ptr<NFmiArea> tmparea(new NFmiLambertConformalConicArea(
-        bottom_left, bottom_left + NFmiPoint(1, 1), Lov, Lad, Lad1, Lad2));
-    auto worldxy1 = tmparea->LatLonToWorldXY(bottom_left);
-    auto worldxy2 = worldxy1 + NFmiPoint((nx - 1) * dx, (ny - 1) * dy);
-    auto top_right = tmparea->WorldXYToLatLon(worldxy2);
+    double width_in_meters = (nx - 1) * dx / 1000.0;
+    double height_in_meters = (ny - 1) * dy / 1000.0;
 
-    // Todo: Establish sphere from GRIB data
-    NFmiArea *area =
-        new NFmiLambertConformalConicArea(bottom_left, top_right, Lov, Lad, Lad1, Lad2);
-    return area;
+    auto proj = fmt::format(
+        "+proj=lcc +lat_0={} +lon_0={} +lat_1={} +lat_2={} +R={:.0f} +units=m +wktext "
+        "+towgs84=0,0,0 +no_defs",
+        Lad,
+        Lov,
+        Lad1,
+        Lad2,
+        kRearth);
+
+    return NFmiArea::CreateFromCornerAndSize(
+        proj, "FMI", bottom_left, width_in_meters, height_in_meters);
   }
 
   throw runtime_error("Error: Unable to retrieve lambert-projection information from grib.");

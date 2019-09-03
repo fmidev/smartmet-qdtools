@@ -616,6 +616,8 @@ void ReportProjection(NFmiFastQueryInfo *q)
     case kNFmiKKJArea:
     case kNFmiPKJArea:
     case kNFmiYKJArea:
+    case kNFmiLambertConformalConicArea:
+    case kNFmiWebMercatorArea:
     {
       break;
     }

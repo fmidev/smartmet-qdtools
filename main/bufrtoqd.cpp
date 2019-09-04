@@ -205,62 +205,29 @@ BufrDataCategory data_category(const std::string &name)
 
 struct Options
 {
-  Options();
-
-  bool verbose;  // -v --verbose
-  bool debug;    //    --debug
+  bool verbose = false;  // -v --verbose
+  bool debug = false;    //    --debug
   // Code 8042 = extended vertical sounding significance. Insignificant levels
   // will also be output if this option is used. This may significantly increase
   // the size of the sounding (from ~100 to ~5000 levels)
-  bool insignificant;        //    --insignificant
-  bool subsets;              //    --subsets
-  std::string category;      // -C --category
-  std::string conffile;      // -c --config
-  std::string stationsfile;  // -s --stations
-  std::string infile;        // -i --infile
-  std::string outfile;       // -o --outfile
-  std::string localtableB;   // -B --localtableB
-  std::string localtableD;   // -D --localtableD
-  std::string producername;  // --producername
-  long producernumber;       // --producernumber
-  bool autoproducer;         // -a --autoproducer
-  int messagenumber;         // -m --message
+  bool insignificant = false;                                      //    --insignificant
+  bool subsets = false;                                            //    --subsets
+  std::string category;                                            // -C --category
+  std::string conffile = "/usr/share/smartmet/formats/bufr.conf";  // -c --config
+  std::string stationsfile = "/usr/share/smartmet/stations.csv";   // -s --stations
+  std::string infile = ".";                                        // -i --infile
+  std::string outfile = "-";                                       // -o --outfile
+  std::string localtableB;                                         // -B --localtableB
+  std::string localtableD;                                         // -D --localtableD
+  std::string producername = "UNKNOWN";                            // --producername
+  long producernumber = 0;                                         // --producernumber
+  bool autoproducer = false;                                       // -a --autoproducer
+  int messagenumber = 0;                                           // -m --message
+  int roundtohours = 0;                                            // --roundtohours
 };
 
 Options options;
 
-// ----------------------------------------------------------------------
-/*!
- * \brief Default options
- */
-// ----------------------------------------------------------------------
-
-Options::Options()
-    : verbose(false),
-      debug(false),
-      insignificant(false),
-      subsets(false),
-      category()
-#ifdef UNIX
-      ,
-      conffile("/usr/share/smartmet/formats/bufr.conf"),
-      stationsfile("/usr/share/smartmet/stations.csv")
-#else
-      ,
-      conffile(""),
-      stationsfile("")
-#endif
-      ,
-      infile("."),
-      outfile("-"),
-      localtableB(""),
-      localtableD(""),
-      producername("UNKNOWN"),
-      producernumber(0),
-      autoproducer(false),
-      messagenumber(0)
-{
-}
 // ----------------------------------------------------------------------
 /*!
  * \brief Parse command line options
@@ -286,6 +253,9 @@ bool parse_options(int argc, char *argv[], Options &options)
       "insignificant",
       po::bool_switch(&options.insignificant),
       "extract also insignificant sounding levels")(
+      "roundtohours",
+      po::value(&options.roundtohours),
+      "round times to multiples of the given number of hours")(
       "config,c", po::value(&options.conffile), msg1.c_str())(
       "stations,s", po::value(&options.stationsfile), msg2.c_str())(
       "infile,i", po::value(&options.infile), "input BUFR file or directory")(
@@ -352,6 +322,9 @@ bool parse_options(int argc, char *argv[], Options &options)
 
   if (!fs::exists(options.infile))
     throw std::runtime_error("Input BUFR '" + options.infile + "' does not exist");
+
+  if ((options.roundtohours > 0) && (24 % options.roundtohours != 0))
+    throw std::runtime_error("Option roundtohours value must divide 24 evenly (1,2,3,4,6,8,12,24)");
 
   // Validate the category option
   if (!options.category.empty()) data_category(options.category);
@@ -1379,10 +1352,12 @@ NFmiHPlaceDescriptor create_hdesc(const Messages &messages,
     }
     else
     {
+      // we use fixed coordinates instead of message ones, since there is often some
+      // variation in the message coordinates
       NFmiStation tmp(station.GetIdent(),
                       stationinfo->GetName().CharPtr(),
-                      station.GetLongitude(),
-                      station.GetLatitude());
+                      stationinfo->GetLongitude(),
+                      stationinfo->GetLatitude());
       lbag.AddLocation(tmp);
     }
   }
@@ -1420,7 +1395,7 @@ NFmiMetTime get_validtime(const Message &msg)
   auto hh = hh_i->second.value;
   auto mi = mi_i->second.value;
 
-  const int timeresolution = 1;
+  const int timeresolution = (options.roundtohours > 0 ? 60 * options.roundtohours : 1);
 
   NFmiMetTime t(static_cast<short>(yy),
                 static_cast<short>(mm),
@@ -1493,7 +1468,7 @@ NFmiMetTime get_validtime_amdar(std::set<NFmiMetTime> &used_times, const Message
   if (year < 0 || month < 0 || day < 0 || hour < 0 || minute < 0)
     throw std::runtime_error("Insufficient date information in AMDAR message");
 
-  const int timestep = 0;
+  const int timestep = (options.roundtohours > 0 ? 60 * options.roundtohours : 1);
   NFmiMetTime t(year, month, day, hour, minute, second, timestep);
 
   // Add up seconds until there is no previous such time.

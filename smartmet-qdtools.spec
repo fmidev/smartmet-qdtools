@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 19.6.11
+Version: 19.9.4
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -188,6 +188,13 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Sep  4 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.9.4-1.fmi
+- Added bufrtoqd --roundtohours option
+- bufrtoqd now uses stations.csv coordinates instead of message coordinates to avoid multiple instances of the same station
+
+* Tue Sep  3 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.9.3-1.fmi
+- Fixed qdinfo to recognize LCC and WebMercator projections
+
 * Tue Jun 11 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.6.11-1.fmi
 - Added ILHF to the stations list
 

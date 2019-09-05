@@ -41,6 +41,7 @@ This file is part of libECBUFR.
 #include <boost/filesystem/operations.hpp>
 #include <boost/foreach.hpp>
 #include <boost/program_options.hpp>
+#include <fmt/format.h>
 #include <macgyver/CsvReader.h>
 #include <macgyver/StringConversion.h>
 #include <newbase/NFmiEnumConverter.h>
@@ -1307,6 +1308,18 @@ NFmiStation get_station(const Message &msg)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Rough estimate on the accuracy of the coordinates
+ */
+// ----------------------------------------------------------------------
+
+int accuracy_estimate(const NFmiPoint &coord)
+{
+  auto str = fmt::format("{}{}", coord.X(), coord.Y());
+  return str.size();
+}
+
+// ----------------------------------------------------------------------
+/*!
  *  \brief Create horizontal place descriptor
  *
  * For some reason NFmiAviationStationInfoSystem::FindStation is not const
@@ -1325,15 +1338,26 @@ NFmiHPlaceDescriptor create_hdesc(const Messages &messages,
 
   // First list all unique stations
 
-  typedef std::set<NFmiStation> Stations;
-  Stations stations;
+  std::map<long, NFmiStation> stations;
 
-  BOOST_FOREACH (const Message &msg, messages)
+  for (const Message &msg : messages)
   {
     NFmiStation station = get_station(msg);
 
     if (station.GetLongitude() != kFloatMissing && station.GetLatitude() != kFloatMissing)
-      stations.insert(station);
+    {
+      auto pos = stations.insert(std::make_pair(station.GetIdent(), station));
+      // Handle stations with different coordinates
+      auto &iter = pos.first;
+      if (!pos.second && iter->second.GetLocation() != station.GetLocation())
+      {
+        auto &oldstation = iter->second;
+        auto acc1 = accuracy_estimate(oldstation.GetLocation());
+        auto acc2 = accuracy_estimate(station.GetLocation());
+        // Use the one which seems to have more significant decimals
+        if (acc1 < acc2) oldstation = station;
+      }
+    }
   }
 
   // Then build the descriptor. The message may contain no name for the
@@ -1341,8 +1365,10 @@ NFmiHPlaceDescriptor create_hdesc(const Messages &messages,
   // possible.
 
   NFmiLocationBag lbag;
-  BOOST_FOREACH (const NFmiStation &station, stations)
+  for (const auto &id_station : stations)
   {
+    const auto &station = id_station.second;
+
     NFmiAviationStation *stationinfo = stationinfos.FindStation(station.GetIdent());
 
     if (stationinfo == 0)
@@ -1356,8 +1382,8 @@ NFmiHPlaceDescriptor create_hdesc(const Messages &messages,
       // variation in the message coordinates
       NFmiStation tmp(station.GetIdent(),
                       stationinfo->GetName().CharPtr(),
-                      stationinfo->GetLongitude(),
-                      stationinfo->GetLatitude());
+                      station.GetLongitude(),
+                      station.GetLatitude());
       lbag.AddLocation(tmp);
     }
   }

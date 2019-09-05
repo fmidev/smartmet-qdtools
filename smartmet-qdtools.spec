@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 19.9.4
+Version: 19.9.5
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -21,6 +21,7 @@ BuildRequires: libbufr >= 3.2
 BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
+BuildRequires: fmt-devel
 BuildRequires: smartmet-library-calculator-devel >= 18.11.24
 BuildRequires: smartmet-library-gis-devel >= 18.12.10
 BuildRequires: smartmet-library-imagine-devel >= 18.11.24
@@ -44,6 +45,7 @@ Requires: smartmet-library-macgyver >= 18.11.24
 Requires: smartmet-library-newbase >= 19.2.14
 Requires: smartmet-library-smarttools >= 18.10.1
 Requires: smartmet-library-spine
+Requires: fmt
 Requires: eccodes
 Requires: hdf5 >= 1.8.12
 Requires: jasper-libs >= 1.900.1
@@ -186,6 +188,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Sep  5 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.9.5-1.fmi
+- bufrtoqd now tries to choose the station data with the most "accurate" coordinates
+
 * Wed Sep  4 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.9.4-1.fmi
 - Added bufrtoqd --roundtohours option
 - bufrtoqd now uses stations.csv coordinates instead of message coordinates to avoid multiple instances of the same station

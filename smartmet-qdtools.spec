@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 19.9.5
+Version: 19.9.11
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -188,6 +188,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Sep 11 2019 Pertti Kinnia <pertti.kinnia@fmi.fi> - 19.9.11-1.fmi
+- gribtoqd accepts ground level data to calculate RH
+
 * Thu Sep  5 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.9.5-1.fmi
 - bufrtoqd now tries to choose the station data with the most "accurate" coordinates
 

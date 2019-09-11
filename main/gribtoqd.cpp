@@ -2872,7 +2872,7 @@ NFmiParamDescriptor GetParamDesc(vector<GridRecordData *> &theGribRecordDatas,
   for (; it != parIds.end(); ++it)
     parBag.Add(FindFirstParam(*it, theGribRecordDatas));
 
-  if (wantedLevelType == kFmiHybridLevel)
+  if (wantedLevelType == kFmiHybridLevel || (wantedLevelType == kFmiGroundSurface))
   {
     ::AddGeneratedHybridParam(parBag, theGribFilterOptions.itsHybridPressureInfo);
     ::AddGeneratedHybridParam(parBag, theGribFilterOptions.itsHybridRelativeHumidityInfo);
@@ -3086,6 +3086,23 @@ static boost::shared_ptr<NFmiQueryData> GetPressureData(
   return data;
 }
 
+static boost::shared_ptr<NFmiQueryData> GetGroundData(
+    vector<boost::shared_ptr<NFmiQueryData> > &theQdatas)
+{
+  boost::shared_ptr<NFmiQueryData> data;
+  for (size_t i = 0; i < theQdatas.size(); i++)
+  {
+    theQdatas[i]->Info()->FirstLevel();
+    if (theQdatas[i]->Info()->Level()->LevelType() ==
+        kFmiGroundSurface)  // pit‰‰ olla ground tyyppi‰
+    {
+      data = theQdatas[i];
+      break;
+    }
+  }
+  return data;
+}
+
 // Jos surfacePressure tulee hPa:na, pit‰‰ se laskuissa se pit‰‰ muuttaa Pa:ksi.
 // Palautetaan kuitenkin aina laskettu paine hPa-yksikˆss‰.
 static float CalcHybridPressure(double a, double b, float surfacePressure)
@@ -3235,6 +3252,9 @@ static void CalcRelativeHumidityData(vector<boost::shared_ptr<NFmiQueryData> > &
     boost::shared_ptr<NFmiQueryData> pressureData = ::GetPressureData(theQdatas);
     ::CalcRelativeHumidityData(
         RH_id, pressureData, theHybridRelativeHumidityInfo, theHybridPressureInfo);
+    boost::shared_ptr<NFmiQueryData> groundData = ::GetGroundData(theQdatas);
+    ::CalcRelativeHumidityData(
+        RH_id, groundData, theHybridRelativeHumidityInfo, theHybridPressureInfo);
   }
 }
 

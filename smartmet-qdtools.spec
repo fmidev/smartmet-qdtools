@@ -189,7 +189,7 @@ make %{_smp_mflags}
 
 %changelog
 * Thu Sep 19 2019 Pertti Kinnia <pertti.kinnia@fmi.fi> - 19.9.19-1.fmi
-- Changed gribtoqd to use PressureAtStationLevel as pressure for RH calculation when running with option -L 1 (using ground surface data only) and without -H <optionvalues>
+- gribtoqd uses separate parameter structure to store pressure parameter info for ground data RH calculation
 
 * Wed Sep 11 2019 Pertti Kinnia <pertti.kinnia@fmi.fi> - 19.9.11-1.fmi
 - gribtoqd accepts ground level data to calculate RH

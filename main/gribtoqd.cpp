@@ -118,6 +118,7 @@ struct GribFilterOptions
         itsWantedPressureProducer(),
         itsWantedHybridProducer(),
         itsHybridPressureInfo(),
+        itsGroundPressureInfo(),
         itsLatlonCropRect(gMissingCropRect),
         itsGridSettings(),
         fVerbose(false),
@@ -171,6 +172,7 @@ struct GribFilterOptions
   NFmiProducer itsWantedHybridProducer;
   GeneratedHybridParamInfo itsHybridPressureInfo;
   GeneratedHybridParamInfo itsHybridRelativeHumidityInfo;
+  GeneratedHybridParamInfo itsGroundPressureInfo;
   NFmiRect itsLatlonCropRect;
   GridSettingsPackage itsGridSettings;
   bool fVerbose;
@@ -3240,7 +3242,8 @@ static void CalcRelativeHumidityData(FmiParameterName RH_id,
 // HUOM! T‰m‰ pit‰‰ ajaa vasta jos ensin on laskettu paine parametri hybridi dataan!!!
 static void CalcRelativeHumidityData(vector<boost::shared_ptr<NFmiQueryData> > &theQdatas,
                                      const GeneratedHybridParamInfo &theHybridRelativeHumidityInfo,
-                                     const GeneratedHybridParamInfo &theHybridPressureInfo)
+                                     const GeneratedHybridParamInfo &theHybridPressureInfo,
+                                     const GeneratedHybridParamInfo &theGroundPressureInfo)
 {
   if (theHybridRelativeHumidityInfo.fCalcHybridParam)
   {
@@ -3254,7 +3257,7 @@ static void CalcRelativeHumidityData(vector<boost::shared_ptr<NFmiQueryData> > &
         RH_id, pressureData, theHybridRelativeHumidityInfo, theHybridPressureInfo);
     boost::shared_ptr<NFmiQueryData> groundData = ::GetGroundData(theQdatas);
     ::CalcRelativeHumidityData(
-        RH_id, groundData, theHybridRelativeHumidityInfo, theHybridPressureInfo);
+        RH_id, groundData, theHybridRelativeHumidityInfo, theGroundPressureInfo);
   }
 }
 
@@ -4793,7 +4796,8 @@ static void MakeTotalCombineQDatas(
   // tarvittavia parametreja
   ::CalcRelativeHumidityData(theGribFilterOptionsOut.itsGeneratedDatas,
                              theGribFilterOptionsOut.itsHybridRelativeHumidityInfo,
-                             theGribFilterOptionsOut.itsHybridPressureInfo);
+                             theGribFilterOptionsOut.itsHybridPressureInfo,
+                             theGribFilterOptionsOut.itsGroundPressureInfo);
 }
 
 static int BuildAndStoreAllDatas(vector<string> &theFileList,
@@ -5045,24 +5049,10 @@ static int GetOptions(NFmiCmdLine &theCmdLine, GribFilterOptions &theGribFilterO
 
   theGribFilterOptions.itsHybridPressureInfo =
       ::GetGeneratedHybridParamInfo(theCmdLine, 'H', kFmiPressure, "P");
-  if (theCmdLine.isOption('r'))
-  {
-    theGribFilterOptions.itsHybridRelativeHumidityInfo =
-        ::GetGeneratedHybridParamInfo(theCmdLine, 'r', kFmiHumidity, "RH");
-
-    // Use PressureAtStationLevel as pressure for RH calculation when running
-    // with option -L 1 (using ground surface data only) and without -H <optionvalues>
-
-    if (
-        (!theCmdLine.isOption('H')) &&
-        (theGribFilterOptions.itsAcceptOnlyLevelTypes.size() == 1) &&
-        (theGribFilterOptions.itsAcceptOnlyLevelTypes.front() == kFmiGroundSurface)
-       )
-    {
-      theGribFilterOptions.itsHybridPressureInfo =
-          ::GetGeneratedHybridParamInfo(theCmdLine, 'r', kFmiPressureAtStationLevel, "P");
-    }
-  }
+  theGribFilterOptions.itsHybridRelativeHumidityInfo =
+      ::GetGeneratedHybridParamInfo(theCmdLine, 'r', kFmiHumidity, "RH");
+  theGribFilterOptions.itsGroundPressureInfo =
+      ::GetGeneratedHybridParamInfo(theCmdLine, 'r', kFmiPressureAtStationLevel, "P");
 
   if (theCmdLine.isOption('m'))
     theGribFilterOptions.itsMaxQDataSizeInBytes = GetIntegerOptionValue(theCmdLine, 'm') * gMBsize;

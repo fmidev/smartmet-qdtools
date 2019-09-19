@@ -2872,12 +2872,12 @@ NFmiParamDescriptor GetParamDesc(vector<GridRecordData *> &theGribRecordDatas,
   for (; it != parIds.end(); ++it)
     parBag.Add(FindFirstParam(*it, theGribRecordDatas));
 
-  if (wantedLevelType == kFmiHybridLevel || (wantedLevelType == kFmiGroundSurface))
+  if (wantedLevelType == kFmiHybridLevel)
   {
     ::AddGeneratedHybridParam(parBag, theGribFilterOptions.itsHybridPressureInfo);
     ::AddGeneratedHybridParam(parBag, theGribFilterOptions.itsHybridRelativeHumidityInfo);
   }
-  else if (wantedLevelType == kFmiPressureLevel)
+  else if ((wantedLevelType == kFmiPressureLevel) || (wantedLevelType == kFmiGroundSurface))
   {
     ::AddGeneratedHybridParam(parBag, theGribFilterOptions.itsHybridRelativeHumidityInfo);
   }
@@ -5045,8 +5045,24 @@ static int GetOptions(NFmiCmdLine &theCmdLine, GribFilterOptions &theGribFilterO
 
   theGribFilterOptions.itsHybridPressureInfo =
       ::GetGeneratedHybridParamInfo(theCmdLine, 'H', kFmiPressure, "P");
-  theGribFilterOptions.itsHybridRelativeHumidityInfo =
-      ::GetGeneratedHybridParamInfo(theCmdLine, 'r', kFmiHumidity, "RH");
+  if (theCmdLine.isOption('r'))
+  {
+    theGribFilterOptions.itsHybridRelativeHumidityInfo =
+        ::GetGeneratedHybridParamInfo(theCmdLine, 'r', kFmiHumidity, "RH");
+
+    // Use PressureAtStationLevel as pressure for RH calculation when running
+    // with option -L 1 (using ground surface data only) and without -H <optionvalues>
+
+    if (
+        (!theCmdLine.isOption('H')) &&
+        (theGribFilterOptions.itsAcceptOnlyLevelTypes.size() == 1) &&
+        (theGribFilterOptions.itsAcceptOnlyLevelTypes.front() == kFmiGroundSurface)
+       )
+    {
+      theGribFilterOptions.itsHybridPressureInfo =
+          ::GetGeneratedHybridParamInfo(theCmdLine, 'r', kFmiPressureAtStationLevel, "P");
+    }
+  }
 
   if (theCmdLine.isOption('m'))
     theGribFilterOptions.itsMaxQDataSizeInBytes = GetIntegerOptionValue(theCmdLine, 'm') * gMBsize;

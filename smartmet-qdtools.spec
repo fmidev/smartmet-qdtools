@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 19.9.11
+Version: 19.9.19
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -188,6 +188,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Sep 19 2019 Pertti Kinnia <pertti.kinnia@fmi.fi> - 19.9.19-1.fmi
+- Changed gribtoqd to use PressureAtStationLevel as pressure for RH calculation when running with option -L 1 (using ground surface data only) and without -H <optionvalues>
+
 * Wed Sep 11 2019 Pertti Kinnia <pertti.kinnia@fmi.fi> - 19.9.11-1.fmi
 - gribtoqd accepts ground level data to calculate RH
 

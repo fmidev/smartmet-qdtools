@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 19.9.19
+Version: 19.9.27
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -22,12 +22,12 @@ BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: fmt-devel
-BuildRequires: smartmet-library-calculator-devel >= 18.11.24
-BuildRequires: smartmet-library-gis-devel >= 18.12.10
+BuildRequires: smartmet-library-calculator-devel >= 19.9.26
+BuildRequires: smartmet-library-gis-devel >= 19.9.26
 BuildRequires: smartmet-library-imagine-devel >= 18.11.24
-BuildRequires: smartmet-library-macgyver-devel >= 18.11.24
-BuildRequires: smartmet-library-newbase-devel >= 19.2.14
-BuildRequires: smartmet-library-smarttools-devel >= 18.10.1
+BuildRequires: smartmet-library-macgyver-devel >= 19.9.26
+BuildRequires: smartmet-library-newbase-devel >= 19.9.26
+BuildRequires: smartmet-library-smarttools-devel >= 19.9.26
 BuildRequires: smartmet-timezones
 BuildRequires: smartmet-library-spine-devel
 BuildRequires: mdsplib >= 16.4.8
@@ -37,13 +37,13 @@ BuildRequires: gdal-devel >= 1.11.4
 BuildRequires: jasper-devel
 BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
-Requires: smartmet-timezones >= 19.1.25
-Requires: smartmet-library-calculator >= 18.11.24
-Requires: smartmet-library-gis >= 18.12.10
+Requires: smartmet-timezones >= 19.7.29
+Requires: smartmet-library-calculator >= 19.9.26
+Requires: smartmet-library-gis >= 19.9.26
 Requires: smartmet-library-imagine >= 18.11.24
-Requires: smartmet-library-macgyver >= 18.11.24
-Requires: smartmet-library-newbase >= 19.2.14
-Requires: smartmet-library-smarttools >= 18.10.1
+Requires: smartmet-library-macgyver >= 19.9.26
+Requires: smartmet-library-newbase >= 19.9.26
+Requires: smartmet-library-smarttools >= 19.9.26
 Requires: smartmet-library-spine
 Requires: fmt
 Requires: eccodes
@@ -188,6 +188,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Fri Sep 27 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.9.27-1.fmi
+- Repackaged due to ABI changes in SmartMet libraries
+
 * Thu Sep 19 2019 Pertti Kinnia <pertti.kinnia@fmi.fi> - 19.9.19-1.fmi
 - gribtoqd uses separate parameter structure to store pressure parameter info for ground data RH calculation
 

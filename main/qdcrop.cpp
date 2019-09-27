@@ -130,7 +130,6 @@
 #include <stdexcept>
 #include <string>
 
-extern unsigned short FmiInfoVersion;
 
 using namespace std;
 using namespace boost;
@@ -1378,7 +1377,7 @@ int run(int argc, const char* argv[])
 
   // Establish the querydata version to be produced
 
-  double version = FmiInfoVersion;
+  double version = DefaultFmiInfoVersion;
   if (opt_preserve_version) version = srcinfo->InfoVersion();
 
   // Special optimization for fast removal of missing timesteps only. This is

@@ -113,6 +113,7 @@ struct GribFilterOptions
         itsWantedPressureProducer(),
         itsWantedHybridProducer(),
         itsHybridPressureInfo(),
+        itsGroundPressureInfo(),
         itsLatlonCropRect(gMissingCropRect),
         itsGridSettings(),
         fVerbose(false),
@@ -166,6 +167,7 @@ struct GribFilterOptions
   NFmiProducer itsWantedHybridProducer;
   GeneratedHybridParamInfo itsHybridPressureInfo;
   GeneratedHybridParamInfo itsHybridRelativeHumidityInfo;
+  GeneratedHybridParamInfo itsGroundPressureInfo;
   NFmiRect itsLatlonCropRect;
   GridSettingsPackage itsGridSettings;
   bool fVerbose;
@@ -2902,7 +2904,7 @@ NFmiParamDescriptor GetParamDesc(vector<GridRecordData *> &theGribRecordDatas,
     ::AddGeneratedHybridParam(parBag, theGribFilterOptions.itsHybridPressureInfo);
     ::AddGeneratedHybridParam(parBag, theGribFilterOptions.itsHybridRelativeHumidityInfo);
   }
-  else if (wantedLevelType == kFmiPressureLevel)
+  else if ((wantedLevelType == kFmiPressureLevel) || (wantedLevelType == kFmiGroundSurface))
   {
     ::AddGeneratedHybridParam(parBag, theGribFilterOptions.itsHybridRelativeHumidityInfo);
   }
@@ -3111,6 +3113,23 @@ static boost::shared_ptr<NFmiQueryData> GetPressureData(
   return data;
 }
 
+static boost::shared_ptr<NFmiQueryData> GetGroundData(
+    vector<boost::shared_ptr<NFmiQueryData> > &theQdatas)
+{
+  boost::shared_ptr<NFmiQueryData> data;
+  for (size_t i = 0; i < theQdatas.size(); i++)
+  {
+    theQdatas[i]->Info()->FirstLevel();
+    if (theQdatas[i]->Info()->Level()->LevelType() ==
+        kFmiGroundSurface)  // pit‰‰ olla ground tyyppi‰
+    {
+      data = theQdatas[i];
+      break;
+    }
+  }
+  return data;
+}
+
 // Jos surfacePressure tulee hPa:na, pit‰‰ se laskuissa se pit‰‰ muuttaa Pa:ksi.
 // Palautetaan kuitenkin aina laskettu paine hPa-yksikˆss‰.
 static float CalcHybridPressure(double a, double b, float surfacePressure)
@@ -3248,7 +3267,8 @@ static void CalcRelativeHumidityData(FmiParameterName RH_id,
 // HUOM! T‰m‰ pit‰‰ ajaa vasta jos ensin on laskettu paine parametri hybridi dataan!!!
 static void CalcRelativeHumidityData(vector<boost::shared_ptr<NFmiQueryData> > &theQdatas,
                                      const GeneratedHybridParamInfo &theHybridRelativeHumidityInfo,
-                                     const GeneratedHybridParamInfo &theHybridPressureInfo)
+                                     const GeneratedHybridParamInfo &theHybridPressureInfo,
+                                     const GeneratedHybridParamInfo &theGroundPressureInfo)
 {
   if (theHybridRelativeHumidityInfo.fCalcHybridParam)
   {
@@ -3260,6 +3280,9 @@ static void CalcRelativeHumidityData(vector<boost::shared_ptr<NFmiQueryData> > &
     boost::shared_ptr<NFmiQueryData> pressureData = ::GetPressureData(theQdatas);
     ::CalcRelativeHumidityData(
         RH_id, pressureData, theHybridRelativeHumidityInfo, theHybridPressureInfo);
+    boost::shared_ptr<NFmiQueryData> groundData = ::GetGroundData(theQdatas);
+    ::CalcRelativeHumidityData(
+        RH_id, groundData, theHybridRelativeHumidityInfo, theGroundPressureInfo);
   }
 }
 
@@ -4805,7 +4828,8 @@ static void MakeTotalCombineQDatas(
   // tarvittavia parametreja
   ::CalcRelativeHumidityData(theGribFilterOptionsOut.itsGeneratedDatas,
                              theGribFilterOptionsOut.itsHybridRelativeHumidityInfo,
-                             theGribFilterOptionsOut.itsHybridPressureInfo);
+                             theGribFilterOptionsOut.itsHybridPressureInfo,
+                             theGribFilterOptionsOut.itsGroundPressureInfo);
 }
 
 static int BuildAndStoreAllDatas(vector<string> &theFileList,
@@ -5059,6 +5083,8 @@ static int GetOptions(NFmiCmdLine &theCmdLine, GribFilterOptions &theGribFilterO
       ::GetGeneratedHybridParamInfo(theCmdLine, 'H', kFmiPressure, "P");
   theGribFilterOptions.itsHybridRelativeHumidityInfo =
       ::GetGeneratedHybridParamInfo(theCmdLine, 'r', kFmiHumidity, "RH");
+  theGribFilterOptions.itsGroundPressureInfo =
+      ::GetGeneratedHybridParamInfo(theCmdLine, 'r', kFmiPressureAtStationLevel, "P");
 
   if (theCmdLine.isOption('m'))
     theGribFilterOptions.itsMaxQDataSizeInBytes = GetIntegerOptionValue(theCmdLine, 'm') * gMBsize;

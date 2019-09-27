@@ -247,8 +247,9 @@ void run(int argc, const char* argv[])
 
   // Copied from NFmiStreamQueryData::WriteData for backward compatibility
 
-  FmiInfoVersion = static_cast<unsigned short>(qd.InfoVersion());
-  if (FmiInfoVersion < 5) FmiInfoVersion = 5;
+  auto version = static_cast<unsigned short>(qd.InfoVersion());
+  if (version < 6) version = 6;
+  qd.InfoVersion(version);
 
   boost::filesystem::path p = dataFile;
   boost::filesystem::path tmp = boost::filesystem::unique_path(p.string() + "_%%%%%%%%");

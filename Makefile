@@ -85,6 +85,7 @@ LIBS = -L$(libdir) \
 	-lMXADataModel -lhdf5 \
 	-lbufr \
 	-lecbufr \
+	-lfmt \
 	-lbz2 -ljpeg -lpng -lz -lrt \
 	-lpthread
 

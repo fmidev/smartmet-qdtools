@@ -130,7 +130,6 @@
 #include <stdexcept>
 #include <string>
 
-
 using namespace std;
 using namespace boost;
 
@@ -996,7 +995,13 @@ void CopyNonGridData(NFmiFastQueryInfo& theSrc, NFmiFastQueryInfo& theDst, bool 
  */
 // ----------------------------------------------------------------------
 
-void CopySameGridData(NFmiFastQueryInfo& theSrc, NFmiFastQueryInfo& theDst)
+void CopySameGridData(NFmiFastQueryInfo& theSrc,
+                      NFmiFastQueryInfo& theDst,
+                      bool cropped,
+                      int x1,
+                      int y1,
+                      int dx,
+                      int dy)
 {
   // Establish output timeindexes up front for speed. -1 implies time is not available
   // We assume there are no time interpolations.
@@ -1008,29 +1013,65 @@ void CopySameGridData(NFmiFastQueryInfo& theSrc, NFmiFastQueryInfo& theDst)
     if (theDst.TimeIndex(i) && theSrc.Time(theDst.Time())) timeindexes[i] = theSrc.TimeIndex();
   }
 
-  for (theDst.ResetParam(); theDst.NextParam();)
-  {
-    if (theSrc.Param(theDst.Param()))
-    {
-      for (theDst.ResetLevel(); theDst.NextLevel();)
-      {
-        if (!theSrc.Level(*theDst.Level())) throw runtime_error("Level not available in querydata");
+  const int nx = theSrc.Grid()->XNumber();
+  const int ny = theSrc.Grid()->YNumber();
 
-        for (theDst.ResetLocation(), theSrc.ResetLocation();
-             theDst.NextLocation() && theSrc.NextLocation();)
+  if (!cropped)
+  {
+    // Handled separately for speed
+    for (theDst.ResetParam(); theDst.NextParam();)
+      if (theSrc.Param(theDst.Param()))
+        for (theDst.ResetLevel(); theDst.NextLevel();)
         {
-          for (unsigned long i = 0; i < ntimes; i++)
-          {
-            if (timeindexes[i] >= 0)
+          if (!theSrc.Level(*theDst.Level()))
+            throw runtime_error("Level not available in querydata");
+
+          for (theDst.ResetLocation(), theSrc.ResetLocation();
+               theDst.NextLocation() && theSrc.NextLocation();)
+            for (unsigned long i = 0; i < ntimes; i++)
             {
-              theDst.TimeIndex(i);
-              theSrc.TimeIndex(timeindexes[i]);
-              theDst.FloatValue(theSrc.FloatValue());
+              if (timeindexes[i] >= 0)
+              {
+                theDst.TimeIndex(i);
+                theSrc.TimeIndex(timeindexes[i]);
+                theDst.FloatValue(theSrc.FloatValue());
+              }
             }
-          }
         }
-      }
-    }
+  }
+  else
+  {
+    // peeking around should be slower than the above algorithm. Also, one should
+    // not extract parameters from composite parameters simultaneously, PeekLocationValue
+    // does not work correctly for subparameters.
+
+    theSrc.FirstLocation();
+
+    const bool ignore_sub_param = false;
+    for (theDst.ResetParam(); theDst.NextParam(ignore_sub_param);)
+      if (theSrc.Param(theDst.Param()))
+        for (theDst.ResetLevel(); theDst.NextLevel();)
+        {
+          if (!theSrc.Level(*theDst.Level()))
+            throw runtime_error("Level not available in querydata");
+
+          theDst.ResetLocation();
+          for (int j = ny - y1 - dy; j < ny; j += dy)
+            for (int i = 0; i < nx; i += dx)
+            {
+              if (theDst.NextLocation())
+                for (unsigned long t = 0; t < ntimes; t++)
+                {
+                  if (timeindexes[t] >= 0)
+                  {
+                    theDst.TimeIndex(t);
+                    theSrc.TimeIndex(timeindexes[t]);
+
+                    theDst.FloatValue(theSrc.PeekLocationValue(i, j));
+                  }
+                }
+            }
+        }
   }
 }
 
@@ -1095,10 +1136,17 @@ void CopyDifferentGridData(NFmiFastQueryInfo& theSrc, NFmiFastQueryInfo& theDst)
  */
 // ----------------------------------------------------------------------
 
-void CopyGridData(NFmiFastQueryInfo& theSrc, NFmiFastQueryInfo& theDst, bool same_area)
+void CopyGridData(NFmiFastQueryInfo& theSrc,
+                  NFmiFastQueryInfo& theDst,
+                  bool same_area,
+                  bool cropped,
+                  int x1,
+                  int y1,
+                  int dx,
+                  int dy)
 {
   if (same_area)
-    CopySameGridData(theSrc, theDst);
+    CopySameGridData(theSrc, theDst, cropped, x1, y1, dx, dy);
   else
     CopyDifferentGridData(theSrc, theDst);
 }
@@ -1445,9 +1493,9 @@ int run(int argc, const char* argv[])
 
   if (dstinfo.Grid())
   {
-    bool same_area =
-        (opt_geometry.empty() && opt_bounds.empty() && opt_steps.empty() && opt_proj.empty());
-    CopyGridData(*srcinfo, dstinfo, same_area);
+    bool same_area = (opt_bounds.empty() && opt_proj.empty());
+    bool cropped = (!opt_geometry.empty() || !opt_steps.empty());
+    CopyGridData(*srcinfo, dstinfo, same_area, cropped, x1, y1, dx, dy);
   }
   else
     CopyNonGridData(*srcinfo, dstinfo, same_stations);

@@ -100,15 +100,15 @@ DoTest("option -G 25,60,40,71 succeeds",
 # option -d
 
 DoTest("option -d 2x1 succeeds",
-       "g_2_1_succeeds",
+       "d_2_1_succeeds",
        "-d 2x1 $data");
 
 DoTest("option -d 1x2 succeeds",
-       "g_1_2_succeeds",
+       "d_1_2_succeeds",
        "-d 1x2 $data");
 
 DoTest("option -d 2x2 succeeds",
-       "g_2_2_succeeds",
+       "d_2_2_succeeds",
        "-d 2x2 $data");
 
 # option -g and -d simultaneously

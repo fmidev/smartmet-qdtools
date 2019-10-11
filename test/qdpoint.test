@@ -6,6 +6,7 @@ $results = "results";
 $griddata = "data/griddata.sqd";
 $pointdata = "data/pointdata.sqd";
 $synopdata = "data/synop.sqd";
+$harmoniedata = "data/harmonie_hybrid.sqd";
 
 %usednames = ();
 
@@ -189,6 +190,10 @@ DoTest("-N 100 -d 20",
 DoTest("-n 1 -p Helsinki,Turku -P MetaNorth -q",
        "north_Helsinki_Turku",
        "-n 1 -p Helsinki,Turku -P MetaNorth -q $griddata");
+
+DoTest("-p Sipoo for rotated latlon data",
+       "Sipoo_rotated_latlon",
+       "-p Sipoo -P Temperature,GeomHeight -q $harmoniedata");
 
 print "Done\n";
 

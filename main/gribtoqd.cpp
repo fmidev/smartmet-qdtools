@@ -31,6 +31,10 @@
 #include <sstream>
 #include <stdexcept>
 
+#ifdef WGS84
+#include <newbase/NFmiAreaTools.h>
+#endif
+
 using namespace std;
 
 bool jscan_is_negative(grib_handle *theGribHandle)
@@ -1920,9 +1924,7 @@ static NFmiArea *CreateLatlonArea(grib_handle *theGribHandle,
     NFmiPoint bl(Lo1, La1);
     NFmiPoint tr(Lo2, La2);
 #ifdef WGS84
-    auto proj = fmt::format("+proj=eqc +R={:.0f} +wktext +over +no_defs +towgs84=0,0,0", kRearth);
-    return NFmiArea::CreateFromBBox(proj, bl, tr);
-
+    return NFmiAreaTools::CreateLegacyLatLonArea(bl, tr);
 #else
     bool usePacificView = NFmiArea::IsPacificView(bl, tr);
     if (usePacificView) ::FixPacificLongitude(tr);
@@ -1966,19 +1968,14 @@ static NFmiArea *CreateRotatedLatlonArea(grib_handle *theGribHandle,
 
     NFmiPoint bottomleft(Lo1, FmiMin(La1, La2));
     NFmiPoint topright(Lo2, FmiMax(La1, La2));
+    NFmiPoint southpole(PoleLon, PoleLat);
 
 #ifdef WGS84
-    auto proj = fmt::format(
-        "+to_meter=.0174532925199433 +proj=ob_tran +o_proj=eqc +o_lon_p={} +o_lat_p={} "
-        "+R={:.0f} +wktext +over +towgs84=0,0,0 +no_defs",
-        PoleLon,
-        -PoleLat,
-        kRearth);
-    return NFmiArea::CreateFromBBox(proj, bottomleft, topright);
+    return NFmiAreaTools::CreateLegacyRotatedLatLonArea(bottomleft, topright, southpole);
 #else
-    NFmiPoint pole(PoleLon, PoleLat);
     NFmiRotatedLatLonArea rot(bottomleft, topright, pole);
-    return new NFmiRotatedLatLonArea(rot.ToRegLatLon(bottomleft), rot.ToRegLatLon(topright), pole);
+    return new NFmiRotatedLatLonArea(
+        rot.ToRegLatLon(bottomleft), rot.ToRegLatLon(topright), southpole);
 #endif
   }
   else
@@ -1999,9 +1996,7 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
 
   if (status1 == 0 && status2 == 0 && status3 == 0 && status4 == 0)
   {
-    auto proj =
-        fmt::format("+proj=merc +R={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs", kRearth);
-    return NFmiArea::CreateFromCorners(proj, "FMI", NFmiPoint(Lo1, La1), NFmiPoint(Lo2, La2));
+    return NFmiAreaTools::CreateLegacyMercatorArea(NFmiPoint(Lo1, La1), NFmiPoint(Lo2, La2));
   }
 
   else if (status1 == 0 && status2 == 0)

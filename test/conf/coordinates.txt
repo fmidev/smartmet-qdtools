@@ -3,4 +3,5 @@ Imatra	IMA					61.18	28.85
 Tampere		MANSE	Tpe			61.4991	23.7871	
 Turku		TKU				60.57	22.35	
 Utsjoki	UTSJ	utsjo				69.62	27.00	
+Sipoo						60.33	25.31
 Neverland						60	25	

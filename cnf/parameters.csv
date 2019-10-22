@@ -11,6 +11,7 @@
 56,PrecipitationType,32700,32700,nearest,%.0f
 57,PrecipitationForm,32700,32700,nearest,%.0f
 79,TotalCloudCover,0,100,linear,%.1f
+203,PressureTendency,0,2000,linear,%.1f
 288,GroundTemperature,-300,1000,linear,%.1f
 353,Precipitation1h,0,1000,linear,%.1f
 354,Precipitation3h,0,1000,linear,%.1f

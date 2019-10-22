@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 19.9.27
+Version: 19.10.22
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -24,7 +24,7 @@ BuildRequires: libpng-devel
 BuildRequires: fmt-devel
 BuildRequires: smartmet-library-calculator-devel >= 19.9.26
 BuildRequires: smartmet-library-gis-devel >= 19.9.26
-BuildRequires: smartmet-library-imagine-devel >= 18.11.24
+BuildRequires: smartmet-library-imagine-devel >= 19.9.27
 BuildRequires: smartmet-library-macgyver-devel >= 19.9.26
 BuildRequires: smartmet-library-newbase-devel >= 19.9.26
 BuildRequires: smartmet-library-smarttools-devel >= 19.9.26
@@ -40,7 +40,7 @@ BuildRequires: netcdf-cxx-devel
 Requires: smartmet-timezones >= 19.7.29
 Requires: smartmet-library-calculator >= 19.9.26
 Requires: smartmet-library-gis >= 19.9.26
-Requires: smartmet-library-imagine >= 18.11.24
+Requires: smartmet-library-imagine >= 19.9.27
 Requires: smartmet-library-macgyver >= 19.9.26
 Requires: smartmet-library-newbase >= 19.9.26
 Requires: smartmet-library-smarttools >= 19.9.26
@@ -188,6 +188,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Oct 22 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.10.22-1.fmi
+- Added PressureTendency to default parameters.csv file
+
 * Fri Sep 27 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.9.27-1.fmi
 - Repackaged due to ABI changes in SmartMet libraries
 

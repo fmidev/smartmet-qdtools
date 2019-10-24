@@ -28,11 +28,11 @@ DoTest("synop data with -m NULL",
 
 DoTest("road1h data with -S",
        "road1h_plain",
-       "-S conf/roadstations.csv -p Temperature,WindSpeedMS data/road1h.csv");
+       "-S conf/roadstations.csv -P ../cnf/parameters.csv -p Temperature,WindSpeedMS data/road1h.csv");
 
 DoTest("road1h data with -S --allstations",
        "road1h_allstations",
-       "-S conf/roadstations.csv --allstations -p Temperature,WindSpeedMS data/road1h.csv");
+       "-S conf/roadstations.csv -P ../cnf/parameters.csv --allstations -p Temperature,WindSpeedMS data/road1h.csv");
 
 DoTest("sounding data with -O idtimelevel",
        "sounding_idtimelevel",

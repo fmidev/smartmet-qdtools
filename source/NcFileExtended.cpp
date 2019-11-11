@@ -1,16 +1,12 @@
-
-#include <iostream>
-#include <memory>
-#include <string>
-
+#include "NcFileExtended.h"
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <macgyver/TimeParser.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <spine/Exception.h>
-
-#include <boost/algorithm/string.hpp>
-#include <boost/algorithm/string/split.hpp>
-
-#include "NcFileExtended.h"
+#include <iostream>
+#include <memory>
+#include <string>
 
 namespace nctools
 {
@@ -112,27 +108,6 @@ float get_offset(NcVar *var)
 
 // ----------------------------------------------------------------------
 /*!
- * \brief Perform well known unit conversions
- *
- * Kelvin --> Celsius
- * Pascal --> hectoPascal
- */
-// ----------------------------------------------------------------------
-
-float normalize_units(float value, const std::string &units)
-{
-  if (value == kFloatMissing)
-    return value;
-  else if (units == "K")
-    return value - 273.15f;
-  else if (units == "Pa")
-    return value / 100.0f;
-  else
-    return value;
-}
-
-// ----------------------------------------------------------------------
-/*!
  * Report unit conversions if they are done
  */
 // ----------------------------------------------------------------------
@@ -159,6 +134,15 @@ void report_units(NcVar *var,
                 << std::endl;
     else
       std::cout << "Note: " << get_name(var) << " units converted from pa to hPa" << std::endl;
+  }
+  else if (units == "fraction")
+  {
+    if (ignoreUnitChange)
+      std::cout << "Note: " << get_name(var)
+                << " units convertion ignored from fraction to percentage" << std::endl;
+    else
+      std::cout << "Note: " << get_name(var) << " units converted from fraction to percentage"
+                << std::endl;
   }
 }
 
@@ -192,6 +176,7 @@ bool is_name_in_list(const std::list<std::string> &nameList, const std::string n
 void NcFileExtended::copy_values(const Options &options, NcVar *var, NFmiFastQueryInfo &info)
 {
   std::string name = var->name();
+
   std::string units = "";
   NcAtt *att = var->get_att("units");
   if (att != 0) units = att->values()->as_string(0);
@@ -207,11 +192,26 @@ void NcFileExtended::copy_values(const Options &options, NcVar *var, NFmiFastQue
   float scale = get_scale(var);
   float offset = get_offset(var);
 
+  // Apply unit conversion outside the loop for speed
+  if (!ignoreUnitChange)
+  {
+    if (units == "K")
+      offset -= 273.15;
+    else if (units == "Pa")
+      scale *= 0.01;
+    else if (units == "fraction")
+      scale *= 100;
+  }
+
   // NetCDF data ordering: time, level, rows from bottom row to top row, left-right order in row, if
   // none of the axises are inverted We have to calculate the actual position for inverted axises.
   // They will be non-inverted in the result data.
   int sourcetimeindex = 0;
   int targettimeindex = 0;
+
+  NcValues *vals = var->values();
+
+  unsigned long zstart = 0;
 
   for (info.ResetTime(); info.NextTime(); ++targettimeindex)
   {
@@ -241,15 +241,13 @@ void NcFileExtended::copy_values(const Options &options, NcVar *var, NFmiFastQue
 
     if (sourcetime == targettime)
     {
-      // must delete
-      NcValues *vals = var->get_rec(sourcetimeindex);
       for (info.ResetLevel(); info.NextLevel(); ++level)
       {
-        // Outer loop is just the level - multiple levels are not supported yet
         unsigned long xcounter = (this->xinverted() ? xsize() - 1 : 0);  // Current x-coordinate
+
         // Calculating every point by multiplication is slow so saving the starting point of current
         // row Further improvement when both axises are non-inverted does not improve performance
-        unsigned long ystart = (this->yinverted() ? (ysize() - 1) * xsize() : 0);
+        unsigned long ystart = zstart + (this->yinverted() ? (ysize() - 1) * xsize() : 0);
 
         if (options.debug)
           std::cerr << "debug: starting copy loop, level=" << level << " xcounter=" << xcounter
@@ -261,7 +259,7 @@ void NcFileExtended::copy_values(const Options &options, NcVar *var, NFmiFastQue
           float value = vals->as_float(ystart + xcounter);
           if (!IsMissingValue(value, missingvalue))
           {
-            if (!ignoreUnitChange) value = normalize_units(scale * value + offset, units);
+            value = scale * value + offset;
             info.FloatValue(value);
           }
 
@@ -278,12 +276,15 @@ void NcFileExtended::copy_values(const Options &options, NcVar *var, NFmiFastQue
             (this->xinverted() ? xcounter-- : xcounter++);
           }
         }
+
+        // Next level start point
+        zstart += xsize() * ysize();
+
         if (options.debug)
           std::cerr << "debug: after copy loop, level=" << level << " xcounter=" << xcounter
                     << " ystart=" << ystart << std::endl;
       }
       sourcetimeindex++;
-      delete vals;
     }
     else if (options.debug)
       std::cerr << "debug: sourcetime and targettime mismatch, advancing to next targettimeindex"
@@ -408,7 +409,9 @@ void NcFileExtended::copy_values(const Options &options,
     NcVar *var = get_var(i);
     if (var == nullptr) continue;
 
-    ParamInfo pinfo = parse_parameter(var, paramconvs, useAutoGeneratedIds);
+    if (!axis_match(var)) continue;
+
+    ParamInfo pinfo = parse_parameter(nctools::get_name(var), paramconvs, useAutoGeneratedIds);
     if (pinfo.id == kFmiBadParameter) continue;
 
     if (info.Param(pinfo.id))
@@ -508,112 +511,118 @@ std::string NcFileExtended::grid_mapping()
 
 // ----------------------------------------------------------------------
 /*!
+ * Test if the given parameter name is a dimension instead of a regular variable
+ */
+// ----------------------------------------------------------------------
+
+bool NcFileExtended::is_dim(const std::string &name) const
+{
+  auto lower_name = boost::algorithm::to_lower_copy(name);
+  for (int i = 0; i < num_dims(); i++)
+  {
+    NcDim *dim = this->get_dim(i);
+    std::string dimname = dim->name();
+    boost::algorithm::to_lower(dimname);
+
+    if (lower_name == dimname) return true;
+  }
+
+  return false;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * Test if the variable matches the requested axes
+ */
+// ----------------------------------------------------------------------
+
+bool NcFileExtended::axis_match(NcVar *var) const
+{
+  if (var == nullptr) return false;
+
+  // Number of dimensions the parameter must have
+  int wanted_dims = 0;
+  if (x != nullptr) ++wanted_dims;
+  if (y != nullptr) ++wanted_dims;
+  if (z != nullptr) ++wanted_dims;
+  if (t != nullptr) ++wanted_dims;
+
+  if (var->num_dims() != wanted_dims) return false;
+
+  int ok_count = 0;
+  for (int i = 0; i < var->num_dims(); i++)
+  {
+    NcDim *dim = var->get_dim(i);
+    if (dim == nullptr) return false;
+    std::string name = dim->name();
+
+    bool ok = (x != nullptr && x->name() == name) || (y != nullptr && y->name() == name) ||
+              (z != nullptr && z->name() == name) || (t != nullptr && t->name() == name);
+    if (ok) ++ok_count;
+  }
+
+  return (ok_count == wanted_dims);
+}
+
+// ----------------------------------------------------------------------
+/*!
  * Find variable for the desired axis
  */
 // ----------------------------------------------------------------------
 
-NcVar *NcFileExtended::axis(const std::string &axisname)
+NcVar *NcFileExtended::axis(const std::set<std::string> &axisnames)
 {
-  std::string axis = boost::algorithm::to_lower_copy(axisname);
-
-  NcVar *var = 0;
-  for (int i = 0; i < num_vars(); i++)
+  for (int i = 0; i < num_dims(); i++)
   {
-    var = get_var(i);
-    for (int j = 0; j < var->num_atts(); j++)
-    {
-      NcAtt *att = var->get_att(j);
-      if (att->type() == ncChar && att->num_vals() > 0)
-      {
-        std::string name = att->values()->as_string(0);
-        boost::algorithm::to_lower(name);
-        if (name == axis) return var;
-      }
-    }
+    NcDim *dim = this->get_dim(i);
+    std::string name = dim->name();
+    boost::algorithm::to_lower(name);
+
+    auto pos = axisnames.find(name);
+
+    if (pos != axisnames.end()) return this->get_var(dim->name());
   }
+
   return nullptr;
 }
 
 // ----------------------------------------------------------------------
 /*!
- * Try various names to find x axis
+ * Init axis dimensions from suggested (optional) parameter names
  */
 // ----------------------------------------------------------------------
-NcVar *NcFileExtended::x_axis()
+
+void NcFileExtended::initAxis(const boost::optional<std::string> &xname,
+                              const boost::optional<std::string> &yname,
+                              const boost::optional<std::string> &zname,
+                              const boost::optional<std::string> &tname)
 {
-  if (x != nullptr) return x;
+  if (xname)
+    x = axis({boost::algorithm::to_lower_copy(*xname)});
+  else
+    x = axis({"lon", "longitude", "xc"});
 
-  x = axis("x");
-  if (x == nullptr) x = axis("degree_east");
-  if (x == nullptr) x = axis("degrees_east");
-  if (x == nullptr) x = axis("degree_E");
-  if (x == nullptr) x = axis("degrees_E");
-  if (x == nullptr) x = axis("degreeE");
-  if (x == nullptr) x = axis("degreesE");
-  /* Really? I think these are units ... pernu 2017-12-07
-  if (x == nullptr) x = axis("100  km");
-  if (x == nullptr) x = axis("m"); */
-  if (x == nullptr) x = axis("projection_x_coordinate");
-  if (x == nullptr) throw SmartMet::Spine::Exception(BCP, "X-axis type unsupported");
+  if (yname)
+    y = axis({boost::algorithm::to_lower_copy(*yname)});
+  else
+    y = axis({"lat", "latitude", "yc"});
 
-  return x;
-}
+  if (zname)
+    z = axis({boost::algorithm::to_lower_copy(*zname)});
+  else
+    z = axis({"lev", "level", "zc"});
 
-// ----------------------------------------------------------------------
-/*!
- * Try various names to find y axis
- */
-// ----------------------------------------------------------------------
-NcVar *NcFileExtended::y_axis()
-{
-  if (y != nullptr) return y;
+  if (tname)
+    t = axis({boost::algorithm::to_lower_copy(*tname)});
+  else
+    t = axis({"time"});
 
-  y = axis("y");
-  if (y == nullptr) y = axis("degree_north");
-  if (y == nullptr) y = axis("degrees_north");
-  if (y == nullptr) y = axis("degree_N");
-  if (y == nullptr) y = axis("degrees_N");
-  if (y == nullptr) y = axis("degreeN");
-  if (y == nullptr) y = axis("degreesN");
-  /* Really? I think these are units ... pernu 2017-12-07
-  if (y == nullptr) y = axis("100  km");
-  if (y == nullptr) y = axis("m"); */
-  if (y == nullptr) y = axis("projection_y_coordinate");
-  if (y == nullptr) throw SmartMet::Spine::Exception(BCP, "Y-axis type unsupported");
-
-  return y;
-}
-
-// ----------------------------------------------------------------------
-/*!
- * Try various names to find z axis
- */
-// ----------------------------------------------------------------------
-NcVar *NcFileExtended::z_axis()
-{
-  if (z != nullptr) return z;
-  z = axis("z");
-  if (z == nullptr) z = axis("projection_z_coordinate");
-
-  // It is okay for z-axis to be null: there might only be one level(=no z-axis)
-  return z;
-}
-
-// ----------------------------------------------------------------------
-/*!
- * Try various names to find t axis
- */
-// ----------------------------------------------------------------------
-NcVar *NcFileExtended::t_axis()
-{
-  if (t != nullptr) return t;
-  t = (isStereographic() ? nullptr : axis("T"));
-
-  // Alternate names
-  if (t == nullptr) t = axis("time");
-
-  // It is okay for t-axis to be null: there might be only one time for the whole file
-  return t;
+  if (x == nullptr) throw SmartMet::Spine::Exception(BCP, "X-axis not found");
+  if (y == nullptr) throw SmartMet::Spine::Exception(BCP, "Y-axis not found");
+  if (z == nullptr && zname && !zname->empty())
+    throw SmartMet::Spine::Exception(BCP, "Z-axis not found");
+  if (t == nullptr && tname && !tname->empty())
+    throw SmartMet::Spine::Exception(BCP, "T-axis not found");
 }
 
 bool NcFileExtended::isStereographic()
@@ -646,17 +655,18 @@ unsigned long NcFileExtended::axis_size(NcVar *axis)
   throw SmartMet::Spine::Exception(BCP, std::string("Could not find dimension of axis ") + varname);
 }
 
-unsigned long NcFileExtended::xsize() { return axis_size(x_axis()); }
+unsigned long NcFileExtended::xsize() { return axis_size(x); }
 
-unsigned long NcFileExtended::ysize() { return axis_size(y_axis()); }
+unsigned long NcFileExtended::ysize() { return axis_size(y); }
 
-unsigned long NcFileExtended::zsize()
+unsigned long NcFileExtended::zsize() { return (z == nullptr ? 1 : axis_size(z)); }
+
+unsigned long NcFileExtended::tsize()
 {
-  auto z = z_axis();
-  return (z == nullptr ? 1 : axis_size(z));
+  if (t == nullptr) return 0;
+  if (isStereographic()) return 0;
+  return axis_size(t);
 }
-
-unsigned long NcFileExtended::tsize() { return (isStereographic() ? 0 : axis_size(t_axis())); }
 
 /*
  * Get list of times in this NetCDF file
@@ -686,12 +696,12 @@ NFmiTimeList NcFileExtended::timeList(std::string varName, std::string unitAttrN
       if (isdigit(date_str[8]) && !isdigit(date_str[9])) date_str.insert(8, "0");
     }
 
-    boost::posix_time::ptime t = Fmi::TimeParser::parse(date_str);
+    boost::posix_time::ptime torigin = Fmi::TimeParser::parse(date_str);
 
     NcValues *ncvals = ncvar->values();
     for (int k = 0; k < ncvar->num_vals(); k++)
     {
-      boost::posix_time::ptime timestep(t +
+      boost::posix_time::ptime timestep(torigin +
                                         boost::posix_time::seconds(ncvals->as_long(k) * unit_secs));
       tlist->Add(new NFmiMetTime(tomettime(timestep)));
     }
@@ -701,27 +711,34 @@ NFmiTimeList NcFileExtended::timeList(std::string varName, std::string unitAttrN
     using boost::posix_time::ptime;
     ptime origintime;
     long timeunit;
-    parse_time_units(t_axis(), &origintime, &timeunit);
+    parse_time_units(&origintime, &timeunit);
 
-    NcValues *values = t->values();
-    for (int i = 0; i < t->num_vals(); i++)
+    if (t == nullptr)
     {
-      long timeoffset = values->as_int(i);
+      tlist->Add(new NFmiMetTime(origintime));  // use origintime for static data
+    }
+    else
+    {
+      NcValues *values = t->values();
+      for (int i = 0; i < t->num_vals(); i++)
+      {
+        long timeoffset = values->as_int(i);
 
-      ptime validtime = origintime + boost::posix_time::minutes(timeshift);
+        ptime validtime = origintime + boost::posix_time::minutes(timeshift);
 
-      if (timeunit == 1)
-        validtime += boost::posix_time::seconds(timeoffset);
-      else if (timeunit == 60)
-        validtime += boost::posix_time::minutes(timeoffset);
-      else if (timeunit == 60 * 60)
-        validtime += boost::posix_time::hours(timeoffset);
-      else if (timeunit == 24 * 60 * 60)
-        validtime += boost::posix_time::hours(24 * timeoffset);
-      else
-        validtime += boost::posix_time::seconds(timeoffset * timeunit);
+        if (timeunit == 1)
+          validtime += boost::posix_time::seconds(timeoffset);
+        else if (timeunit == 60)
+          validtime += boost::posix_time::minutes(timeoffset);
+        else if (timeunit == 60 * 60)
+          validtime += boost::posix_time::hours(timeoffset);
+        else if (timeunit == 24 * 60 * 60)
+          validtime += boost::posix_time::hours(24 * timeoffset);
+        else
+          validtime += boost::posix_time::seconds(timeoffset * timeunit);
 
-      tlist->Add(new NFmiMetTime(nctools::tomettime(validtime)));
+        tlist->Add(new NFmiMetTime(nctools::tomettime(validtime)));
+      }
     }
   }
 
@@ -752,9 +769,16 @@ unsigned long get_units_in_seconds(std::string unit_str)
  */
 // ----------------------------------------------------------------------
 
-void parse_time_units(NcVar *t, boost::posix_time::ptime *origintime, long *timeunit)
+void NcFileExtended::parse_time_units(boost::posix_time::ptime *origintime, long *timeunit) const
 {
-  NcAtt *att = t->get_att("units");
+  // If static data is extracted, --tdim '' has been used. We still need the origintime,
+  // so we just assume "time" contains the required data as specified in COARDS etc
+  NcVar *tvar = t;
+  if (tvar == nullptr) tvar = this->get_var("time");
+
+  if (!tvar) throw SmartMet::Spine::Exception(BCP, "Time axis unknown");
+
+  NcAtt *att = tvar->get_att("units");
   if (att == 0) throw SmartMet::Spine::Exception(BCP, "Time axis has no defined units");
   if (att->type() != ncChar)
     throw SmartMet::Spine::Exception(BCP, "Time axis units must be a string");
@@ -910,9 +934,6 @@ void NcFileExtended::find_bounds()
     find_axis_bounds(x, xsize(), _xmin, _xmax, "x", _xinverted);
     find_axis_bounds(y, ysize(), _ymin, _ymax, "y", _yinverted);
   }
-  find_axis_bounds(z, zsize(), _zmin, _zmax, "z", _zinverted);
-  if (_zinverted == true && _zmin != _zmax)
-    throw SmartMet::Spine::Exception(BCP, "z-axis is inverted: this is not supported(yet?)");
   minmaxfound = true;
 }
 
@@ -1010,7 +1031,7 @@ double NcFileExtended::x_scale()
   if (x_units == nullptr)
   {
     std::shared_ptr<std::string> tmp = nullptr;
-    xscale = get_axis_scale(x_axis(), &tmp);
+    xscale = get_axis_scale(x, &tmp);
     x_units = tmp;
   }
   return xscale;
@@ -1021,7 +1042,7 @@ double NcFileExtended::y_scale()
   if (y_units == nullptr)
   {
     std::shared_ptr<std::string> tmp = nullptr;
-    yscale = get_axis_scale(y_axis(), &tmp);
+    yscale = get_axis_scale(y, &tmp);
     y_units = tmp;
   }
   return yscale;
@@ -1032,7 +1053,7 @@ double NcFileExtended::z_scale()
   if (z_units == nullptr)
   {
     std::shared_ptr<std::string> tmp = nullptr;
-    zscale = get_axis_scale(z_axis(), &tmp);
+    zscale = get_axis_scale(z, &tmp);
     z_units = tmp;
   }
   return zscale;
@@ -1178,12 +1199,71 @@ void NcFileExtended::require_conventions(const std::string *reference)
   std::string cmp = *reference;
   std::string refsub = ref;
 
+  // Accept COARDS as subset of all CF conventions
+  if (ref == "COARDS") return;
+
   if (refsub.substr(0, 3) == "CF-") refsub = ref.substr(3);
   if (cmp.substr(0, 3) == "CF-") cmp = reference->substr(3);
 
   if (compare_versions(refsub, cmp) < 0)
     throw SmartMet::Spine::Exception(BCP,
                                      "The file must conform to " + *reference + ", not to " + ref);
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * Print summary information on the dimensions
+ */
+// ----------------------------------------------------------------------
+
+void NcFileExtended::printInfo() const
+{
+  // Establish all dimension names and sizes
+  std::map<std::string, std::size_t> dims_size;
+
+  for (int i = 0; i < this->num_dims(); i++)
+  {
+    NcDim *dim = this->get_dim(i);
+    dims_size[dim->name()] = dim->size();
+  }
+
+  // Establish all combinations of dimensions for the other parameters
+
+  std::map<std::string, std::set<std::string>> grids_params;
+
+  for (int i = 0; i < this->num_vars(); i++)
+  {
+    NcVar *var = this->get_var(i);
+
+    // Skip dim parameters
+    if (dims_size.find(var->name()) != dims_size.end()) continue;
+
+    std::string varname = var->name();
+    std::string gridstr = "";
+
+    for (int j = 0; j < var->num_dims(); j++)
+    {
+      NcDim *dim = var->get_dim(j);
+      if (!gridstr.empty()) gridstr += ",";
+      gridstr += dim->name();
+    }
+    auto &names = grids_params[gridstr];  // generates std::set if not set yet
+    names.insert(varname);
+  }
+
+  // Print the info
+
+  std::cout << path << " information:\n";
+  std::cout << "    Dimensions:\n";
+  for (const auto &name_count : dims_size)
+    std::cout << "\t" << name_count.first << '(' << name_count.second << ")\n";
+
+  std::cout << "    Parameter dimensions:\n";
+  for (const auto &grid_params : grids_params)
+  {
+    std::cout << "\t" << grid_params.first << " : "
+              << boost::algorithm::join(grid_params.second, ",") << "\n";
+  }
 }
 
 }  // namespace nctools

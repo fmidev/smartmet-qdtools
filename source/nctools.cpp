@@ -1,21 +1,21 @@
-
-#include <iostream>
-#include <list>
-#include <string>
-
+#include "nctools.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/bind.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/foreach.hpp>
 #include <boost/program_options.hpp>
-
-#include "nctools.h"
-
 #include <macgyver/CsvReader.h>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiStringTools.h>
 #include <spine/Exception.h>
+#include <iostream>
+#include <list>
+#include <string>
+
+#ifdef UNIX
+#include <sys/ioctl.h>
+#endif
 
 int nctools::unknownParIdCounterBegin = 30000;
 
@@ -37,38 +37,6 @@ int unknownParIdCounter = nctools::unknownParIdCounterBegin;  // jos tuntematon 
 
 namespace nctools
 {
-// ----------------------------------------------------------------------
-/*!
- * \brief Default options
- */
-// ----------------------------------------------------------------------
-
-Options::Options()
-    : verbose(false),
-      outfile("-"),
-#ifdef UNIX
-      configfile("/usr/share/smartmet/formats/netcdf.conf"),
-#else
-      configfile("netcdf.conf"),
-#endif
-      producername("UNKNOWN"),
-      conventions("CF-1.0"),
-      producernumber(0),
-      timeshift(0),
-      memorymap(false),
-      fixstaggered(false),
-      autoid(false),
-      parameters(),
-      ignoreUnitChangeParams(),
-      excludeParams(),
-      projection(),
-      cmdLineGlobalAttributes(),
-      tolerance(1e-3)
-{
-  debug = false;
-  experimental = false;
-}
-
 NFmiEnumConverter &get_enumconverter(void) { return converter; }
 // ----------------------------------------------------------------------
 /*!
@@ -91,7 +59,15 @@ bool parse_options(int argc, char *argv[], Options &options)
   std::string tmpExcludeParamsStr;
   std::string tmpCmdLineGlobalAttributesStr;
 
-  po::options_description desc("Allowed options");
+#ifdef UNIX
+  struct winsize wsz;
+  ioctl(STDOUT_FILENO, TIOCGWINSZ, &wsz);
+  const int desc_width = (wsz.ws_col < 80 ? 80 : wsz.ws_col);
+#else
+  const int desc_width = 100;
+#endif
+
+  po::options_description desc("Allowed options", desc_width);
   desc.add_options()("help,h", "print out help message")(
       "config,c", po::value(&options.configfile), msg1.c_str())(
       "configs,C",
@@ -102,6 +78,11 @@ bool parse_options(int argc, char *argv[], Options &options)
       ("Minimum NetCDF conventions to verify or empty string if no check wanted (default: " +
        options.conventions + ")")
           .c_str())("debug,d", po::bool_switch(&options.debug), "enable debugging output")(
+      "tdim", po::value(&options.tdim), "name of T-dimension parameter (default=time)")(
+      "xdim", po::value(&options.xdim), "name of X-dimension parameter (default=lon)")(
+      "ydim", po::value(&options.ydim), "name of Y-dimension parameter (default=lat)")(
+      "zdim", po::value(&options.zdim), "name of Z-dimension parameter (no default)")(
+      "info", po::bool_switch(&options.info), "print information on data dimensions and exit")(
       "experimental", po::bool_switch(&options.experimental), "enable experimental features")(
       "infile,i", po::value(&options.infiles), "input netcdf file")(
       "globalAttributes,a",
@@ -194,17 +175,20 @@ bool parse_options(int argc, char *argv[], Options &options)
     // Running nctoqd
     if (opt.count("infile") == 0) throw std::runtime_error("Expecting input file as parameter 1");
 
-    if (opt.count("outfile") == 0)
+    if (!options.info)
     {
-      // Output file not explicitly specified
-      if (options.infiles.size() > 2)
-        throw std::runtime_error(
-            "You must specifify desired output file with -o parameter for multiple inputs");
-      if (options.infiles.size() == 1)
-        throw std::runtime_error(
-            "Must specify output file either with the -o option or as the last parameter");
-      options.outfile = options.infiles[1];
-      options.infiles.pop_back();  // Remove the output element which was the last argument
+      if (opt.count("outfile") == 0)
+      {
+        // Output file not explicitly specified
+        if (options.infiles.size() > 2)
+          throw std::runtime_error(
+              "You must specifify desired output file with -o parameter for multiple inputs");
+        if (options.infiles.size() == 1)
+          throw std::runtime_error(
+              "Must specify output file either with the -o option or as the last parameter");
+        options.outfile = options.infiles[1];
+        options.infiles.pop_back();  // Remove the output element which was the last argument
+      }
     }
 
     for (auto infile : options.infiles)
@@ -378,7 +362,7 @@ ParamInfo parse_parameter(const std::string &name,
 {
   ParamInfo info;
 
-  BOOST_FOREACH (const ParamConversions::value_type &vt, paramconvs)
+  for (const ParamConversions::value_type &vt : paramconvs)
   {
     if (vt.size() == 2)
     {
@@ -417,7 +401,9 @@ ParamInfo parse_parameter(const std::string &name,
   // Try newbase as fail safe
   info.id = getIdFromString(converter, name);
   if (info.id != kFmiBadParameter)
+  {
     info.name = converter.ToString(info.id);
+  }
   else
   {
     // We either have a numeric conversion done or should use autogenerated ids
@@ -497,29 +483,26 @@ void debug_output(const NcFile &ncfile)
               << "\tid = " << dim->id() << std::endl;
   }
 
-  for (int i = 0; i < ncfile.num_vars(); i++)
-  {
-    NcVar *var = ncfile.get_var(i);
-    std::cerr << "Var " << i << "\tname = " << var->name() << std::endl
-              << "\ttype = " << int(var->type()) << std::endl
-              << "\tvalid = " << var->is_valid() << std::endl
-              << "\tdims = " << var->num_dims() << std::endl
-              << "\tatts = " << var->num_atts() << std::endl
-              << "\tvals = " << var->num_vals() << std::endl;
-
-    for (int j = 0; j < var->num_atts(); j++)
-    {
-      NcAtt *att = var->get_att(j);
-      std::cerr << "\tAtt " << j << std::endl;
-      print_att(*att);
-    }
-  }
-
   for (int i = 0; i < ncfile.num_atts(); i++)
   {
     NcAtt *att = ncfile.get_att(i);
-    std::cerr << "\tAtt " << i << std::endl;
+    std::cerr << "Att " << i << std::endl;
     print_att(*att);
+  }
+
+  for (int i = 0; i < ncfile.num_vars(); i++)
+  {
+    NcVar *var = ncfile.get_var(i);
+
+    for (int j = 0; j < var->num_dims(); j++)
+    {
+      NcDim *dim = var->get_dim(j);
+      std::cerr << "    Dim " << j << "\tname = " << dim->name() << std::endl
+                << "\tsize = " << dim->size() << std::endl
+                << "\tvalid = " << dim->is_valid() << std::endl
+                << "\tunlimited = " << dim->is_unlimited() << std::endl
+                << "\tid = " << dim->id() << std::endl;
+    }
   }
 }
 

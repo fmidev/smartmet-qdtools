@@ -56,6 +56,10 @@
 #include <stdexcept>
 #include <string>
 
+#ifdef UNIX
+#include <sys/ioctl.h>
+#endif
+
 using namespace std;
 
 //! Must be one single global instance for speed, constructing is expensive
@@ -191,7 +195,15 @@ bool parse_options(int argc, char* argv[])
   string opt_places;
   string opt_params;
 
-  po::options_description desc("Available options");
+#ifdef UNIX
+  struct winsize wsz;
+  ioctl(STDOUT_FILENO, TIOCGWINSZ, &wsz);
+  const int desc_width = (wsz.ws_col < 80 ? 80 : wsz.ws_col);
+#else
+  const int desc_width = 100;
+#endif
+
+  po::options_description desc("Available options", desc_width);
   desc.add_options()("help,h", "print out help message")(
       "verbose,v", po::bool_switch(&options.verbose), "verbose mode")("version,V",
                                                                       "display version number")(

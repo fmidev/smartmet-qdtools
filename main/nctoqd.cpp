@@ -43,6 +43,8 @@
 
 nctools::Options options;
 
+using SmartMet::Spine::Exception;
+
 // ----------------------------------------------------------------------
 /*!
  * Check X-axis units
@@ -52,7 +54,7 @@ nctools::Options options;
 void check_xaxis_units(NcVar* var)
 {
   NcAtt* att = var->get_att("units");
-  if (att == 0) throw SmartMet::Spine::Exception(BCP, "X-axis has no units attribute");
+  if (att == 0) throw Exception(BCP, "X-axis has no units attribute");
 
   std::string units = att->values()->as_string(0);
 
@@ -67,7 +69,7 @@ void check_xaxis_units(NcVar* var)
   if (units == "m") return;
   if (units == "km") return;
 
-  throw SmartMet::Spine::Exception(BCP, "X-axis has unknown units: " + units);
+  throw Exception(BCP, "X-axis has unknown units: " + units);
 }
 
 // ----------------------------------------------------------------------
@@ -79,7 +81,7 @@ void check_xaxis_units(NcVar* var)
 void check_yaxis_units(NcVar* var)
 {
   NcAtt* att = var->get_att("units");
-  if (att == 0) throw SmartMet::Spine::Exception(BCP, "Y-axis has no units attribute");
+  if (att == 0) throw Exception(BCP, "Y-axis has no units attribute");
 
   std::string units = att->values()->as_string(0);
 
@@ -94,7 +96,7 @@ void check_yaxis_units(NcVar* var)
   if (units == "m") return;
   if (units == "km") return;
 
-  throw SmartMet::Spine::Exception(BCP, "Y-axis has unknown units: " + units);
+  throw Exception(BCP, "Y-axis has unknown units: " + units);
 }
 
 // ----------------------------------------------------------------------
@@ -130,7 +132,8 @@ NFmiHPlaceDescriptor create_hdesc(nctools::NcFileExtended& ncfile)
     std::cout << "  grid_mapping => " << ncfile.grid_mapping() << std::endl;
   }
 
-  NFmiArea* area;
+  NFmiArea* area = nullptr;
+
   if (ncfile.grid_mapping() == POLAR_STEREOGRAPHIC)
   {
     auto proj4 = fmt::format(
@@ -159,8 +162,7 @@ NFmiHPlaceDescriptor create_hdesc(nctools::NcFileExtended& ncfile)
     area = NFmiArea::CreateFromCorners(proj4, "FMI", NFmiPoint(x1, y1), NFmiPoint(x2, y2));
   }
   else
-    throw SmartMet::Spine::Exception(BCP,
-                                     "Projection " + ncfile.grid_mapping() + " is not supported");
+    throw Exception(BCP, "Projection " + ncfile.grid_mapping() + " is not supported");
 
   NFmiGrid grid(area, nx, ny);
   NFmiHPlaceDescriptor hdesc(grid);
@@ -174,14 +176,53 @@ NFmiHPlaceDescriptor create_hdesc(nctools::NcFileExtended& ncfile)
  */
 // ----------------------------------------------------------------------
 
-NFmiVPlaceDescriptor create_vdesc(const NcFile& /* ncfile */,
-                                  double /* z1 */,
-                                  double /* z2 */,
-                                  int /* nz */)
+NFmiVPlaceDescriptor create_vdesc(const nctools::NcFileExtended& ncfile)
 {
-  NFmiLevelBag bag(kFmiAnyLevelType, 0, 0, 0);
-  NFmiVPlaceDescriptor vdesc(bag);
-  return vdesc;
+  NcVar* z = ncfile.z_axis();
+
+  // Defaults if there are no levels
+  if (z == nullptr)
+  {
+    if (options.verbose) std::cerr << "  Extracting default level only\n";
+    NFmiLevelBag bag(kFmiAnyLevelType, 0, 0, 0);
+    return NFmiVPlaceDescriptor(bag);
+  }
+
+  // Guess level type from z-axis units
+
+  auto leveltype = kFmiAnyLevelType;
+
+  NcAtt* units_att = z->get_att("units");
+  if (units_att != nullptr)
+  {
+    std::string units = units_att->values()->as_string(0);
+    if (units == "Pa" || units == "hPa" || units == "mb")
+      leveltype = kFmiPressureLevel;
+    else if (units == "cm")
+      leveltype = kFmiDepth;
+    else if (units == "m" || units == "km")
+      leveltype = kFmiHeight;
+  }
+
+  // Otherwise collect all levels
+
+  NFmiLevelBag bag;
+
+  NcValues* zvalues = z->values();
+
+  if (options.verbose) std::cerr << "  Extracting " << z->num_vals() << " levels:";
+
+  for (int i = 0; i < z->num_vals(); i++)
+  {
+    auto value = zvalues->as_long(i);
+    if (options.verbose) std::cerr << " " << value << std::flush;
+    NFmiLevel level(leveltype, value);
+    bag.AddLevel(level);
+  }
+
+  if (options.verbose) std::cout << std::endl;
+
+  return NFmiVPlaceDescriptor(bag);
 }
 
 // ----------------------------------------------------------------------
@@ -194,22 +235,173 @@ NFmiVPlaceDescriptor create_vdesc(const NcFile& /* ncfile */,
  */
 // ----------------------------------------------------------------------
 
-NFmiTimeDescriptor create_tdesc(nctools::NcFileExtended& ncFile)
+NFmiTimeDescriptor create_tdesc(nctools::NcFileExtended& ncfile)
 {
-  NFmiTimeList tlist(ncFile.timeList());
+  NFmiTimeList tlist(ncfile.timeList());
 
   return NFmiTimeDescriptor(tlist.FirstTime(), tlist);
 }
 
 // ----------------------------------------------------------------------
 /*!
- * Create parameter descriptor
- *
- * We extract all parameters which are recognized by newbase.
+ * \brief Add calculated parameters to the param descriptor
  */
 // ----------------------------------------------------------------------
 
-int add_to_pbag(const NcFile& ncfile,
+void add_calculated_params_to_pbag(NFmiParamBag& pbag)
+{
+  for (const auto& name : options.addParams)
+  {
+    auto id = nctools::get_enumconverter().ToEnum(name);
+
+    if (id == kFmiBadParameter) throw std::runtime_error("Unknown parameter name '" + name + "'");
+
+    NFmiParam param(id, name);
+
+    switch (id)
+    {
+      case kFmiHumidity:
+      {
+        param.InterpolationMethod(kLinearly);
+        param.MinValue(0);
+        param.MaxValue(100);
+        break;
+      }
+      default:
+        throw Exception(BCP, "Calculating '" + name + "' from other parameters is not supported");
+    }
+
+    NFmiDataIdent ident(param);
+    const bool check_duplicates = true;
+
+    if (!pbag.Add(ident, check_duplicates))
+      throw Exception(BCP, "Failed to add calculated parameter to parameter descriptor")
+          .addParameter("parameter", name);
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Calculate humidity
+ */
+// ----------------------------------------------------------------------
+
+void calculate_humidity(NFmiFastQueryInfo& info)
+{
+  if (!info.Param(kFmiHumidity))
+    throw Exception(BCP, "Humidity has not been added to the data, internal error");
+
+  const auto rh_idx = info.ParamIndex();
+
+  if (!info.Param(kFmiTemperature))
+    throw Exception(BCP, "Temperature is needed for calculating Humidity");
+
+  const auto t_idx = info.ParamIndex();
+
+  if (info.Param(kFmiDewPoint))
+  {
+    const auto td_idx = info.ParamIndex();
+
+    for (info.ResetLevel(); info.NextLevel();)
+      for (info.ResetLocation(); info.NextLocation();)
+        for (info.ResetTime(); info.NextTime();)
+        {
+          info.ParamIndex(t_idx);
+          auto t = info.FloatValue();
+          info.ParamIndex(td_idx);
+          auto td = info.FloatValue();
+          if (t != kFloatMissing && td != kFloatMissing)
+          {
+            // t -= 273.15;  // we assume Celsius
+            // td -= 273.15;
+            auto rh = 100 * (exp(1.8 + 17.27 * (td / (td + 237.3)))) /
+                      (exp(1.8 + 17.27 * (t / (t + 237.3))));
+            rh = std::max(0.0, std::min(100.0, rh));
+            info.ParamIndex(rh_idx);
+            info.FloatValue(rh);
+          }
+        }
+  }
+  else if (info.Param(kFmiSpecificHumidity))
+  {
+    const auto q_idx = info.ParamIndex();
+    int p_idx = -1;
+
+    if (info.Param(kFmiPressure))
+      p_idx = info.ParamIndex();
+    else
+    {
+      info.FirstLevel();
+      if (info.Level()->LevelType() != kFmiPressureLevel)
+        throw Exception(BCP, "Pressure data is required for calculating humidity");
+    }
+
+    for (info.ResetLevel(); info.NextLevel();)
+      for (info.ResetLocation(); info.NextLocation();)
+        for (info.ResetTime(); info.NextTime();)
+        {
+          float p = kFloatMissing;
+          if (p_idx >= 0)
+          {
+            info.ParamIndex(p_idx);
+            p = info.FloatValue();  // we assume hPa
+          }
+          else
+            p = info.Level()->LevelValue();  // we assume hPa
+
+          info.ParamIndex(t_idx);
+          auto t = info.FloatValue();
+          info.ParamIndex(q_idx);
+          auto q = info.FloatValue();
+
+          if (t != kFloatMissing && q != kFloatMissing && p != kFloatMissing)
+          {
+            // t -= 273.15;  // we assume Celsius
+            // p *= 100;     // we assume hPa
+            q /= 1000;  // g/kg to kg/kg
+            auto e = (t > -5) ? (6.107 * pow(10, 7.5 * t / (237 + t)))
+                              : (6.107 * pow(10, 9.5 * t / (265.5 + t)));
+            auto rh = 100 * (p * q) / (0.622 * e) * (p - e) / (p - q * p / 0.622);
+            rh = std::max(0.0, std::min(100.0, rh));
+
+            info.ParamIndex(rh_idx);
+            info.FloatValue(rh);
+          }
+        }
+  }
+  else
+    throw Exception(
+        BCP, "DewPoint or Pressure and SpecificHumidity is required for calculating humidity");
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Add calculated parameters
+ */
+// ----------------------------------------------------------------------
+
+void calculate_added_params(NFmiFastQueryInfo& info)
+{
+  for (const auto& name : options.addParams)
+  {
+    if (name == "Humidity")
+      calculate_humidity(info);
+    else
+      throw Exception(BCP, "Calculating '" + name + "' from other parameters is not supported");
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * Create parameter descriptor
+ *
+ * We extract all parameters which are recognized by newbase and use the
+ * axes established by the command line options --xdim etc, or which
+ * have been guessed based on standard names.
+ */
+// ----------------------------------------------------------------------
+
+int add_to_pbag(const nctools::NcFileExtended& ncfile,
                 const nctools::ParamConversions& paramconvs,
                 NFmiParamBag& pbag)
 {
@@ -222,6 +414,13 @@ int add_to_pbag(const NcFile& ncfile,
   const NFmiString precision = "%.1f";
   const FmiInterpolationMethod interpolation = kLinearly;
 
+  // Number of dimensions the parameter must have
+  int wanted_dims = 0;
+  if (ncfile.x_axis() != nullptr) ++wanted_dims;
+  if (ncfile.y_axis() != nullptr) ++wanted_dims;
+  if (ncfile.z_axis() != nullptr) ++wanted_dims;
+  if (ncfile.t_axis() != nullptr) ++wanted_dims;
+
   // Note: We loop over variables the same way as in copy_values
 
   for (int i = 0; i < ncfile.num_vars(); i++)
@@ -229,22 +428,38 @@ int add_to_pbag(const NcFile& ncfile,
     NcVar* var = ncfile.get_var(i);
     if (var == 0) continue;
 
-    // Here we need to know only the id
-    nctools::ParamInfo pinfo = nctools::parse_parameter(var, paramconvs, options.autoid);
-    if (pinfo.id < 1)
-    /*   	== kFmiBadParameter && pinfo.id < nctools::unknownParIdCounterBegin &&
-           pinfo.id < 1) */
+    // Skip dimension variables
+    if (ncfile.is_dim(var->name())) continue;
+
+    // Check dimensions
+
+    if (!ncfile.axis_match(var))
     {
       if (options.verbose)
-        std::cout << "  Skipping unknown variable '" << nctools::get_name(var) << "'" << std::endl;
+        std::cout << "  Skipping variable " << nctools::get_name(var)
+                  << " for not having requested dimensions\n";
+      continue;
+    }
+
+    // Here we need to know only the id
+    nctools::ParamInfo pinfo =
+        nctools::parse_parameter(nctools::get_name(var), paramconvs, options.autoid);
+    if (pinfo.id < 1)
+    {
+      if (options.verbose)
+        std::cout << "  Skipping unknown variable '" << nctools::get_name(var) << "'\n";
       continue;
     }
     else if (options.verbose)
+    {
       std::cout << "  Variable " << nctools::get_name(var) << " has id " << pinfo.id << " and name "
                 << (nctools::get_enumconverter().ToString(pinfo.id).empty()
                         ? "undefined"
                         : nctools::get_enumconverter().ToString(pinfo.id))
                 << std::endl;
+    }
+
+    // Check dimensions match
 
     NFmiParam param(pinfo.id,
                     nctools::get_enumconverter().ToString(pinfo.id),
@@ -280,152 +495,147 @@ int run(int argc, char* argv[])
     // Prepare empty target querydata
     std::unique_ptr<NFmiQueryData> data;
 
-    int counter = 0;
+    int file_counter = 0;
     NFmiHPlaceDescriptor hdesc;
     NFmiVPlaceDescriptor vdesc;
     NFmiTimeDescriptor tdesc;
     NFmiParamBag pbag;
-    std::shared_ptr<nctools::NcFileExtended> ncfile1;
+
+    using NcFileExtendedPtr = std::shared_ptr<nctools::NcFileExtended>;
+    using NcFileExtendedList = std::vector<NcFileExtendedPtr>;
+
+    NcFileExtendedPtr first_ncfile;
+    NcFileExtendedList ncfilelist;
+
     unsigned int known_variables = 0;
 
     // Loop through the files once to check and to prepare the descriptors first
+
     for (std::string infile : options.infiles)
     {
+      ++file_counter;
+
       try
       {
         NcError errormode(NcError::silent_nonfatal);
-        std::shared_ptr<nctools::NcFileExtended> ncfile =
-            std::make_shared<nctools::NcFileExtended>(infile, options.timeshift);
+        auto ncfile = std::make_shared<nctools::NcFileExtended>(infile, options.timeshift);
+
         ncfile->tolerance = options.tolerance;
 
         if (!ncfile->is_valid())
-          throw SmartMet::Spine::Exception(
-              BCP, "File '" + infile + "' does not contain valid NetCDF", nullptr);
+          throw Exception(BCP, "File '" + infile + "' does not contain valid NetCDF", nullptr);
 
-        ncfile->require_conventions(&(options.conventions));
-        std::string grid_mapping(ncfile->grid_mapping());
-        NcVar* x = ncfile->x_axis();
-        NcVar* y = ncfile->y_axis();
-        NcVar* z = ncfile->z_axis();
-        NcVar* t = ncfile->t_axis();
-
-        if (!ncfile->isStereographic() && t == nullptr)
-          throw SmartMet::Spine::Exception(BCP, "Failed to find T-axis variable");
-        if (x->num_vals() < 1) throw SmartMet::Spine::Exception(BCP, "X-axis has no values");
-        if (y->num_vals() < 1) throw SmartMet::Spine::Exception(BCP, "Y-axis has no values");
-        if (z != nullptr && z->num_vals() < 1)
-          throw SmartMet::Spine::Exception(BCP, "Z-axis has no values");
-        if (!ncfile->isStereographic() && t->num_vals() < 1)
-          throw SmartMet::Spine::Exception(BCP, "T-axis has no values");
-
-        check_xaxis_units(x);
-        check_yaxis_units(y);
-
-        unsigned long nx = ncfile->xsize();
-        unsigned long ny = ncfile->ysize();
-        unsigned long nz = ncfile->zsize();
-        unsigned long nt = ncfile->tsize();
-
-        if (nx == 0) throw SmartMet::Spine::Exception(BCP, "X-dimension is of size zero");
-        if (ny == 0) throw SmartMet::Spine::Exception(BCP, "Y-dimension is of size zero");
-        if (nz == 0) throw SmartMet::Spine::Exception(BCP, "Z-dimension is of size zero");
-        if (!ncfile->isStereographic() && nt == 0)
-          throw SmartMet::Spine::Exception(BCP, "T-dimension is of size zero");
-
-        if (nz != 1)
-          throw SmartMet::Spine::Exception(
-              BCP, "Z-dimension <> 1 is not supported (yet), sample file is needed first");
-
-        // We don't do comparison for the first one but instead initialize the param descriptors
-        if (counter == 0)
+        // When --info is given we only print useful metadata instead of generating anything
+        if (options.info)
         {
-          ncfile1 = ncfile;
+          ncfile->printInfo();
+          continue;
+        }
 
-          hdesc = create_hdesc(*ncfile);
-          vdesc = create_vdesc(*ncfile, ncfile->zmin(), ncfile->zmax(), nz);
+        // Verify convention requirement
+        ncfile->require_conventions(&(options.conventions));
+
+        // Establish wanted axis parameters, this throws if unsuccesful
+        ncfile->initAxis(options.xdim, options.ydim, options.zdim, options.tdim);
+
+        // Save initialized state for further processing
+        ncfilelist.push_back(ncfile);
+
+        std::string grid_mapping(ncfile->grid_mapping());
+
+        if (ncfile->x_axis()->num_vals() < 1) throw Exception(BCP, "X-axis has no values");
+        if (ncfile->y_axis()->num_vals() < 1) throw Exception(BCP, "Y-axis has no values");
+        if (ncfile->z_axis() != nullptr && ncfile->zsize() < 1)
+          throw Exception(BCP, "Z-axis has no values");
+        if (ncfile->t_axis() != nullptr && ncfile->tsize() < 1)
+          throw Exception(BCP, "T-axis has no values");
+
+        check_xaxis_units(ncfile->x_axis());
+        check_yaxis_units(ncfile->y_axis());
+
+        if (ncfile->xsize() == 0) throw Exception(BCP, "X-dimension is of size zero");
+        if (ncfile->ysize() == 0) throw Exception(BCP, "Y-dimension is of size zero");
+        if (ncfile->zsize() == 0) throw Exception(BCP, "Z-dimension is of size zero");
+
+        // Crate initial descriptors based on the first NetCDF file
+        if (file_counter == 1)
+        {
+          first_ncfile = ncfile;
+
           tdesc = create_tdesc(*ncfile);
+          hdesc = create_hdesc(*ncfile);
+          vdesc = create_vdesc(*ncfile);
         }
         else
         {
+          // Try to merge times and parameters from other files with the same grid and levels
           std::vector<std::string> failreasons;
-          if (ncfile->joinable(*ncfile1, &failreasons) == false)
+          if (ncfile->joinable(*first_ncfile, &failreasons) == false)
           {
-            std::cerr << "Unable to combine " << ncfile1->path << " and " << infile << ":"
+            std::cerr << "Unable to combine " << first_ncfile->path << " and " << infile << ":"
                       << std::endl;
             for (auto error : failreasons)
-            {
               std::cerr << "  " << error << std::endl;
-            }
-            throw SmartMet::Spine::Exception(BCP, "Files not joinable", nullptr);
+
+            throw Exception(BCP, "Files not joinable", nullptr);
           }
 
-          NFmiHPlaceDescriptor newhdesc = create_hdesc(*ncfile);
-          NFmiVPlaceDescriptor newvdesc = create_vdesc(*ncfile, ncfile->zmin(), ncfile->zmax(), nz);
-          NFmiTimeDescriptor newtdesc = create_tdesc(*ncfile);
+          auto new_hdesc = create_hdesc(*ncfile);
+          auto new_vdesc = create_vdesc(*ncfile);
+          auto new_tdesc = create_tdesc(*ncfile);
 
-          if (!(newhdesc == hdesc))
-            throw SmartMet::Spine::Exception(BCP, "Hdesc differs from " + ncfile1->path);
-          if (!(newvdesc == vdesc))
-            throw SmartMet::Spine::Exception(BCP, "Vdesc differs from " + ncfile1->path);
+          if (!(new_hdesc == hdesc))
+            throw Exception(BCP, "Hdesc differs from " + first_ncfile->path);
+          if (!(new_vdesc == vdesc))
+            throw Exception(BCP, "Vdesc differs from " + first_ncfile->path);
 
-          tdesc = tdesc.Combine(newtdesc);
+          tdesc = tdesc.Combine(new_tdesc);
         }
         known_variables += add_to_pbag(*ncfile, paramconvs, pbag);
       }
       catch (...)
       {
-        throw SmartMet::Spine::Exception(BCP, "File check failed on input " + infile, nullptr);
+        throw Exception(BCP, "File check failed on input " + infile, nullptr);
       }
-      counter++;
     }
+
+    if (options.info) return 0;
 
     // Check parameters
     if (known_variables == 0)
-      throw SmartMet::Spine::Exception(BCP,
-                                       "inputs do not contain any convertible variables. Do you "
-                                       "need to define some conversion in config?");
+      throw Exception(BCP,
+                      "No known parameters defined by conversion tables found from input file(s)");
 
     // Create querydata structures and target file
+    add_calculated_params_to_pbag(pbag);
     NFmiParamDescriptor pdesc(pbag);
     NFmiFastQueryInfo qi(pdesc, tdesc, hdesc, vdesc);
+
     if (options.memorymap)
-    {
       data.reset(NFmiQueryDataUtil::CreateEmptyData(qi, options.outfile, true));
-    }
     else
-    {
       data.reset(NFmiQueryDataUtil::CreateEmptyData(qi));
-    }
+
     NFmiFastQueryInfo info(data.get());
     info.SetProducer(NFmiProducer(options.producernumber, options.producername));
 
     // Copy data from input files
-    counter = 0;
-    for (std::string infile : options.infiles)
+    for (auto i = 0ul; i < options.infiles.size(); i++)
     {
       try
       {
-        if (options.verbose)
-        {
-          std::cout << "Copying data from input " << infile << std::endl;
-        }
-        // Default is to exit in some non fatal situations
-        NcError errormode(NcError::silent_nonfatal);
-        nctools::NcFileExtended ncfile(infile, options.timeshift);
-        ncfile.tolerance = options.tolerance;
-
-#if DEBUG_PRINT
-        debug_output(ncfile);
-#endif
-        ncfile.copy_values(options, info, paramconvs);
+        const auto& ncfile = ncfilelist[i];
+        ncfile->copy_values(options, info, paramconvs);
       }
       catch (...)
       {
-        throw SmartMet::Spine::Exception(BCP, "Operation failed on input " + infile, nullptr);
+        throw Exception(BCP, "Operation failed on input " + options.infiles[i], nullptr);
       }
-      counter++;
     }
 
+    calculate_added_params(info);
+
+    // Save output
     if (options.outfile == "-")
       data->Write();
     else if (!options.memorymap)
@@ -433,7 +643,7 @@ int run(int argc, char* argv[])
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
+    throw Exception(BCP, "Operation failed!", nullptr);
   }
   return 0;
 }
@@ -452,7 +662,7 @@ int main(int argc, char* argv[])
   }
   catch (...)
   {
-    SmartMet::Spine::Exception e(BCP, "Operation failed!", nullptr);
+    Exception e(BCP, "Operation failed!", nullptr);
     e.printError();
     return 1;
   }

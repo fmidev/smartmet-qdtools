@@ -84,8 +84,6 @@ class GridSettingsPackage
   boost::shared_ptr<NFmiGrid> itsHybridGrid;
 };
 
-static const int gMBsize = 1024 * 1024;
-
 class Reduced_ll_grib_exception
 {
   // gribej‰ yritet‰‰n purkaa ensin k‰ytt‰en ECMWF:n grib_api-kirjastoa.
@@ -98,7 +96,6 @@ struct GribFilterOptions
   GribFilterOptions(void)
       : itsOutputFileName(),
         fUseOutputFile(false),
-        itsMaxQDataSizeInBytes(1024 * gMBsize),
         itsReturnStatus(0),
         itsIgnoredLevelList(),
         itsGeneratedDatas(),
@@ -143,8 +140,7 @@ struct GribFilterOptions
 
   string itsOutputFileName;  // -o optio tai sitten tulostetann cout:iin
   bool fUseOutputFile;
-  size_t itsMaxQDataSizeInBytes;  // default max koko 1 GB
-  int itsReturnStatus;            // 0 = ok
+  int itsReturnStatus;               // 0 = ok
   NFmiLevelBag itsIgnoredLevelList;  // lista miss‰ yksitt‰isi‰ leveleit‰, mitk‰ halutaan j‰tt‰‰
                                      // pois laskuista
   vector<boost::shared_ptr<NFmiQueryData> > itsGeneratedDatas;
@@ -2972,29 +2968,6 @@ NFmiTimeDescriptor GetTimeDesc(vector<GridRecordData *> &theGribRecordDatas,
     return NFmiTimeDescriptor(theGribRecordDatas[0]->itsOrigTime, timeList);
 }
 
-void CheckInfoSize(const NFmiQueryInfo &theInfo, size_t theMaxQDataSizeInBytes)
-{
-  size_t infoSize = theInfo.Size();
-  size_t infoSizeInBytes = infoSize * sizeof(float);
-  if (theMaxQDataSizeInBytes < infoSizeInBytes)
-  {
-    stringstream ss;
-    ss << "Data would be too big:" << endl;
-    ss << "The result would be " << infoSizeInBytes << " bytes." << endl;
-    ss << "The limit is set to " << theMaxQDataSizeInBytes << " bytes." << endl;
-
-    unsigned long paramSize = theInfo.SizeParams();
-    ss << "Number of parameters: " << paramSize << endl;
-    unsigned long timeSize = theInfo.SizeTimes();
-    ss << "Number of timesteps: " << timeSize << endl;
-    unsigned long locSize = theInfo.SizeLocations();
-    ss << "Number of points: " << locSize << endl;
-    unsigned long levelSize = theInfo.SizeLevels();
-    ss << "Number of levels: " << levelSize << endl;
-    throw runtime_error(ss.str());
-  }
-}
-
 bool FillQDataWithGribRecords(boost::shared_ptr<NFmiQueryData> &theQData,
                               vector<GridRecordData *> &theGribRecordDatas,
                               bool verbose)
@@ -3037,7 +3010,6 @@ boost::shared_ptr<NFmiQueryData> CreateQueryData(vector<GridRecordData *> &theGr
     if (params.Size() == 0 || times.Size() == 0)
       return qdata;  // turha jatkaa jos toinen n‰ist‰ on tyhj‰
     NFmiQueryInfo innerInfo(params, times, theHplace, theVplace);
-    CheckInfoSize(innerInfo, theGribFilterOptions.itsMaxQDataSizeInBytes);
     qdata = boost::shared_ptr<NFmiQueryData>(NFmiQueryDataUtil::CreateEmptyData(innerInfo));
     bool anyDataFilled =
         FillQDataWithGribRecords(qdata, theGribRecordDatas, theGribFilterOptions.fVerbose);
@@ -4447,8 +4419,7 @@ NFmiTimeDescriptor GetTimeDesc(vector<GridRecordData *> &theGribRecordDatas)
 
 boost::shared_ptr<NFmiQueryData> CreateQueryData(vector<GridRecordData *> &theGribRecordDatas,
                                                  NFmiHPlaceDescriptor &theHplace,
-                                                 NFmiVPlaceDescriptor &theVplace,
-                                                 int theMaxQDataSizeInBytes)
+                                                 NFmiVPlaceDescriptor &theVplace)
 {
   boost::shared_ptr<NFmiQueryData> qdata;
   int gribCount = static_cast<int>(theGribRecordDatas.size());
@@ -4459,7 +4430,6 @@ boost::shared_ptr<NFmiQueryData> CreateQueryData(vector<GridRecordData *> &theGr
     if (params.Size() == 0 || times.Size() == 0)
       return qdata;  // turha jatkaa jos toinen n‰ist‰ on tyhj‰
     NFmiQueryInfo innerInfo(params, times, theHplace, theVplace);
-    ::CheckInfoSize(innerInfo, theMaxQDataSizeInBytes);
     qdata.reset(NFmiQueryDataUtil::CreateEmptyData(innerInfo));
     bool anyDataFilled = wgrib2qd::FillQDataWithGribRecords(*qdata, theGribRecordDatas);
     if (anyDataFilled == false)
@@ -4471,7 +4441,7 @@ boost::shared_ptr<NFmiQueryData> CreateQueryData(vector<GridRecordData *> &theGr
 }
 
 vector<boost::shared_ptr<NFmiQueryData> > CreateQueryDatas(
-    vector<GridRecordData *> &theGribRecordDatas, int theMaxQDataSizeInBytes, bool useOutputFile)
+    vector<GridRecordData *> &theGribRecordDatas, bool useOutputFile)
 {
   vector<boost::shared_ptr<NFmiQueryData> > qdatas;
   int gribCount = static_cast<int>(theGribRecordDatas.size());
@@ -4486,7 +4456,7 @@ vector<boost::shared_ptr<NFmiQueryData> > CreateQueryDatas(
       for (unsigned int i = 0; i < hPlaceDescriptors.size(); i++)
       {
         boost::shared_ptr<NFmiQueryData> qdata = wgrib2qd::CreateQueryData(
-            theGribRecordDatas, hPlaceDescriptors[i], vPlaceDescriptors[j], theMaxQDataSizeInBytes);
+            theGribRecordDatas, hPlaceDescriptors[i], vPlaceDescriptors[j]);
         if (qdata) qdatas.push_back(qdata);
       }
     }
@@ -4879,7 +4849,6 @@ void Usage(void)
        << endl
        << "Options:" << endl
        << endl
-       << "\t-m <max-data-sizeMB>\tMax size of generated data, default = 1024 MB" << endl
        << "\t-o output\tDefault data is writen to stdout." << endl
        << "\t-l t105v3,t109v255,...\tIgnore following individual levels" << endl
        << "\t\t(e.g. 1. type 105, value 3, 2. type 109, value 255, etc.)" << endl
@@ -5082,7 +5051,7 @@ static int GetOptions(NFmiCmdLine &theCmdLine, GribFilterOptions &theGribFilterO
       ::GetGeneratedHybridParamInfo(theCmdLine, 'r', kFmiPressureAtStationLevel, "P");
 
   if (theCmdLine.isOption('m'))
-    theGribFilterOptions.itsMaxQDataSizeInBytes = GetIntegerOptionValue(theCmdLine, 'm') * gMBsize;
+    std::cerr << "Warning: option -m is deprecated, sizes are now unlimited\n";
 
   if (theCmdLine.isOption('G'))
   {

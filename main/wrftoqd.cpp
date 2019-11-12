@@ -308,10 +308,10 @@ static WRFData::TotalDimensionDataSet GetNCTotalDimensionDataSet(nctools::Option
 
 template <typename T>
 static bool GetGlobalAttributeValue(const std::string &attributeName,
-                                    nctools::attributesMap &globalAttributes,
+                                    nctools::AttributesMap &globalAttributes,
                                     T &valueOut)
 {
-  nctools::attributesMap::iterator it = globalAttributes.find(attributeName);
+  nctools::AttributesMap::iterator it = globalAttributes.find(attributeName);
   if (it != globalAttributes.end())
   {
     try
@@ -331,7 +331,7 @@ static bool GetGlobalAttributeValue(const std::string &attributeName,
 
 static int GetWRFGlobalAttributeInteger(const NcFile &ncFile,
                                         const std::string &attributeName,
-                                        nctools::attributesMap &globalAttributes)
+                                        nctools::AttributesMap &globalAttributes)
 {
   int returnValue = WRFData::MissingInt;
   if (!::GetGlobalAttributeValue(attributeName, globalAttributes, returnValue))
@@ -347,7 +347,7 @@ static int GetWRFGlobalAttributeInteger(const NcFile &ncFile,
 
 static double GetWRFGlobalAttributeDouble(const NcFile &ncFile,
                                           const std::string &attributeName,
-                                          nctools::attributesMap &globalAttributes)
+                                          nctools::AttributesMap &globalAttributes)
 {
   double returnValue = WRFData::MissingDouble;
   if (!::GetGlobalAttributeValue(attributeName, globalAttributes, returnValue))
@@ -363,7 +363,7 @@ static double GetWRFGlobalAttributeDouble(const NcFile &ncFile,
 
 static std::string GetWRFGlobalAttributeString(const NcFile &ncFile,
                                                const std::string &attributeName,
-                                               nctools::attributesMap &globalAttributes)
+                                               nctools::AttributesMap &globalAttributes)
 {
   std::string returnValue = "";
   if (!::GetGlobalAttributeValue(attributeName, globalAttributes, returnValue))

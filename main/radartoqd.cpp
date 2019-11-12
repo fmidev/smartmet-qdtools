@@ -31,6 +31,12 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+#ifdef UNIX
+#include <sys/ioctl.h>
+#endif
+
+// compression
 #include <zlib.h>
 
 #define MAXBLOCK 65534
@@ -416,7 +422,15 @@ bool parse_options(int argc, char *argv[], Options &options)
   std::string producerinfo;
   std::string tab_msg = "BUFR tables directory (default=" + default_tabdir + ")";
 
-  po::options_description desc("Allowed options");
+#ifdef UNIX
+  struct winsize wsz;
+  ioctl(STDOUT_FILENO, TIOCGWINSZ, &wsz);
+  const int desc_width = (wsz.ws_col < 80 ? 80 : wsz.ws_col);
+#else
+  const int desc_width = 100;
+#endif
+
+  po::options_description desc("Allowed options", desc_width);
   desc.add_options()("help,h", "print out help message")("version,V", "display version number")(
       "verbose,v", po::bool_switch(&options.verbose), "set verbose mode on")(
       "quiet,q", po::bool_switch(&options.quiet), "disable warning messages")(

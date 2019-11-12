@@ -12,16 +12,18 @@
 
 #include "NFmiParamCheckData.h"
 #include "NFmiQueryDataChecker.h"
+#include <boost/filesystem/operations.hpp>
+#include <boost/program_options.hpp>
 #include <newbase/NFmiCommentStripper.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiValueString.h>
-
-#include <boost/filesystem/operations.hpp>
-#include <boost/program_options.hpp>
-
 #include <fstream>
 #include <sstream>
+
+#ifdef UNIX
+#include <sys/ioctl.h>
+#endif
 
 using namespace std;
 
@@ -63,7 +65,15 @@ bool ParseOptions(int argc, char *argv[], Options &options)
   namespace po = boost::program_options;
   namespace fs = boost::filesystem;
 
-  po::options_description desc("Allowed options");
+#ifdef UNIX
+  struct winsize wsz;
+  ioctl(STDOUT_FILENO, TIOCGWINSZ, &wsz);
+  const int desc_width = (wsz.ws_col < 80 ? 80 : wsz.ws_col);
+#else
+  const int desc_width = 100;
+#endif
+
+  po::options_description desc("Allowed options", desc_width);
   desc.add_options()("help,h", "print out help message")("version,V", "display version number")(
       "check-dewpoint-difference",
       po::bool_switch(&options.check_tdew),

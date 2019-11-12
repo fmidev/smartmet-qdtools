@@ -16,10 +16,16 @@
  */
 // ======================================================================
 
+#include <boost/algorithm/string.hpp>
+#include <boost/bind.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/program_options.hpp>
 #include <macgyver/CsvReader.h>
 #include <macgyver/TimeParser.h>
 #include <macgyver/TimeZoneFactory.h>
-
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiHPlaceDescriptor.h>
@@ -30,21 +36,16 @@
 #include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiVPlaceDescriptor.h>
-
-#include <boost/algorithm/string.hpp>
-#include <boost/bind.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <boost/foreach.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/program_options.hpp>
-
 #include <iostream>
 #include <list>
 #include <set>
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+#ifdef UNIX
+#include <sys/ioctl.h>
+#endif
 
 using namespace std;
 
@@ -110,7 +111,15 @@ bool parse_options(int argc, char* argv[], Options& options)
 
   string prodnamedesc = "producer name (default=" + string(default_producer_name + ")");
 
-  po::options_description desc("Allowed options");
+#ifdef UNIX
+  struct winsize wsz;
+  ioctl(STDOUT_FILENO, TIOCGWINSZ, &wsz);
+  const int desc_width = (wsz.ws_col < 80 ? 80 : wsz.ws_col);
+#else
+  const int desc_width = 100;
+#endif
+
+  po::options_description desc("Allowed options", desc_width);
   // clang-format off
   desc.add_options()
       ("help,h", "print out help message")

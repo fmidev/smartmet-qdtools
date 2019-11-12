@@ -34,11 +34,17 @@ foreach my $input (@inputs) {
 	if ( $input =~ m/(T[0-9]+)[.]/ ) {
 		DoTest( "$name", "$output", "-U -" . $1 . " -c ../cnf/netcdf.conf $input" );
 	}
+	elsif ( $input =~ m/vietnam/ ) {
+		DoTest( "$name", "$output", " -c conf/netcdf_vietnam.conf $input" );
+	}
 	else {
 		DoTest( "$name", "$output", "-c ../cnf/netcdf.conf $input" );
 	}
 }
 
+DoTest( "vietnam_lev", "vietnam_lev.sqd", "-c conf/netcdf_vietnam.conf --zdim lev data/vietnam.nc");
+DoTest( "vietnam_soil", "vietnam_soil.sqd", "-c conf/netcdf_vietnam.conf --zdim lev_soil data/vietnam.nc");
+DoTest( "vietnam_topo", "vietnam_topo.sqd", "-c conf/netcdf_vietnam.conf --tdim '' data/vietnam.nc");
 DoTest( "merge", "merge.sqd", "-c ../cnf/netcdf.conf " . join( ' ', sort glob "data/*.merge-nc" ) );
 DoTest( "fixid", "fixid.sqd", "-m sm_uncertainty,15000 -c ../cnf/netcdf.conf " . $inputs[0] );
 DoTest( "unknownids", "unknownids.sqd", "-U -c ../cnf/netcdf.conf " . $inputs[0] );
@@ -158,7 +164,7 @@ sub DoTest {
 sub padname {
 	my ($str) = $_[0];
 
-	while ( length($str) < 70 ) {
+	while ( length($str) < 75 ) {
 		$str .= ".";
 	}
 	return $str;

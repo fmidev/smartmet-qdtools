@@ -4,16 +4,18 @@
  */
 // ======================================================================
 
+#include <boost/program_options.hpp>
 #include <newbase/NFmiCommentStripper.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiLocationBag.h>
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
-
-#include <boost/program_options.hpp>
-
 #include <stdexcept>
 #include <string>
+
+#ifdef UNIX
+#include <sys/ioctl.h>
+#endif
 
 // ----------------------------------------------------------------------
 /*!
@@ -50,7 +52,15 @@ bool parse_options(int argc, char* argv[])
 {
   namespace po = boost::program_options;
 
-  po::options_description desc("Available options");
+#ifdef UNIX
+  struct winsize wsz;
+  ioctl(STDOUT_FILENO, TIOCGWINSZ, &wsz);
+  const int desc_width = (wsz.ws_col < 80 ? 80 : wsz.ws_col);
+#else
+  const int desc_width = 100;
+#endif
+
+  po::options_description desc("Available options", desc_width);
   desc.add_options()("help,h", "print out help message")("version,V", "display version number")(
       "infile,i", po::value(&options.infile), "input querydata")(
       "outfile,o", po::value(&options.outfile), "output querydata")(

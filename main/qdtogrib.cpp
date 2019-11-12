@@ -19,6 +19,10 @@
 #include <map>
 #include <string>
 
+#ifdef UNIX
+#include <sys/ioctl.h>
+#endif
+
 #ifdef _MSC_VER
 #pragma warning(disable : 4996)  // winkkari puolella fopen -funktio koetaan turvattomaksi ja siit‰
                                  // tulee varoituksia (MSVC++ k‰‰nt‰j‰n 4996)
@@ -265,7 +269,15 @@ bool parse_options(int argc, char *argv[])
 
   std::string msg1 = "configuration file with conversion information (default='" + config + "')";
 
-  po::options_description desc("Allowed options");
+#ifdef UNIX
+  struct winsize wsz;
+  ioctl(STDOUT_FILENO, TIOCGWINSZ, &wsz);
+  const int desc_width = (wsz.ws_col < 80 ? 80 : wsz.ws_col);
+#else
+  const int desc_width = 100;
+#endif
+
+  po::options_description desc("Allowed options", desc_width);
   // clang-format off
   desc.add_options()("help,h", "print out help message")("version,V", "display version number")(
       "verbose,v", po::bool_switch(&options.verbose), "set verbose mode on")(

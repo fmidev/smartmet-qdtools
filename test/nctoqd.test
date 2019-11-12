@@ -164,7 +164,7 @@ sub DoTest {
 sub padname {
 	my ($str) = $_[0];
 
-	while ( length($str) < 70 ) {
+	while ( length($str) < 75 ) {
 		$str .= ".";
 	}
 	return $str;

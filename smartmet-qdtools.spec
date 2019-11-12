@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 19.11.5
+Version: 19.11.12
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -188,6 +188,12 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Nov 12 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.11.12-1.fmi
+- Added nctoqd --info option for printing dimensionality summary
+- Added nctoqd --xdim --ydim --zdim and --tdim options
+- Added level handling to nctoqd
+- Fixed nctoqd to analyze dimensions from NcDim variables instead of variable units
+
 * Tue Nov  5 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.11.5-1.fmi
 - gribtoqd no longer limits output size, option -m has no effect
 

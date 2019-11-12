@@ -189,6 +189,22 @@ NFmiVPlaceDescriptor create_vdesc(const nctools::NcFileExtended& ncfile)
     return NFmiVPlaceDescriptor(bag);
   }
 
+  // Guess level type from z-axis units
+
+  auto leveltype = kFmiAnyLevelType;
+
+  NcAtt* units_att = z->get_att("units");
+  if (units_att != nullptr)
+  {
+    std::string units = units_att->values()->as_string(0);
+    if (units == "Pa" || units == "hPa" || units == "mb")
+      leveltype = kFmiPressureLevel;
+    else if (units == "cm")
+      leveltype = kFmiDepth;
+    else if (units == "m" || units == "km")
+      leveltype = kFmiHeight;
+  }
+
   // Otherwise collect all levels
 
   NFmiLevelBag bag;
@@ -201,7 +217,7 @@ NFmiVPlaceDescriptor create_vdesc(const nctools::NcFileExtended& ncfile)
   {
     auto value = zvalues->as_long(i);
     if (options.verbose) std::cerr << " " << value << std::flush;
-    NFmiLevel level(kFmiAnyLevelType, value);
+    NFmiLevel level(leveltype, value);
     bag.AddLevel(level);
   }
 
@@ -225,6 +241,155 @@ NFmiTimeDescriptor create_tdesc(nctools::NcFileExtended& ncfile)
   NFmiTimeList tlist(ncfile.timeList());
 
   return NFmiTimeDescriptor(tlist.FirstTime(), tlist);
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Add calculated parameters to the param descriptor
+ */
+// ----------------------------------------------------------------------
+
+void add_calculated_params_to_pbag(NFmiParamBag& pbag)
+{
+  for (const auto& name : options.addParams)
+  {
+    auto id = nctools::get_enumconverter().ToEnum(name);
+
+    if (id == kFmiBadParameter) throw std::runtime_error("Unknown parameter name '" + name + "'");
+
+    NFmiParam param(id, name);
+
+    switch (id)
+    {
+      case kFmiHumidity:
+      {
+        param.InterpolationMethod(kLinearly);
+        param.MinValue(0);
+        param.MaxValue(100);
+        break;
+      }
+      default:
+        throw Exception(BCP, "Calculating '" + name + "' from other parameters is not supported");
+    }
+
+    NFmiDataIdent ident(param);
+    const bool check_duplicates = true;
+
+    if (!pbag.Add(ident, check_duplicates))
+      throw Exception(BCP, "Failed to add calculated parameter to parameter descriptor")
+          .addParameter("parameter", name);
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Calculate humidity
+ */
+// ----------------------------------------------------------------------
+
+void calculate_humidity(NFmiFastQueryInfo& info)
+{
+  if (!info.Param(kFmiHumidity))
+    throw Exception(BCP, "Humidity has not been added to the data, internal error");
+
+  const auto rh_idx = info.ParamIndex();
+
+  if (!info.Param(kFmiTemperature))
+    throw Exception(BCP, "Temperature is needed for calculating Humidity");
+
+  const auto t_idx = info.ParamIndex();
+
+  if (info.Param(kFmiDewPoint))
+  {
+    const auto td_idx = info.ParamIndex();
+
+    for (info.ResetLevel(); info.NextLevel();)
+      for (info.ResetLocation(); info.NextLocation();)
+        for (info.ResetTime(); info.NextTime();)
+        {
+          info.ParamIndex(t_idx);
+          auto t = info.FloatValue();
+          info.ParamIndex(td_idx);
+          auto td = info.FloatValue();
+          if (t != kFloatMissing && td != kFloatMissing)
+          {
+            // t -= 273.15;  // we assume Celsius
+            // td -= 273.15;
+            auto rh = 100 * (exp(1.8 + 17.27 * (td / (td + 237.3)))) /
+                      (exp(1.8 + 17.27 * (t / (t + 237.3))));
+            rh = std::max(0.0, std::min(100.0, rh));
+            info.ParamIndex(rh_idx);
+            info.FloatValue(rh);
+          }
+        }
+  }
+  else if (info.Param(kFmiSpecificHumidity))
+  {
+    const auto q_idx = info.ParamIndex();
+    int p_idx = -1;
+
+    if (info.Param(kFmiPressure))
+      p_idx = info.ParamIndex();
+    else
+    {
+      info.FirstLevel();
+      if (info.Level()->LevelType() != kFmiPressureLevel)
+        throw Exception(BCP, "Pressure data is required for calculating humidity");
+    }
+
+    for (info.ResetLevel(); info.NextLevel();)
+      for (info.ResetLocation(); info.NextLocation();)
+        for (info.ResetTime(); info.NextTime();)
+        {
+          float p = kFloatMissing;
+          if (p_idx >= 0)
+          {
+            info.ParamIndex(p_idx);
+            p = info.FloatValue();  // we assume hPa
+          }
+          else
+            p = info.Level()->LevelValue();  // we assume hPa
+
+          info.ParamIndex(t_idx);
+          auto t = info.FloatValue();
+          info.ParamIndex(q_idx);
+          auto q = info.FloatValue();
+
+          if (t != kFloatMissing && q != kFloatMissing && p != kFloatMissing)
+          {
+            // t -= 273.15;  // we assume Celsius
+            // p *= 100;     // we assume hPa
+            q /= 1000;  // g/kg to kg/kg
+            auto e = (t > -5) ? (6.107 * pow(10, 7.5 * t / (237 + t)))
+                              : (6.107 * pow(10, 9.5 * t / (265.5 + t)));
+            auto rh = 100 * (p * q) / (0.622 * e) * (p - e) / (p - q * p / 0.622);
+            rh = std::max(0.0, std::min(100.0, rh));
+
+            info.ParamIndex(rh_idx);
+            info.FloatValue(rh);
+          }
+        }
+  }
+  else
+    throw Exception(
+        BCP, "DewPoint or Pressure and SpecificHumidity is required for calculating humidity");
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Add calculated parameters
+ */
+// ----------------------------------------------------------------------
+
+void calculate_added_params(NFmiFastQueryInfo& info)
+{
+  for (const auto& name : options.addParams)
+  {
+    if (name == "Humidity")
+      calculate_humidity(info);
+    else
+      throw Exception(BCP, "Calculating '" + name + "' from other parameters is not supported");
+  }
 }
 
 // ----------------------------------------------------------------------
@@ -443,6 +608,7 @@ int run(int argc, char* argv[])
                       "No known parameters defined by conversion tables found from input file(s)");
 
     // Create querydata structures and target file
+    add_calculated_params_to_pbag(pbag);
     NFmiParamDescriptor pdesc(pbag);
     NFmiFastQueryInfo qi(pdesc, tdesc, hdesc, vdesc);
 
@@ -467,6 +633,8 @@ int run(int argc, char* argv[])
         throw Exception(BCP, "Operation failed on input " + options.infiles[i], nullptr);
       }
     }
+
+    calculate_added_params(info);
 
     // Save output
     if (options.outfile == "-")

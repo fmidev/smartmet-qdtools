@@ -58,6 +58,7 @@ bool parse_options(int argc, char *argv[], Options &options)
   std::string tmpIgnoreUnitChangeParamsStr;
   std::string tmpExcludeParamsStr;
   std::string tmpCmdLineGlobalAttributesStr;
+  std::string tmpAddParamsStr;
 
 #ifdef UNIX
   struct winsize wsz;
@@ -110,7 +111,8 @@ bool parse_options(int argc, char *argv[], Options &options)
        std::to_string((int)nctools::unknownParIdCounterBegin))
           .c_str())("verbose,v", po::bool_switch(&options.verbose), "set verbose mode on")(
       "version,V", "display version number")(
-      "excludeparams,x", po::value(&tmpExcludeParamsStr), "exclude params");
+      "excludeparams,x", po::value(&tmpExcludeParamsStr), "exclude params")(
+      "addparams", po::value(&tmpAddParamsStr), "add parameters by calculating them");
 
   po::positional_options_description p;
   if (strstr(argv[0], "wrftoqd") != nullptr)
@@ -215,16 +217,15 @@ bool parse_options(int argc, char *argv[], Options &options)
   }
 
   if (!tmpIgnoreUnitChangeParamsStr.empty())
-  {
     options.ignoreUnitChangeParams =
         NFmiStringTools::Split<std::list<std::string>>(tmpIgnoreUnitChangeParamsStr, ",");
-  }
 
   if (!tmpExcludeParamsStr.empty())
-  {
     options.excludeParams =
         NFmiStringTools::Split<std::list<std::string>>(tmpExcludeParamsStr, ",");
-  }
+
+  if (!tmpAddParamsStr.empty())
+    options.addParams = NFmiStringTools::Split<std::list<std::string>>(tmpAddParamsStr, ",");
 
   if (!tmpCmdLineGlobalAttributesStr.empty())
   {
@@ -239,10 +240,8 @@ bool parse_options(int argc, char *argv[], Options &options)
       std::vector<std::string> attributeParts =
           NFmiStringTools::Split<std::vector<std::string>>(*it, "=");
       if (attributeParts.size() == 2)
-      {
         options.cmdLineGlobalAttributes.insert(
             std::make_pair(attributeParts[0], attributeParts[1]));
-      }
       else
         throw std::runtime_error(
             "Option -a (global attributes) was ilformatted, give option in following format:\n-a "

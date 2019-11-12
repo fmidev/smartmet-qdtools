@@ -600,22 +600,22 @@ void NcFileExtended::initAxis(const boost::optional<std::string> &xname,
   if (xname)
     x = axis({boost::algorithm::to_lower_copy(*xname)});
   else
-    x = axis({"lon", "longitude", "xc"});
+    x = axis({"lon", "longitude", "x", "xc"});
 
   if (yname)
     y = axis({boost::algorithm::to_lower_copy(*yname)});
   else
-    y = axis({"lat", "latitude", "yc"});
+    y = axis({"lat", "latitude", "y", "yc"});
 
   if (zname)
     z = axis({boost::algorithm::to_lower_copy(*zname)});
   else
-    z = axis({"lev", "level", "zc"});
+    z = axis({"lev", "level", "z", "zc"});
 
   if (tname)
     t = axis({boost::algorithm::to_lower_copy(*tname)});
   else
-    t = axis({"time"});
+    t = axis({"time", "t"});
 
   if (x == nullptr) throw SmartMet::Spine::Exception(BCP, "X-axis not found");
   if (y == nullptr) throw SmartMet::Spine::Exception(BCP, "Y-axis not found");
@@ -625,11 +625,7 @@ void NcFileExtended::initAxis(const boost::optional<std::string> &xname,
     throw SmartMet::Spine::Exception(BCP, "T-axis not found");
 }
 
-bool NcFileExtended::isStereographic()
-{
-  if (grid_mapping() == POLAR_STEREOGRAPHIC) return true;
-  return false;
-}
+bool NcFileExtended::isStereographic() { return (grid_mapping() == POLAR_STEREOGRAPHIC); }
 
 // ----------------------------------------------------------------------
 /*!
@@ -664,7 +660,6 @@ unsigned long NcFileExtended::zsize() { return (z == nullptr ? 1 : axis_size(z))
 unsigned long NcFileExtended::tsize()
 {
   if (t == nullptr) return 0;
-  if (isStereographic()) return 0;
   return axis_size(t);
 }
 

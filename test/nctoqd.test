@@ -24,10 +24,10 @@ while ( scalar @ARGV > 0 ) {
 	shift @ARGV;
 }
 
-@inputs = glob "data/*.nc";
+@inputs = glob "data/netcdf/*.nc";
 foreach my $input (@inputs) {
 	my $output = $input;
-	$output =~ s%^data/%%;
+	$output =~ s%^data/netcdf/%%;
 	$output =~ s%[.]nc$%.sqd%;
 	my $name = $output;
 	$name =~ s%[.]sqd%%;
@@ -37,17 +37,20 @@ foreach my $input (@inputs) {
 	elsif ( $input =~ m/vietnam/ ) {
 		DoTest( "$name", "$output", " -c conf/netcdf_vietnam.conf $input" );
 	}
+	elsif ( $input =~ m/aquamar/ ) {
+		DoTest( "$name", "$output", " --zdim Z21_21 -c conf/netcdf_aquamar.conf $input" );
+	}
 	else {
 		DoTest( "$name", "$output", "-c ../cnf/netcdf.conf $input" );
 	}
 }
 
-DoTest( "vietnam_lev", "vietnam_lev.sqd", "-c conf/netcdf_vietnam.conf --zdim lev data/vietnam.nc");
-DoTest( "vietnam_soil", "vietnam_soil.sqd", "-c conf/netcdf_vietnam.conf --zdim lev_soil data/vietnam.nc");
-DoTest( "vietnam_topo", "vietnam_topo.sqd", "-c conf/netcdf_vietnam.conf --tdim '' data/vietnam.nc");
-DoTest( "merge", "merge.sqd", "-c ../cnf/netcdf.conf " . join( ' ', sort glob "data/*.merge-nc" ) );
-DoTest( "fixid", "fixid.sqd", "-m sm_uncertainty,15000 -c ../cnf/netcdf.conf " . $inputs[0] );
-DoTest( "unknownids", "unknownids.sqd", "-U -c ../cnf/netcdf.conf " . $inputs[0] );
+DoTest( "vietnam_lev", "vietnam_lev.sqd", "-c conf/netcdf_vietnam.conf --zdim lev data/netcdf/vietnam.nc");
+DoTest( "vietnam_soil", "vietnam_soil.sqd", "-c conf/netcdf_vietnam.conf --zdim lev_soil data/netcdf/vietnam.nc");
+DoTest( "vietnam_topo", "vietnam_topo.sqd", "-c conf/netcdf_vietnam.conf --tdim '' data/netcdf/vietnam.nc");
+DoTest( "merge", "merge.sqd", "-c ../cnf/netcdf.conf " . join( ' ', sort glob "data/netcdf/*.merge-nc" ) );
+DoTest( "fixid", "fixid.sqd", "-m sm_uncertainty,15000 -c ../cnf/netcdf.conf data/netcdf/C3S-SOILMOISTURE-L3S-SSMV-PASSIVE-DAILY-20160831000000-TCDR-v201706.0.0.nc" );
+DoTest( "unknownids", "unknownids.sqd", "-U -c ../cnf/netcdf.conf data/netcdf/C3S-SOILMOISTURE-L3S-SSMV-PASSIVE-DAILY-20160831000000-TCDR-v201706.0.0.nc" );
 
 print "Done\n";
 

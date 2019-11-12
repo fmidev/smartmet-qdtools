@@ -1,14 +1,4 @@
 #include "TimeTools.h"
-
-#include <newbase/NFmiEnumConverter.h>
-#include <newbase/NFmiFastQueryInfo.h>
-#include <newbase/NFmiMetTime.h>
-#include <newbase/NFmiParameterName.h>
-#include <newbase/NFmiQueryData.h>
-
-#include <macgyver/StringConversion.h>
-#include <macgyver/TimeParser.h>
-
 #include <boost/algorithm/string.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -16,7 +6,13 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
-
+#include <macgyver/StringConversion.h>
+#include <macgyver/TimeParser.h>
+#include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiMetTime.h>
+#include <newbase/NFmiParameterName.h>
+#include <newbase/NFmiQueryData.h>
 #include <cmath>
 #include <iomanip>
 #include <limits>
@@ -26,6 +22,10 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+
+#ifdef UNIX
+#include <sys/ioctl.h>
+#endif
 
 // This is global so that we can not just parse but also print errors
 NFmiEnumConverter converter;
@@ -172,7 +172,15 @@ bool parse_options(int argc, char* argv[])
   std::string opt_stations;
   std::string opt_levels;
 
-  po::options_description desc("Available options");
+#ifdef UNIX
+  struct winsize wsz;
+  ioctl(STDOUT_FILENO, TIOCGWINSZ, &wsz);
+  const int desc_width = (wsz.ws_col < 80 ? 80 : wsz.ws_col);
+#else
+  const int desc_width = 100;
+#endif
+
+  po::options_description desc("Available options", desc_width);
   desc.add_options()("help,h", "print out help message")("version,V", "display version number")(
       "infile,i", po::value(&options.infile), "input querydata")(
       "alltimes,T", po::bool_switch(&options.all_times), "for all times")(

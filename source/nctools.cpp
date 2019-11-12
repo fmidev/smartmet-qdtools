@@ -149,13 +149,14 @@ bool parse_options(int argc, char *argv[], Options &options)
     }
     else
     {
-      std::cout << "Usage: " << std::endl
-                << "  nctoqd [options] infile outfile " << std::endl
-                << "  nctoqd [options] -o outfile infile ..." << std::endl
-                << "Converts CF-1.4 conforming NetCDF to querydata." << std::endl
-                << "Only features in known use are supported." << std::endl
-                << std::endl
-                << desc << std::endl;
+      std::cout << "Usage:\n"
+                   "  nctoqd [options] infile outfile\n"
+                   "  nctoqd [options] -o outfile infile ...\n"
+                   "\n"
+                   "Converts CF-1.4 conforming NetCDF to querydata.\n"
+                   "\n"
+                   "Parameters supported by --addparams: Humidity\n"
+                << std::endl;
     }
 
     return false;

@@ -64,6 +64,10 @@ This file is part of libECBUFR.
 #include <stdexcept>
 #include <string>
 
+#ifdef UNIX
+#include <sys/ioctl.h>
+#endif
+
 extern "C"
 {
 #include <bufr_api.h>
@@ -246,7 +250,15 @@ bool parse_options(int argc, char *argv[], Options &options)
   std::string msg1 = "BUFR parameter configuration file (default='" + options.conffile + "')";
   std::string msg2 = "stations CSV file (default='" + options.stationsfile + "')";
 
-  po::options_description desc("Allowed options");
+#ifdef UNIX
+  struct winsize wsz;
+  ioctl(STDOUT_FILENO, TIOCGWINSZ, &wsz);
+  const int desc_width = (wsz.ws_col < 80 ? 80 : wsz.ws_col);
+#else
+  const int desc_width = 100;
+#endif
+
+  po::options_description desc("Allowed options", desc_width);
   desc.add_options()("help,h", "print out help message")("version,V", "display version number")(
       "verbose,v", po::bool_switch(&options.verbose), "set verbose mode on")(
       "debug", po::bool_switch(&options.debug), "set debug mode on")(

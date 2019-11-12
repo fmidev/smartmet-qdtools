@@ -6,8 +6,15 @@
  */
 // ======================================================================
 
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/bind.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/foreach.hpp>
+#include <boost/optional.hpp>
+#include <boost/program_options.hpp>
+#include <boost/shared_ptr.hpp>
 #include <macgyver/StringConversion.h>
-
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiEquidistArea.h>
@@ -23,21 +30,15 @@
 #include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiVPlaceDescriptor.h>
-
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/split.hpp>
-#include <boost/bind.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <boost/foreach.hpp>
-#include <boost/optional.hpp>
-#include <boost/program_options.hpp>
-#include <boost/shared_ptr.hpp>
-
 #include <fstream>
 #include <limits>
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+#ifdef UNIX
+#include <sys/ioctl.h>
+#endif
 
 // compression
 #include <zlib.h>
@@ -424,7 +425,15 @@ bool parse_options(int argc, char *argv[], Options &options)
   std::string producerinfo;
   std::string tab_msg = "BUFR tables directory (default=" + default_tabdir + ")";
 
-  po::options_description desc("Allowed options");
+#ifdef UNIX
+  struct winsize wsz;
+  ioctl(STDOUT_FILENO, TIOCGWINSZ, &wsz);
+  const int desc_width = (wsz.ws_col < 80 ? 80 : wsz.ws_col);
+#else
+  const int desc_width = 100;
+#endif
+
+  po::options_description desc("Allowed options", desc_width);
   desc.add_options()("help,h", "print out help message")("version,V", "display version number")(
       "verbose,v", po::bool_switch(&options.verbose), "set verbose mode on")(
       "quiet,q", po::bool_switch(&options.quiet), "disable warning messages")(

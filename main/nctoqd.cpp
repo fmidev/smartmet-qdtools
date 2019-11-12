@@ -137,10 +137,11 @@ NFmiHPlaceDescriptor create_hdesc(nctools::NcFileExtended& ncfile)
   if (ncfile.grid_mapping() == POLAR_STEREOGRAPHIC)
   {
     auto proj4 = fmt::format(
-        "+proj=stere +lat_0={} +lon_0={} +k=1 +x_0=0 +y_0=0 +R={:.0f} +units=m +wktext "
+        "+proj=stere +lat_0={} +lon_0={} +lat_ts={} +k=1 +x_0=0 +y_0=0 +R={:.0f} +units=m +wktext "
         "+towgs84=0,0,0 +no_defs",
         ncfile.latitudeOfProjectionOrigin,
         ncfile.longitudeOfProjectionOrigin,
+        ncfile.latitudeOfProjectionOrigin,
         kRearth);
     area = NFmiArea::CreateFromCorners(proj4, "FMI", NFmiPoint(x1, y1), NFmiPoint(x2, y2));
   }

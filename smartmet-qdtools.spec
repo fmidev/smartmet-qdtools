@@ -3,7 +3,7 @@
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
 Version: 19.11.12
-Release: 1%{?dist}.fmi
+Release: 2%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -188,6 +188,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Nov 12 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.11.12-2.fmi
+- Fixed nctoqd to work for sample polar stereographic data
+
 * Tue Nov 12 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.11.12-1.fmi
 - Added nctoqd --info option for printing dimensionality summary
 - Added nctoqd --xdim --ydim --zdim and --tdim options

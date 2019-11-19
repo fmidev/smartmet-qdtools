@@ -37,18 +37,18 @@
 
 using namespace std;
 
-bool jscan_is_negative(grib_handle *theGribHandle)
+bool jscan_is_negative(grib_handle *theHandle)
 {
   long direction = 0;
-  int status = grib_get_long(theGribHandle, "jScansPositively", &direction);
+  int status = grib_get_long(theHandle, "jScansPositively", &direction);
   if (status != 0) return false;
   return (direction == 0);
 }
 
-void check_jscan_direction(grib_handle *theGribHandle)
+void check_jscan_direction(grib_handle *theHandle)
 {
   long direction = 0;
-  int status = grib_get_long(theGribHandle, "jScansPositively", &direction);
+  int status = grib_get_long(theHandle, "jScansPositively", &direction);
   if (status != 0) return;
   if (direction == 0)
     throw std::runtime_error("GRIBs with a negative j-scan direction are not supported");
@@ -263,18 +263,18 @@ float CalcRH(float P, float T, float Q)
   }
 }
 
-bool GetGribLongValue(grib_handle *theGribHandle,
+bool GetGribLongValue(grib_handle *theHandle,
                       const std::string &theDefinitionName,
                       long &theLongValueOut)
 {
-  return grib_get_long(theGribHandle, theDefinitionName.c_str(), &theLongValueOut) == 0;
+  return grib_get_long(theHandle, theDefinitionName.c_str(), &theLongValueOut) == 0;
 }
 
-bool GetGribDoubleValue(grib_handle *theGribHandle,
+bool GetGribDoubleValue(grib_handle *theHandle,
                         const std::string &theDefinitionName,
                         double &theDoubleValueOut)
 {
-  return grib_get_double(theGribHandle, theDefinitionName.c_str(), &theDoubleValueOut) == 0;
+  return grib_get_double(theHandle, theDefinitionName.c_str(), &theDoubleValueOut) == 0;
 }
 
 string GetFileNameAreaStr(const NFmiArea *theArea)
@@ -297,7 +297,7 @@ string GetFileNameAreaStr(const NFmiArea *theArea)
   return str;
 }
 
-bool GetGribStringValue(grib_handle *theGribHandle,
+bool GetGribStringValue(grib_handle *theHandle,
                         const std::string &theDefinitionName,
                         std::string &theStringValueOut)
 {
@@ -306,8 +306,8 @@ bool GetGribStringValue(grib_handle *theGribHandle,
                   // grib_get_string -kutsun
   char stringValue[128] = "";
   size_t stringValueBufferSize = sizeof(stringValue);
-  int getFailed = grib_get_string(
-      theGribHandle, theDefinitionName.c_str(), stringValue, &stringValueBufferSize);
+  int getFailed =
+      grib_get_string(theHandle, theDefinitionName.c_str(), stringValue, &stringValueBufferSize);
   if (!getFailed)
   {
     std::string testParamName = stringValue;
@@ -320,15 +320,13 @@ bool GetGribStringValue(grib_handle *theGribHandle,
   return false;
 }
 
-NFmiMetTime GetTime(grib_handle *theGribHandle,
-                    const std::string &dateStr,
-                    const std::string &timeStr)
+NFmiMetTime GetTime(grib_handle *theHandle, const std::string &dateStr, const std::string &timeStr)
 {
   long dataDate = 0;
   long dataTime = 0;
 
-  int err1 = grib_get_long(theGribHandle, dateStr.c_str(), &dataDate);
-  int err2 = grib_get_long(theGribHandle, timeStr.c_str(), &dataTime);
+  int err1 = grib_get_long(theHandle, dateStr.c_str(), &dataDate);
+  int err2 = grib_get_long(theHandle, timeStr.c_str(), &dataTime);
 
   if (err1) throw runtime_error("Could not extract dataDate from GRIB");
   if (err2) throw runtime_error("Could not extract dataTime from GRIB");
@@ -362,24 +360,24 @@ NFmiMetTime GetTime(grib_handle *theGribHandle,
   return aTime;
 }
 
-NFmiMetTime GetOrigTime(grib_handle *theGribHandle)
+NFmiMetTime GetOrigTime(grib_handle *theHandle)
 {
-  return GetTime(theGribHandle, "dataDate", "dataTime");
+  return GetTime(theHandle, "dataDate", "dataTime");
 }
 
-NFmiMetTime GetValidTime(grib_handle *theGribHandle)
+NFmiMetTime GetValidTime(grib_handle *theHandle)
 {
-  return GetTime(theGribHandle, "validityDate", "validityTime");
+  return GetTime(theHandle, "validityDate", "validityTime");
 }
 
-long GetUsedLevelType(grib_handle *theGribHandle)
+long GetUsedLevelType(grib_handle *theHandle)
 {
   string name;
-  bool ok = GetGribStringValue(theGribHandle, "vertical.typeOfLevel", name);
+  bool ok = GetGribStringValue(theHandle, "vertical.typeOfLevel", name);
 
   if (!ok)
   {
-    bool ok = GetGribStringValue(theGribHandle, "typeOfFirstFixedSurface", name);
+    bool ok = GetGribStringValue(theHandle, "typeOfFirstFixedSurface", name);
     if (!ok)
     {
       return kFmiNoLevelType;
@@ -436,36 +434,36 @@ long GetUsedLevelType(grib_handle *theGribHandle)
   throw runtime_error("Unknown level type: " + name);
 }
 
-NFmiLevel GetLevel(grib_handle *theGribHandle)
+NFmiLevel GetLevel(grib_handle *theHandle)
 {
-  long usedLevelType = GetUsedLevelType(theGribHandle);
+  long usedLevelType = GetUsedLevelType(theHandle);
 
   long levelValue = 0;
-  bool levelValueOk = GetGribLongValue(theGribHandle, "vertical.level", levelValue);
+  bool levelValueOk = GetGribLongValue(theHandle, "vertical.level", levelValue);
 
-  if (!levelValueOk) throw runtime_error("Error: Couldn't get level from given grib_handle.");
+  if (!levelValueOk) throw runtime_error("Couldn't get level from given grib_handle.");
 
   // Note: a missing value is encoded as a 16-bit -1, which is converted to max int by
   // grib_get_long. Bizarre API, if there is no better way to test for missing values
 
   if (levelValue == std::numeric_limits<int>::max())
-    throw runtime_error("Error: MISSING level value in data");
+    throw runtime_error("MISSING level value in data");
 
   return NFmiLevel(
       usedLevelType, NFmiStringTools::Convert(levelValue), static_cast<float>(levelValue));
 }
 
-long GetMissingValue(grib_handle *theGribHandle)
+long GetMissingValue(grib_handle *theHandle)
 {
-  // DUMP(theGribHandle);
+  // DUMP(theHandle);
   // missingValue is not in edition independent docs
 
   long missingValue = 0;
-  int status = grib_get_long(theGribHandle, "missingValue", &missingValue);
+  int status = grib_get_long(theHandle, "missingValue", &missingValue);
 
   if (status == 0) return missingValue;
 
-  throw runtime_error("Error: Couldn't get missingValue from given grib_handle.");
+  throw runtime_error("Couldn't get missingValue from given grib_handle.");
 }
 
 NFmiRect GetLatlonCropRect(const string &theBoundsStr)
@@ -1635,19 +1633,19 @@ void DoErrorReporting(const std::string &theBaseString,
   cerr << errStr << std::endl;
 }
 
-std::string GetParamName(grib_handle *theGribHandle)
+std::string GetParamName(grib_handle *theHandle)
 {
   std::string name, units;
-  bool ok1 = GetGribStringValue(theGribHandle, "parameter.name", name);
-  bool ok2 = GetGribStringValue(theGribHandle, "parameter.units", units);
+  bool ok1 = GetGribStringValue(theHandle, "parameter.name", name);
+  bool ok2 = GetGribStringValue(theHandle, "parameter.units", units);
 
   if (ok1 && ok2) return (name + " [" + units + "]");
 
   // Let's try other methods to obtain name
   std::string cfName;
-  bool cfNameOk = GetGribStringValue(theGribHandle, "cfName", cfName);
+  bool cfNameOk = GetGribStringValue(theHandle, "cfName", cfName);
   std::string shortName;
-  bool shortNameOk = GetGribStringValue(theGribHandle, "shortName", shortName);
+  bool shortNameOk = GetGribStringValue(theHandle, "shortName", shortName);
 
   std::string usedParameterName;
   if (shortNameOk) usedParameterName = shortName;
@@ -1663,47 +1661,46 @@ std::string GetParamName(grib_handle *theGribHandle)
   return usedParameterName;
 }
 
-long GetUsedParamId(grib_handle *theGribHandle)
+long GetUsedParamId(grib_handle *theHandle)
 {
   // 1. Kokeillaan lˆytyykˆ paramId -hakusanalla
   long paramid;
-  bool ok = GetGribLongValue(theGribHandle, "paramId", paramid);
+  bool ok = GetGribLongValue(theHandle, "paramId", paramid);
   if (ok && paramid != 0) return paramid;
 
   // 2. Katsotaan onko indicatorOfParameter -id k‰ytˆss‰, jos on, k‰ytet‰‰n sit‰.
   long indicatorOfParameter = 0;
   bool indicatorOfParameterOk =
-      GetGribLongValue(theGribHandle, "indicatorOfParameter", indicatorOfParameter);
+      GetGribLongValue(theHandle, "indicatorOfParameter", indicatorOfParameter);
   if (indicatorOfParameterOk) return indicatorOfParameter;
 
   // 3. kokeillaan parameterCategory + parameterNumber yhdistelm‰‰, jossa lopullinen arvo saadaan
   // ((paramCategory * 1000) + paramNumber)
   long parameterCategory = 0;
-  bool parameterCategoryOk =
-      GetGribLongValue(theGribHandle, "parameterCategory", parameterCategory);
+  bool parameterCategoryOk = GetGribLongValue(theHandle, "parameterCategory", parameterCategory);
   long parameterNumber = 0;
-  bool parameterNumberOk = GetGribLongValue(theGribHandle, "parameterNumber", parameterNumber);
+  bool parameterNumberOk = GetGribLongValue(theHandle, "parameterNumber", parameterNumber);
   if (parameterCategoryOk && parameterNumberOk) return (parameterCategory * 1000) + parameterNumber;
 
   // 4. Kokeillaan lˆytyykˆ parameter -hakusanalla
   long parameter = 0;
-  bool parameterOk = GetGribLongValue(theGribHandle, "parameter", parameter);
+  bool parameterOk = GetGribLongValue(theHandle, "parameter", parameter);
   if (parameterOk) return parameter;
 
-  throw runtime_error("Error: Couldn't get paramId from given grib_handle.");
+  throw runtime_error("Couldn't get paramId from given grib_handle.");
 }
 
 #if 0
-void PrintAllParamInfo_forDebugging(grib_handle *theGribHandle)
+void PrintAllParamInfo_forDebugging(grib_handle *theHandle)
 {
   std::string name, units, cfName, shortName;
-  if(GetGribStringValue(theGribHandle, "parameter.name", name))
+  if(GetGribStringValue(theHandle, "parameter.name", name))
     cerr << "\n\nparameter.name: " << name << endl;
-  if(GetGribStringValue(theGribHandle, "parameter.units", units))
+  if(GetGribStringValue(theHandle, "parameter.units", units))
     cerr << "parameter.units: " << units << endl;
-  if(GetGribStringValue(theGribHandle, "cfName", cfName))
+  if(GetGribStringValue(theHandle, "cfName", cfName))
     cerr << "cfName: " << cfName << endl;
-  if(GetGribStringValue(theGribHandle, "shortName", shortName))
+  if(GetGribStringValue(theHandle, "shortName", shortName))
     cerr << "shortName: " << shortName << endl;
   
   long paramid = 0;
@@ -1711,36 +1708,36 @@ void PrintAllParamInfo_forDebugging(grib_handle *theGribHandle)
   long parameterCategory = 0;
   long parameterNumber = 0;
   long parameter = 0;
-  if(GetGribLongValue(theGribHandle, "paramId", paramid))
+  if(GetGribLongValue(theHandle, "paramId", paramid))
     cerr << "paramId: " << paramid << endl;
-  if(GetGribLongValue(theGribHandle, "indicatorOfParameter", indicatorOfParameter))
+  if(GetGribLongValue(theHandle, "indicatorOfParameter", indicatorOfParameter))
     cerr << "indicatorOfParameter: " << indicatorOfParameter << endl;
-  if(GetGribLongValue(theGribHandle, "parameterCategory", parameterCategory))
+  if(GetGribLongValue(theHandle, "parameterCategory", parameterCategory))
     cerr << "parameterCategory: " << parameterCategory << endl;
-  if(GetGribLongValue(theGribHandle, "parameterNumber", parameterNumber))
+  if(GetGribLongValue(theHandle, "parameterNumber", parameterNumber))
     cerr << "parameterNumber: " << parameterNumber << endl;
-  if(GetGribLongValue(theGribHandle, "parameter", parameter))
+  if(GetGribLongValue(theHandle, "parameter", parameter))
     cerr << "parameter: " << parameter << endl;
   
   string levelName;
-  if(GetGribStringValue(theGribHandle, "vertical.typeOfLevel", levelName))
+  if(GetGribStringValue(theHandle, "vertical.typeOfLevel", levelName))
     cerr << "vertical.typeOfLevel: " << levelName << endl;
-  if(GetGribStringValue(theGribHandle, "typeOfFirstFixedSurface", levelName))
+  if(GetGribStringValue(theHandle, "typeOfFirstFixedSurface", levelName))
     cerr << "typeOfFirstFixedSurface: " << levelName;
   double levelValue = 0;
-  if(GetGribDoubleValue(theGribHandle, "vertical.level", levelValue))
+  if(GetGribDoubleValue(theHandle, "vertical.level", levelValue))
     cerr << "vertical.level: " << levelValue << endl;
   
   cerr << endl;
 }
 #endif
 
-NFmiDataIdent GetParam(grib_handle *theGribHandle, const NFmiProducer &theWantedProducer)
+NFmiDataIdent GetParam(grib_handle *theHandle, const NFmiProducer &theWantedProducer)
 {
   // TODO producerin voisi p‰‰tell‰ originating center numeroista
 
-  std::string usedParameterName = GetParamName(theGribHandle);
-  long usedParId = GetUsedParamId(theGribHandle);
+  std::string usedParameterName = GetParamName(theHandle);
+  long usedParId = GetUsedParamId(theHandle);
   if (usedParameterName.empty()) usedParameterName = NFmiStringTools::Convert(usedParId);
   return NFmiDataIdent(NFmiParam(usedParId,
                                  usedParameterName,
@@ -1813,29 +1810,29 @@ void DoPossibleGlobalLongitudeFixes(double &Lo1,
  */
 // ----------------------------------------------------------------------
 
-NFmiArea *CreateLatlonArea(grib_handle *theGribHandle, GribFilterOptions &theGribFilterOptions)
+NFmiArea *CreateLatlonArea(grib_handle *theHandle, GribFilterOptions &theGribFilterOptions)
 {
   double La1 = 0, Lo1 = 0, La2 = 0, Lo2 = 0;
-  int status1 = grib_get_double(theGribHandle, "latitudeOfFirstGridPointInDegrees", &La1);
-  int status2 = grib_get_double(theGribHandle, "longitudeOfFirstGridPointInDegrees", &Lo1);
-  int status3 = grib_get_double(theGribHandle, "latitudeOfLastGridPointInDegrees", &La2);
-  int status4 = grib_get_double(theGribHandle, "longitudeOfLastGridPointInDegrees", &Lo2);
+  int status1 = grib_get_double(theHandle, "latitudeOfFirstGridPointInDegrees", &La1);
+  int status2 = grib_get_double(theHandle, "longitudeOfFirstGridPointInDegrees", &Lo1);
+  int status3 = grib_get_double(theHandle, "latitudeOfLastGridPointInDegrees", &La2);
+  int status4 = grib_get_double(theHandle, "longitudeOfLastGridPointInDegrees", &Lo2);
 
   if (status1 != 0 || status2 != 0 || status3 != 0 || status4 != 0)
-    throw runtime_error("Error: Unable to retrieve latlon-projection information from grib.");
+    throw runtime_error("Unable to retrieve latlon-projection information from grib.");
 
   // We ignore the status of the version check intentionally and assume V2
   long version = 2;
-  grib_get_long(theGribHandle, "editionNumber", &version);
+  grib_get_long(theHandle, "editionNumber", &version);
 
   // Fix BAM data which uses zero for both longitudes
   if (Lo1 == 0 && Lo2 == 0) Lo2 = 360;
 
   // Not needed:
-  // check_jscan_direction(theGribHandle);
+  // check_jscan_direction(theHandle);
 
   long iScansNegatively = 0;
-  int iScansNegativelyStatus = grib_get_long(theGribHandle, "iScansNegatively", &iScansNegatively);
+  int iScansNegativelyStatus = grib_get_long(theHandle, "iScansNegatively", &iScansNegatively);
 
   if (iScansNegativelyStatus == 0 && !iScansNegatively)
   {
@@ -1883,30 +1880,28 @@ NFmiArea *CreateLatlonArea(grib_handle *theGribHandle, GribFilterOptions &theGri
  */
 // ----------------------------------------------------------------------
 
-NFmiArea *CreateRotatedLatlonArea(grib_handle *theGribHandle,
-                                  GribFilterOptions &theGribFilterOptions)
+NFmiArea *CreateRotatedLatlonArea(grib_handle *theHandle, GribFilterOptions &theGribFilterOptions)
 {
   double La1 = 0;
-  int status1 = grib_get_double(theGribHandle, "latitudeOfFirstGridPointInDegrees", &La1);
+  int status1 = grib_get_double(theHandle, "latitudeOfFirstGridPointInDegrees", &La1);
   double Lo1 = 0;
-  int status2 = grib_get_double(theGribHandle, "longitudeOfFirstGridPointInDegrees", &Lo1);
+  int status2 = grib_get_double(theHandle, "longitudeOfFirstGridPointInDegrees", &Lo1);
   double La2 = 0;
-  int status3 = grib_get_double(theGribHandle, "latitudeOfLastGridPointInDegrees", &La2);
+  int status3 = grib_get_double(theHandle, "latitudeOfLastGridPointInDegrees", &La2);
   double Lo2 = 0;
-  int status4 = grib_get_double(theGribHandle, "longitudeOfLastGridPointInDegrees", &Lo2);
+  int status4 = grib_get_double(theHandle, "longitudeOfLastGridPointInDegrees", &Lo2);
 
   double PoleLat = -90;
   double PoleLon = 0;
-  int status5 = grib_get_double(theGribHandle, "longitudeOfSouthernPoleInDegrees", &PoleLon);
-  int status6 = grib_get_double(theGribHandle, "latitudeOfSouthernPoleInDegrees", &PoleLat);
+  int status5 = grib_get_double(theHandle, "longitudeOfSouthernPoleInDegrees", &PoleLon);
+  int status6 = grib_get_double(theHandle, "latitudeOfSouthernPoleInDegrees", &PoleLat);
 
   if (status1 || status2 || status3 || status4 || status5 || status6)
-    throw runtime_error(
-        "Error: Unable to retrieve rotated latlon-projection information from grib.");
+    throw runtime_error("Unable to retrieve rotated latlon-projection information from grib.");
 
   // We ignore the status of the version check intentionally and assume V2
   long version = 2;
-  grib_get_long(theGribHandle, "editionNumber", &version);
+  grib_get_long(theHandle, "editionNumber", &version);
 
 #ifndef WGS84
   DoPossibleGlobalLongitudeFixes(Lo1, Lo2, theGribFilterOptions);
@@ -1914,7 +1909,7 @@ NFmiArea *CreateRotatedLatlonArea(grib_handle *theGribHandle,
 #endif
 
   // Not needed:
-  // check_jscan_direction(theGribHandle);
+  // check_jscan_direction(theHandle);
 
   NFmiPoint bottomleft(Lo1, FmiMin(La1, La2));
   NFmiPoint topright(Lo2, FmiMax(La1, La2));
@@ -1948,36 +1943,36 @@ NFmiArea *CreateRotatedLatlonArea(grib_handle *theGribHandle,
  */
 // ----------------------------------------------------------------------
 
-NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
+NFmiArea *CreateMercatorArea(grib_handle *theHandle)
 {
   double La1 = 0, Lo1 = 0, La2 = 0, Lo2 = 0;
-  int status1 = grib_get_double(theGribHandle, "latitudeOfFirstGridPointInDegrees", &La1);
-  int status2 = grib_get_double(theGribHandle, "longitudeOfFirstGridPointInDegrees", &Lo1);
-  int status3 = grib_get_double(theGribHandle, "latitudeOfLastGridPointInDegrees", &La2);
-  int status4 = grib_get_double(theGribHandle, "longitudeOfLastGridPointInDegrees", &Lo2);
+  int status1 = grib_get_double(theHandle, "latitudeOfFirstGridPointInDegrees", &La1);
+  int status2 = grib_get_double(theHandle, "longitudeOfFirstGridPointInDegrees", &Lo1);
+  int status3 = grib_get_double(theHandle, "latitudeOfLastGridPointInDegrees", &La2);
+  int status4 = grib_get_double(theHandle, "longitudeOfLastGridPointInDegrees", &Lo2);
 
   if (status1 == 0 && status2 == 0 && status3 == 0 && status4 == 0)
     return NFmiAreaTools::CreateLegacyMercatorArea(NFmiPoint(Lo1, La1), NFmiPoint(Lo2, La2));
 
   if (status1 || status2)
-    throw runtime_error("Error: Unable to retrieve mercator-projection information from grib.");
+    throw runtime_error("Unable to retrieve mercator-projection information from grib.");
 
   long nx = 0, ny = 0;
-  int status6 = grib_get_long(theGribHandle, "numberOfPointsAlongAMeridian", &ny);
-  if (status6 != 0) status6 = grib_get_long(theGribHandle, "numberOfPointsAlongYAxis", &ny);
+  int status6 = grib_get_long(theHandle, "numberOfPointsAlongAMeridian", &ny);
+  if (status6 != 0) status6 = grib_get_long(theHandle, "numberOfPointsAlongYAxis", &ny);
 
-  int status9 = grib_get_long(theGribHandle, "numberOfPointsAlongAParallel", &nx);
-  if (status9 != 0) status9 = grib_get_long(theGribHandle, "numberOfPointsAlongXAxis", &nx);
+  int status9 = grib_get_long(theHandle, "numberOfPointsAlongAParallel", &nx);
+  if (status9 != 0) status9 = grib_get_long(theHandle, "numberOfPointsAlongXAxis", &nx);
 
   double dx = 0, dy = 0;
-  int status7 = grib_get_double(theGribHandle, "xDirectionGridLength", &dx);
-  int status8 = grib_get_double(theGribHandle, "yDirectionGridLength", &dy);
+  int status7 = grib_get_double(theHandle, "xDirectionGridLength", &dx);
+  int status8 = grib_get_double(theHandle, "yDirectionGridLength", &dy);
 
   if (status9 || status6 || status7 || status8)
     throw std::runtime_error("Failed to create Mercator area");
 
   // Not needed:
-  // check_jscan_direction(theGribHandle);
+  // check_jscan_direction(theHandle);
 
   auto proj = fmt::format("+proj=merc +R={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs", kRearth);
   return NFmiArea::CreateFromCornerAndSize(
@@ -2001,32 +1996,32 @@ NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
  */
 // ----------------------------------------------------------------------
 
-NFmiArea *CreatePolarStereographicArea(grib_handle *theGribHandle)
+NFmiArea *CreatePolarStereographicArea(grib_handle *theHandle)
 {
   double La1 = 0, Lo1 = 0, Lov = 0, Lad = 0;
-  int badLa1 = grib_get_double(theGribHandle, "latitudeOfFirstGridPointInDegrees", &La1);
-  int badLo1 = grib_get_double(theGribHandle, "longitudeOfFirstGridPointInDegrees", &Lo1);
-  int badLov = grib_get_double(theGribHandle, "orientationOfTheGridInDegrees", &Lov);
-  int badLad = grib_get_double(theGribHandle, "LaDInDegrees", &Lad);
+  int badLa1 = grib_get_double(theHandle, "latitudeOfFirstGridPointInDegrees", &La1);
+  int badLo1 = grib_get_double(theHandle, "longitudeOfFirstGridPointInDegrees", &Lo1);
+  int badLov = grib_get_double(theHandle, "orientationOfTheGridInDegrees", &Lov);
+  int badLad = grib_get_double(theHandle, "LaDInDegrees", &Lad);
 
   long pcentre = -999;
-  int badPcentre = grib_get_long(theGribHandle, "projectionCentreFlag", &pcentre);
+  int badPcentre = grib_get_long(theHandle, "projectionCentreFlag", &pcentre);
 
-  if (badPcentre) throw runtime_error("Error: Failed to extract projectionCentreFlag");
+  if (badPcentre) throw runtime_error("Failed to extract projectionCentreFlag");
 
   long nx = 0, ny = 0;
-  int badNx = grib_get_long(theGribHandle, "numberOfPointsAlongXAxis", &nx);
-  int badNy = grib_get_long(theGribHandle, "numberOfPointsAlongYAxis", &ny);
+  int badNx = grib_get_long(theHandle, "numberOfPointsAlongXAxis", &nx);
+  int badNy = grib_get_long(theHandle, "numberOfPointsAlongYAxis", &ny);
 
   double dx = 0, dy = 0;
-  int badDx = grib_get_double(theGribHandle, "xDirectionGridLength", &dx);
-  int badDy = grib_get_double(theGribHandle, "yDirectionGridLength", &dy);
+  int badDx = grib_get_double(theHandle, "xDirectionGridLength", &dx);
+  int badDy = grib_get_double(theHandle, "yDirectionGridLength", &dy);
 
   if (badLa1 || badLo1 || badLov || badLad || badNx || badNy || badDx || badDy)
-    throw runtime_error("Error: Unable to retrieve polster-projection information from grib.");
+    throw runtime_error("Unable to retrieve polster-projection information from grib.");
 
   // Has to be checked:
-  check_jscan_direction(theGribHandle);
+  check_jscan_direction(theHandle);
 
   NFmiPoint bottom_left(Lo1, La1);
 
@@ -2066,36 +2061,35 @@ NFmiArea *CreatePolarStereographicArea(grib_handle *theGribHandle)
  */
 // ----------------------------------------------------------------------
 
-NFmiArea *CreateLambertArea(grib_handle *theGribHandle)
+NFmiArea *CreateLambertArea(grib_handle *theHandle)
 {
   double La1 = 0, Lo1 = 0, Lov = 0, Lad = 0, Lad1 = 0, Lad2 = 0;
-  int badLa1 = grib_get_double(theGribHandle, "latitudeOfFirstGridPointInDegrees", &La1);
-  int badLo1 = grib_get_double(theGribHandle, "longitudeOfFirstGridPointInDegrees", &Lo1);
-  int badLov = grib_get_double(theGribHandle, "LoVInDegrees", &Lov);
-  int badLad = grib_get_double(theGribHandle, "LaDInDegrees", &Lad);
-  int badLad1 = grib_get_double(theGribHandle, "Latin1InDegrees", &Lad1);
-  int badLad2 = grib_get_double(theGribHandle, "Latin2InDegrees", &Lad2);
+  int badLa1 = grib_get_double(theHandle, "latitudeOfFirstGridPointInDegrees", &La1);
+  int badLo1 = grib_get_double(theHandle, "longitudeOfFirstGridPointInDegrees", &Lo1);
+  int badLov = grib_get_double(theHandle, "LoVInDegrees", &Lov);
+  int badLad = grib_get_double(theHandle, "LaDInDegrees", &Lad);
+  int badLad1 = grib_get_double(theHandle, "Latin1InDegrees", &Lad1);
+  int badLad2 = grib_get_double(theHandle, "Latin2InDegrees", &Lad2);
 
   long pcentre = 0;
-  int badPcentre = grib_get_long(theGribHandle, "projectionCentreFlag", &pcentre);
+  int badPcentre = grib_get_long(theHandle, "projectionCentreFlag", &pcentre);
 
-  if (!badPcentre && pcentre != 0)
-    throw runtime_error("Error: South pole not supported for lambert");
+  if (!badPcentre && pcentre != 0) throw runtime_error("South pole not supported for lambert");
 
   long nx = 0, ny = 0;
-  int badNx = grib_get_long(theGribHandle, "numberOfPointsAlongXAxis", &nx);
-  int badNy = grib_get_long(theGribHandle, "numberOfPointsAlongYAxis", &ny);
+  int badNx = grib_get_long(theHandle, "numberOfPointsAlongXAxis", &nx);
+  int badNy = grib_get_long(theHandle, "numberOfPointsAlongYAxis", &ny);
 
   double dx = 0, dy = 0;
-  int badDx = grib_get_double(theGribHandle, "DxInMetres", &dx);
-  int badDy = grib_get_double(theGribHandle, "DyInMetres", &dy);
+  int badDx = grib_get_double(theHandle, "DxInMetres", &dx);
+  int badDy = grib_get_double(theHandle, "DyInMetres", &dy);
 
   if (badLa1 || badLo1 || badLov || badLad || badLad1 || badLad2 || badNx || badNy || badDx ||
       badDy)
-    throw runtime_error("Error: Unable to retrieve lambert-projection information from grib.");
+    throw runtime_error("Unable to retrieve lambert-projection information from grib.");
 
   // Has to be checked:
-  check_jscan_direction(theGribHandle);
+  check_jscan_direction(theHandle);
 
   NFmiPoint bottom_left(Lo1, La1);
 
@@ -2149,7 +2143,7 @@ void CalcCroppedGrid(GridRecordData *theGridRecordData)
     newArea = NFmiArea::CreateFromBBox(proj, latlon1, latlon2);
   }
   else
-    throw runtime_error("Error: CalcCroppedGrid doesn't support this projection yet.");
+    throw runtime_error("CalcCroppedGrid doesn't support this projection yet.");
 
   boost::shared_ptr<NFmiArea> newAreaPtr(newArea);
   theGridRecordData->itsGridPointCropOffset = NFmiPoint(xy1.X(), xy1.Y());
@@ -2168,9 +2162,40 @@ void CalcCroppedGrid(GridRecordData *theGridRecordData)
 struct EarthShape
 {
   std::string datum;  // empty, WGS84 or OSGB36
-  double a = 0;       // we set these even if datum is not empty
-  double b = 0;
+  double a = 0;       // we set these even if datum is not empty since 'a' is
+  double b = 0;       // needed for creating the orthographic projection
 };
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Return PROJ.4 string for the given earth shape
+ */
+//----------------------------------------------------------------------
+
+std::string GetEarthProj(const EarthShape &theShape)
+{
+  if (!theShape.datum.empty()) return fmt::format("+datum={}", theShape.datum);
+
+  if (theShape.a == theShape.b) return fmt::format("+R={:.0f} +towgs84=0,0,0", theShape.a);
+
+  return fmt::format("+a={:.0f} +b={:.0f} +towgs84=0,0,0", theShape.a, theShape.b);
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Return PROJ.4 string for the given earth shape
+ */
+//----------------------------------------------------------------------
+
+std::string GetEarthProjFull(const EarthShape &theShape)
+{
+  if (!theShape.datum.empty()) return fmt::format("+datum={}", theShape.datum);
+
+  if (theShape.a == theShape.b)
+    return fmt::format("+proj=longlat +R={:.0f} +towgs84=0,0,0", theShape.a);
+
+  return fmt::format("+proj=longlat +a={:.0f} +b={:.0f} +towgs84=0,0,0", theShape.a, theShape.b);
+}
 
 // ----------------------------------------------------------------------
 /*!
@@ -2180,7 +2205,7 @@ struct EarthShape
  */
 // ----------------------------------------------------------------------
 
-EarthShape GetEarthShape(grib_handle *theGribHandle)
+EarthShape GetEarthShape(grib_handle *theHandle)
 {
   EarthShape shape;
 
@@ -2188,11 +2213,28 @@ EarthShape GetEarthShape(grib_handle *theGribHandle)
   long scalefactor = 1;
 
   long shapeOfEarth = 0;
-  if (!GetGribLongValue(theGribHandle, "shapeOfEarth", shapeOfEarth))
-    throw std::runtime_error("Shape of earth not set in the GRIB");
+  if (!GetGribLongValue(theHandle, "shapeOfEarth", shapeOfEarth))
+  {
+    // GRIB1 handling
+    if (!GetGribLongValue(theHandle, "earthIsOblate", shapeOfEarth))
+      throw std::runtime_error("earthIsOblate not set in the GRIB");
+
+    if (shapeOfEarth == 0)
+    {
+      // same as shapeOfEarth=0 for GRIB2
+      shape.a = 6367470.0;
+      shape.b = shape.a;
+    }
+    else
+    {
+      // shape as shapeOfEarth=2 for GRIB2
+      shape.a = 6378160.0;
+      shape.b = 6356775.0;
+    }
+  }
 
   // Section 3, Code Table 2
-  if (shapeOfEarth == 0)
+  else if (shapeOfEarth == 0)
   {
     // Earth assumed spherical with radius = 6,367,470.0 m
     shape.a = 6367470.0;
@@ -2201,10 +2243,10 @@ EarthShape GetEarthShape(grib_handle *theGribHandle)
   else if (shapeOfEarth == 1)
   {
     // Earth assumed spherical with radius specified (in m) by data producer
-    if (GetGribLongValue(theGribHandle, "scaleFactorOfRadiusOfSphericalEarth", scalefactor))
+    if (GetGribLongValue(theHandle, "scaleFactorOfRadiusOfSphericalEarth", scalefactor))
       if (scalefactor != GRIB_MISSING_LONG) scale = pow(10.0, scalefactor);
 
-    if (!GetGribDoubleValue(theGribHandle, "scaledValueOfRadiusOfSphericalEarth", shape.a))
+    if (!GetGribDoubleValue(theHandle, "scaledValueOfRadiusOfSphericalEarth", shape.a))
       throw std::runtime_error("Failed to read scaledValueOfRadiusOfSphericalEarth");
 
     shape.a *= scale;
@@ -2223,14 +2265,14 @@ EarthShape GetEarthShape(grib_handle *theGribHandle)
     // producer
     if (shapeOfEarth == 3) scale = 1000;  // from kilometers to meters
 
-    if (!GetGribDoubleValue(theGribHandle, "scaledValueOfEarthMajorAxis", shape.a) ||
-        !GetGribDoubleValue(theGribHandle, "scaledValueOfEarthMinorAxis", shape.b))
+    if (!GetGribDoubleValue(theHandle, "scaledValueOfEarthMajorAxis", shape.a) ||
+        !GetGribDoubleValue(theHandle, "scaledValueOfEarthMinorAxis", shape.b))
       throw std::runtime_error("Failed to read major/minor axes");
     shape.a *= scale;
     shape.b *= scale;
-    if (GetGribLongValue(theGribHandle, "scaleFactorOfMajorAxisOfOblateSpheroidEarth", scalefactor))
+    if (GetGribLongValue(theHandle, "scaleFactorOfMajorAxisOfOblateSpheroidEarth", scalefactor))
       if (scalefactor != GRIB_MISSING_LONG) shape.a *= pow(10.0, scalefactor);
-    if (GetGribLongValue(theGribHandle, "scaleFactorOfMinorAxisOfOblateSpheroidEarth", scalefactor))
+    if (GetGribLongValue(theHandle, "scaleFactorOfMinorAxisOfOblateSpheroidEarth", scalefactor))
       if (scalefactor != GRIB_MISSING_LONG) shape.b *= pow(10.0, scalefactor);
   }
   else if (shapeOfEarth == 4)
@@ -2279,36 +2321,19 @@ EarthShape GetEarthShape(grib_handle *theGribHandle)
 
 // ----------------------------------------------------------------------
 /*!
- * \brief Return PROJ.4 string for the given earth shape
- */
-//----------------------------------------------------------------------
-
-std::string GetEarthProj(const EarthShape &theShape)
-{
-  if (!theShape.datum.empty()) return fmt::format("+datum={}", theShape.datum);
-
-  if (theShape.a == theShape.b) return fmt::format("+R={}", theShape.a);
-
-  return fmt::format("+a={} +b={}", theShape.a, theShape.b);
-}
-
-// ----------------------------------------------------------------------
-/*!
  * \brief Extract PROJ.4 string from the GRIB
  *
  * Throws for unsupported projections. Based on pygrib code in GitHub.
  */
 // ----------------------------------------------------------------------
 
-std::string GetProjString(grib_handle *theGribHandle)
+std::string GetProjString(grib_handle *theHandle)
 {
-  auto earth_shape = GetEarthShape(theGribHandle);
+  auto earth_shape = GetEarthShape(theHandle);
   auto earth_proj = GetEarthProj(earth_shape);
 
-  // Version independent parameter:
-
   std::string proj_name;
-  if (!GetGribStringValue(theGribHandle, "gridType", proj_name))
+  if (!GetGribStringValue(theHandle, "gridType", proj_name))
     throw runtime_error("Could not extract gridType from the GRIB metadata");
 
   if (proj_name == "regular_ll" || proj_name == "regular_gg" || proj_name == "reduced_ll" ||
@@ -2318,18 +2343,26 @@ std::string GetProjString(grib_handle *theGribHandle)
     return fmt::format("+proj=eqc {}", earth_proj);
   }
 
+  // Used only for some projections
+  double grib2divider = 1;
+  long truncateDegrees = 0;
+  GetGribDoubleValue(theHandle, "grib2divider", grib2divider);
+  GetGribLongValue(theHandle, "truncateDegrees", truncateDegrees);
+
   if (proj_name == "rotated_ll" || proj_name == "rotated_gg")
   {
-    double pole_lon, pole_lat, rotation;
-    if (!GetGribDoubleValue(theGribHandle, "longitudeOfSouthernPoleInDegrees", pole_lon) ||
-        !GetGribDoubleValue(theGribHandle, "latitudeOfSouthernPoleInDegrees", pole_lat) ||
-        !GetGribDoubleValue(theGribHandle, "angleOfRotationInDegrees", pole_lat))
+    double pole_lon = 666, pole_lat = 666, rotation = 666;
+    if (!GetGribDoubleValue(theHandle, "longitudeOfSouthernPoleInDegrees", pole_lon) ||
+        !GetGribDoubleValue(theHandle, "latitudeOfSouthernPoleInDegrees", pole_lat) ||
+        !GetGribDoubleValue(theHandle, "angleOfRotationInDegrees", rotation))
       throw std::runtime_error("Failed to extract rotated_ll parameters");
 
+    if (rotation != 0) throw std::runtime_error("Shit happens");  // TODO
+
     // Note:: convert to eqc == legacy NFmiRotatedLatLonArea
-    return fmt::format("+proj=ob_tran +o_proj=eqc +lon_0={} +o_lon_p={} +o_lat_p={} {}",
+    return fmt::format("+proj=ob_tran +o_proj=eqc +lon_0={} +o_lon_p={} +o_lat_p={} {} +wktext",
                        pole_lon,
-                       rotation,
+                       0,
                        -pole_lat,
                        earth_proj);
   }
@@ -2337,11 +2370,20 @@ std::string GetProjString(grib_handle *theGribHandle)
   if (proj_name == "mercator")
   {
     double lon1, lon2, lat_ts;
-    if (!GetGribDoubleValue(theGribHandle, "longitudeOfFirstGridPoint", lon1) ||
-        !GetGribDoubleValue(theGribHandle, "longitudeOfLastGridPoint", lon2) ||
-        (!GetGribDoubleValue(theGribHandle, "LaD", lat_ts) &&
-         !GetGribDoubleValue(theGribHandle, "Latin", lat_ts)))
-      throw std::runtime_error("Failed to extract rotated_ll parameters");
+    if (!GetGribDoubleValue(theHandle, "longitudeOfFirstGridPoint", lon1) ||
+        !GetGribDoubleValue(theHandle, "longitudeOfLastGridPoint", lon2) ||
+        (!GetGribDoubleValue(theHandle, "LaD", lat_ts) &&
+         !GetGribDoubleValue(theHandle, "Latin", lat_ts)))
+      throw std::runtime_error("Failed to extract mercator parameters");
+
+    lon1 /= grib2divider;
+    lon2 /= grib2divider;
+    lat_ts /= grib2divider;
+    if (truncateDegrees)
+    {
+      lon1 = static_cast<int>(lon1);
+      lon2 = static_cast<int>(lon2);
+    }
 
     return fmt::format("+proj=merc +lat_ts={} +lon_0={} {}",
                        lat_ts,
@@ -2353,9 +2395,9 @@ std::string GetProjString(grib_handle *theGribHandle)
   {
     double lat_ts, lon_0;
     long proj_centre = 0;  // north pole by default
-    if (!GetGribDoubleValue(theGribHandle, "latitudeWhereDxAndDyAreSpecifiedInDegrees", lat_ts) ||
-        !GetGribDoubleValue(theGribHandle, "orientationOfTheGridInDegrees", lon_0) ||
-        !GetGribLongValue(theGribHandle, "projectionCentreFlag", proj_centre))
+    if (!GetGribDoubleValue(theHandle, "latitudeWhereDxAndDyAreSpecifiedInDegrees", lat_ts) ||
+        !GetGribDoubleValue(theHandle, "orientationOfTheGridInDegrees", lon_0) ||
+        !GetGribLongValue(theHandle, "projectionCentreFlag", proj_centre))
       throw std::runtime_error("Failed to extract polar_stereographic parameters");
 
     return fmt::format("+proj=stere +lon_0={} +lat_0={} +lat_ts={} {}",
@@ -2367,12 +2409,17 @@ std::string GetProjString(grib_handle *theGribHandle)
 
   if (proj_name == "lambert")
   {
-    double lon_0, lat_0, lat_1, lat_2;
-    if (!GetGribDoubleValue(theGribHandle, "LoVInDegrees", lon_0) ||
-        !GetGribDoubleValue(theGribHandle, "LaDInDegrees", lat_0) ||
-        !GetGribDoubleValue(theGribHandle, "Latin1InDegrees", lat_1) ||
-        !GetGribDoubleValue(theGribHandle, "Latin2InDegrees", lat_2))
+    double lon_0, lat_0, lat_1, lat_2, pole_lon, pole_lat;
+    if (!GetGribDoubleValue(theHandle, "LoVInDegrees", lon_0) ||
+        !GetGribDoubleValue(theHandle, "LaDInDegrees", lat_0) ||
+        !GetGribDoubleValue(theHandle, "Latin1InDegrees", lat_1) ||
+        !GetGribDoubleValue(theHandle, "Latin2InDegrees", lat_2) ||
+        !GetGribDoubleValue(theHandle, "longitudeOfSouthernPoleInDegrees", pole_lon) ||
+        !GetGribDoubleValue(theHandle, "latitudeOfSouthernPoleInDegrees", pole_lat))
       throw std::runtime_error("Failed to extract lambert parameters");
+
+    if (pole_lon != 0 || pole_lat != -90)
+      throw std::runtime_error("Rotated Lambert projection not supported");  // TODO
 
     return fmt::format("+proj=lcc +lon_0={} +lat_0={} +lat_1={} +lat_2={} {}",
                        lon_0,
@@ -2385,11 +2432,24 @@ std::string GetProjString(grib_handle *theGribHandle)
   if (proj_name == "albers")
   {
     double lon_0, lat_0, lat_1, lat_2;
-    if (!GetGribDoubleValue(theGribHandle, "LoV", lon_0) ||
-        !GetGribDoubleValue(theGribHandle, "LaD", lat_0) ||
-        !GetGribDoubleValue(theGribHandle, "Latin1", lat_1) ||
-        !GetGribDoubleValue(theGribHandle, "Latin2", lat_2))
-      throw std::runtime_error("Failed to extract lambert parameters");
+    if (!GetGribDoubleValue(theHandle, "LoV", lon_0) ||
+        !GetGribDoubleValue(theHandle, "LaD", lat_0) ||
+        !GetGribDoubleValue(theHandle, "Latin1", lat_1) ||
+        !GetGribDoubleValue(theHandle, "Latin2", lat_2))
+      throw std::runtime_error("Failed to extract albers parameters");
+
+    lon_0 /= grib2divider;
+    lat_0 /= grib2divider;
+    lat_1 /= grib2divider;
+    lat_2 /= grib2divider;
+
+    if (truncateDegrees)
+    {
+      lon_0 = static_cast<int>(lon_0);
+      lat_0 = static_cast<int>(lat_0);
+      lat_1 = static_cast<int>(lat_1);
+      lat_2 = static_cast<int>(lat_2);
+    }
 
     return fmt::format("+proj=aea +lon_0={} +lat_0={} +lat_1={} +lat_2={} {}",
                        lon_0,
@@ -2402,24 +2462,25 @@ std::string GetProjString(grib_handle *theGribHandle)
   if (proj_name == "space_view")
   {
     double lon_0, lat_0, Nr;
-    if (!GetGribDoubleValue(theGribHandle, "longitudeOfSubSatellitePointInDegrees", lon_0) ||
-        !GetGribDoubleValue(theGribHandle, "latitudeOfSubSatellitePointInDegrees", lat_0) ||
-        !GetGribDoubleValue(theGribHandle, "Nr", Nr))
+    if (!GetGribDoubleValue(theHandle, "longitudeOfSubSatellitePointInDegrees", lon_0) ||
+        !GetGribDoubleValue(theHandle, "latitudeOfSubSatellitePointInDegrees", lat_0) ||
+        !GetGribDoubleValue(theHandle, "Nr", Nr))
       throw std::runtime_error("Failed to extract space_view parameters");
 
     return fmt::format("+proj={} +lon_0={} +lat_0={} +h={} {}",
                        (lat_0 == 0 ? "geos" : "nsper"),
                        lon_0,
                        lat_0,
-                       earth_shape.a * (Nr - 1),  // == Nr*a - a, the distance from the surface
+                       earth_shape.a * (Nr / grib2divider -
+                                        1),  // == Nr/scale*a - a, the distance from the surface
                        earth_proj);
   }
 
   if (proj_name == "equatorial_azimuthal_equidistant")
   {
     double lon_0, lat_0;
-    if (!GetGribDoubleValue(theGribHandle, "standardParallel", lat_0) ||
-        !GetGribDoubleValue(theGribHandle, "centralLongitude", lon_0))
+    if (!GetGribDoubleValue(theHandle, "standardParallel", lat_0) ||
+        !GetGribDoubleValue(theHandle, "centralLongitude", lon_0))
       throw std::runtime_error("Failed to extract equatorial_azimuthal_equidistant parameters");
 
     return fmt::format("+proj=aeqd +lon_0={} +lat_0={} {}", lon_0 / 1e6, lat_0 / 1e6, earth_proj);
@@ -2428,81 +2489,183 @@ std::string GetProjString(grib_handle *theGribHandle)
   if (proj_name == "lambert_azimuthal_equal_area")
   {
     double lon_0, lat_0;
-    if (!GetGribDoubleValue(theGribHandle, "standardParallel", lat_0) ||
-        !GetGribDoubleValue(theGribHandle, "centralLongitude", lon_0))
-      throw std::runtime_error("Failed to extract equatorial_azimuthal_equidistant parameters");
+    if (!GetGribDoubleValue(theHandle, "standardParallel", lat_0) ||
+        !GetGribDoubleValue(theHandle, "centralLongitude", lon_0))
+      throw std::runtime_error("Failed to extract lambert_azimuthal_equal_area parameters");
 
     return fmt::format("+proj=laea +lon_0={} +lat_0={} {}", lon_0 / 1e6, lat_0 / 1e6, earth_proj);
   }
 
-  throw std::runtime_error("Error: Handling of projection " + proj_name +
+  throw std::runtime_error("Handling of projection " + proj_name +
                            " found from grib is not implemented");
 }
 
-void FillGridInfoFromGribHandle(grib_handle *theGribHandle,
-                                GridRecordData *theGridRecordData,
-                                GribFilterOptions &theGribFilterOptions,
-                                GridSettingsPackage &theGridSettings)
+NFmiArea *GetGribArea(grib_handle *theHandle)
 {
-  // version independent string from 'gridType'
-  std::string proj_type;
+  const std::string err = "Failed to extract {} for '{}' projection";
 
-  if (!GetGribStringValue(theGribHandle, "gridType", proj_type))
-    throw runtime_error("Error: Couldn't get gridDefinitionTemplateNumber from given grib_handle.");
+  // PROJ.4 string
+  auto proj = GetProjString(theHandle);
 
-  NFmiArea *area = nullptr;
+  // Needed for specifying spatial reference for the corner coordinates.
+  // Note that rotated latlong needs special handling
+  auto earth_shape = GetEarthShape(theHandle);
+  auto earth_proj = GetEarthProjFull(earth_shape);
 
-  if (proj_type == "regular_ll")
-    area = CreateLatlonArea(theGribHandle, theGribFilterOptions);
-  else if (proj_type == "rotated_ll")
-    area = CreateRotatedLatlonArea(theGribHandle, theGribFilterOptions);
-#ifdef WGS84
-  else if (proj_type == "mercator")
-    area = CreateMercatorArea(theGribHandle);
-#endif
-  else if (proj_type == "polar_stereographic")
-    area = CreatePolarStereographicArea(theGribHandle);
-  else if (proj_type == "lambert")
-    area = CreateLambertArea(theGribHandle);
-  else if (proj_type == "reduced_ll" || proj_type == "UTM" || proj_type == "simple_polyconic" ||
-           proj_type == "albers" || proj_type == "miller" || proj_type == "stretched_ll" ||
-           proj_type == "stretched_rotated_ll" || proj_type == "regular_gg" ||
-           proj_type == "rotated_gg" || proj_type == "stretched_gg" ||
-           proj_type == "stretched_rotated_gg" || proj_type == "reduced_gg" || proj_type == "sh" ||
-           proj_type == "rotated_sh" || proj_type == "stretched_sh" ||
-           proj_type == "stretched_rotated_sh" || proj_type == "space_view" ||
-           // GRIB2 only:
-           proj_type == "triangular_grid" || proj_type == "equatorial_azimuthal_equidistant" ||
-           proj_type == "azimuth_range" || proj_type == "cross_section" ||
-           proj_type == "Hovmoller" || proj_type == "time_section")
-    throw std::runtime_error("Error: Handling of projection " + proj_type +
-                             " found from grib is not implemented (yet).");
-  else
-    throw std::runtime_error("Error: Unknown GRIB projection: " + proj_type);
+  // Establish projection variant
+  std::string proj_name;
+  if (!GetGribStringValue(theHandle, "gridType", proj_name))
+    throw runtime_error("Could not extract gridType from the GRIB metadata");
 
-  long numberOfPointsAlongAParallel = 0;
-  long numberOfPointsAlongAMeridian = 0;
+  // Used only for some projections
+  double grib2divider = 1;
+  long truncateDegrees = 0;
+  GetGribDoubleValue(theHandle, "grib2divider", grib2divider);
+  GetGribLongValue(theHandle, "truncateDegrees", truncateDegrees);
 
-  int status1 =
-      grib_get_long(theGribHandle, "numberOfPointsAlongAParallel", &numberOfPointsAlongAParallel);
-  int status2 =
-      grib_get_long(theGribHandle, "numberOfPointsAlongXAxis", &numberOfPointsAlongAParallel);
+  // Grid sizes are Ni,Nj or Nx,Ny
+  long ni, nj;
+  if (!(GetGribLongValue(theHandle, "Nx", ni) && GetGribLongValue(theHandle, "Ny", nj)) ||
+      !(GetGribLongValue(theHandle, "Ni", ni) && GetGribLongValue(theHandle, "Nj", nj)))
+    throw std::runtime_error(fmt::format(err, "grid size", proj_name));
 
-  int status3 =
-      grib_get_long(theGribHandle, "numberOfPointsAlongAMeridian", &numberOfPointsAlongAMeridian);
-  int status4 =
-      grib_get_long(theGribHandle, "numberOfPointsAlongYAxis", &numberOfPointsAlongAMeridian);
+  if (proj_name == "regular_ll" || proj_name == "regular_gg")
+  {
+    long direction;
+    double lon1, lat1, lon2, lat2;
+    if (!GetGribDoubleValue(theHandle, "longitudeOfFirstGridPointInDegrees", lon1) ||
+        !GetGribDoubleValue(theHandle, "latitudeOfFirstGridPointInDegrees", lat1) ||
+        !GetGribDoubleValue(theHandle, "longitudeOfLastGridPointInDegrees", lon2) ||
+        !GetGribDoubleValue(theHandle, "latitudeOfLastGridPointInDegrees", lat2))
+      throw std::runtime_error(fmt::format(err, "latlon bounding box", proj_name));
 
-  if (status1 || status2 || status3 || status4)
-    throw runtime_error("Error: Couldn't get grid x-y sizes from given grib_handle.");
+    if (!GetGribLongValue(theHandle, "iDirectionIncrement", direction))
+      throw std::runtime_error(fmt::format(err, "iDirectionIncrement", proj_name));
 
-  if (numberOfPointsAlongAParallel == -1 ||
-      numberOfPointsAlongAParallel == static_cast<uint32_t>(-1))
-    throw Reduced_ll_grib_exception();
+    if (lon1 >= 0 && lon2 < 0 && direction > 0) lon2 += 360;
+    if (lon1 >= 0 && lon2 < lon1 && direction > 0) lon1 -= 360;
+
+    return NFmiArea::CreateFromCorners(
+        proj, earth_proj, NFmiPoint(lon1, lat1), NFmiPoint(lon2, lat2));
+  }
+
+  if (proj_name == "rotated_ll" || proj_name == "rotated_gg")
+  {
+    double lon1, lat1, lon2, lat2;
+    if (!GetGribDoubleValue(theHandle, "longitudeOfFirstGridPointInDegrees", lon1) ||
+        !GetGribDoubleValue(theHandle, "latitudeOfFirstGridPointInDegrees", lat1) ||
+        !GetGribDoubleValue(theHandle, "longitudeOfLastGridPointInDegrees", lon2) ||
+        !GetGribDoubleValue(theHandle, "latitudeOfLastGridPointInDegrees", lat2))
+      throw std::runtime_error(fmt::format(err, "latlon bounding box", proj_name));
+
+    double pole_lon, pole_lat, rotation;
+    if (!GetGribDoubleValue(theHandle, "longitudeOfSouthernPoleInDegrees", pole_lon) ||
+        !GetGribDoubleValue(theHandle, "latitudeOfSouthernPoleInDegrees", pole_lat) ||
+        !GetGribDoubleValue(theHandle, "angleOfRotationInDegrees", rotation))
+      throw std::runtime_error(fmt::format(err, "rotation", proj_name));
+
+    // TODO
+    if (rotation != 0)
+      throw std::runtime_error("Rotated latlon rotation parameter nonzero, what to do???");
+
+    // the legacy corners are in rotated spherical latlon coordinate.
+    // the +to_meter setting is necessary to avoid radians
+    auto sphere = fmt::format(
+        "+to_meter=.0174532925199433 +proj=ob_tran +o_proj=longlat +o_lon_p={} +o_lat_p={} "
+        "+lon_0={} +a={:.0f} +b={:.0f} +wktext +over +towgs84=0,0,0 +no_defs",
+        0,
+        -pole_lat,
+        pole_lon,
+        earth_shape.a,
+        earth_shape.b);
+
+    return NFmiArea::CreateFromCorners(proj, sphere, NFmiPoint(lon1, lat1), NFmiPoint(lon2, lat2));
+  }
+
+  if (proj_name == "mercator")
+  {
+    double lon1, lat1, lon2, lat2;
+    if (!GetGribDoubleValue(theHandle, "longitudeOfFirstGridPointInDegrees", lon1) ||
+        !GetGribDoubleValue(theHandle, "latitudeOfFirstGridPointInDegrees", lat1) ||
+        !GetGribDoubleValue(theHandle, "longitudeOfLastGridPointInDegrees", lon2) ||
+        !GetGribDoubleValue(theHandle, "latitudeOfLastGridPointInDegrees", lat2))
+      throw std::runtime_error(fmt::format(err, "latlon bounding box", proj_name));
+
+    lon1 /= grib2divider;
+    lat1 /= grib2divider;
+    lon2 /= grib2divider;
+    lat2 /= grib2divider;
+    if (truncateDegrees)
+    {
+      lon1 = static_cast<int>(lon1);
+      lat1 = static_cast<int>(lat1);
+      lon2 = static_cast<int>(lon2);
+      lat2 = static_cast<int>(lat2);
+    }
+
+    return NFmiArea::CreateFromCorners(
+        proj, earth_proj, NFmiPoint(lon1, lat1), NFmiPoint(lon2, lat2));
+  }
+
+  if (proj_name == "polar_stereographic" || proj_name == "lambert" || proj_name == "albers" ||
+      proj_name == "equatorial_azimuthal_equidistant" ||
+      proj_name == "lambert_azimuthal_equal_area")
+  {
+    double lon1, lat1, dx, dy;
+    if (!GetGribDoubleValue(theHandle, "longitudeOfFirstGridPointInDegrees", lon1) ||
+        !GetGribDoubleValue(theHandle, "latitudeOfFirstGridPointInDegrees", lat1))
+      throw std::runtime_error(fmt::format(err, "latlon corner", proj_name));
+
+    if (proj_name == "polar_stereographic" || proj_name == "lambert")
+    {
+      if (!GetGribDoubleValue(theHandle, "DxInMetres", dx) ||
+          !GetGribDoubleValue(theHandle, "DyInMetres", dy))
+        throw std::runtime_error(fmt::format(err, "grid step size", proj_name));
+    }
+    else
+    {
+      if (!GetGribDoubleValue(theHandle, "Dx", dx) || !GetGribDoubleValue(theHandle, "Dy", dy))
+        throw std::runtime_error(fmt::format(err, "grid step size", proj_name));
+      dx *= 1000;
+      dy *= 1000;
+    }
+
+    return NFmiArea::CreateFromCornerAndSize(
+        proj, earth_proj, NFmiPoint(lon1, lat1), dx * (ni - 1), dy * (nj - 1));
+  }
+
+  if (proj_name == "space_view")
+  {
+    // Sample code: https://github.com/jswhit/pygrib/blob/master/pygrib.pyx#L1707
+    throw std::runtime_error("space_view projection not supported yet");
+  }
+
+  throw std::runtime_error("Handling of projection " + proj_name +
+                           " found from grib is not implemented");
+}
+
+void ExtractGridInfo(grib_handle *theHandle,
+                     GridRecordData *theGridRecordData,
+                     GribFilterOptions &theGribFilterOptions,
+                     GridSettingsPackage &theGridSettings)
+{
+  NFmiArea *area = GetGribArea(theHandle);
+
+  long nx = 0;
+  long ny = 0;
+
+  if ((!GetGribLongValue(theHandle, "numberOfPointsAlongAParallel", nx) &&
+       !GetGribLongValue(theHandle, "numberOfPointsAlongXAxis", nx) &&
+       !GetGribLongValue(theHandle, "Nx", nx)) ||
+      (!GetGribLongValue(theHandle, "numberOfPointsAlongAMeridian", ny) &&
+       !GetGribLongValue(theHandle, "numberOfPointsAlongYAxis", ny) &&
+       !GetGribLongValue(theHandle, "Ny", ny)))
+    throw runtime_error("Couldn't get grid x-y sizes from given grib_handle.");
+
+  if (nx == -1 || nx == static_cast<uint32_t>(-1)) throw Reduced_ll_grib_exception();
 
   theGridRecordData->fDoProjectionConversion = false;
-  theGridRecordData->itsOrigGrid =
-      MyGrid(area, numberOfPointsAlongAParallel, numberOfPointsAlongAMeridian);
+  theGridRecordData->itsOrigGrid = MyGrid(area, nx, ny);
 
   if (theGridSettings.itsBaseGrid)
   {
@@ -2525,7 +2688,7 @@ void FillGridInfoFromGribHandle(grib_handle *theGribHandle,
     CalcCroppedGrid(theGridRecordData);
 }
 
-void GetLevelVerticalCoordinates(grib_handle *theGribHandle,
+void GetLevelVerticalCoordinates(grib_handle *theHandle,
                                  GridRecordData &theGridRecordData,
                                  map<int, pair<double, double> > &theVerticalCoordinateMap)
 {
@@ -2540,13 +2703,13 @@ void GetLevelVerticalCoordinates(grib_handle *theGribHandle,
       // 3. Jos ei, hae koordinaatti taulu (jos lˆytyy siis)
       long numberOfVerticalCoordinateValues = 0;
       int numberOfVerticalCoordinateValuesOk = grib_get_long(
-          theGribHandle, "numberOfVerticalCoordinateValues", &numberOfVerticalCoordinateValues);
+          theHandle, "numberOfVerticalCoordinateValues", &numberOfVerticalCoordinateValues);
 
       if (numberOfVerticalCoordinateValuesOk == 0 && numberOfVerticalCoordinateValues > 0)
       {
         vector<double> pv(numberOfVerticalCoordinateValues);
         size_t num_coord = pv.size();
-        int pvValuesOk = grib_get_double_array(theGribHandle, "pv", &pv[0], &num_coord);
+        int pvValuesOk = grib_get_double_array(theHandle, "pv", &pv[0], &num_coord);
         if (pvValuesOk == 0)
         {
           // 4. Tapuksesta riippuen laske a- ja b-kertoimet ja talleta ne level-tauluun (ks. mallia
@@ -2890,23 +3053,22 @@ void MakeParameterConversions(GridRecordData *theGridRecordData,
   }
 }
 
-void FillGridData(grib_handle *theGribHandle,
+void FillGridData(grib_handle *theHandle,
                   GridRecordData *theGridRecordData,
                   const GribFilterOptions &theOptions)
 {
   // 1. T‰ytet‰‰n ensin origGridin kokoinen matriisi, koska pit‰‰ pysty‰ tekem‰‰n mm. global fix
   size_t values_length = 0;
-  int status1 = grib_get_size(theGribHandle, "values", &values_length);
+  int status1 = grib_get_size(theHandle, "values", &values_length);
   vector<double> doubleValues(values_length);
-  int status2 = grib_get_double_array(theGribHandle, "values", &doubleValues[0], &values_length);
+  int status2 = grib_get_double_array(theHandle, "values", &doubleValues[0], &values_length);
   int gridXSize = theGridRecordData->itsOrigGrid.itsNX;
   int gridYSize = theGridRecordData->itsOrigGrid.itsNY;
   NFmiDataMatrix<float> origValues(gridXSize, gridYSize);
-  if (status1 || status2)
-    throw runtime_error("Error: Couldn't get values-data from given grib_handle.");
+  if (status1 || status2) throw runtime_error("Couldn't get values-data from given grib_handle.");
 
   long scanningMode = 0;
-  int status4 = grib_get_long(theGribHandle, "scanningMode", &scanningMode);
+  int status4 = grib_get_long(theHandle, "scanningMode", &scanningMode);
 
   // BIT  VALUE   MEANING
   // 1    0   Points scan in +i direction (128!)
@@ -2943,7 +3105,7 @@ void FillGridData(grib_handle *theGribHandle,
     }
     else  // sitten kun tulee lis‰‰ ceissej‰, lis‰t‰‰n eri t‰yttˆ variaatioita
     {
-      throw runtime_error("Error: Scanning mode " + boost::lexical_cast<string>(scanningMode) +
+      throw runtime_error("Scanning mode " + boost::lexical_cast<string>(scanningMode) +
                           " not yet implemented.");
     }
   }
@@ -3282,10 +3444,8 @@ boost::shared_ptr<NFmiQueryData> CreateQueryData(vector<GridRecordData *> &theGr
     qdata = boost::shared_ptr<NFmiQueryData>(NFmiQueryDataUtil::CreateEmptyData(innerInfo));
     bool anyDataFilled =
         FillQDataWithGribRecords(qdata, theGribRecordDatas, theGribFilterOptions.fVerbose);
-    if (anyDataFilled == false)
-    {
-      qdata = boost::shared_ptr<NFmiQueryData>();
-    }
+
+    if (anyDataFilled == false) qdata = boost::shared_ptr<NFmiQueryData>();
   }
   return qdata;
 }
@@ -3583,7 +3743,7 @@ int GetStepRange(const std::string &stepRangeStr)
 // Joillain parametreilla on annettu sama parametri eri skaaloissa, esim. sadem‰‰r‰ on vaikka 3h
 // resolla tai 6h resolla tai kumulatiivinen.
 // T‰m‰n funktion on tarkoitus etsi‰ paras resoluutioinen niist‰.
-bool IsStepRangeCorrect(grib_handle *theGribHandle,
+bool IsStepRangeCorrect(grib_handle *theHandle,
                         const NFmiDataIdent &theParam,
                         const std::set<unsigned long> &stepRangeCheckedParams,
                         int wantedStepRange)
@@ -3597,7 +3757,7 @@ bool IsStepRangeCorrect(grib_handle *theGribHandle,
     {
       // 2. Katsotaan lˆytyykˆ parametrille gribist‰ stepRange -m‰‰ritys
       std::string stepRange;
-      if (GetGribStringValue(theGribHandle, "stepRange", stepRange))
+      if (GetGribStringValue(theHandle, "stepRange", stepRange))
       {
         int stepRangeValue = GetStepRange(stepRange);
         if (stepRangeValue > 0)
@@ -3621,7 +3781,7 @@ bool IsStepRangeCorrect(grib_handle *theGribHandle,
   return true;  // Jos t‰nne p‰‰st‰‰n, on parametri ok
 }
 
-void ConvertGrib2QData(GribFilterOptions &theGribFilterOptions)
+void ConvertGrib(GribFilterOptions &theGribFilterOptions)
 {
   vector<GridRecordData *> gribRecordDatas;
   bool executionStoppingError = false;
@@ -3660,7 +3820,7 @@ void ConvertGrib2QData(GribFilterOptions &theGribFilterOptions)
         //                PrintAllParamInfo_forDebugging(gribHandle);
         tmpData->itsParam = GetParam(gribHandle, theGribFilterOptions.itsWantedSurfaceProducer);
         tmpData->itsLevel = GetLevel(gribHandle);
-        FillGridInfoFromGribHandle(
+        ExtractGridInfo(
             gribHandle, tmpData, theGribFilterOptions, theGribFilterOptions.itsGridSettings);
         tmpData->itsOrigTime = GetOrigTime(gribHandle);
         tmpData->itsValidTime = GetValidTime(gribHandle);
@@ -3683,6 +3843,7 @@ void ConvertGrib2QData(GribFilterOptions &theGribFilterOptions)
         // muista poikkeava 2x2 hila latlon-area.
         // Aiheuttaisi turhia ongelmia jatkossa monessakin paikassa.
         bool gribFieldUsed = false;
+
         if (!(tmpData->itsOrigGrid.itsNX <= 2 && tmpData->itsOrigGrid.itsNY <= 2))
         {
           if (IgnoreThisLevel(tmpData, theGribFilterOptions.itsIgnoredLevelList) == false)
@@ -3703,13 +3864,8 @@ void ConvertGrib2QData(GribFilterOptions &theGribFilterOptions)
                                                        // niin iso vektori kuin tarvitaan
                   gribFieldUsed = true;
                 }
-                else
-                {
-                  if (theGribFilterOptions.fVerbose)
-                  {
-                    cerr << "\nWarning: Parameter was discarded due stepRange check" << endl;
-                  }
-                }
+                else if (theGribFilterOptions.fVerbose)
+                  cerr << "\nWarning: Parameter was discarded due stepRange check" << endl;
               }
             }
           }
@@ -3720,10 +3876,8 @@ void ConvertGrib2QData(GribFilterOptions &theGribFilterOptions)
             cerr << static_cast<long>(tmpData->itsParam.GetParamIdent()) << " (skipped)" << endl;
           delete tmpData;
         }
-        else
-        {
-          if (theGribFilterOptions.fVerbose) cerr << endl;
-        }
+        else if (theGribFilterOptions.fVerbose)
+          cerr << endl;
       }
       catch (Reduced_ll_grib_exception &)
       {
@@ -3765,8 +3919,8 @@ void ConvertGrib2QData(GribFilterOptions &theGribFilterOptions)
   FreeDatas(gribRecordDatas);
 }
 
-void ConvertSingleGribFile(const GribFilterOptions &theGribFilterOptionsIn,
-                           const string &theGribFileName)
+void ConvertOneGribFile(const GribFilterOptions &theGribFilterOptionsIn,
+                        const string &theGribFileName)
 {
   GribFilterOptions gribFilterOptionsLocal = theGribFilterOptionsIn;
   gribFilterOptionsLocal.itsInputFileNameStr = theGribFileName;
@@ -3779,7 +3933,7 @@ void ConvertSingleGribFile(const GribFilterOptions &theGribFilterOptionsIn,
 
   try
   {
-    ConvertGrib2QData(gribFilterOptionsLocal);
+    ConvertGrib(gribFilterOptionsLocal);
     gTotalQDataCollector.insert(gTotalQDataCollector.end(),
                                 gribFilterOptionsLocal.itsGeneratedDatas.begin(),
                                 gribFilterOptionsLocal.itsGeneratedDatas.end());
@@ -4462,7 +4616,7 @@ void FillGridData(float *theArray,
     }
     else
       throw runtime_error(
-          "Error: unsupported scanmode in FillGridData-function, someone should implement it...");
+          "Unsupported scanmode in FillGridData-function, someone should implement it...");
   }
 
   if (theGribFilterOptions.DoGlobalFix())
@@ -4738,7 +4892,7 @@ void FreeDatas(vector<GridRecordData *> &theGribRecordDatas, float *array, unsig
   if (buffer) free(buffer);
 }
 
-void ConvertGrib2QData(GribFilterOptions &theGribFilterOptions)
+void ConvertGrib(GribFilterOptions &theGribFilterOptions)
 {
   vector<boost::shared_ptr<NFmiQueryData> > datas;
   unsigned char *buffer, *msg, *pds, *gds, *bms = 0, *bds, *pointer;
@@ -4966,8 +5120,8 @@ void ConvertGrib2QData(GribFilterOptions &theGribFilterOptions)
   wgrib2qd::FreeDatas(gribRecordDatas, array, buffer);
 }
 
-void ConvertSingleGribFile(const GribFilterOptions &theGribFilterOptionsIn,
-                           const string &theGribFileName)
+void ConvertOneGribFile(const GribFilterOptions &theGribFilterOptionsIn,
+                        const string &theGribFileName)
 {
   GribFilterOptions gribFilterOptionsLocal = theGribFilterOptionsIn;
   gribFilterOptionsLocal.itsInputFileNameStr = theGribFileName;
@@ -4980,7 +5134,7 @@ void ConvertSingleGribFile(const GribFilterOptions &theGribFilterOptionsIn,
 
   try
   {
-    wgrib2qd::ConvertGrib2QData(gribFilterOptionsLocal);
+    wgrib2qd::ConvertGrib(gribFilterOptionsLocal);
     gTotalQDataCollector.insert(gTotalQDataCollector.end(),
                                 gribFilterOptionsLocal.itsGeneratedDatas.begin(),
                                 gribFilterOptionsLocal.itsGeneratedDatas.end());
@@ -5003,7 +5157,7 @@ void MakeTotalCombineQDatas(vector<boost::shared_ptr<NFmiQueryData> > &theTotalQ
                             GribFilterOptions &theGribFilterOptionsOut)
 {
   if (theTotalQDataCollector.size() == 0)
-    throw runtime_error("Error unable to create any data.");
+    throw runtime_error("Unable to create any data.");
   else if (theTotalQDataCollector.size() == 1)
   {
     theGribFilterOptionsOut.itsGeneratedDatas =
@@ -5065,33 +5219,15 @@ int BuildAndStoreAllDatas(vector<string> &theFileList, GribFilterOptions &theGri
   try
   {
     for (size_t i = 0; i < fileCount; i++)
-      ConvertSingleGribFile(theGribFilterOptions, theFileList[i]);
+      ConvertOneGribFile(theGribFilterOptions, theFileList[i]);
   }
   catch (Reduced_ll_grib_exception &)
-  {  // wgrib-kirjastoa k‰ytet‰‰n vain jos grib_api ei hanskaa dataa (kuten reduced_ll dataa)
+  {
+    // Use wgrib-kirjastoa only if eccodes cannot handle the data (such as reduced_ll)
     for (size_t i = 0; i < fileCount; i++)
-      wgrib2qd::ConvertSingleGribFile(theGribFilterOptions, theFileList[i]);
+      wgrib2qd::ConvertOneGribFile(theGribFilterOptions, theFileList[i]);
   }
 
-  /* // Multi-threaddaava versio ei toimi, koska grib_api ei ilmeisesti toimi, jos k‰yd‰‰n l‰pi
-     samaan aikaan useita grib-tiedostoja
-          for(size_t i=0; i < fileCount; )
-          {
-                  boost::thread_group calcFiles;
-                  calcFiles.add_thread(new boost::thread(ConvertSingleGribFile,
-     theGribFilterOptions, theFileList[i++]));
-                  if(i < fileCount)
-                          calcFiles.add_thread(new boost::thread(ConvertSingleGribFile,
-     theGribFilterOptions, theFileList[i++]));
-                  if(i < fileCount)
-                          calcFiles.add_thread(new boost::thread(ConvertSingleGribFile,
-     theGribFilterOptions, theFileList[i++]));
-                  if(i < fileCount)
-                          calcFiles.add_thread(new boost::thread(ConvertSingleGribFile,
-     theGribFilterOptions, theFileList[i++]));
-                  calcFiles.join_all(); // odotetaan ett‰ threadit lopettavat
-          }
-  */
   MakeTotalCombineQDatas(gTotalQDataCollector, theGribFilterOptions);
   StoreQueryDatas(theGribFilterOptions);
 
@@ -5213,8 +5349,7 @@ int GetIntegerOptionValue(const NFmiCmdLine &theCmdline, char theOption)
 {
   NFmiValueString valStr(theCmdline.OptionValue(theOption));
   if (valStr.IsInt()) return static_cast<int>(valStr);
-  throw runtime_error(string("Error: '") + theOption +
-                      "' option value must be integer, exiting...");
+  throw runtime_error(string("'") + theOption + "' option value must be integer, exiting...");
 }
 
 void GetStepRangeOptions(const NFmiCmdLine &theCmdline, GribFilterOptions &theGribFilterOptions)
@@ -5411,7 +5546,7 @@ int main(int argc, const char **argv)
   }
   catch (exception &e)
   {
-    cerr << "Error in program's execution:\n" << e.what() << endl;
+    cerr << "Error: " << e.what() << endl;
     returnStatus = 1;
   }
   catch (...)

@@ -51,7 +51,7 @@ void Run(int argc, const char *argv[])
 
   string scriptFileName = cmdline.Parameter(1);
 
-  checkedVector<string> helperFileNameList;
+  std::vector<string> helperFileNameList;
   if (cmdline.NumberofParameters() > 1)
   {
     for (int i = 2; i <= cmdline.NumberofParameters(); i++)

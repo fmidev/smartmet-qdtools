@@ -43,6 +43,7 @@
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiCommentStripper.h>
+#include <newbase/NFmiDataMatrixUtils.h>
 #include <newbase/NFmiFileString.h>
 #include <newbase/NFmiFileSystem.h>
 #include <newbase/NFmiGrid.h>
@@ -153,8 +154,8 @@ struct GribFilterOptions
 
   string itsOutputFileName;  // -o optio tai sitten tulostetann cout:iin
   bool fUseOutputFile;
-  size_t itsMaxQDataSizeInBytes;     // default max koko 1 GB
-  int itsReturnStatus;               // 0 = ok
+  size_t itsMaxQDataSizeInBytes;  // default max koko 1 GB
+  int itsReturnStatus;            // 0 = ok
   NFmiLevelBag itsIgnoredLevelList;  // lista miss‰ yksitt‰isi‰ leveleit‰, mitk‰ halutaan j‰tt‰‰
                                      // pois laskuista
   vector<boost::shared_ptr<NFmiQueryData> > itsGeneratedDatas;
@@ -360,7 +361,7 @@ static boost::shared_ptr<NFmiGrid> GetGridFromProjectionStr(string &theProjectio
     }
 
     boost::shared_ptr<NFmiArea> area = NFmiAreaFactory::Create(areaStr);
-    checkedVector<double> values = NFmiStringTools::Split<checkedVector<double> >(gridStr, ",");
+    std::vector<double> values = NFmiStringTools::Split<std::vector<double> >(gridStr, ",");
     if (values.size() != 2)
       throw runtime_error("Given GridSize was invlid, has to be two numbers (e.g. x,y).");
     NFmiPoint gridSize(values[0], values[1]);
@@ -2115,8 +2116,8 @@ static void ProjectData(GridRecordData *theGridRecordData,
         locationCacheMatrix[targetGrid.Index() % targetXSize][targetGrid.Index() / targetXSize];
     int destX = counter % theGridRecordData->itsGrid.itsNX;
     int destY = counter / theGridRecordData->itsGrid.itsNX;
-    theGridRecordData->itsGridData[destX][destY] =
-        theOrigValues.InterpolatedValue(locCache.itsGridPoint, relativeRect, param, true);
+    theGridRecordData->itsGridData[destX][destY] = DataMatrixUtils::InterpolatedValue(
+        theOrigValues, locCache.itsGridPoint, relativeRect, param, true);
   }
 }
 

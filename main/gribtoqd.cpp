@@ -2212,35 +2212,35 @@ EarthShape GetEarthShape(grib_handle *theHandle)
   double scale = 1;
   long scalefactor = 1;
 
-  long shapeOfEarth = 0;
-  if (!GetGribLongValue(theHandle, "shapeOfEarth", shapeOfEarth))
+  long shapeOfTheEarth = 0;
+  if (!GetGribLongValue(theHandle, "shapeOfTheEarth", shapeOfTheEarth))
   {
     // GRIB1 handling
-    if (!GetGribLongValue(theHandle, "earthIsOblate", shapeOfEarth))
+    if (!GetGribLongValue(theHandle, "earthIsOblate", shapeOfTheEarth))
       throw std::runtime_error("earthIsOblate not set in the GRIB");
 
-    if (shapeOfEarth == 0)
+    if (shapeOfTheEarth == 0)
     {
-      // same as shapeOfEarth=0 for GRIB2
+      // same as shapeOfTheEarth=0 for GRIB2
       shape.a = 6367470.0;
       shape.b = shape.a;
     }
     else
     {
-      // shape as shapeOfEarth=2 for GRIB2
+      // shape as shapeOfTheEarth=2 for GRIB2
       shape.a = 6378160.0;
       shape.b = 6356775.0;
     }
   }
 
   // Section 3, Code Table 2
-  else if (shapeOfEarth == 0)
+  else if (shapeOfTheEarth == 0)
   {
     // Earth assumed spherical with radius = 6,367,470.0 m
     shape.a = 6367470.0;
     shape.b = shape.a;
   }
-  else if (shapeOfEarth == 1)
+  else if (shapeOfTheEarth == 1)
   {
     // Earth assumed spherical with radius specified (in m) by data producer
     if (GetGribLongValue(theHandle, "scaleFactorOfRadiusOfSphericalEarth", scalefactor))
@@ -2252,18 +2252,18 @@ EarthShape GetEarthShape(grib_handle *theHandle)
     shape.a *= scale;
     shape.b = shape.a;
   }
-  else if (shapeOfEarth == 2)
+  else if (shapeOfTheEarth == 2)
   {
     // Earth assumed oblate spheroid with size as determined by IAU in 1965 (major axis =
     // 6,378,160.0 m, minor axis = 6,356,775.0 m, f = 1/297.0)
     shape.a = 6378160.0;
     shape.b = 6356775.0;
   }
-  else if (shapeOfEarth == 3 || shapeOfEarth == 7)
+  else if (shapeOfTheEarth == 3 || shapeOfTheEarth == 7)
   {
     // Earth assumed oblate spheroid with major and minor axes specified (in m or km) by data
     // producer
-    if (shapeOfEarth == 3) scale = 1000;  // from kilometers to meters
+    if (shapeOfTheEarth == 3) scale = 1000;  // from kilometers to meters
 
     if (!GetGribDoubleValue(theHandle, "scaledValueOfEarthMajorAxis", shape.a) ||
         !GetGribDoubleValue(theHandle, "scaledValueOfEarthMinorAxis", shape.b))
@@ -2275,34 +2275,34 @@ EarthShape GetEarthShape(grib_handle *theHandle)
     if (GetGribLongValue(theHandle, "scaleFactorOfMinorAxisOfOblateSpheroidEarth", scalefactor))
       if (scalefactor != GRIB_MISSING_LONG) shape.b *= pow(10.0, scalefactor);
   }
-  else if (shapeOfEarth == 4)
+  else if (shapeOfTheEarth == 4)
   {
     // Earth assumed oblate spheroid as defined in IAG-GRS80 model (major axis = 6,378,137.0 m,
     // minor axis = 6,356,752.314 m, f = 1/298.257222101)
     shape.a = 6378137.0;
     shape.b = 6356752.314;
   }
-  else if (shapeOfEarth == 5)
+  else if (shapeOfTheEarth == 5)
   {
     // Earth assumed represented by WGS84 (as used by ICAO since 1998)
     shape.datum = "WGS84";
     shape.a = 6378137.0;
     shape.b = 6356752.3142;
   }
-  else if (shapeOfEarth == 6)
+  else if (shapeOfTheEarth == 6)
   {
     // Earth assumed spherical with radius of 6,371,229.0 m
     shape.a = 6371229.0;
     shape.b = shape.a;
   }
-  else if (shapeOfEarth == 8)
+  else if (shapeOfTheEarth == 8)
   {
     // Earth model assumed spherical with radius 6371200 m, but the horizontal datum of the
     // resulting latitude/longitude field is the WGS84 reference frame
     shape.a = 63712000.0;
     shape.b = 63712000.0;
   }
-  else if (shapeOfEarth == 9)
+  else if (shapeOfTheEarth == 9)
   {
     // Earth represented by the Ordnance Survey Great Britain 1936 Datum, using the Airy 1830
     // Spheroid, the Greenwich meridian as 0 longitude, and the Newlyn datum as mean sea level, 0
@@ -2311,10 +2311,10 @@ EarthShape GetEarthShape(grib_handle *theHandle)
     shape.a = 6377563.396;  // From Wikipedia on OSGB36
     shape.b = 6356256.909;
   }
-  else if (shapeOfEarth == 255)
+  else if (shapeOfTheEarth == 255)
     throw std::runtime_error("Earth shape has value 255, the missing value");
   else
-    throw std::runtime_error("Earth shape number " + std::to_string(shapeOfEarth) +
+    throw std::runtime_error("Earth shape number " + std::to_string(shapeOfTheEarth) +
                              " is reserved for local use (values 192-254)");
   return shape;
 }
@@ -2357,14 +2357,15 @@ std::string GetProjString(grib_handle *theHandle)
         !GetGribDoubleValue(theHandle, "angleOfRotationInDegrees", rotation))
       throw std::runtime_error("Failed to extract rotated_ll parameters");
 
-    if (rotation != 0) throw std::runtime_error("Shit happens");  // TODO
+    if (rotation != 0) throw std::runtime_error("Rotated latlon rotation not supported");  // TODO
 
     // Note:: convert to eqc == legacy NFmiRotatedLatLonArea
-    return fmt::format("+proj=ob_tran +o_proj=eqc +lon_0={} +o_lon_p={} +o_lat_p={} {} +wktext",
-                       pole_lon,
-                       0,
-                       -pole_lat,
-                       earth_proj);
+    return fmt::format(
+        "+proj=ob_tran +o_proj=eqc +o_lon_p={} +o_lat_p={} +lon_0={} {} +wktext +over +no_defs",
+        0,
+        -pole_lat,
+        pole_lon,
+        earth_proj);
   }
 
   if (proj_name == "mercator")
@@ -2570,14 +2571,25 @@ NFmiArea *GetGribArea(grib_handle *theHandle)
 
     // the legacy corners are in rotated spherical latlon coordinate.
     // the +to_meter setting is necessary to avoid radians
-    auto sphere = fmt::format(
-        "+to_meter=.0174532925199433 +proj=ob_tran +o_proj=longlat +o_lon_p={} +o_lat_p={} "
-        "+lon_0={} +a={:.0f} +b={:.0f} +wktext +over +towgs84=0,0,0 +no_defs",
-        0,
-        -pole_lat,
-        pole_lon,
-        earth_shape.a,
-        earth_shape.b);
+
+    std::string sphere;
+    if (earth_shape.a == earth_shape.b)
+      sphere = fmt::format(
+          "+to_meter=.0174532925199433 +proj=ob_tran +o_proj=longlat +o_lon_p={} +o_lat_p={} "
+          "+lon_0={} +R={:.0f} +wktext +over +towgs84=0,0,0 +no_defs",
+          0,
+          -pole_lat,
+          pole_lon,
+          earth_shape.a);
+    else
+      sphere = fmt::format(
+          "+to_meter=.0174532925199433 +proj=ob_tran +o_proj=longlat +o_lon_p={} +o_lat_p={} "
+          "+lon_0={} +a={:.0f} +b={:.0f} +wktext +over +towgs84=0,0,0 +no_defs",
+          0,
+          -pole_lat,
+          pole_lon,
+          earth_shape.a,
+          earth_shape.b);
 
     return NFmiArea::CreateFromCorners(proj, sphere, NFmiPoint(lon1, lat1), NFmiPoint(lon2, lat2));
   }

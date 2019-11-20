@@ -15,6 +15,6 @@ for f in data/grib/*; do
 	echo FAILED
 	qdinfo -a -q $resultfile > ${tmpfile}.info_ok
 	qdinfo -a -q $tmpfile > ${tmpfile}.info_fail
-	diff ${tmpfile}.info_ok ${tmpfile}.info_fail
+#	diff ${tmpfile}.info_ok ${tmpfile}.info_fail
     fi
 done

@@ -230,8 +230,8 @@ NFmiLevel parse_level(const std::string &theLevelInfoStr)
       0);  // jos level type on 0, se tarkoittaa puuttuvaa ja level info otetaan datasta
   try
   {
-    checkedVector<float> levelValues =
-        NFmiStringTools::Split<checkedVector<float> >(theLevelInfoStr, ",");
+    std::vector<float> levelValues =
+        NFmiStringTools::Split<std::vector<float> >(theLevelInfoStr, ",");
     if (levelValues.size() != 2)
       throw std::runtime_error(
           "GetWantedLevel: level-info contain two values separated with comma: type,value (e.g. "

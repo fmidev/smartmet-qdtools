@@ -1087,7 +1087,7 @@ void CopyDifferentGridData(NFmiFastQueryInfo& theSrc, NFmiFastQueryInfo& theDst)
 
   NFmiDataMatrix<NFmiLocationCache> locationCacheMatrix;
   theSrc.CalcLatlonCachePoints(theDst, locationCacheMatrix);
-  checkedVector<NFmiTimeCache> timeCacheVector;
+  std::vector<NFmiTimeCache> timeCacheVector;
   theSrc.CalcTimeCache(theDst, timeCacheVector);
 
   unsigned long startTimeIndex = 0;

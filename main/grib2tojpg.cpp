@@ -12,6 +12,7 @@
 #include <newbase/NFmiAreaTools.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiCommentStripper.h>
+#include <newbase/NFmiDataMatrixUtils.h>
 #include <newbase/NFmiGrid.h>
 #include <newbase/NFmiInterpolation.h>
 #include <newbase/NFmiQueryDataUtil.h>
@@ -1082,8 +1083,8 @@ static void FillGridData(grib_handle *theGribHandle,
       {
         int destX = counter % theGridRecordData->itsGrid.itsNX;
         int destY = counter / theGridRecordData->itsGrid.itsNX;
-        theGridRecordData->itsGridData[destX][destY] = origValues.InterpolatedValue(
-            theGridRecordData->itsOrigGrid.itsArea->ToXY(destGrid.LatLon()), param);
+        theGridRecordData->itsGridData[destX][destY] = DataMatrixUtils::InterpolatedValue(
+            origValues, theGridRecordData->itsOrigGrid.itsArea->ToXY(destGrid.LatLon()), param);
       }
     }
     else

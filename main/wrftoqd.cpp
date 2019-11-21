@@ -8,10 +8,11 @@
 
 #include "NcFileExtended.h"
 #include "nctools.h"
-
+#include <boost/algorithm/string.hpp>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiHPlaceDescriptor.h>
+#include <newbase/NFmiInterpolation.h>
 #include <newbase/NFmiParamDescriptor.h>
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
@@ -19,8 +20,6 @@
 #include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiVPlaceDescriptor.h>
-
-#include <boost/algorithm/string.hpp>
 
 nctools::Options options;
 
@@ -477,7 +476,7 @@ static NFmiGrid GetGridFromProjectionStr(const std::string &theProjectionStr)
     // muuttaa ','-merkiksi
 
     boost::shared_ptr<NFmiArea> area = NFmiAreaFactory::Create(areaStr);
-    checkedVector<double> values = NFmiStringTools::Split<checkedVector<double> >(gridStr, ",");
+    std::vector<double> values = NFmiStringTools::Split<std::vector<double> >(gridStr, ",");
     if (values.size() != 2)
       throw std::runtime_error(std::string("Projection string contains GridSize that was invalid, "
                                            "has to be two numbers (e.g. x,y):\n'") +

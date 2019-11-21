@@ -221,8 +221,8 @@ struct MetarData
     itsParamIds[itsClType4Index] = kFmi4CloudType;
   }
 
-  checkedVector<float> itsValues;
-  checkedVector<FmiParameterName> itsParamIds;
+  std::vector<float> itsValues;
+  std::vector<FmiParameterName> itsParamIds;
   string itsIcaoName;
   NFmiMetTime itsTime;
   string itsOriginalStr;

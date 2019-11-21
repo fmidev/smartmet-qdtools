@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 19.11.19
+Version: 19.11.21
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -190,6 +190,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Nov 21 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.11.21-1.fmi
+- gribtoqd now supports shape of the earth parameters
+
 * Tue Nov 19 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.11.19-1.fmi
 - Repackaged to get NFmiStreamQueryData default info version up to 7
 

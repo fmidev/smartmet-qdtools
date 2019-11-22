@@ -80,7 +80,8 @@ sub DoTest {
 	$retcode = $?;
 	if ( $retcode != 0 ) {
 		print $output ;
-		die("Failed to run $cmd: $!");
+		print "Failed to run $cmd: $!";
+		return;
 	}
 
 	print padname($text);

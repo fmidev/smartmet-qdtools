@@ -511,8 +511,34 @@ boost::shared_ptr<NFmiGrid> GetGridFromProjectionStr(string &theProjectionStr,
     gridStr += projectionPartsStr[2];
   else
   {
-    gridStr += "50,50";  // jos oli kaksi osainen projektio stringi, laitetaan oletus kooksi 50 x 50
-    cerr << "Warning, using default grid-size for wanted projection (50 x 50)" << endl;
+    string areaStr;
+    string gridStr;
+    if (projectionPartsStr.size() >= 2)
+      areaStr += projectionPartsStr[0] + ":" + projectionPartsStr[1];
+    if (gridSizeX > 0 && gridSizeY > 0)
+    {
+      gridStr = NFmiStringTools::Convert(gridSizeX);
+      gridStr += ",";
+      gridStr += NFmiStringTools::Convert(gridSizeY);
+    }
+    else if (projectionPartsStr.size() >= 3)
+      gridStr += projectionPartsStr[2];
+    else
+    {
+      gridStr +=
+          "50,50";  // jos oli kaksi osainen projektio stringi, laitetaan oletus kooksi 50 x 50
+      cerr << "Warning, using default grid-size for wanted projection (50 x 50)" << endl;
+    }
+
+    boost::shared_ptr<NFmiArea> area = NFmiAreaFactory::Create(areaStr);
+    std::vector<double> values = NFmiStringTools::Split<std::vector<double> >(gridStr, ",");
+    if (values.size() != 2)
+      throw runtime_error("Given GridSize was invlid, has to be two numbers (e.g. x,y).");
+    NFmiPoint gridSize(values[0], values[1]);
+    boost::shared_ptr<NFmiGrid> grid(new NFmiGrid(area->Clone(),
+                                                  static_cast<unsigned int>(gridSize.X()),
+                                                  static_cast<unsigned int>(gridSize.Y())));
+    return grid;
   }
 
   boost::shared_ptr<NFmiArea> area = NFmiAreaFactory::Create(areaStr);

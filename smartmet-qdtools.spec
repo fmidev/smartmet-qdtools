@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 19.11.21
+Version: 19.11.22
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -22,12 +22,12 @@ BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: fmt-devel
-BuildRequires: smartmet-library-calculator-devel >= 19.11.5
+BuildRequires: smartmet-library-calculator-devel >= 19.11.20
 BuildRequires: smartmet-library-gis-devel >= 19.9.26
-BuildRequires: smartmet-library-imagine-devel >= 19.10.31
+BuildRequires: smartmet-library-imagine-devel >= 19.11.20
 BuildRequires: smartmet-library-macgyver-devel >= 19.9.26
-BuildRequires: smartmet-library-newbase-devel >= 19.11.19
-BuildRequires: smartmet-library-smarttools-devel >= 19.10.31
+BuildRequires: smartmet-library-newbase-devel >= 19.11.21
+BuildRequires: smartmet-library-smarttools-devel >= 19.11.20
 BuildRequires: smartmet-timezones
 BuildRequires: smartmet-library-spine-devel
 BuildRequires: mdsplib >= 16.4.8
@@ -39,12 +39,12 @@ BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
 BuildRequires: fmt-devel
 Requires: smartmet-timezones >= 19.7.29
-Requires: smartmet-library-calculator >= 19.11.5
+Requires: smartmet-library-calculator >= 19.11.20
 Requires: smartmet-library-gis >= 19.9.26
-Requires: smartmet-library-imagine >= 19.10.31
+Requires: smartmet-library-imagine >= 19.11.20
 Requires: smartmet-library-macgyver >= 19.9.26
-Requires: smartmet-library-newbase >= 19.11.19
-Requires: smartmet-library-smarttools >= 19.10.31
+Requires: smartmet-library-newbase >= 19.11.21
+Requires: smartmet-library-smarttools >= 19.11.20
 Requires: smartmet-library-spine
 Requires: fmt
 Requires: eccodes
@@ -190,8 +190,14 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Fri Nov 22 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.11.22-1.fmi
+- qdinfo now displays parameter limits with "-" instead of 32700
+
 * Thu Nov 21 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.11.21-1.fmi
 - gribtoqd now supports shape of the earth parameters
+
+* Wed Nov 20 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.11.20-1.fmi
+- Repackaged due to newbase API changes
 
 * Tue Nov 19 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.11.19-1.fmi
 - Repackaged to get NFmiStreamQueryData default info version up to 7

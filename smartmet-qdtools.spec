@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 19.11.20
+Version: 19.11.22
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -26,7 +26,7 @@ BuildRequires: smartmet-library-calculator-devel >= 19.11.20
 BuildRequires: smartmet-library-gis-devel >= 19.9.26
 BuildRequires: smartmet-library-imagine-devel >= 19.11.20
 BuildRequires: smartmet-library-macgyver-devel >= 19.9.26
-BuildRequires: smartmet-library-newbase-devel >= 19.11.20
+BuildRequires: smartmet-library-newbase-devel >= 19.11.21
 BuildRequires: smartmet-library-smarttools-devel >= 19.11.20
 BuildRequires: smartmet-timezones
 BuildRequires: smartmet-library-spine-devel
@@ -42,7 +42,7 @@ Requires: smartmet-library-calculator >= 19.11.20
 Requires: smartmet-library-gis >= 19.9.26
 Requires: smartmet-library-imagine >= 19.11.20
 Requires: smartmet-library-macgyver >= 19.9.26
-Requires: smartmet-library-newbase >= 19.11.20
+Requires: smartmet-library-newbase >= 19.11.21
 Requires: smartmet-library-smarttools >= 19.11.20
 Requires: smartmet-library-spine
 Requires: fmt
@@ -188,6 +188,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Fri Nov 22 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.11.22-1.fmi
+- qdinfo now displays parameter limits with "-" instead of 32700
+
 * Wed Nov 20 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.11.20-1.fmi
 - Repackaged due to newbase API changes
 

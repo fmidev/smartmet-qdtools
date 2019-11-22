@@ -109,6 +109,18 @@ using namespace std;
 
 // ----------------------------------------------------------------------
 /*!
+ * Convert number to printable form handling missing values
+ */
+// ----------------------------------------------------------------------
+
+std::string ToString(float theValue)
+{
+  if (theValue == kFloatMissing) return "-";
+  return Fmi::to_string(theValue);
+}
+
+// ----------------------------------------------------------------------
+/*!
  * Report version information
  *
  * \param q The queryinfo to report on
@@ -218,8 +230,8 @@ void ReportParameters(NFmiFastQueryInfo *q, bool ignoresubs)
          << description.CharPtr() << setw(16)
          << interpolation_name(q->Param().GetParam()->InterpolationMethod()) << setw(12) << right
          << q->Param().GetParam()->Precision().CharPtr() << setw(9)
-         << Fmi::to_string(q->Param().GetParam()->MinValue()) << setw(9)
-         << Fmi::to_string(q->Param().GetParam()->MaxValue()) << endl;
+         << ToString(q->Param().GetParam()->MinValue()) << setw(9)
+         << ToString(q->Param().GetParam()->MaxValue()) << endl;
   }
   cout << endl << "There are " << count << " stored parameters in total" << endl;
   return;

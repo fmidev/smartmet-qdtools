@@ -1760,6 +1760,14 @@ list<string> SortMetarFiles(const list<string> &metarfiles)
   return outfiles;
 }
 
+static void WriteMetarDataToCout(NFmiQueryData *metarData)
+{
+  cerr << "\nStoring data to file." << endl;
+  NFmiStreamQueryData sQOutData(metarData);  // tämä myös tuhoaa qdatan
+  if (!sQOutData.WriteCout())
+    throw runtime_error("Error: Couldn't write combined qdata to stdout.");
+}
+
 // ----------------------------------------------------------------------
 /*!
  * \brief Main program without error catching
@@ -1833,6 +1841,9 @@ void run(int argc, const char *argv[])
   if (cmdline.isOption('r'))
     timeRoundingResolution = NFmiStringTools::Convert<int>(cmdline.OptionValue('r'));
 
+  bool makeTotalWindParameter = true;  // Oletuksena luodaan TotalWind parametri
+  if (cmdline.isOption('W')) makeTotalWindParameter = false;
+
   //	1. Lue n kpl filefiltereitä listaan
   vector<string> fileFilterList;
   for (int i = 1; i <= numOfParams; i++)
@@ -1886,18 +1897,19 @@ void run(int argc, const char *argv[])
   if (newQData == 0)
     throw runtime_error("Error: Unable to create querydata from METAR data, stopping program...");
 
-  // tehdään dataan vielä totalwind parametri WS, WD ja WGustin avulla
-  NFmiFastQueryInfo tempInfo(newQData);
-  NFmiQueryData *newQDataWithTotalWind = NFmiQueryDataUtil::MakeCombineParams(
-      tempInfo, 7, false, true, false, kFmiWindGust, std::vector<int>(), false, 0, false, false);
-  if (newQDataWithTotalWind == 0)
-    throw runtime_error(
-        "Error: Unable to create querydata with totalWind-parameter, stopping program...");
-
-  cerr << "\nStoring data to file." << endl;
-  NFmiStreamQueryData sQOutData(newQDataWithTotalWind);  // tämä myös tuhoaa qdatan
-  if (!sQOutData.WriteCout())
-    throw runtime_error("Error: Couldn't write combined qdata to stdout.");
+  if (makeTotalWindParameter)
+  {
+    // tehdään dataan vielä totalwind parametri WS, WD ja WGustin avulla
+    NFmiFastQueryInfo tempInfo(newQData);
+    NFmiQueryData *newQDataWithTotalWind = NFmiQueryDataUtil::MakeCombineParams(
+        tempInfo, 7, false, true, false, kFmiWindGust, std::vector<int>(), false, 0, false, false);
+    if (newQDataWithTotalWind == 0)
+      throw runtime_error(
+          "Error: Unable to create querydata with totalWind-parameter, stopping program...");
+    ::WriteMetarDataToCout(newQDataWithTotalWind);
+  }
+  else
+    ::WriteMetarDataToCout(newQData);
 
   if (fVerboseMode && icaoIdUnknownSet.size())
   {

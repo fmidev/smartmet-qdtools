@@ -3,7 +3,6 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/filesystem/operations.hpp>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 #include <macgyver/StringConversion.h>
@@ -76,7 +75,7 @@ std::set<boost::posix_time::ptime> parse_times(const std::string& str)
   std::list<std::string> parts;
   boost::algorithm::split(parts, str, boost::is_any_of(","));
 
-  BOOST_FOREACH (const auto& stamp, parts)
+  for (const auto& stamp : parts)
   {
     ret.insert(Fmi::TimeParser::parse(stamp));
   }
@@ -99,7 +98,7 @@ std::set<FmiParameterName> parse_params(const std::string& str)
   std::list<std::string> parts;
   boost::algorithm::split(parts, str, boost::is_any_of(","));
 
-  BOOST_FOREACH (const auto& param, parts)
+  for (const auto& param : parts)
   {
     FmiParameterName p = FmiParameterName(converter.ToEnum(param));
     if (p == kFmiBadParameter) throw std::runtime_error("Bad parameter name: '" + param + "'");
@@ -124,7 +123,7 @@ std::set<int> parse_stations(const std::string& str)
   std::list<std::string> parts;
   boost::algorithm::split(parts, str, boost::is_any_of(","));
 
-  BOOST_FOREACH (const auto& str, parts)
+  for (const auto& str : parts)
   {
     ret.insert(Fmi::stoi(str));
   }
@@ -147,7 +146,7 @@ std::set<float> parse_levels(const std::string& str)
   std::list<std::string> parts;
   boost::algorithm::split(parts, str, boost::is_any_of(","));
 
-  BOOST_FOREACH (const auto& str, parts)
+  for (const auto& str : parts)
   {
     ret.insert(Fmi::stof(str));
   }
@@ -1016,7 +1015,7 @@ std::string Stats::report() const
     {
       const int precision = estimate_precision(itsCounts);
 
-      BOOST_FOREACH (const auto& value_count, itsCounts)
+      for (const auto& value_count : itsCounts)
       {
         double value = value_count.first;
         std::size_t count = value_count.second;
@@ -1049,7 +1048,7 @@ std::string Stats::report() const
         if (minvalue >= itsMax) break;
         double maxvalue = minvalue + tick;
         std::size_t count = 0;
-        BOOST_FOREACH (const auto& value_count, itsCounts)
+        for (const auto& value_count : itsCounts)
         {
           double value = value_count.first;
           // The max value must be counted into the last bin
@@ -1101,7 +1100,7 @@ std::string station_header(NFmiFastQueryInfo& qi)
 std::size_t max_param_width(NFmiFastQueryInfo& qi)
 {
   std::size_t widest = 0;
-  BOOST_FOREACH (auto p, options.these_params)
+  for (auto p : options.these_params)
   {
     qi.Param(p);
     std::string name = converter.ToString(qi.Param().GetParam()->GetIdent());
@@ -1120,7 +1119,7 @@ std::size_t max_param_width(NFmiFastQueryInfo& qi)
 std::size_t max_station_width(NFmiFastQueryInfo& qi)
 {
   std::size_t widest = 0;
-  BOOST_FOREACH (int wmo, options.these_stations)
+  for (int wmo : options.these_stations)
   {
     qi.Location(wmo);
     widest = std::max(widest, station_header(qi).size());
@@ -1161,7 +1160,7 @@ void stat_locations_times(NFmiFastQueryInfo& qi)
     std::cout << std::setw(param_width) << std::right << "Parameter" << std::setw(column_width)
               << "Level" << Stats::header() << std::endl;
 
-  BOOST_FOREACH (auto p, options.these_params)
+  for (auto p : options.these_params)
   {
     qi.Param(p);
     std::string name = converter.ToString(qi.Param().GetParam()->GetIdent());
@@ -1207,7 +1206,7 @@ void stat_locations_these_times(NFmiFastQueryInfo& qi)
 {
   int param_width = max_param_width(qi);
 
-  BOOST_FOREACH (auto p, options.these_params)
+  for (auto p : options.these_params)
   {
     qi.Param(p);
     std::string name = converter.ToString(qi.Param().GetParam()->GetIdent());
@@ -1220,7 +1219,7 @@ void stat_locations_these_times(NFmiFastQueryInfo& qi)
       std::cout << std::setw(param_width) << std::right << "Parameter" << std::setw(column_width)
                 << "Level" << std::setw(18) << std::right << "Time" << Stats::header() << std::endl;
 
-    BOOST_FOREACH (const auto& pt, options.these_times)
+    for (const auto& pt : options.these_times)
     {
       NFmiMetTime t = pt;
       qi.Time(t);
@@ -1267,7 +1266,7 @@ void stat_locations_these_times(NFmiFastQueryInfo& qi)
 
 void stat_these_stations_these_times(NFmiFastQueryInfo& qi)
 {
-  BOOST_FOREACH (auto p, options.these_params)
+  for (auto p : options.these_params)
   {
     std::cout << std::setw(20) << "" << Stats::header() << std::endl;
 
@@ -1276,13 +1275,13 @@ void stat_these_stations_these_times(NFmiFastQueryInfo& qi)
     if (name.empty()) name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
     std::cout << name << std::endl;
 
-    BOOST_FOREACH (int wmo, options.these_stations)
+    for (int wmo : options.these_stations)
     {
       qi.Location(wmo);
 
       std::cout << "  " << station_header(qi) << std::endl;
 
-      BOOST_FOREACH (const auto& pt, options.these_times)
+      for (const auto& pt : options.these_times)
       {
         NFmiMetTime t = pt;
         qi.Time(t);
@@ -1311,13 +1310,13 @@ void stat_these_stations_times(NFmiFastQueryInfo& qi)
   std::cout << std::setw(station_width) << std::right << "Station" << std::setw(param_width + 1)
             << std::right << "Parameter" << Stats::header() << std::endl;
 
-  BOOST_FOREACH (auto p, options.these_params)
+  for (auto p : options.these_params)
   {
     qi.Param(p);
     std::string name = converter.ToString(qi.Param().GetParam()->GetIdent());
     if (name.empty()) name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
 
-    BOOST_FOREACH (int wmo, options.these_stations)
+    for (int wmo : options.these_stations)
     {
       qi.Location(wmo);
 
@@ -1362,7 +1361,7 @@ int run(int argc, char* argv[])
   else
   {
     // Otherwise validate the parameters first
-    BOOST_FOREACH (auto p, options.these_params)
+    for (auto p : options.these_params)
     {
       if (!qi.Param(p))
         throw std::runtime_error("Requested parameter not available in the data: '" +

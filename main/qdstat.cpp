@@ -3,8 +3,8 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/filesystem/operations.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
+#include <fmt/format.h>
 #include <macgyver/StringConversion.h>
 #include <macgyver/TimeParser.h>
 #include <newbase/NFmiEnumConverter.h>
@@ -212,13 +212,13 @@ bool parse_options(int argc, char* argv[])
 
   if (opt.count("help"))
   {
-    std::cout << "Usage: qdstat [options] querydata" << std::endl
-              << "       qdstat -i querydata [options]" << std::endl
-              << "       qdstat [options] < querydata" << std::endl
-              << "       cat querydata | qdstat [options]" << std::endl
-              << std::endl
-              << "Calculate statistics on querydata values." << std::endl
-              << std::endl
+    std::cout << "Usage: qdstat [options] querydata\n"
+                 "       qdstat -i querydata [options]\n"
+                 "       qdstat [options] < querydata\n"
+                 "       cat querydata | qdstat [options]\n"
+                 "\n"
+                 "Calculate statistics on querydata values.\n"
+                 "\n"
               << desc << std::endl;
     return false;
   }
@@ -333,9 +333,10 @@ std::string Stats::header()
   std::ostringstream out;
   out << std::setw(column_width + 1) << std::right << "Min" << std::setw(column_width + 1)
       << std::right << "Mean" << std::setw(column_width + 1) << std::right << "Max"
-      << std::setw(column_width) << std::right << "Count" << std::setw(column_width) << std::right
-      << "Valid" << std::setw(column_width) << std::right << "Miss" << std::setw(column_width)
-      << std::right << "NaN" << std::setw(column_width) << std::right << "Inf";
+      << std::setw(column_width + 1) << std::right << "Count" << std::setw(column_width + 1)
+      << std::right << "Valid" << std::setw(column_width + 1) << std::right << "Miss"
+      << std::setw(column_width) << std::right << "NaN" << std::setw(column_width) << std::right
+      << "Inf";
   return out.str();
 }
 
@@ -984,9 +985,9 @@ std::string Stats::report() const
     out << std::fixed << std::setprecision(2) << ' ' << std::setw(column_width) << std::right
         << itsMin << std::setprecision(2) << ' ' << std::setw(column_width) << std::right << mean
         << std::setprecision(2) << ' ' << std::setw(column_width) << std::right << itsMax
-        << std::setw(column_width) << std::right << itsCount << std::setw(column_width)
-        << std::right << 100.0 * itsValidCount / itsCount << std::setw(column_width) << std::right
-        << 100.0 * itsMissingCount / itsCount << std::setw(column_width) << std::right
+        << std::setw(column_width + 1) << std::right << itsCount << std::setw(column_width + 1)
+        << std::right << 100.0 * itsValidCount / itsCount << std::setw(column_width + 1)
+        << std::right << 100.0 * itsMissingCount / itsCount << std::setw(column_width) << std::right
         << 100.0 * itsNaNCount / itsCount << std::setw(column_width) << std::right
         << 100.0 * itsInfCount / itsCount;
   }
@@ -995,10 +996,10 @@ std::string Stats::report() const
     out << std::fixed << std::setprecision(2) << ' ' << std::setw(column_width) << std::right
         << itsMin << std::setprecision(2) << ' ' << std::setw(column_width) << std::right << mean
         << std::setprecision(2) << ' ' << std::setw(column_width) << std::right << itsMax
-        << std::setw(column_width) << std::right << itsCount << std::setw(column_width)
-        << std::right << itsValidCount << std::setw(column_width) << std::right << itsMissingCount
-        << std::setw(column_width) << std::right << itsNaNCount << std::setw(column_width)
-        << std::right << itsInfCount;
+        << std::setw(column_width + 1) << std::right << itsCount << std::setw(column_width + 1)
+        << std::right << itsValidCount << std::setw(column_width + 1) << std::right
+        << itsMissingCount << std::setw(column_width) << std::right << itsNaNCount
+        << std::setw(column_width) << std::right << itsInfCount;
   }
 
   if (!itsCounts.empty())
@@ -1023,12 +1024,12 @@ std::string Stats::report() const
         if (options.percentages)
         {
           out << std::fixed << std::setprecision(precision) << std::setw(10) << std::right << value
-              << std::setw(10) << std::right << 100.0 * count / itsValidCount;
+              << std::setw(column_width + 1) << std::right << 100.0 * count / itsValidCount;
         }
         else
         {
           out << std::fixed << std::setprecision(precision) << std::setw(10) << std::right << value
-              << std::setw(10) << std::right << count;
+              << std::setw(column_width + 1) << std::right << count;
         }
 
         int w = static_cast<int>(std::round(options.barsize * count / itsValidCount));
@@ -1063,9 +1064,9 @@ std::string Stats::report() const
 
         out << std::setw(20) << std::right << range.str();
         if (options.percentages)
-          out << std::setw(column_width) << std::right << 100.0 * count / itsValidCount;
+          out << std::setw(column_width + 1) << std::right << 100.0 * count / itsValidCount;
         else
-          out << std::setw(column_width) << std::right << count;
+          out << std::setw(column_width + 1) << std::right << count;
 
         int w = static_cast<int>(std::round(options.barsize * count / itsValidCount));
         out << std::setw(5) << std::right << '|' << std::string(w, '=')

@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 19.11.22
+Version: 19.11.29
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -190,6 +190,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Fri Nov 29 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.11.29-1.fmi
+- Increased space reserved for qdstat counters
+
 * Fri Nov 22 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.11.22-1.fmi
 - qdinfo now displays parameter limits with "-" instead of 32700
 

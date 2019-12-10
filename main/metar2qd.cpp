@@ -530,6 +530,7 @@ void Usage(const std::string &theExecutableName)
        << "\t-r <round_time_in_minutes>\tUse messages time rounding, default value is 30 minutes."
        << endl
        << "\t-n <NOAA-format=false>\tTry reading NOAA metar format files." << endl
+       << "\t-W \tDon't create Wind combined parameter to result data." << endl
        << endl;
 }
 
@@ -1779,7 +1780,7 @@ void run(int argc, const char *argv[])
   // HUOM!! VC++ 2012 (Update 3) -versiolla x64-debug versio toimii debuggerissa ihan oudosti,
   // ohjelman steppaus ei mene oikein (win32 debug käyttäytyy oikein).
   // Ohjelma tuottaa kuitenkin oikean tuloksen kaikilla kombinaatioilla win32/x64 + debug/release
-  NFmiCmdLine cmdline(argc, argv, "s!vFr!n");
+  NFmiCmdLine cmdline(argc, argv, "s!vFr!nW");
 
   // Tarkistetaan optioiden oikeus:
   if (cmdline.Status().IsError())

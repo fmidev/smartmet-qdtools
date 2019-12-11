@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 19.11.29
+Version: 19.12.4
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -22,29 +22,29 @@ BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: fmt-devel
-BuildRequires: smartmet-library-calculator-devel >= 19.11.20
-BuildRequires: smartmet-library-gis-devel >= 19.9.26
+BuildRequires: smartmet-library-calculator-devel >= 19.12.4
+BuildRequires: smartmet-library-gis-devel >= 19.12.4
 BuildRequires: smartmet-library-imagine-devel >= 19.11.20
-BuildRequires: smartmet-library-macgyver-devel >= 19.9.26
-BuildRequires: smartmet-library-newbase-devel >= 19.11.21
-BuildRequires: smartmet-library-smarttools-devel >= 19.11.20
+BuildRequires: smartmet-library-macgyver-devel >= 19.12.4
+BuildRequires: smartmet-library-newbase-devel >= 19.12.4
+BuildRequires: smartmet-library-smarttools-devel >= 19.12.4
 BuildRequires: smartmet-timezones
 BuildRequires: smartmet-library-spine-devel
 BuildRequires: mdsplib >= 16.4.8
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: zlib-devel
-BuildRequires: gdal-devel >= 1.11.4
+BuildRequires: gdal-devel
 BuildRequires: jasper-devel
 BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
 BuildRequires: fmt-devel
 Requires: smartmet-timezones >= 19.7.29
-Requires: smartmet-library-calculator >= 19.11.20
-Requires: smartmet-library-gis >= 19.9.26
+Requires: smartmet-library-calculator >= 19.12.4
+Requires: smartmet-library-gis >= 19.12.4
 Requires: smartmet-library-imagine >= 19.11.20
-Requires: smartmet-library-macgyver >= 19.9.26
-Requires: smartmet-library-newbase >= 19.11.21
-Requires: smartmet-library-smarttools >= 19.11.20
+Requires: smartmet-library-macgyver >= 19.12.4
+Requires: smartmet-library-newbase >= 19.12.4
+Requires: smartmet-library-smarttools >= 19.12.4
 Requires: smartmet-library-spine
 Requires: fmt
 Requires: eccodes
@@ -54,7 +54,7 @@ Requires: jasper-libs >= 1.900.1
 Requires: libecbufr
 Requires: libbufr >= 3.2
 Requires: netcdf >= 4.3.3.1
-Requires: gdal >= 1.11.4
+Requires: gdal-libs
 Requires: boost-regex
 Requires: boost-iostreams
 Requires: boost-date-time
@@ -190,6 +190,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Dec  4 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.12.4-1.fmi
+- Fixed dependency to be on gdal-libs instead of gdal
+- Use -fno-omit-frame-pointer for a better profiling and debugging experience                                                                                              
 * Fri Nov 29 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.11.29-1.fmi
 - Increased space reserved for qdstat counters
 

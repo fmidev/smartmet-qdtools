@@ -1894,7 +1894,7 @@ void run(int argc, const char *argv[])
   // Build querydata from the contents
 
   NFmiQueryData *newQData = ::MakeQueryDataFromBlocks(params, stationInfoSystem, dataBlocks);
-  auto_ptr<NFmiQueryData> newQDataPtr(newQData);
+
   if (newQData == 0)
     throw runtime_error("Error: Unable to create querydata from METAR data, stopping program...");
 
@@ -1908,6 +1908,7 @@ void run(int argc, const char *argv[])
       throw runtime_error(
           "Error: Unable to create querydata with totalWind-parameter, stopping program...");
     ::WriteMetarDataToCout(newQDataWithTotalWind);
+    delete newQData;
   }
   else
     ::WriteMetarDataToCout(newQData);

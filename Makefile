@@ -59,7 +59,8 @@ INCLUDES = -I$(includedir) \
 	-I$(includedir)/bufr \
 	-I$(includedir)/libecbufr \
 	-I$(includedir)/ecbufr \
-	-I$(includedir)/smartmet
+	-I$(includedir)/smartmet \
+	-I$(PREFIX)/gdal30/include
 
 LIBS = -L$(libdir) \
 	-lsmartmet-calculator \
@@ -77,7 +78,7 @@ LIBS = -L$(libdir) \
 	-lboost_filesystem \
         -lboost_system \
 	-lfmt \
-	-lgdal \
+	-L$(PREFIX)/gdal30/lib -lgdal \
 	-lmetar \
 	-ljasper \
 	-leccodes \

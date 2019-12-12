@@ -34,7 +34,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
-#include <gdal/ogr_geometry.h>
+#include <ogr_geometry.h>
 #include <macgyver/StringConversion.h>
 #include <macgyver/WorldTimeZones.h>
 #include <newbase/NFmiCmdLine.h>

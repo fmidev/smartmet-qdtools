@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 19.12.4
+Version: 19.12.11
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -33,7 +33,7 @@ BuildRequires: smartmet-library-spine-devel
 BuildRequires: mdsplib >= 16.4.8
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: zlib-devel
-BuildRequires: gdal-devel
+BuildRequires: gdal30-devel
 BuildRequires: jasper-devel
 BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
@@ -54,7 +54,7 @@ Requires: jasper-libs >= 1.900.1
 Requires: libecbufr
 Requires: libbufr >= 3.2
 Requires: netcdf >= 4.3.3.1
-Requires: gdal-libs
+Requires: gdal30-libs
 Requires: boost-regex
 Requires: boost-iostreams
 Requires: boost-date-time
@@ -190,6 +190,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Dec 11 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.12.11-1.fmi
+- Upgrade to GDAL 3.0
+
 * Wed Dec  4 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.12.4-1.fmi
 - Fixed dependency to be on gdal-libs instead of gdal
 - Use -fno-omit-frame-pointer for a better profiling and debugging experience                                                                                              

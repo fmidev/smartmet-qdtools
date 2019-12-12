@@ -9,7 +9,7 @@
 #include <newbase/NFmiStringList.h>
 
 #ifdef UNIX
-#include <gdal/ogr_spatialref.h>
+#include <ogr_spatialref.h>
 #endif
 
 #include <algorithm>

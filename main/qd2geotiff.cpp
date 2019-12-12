@@ -1,12 +1,12 @@
 #include "GeoTiffQD.h"
 #include <boost/shared_ptr.hpp>
-#include <gdal/gdal_priv.h>
-#include <gdal/ogr_spatialref.h>
 #include <newbase/NFmiArea.h>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiQueryData.h>
+#include <gdal_priv.h>
 #include <iomanip>
 #include <iostream>
+#include <ogr_spatialref.h>
 #include <stdio.h>
 
 // float * fillFloatRasterByQD(NFmiFastQueryInfo * theData, int width, int height);
@@ -142,11 +142,11 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
   // papszMetadata = poDriver->GetMetadata();
 
   /*
-       if( CSLFetchBoolean( papszMetadata, GDAL_DCAP_CREATE, FALSE ) )
-       printf( "Driver %s supports Create() method.\n", pszFormat );
-   if( CSLFetchBoolean( papszMetadata, GDAL_DCAP_CREATECOPY, FALSE ) )
-       printf( "Driver %s supports CreateCopy() method.\n", pszFormat );
-       */
+    if( CSLFetchBoolean( papszMetadata, GDAL_DCAP_CREATE, FALSE ) )
+    printf( "Driver %s supports Create() method.\n", pszFormat );
+    if( CSLFetchBoolean( papszMetadata, GDAL_DCAP_CREATECOPY, FALSE ) )
+    printf( "Driver %s supports CreateCopy() method.\n", pszFormat );
+  */
 
   int paramSize = 1;  // theData->ParamBag().GetSize();
   if (theExternal != 0) paramSize = 2;
@@ -254,17 +254,26 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
   // int  *abyRaster;
   // abyRaster = fillIntRasterByQD(theData, theExternal, width, height, area);
   void *abyRaster;
+
+  // Note: Added trivial error handling to make compilation pass by introducing
+  // "auto err = " variables and always throwing if something went wrong.
+  // Won't make this legacy code any better than that.
+
   if (isIntDataType)
   {
     abyRaster = fillIntRasterByQD(theData, theExternal, width, height, area);
     // GDT_Int32   3/4
-    poBand->RasterIO(GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Int32, 0, 0);
+    auto err =
+        poBand->RasterIO(GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Int32, 0, 0);
+    if (err) throw std::runtime_error("Error in raster handler");
   }
   else
   {
     abyRaster = fillFloatRasterByQD(theData, theExternal, width, height, area);
     //  GDT_Float32  3/4
-    poBand->RasterIO(GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Float32, 0, 0);
+    auto err = poBand->RasterIO(
+        GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Float32, 0, 0);
+    if (err) throw std::runtime_error("Error in raster handler");
   }
 
   // External Band parameter for data int
@@ -280,13 +289,17 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
     {
       abyRaster = fillIntRasterByQD(theExternal, theData, width, height, area);
       // GDT_Int32   3/4
-      poBand->RasterIO(GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Int32, 0, 0);
+      auto err = poBand->RasterIO(
+          GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Int32, 0, 0);
+      if (err) throw std::runtime_error("Error in raster handler");
     }
     else
     {
       abyRaster = fillFloatRasterByQD(theExternal, theData, width, height, area);
       //  GDT_Float32  3/4
-      poBand->RasterIO(GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Float32, 0, 0);
+      auto err = poBand->RasterIO(
+          GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Float32, 0, 0);
+      if (err) throw std::runtime_error("Error in raster handler");
     }
 
     // abyRaster = fillIntRasterByQD(theExternal, theData, width, height, area);

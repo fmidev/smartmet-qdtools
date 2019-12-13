@@ -520,7 +520,7 @@ NFmiHPlaceDescriptor MakeHPlaceDescriptor(NFmiFastQueryInfo& theQ,
   NFmiPoint tr(theQ.Grid()->GridToWorldXY(NFmiPoint(x2, y2)));
 
   boost::shared_ptr<NFmiArea> area(
-      NFmiArea::CreateFromBBox(*theQ.Grid()->Area()->SpatialReference(), bl, tr));
+      NFmiArea::CreateFromBBox(theQ.Grid()->Area()->SpatialReference(), bl, tr));
 
   if (area.get() == 0) throw runtime_error("Failed to create the new projection");
 

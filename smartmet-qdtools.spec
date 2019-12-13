@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 19.12.11
+Version: 19.12.13
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -22,12 +22,12 @@ BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: fmt-devel
-BuildRequires: smartmet-library-calculator-devel >= 19.12.4
-BuildRequires: smartmet-library-gis-devel >= 19.12.4
-BuildRequires: smartmet-library-imagine-devel >= 19.11.20
-BuildRequires: smartmet-library-macgyver-devel >= 19.12.4
-BuildRequires: smartmet-library-newbase-devel >= 19.12.4
-BuildRequires: smartmet-library-smarttools-devel >= 19.12.4
+BuildRequires: smartmet-library-calculator-devel >= 19.12.13
+BuildRequires: smartmet-library-gis-devel >= 19.12.10
+BuildRequires: smartmet-library-imagine-devel >= 19.12.13
+BuildRequires: smartmet-library-macgyver-devel >= 19.9.26
+BuildRequires: smartmet-library-newbase-devel >= 19.12.12
+BuildRequires: smartmet-library-smarttools-devel >= 19.12.13
 BuildRequires: smartmet-timezones
 BuildRequires: smartmet-library-spine-devel
 BuildRequires: mdsplib >= 16.4.8
@@ -39,12 +39,12 @@ BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
 BuildRequires: fmt-devel
 Requires: smartmet-timezones >= 19.7.29
-Requires: smartmet-library-calculator >= 19.12.4
-Requires: smartmet-library-gis >= 19.12.4
-Requires: smartmet-library-imagine >= 19.11.20
-Requires: smartmet-library-macgyver >= 19.12.4
-Requires: smartmet-library-newbase >= 19.12.4
-Requires: smartmet-library-smarttools >= 19.12.4
+Requires: smartmet-library-calculator >= 19.12.13
+Requires: smartmet-library-gis >= 19.12.10
+Requires: smartmet-library-imagine >= 19.12.13
+Requires: smartmet-library-macgyver >= 19.9.26
+Requires: smartmet-library-newbase >= 19.12.12
+Requires: smartmet-library-smarttools >= 19.12.13
 Requires: smartmet-library-spine
 Requires: fmt
 Requires: eccodes
@@ -190,6 +190,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Fri Dec 13 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.12.13-1.fmi
+- Repackaged due to NFmiArea API changes
+
 * Wed Dec 11 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.12.11-1.fmi
 - Upgrade to GDAL 3.0
 

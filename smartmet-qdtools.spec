@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 19.12.4
+Version: 20.1.17
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -188,6 +188,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Fri Jan 17 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.1.17-1.fmi
+- qdcombine can now combine point data too
+
 * Wed Dec  4 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.12.4-1.fmi
 - Fixed dependency to be on gdal-libs instead of gdal
 - Use -fno-omit-frame-pointer for a better profiling and debugging experience                                                                                              

@@ -15,9 +15,6 @@
 #include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiTotalWind.h>
 #include <newbase/NFmiWeatherAndCloudiness.h>
-
-#include <boost/foreach.hpp>
-
 #include <iostream>
 #include <utility>
 
@@ -35,20 +32,24 @@ void Usage(void)
        << "       qdcombine [options] -o [outfile] directory [file2 file3...]" << endl
        << "       qdcombine [options] -O [mmapped_outfile] directory [file2 file3...]" << endl
        << endl
-       << "Program combines all qdatas from given directory to one file if possible." << endl
-       << "if multiple arguments are given, each is read in as a file, or as" << endl
+       << "The program combines all querydatas from given directory to one file if possible."
+       << endl
+       << "If multiple arguments are given, each one is processedn as a file, or as" << endl
        << "the latest file in a directory." << endl
        << endl
        << "The program makes combined times/params/level to output file." << endl
-       << "QueryData in files must have the same projection and grid size." << endl
-       << "TODO doesn't work for station data yet." << endl
+       << "Querydata in files must have the same projection and grid size" << endl
+       << "unless point data is being combined." << endl
        << endl
        << "Options:" << endl
        << endl
-       << "\t-o outfile Output filename, normally data is printed to standard output" << endl
-       << "\t-O outfile Memory mapped output filename" << endl
-       << "\t-l force levelType[,value] (e.g. 5000,0 would be normal ground data)." << endl
-       << "\t-p e.g. 240,ecmwf\tMake result data's producer id and name as wanted." << endl
+       << "   -o outfile           Output filename (default = stdout)" << endl
+       << "   -O outfile           Memory mapped output filename" << endl
+       << "   -P                   Combine point data instead of grid data" << endl
+       << "   -l levelType[,value] Set level type and value (e.g. 5000,0 would be normal ground "
+          "data)."
+       << endl
+       << "   -p producer_id,name  Set producer id and name (for example 240,ecmwf)." << endl
        << endl;
 }
 
@@ -61,7 +62,7 @@ struct PointerDestroyer
   }
 };
 
-static void ReadData(vector<string> &theDataFileNames, MyGrid &theUsedGrid)
+static void ReadGridData(vector<string> &theDataFileNames, MyGrid &theUsedGrid)
 {
   for (unsigned int i = 0; i < theDataFileNames.size(); i++)
   {
@@ -111,7 +112,7 @@ static void FillCombinedData(const vector<string> &theDataFileNames,
 
       if (!params.empty() && !times.empty() && !levels.empty())
       {
-        BOOST_FOREACH (const IndexPair &param, params)
+        for (const IndexPair &param : params)
         {
           sourceInfo.ParamIndex(param.first);
           theInfo.ParamIndex(param.second);
@@ -119,12 +120,12 @@ static void FillCombinedData(const vector<string> &theDataFileNames,
           for (sourceInfo.ResetLocation(), theInfo.ResetLocation();
                sourceInfo.NextLocation() && theInfo.NextLocation();)
           {
-            BOOST_FOREACH (const IndexPair &level, levels)
+            for (const IndexPair &level : levels)
             {
               sourceInfo.LevelIndex(level.first);
               theInfo.LevelIndex(level.second);
 
-              BOOST_FOREACH (const IndexPair &time, times)
+              for (const IndexPair &time : times)
               {
                 sourceInfo.TimeIndex(time.first);
                 theInfo.TimeIndex(time.second);
@@ -140,6 +141,79 @@ static void FillCombinedData(const vector<string> &theDataFileNames,
   }              // for files
 }
 
+static void FillCombinedData(const vector<string> &theDataFileNames,
+                             bool use_point_data,
+                             NFmiFastQueryInfo &theInfo,
+                             NFmiLevel *theForcedLevel)
+{
+  if (!use_point_data)
+    FillCombinedData(theDataFileNames, theInfo, theForcedLevel);
+  else
+  {
+    for (unsigned int i = 0; i < theDataFileNames.size(); i++)
+    {
+      NFmiQueryData qd(theDataFileNames[i]);
+      NFmiFastQueryInfo sourceInfo(&qd);
+
+      if (!sourceInfo.Grid())
+      {
+        typedef std::pair<unsigned int, unsigned int> IndexPair;
+        typedef std::vector<IndexPair> Indexes;
+        Indexes params, times, levels, locations;
+
+        // Collect indexes for common parameters, times, levels and locations
+        for (sourceInfo.ResetParam(); sourceInfo.NextParam();)
+          if (theInfo.Param(*(sourceInfo.Param().GetParam())))
+            params.push_back(IndexPair(sourceInfo.ParamIndex(), theInfo.ParamIndex()));
+
+        for (sourceInfo.ResetTime(); sourceInfo.NextTime();)
+          if (theInfo.Time(sourceInfo.Time()))
+            times.push_back(IndexPair(sourceInfo.TimeIndex(), theInfo.TimeIndex()));
+
+        for (sourceInfo.ResetLevel(); sourceInfo.NextLevel();)
+          if (theForcedLevel || theInfo.Level(*sourceInfo.Level()))
+            levels.push_back(IndexPair(sourceInfo.LevelIndex(), theInfo.LevelIndex()));
+
+        for (sourceInfo.ResetLocation(); sourceInfo.NextLocation();)
+          if (theInfo.Location(sourceInfo.Location()->GetIdent()))
+            locations.push_back(IndexPair(sourceInfo.LocationIndex(), theInfo.LocationIndex()));
+
+        // We avoid unnecessary location loops with this extra test
+
+        if (!params.empty() && !times.empty() && !levels.empty() && !locations.empty())
+        {
+          for (const IndexPair &param : params)
+          {
+            sourceInfo.ParamIndex(param.first);
+            theInfo.ParamIndex(param.second);
+
+            for (const IndexPair &loc : locations)
+            {
+              sourceInfo.LocationIndex(loc.first);
+              theInfo.LocationIndex(loc.second);
+
+              for (const IndexPair &level : levels)
+              {
+                sourceInfo.LevelIndex(level.first);
+                theInfo.LevelIndex(level.second);
+
+                for (const IndexPair &time : times)
+                {
+                  sourceInfo.TimeIndex(time.first);
+                  theInfo.TimeIndex(time.second);
+
+                  if (theInfo.FloatValue() == kFloatMissing)
+                    theInfo.FloatValue(sourceInfo.FloatValue());
+                }  // times
+              }    // levels
+            }      // locations
+          }        // params
+        }          // if !empty
+      }            // if same grid
+    }              // for files
+  }
+}
+
 struct LevelLessThan
 {
   bool operator()(const NFmiLevel &l1, const NFmiLevel &l2)
@@ -151,6 +225,7 @@ struct LevelLessThan
 };
 
 static NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
+                                           bool use_point_data,
                                            MyGrid &theUsedGrid,
                                            NFmiLevel *theForcedLevel,
                                            NFmiProducer *theWantedProducer)
@@ -180,33 +255,52 @@ static NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
   // suoraan k‰yttˆˆn, koska muuten parametrien j‰rjestys voi
   // muuttua
 
+  std::set<NFmiStation> stations;  // for point data only
+
   for (unsigned int i = 0; i < dataFileNames.size(); i++)
   {
     NFmiQueryData data(dataFileNames[i]);
     NFmiFastQueryInfo info(&data);
 
-    if (info.Grid() && theUsedGrid == *info.Grid())
+    bool ok = false;
+    if (use_point_data)
+      ok = !info.Grid();
+    else
+      ok = (info.Grid() && theUsedGrid == *info.Grid());
+
+    if (ok)
     {
+      isAllParamBagsIdentical &= (firstParaBag == info.ParamBag());
+
       for (info.ResetTime(); info.NextTime();)
         allTimes.insert(info.Time());
-      if ((firstParaBag == info.ParamBag()) == false) isAllParamBagsIdentical = false;
+
       for (info.ResetParam(); info.NextParam();)
         allParams.insert(*(info.Param().GetParam()));
-      for (info.ResetLevel(); info.NextLevel();)
-      {
-        if (theForcedLevel)
-          ;
-        else
+
+      if (!theForcedLevel)
+        for (info.ResetLevel(); info.NextLevel();)
           allLevels.insert(*(info.Level()));
+
+      if (use_point_data)
+      {
+        for (info.ResetLocation(); info.NextLocation();)
+        {
+          auto *loc = info.Location();
+          // loc may by NFmiStation, NFmiLocation or NFmiRadarStation. We select NFmiStation
+          NFmiStation station(
+              loc->GetIdent(), loc->GetName(), loc->GetLongitude(), loc->GetLatitude());
+          stations.insert(station);
+        }
       }
     }
   }
 
-  // Tehd‰‰n kaikkia datoja yhdist‰v‰ timeDescriptor
+  // Tehd‰‰n kaikkia datoja yhdist‰v‰ tdescriptor
   NFmiTimeList timeList;
   for (set<NFmiMetTime>::iterator it1 = allTimes.begin(); it1 != allTimes.end(); ++it1)
     timeList.Add(new NFmiMetTime(*it1));
-  NFmiTimeDescriptor timeDesc(originTime, timeList);
+  NFmiTimeDescriptor tdesc(originTime, timeList);
 
   // Tehd‰‰n kaikkia datoja yhdist‰v‰ paramDescriptor
   NFmiParamBag paramBag;
@@ -221,8 +315,8 @@ static NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
           parId == kFmiWeatherAndCloudiness)  // HUOM! yhdistelm‰ parametrit totalWind ja
                                               // weatherAndCloudiness ovat erikois tapauksia!!!
       {
-        NFmiTotalWind totWind;  // pit‰isi muuttaa kyseisten luokkien CreateParam static-metodiksi,
-                                // niin koodista tulisi fiksumpaa
+        NFmiTotalWind totWind;  // pit‰isi muuttaa kyseisten luokkien CreateParam
+                                // static-metodiksi, niin koodista tulisi fiksumpaa
         NFmiWeatherAndCloudiness weatAndC;
         NFmiDataIdent *dataIdent = (parId == kFmiTotalWindMS) ? totWind.CreateParam(usedProducer)
                                                               : weatAndC.CreateParam(usedProducer);
@@ -233,20 +327,31 @@ static NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
         paramBag.Add(NFmiDataIdent(*it2, usedProducer));
     }
   }
-  NFmiParamDescriptor paramDesc(paramBag);
+  NFmiParamDescriptor pdesc(paramBag);
 
   // Tehd‰‰n kaikkia datoja yhdist‰v‰ vPlaceDescriptor
   NFmiLevelBag levelBag;
   for (set<NFmiLevel, LevelLessThan>::iterator it3 = allLevels.begin(); it3 != allLevels.end();
        ++it3)
     levelBag.AddLevel(*it3);
-  NFmiVPlaceDescriptor vplaceDesc(levelBag);
+  NFmiVPlaceDescriptor vdesc(levelBag);
 
-  NFmiGrid grid(theUsedGrid.itsArea, theUsedGrid.itsNX, theUsedGrid.itsNY);
-  NFmiHPlaceDescriptor hplaceDesc(grid);
-
-  NFmiQueryInfo info(paramDesc, timeDesc, hplaceDesc, vplaceDesc);
-  return info;
+  if (use_point_data)
+  {
+    NFmiLocationBag lbag;
+    for (const auto &station : stations)
+      lbag.AddLocation(station);
+    NFmiHPlaceDescriptor hdesc(lbag);
+    NFmiQueryInfo info(pdesc, tdesc, hdesc, vdesc);
+    return info;
+  }
+  else
+  {
+    NFmiGrid grid(theUsedGrid.itsArea, theUsedGrid.itsNX, theUsedGrid.itsNY);
+    NFmiHPlaceDescriptor hdesc(grid);
+    NFmiQueryInfo info(pdesc, tdesc, hdesc, vdesc);
+    return info;
+  }
 }
 
 // ----------------------------------------------------------------------
@@ -255,9 +360,9 @@ static NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
  */
 // ----------------------------------------------------------------------
 
-void Run(int argc, const char *argv[])
+int Run(int argc, const char *argv[])
 {
-  NFmiCmdLine cmdline(argc, argv, "l!p!o!O!");
+  NFmiCmdLine cmdline(argc, argv, "l!p!o!O!P");
 
   // Tarkistetaan optioiden oikeus:
 
@@ -276,6 +381,8 @@ void Run(int argc, const char *argv[])
     throw runtime_error("");  // t‰ss‰ piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
   }
+
+  bool use_point_data = cmdline.isOption('P');
 
   NFmiLevel *forcedLevel = 0;
   if (cmdline.isOption('l'))
@@ -350,10 +457,10 @@ void Run(int argc, const char *argv[])
   }
 
   MyGrid usedGrid;
-  ::ReadData(dataFileNames, usedGrid);
+  if (!use_point_data) ::ReadGridData(dataFileNames, usedGrid);
 
   NFmiQueryInfo innerInfo =
-      ::MakeCombinedInnerInfo(dataFileNames, usedGrid, forcedLevel, wantedProducer);
+      ::MakeCombinedInnerInfo(dataFileNames, use_point_data, usedGrid, forcedLevel, wantedProducer);
 
   if (!mmapped)
   {
@@ -361,7 +468,7 @@ void Run(int argc, const char *argv[])
     if (newData)
     {
       NFmiFastQueryInfo info(newData);
-      ::FillCombinedData(dataFileNames, info, forcedLevel);
+      ::FillCombinedData(dataFileNames, use_point_data, info, forcedLevel);
       newData->Write(outfile);
     }
     delete newData;
@@ -370,15 +477,16 @@ void Run(int argc, const char *argv[])
   {
     NFmiQueryData *newData = NFmiQueryDataUtil::CreateEmptyData(innerInfo, outfile, true);
     NFmiFastQueryInfo info(newData);
-    ::FillCombinedData(dataFileNames, info, forcedLevel);
+    ::FillCombinedData(dataFileNames, use_point_data, info, forcedLevel);
     delete newData;
   }
+
+  return 0;
 }
 
 int main(int argc, const char *argv[]) try
 {
-  Run(argc, argv);
-  return 0;
+  return Run(argc, argv);
 }
 catch (exception &e)
 {

@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 20.1.8
+Version: 20.2.6
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -190,6 +190,12 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Feb  6 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.2.6-1.fmi
+- NFmiPoint Z-coordinate was removed from the ABI
+
+* Fri Jan 17 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.1.17-1.fmi
+- qdcombine can now combine point data too
+
 * Wed Jan  8 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.1.8-1.fmi
 - NFmiPoint ABI changed
 

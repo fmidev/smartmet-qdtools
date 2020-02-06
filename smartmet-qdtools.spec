@@ -22,12 +22,12 @@ BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: fmt-devel
-BuildRequires: smartmet-library-calculator-devel >= 20.1.8
-BuildRequires: smartmet-library-gis-devel >= 19.12.10
-BuildRequires: smartmet-library-imagine-devel >= 20.1.8
-BuildRequires: smartmet-library-macgyver-devel >= 19.9.26
-BuildRequires: smartmet-library-newbase-devel >= 20.1.8
-BuildRequires: smartmet-library-smarttools-devel >= 20.1.8
+BuildRequires: smartmet-library-calculator-devel >= 20.2.6
+BuildRequires: smartmet-library-gis-devel >= 20.2.5
+BuildRequires: smartmet-library-imagine-devel >= 20.2.6
+BuildRequires: smartmet-library-macgyver-devel >= 20.2.5
+BuildRequires: smartmet-library-newbase-devel >= 20.2.6
+BuildRequires: smartmet-library-smarttools-devel >= 20.2.5
 BuildRequires: smartmet-timezones
 BuildRequires: smartmet-library-spine-devel
 BuildRequires: mdsplib >= 16.4.8
@@ -39,12 +39,12 @@ BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
 BuildRequires: fmt-devel
 Requires: smartmet-timezones >= 19.7.29
-Requires: smartmet-library-calculator >= 20.1.8
-Requires: smartmet-library-gis >= 19.12.10
-Requires: smartmet-library-imagine >= 20.1.8
-Requires: smartmet-library-macgyver >= 19.9.26
-Requires: smartmet-library-newbase >= 20.1.8
-Requires: smartmet-library-smarttools >= 20.1.8
+Requires: smartmet-library-calculator >= 20.2.6
+Requires: smartmet-library-gis >= 20.2.5
+Requires: smartmet-library-imagine >= 20.2.6
+Requires: smartmet-library-macgyver >= 20.2.5
+Requires: smartmet-library-newbase >= 20.2.6
+Requires: smartmet-library-smarttools >= 20.2.5
 Requires: smartmet-library-spine
 Requires: fmt
 Requires: eccodes

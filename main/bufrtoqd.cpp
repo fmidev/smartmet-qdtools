@@ -78,7 +78,8 @@ extern "C"
 namespace fs = boost::filesystem;
 struct ParNameInfo
 {
-  ParNameInfo() : bufrName(), shortName(), parId(kFmiBadParameter) {}
+  ParNameInfo() : bufrId(), bufrName(), shortName(), parId(kFmiBadParameter) {}
+  std::string bufrId;
   std::string bufrName;
   std::string shortName;
   FmiParameterName parId;
@@ -217,6 +218,7 @@ struct Options
   // the size of the sounding (from ~100 to ~5000 levels)
   bool insignificant = false;                                      //    --insignificant
   bool subsets = false;                                            //    --subsets
+  bool usebufrname = false;                                        // --usebufrname
   std::string category;                                            // -C --category
   std::string conffile = "/usr/share/smartmet/formats/bufr.conf";  // -c --config
   std::string stationsfile = "/usr/share/smartmet/stations.csv";   // -s --stations
@@ -280,7 +282,10 @@ bool parse_options(int argc, char *argv[], Options &options)
       "producer,p", po::value(&producerinfo), "producer number,name")(
       "producernumber", po::value(&options.producernumber), "producer number (default: 0)")(
       "producername", po::value(&options.producername), "producer name (default: UNKNOWN)")(
-      "autoproducer,a", po::bool_switch(&options.autoproducer), "guess producer automatically");
+      "autoproducer,a", po::bool_switch(&options.autoproducer), "guess producer automatically")(
+      "usebufrname",
+      po::bool_switch(&options.usebufrname),
+      "use BUFR parameter name instead of parameter code number from configuration file");
 
   po::positional_options_description p;
   p.add("infile", 1);
@@ -324,7 +329,14 @@ bool parse_options(int argc, char *argv[], Options &options)
            " * 'radiances'\n"
            " * 'oceanographic'\n"
            " * 'image'\n\n"
-           "Conversion of all categories is not supported though.\n";
+           "Conversion of all categories is not supported though.\n\n"
+           "Earlier versions of bufrtoqd used the second column of the configuration file, i.e.\n"
+           "the parameter name, to determine the mapping from BUFR to querydata parameters. This\n"
+           "lead to problems since codes 010004 and 007004 both have the same name PRESSURE.\n"
+           "The current default is to use the BUFR code instead of the name so that parameters\n"
+           "with the same name can be discerned. The old behaviour can be restored using the\n"
+           "option --usebufrname.\n";
+
     return false;
   }
 
@@ -702,7 +714,7 @@ void read_message(const std::string &filename,
   // Open the file
 
   FILE *bufr = fopen(filename.c_str(),
-                     "rb");  // VC++ vaatii ett‰ avataan bin‰‰risen‰ (Linuxissa se on default)
+                     "rb");  // VC++ vaatii ett√§ avataan bin√§√§risen√§ (Linuxissa se on default)
   if (bufr == nullptr)
   {
     throw std::runtime_error("Could not open BUFR file '" + filename + "' reading");
@@ -933,7 +945,12 @@ std::set<std::string> collect_names(const Messages &messages)
   BOOST_FOREACH (const Message &msg, messages)
   {
     BOOST_FOREACH (const Message::value_type &value, msg)
-      names.insert(value.second.name);
+    {
+      if (options.usebufrname)
+        names.insert(value.second.name);
+      else
+        names.insert(fmt::format("{:0>6}", value.first));
+    }
   }
   return names;
 }
@@ -993,9 +1010,13 @@ struct CsvConfig
 
     ParNameInfo parInfo;
     parInfo.parId = static_cast<FmiParameterName>(converter.ToEnum(row[2]));
+    parInfo.bufrId = row[0];
     parInfo.bufrName = row[1];
     parInfo.shortName = row[3];
-    pmap.insert(NameMap::value_type(parInfo.bufrName, parInfo));
+    if (options.usebufrname)
+      pmap.insert(NameMap::value_type(parInfo.bufrName, parInfo));
+    else
+      pmap.insert(NameMap::value_type(parInfo.bufrId, parInfo));
   }
 };
 
@@ -2031,8 +2052,8 @@ int run(int argc, char *argv[])
   else
   {
     std::ofstream out(options.outfile.c_str(),
-                      std::ios::out | std::ios::binary);  // VC++ vaatii ett‰ tiedosto avataan
-    // bin‰‰risen‰ (Linuxissa se on default
+                      std::ios::out | std::ios::binary);  // VC++ vaatii ett√§ tiedosto avataan
+    // bin√§√§risen√§ (Linuxissa se on default
     // optio)
     out << *data;
   }

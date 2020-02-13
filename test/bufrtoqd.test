@@ -15,7 +15,7 @@ DoTest("land observations",
 
 DoTest("airplane (AMDAR) observations",
        "amdar.sqd",
-       "-c ../cnf/bufr.conf -s ../cnf/stations.csv data/amdar.bufr");
+       "--usebufrname -c ../cnf/bufr.conf -s ../cnf/stations.csv data/amdar.bufr");
 
 DoTest("soundings",
        "sounding.sqd",

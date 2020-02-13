@@ -23,8 +23,8 @@ BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: fmt-devel
 BuildRequires: smartmet-library-calculator-devel >= 20.2.6
-BuildRequires: smartmet-library-gis-devel >= 20.2.5
-BuildRequires: smartmet-library-imagine-devel >= 20.2.6
+BuildRequires: smartmet-library-gis-devel >= 20.2.13
+BuildRequires: smartmet-library-imagine-devel >= 20.2.12
 BuildRequires: smartmet-library-macgyver-devel >= 20.2.5
 BuildRequires: smartmet-library-newbase-devel >= 20.2.6
 BuildRequires: smartmet-library-smarttools-devel >= 20.2.5
@@ -40,8 +40,8 @@ BuildRequires: netcdf-cxx-devel
 BuildRequires: fmt-devel
 Requires: smartmet-timezones >= 19.7.29
 Requires: smartmet-library-calculator >= 20.2.6
-Requires: smartmet-library-gis >= 20.2.5
-Requires: smartmet-library-imagine >= 20.2.6
+Requires: smartmet-library-gis >= 20.2.13
+Requires: smartmet-library-imagine >= 20.2.12
 Requires: smartmet-library-macgyver >= 20.2.5
 Requires: smartmet-library-newbase >= 20.2.6
 Requires: smartmet-library-smarttools >= 20.2.5

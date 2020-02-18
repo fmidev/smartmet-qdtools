@@ -1651,7 +1651,8 @@ void copy_params(NFmiFastQueryInfo &info, const Message &msg, const NameMap &nam
 {
   BOOST_FOREACH (const Message::value_type &value, msg)
   {
-    NameMap::const_iterator it = namemap.find(value.second.name);
+    auto key = options.usebufrname ? value.second.name : fmt::format("{:0>6}", value.first);
+    NameMap::const_iterator it = namemap.find(key);
     if (it != namemap.end())
     {
       if (!info.Param(it->second.parId))

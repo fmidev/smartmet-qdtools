@@ -3,7 +3,7 @@
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
 Version: 20.2.18
-Release: 1%{?dist}.fmi
+Release: 2%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -190,6 +190,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Feb 18 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.2.18-2.fmi
+- Fixed bufrtoqd data copying loop to use --usebufrname correctly
+
 * Tue Feb 18 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.2.18-1.fmi
 - metar2qd option -W prevents packaging wind components to one TotalWind parameter
 

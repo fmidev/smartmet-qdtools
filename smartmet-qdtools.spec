@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 20.2.13
+Version: 20.2.18
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -190,6 +190,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Feb 18 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.2.18-1.fmi
+- metar2qd option -W prevents packaging wind components to one TotalWind parameter
+
 * Thu Feb 13 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.2.13-1.fmi
 - bufrtoqd now uses config file column 1 (code) instead of column 2 (name) to avoid ambiguities for parameters with the same name
 - Added bufrtoqd --usebufrname to revert to the old behaviour

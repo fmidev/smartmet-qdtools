@@ -530,6 +530,7 @@ void Usage(const std::string &theExecutableName)
        << "\t-r <round_time_in_minutes>\tUse messages time rounding, default value is 30 minutes."
        << endl
        << "\t-n <NOAA-format=false>\tTry reading NOAA metar format files." << endl
+       << "\t-W \tDon't create Wind combined parameter to result data." << endl
        << endl;
 }
 
@@ -1760,6 +1761,14 @@ list<string> SortMetarFiles(const list<string> &metarfiles)
   return outfiles;
 }
 
+static void WriteMetarDataToCout(NFmiQueryData *metarData)
+{
+  cerr << "\nStoring data to file." << endl;
+  NFmiStreamQueryData sQOutData(metarData);  // t‰m‰ myˆs tuhoaa qdatan
+  if (!sQOutData.WriteCout())
+    throw runtime_error("Error: Couldn't write combined qdata to stdout.");
+}
+
 // ----------------------------------------------------------------------
 /*!
  * \brief Main program without error catching
@@ -1771,7 +1780,7 @@ void run(int argc, const char *argv[])
   // HUOM!! VC++ 2012 (Update 3) -versiolla x64-debug versio toimii debuggerissa ihan oudosti,
   // ohjelman steppaus ei mene oikein (win32 debug k‰ytt‰ytyy oikein).
   // Ohjelma tuottaa kuitenkin oikean tuloksen kaikilla kombinaatioilla win32/x64 + debug/release
-  NFmiCmdLine cmdline(argc, argv, "s!vFr!n");
+  NFmiCmdLine cmdline(argc, argv, "s!vFr!nW");
 
   // Tarkistetaan optioiden oikeus:
   if (cmdline.Status().IsError())
@@ -1833,6 +1842,9 @@ void run(int argc, const char *argv[])
   if (cmdline.isOption('r'))
     timeRoundingResolution = NFmiStringTools::Convert<int>(cmdline.OptionValue('r'));
 
+  bool makeTotalWindParameter = true;  // Oletuksena luodaan TotalWind parametri
+  if (cmdline.isOption('W')) makeTotalWindParameter = false;
+
   //	1. Lue n kpl filefiltereit‰ listaan
   vector<string> fileFilterList;
   for (int i = 1; i <= numOfParams; i++)
@@ -1882,22 +1894,24 @@ void run(int argc, const char *argv[])
   // Build querydata from the contents
 
   NFmiQueryData *newQData = ::MakeQueryDataFromBlocks(params, stationInfoSystem, dataBlocks);
-  auto_ptr<NFmiQueryData> newQDataPtr(newQData);
+
   if (newQData == 0)
     throw runtime_error("Error: Unable to create querydata from METAR data, stopping program...");
 
-  // tehd‰‰n dataan viel‰ totalwind parametri WS, WD ja WGustin avulla
-  NFmiFastQueryInfo tempInfo(newQData);
-  NFmiQueryData *newQDataWithTotalWind = NFmiQueryDataUtil::MakeCombineParams(
-      tempInfo, 7, false, true, false, kFmiWindGust, std::vector<int>(), false, 0, false, false);
-  if (newQDataWithTotalWind == 0)
-    throw runtime_error(
-        "Error: Unable to create querydata with totalWind-parameter, stopping program...");
-
-  cerr << "\nStoring data to file." << endl;
-  NFmiStreamQueryData sQOutData(newQDataWithTotalWind);  // t‰m‰ myˆs tuhoaa qdatan
-  if (!sQOutData.WriteCout())
-    throw runtime_error("Error: Couldn't write combined qdata to stdout.");
+  if (makeTotalWindParameter)
+  {
+    // tehd‰‰n dataan viel‰ totalwind parametri WS, WD ja WGustin avulla
+    NFmiFastQueryInfo tempInfo(newQData);
+    NFmiQueryData *newQDataWithTotalWind = NFmiQueryDataUtil::MakeCombineParams(
+        tempInfo, 7, false, true, false, kFmiWindGust, std::vector<int>(), false, 0, false, false);
+    if (newQDataWithTotalWind == 0)
+      throw runtime_error(
+          "Error: Unable to create querydata with totalWind-parameter, stopping program...");
+    ::WriteMetarDataToCout(newQDataWithTotalWind);
+    delete newQData;
+  }
+  else
+    ::WriteMetarDataToCout(newQData);
 
   if (fVerboseMode && icaoIdUnknownSet.size())
   {

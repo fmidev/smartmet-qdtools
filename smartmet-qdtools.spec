@@ -2,8 +2,8 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 20.2.18
-Release: 2%{?dist}.fmi
+Version: 20.2.19
+Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -188,6 +188,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Feb 19 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.2.19-1.fmi
+- Fixed nctoqd -h output
+
 * Tue Feb 18 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.2.18-2.fmi
 - Fixed bufrtoqd data copying loop to use --usebufrname correctly
 

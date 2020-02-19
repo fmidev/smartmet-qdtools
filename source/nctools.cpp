@@ -155,6 +155,8 @@ bool parse_options(int argc, char *argv[], Options &options)
                    "\n"
                    "Converts CF-1.4 conforming NetCDF to querydata.\n"
                    "\n"
+                << desc
+                << "\n"
                    "Parameters supported by --addparams: Humidity\n"
                 << std::endl;
     }

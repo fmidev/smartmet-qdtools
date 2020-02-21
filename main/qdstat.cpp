@@ -31,6 +31,10 @@ NFmiEnumConverter converter;
 
 const int column_width = 10;
 
+const std::set<std::string> ignored_params{"WindVectorMS"};
+
+bool ignore_param(const std::string& p) { return (ignored_params.find(p) != ignored_params.end()); }
+
 // ----------------------------------------------------------------------
 /*!
  * \brief Command line options
@@ -1167,6 +1171,8 @@ void stat_locations_times(NFmiFastQueryInfo& qi)
     std::string name = converter.ToString(qi.Param().GetParam()->GetIdent());
     if (name.empty()) name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
 
+    if (ignore_param(name)) continue;
+
     if (options.these_levels.empty())
     {
       Stats stats;
@@ -1212,6 +1218,8 @@ void stat_locations_these_times(NFmiFastQueryInfo& qi)
     qi.Param(p);
     std::string name = converter.ToString(qi.Param().GetParam()->GetIdent());
     if (name.empty()) name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
+
+    if (ignore_param(name)) continue;
 
     if (options.these_levels.empty())
       std::cout << std::setw(param_width) << std::right << "Parameter" << std::setw(18)
@@ -1274,6 +1282,8 @@ void stat_these_stations_these_times(NFmiFastQueryInfo& qi)
     qi.Param(p);
     std::string name = converter.ToString(qi.Param().GetParam()->GetIdent());
     if (name.empty()) name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
+    if (ignore_param(name)) continue;
+
     std::cout << name << std::endl;
 
     for (int wmo : options.these_stations)
@@ -1316,6 +1326,8 @@ void stat_these_stations_times(NFmiFastQueryInfo& qi)
     qi.Param(p);
     std::string name = converter.ToString(qi.Param().GetParam()->GetIdent());
     if (name.empty()) name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
+
+    if (ignore_param(name)) continue;
 
     for (int wmo : options.these_stations)
     {

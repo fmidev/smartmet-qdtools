@@ -71,6 +71,8 @@ void check_xaxis_units(NcVar* var)
   if (units == "m") return;
   if (units == "km") return;
 
+  if (units == "Meter") return;
+
   throw Exception(BCP, "X-axis has unknown units: " + units);
 }
 
@@ -97,6 +99,8 @@ void check_yaxis_units(NcVar* var)
   if (units == "100  km") return;
   if (units == "m") return;
   if (units == "km") return;
+
+  if (units == "Meter") return;
 
   throw Exception(BCP, "Y-axis has unknown units: " + units);
 }
@@ -201,7 +205,7 @@ NFmiVPlaceDescriptor create_vdesc(const nctools::NcFileExtended& ncfile)
       leveltype = kFmiPressureLevel;
     else if (units == "cm")
       leveltype = kFmiDepth;
-    else if (units == "m" || units == "km")
+    else if (units == "m" || units == "km" || units == "Meter")
       leveltype = kFmiHeight;
   }
 

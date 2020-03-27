@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 20.2.21
+Version: 20.3.27
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -76,6 +76,7 @@ Provides: grib2tojpg = %{Version}
 Provides: gribtoqd = %{Version} 
 Provides: grib2toqd = %{Version} 
 Provides: h5toqd = %{Version} 
+Provides: kriging2qd = %{Version}
 Provides: laps2qd = %{Version} 
 Provides: metar2qd = %{Version} 
 Provides: nctoqd = %{Version} 
@@ -143,6 +144,7 @@ make %{_smp_mflags}
 %{_bindir}/grib2toqd
 %{_bindir}/gribtoqd
 %{_bindir}/h5toqd
+%{_bindir}/kriging2qd
 %{_bindir}/laps2qd
 %{_bindir}/metar2qd
 %{_bindir}/nc2qd
@@ -188,6 +190,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Fri Mar 27 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.3.27-1.fmi
+- Added kriging2qd
+
 * Fri Feb 21 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.2.21-1.fmi
 - qdstat now skips WindVectorMS automatically for not being suitable for simple mean/max calculations
 

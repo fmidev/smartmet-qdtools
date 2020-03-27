@@ -489,26 +489,27 @@ void ReportProjection(NFmiFastQueryInfo *q)
        << std::setprecision(6) << endl
        << endl;
 
-  auto *sr = const_cast<NFmiArea *>(area)->SpatialReference();
+  //   auto *sr = const_cast<NFmiArea *>(area)->SpatialReference();
+  const auto &sr = *area->SpatialReference();
   cout << "projstr\t= " << area->ProjStr() << endl
        << "wkt\t= " << area->WKT() << endl
        << endl
        << "prettywkt =\n"
        << area->PrettyWKT() << endl
        << endl
-       << "EPSGTreatsAsLatLong\t\t= " << sr->EPSGTreatsAsLatLong() << endl
-       << "EPSGTreatsAsNorthingEasting\t= " << sr->EPSGTreatsAsNorthingEasting() << endl
-       << "PrimeMeridian\t\t\t= " << sr->GetPrimeMeridian() << endl
-       << "IsGeographic\t\t\t= " << sr->IsGeographic() << endl
-       << "IsProjected\t\t\t= " << sr->IsProjected() << endl
-       << "IsGeocentric\t\t\t= " << sr->IsGeocentric() << endl
-       << "IsLocal\t\t\t\t= " << sr->IsLocal() << endl
-       << "IsVertical\t\t\t= " << sr->IsVertical() << endl
-       << "IsCompound\t\t\t= " << sr->IsCompound() << endl
-       << std::setprecision(10) << "SemiMajor\t\t\t= " << sr->GetSemiMajor() << endl
-       << "SemiMinor\t\t\t= " << sr->GetSemiMinor() << endl
-       << "InvFlattening\t\t\t= " << sr->GetInvFlattening() << endl
-       << "EPSG\t\t\t\t= " << sr->GetEPSGGeogCS() << endl;
+       << "EPSGTreatsAsLatLong\t\t= " << sr.EPSGTreatsAsLatLong() << endl
+       << "EPSGTreatsAsNorthingEasting\t= " << sr.EPSGTreatsAsNorthingEasting() << endl
+       << "PrimeMeridian\t\t\t= " << sr.GetPrimeMeridian() << endl
+       << "IsGeographic\t\t\t= " << sr.IsGeographic() << endl
+       << "IsProjected\t\t\t= " << sr.IsProjected() << endl
+       << "IsGeocentric\t\t\t= " << sr.IsGeocentric() << endl
+       << "IsLocal\t\t\t\t= " << sr.IsLocal() << endl
+       << "IsVertical\t\t\t= " << sr.IsVertical() << endl
+       << "IsCompound\t\t\t= " << sr.IsCompound() << endl
+       << std::setprecision(10) << "SemiMajor\t\t\t= " << sr.GetSemiMajor() << endl
+       << "SemiMinor\t\t\t= " << sr.GetSemiMinor() << endl
+       << "InvFlattening\t\t\t= " << sr.GetInvFlattening() << endl
+       << "EPSG\t\t\t\t= " << sr.GetEPSGGeogCS() << endl;
 
   std::list<std::string> srs_params{SRS_PP_CENTRAL_MERIDIAN,
                                     SRS_PP_SCALE_FACTOR,
@@ -544,7 +545,7 @@ void ReportProjection(NFmiFastQueryInfo *q)
   for (const auto &param : srs_params)
   {
     OGRErr err = OGRERR_NONE;
-    auto value = sr->GetNormProjParm(param.c_str(), -999, &err);
+    auto value = sr.GetNormProjParm(param.c_str(), -999, &err);
     if (err == OGRERR_NONE) std::cout << param << "\t= " << value << endl;
   }
 
@@ -566,7 +567,7 @@ void ReportProjection(NFmiFastQueryInfo *q)
     cout << "xnumber\t\t= " << grid->XNumber() << endl
          << "ynumber\t\t= " << grid->YNumber() << endl;
 
-    if (sr->IsGeographic())
+    if (sr.IsGeographic())
     {
       cout << "dx\t\t= " << area->WorldXYWidth() / grid->XNumber() << " deg" << endl
            << "dy\t\t= " << area->WorldXYHeight() / grid->YNumber() << " deg" << endl

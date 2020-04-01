@@ -1013,8 +1013,7 @@ static void FillQData(boost::shared_ptr<NFmiQueryData> &theQData,
                       }
                       else
                       {
-                        NFmiDataMatrix<float> values;
-                        sourceInfo.Values(values);
+                        auto values = sourceInfo.Values();
                         if (HasValidData(values)) destInfo.SetValues(values);
                       }
                     }

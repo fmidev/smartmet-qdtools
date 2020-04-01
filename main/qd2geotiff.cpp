@@ -329,8 +329,7 @@ int *GeoTiffQD::fillIntRasterByQD(NFmiFastQueryInfo *theData,
 
   theData->FirstLocation();
 
-  NFmiDataMatrix<float> data;
-  theData->Values(data);
+  auto data = theData->Values();
   NFmiPoint *xy = new NFmiPoint(0, 0);
 
   // Second data for u/v - component
@@ -338,7 +337,7 @@ int *GeoTiffQD::fillIntRasterByQD(NFmiFastQueryInfo *theData,
   if (theSecondData != 0)
   {
     theSecondData->FirstLocation();
-    theSecondData->Values(dataSecond);
+    dataSecond = theSecondData->Values();
   }
 
   bool is_rotlatlon = (area->Proj().GetString("proj") == std::string("ob_tran") &&
@@ -459,8 +458,7 @@ float *GeoTiffQD::fillFloatRasterByQD(NFmiFastQueryInfo *theData,
 
   theData->FirstLocation();
 
-  NFmiDataMatrix<float> data;
-  theData->Values(data);
+  auto data = theData->Values();
   NFmiPoint *xy = new NFmiPoint(0, 0);
 
   // Second data for u/v - component
@@ -468,7 +466,7 @@ float *GeoTiffQD::fillFloatRasterByQD(NFmiFastQueryInfo *theData,
   if (theSecondData != 0)
   {
     theSecondData->FirstLocation();
-    theSecondData->Values(dataSecond);
+    dataSecond = theSecondData->Values();
   }
 
   printf("Processing (float) with scale %f, QD to Gtiff raster convert for parameter %li \n",

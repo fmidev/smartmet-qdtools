@@ -1050,8 +1050,7 @@ bool FillQData(boost::shared_ptr<NFmiQueryData> &theQData,
                 for (sourceInfo.ResetTime(); sourceInfo.NextTime();)
                   if (destInfo.Time(sourceInfo.Time()))
                   {
-                    NFmiDataMatrix<float> values;
-                    sourceInfo.Values(values);
+                    auto values = sourceInfo.Values();
                     if (HasValidData(values))
                     {
                       destInfo.SetValues(values);

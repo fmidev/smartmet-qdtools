@@ -364,8 +364,7 @@ void smoothen_data(NFmiQueryData& theQD, NFmiFastQueryInfo& theQ)
 
   NFmiFastQueryInfo q(&theQD);
 
-  NFmiDataMatrix<NFmiPoint> coordinates;
-  theQ.LocationsWorldXY(coordinates, *theQ.Area());
+  auto coordinates = theQ.LocationsWorldXY(*theQ.Area());
 
   for (q.ResetParam(); q.NextParam();)
   {
@@ -395,8 +394,7 @@ void smoothen_data(NFmiQueryData& theQD, NFmiFastQueryInfo& theQ)
 
       for (q.ResetTime(); q.NextTime();)
       {
-        NFmiDataMatrix<float> values;
-        theQ.Values(values, q.ValidTime());
+        auto values = theQ.Values(q.ValidTime());
 
         NFmiSmoother smoother(method, factor, 1000 * radius);
         values = smoother.Smoothen(coordinates, values);

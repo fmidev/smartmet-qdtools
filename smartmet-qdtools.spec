@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 20.3.27
+Version: 20.4.1
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -22,12 +22,12 @@ BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: fmt-devel
-BuildRequires: smartmet-library-calculator-devel >= 20.2.6
-BuildRequires: smartmet-library-gis-devel >= 20.2.13
-BuildRequires: smartmet-library-imagine-devel >= 20.2.12
-BuildRequires: smartmet-library-macgyver-devel >= 20.2.5
-BuildRequires: smartmet-library-newbase-devel >= 20.2.6
-BuildRequires: smartmet-library-smarttools-devel >= 20.2.5
+BuildRequires: smartmet-library-calculator-devel >= 20.4.1
+BuildRequires: smartmet-library-gis-devel >= 20.3.26
+BuildRequires: smartmet-library-imagine-devel >= 20.4.1
+BuildRequires: smartmet-library-macgyver-devel >= 20.3.5
+BuildRequires: smartmet-library-newbase-devel >= 20.3.31
+BuildRequires: smartmet-library-smarttools-devel >= 20.4.1
 BuildRequires: smartmet-timezones
 BuildRequires: smartmet-library-spine-devel
 BuildRequires: mdsplib >= 16.4.8
@@ -39,12 +39,12 @@ BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
 BuildRequires: fmt-devel
 Requires: smartmet-timezones >= 19.7.29
-Requires: smartmet-library-calculator >= 20.2.6
-Requires: smartmet-library-gis >= 20.2.13
-Requires: smartmet-library-imagine >= 20.2.12
-Requires: smartmet-library-macgyver >= 20.2.5
-Requires: smartmet-library-newbase >= 20.2.6
-Requires: smartmet-library-smarttools >= 20.2.5
+Requires: smartmet-library-calculator >= 20.4.1
+Requires: smartmet-library-gis >= 20.3.26
+Requires: smartmet-library-imagine >= 20.4.1
+Requires: smartmet-library-macgyver >= 20.3.5
+Requires: smartmet-library-newbase >= 20.3.31
+Requires: smartmet-library-smarttools >= 20.4.1
 Requires: smartmet-library-spine
 Requires: fmt
 Requires: eccodes
@@ -192,6 +192,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Apr  1 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.4.1-1.fmi
+- Use NFmiCoordinateMatrix instead of NFmiDataMatrix<NFmiPoint>
+
 * Fri Mar 27 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.3.27-1.fmi
 - Added kriging2qd
 

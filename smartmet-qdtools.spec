@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 20.3.27
+Version: 20.4.2
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -70,6 +70,7 @@ Requires: zlib
 Provides: ashtoqd = %{Version} 
 Provides: bufrtoqd = %{Version} 
 Provides: combinepgms2qd = %{Version} 
+Provides: combineHistory = %{Version}
 Provides: csv2qd = %{Version} 
 Provides: flash2qd = %{Version} 
 Provides: grib2tojpg = %{Version} 
@@ -138,6 +139,7 @@ make %{_smp_mflags}
 %{_bindir}/ashtoqd
 %{_bindir}/bufrtoqd
 %{_bindir}/combinepgms2qd
+%{_bindir}/combineHistory
 %{_bindir}/csv2qd
 %{_bindir}/flash2qd 
 %{_bindir}/grib2tojpg
@@ -190,6 +192,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Apr  2 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.4.2-1.fmi
+- Added combineHistory
+
 * Fri Mar 27 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.3.27-1.fmi
 - Added kriging2qd
 

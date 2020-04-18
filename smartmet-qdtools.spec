@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 20.4.2
+Version: 20.4.18
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -12,7 +12,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot-%(%{__id_u} -n)
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: make
-BuildRequires: boost-devel
+BuildRequires: boost169-devel
 BuildRequires: bzip2-devel
 BuildRequires: eccodes-devel
 BuildRequires: eccodes
@@ -22,12 +22,12 @@ BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: fmt-devel
-BuildRequires: smartmet-library-calculator-devel >= 19.12.4
-BuildRequires: smartmet-library-gis-devel >= 19.12.4
-BuildRequires: smartmet-library-imagine-devel >= 19.11.20
-BuildRequires: smartmet-library-macgyver-devel >= 19.12.4
-BuildRequires: smartmet-library-newbase-devel >= 19.12.4
-BuildRequires: smartmet-library-smarttools-devel >= 19.12.4
+BuildRequires: smartmet-library-calculator-devel >= 20.4.18
+BuildRequires: smartmet-library-gis-devel >= 20.4.18
+BuildRequires: smartmet-library-imagine-devel >= 20.4.18
+BuildRequires: smartmet-library-macgyver-devel >= 20.4.18
+BuildRequires: smartmet-library-newbase-devel >= 20.4.18
+BuildRequires: smartmet-library-smarttools-devel >= 20.4.18
 BuildRequires: smartmet-timezones
 BuildRequires: smartmet-library-spine-devel
 BuildRequires: mdsplib >= 16.4.8
@@ -38,12 +38,12 @@ BuildRequires: jasper-devel
 BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
 Requires: smartmet-timezones >= 19.7.29
-Requires: smartmet-library-calculator >= 19.12.4
-Requires: smartmet-library-gis >= 19.12.4
-Requires: smartmet-library-imagine >= 19.11.20
-Requires: smartmet-library-macgyver >= 19.12.4
-Requires: smartmet-library-newbase >= 19.12.4
-Requires: smartmet-library-smarttools >= 19.12.4
+Requires: smartmet-library-calculator >= 20.4.18
+Requires: smartmet-library-gis >= 20.4.18
+Requires: smartmet-library-imagine >= 20.4.18
+Requires: smartmet-library-macgyver >= 20.4.18
+Requires: smartmet-library-newbase >= 20.4.18
+Requires: smartmet-library-smarttools >= 20.4.18
 Requires: smartmet-library-spine
 Requires: fmt
 Requires: eccodes
@@ -53,13 +53,13 @@ Requires: libecbufr
 Requires: libbufr >= 3.2
 Requires: netcdf >= 4.3.3.1
 Requires: gdal-libs
-Requires: boost-regex
-Requires: boost-iostreams
-Requires: boost-date-time
-Requires: boost-program-options
-Requires: boost-thread
-Requires: boost-filesystem
-Requires: boost-system
+Requires: boost169-regex
+Requires: boost169-iostreams
+Requires: boost169-date-time
+Requires: boost169-program-options
+Requires: boost169-thread
+Requires: boost169-filesystem
+Requires: boost169-system
 Requires: bzip2-libs
 Requires: glibc
 Requires: libgcc
@@ -192,6 +192,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Sat Apr 18 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.4.18-1.fmi
+- Upgrade to Boost 1.69
+
 * Thu Apr  2 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.4.2-1.fmi
 - Added combineHistory
 

@@ -54,7 +54,7 @@ Requires: jasper-libs >= 1.900.1
 Requires: libecbufr
 Requires: libbufr >= 3.2
 Requires: netcdf >= 4.3.3.1
-Requires: gda30-libs
+Requires: gdal30-libs
 Requires: boost169-regex
 Requires: boost169-iostreams
 Requires: boost169-date-time

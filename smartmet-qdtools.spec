@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 20.4.18
+Version: 20.4.24
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -22,12 +22,12 @@ BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: fmt-devel
-BuildRequires: smartmet-library-calculator-devel >= 20.4.18
-BuildRequires: smartmet-library-gis-devel >= 20.4.18
-BuildRequires: smartmet-library-imagine-devel >= 20.4.18
+BuildRequires: smartmet-library-calculator-devel >= 20.4.24
+BuildRequires: smartmet-library-gis-devel >= 20.4.23
+BuildRequires: smartmet-library-imagine-devel >= 20.4.24
 BuildRequires: smartmet-library-macgyver-devel >= 20.4.18
-BuildRequires: smartmet-library-newbase-devel >= 20.4.18
-BuildRequires: smartmet-library-smarttools-devel >= 20.4.18
+BuildRequires: smartmet-library-newbase-devel >= 20.4.23
+BuildRequires: smartmet-library-smarttools-devel >= 20.4.24
 BuildRequires: smartmet-timezones
 BuildRequires: smartmet-library-spine-devel
 BuildRequires: mdsplib >= 16.4.8
@@ -39,12 +39,12 @@ BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
 BuildRequires: fmt-devel
 Requires: smartmet-timezones >= 19.7.29
-Requires: smartmet-library-calculator >= 20.4.18
-Requires: smartmet-library-gis >= 20.4.18
-Requires: smartmet-library-imagine >= 20.4.18
+Requires: smartmet-library-calculator >= 20.4.24
+Requires: smartmet-library-gis >= 20.4.23
+Requires: smartmet-library-imagine >= 20.4.24
 Requires: smartmet-library-macgyver >= 20.4.18
-Requires: smartmet-library-newbase >= 20.4.18
-Requires: smartmet-library-smarttools >= 20.4.18
+Requires: smartmet-library-newbase >= 20.4.23
+Requires: smartmet-library-smarttools >= 20.4.24
 Requires: smartmet-library-spine
 Requires: fmt
 Requires: eccodes
@@ -194,6 +194,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Fri Apr 24 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.4.24-1.fmi
+- Repackaged
+
 * Sat Apr 18 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.4.18-1.fmi
 - Upgrade to Boost 1.69
 

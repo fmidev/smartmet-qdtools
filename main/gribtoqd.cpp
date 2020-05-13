@@ -477,7 +477,8 @@ static NFmiLevel GetLevel(grib_handle *theGribHandle)
   long levelValue = 0;
   bool levelValueOk = ::GetGribLongValue(theGribHandle, "vertical.level", levelValue);
 
-  if (!levelValueOk) throw runtime_error("Error: Couldn't get level from given grib_handle.");
+  if (!levelValueOk)
+    cerr << "Warning: Couldn't get level from given grib_handle, assuming value zero\n.";
 
   // Note: a missing value is encoded as a 16-bit -1, which is converted to max int by
   // grib_get_long. Bizarre API, if there is no better way to test for missing values

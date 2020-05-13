@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 20.4.18
+Version: 20.5.13
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -37,7 +37,7 @@ BuildRequires: gdal-devel
 BuildRequires: jasper-devel
 BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
-Requires: smartmet-timezones >= 19.7.29
+Requires: smartmet-timezones >= 20.5.5
 Requires: smartmet-library-calculator >= 20.4.18
 Requires: smartmet-library-gis >= 20.4.18
 Requires: smartmet-library-imagine >= 20.4.18
@@ -192,6 +192,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed May 13 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.5.13-1.fmi
+- gribtoqd now assumes the level value is zero if vertical.level setting is not available
+
 * Sat Apr 18 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.4.18-1.fmi
 - Upgrade to Boost 1.69
 

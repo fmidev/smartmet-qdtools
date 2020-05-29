@@ -5,6 +5,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
+#include <gis/ProjInfo.h>
 #include <macgyver/StringConversion.h>
 #include <newbase/NFmiArea.h>
 #include <newbase/NFmiCmdLine.h>
@@ -491,8 +492,8 @@ void set_rotated_latlon_geometry(NFmiFastQueryInfo &theInfo,
 
   // Get north pole location
 
-  auto plat = a.Proj().GetDouble("o_lat_p");
-  auto plon = a.Proj().GetDouble("o_lon_p");
+  auto plat = a.ProjInfo().getDouble("o_lat_p");
+  auto plon = a.ProjInfo().getDouble("o_lon_p");
 
   if (!plat || !plon) throw std::runtime_error("Rotated latlon north pole location not set");
 
@@ -560,9 +561,9 @@ void set_stereographic_geometry(NFmiFastQueryInfo &theInfo,
 
   auto *a = theInfo.Area();
 
-  auto clon = a->Proj().GetDouble("lon_0");
-  auto clat = a->Proj().GetDouble("lat_0");
-  auto tlat = a->Proj().GetDouble("lat_ts");
+  auto clon = a->ProjInfo().getDouble("lon_0");
+  auto clat = a->ProjInfo().getDouble("lat_0");
+  auto tlat = a->ProjInfo().getDouble("lat_ts");
 
   if (!clon) clon = 0;
   if (!clat) clat = 90;
@@ -694,7 +695,7 @@ static void set_geometry(NFmiFastQueryInfo &theInfo,
                          grib_handle *gribHandle,
                          std::vector<double> &theValueArray)
 {
-  auto id = theInfo.Area()->Proj().DetectClassId();
+  auto id = theInfo.Area()->DetectClassId();
 
   if (id == kNFmiLatLonArea)
     set_latlon_geometry(theInfo, gribHandle, theValueArray);

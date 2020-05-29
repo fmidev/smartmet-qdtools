@@ -19,6 +19,7 @@
 #include <boost/program_options.hpp>
 #include <boost/shared_ptr.hpp>
 #include <fmt/format.h>
+#include <gis/ProjInfo.h>
 #include <macgyver/StringConversion.h>
 #include <macgyver/TimeParser.h>
 #include <newbase/NFmiAreaFactory.h>
@@ -1274,7 +1275,7 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
   if (object == "COMP" || object == "IMAGE" || object == "CVOL")
   {
     std::string projdef = get_attribute_value<std::string>(hid, "/where", "projdef");
-    std::string sphere = NFmiProj(projdef).InverseProjStr();
+    std::string sphere = Fmi::ProjInfo(projdef).inverseProjStr();
     long xsize = get_attribute_value<long>(hid, "/where", "xsize");
     long ysize = get_attribute_value<long>(hid, "/where", "ysize");
 

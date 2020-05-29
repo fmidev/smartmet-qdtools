@@ -1,5 +1,6 @@
 #include "GeoTiffQD.h"
 #include <boost/shared_ptr.hpp>
+#include <gis/ProjInfo.h>
 #include <newbase/NFmiArea.h>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiQueryData.h>
@@ -27,7 +28,7 @@ GeomDefinedType GeoTiffQD::ConverQD2GeoTiff(string aNameVersion,
   GeomDefinedType geomDefinedType = kUndefinedGeom;
 
   const NFmiArea *area = theData->HPlaceDescriptor().Area();
-  auto id = area->Proj().DetectClassId();
+  auto id = area->DetectClassId();
 
   if (id == kNFmiLatLonArea)
     ConvertToGeoTiff(aNameVersion, theData, theExternal, geomDefinedType = kLatLonGeom);
@@ -36,8 +37,8 @@ GeomDefinedType GeoTiffQD::ConverQD2GeoTiff(string aNameVersion,
   else if (id == kNFmiStereographicArea)
   {
     ConvertToGeoTiff(aNameVersion, theData, theExternal, geomDefinedType = kStereoGeom);
-    if (area->Proj().GetDouble("lat_0") == 10.0) geomDefinedType = kStereoGeom10;
-    if (area->Proj().GetDouble("lat_0") == 20.0) geomDefinedType = kStereoGeom20;
+    if (area->ProjInfo().getDouble("lat_0") == 10.0) geomDefinedType = kStereoGeom10;
+    if (area->ProjInfo().getDouble("lat_0") == 20.0) geomDefinedType = kStereoGeom20;
   }
   else if (id == kNFmiRotatedLatLonArea)
     ConvertToGeoTiff(aNameVersion, theData, theExternal, geomDefinedType = kRotatedGeom);
@@ -340,9 +341,9 @@ int *GeoTiffQD::fillIntRasterByQD(NFmiFastQueryInfo *theData,
     dataSecond = theSecondData->Values();
   }
 
-  bool is_rotlatlon = (area->Proj().GetString("proj") == std::string("ob_tran") &&
-                       area->Proj().GetString("o_proj") == std::string("eqc") &&
-                       area->Proj().GetString("towgs84") == std::string("0,0,0"));
+  bool is_rotlatlon = (area->ProjInfo().getString("proj") == std::string("ob_tran") &&
+                       area->ProjInfo().getString("o_proj") == std::string("eqc") &&
+                       area->ProjInfo().getString("towgs84") == std::string("0,0,0"));
 
   printf("Processing (int) with scale %f , QD to Gtiff raster convert for parameter %li\n",
          itsScale,
@@ -475,9 +476,9 @@ float *GeoTiffQD::fillFloatRasterByQD(NFmiFastQueryInfo *theData,
   int ref = height / 10;
   int refCount = 0;
 
-  bool is_rotlatlon = (area->Proj().GetString("proj") == std::string("ob_tran") &&
-                       area->Proj().GetString("o_proj") == std::string("eqc") &&
-                       area->Proj().GetString("towgs84") == std::string("0,0,0"));
+  bool is_rotlatlon = (area->ProjInfo().getString("proj") == std::string("ob_tran") &&
+                       area->ProjInfo().getString("o_proj") == std::string("eqc") &&
+                       area->ProjInfo().getString("towgs84") == std::string("0,0,0"));
 
   // const NFmiRotatedLatLonArea *rotArea = dynamic_cast<const NFmiRotatedLatLonArea*>(area);
 

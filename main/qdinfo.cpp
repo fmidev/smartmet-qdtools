@@ -1,3 +1,4 @@
+#include <gis/ProjInfo.h>
 #include <macgyver/StringConversion.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiEnumConverter.h>
@@ -550,7 +551,7 @@ void ReportProjection(NFmiFastQueryInfo *q)
   }
 
   std::cout << "\nproj options:\n";
-  area->Proj().Dump(std::cout);
+  area->ProjInfo().dump(std::cout);
 
   cout << endl
        << "top\t= " << area->Top() << endl
@@ -561,7 +562,7 @@ void ReportProjection(NFmiFastQueryInfo *q)
 
   if (grid)
   {
-    auto opt_to_meter = area->Proj().GetDouble("to_meter");
+    auto opt_to_meter = area->ProjInfo().getDouble("to_meter");
     auto to_meter = (opt_to_meter ? *opt_to_meter : 1.0);
 
     cout << "xnumber\t\t= " << grid->XNumber() << endl
@@ -576,8 +577,8 @@ void ReportProjection(NFmiFastQueryInfo *q)
            << "xyheight\t= " << area->WorldXYHeight() << " deg" << endl
            << "aspectratio\t= " << area->WorldXYAspectRatio() << endl;
     }
-    else if (area->Proj().GetString("proj") == std::string("ob_tran") &&
-             area->Proj().GetString("o_proj") == std::string("latlon"))
+    else if (area->ProjInfo().getString("proj") == std::string("ob_tran") &&
+             area->ProjInfo().getString("o_proj") == std::string("latlon"))
     {
       cout << "dx\t\t= " << area->WorldXYWidth() / grid->XNumber() << " deg" << endl
            << "dy\t\t= " << area->WorldXYHeight() / grid->YNumber() << " deg" << endl

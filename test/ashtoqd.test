@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
-$program = "../ashtoqd";
+$program = (-x "../ashtoqd" ? "../ashtoqd" : "ashtoqd");
+
 $results = "results";
 
 %usednames = ();

@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
-$program = "../csv2qd";
+$program = (-x "../csv2qd" ? "../csv2qd" : "csv2qd");
+
 $results = "results";
 $common = "-S conf/stations.csv -P ../cnf/parameters.csv";
 

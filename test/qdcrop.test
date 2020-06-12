@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
-$program = "../qdcrop";
+$program = (-x "../qdcrop" ? "../qdcrop" : "qdcrop");
+
 $results = "results";
 $data = "data/griddata.sqd";
 $pointdata = "data/pointdata.sqd";

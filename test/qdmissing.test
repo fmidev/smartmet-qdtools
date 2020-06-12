@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
-$qdmissing = "../qdmissing";
+$program = (-x "../qdmissing" ? "../qdmissing" : "qdmissing");
+
 $results = "results";
 $griddata = "data/griddata.sqd";
 $pointdata = "data/pointdata.sqd";
@@ -146,7 +147,7 @@ sub DoTest
 
     my($resultfile) = "qdmissing_$name";
     my($tmpfile) = "${resultfile}.tmp";
-    $cmd = "$qdmissing $arguments 2>&1";
+    $cmd = "$program $arguments 2>&1";
     $output = `$cmd`;
 
     print padname($text);

@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
-$program = "../qdproject";
+$program = (-x "../qdproject" ? "../qdproject" : "qdproject");
+
 $results = "results";
 $griddata = "data/griddata.sqd";
 

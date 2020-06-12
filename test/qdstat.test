@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
-$program = "../qdstat";
+$program = (-x "../qdstat" ? "../qdstat" : "qdstat");
+
 $results = "results";
 $griddata = "data/griddata.sqd";
 $pointdata = "data/pointdata.sqd";

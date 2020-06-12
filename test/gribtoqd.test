@@ -1,10 +1,16 @@
 #!/bin/sh
 
+if [ -x ../gribtoqd ]; then
+  PROG=../gribtoqd
+else
+  PROG=gribtoqd
+fi
+
 for f in data/grib/*; do
     name=$(basename $f)
     resultfile=results/gribtoqd/$name
     tmpfile=${resultfile}.tmp
-    ../gribtoqd -c ../cnf/grib.conf -o $tmpfile $f
+    $PROG -c ../cnf/grib.conf -o $tmpfile $f
     cmp --quiet $resultfile $tmpfile
     printf '%-60s' "$name"
     if [[ $? -eq 0 ]]; then

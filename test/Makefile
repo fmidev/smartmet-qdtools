@@ -5,7 +5,7 @@ all: $(PROG)
 test: $(PROG)
 .PHONY: $(PROG)
 
-$(PROG): % : ../%
+$(PROG):
 	./$@.test
 
 clean:

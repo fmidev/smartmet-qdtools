@@ -1405,9 +1405,7 @@ vector<pair<NFmiGrid, FmiLevelType> > CalcGrids2(
       CalcAreaConnection(connectionEdgeInfo, bottomLeft, topRight, xSize, ySize);
     }
 
-    auto proj = fmt::format("+proj=eqc +R={:.0f} +wktext +over +no_defs +towgs84=0,0,0", kRearth);
-
-    auto *area = NFmiArea::CreateFromBBox(proj, bottomLeft, topRight);
+    auto *area = NFmiAreaTools::CreateLegacyLatLonArea(bottomLeft, topRight);
 
     NFmiGrid grid(area, xSize, ySize);
     gridVector.push_back(make_pair(grid, leveltype));
@@ -1870,20 +1868,9 @@ NFmiArea *CreateLatlonArea(grib_handle *theHandle, GribFilterOptions &theGribFil
   else if (Lo1 > Lo2)
     std::swap(Lo1, Lo2);
 
-#ifndef WGS84
-  DoPossibleGlobalLongitudeFixes(Lo1, Lo2, theGribFilterOptions);
-  if (La1 > La2) std::swap(La1, La2);
-#endif
-
   NFmiPoint bl(Lo1, La1);
   NFmiPoint tr(Lo2, La2);
-#ifdef WGS84
   return NFmiAreaTools::CreateLegacyLatLonArea(bl, tr);
-#else
-  bool usePacificView = NFmiArea::IsPacificView(bl, tr);
-  if (usePacificView) FixPacificLongitude(tr);
-  return new NFmiLatLonArea(bl, tr, NFmiPoint(0, 0), NFmiPoint(1, 1), usePacificView);
-#endif
 }
 
 // ----------------------------------------------------------------------
@@ -2366,7 +2353,8 @@ std::string GetProjString(grib_handle *theHandle)
       proj_name == "reduced_gg")
   {
     // Note:: convert to eqc == legacy NFmiLatLonArea
-    return fmt::format("+proj=eqc {}", earth_proj);
+    // return fmt::format("+proj=eqc {}", earth_proj);
+    return "+proj=eqc +datum=WGS84 +no_defs";
   }
 
   // Used only for some projections
@@ -2572,8 +2560,9 @@ NFmiArea *GetGribArea(grib_handle *theHandle)
     if (lon1 >= 0 && lon2 < 0 && direction > 0) lon2 += 360;
     if (lon1 >= 0 && lon2 < lon1 && direction > 0) lon1 -= 360;
 
-    return NFmiArea::CreateFromCorners(
-        proj, earth_proj, NFmiPoint(lon1, lat1), NFmiPoint(lon2, lat2));
+    // return NFmiArea::CreateFromCorners(proj, earth_proj, NFmiPoint(lon1, lat1), NFmiPoint(lon2,
+    // lat2));
+    return NFmiArea::CreateFromCorners(proj, "WGS84", NFmiPoint(lon1, lat1), NFmiPoint(lon2, lat2));
   }
 
   if (proj_name == "rotated_ll" || proj_name == "rotated_gg")

@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 20.7.1
+Version: 20.7.10
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -202,6 +202,9 @@ make %{_smp_mflags}
 
 * Thu May 28 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.5.28-1.fmi
 - Use Gis-library ProjInfo
+
+* Wed May 13 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.5.13-1.fmi
+- gribtoqd now assumes the level value is zero if vertical.level setting is not available
 
 * Fri Apr 24 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.4.24-1.fmi
 - Repackaged

@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
-$qdsounding = "../qdsounding";
+$program = (-x "../qdsounding" ? "../qdsounding" : "qdsounding");
+
 $coordinatefile = "conf/coordinates.txt";
 $results = "results";
 $data = "data/sounding.sqd";
@@ -31,7 +32,7 @@ sub DoTest
 
     my($resultfile) = "qdsounding_$name";
     my($tmpfile) = "${resultfile}.tmp";
-    $cmd = "$qdsounding -c $coordinatefile $arguments 2>&1";
+    $cmd = "$program -c $coordinatefile $arguments 2>&1";
     $output = `$cmd`;
 
     print padname($text);

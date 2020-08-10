@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
-$program = "../pgm2qd";
+$program = (-x "../pgm2qd" ? "../pgm2qd" : "pgm2qd");
+
 $results = "results";
 
 %usednames = ();

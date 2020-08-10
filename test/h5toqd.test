@@ -1,7 +1,8 @@
 #!/usr/bin/perl
 
-$program = "../h5toqd";
-$results = "results/hdf";
+$program = (-x "../h5toqd" ? "../h5toqd" : "h5toqd");
+
+$results = "results";
 
 %usednames = ();
 

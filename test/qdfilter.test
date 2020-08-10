@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
-$program = "../qdfilter";
+$program = (-x "../qdfilter" ? "../qdfilter" : "qdfilter");
+
 $results = "results";
 $griddata = "data/griddata.sqd";
 $pointdata = "data/pointdata.sqd";

@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
-$qdpoint = "../qdpoint";
+$program = (-x "../qdpoint" ? "../qdpoint" : "qdpoint");
+
 $coordinatefile = "conf/coordinates.txt";
 $results = "results";
 $griddata = "data/griddata.sqd";
@@ -214,7 +215,7 @@ sub DoTest
 
     my($resultfile) = "qdpoint_$name";
     my($tmpfile) = "${resultfile}.tmp";
-    $cmd = "$qdpoint -c $coordinatefile $arguments 2>&1";
+    $cmd = "$program -c $coordinatefile $arguments 2>&1";
     $output = `$cmd`;
 
     print padname($text);

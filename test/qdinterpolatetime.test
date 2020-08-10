@@ -1,27 +1,18 @@
 #!/usr/bin/perl
 
+$program = (-x "../qdinterpolatetime" ? "../qdinterpolatetime" : "qdinterpolatetime");
+
 use IO::Handle;
 autoflush STDOUT 1;
-
-$path = "..";
-
-if(scalar(@ARGV) == 1)
-{
-    $path = shift @ARGV;
-}
-elsif(scalar(@ARGV) > 1)
-{
-    die "Error: Only one argument expected!\n";
-}
 
 # qdinterpolatetime
 
 DoSqdTest("qdinterpolatetime linear",
-	  "$path/qdinterpolatetime 60 32700 360 1 < data/pal_xh.sqd > /tmp/qdinterpolatetime_linear.sqd",
+	  "$program 60 32700 360 1 < data/pal_xh.sqd > /tmp/qdinterpolatetime_linear.sqd",
 	  "qdinterpolatetime_linear.sqd");
 
 DoSqdTest("qdinterpolatetime lagrange",
-	  "$path/qdinterpolatetime 60 32700 360 5 < data/pal_xh.sqd > /tmp/qdinterpolatetime_lagrange.sqd",
+	  "$program 60 32700 360 5 < data/pal_xh.sqd > /tmp/qdinterpolatetime_lagrange.sqd",
 	  "qdinterpolatetime_lagrange.sqd");
 
 # ----------------------------------------------------------------------

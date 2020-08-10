@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
-$program = "../flash2qd";
+$program = (-x "../flash2qd" ? "../flash2qd" : "flash2qd");
+
 $results = "results";
 
 %usednames = ();

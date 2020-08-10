@@ -1,6 +1,9 @@
 #!/usr/bin/perl
 
-$program = "../nctoqd";
+$program = (-x "../nctoqd" ? "../nctoqd" : "nctoqd");
+$qdinfo = (-x "../qdinfo" ? "../qdinfo" : "qdinfo");
+$qddifference = (-x "../qddifference" ? "../qddifference" : "qddifference");
+
 $results = "results";
 
 %usednames = ();
@@ -107,10 +110,10 @@ sub DoTest {
 			}
 		}
 		else {
-			my ($difference) = `../qddifference results/$resultfile results/$tmpfile`;
+			my ($difference) = `$qddifference results/$resultfile results/$tmpfile`;
 			my $ret = $?;
 			if ( $ret != 0 ) {
-				print " FAILED!\nqdifference says:\n$difference";
+				print " FAILED!\nqddifference says:\n$difference";
 				print "( $resultfile <> $tmpfile in $results/ )\n";
 			}
 			else {
@@ -123,13 +126,13 @@ sub DoTest {
 
 					# Test with qdinfo as well
 					print padname($text);
-					my $qdinfo1 = `../qdinfo -a -q $results/$resultfile > results/$resultfile.qdinfo`;
+					my $qdinfo1 = `$qdinfo -a -q $results/$resultfile > results/$resultfile.qdinfo`;
 					my $ret1    = $?;
 					if ( $ret1 != 0 ) {
 						print " FAILED!\nqdinfo failed on original result file\n";
 					}
 					else {
-						my $qdinfo2 = `../qdinfo -a -q results/$tmpfile > results/$tmpfile.qdinfo`;
+						my $qdinfo2 = `$qdinfo -a -q results/$tmpfile > results/$tmpfile.qdinfo`;
 						my $ret2    = $?;
 						if ( $ret2 != 0 ) {
 							print " FAILED!\nqdinfo failed on generated test file\n";

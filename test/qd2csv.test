@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
-$program = "../qd2csv";
+$program = (-x "../qd2csv" ? "../qd2csv" : "qd2csv");
+
 $results = "results";
 $pointdata = "data/pointdata.sqd";
 

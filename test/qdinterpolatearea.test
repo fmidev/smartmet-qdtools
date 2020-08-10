@@ -1,36 +1,28 @@
 #!/usr/bin/perl
 
+$program = (-x "../qdinterpolatearea" ? "../qdinterpolatearea" : "qdinterpolatearea");
+
 use IO::Handle;
 autoflush STDOUT 1;
 
-$path = "..";
-
-if(scalar(@ARGV) == 1)
-{
-    $path = shift @ARGV;
-}
-elsif(scalar(@ARGV) > 1)
-{
-    die "Error: Only one argument expected!\n";
-}
 
 # qdinterpolatearea
 # This is the old scandinavia -> kepa transformation
 
 DoSqdTest("qdinterpolatearea pal",
-	  "$path/qdinterpolatearea conf/qdinterpolatearea.txt < data/pal.sqd > results/qdinterpolatearea_pal.sqd.tmp",
+	  "$program conf/qdinterpolatearea.txt < data/pal.sqd > results/qdinterpolatearea_pal.sqd.tmp",
 	  "qdinterpolatearea_pal.sqd");
 
 DoSqdTest("qdinterpolatearea pal_xh",
-	  "$path/qdinterpolatearea conf/qdinterpolatearea.txt < data/pal_xh.sqd > results/qdinterpolatearea_palxh.sqd.tmp",
+	  "$program conf/qdinterpolatearea.txt < data/pal_xh.sqd > results/qdinterpolatearea_palxh.sqd.tmp",
 	  "qdinterpolatearea_palxh.sqd");
 
 DoSqdTest("qdinterpolatearea proj option",
-	  "$path/qdinterpolatearea -p stereographic,20,90,60:6,51.3,49,70.2 -s 63x70 -i data/pal_xh.sqd -o results/qdinterpolatearea_proj.sqd.tmp",
+	  "$program -p stereographic,20,90,60:6,51.3,49,70.2 -s 63x70 -i data/pal_xh.sqd -o results/qdinterpolatearea_proj.sqd.tmp",
 	  "qdinterpolatearea_proj.sqd");
 
 DoSqdTest("qdinterpolatearea resolution option",
-	  "$path/qdinterpolatearea -p stereographic,20,90,60:6,51.3,49,70.2 -s 50x50km -i data/pal_xh.sqd -o results/qdinterpolatearea_resolution.sqd.tmp",
+	  "$program -p stereographic,20,90,60:6,51.3,49,70.2 -s 50x50km -i data/pal_xh.sqd -o results/qdinterpolatearea_resolution.sqd.tmp",
 	  "qdinterpolatearea_resolution.sqd");
 
 # ----------------------------------------------------------------------

@@ -1457,7 +1457,7 @@ void FillCombinedAreaData(boost::shared_ptr<NFmiQueryData> &newData,
                 if (sourceInfo.Time(info.Time()))
                   for (info.ResetLocation(); info.NextLocation();)
                     if (info.FloatValue() == kFloatMissing)
-                      info.FloatValue(sourceInfo.InterpolatedValue(info.LatLonFast()));
+                      info.FloatValue(sourceInfo.InterpolatedValue(info.LatLon()));
   }
 }
 

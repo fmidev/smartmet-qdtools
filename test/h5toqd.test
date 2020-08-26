@@ -2,7 +2,7 @@
 
 $program = (-x "../h5toqd" ? "../h5toqd" : "h5toqd");
 
-$results = "results";
+$results = "results/hdf";
 
 %usednames = ();
 
@@ -65,7 +65,7 @@ sub DoTest
     }
     elsif(! -e "$results/$resultfile")
     {
-	print " FAILED: TRUE RESULT MISSING\n";
+	print " FAILED: TRUE RESULT MISSING ($results/$resultfile)\n";
 	unlink("$results/$tmpfile");
     }
     else

@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 20.8.25
+Version: 20.8.27
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -22,12 +22,12 @@ BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: fmt-devel
-BuildRequires: smartmet-library-calculator-devel >= 20.8.26
-BuildRequires: smartmet-library-gis-devel >= 20.8.26
-BuildRequires: smartmet-library-imagine-devel >= 20.8.26
+BuildRequires: smartmet-library-calculator-devel >= 20.8.27
+BuildRequires: smartmet-library-gis-devel >= 20.8.27
+BuildRequires: smartmet-library-imagine-devel >= 20.8.27
 BuildRequires: smartmet-library-macgyver-devel >= 20.8.21
-BuildRequires: smartmet-library-newbase-devel >= 20.8.26
-BuildRequires: smartmet-library-smarttools-devel >= 20.8.26
+BuildRequires: smartmet-library-newbase-devel >= 20.8.27
+BuildRequires: smartmet-library-smarttools-devel >= 20.8.27
 BuildRequires: smartmet-timezones
 BuildRequires: smartmet-library-spine-devel
 BuildRequires: mdsplib >= 16.4.8
@@ -39,12 +39,12 @@ BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
 BuildRequires: fmt-devel
 Requires: smartmet-timezones >= 20.5.5
-Requires: smartmet-library-calculator >= 20.8.26
-Requires: smartmet-library-gis >= 20.8.26
-Requires: smartmet-library-imagine >= 20.8.26
+Requires: smartmet-library-calculator >= 20.8.27
+Requires: smartmet-library-gis >= 20.8.27
+Requires: smartmet-library-imagine >= 20.8.27
 Requires: smartmet-library-macgyver >= 20.8.21
-Requires: smartmet-library-newbase >= 20.8.26
-Requires: smartmet-library-smarttools >= 20.8.26
+Requires: smartmet-library-newbase >= 20.8.27
+Requires: smartmet-library-smarttools >= 20.8.27
 Requires: smartmet-library-spine
 Requires: fmt
 Requires: eccodes
@@ -194,6 +194,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Aug 27 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.8.27-1.fmi
+- NFmiGrid API changed
+
 * Tue Aug 25 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.8.25-1.fmi
 - Repackaged due to eccodes upgrade
 

@@ -33,7 +33,6 @@ BuildRequires: smartmet-library-spine-devel
 BuildRequires: mdsplib >= 16.4.8
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: zlib-devel
-BuildRequires: gdal-devel
 BuildRequires: jasper-devel
 BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
@@ -52,7 +51,6 @@ Requires: jasper-libs >= 1.900.1
 Requires: libecbufr
 Requires: libbufr >= 3.2
 Requires: netcdf >= 4.3.3.1
-Requires: gdal-libs
 Requires: boost169-regex
 Requires: boost169-iostreams
 Requires: boost169-date-time
@@ -67,6 +65,15 @@ Requires: libjpeg
 Requires: libpng
 Requires: libstdc++
 Requires: zlib
+
+%if %{defined el7}
+Requires: gdal-libs
+BuildRequires: gdal-devel
+%else if %{defined el8}
+Requires: gdal30-libs
+BuildRequires: gdal30-devel
+%endif
+
 Provides: ashtoqd = %{Version} 
 Provides: bufrtoqd = %{Version} 
 Provides: combinepgms2qd = %{Version} 

@@ -463,7 +463,7 @@ bool is_group_attribute(const hid_t &hid, const std::string &path, const std::st
 
   H5Lite::closeId(hid_group, H5G_GROUP);
 
-  return ret != 0;
+  return ret == 1;
 }
 
 template <typename T>

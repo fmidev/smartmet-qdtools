@@ -1,7 +1,7 @@
 #include "GeoTiffQD.h"
 #include <boost/shared_ptr.hpp>
-#include <gdal/gdal_priv.h>
-#include <gdal/ogr_spatialref.h>
+#include <gdal_priv.h>
+#include <ogr_spatialref.h>
 #include <newbase/NFmiArea.h>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiLambertEqualArea.h>

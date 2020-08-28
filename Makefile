@@ -61,6 +61,14 @@ ifneq "$(wildcard /usr/include/boost169)" ""
   LIBS += -L/usr/lib64/boost169
 endif
 
+# gdal 30 from pgdg
+
+ifneq "$(wildcard /usr/gdal30/include)" ""
+  INCLUDES += -I/usr/gdal30/include
+  LIBS += -L/usr/gdal30/lib
+else
+  INCLUDES += -I/usr/include/gdal
+endif
 
 INCLUDES += -I$(includedir) \
 	-I$(includedir)/netcdf-3 \

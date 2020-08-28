@@ -48,7 +48,6 @@ extern "C"
 {
 #include "metar_structs.h"
   void print_decoded_metar(Decoded_METAR *);
-  int decode_metar(char *, Decoded_METAR *);
 }
 
 using namespace std;

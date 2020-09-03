@@ -6,9 +6,9 @@
 #include <boost/foreach.hpp>
 #include <boost/program_options.hpp>
 #include <macgyver/CsvReader.h>
+#include <macgyver/Exception.h>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiStringTools.h>
-#include <spine/Exception.h>
 #include <iostream>
 #include <list>
 #include <string>
@@ -272,13 +272,13 @@ ParamConversions read_netcdf_configs(const Options &options)
       try
       {
         if (line.length() < 1)
-          throw SmartMet::Spine::Exception(BCP,
+          throw Fmi::Exception(BCP,
                                            "A parameter given on command line is of zero length");
         if (options.verbose) std::cout << "Adding parameter mapping " << line << std::endl;
         std::vector<std::string> row;
         std::size_t delimpos = line.find(',');
         if (delimpos < 1 || delimpos >= line.length() - 1)
-          throw SmartMet::Spine::Exception(
+          throw Fmi::Exception(
               BCP, "Parameter from command line is not of correct format: " + line);
         row.push_back(line.substr(0, delimpos));
         row.push_back(line.substr(delimpos + 1));
@@ -286,7 +286,7 @@ ParamConversions read_netcdf_configs(const Options &options)
       }
       catch (...)
       {
-        throw SmartMet::Spine::Exception(
+        throw Fmi::Exception(
             BCP, "Adding parameter conversion " + line + " from command line failed", nullptr);
       }
 
@@ -301,7 +301,7 @@ ParamConversions read_netcdf_configs(const Options &options)
       }
       catch (...)
       {
-        throw SmartMet::Spine::Exception(BCP, "Reading config file " + file + " failed", nullptr);
+        throw Fmi::Exception(BCP, "Reading config file " + file + " failed", nullptr);
       }
 
   // Base config file
@@ -313,7 +313,7 @@ ParamConversions read_netcdf_configs(const Options &options)
     }
     catch (...)
     {
-      throw SmartMet::Spine::Exception(
+      throw Fmi::Exception(
           BCP, "Reading base config file " + options.configfile + " failed", nullptr);
     }
 
@@ -327,7 +327,7 @@ void CsvParams::add(const Fmi::CsvReader::row_type &row)
   if (row[0].substr(0, 1) == "#") return;
 
   if (row.size() != 2 && row.size() != 4)
-    throw SmartMet::Spine::Exception(
+    throw Fmi::Exception(
         BCP,
         (std::string) "Invalid config row of size " + std::to_string(row.size()) + ": " + row[0]);
 

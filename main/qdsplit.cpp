@@ -267,7 +267,7 @@ void extract_time(NFmiFastQueryInfo& theQ)
   NFmiFastQueryInfo info(
       theQ.ParamDescriptor(), tdesc, theQ.HPlaceDescriptor(), theQ.VPlaceDescriptor());
 
-  auto_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
+  unique_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
   NFmiFastQueryInfo dstinfo(data.get());
 
   if (data.get() == 0) throw runtime_error("Could not allocate memory for result data");

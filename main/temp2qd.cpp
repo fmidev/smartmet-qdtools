@@ -270,7 +270,7 @@ void Domain(int argc, const char *argv[])
   //	7. talleta querydata output:iin
   if (bigQData)
   {
-    //		auto_ptr<NFmiQueryData> bigQDataPtr(bigQData); // tuhoaa datan automaattisesti
+    //		unique_ptr<NFmiQueryData> bigQDataPtr(bigQData); // tuhoaa datan automaattisesti
     // lopuksi
     NFmiStreamQueryData sQOutData(bigQData);
     if (!sQOutData.WriteCout())

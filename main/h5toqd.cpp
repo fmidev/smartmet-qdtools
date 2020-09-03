@@ -249,7 +249,7 @@ std::string get_string(const std::string &name, IMXAArray &attr)
   else if (n > 1)
   {
     out << "[ ";
-    for (int i = 0; i < n; i++)
+    for (std::size_t i = 0; i < n; i++)
     {
       if (i > 0) out << ", ";
       T *value = static_cast<T *>(attr.getVoidPointer(i));

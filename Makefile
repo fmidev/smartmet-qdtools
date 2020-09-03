@@ -84,7 +84,6 @@ LIBS += -L$(libdir) \
 	-lsmartmet-macgyver \
 	-lsmartmet-gis \
 	-lsmartmet-imagine \
-	-lsmartmet-spine \
 	-lboost_regex \
 	-lboost_date_time \
 	-lboost_program_options \

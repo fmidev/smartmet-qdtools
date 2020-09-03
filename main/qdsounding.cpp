@@ -442,7 +442,7 @@ int domain(int argc, const char *argv[])
   // Read the querydata
 
   NFmiQueryData qd(options.inputfile);
-  auto_ptr<NFmiFastQueryInfo> q(new NFmiFastQueryInfo(&qd));
+  unique_ptr<NFmiFastQueryInfo> q(new NFmiFastQueryInfo(&qd));
 
   // Establish time zone
 

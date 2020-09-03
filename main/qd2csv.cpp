@@ -70,8 +70,10 @@ const string makename(const NFmiFastQueryInfo& theQ)
       break;
     case kFmiHeight:
       name << "_H" << level.LevelValue();
+      break;
     case kFmiHybridLevel:
       name << "_L" << level.LevelValue();
+      break;
     case kFmi:
     case kFmiAnyLevelType:
       break;

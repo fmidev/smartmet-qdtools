@@ -871,7 +871,8 @@ void read_bufr()
 
   // Decode data descriptor and data section into a radar data structure
 
-  memset(&radar_data, 0, sizeof(radar_data_t));
+  radar_data = radar_data_t{};
+  // memset(&radar_data, 0, sizeof(radar_data_t));
 
   // Open bitstreams for section 3 and 4
 

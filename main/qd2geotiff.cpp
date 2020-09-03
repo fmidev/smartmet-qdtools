@@ -287,17 +287,19 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
   // int  *abyRaster;
   // abyRaster = fillIntRasterByQD(theData, theExternal, width, height, area);
   void *abyRaster;
+
+  CPLErr err;
   if (isIntDataType)
   {
     abyRaster = fillIntRasterByQD(theData, theExternal, width, height, area);
     // GDT_Int32   3/4
-    poBand->RasterIO(GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Int32, 0, 0);
+    err = poBand->RasterIO(GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Int32, 0, 0);
   }
   else
   {
     abyRaster = fillFloatRasterByQD(theData, theExternal, width, height, area);
     //  GDT_Float32  3/4
-    poBand->RasterIO(GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Float32, 0, 0);
+    err = poBand->RasterIO(GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Float32, 0, 0);
   }
 
   // External Band parameter for data int
@@ -313,14 +315,17 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
     {
       abyRaster = fillIntRasterByQD(theExternal, theData, width, height, area);
       // GDT_Int32   3/4
-      poBand->RasterIO(GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Int32, 0, 0);
+      err = poBand->RasterIO(GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Int32, 0, 0);
     }
     else
     {
       abyRaster = fillFloatRasterByQD(theExternal, theData, width, height, area);
       //  GDT_Float32  3/4
-      poBand->RasterIO(GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Float32, 0, 0);
+      err = poBand->RasterIO(GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Float32, 0, 0);
     }
+
+    if(err)
+	std::cout << "Warning: Encountered problems in raster band conversions\n";
 
     // abyRaster = fillIntRasterByQD(theExternal, theData, width, height, area);
     // abyRaster = fillFloatRasterByQD(theExternal, theData, width, height, area);

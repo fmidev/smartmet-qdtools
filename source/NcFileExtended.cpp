@@ -1,9 +1,9 @@
 #include "NcFileExtended.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <macgyver/Exception.h>
 #include <macgyver/TimeParser.h>
 #include <newbase/NFmiFastQueryInfo.h>
-#include <spine/Exception.h>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -361,7 +361,7 @@ void NcFileExtended::copy_values(NFmiFastQueryInfo &info,
         for (info.ResetLocation(); info.NextLocation();)
         {
           if (xinverted() || yinverted())
-            throw SmartMet::Spine::Exception(
+            throw Fmi::Exception(
                 BCP, std::string("Inverted axises not implemented here yet"));
           float x = xvals->as_float(counter);
           float y = yvals->as_float(counter);
@@ -617,12 +617,12 @@ void NcFileExtended::initAxis(const boost::optional<std::string> &xname,
   else
     t = axis({"time", "t"});
 
-  if (x == nullptr) throw SmartMet::Spine::Exception(BCP, "X-axis not found");
-  if (y == nullptr) throw SmartMet::Spine::Exception(BCP, "Y-axis not found");
+  if (x == nullptr) throw Fmi::Exception(BCP, "X-axis not found");
+  if (y == nullptr) throw Fmi::Exception(BCP, "Y-axis not found");
   if (z == nullptr && zname && !zname->empty())
-    throw SmartMet::Spine::Exception(BCP, "Z-axis not found");
+    throw Fmi::Exception(BCP, "Z-axis not found");
   if (t == nullptr && tname && !tname->empty())
-    throw SmartMet::Spine::Exception(BCP, "T-axis not found");
+    throw Fmi::Exception(BCP, "T-axis not found");
 }
 
 bool NcFileExtended::isStereographic() { return (grid_mapping() == POLAR_STEREOGRAPHIC); }
@@ -636,7 +636,7 @@ bool NcFileExtended::isStereographic() { return (grid_mapping() == POLAR_STEREOG
 unsigned long NcFileExtended::axis_size(NcVar *axis)
 {
   if (axis == nullptr)
-    throw SmartMet::Spine::Exception(BCP,
+    throw Fmi::Exception(BCP,
                                      std::string("Dimensions for axis null cannot be retrieved"));
   std::string varname = axis->name();
 
@@ -648,7 +648,7 @@ unsigned long NcFileExtended::axis_size(NcVar *axis)
     boost::algorithm::to_lower(name);
     if (name == dimname) return dim->size();
   }
-  throw SmartMet::Spine::Exception(BCP, std::string("Could not find dimension of axis ") + varname);
+  throw Fmi::Exception(BCP, std::string("Could not find dimension of axis ") + varname);
 }
 
 unsigned long NcFileExtended::xsize() { return axis_size(x); }
@@ -754,7 +754,7 @@ unsigned long get_units_in_seconds(std::string unit_str)
     return 1;
   else
   {
-    throw SmartMet::Spine::Exception(BCP, "Invalid time unit used: " + unit_str);
+    throw Fmi::Exception(BCP, "Invalid time unit used: " + unit_str);
   }
 }
 
@@ -771,12 +771,12 @@ void NcFileExtended::parse_time_units(boost::posix_time::ptime *origintime, long
   NcVar *tvar = t;
   if (tvar == nullptr) tvar = this->get_var("time");
 
-  if (!tvar) throw SmartMet::Spine::Exception(BCP, "Time axis unknown");
+  if (!tvar) throw Fmi::Exception(BCP, "Time axis unknown");
 
   NcAtt *att = tvar->get_att("units");
-  if (att == 0) throw SmartMet::Spine::Exception(BCP, "Time axis has no defined units");
+  if (att == 0) throw Fmi::Exception(BCP, "Time axis has no defined units");
   if (att->type() != ncChar)
-    throw SmartMet::Spine::Exception(BCP, "Time axis units must be a string");
+    throw Fmi::Exception(BCP, "Time axis units must be a string");
 
   // "units since date [time] [tz]"
 
@@ -786,7 +786,7 @@ void NcFileExtended::parse_time_units(boost::posix_time::ptime *origintime, long
   boost::algorithm::split(parts, units, boost::algorithm::is_any_of(" "));
 
   if (parts.size() < 3 || parts.size() > 5)
-    throw SmartMet::Spine::Exception(BCP, "Invalid time units string: '" + units + "'");
+    throw Fmi::Exception(BCP, "Invalid time units string: '" + units + "'");
 
   std::string unit = boost::algorithm::to_lower_copy(parts[0]);
 
@@ -799,10 +799,10 @@ void NcFileExtended::parse_time_units(boost::posix_time::ptime *origintime, long
   else if (unit == "day" || unit == "days" || unit == "d")
     *timeunit = 24 * 60 * 60;
   else
-    throw SmartMet::Spine::Exception(BCP, "Unknown unit in time axis: '" + unit + "'");
+    throw Fmi::Exception(BCP, "Unknown unit in time axis: '" + unit + "'");
 
   if (boost::algorithm::to_lower_copy(parts[1]) != "since")
-    throw SmartMet::Spine::Exception(BCP, "Invalid time units string: '" + units + "'");
+    throw Fmi::Exception(BCP, "Invalid time units string: '" + units + "'");
 
   std::string datestr = parts[2];
   std::string timestr = (parts.size() >= 4 ? parts[3] : "00:00:00");
@@ -850,10 +850,10 @@ void NcFileExtended::find_axis_bounds(
   for (int i = 1; i < var->num_vals(); i++)
   {
     if (isdescending == false && values->as_double(i) <= values->as_double(i - 1))
-      throw SmartMet::Spine::Exception(BCP,
+      throw Fmi::Exception(BCP,
                                        std::string(name) + "-axis is not monotonously increasing");
     if (isdescending == true && values->as_double(i) >= values->as_double(i - 1))
-      throw SmartMet::Spine::Exception(BCP,
+      throw Fmi::Exception(BCP,
                                        std::string(name) + "-axis is not monotonously decreasing");
   }
 
@@ -883,7 +883,7 @@ void NcFileExtended::find_axis_bounds(
       s = values->as_double(i - 1) - values->as_double(i);
 
     if (std::abs(s - step) > tolerance * step)
-      throw SmartMet::Spine::Exception(
+      throw Fmi::Exception(
           BCP,
           std::string(name) + "-axis is not regular with tolerance " + std::to_string(tolerance));
   }
@@ -984,7 +984,7 @@ std::shared_ptr<std::string> NcFileExtended::get_axis_units(NcVar *axis)
   // String presentation of a particular units on an axis
   NcAtt *att = axis->get_att("units");
   if (att == 0)
-    throw SmartMet::Spine::Exception(
+    throw Fmi::Exception(
         BCP, (std::string)axis->name() + (std::string) "-axis has no units attribute");
 
   std::shared_ptr<std::string> units = std::make_shared<std::string>(att->values()->as_string(0));
@@ -1000,7 +1000,7 @@ std::shared_ptr<std::string> NcFileExtended::get_axis_units(NcVar *axis)
             if (units == "m") return;
             if (units == "km") return;
   */
-  //	  throw SmartMet::Spine::Exception(BCP, "Y-axis has unknown units: " + units);
+  //	  throw Fmi::Exception(BCP, "Y-axis has unknown units: " + units);
   return units;
 }
 
@@ -1011,7 +1011,7 @@ double NcFileExtended::get_axis_scale(NcVar *axis,
    // units, default target being meters
   *source_units = get_axis_units(axis);
   if (target_units != nullptr && target_units->compare("m") != 0)
-    throw SmartMet::Spine::Exception(BCP,
+    throw Fmi::Exception(BCP,
                                      "Sorry: do not know how to convert " + **source_units +
                                          " to " + *target_units + " on axis " + axis->name());
 
@@ -1148,7 +1148,7 @@ static int compare_versions(const std::string &v1, const std::string &v2)
     }
     catch (boost::bad_lexical_cast const &)
     {
-      throw SmartMet::Spine::Exception(BCP,
+      throw Fmi::Exception(BCP,
                                        "Unable to convert " + v1 + " to integer version parts");
     }
     try
@@ -1157,7 +1157,7 @@ static int compare_versions(const std::string &v1, const std::string &v2)
     }
     catch (boost::bad_lexical_cast const &)
     {
-      throw SmartMet::Spine::Exception(BCP,
+      throw Fmi::Exception(BCP,
                                        "Unable to convert " + v2 + " to integer version parts");
     }
     if (v1part != v2part)  // Version parts differ, no need to compare farther
@@ -1181,10 +1181,10 @@ void NcFileExtended::require_conventions(const std::string *reference)
 
   NcAtt *att = get_att("Conventions");
   if (att == 0)
-    throw SmartMet::Spine::Exception(BCP, "The NetCDF file is missing the Conventions attribute");
+    throw Fmi::Exception(BCP, "The NetCDF file is missing the Conventions attribute");
 
   if (att->type() != ncChar)
-    throw SmartMet::Spine::Exception(BCP, "The Conventions attribute must be a string");
+    throw Fmi::Exception(BCP, "The Conventions attribute must be a string");
 
   // pernu 2018-02-07: We use to have sz parameter which limits the comparison like this:
   //  if (ref.substr(0, sz) != reference.substr(0, sz))
@@ -1201,7 +1201,7 @@ void NcFileExtended::require_conventions(const std::string *reference)
   if (cmp.substr(0, 3) == "CF-") cmp = reference->substr(3);
 
   if (compare_versions(refsub, cmp) < 0)
-    throw SmartMet::Spine::Exception(BCP,
+    throw Fmi::Exception(BCP,
                                      "The file must conform to " + *reference + ", not to " + ref);
 }
 

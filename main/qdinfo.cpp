@@ -575,7 +575,8 @@ void ReportProjection(NFmiFastQueryInfo *q)
   char *proj4 = nullptr;
   crs.exportToProj4(&proj4);
   cout << "wktarea\t= " << area->WKT() << endl << "proj4\t= " << proj4 << endl;
-  OGRFree(proj4);
+  
+  CPLFree(proj4);
 #endif
 
   cout << endl
@@ -835,7 +836,7 @@ int domain(int argc, const char *argv[])
 
   // Actual processing begins
 
-  auto_ptr<NFmiQueryInfo> qi;
+  unique_ptr<NFmiQueryInfo> qi;
 
   if (cmdline.isOption('q'))
   {

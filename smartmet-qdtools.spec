@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 20.8.21
+Version: 20.9.3
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -29,7 +29,6 @@ BuildRequires: smartmet-library-macgyver-devel >= 20.8.21
 BuildRequires: smartmet-library-newbase-devel >= 20.8.21
 BuildRequires: smartmet-library-smarttools-devel >= 20.8.21
 BuildRequires: smartmet-timezones
-BuildRequires: smartmet-library-spine-devel
 BuildRequires: mdsplib >= 16.4.8
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: zlib-devel
@@ -43,7 +42,6 @@ Requires: smartmet-library-imagine >= 20.8.21
 Requires: smartmet-library-macgyver >= 20.8.21
 Requires: smartmet-library-newbase >= 20.8.21
 Requires: smartmet-library-smarttools >= 20.8.21
-Requires: smartmet-library-spine
 Requires: fmt
 Requires: eccodes
 Requires: hdf5 >= 1.8.12
@@ -199,6 +197,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Sep  3 2020 Mika Heiskanen <mheiskan@rhel8.dev.fmi.fi> - 20.9.3-1.fmi
+- Removed spine dependency by using Fmi::Exception
+
 * Fri Aug 21 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.8.21-1.fmi
 - Upgrade to fmt 6.2
 

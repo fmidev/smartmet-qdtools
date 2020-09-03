@@ -29,7 +29,7 @@ BuildRequires: smartmet-library-macgyver-devel >= 20.9.3
 BuildRequires: smartmet-library-newbase-devel >= 20.8.21
 BuildRequires: smartmet-library-smarttools-devel >= 20.8.21
 BuildRequires: smartmet-timezones
-BuildRequires: mdsplib >= 16.4.8
+BuildRequires: mdsplib >= 20.8.26
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: zlib-devel
 BuildRequires: jasper-devel

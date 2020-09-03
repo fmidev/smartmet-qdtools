@@ -25,7 +25,7 @@ BuildRequires: fmt-devel
 BuildRequires: smartmet-library-calculator-devel >= 20.8.21
 BuildRequires: smartmet-library-gis-devel >= 20.8.21
 BuildRequires: smartmet-library-imagine-devel >= 20.8.21
-BuildRequires: smartmet-library-macgyver-devel >= 20.8.21
+BuildRequires: smartmet-library-macgyver-devel >= 20.9.3
 BuildRequires: smartmet-library-newbase-devel >= 20.8.21
 BuildRequires: smartmet-library-smarttools-devel >= 20.8.21
 BuildRequires: smartmet-timezones
@@ -39,7 +39,7 @@ Requires: smartmet-timezones >= 20.5.5
 Requires: smartmet-library-calculator >= 20.8.21
 Requires: smartmet-library-gis >= 20.8.21
 Requires: smartmet-library-imagine >= 20.8.21
-Requires: smartmet-library-macgyver >= 20.8.21
+Requires: smartmet-library-macgyver >= 20.9.3
 Requires: smartmet-library-newbase >= 20.8.21
 Requires: smartmet-library-smarttools >= 20.8.21
 Requires: fmt

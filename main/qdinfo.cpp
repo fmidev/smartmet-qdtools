@@ -97,6 +97,7 @@
 #include <newbase/NFmiYKJArea.h>
 
 #ifdef UNIX
+#include <gdal_version.h>
 #include <ogr_spatialref.h>
 #endif
 
@@ -575,8 +576,13 @@ void ReportProjection(NFmiFastQueryInfo *q)
   char *proj4 = nullptr;
   crs.exportToProj4(&proj4);
   cout << "wktarea\t= " << area->WKT() << endl << "proj4\t= " << proj4 << endl;
-  
+
+#if GDAL_VERSION_MAJOR < 2
+  OGRFree(proj4);
+#else
   CPLFree(proj4);
+#endif
+
 #endif
 
   cout << endl

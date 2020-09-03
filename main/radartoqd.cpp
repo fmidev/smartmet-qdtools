@@ -84,22 +84,22 @@ NFmiEnumConverter converter;
 
 struct point_t
 {
-  boost::optional<varfl> lat; /* latitude */
-  boost::optional<varfl> lon; /* longitude */
+  boost::optional<varfl> lat{}; /* latitude */
+  boost::optional<varfl> lon{}; /* longitude */
 };
 
 /* Meta information about image */
 
 struct meta_t
 {
-  boost::optional<int> year;
-  boost::optional<int> month;
-  boost::optional<int> day;
-  boost::optional<int> hour;
-  boost::optional<int> min;
-  point_t radar;  // Radar position
-  boost::optional<varfl> radar_height;
-  boost::optional<varfl> height_above_station;
+  boost::optional<int> year{};
+  boost::optional<int> month{};
+  boost::optional<int> day{};
+  boost::optional<int> hour{};
+  boost::optional<int> min{};
+  point_t radar{};  // Radar position
+  boost::optional<varfl> radar_height{};
+  boost::optional<varfl> height_above_station{};
 };
 
 /* Level slicing table */
@@ -107,81 +107,81 @@ struct meta_t
 struct scale_t
 {
   // dBZ quantization limits
-  std::vector<varfl> dbz_values;
+  std::vector<varfl> dbz_values{};
 
   // rainfall intensities
-  std::vector<varfl> intensity_values;
-  boost::optional<varfl> z_to_r_conversion;
-  boost::optional<varfl> z_to_r_conversion_factor;
-  boost::optional<varfl> z_to_r_conversion_exponent;
+  std::vector<varfl> intensity_values{};
+  boost::optional<varfl> z_to_r_conversion{};
+  boost::optional<varfl> z_to_r_conversion_factor{};
+  boost::optional<varfl> z_to_r_conversion_exponent{};
 
   /* another method: */
-  boost::optional<varfl> offset;    /* offset */
-  boost::optional<varfl> increment; /* increment */
+  boost::optional<varfl> offset{};    /* offset */
+  boost::optional<varfl> increment{}; /* increment */
 };
 
 /* Radar image */
 
 struct img_t
 {
-  boost::optional<int> type;            /* Image type */
-  boost::optional<varfl> qual;          /* quality indicator */
-  boost::optional<int> grid;            /* Co-ordinate grid type */
-  point_t nw;                           /* Northwest corner of the image */
-  point_t ne;                           /* NE corner */
-  point_t se;                           /* SE corner */
-  point_t sw;                           /* SW corner */
-  boost::optional<int> nrows;           /* Number of pixels per row */
-  boost::optional<int> ncols;           /* Number of pixels per column */
-  boost::optional<varfl> psizex;        /* Pixel size along x coordinate */
-  boost::optional<varfl> psizey;        /* Pixel size along y coordinate */
-  scale_t scale;                        /* Level slicing table */
-  boost::optional<varfl> elevation;     /* Antenna elevation angle */
-  boost::optional<int> ns_organisation; /* North south view organisation */
-  boost::optional<int> ew_organisation; /* East west view organisation */
-  std::vector<varfl> heights;           /* Heights */
-  std::vector<varfl> cappi_heights;     /* CAPPI heights */
+  boost::optional<int> type{};            /* Image type */
+  boost::optional<varfl> qual{};          /* quality indicator */
+  boost::optional<int> grid{};            /* Co-ordinate grid type */
+  point_t nw{};                           /* Northwest corner of the image */
+  point_t ne{};                           /* NE corner */
+  point_t se{};                           /* SE corner */
+  point_t sw{};                           /* SW corner */
+  boost::optional<int> nrows{};           /* Number of pixels per row */
+  boost::optional<int> ncols{};           /* Number of pixels per column */
+  boost::optional<varfl> psizex{};        /* Pixel size along x coordinate */
+  boost::optional<varfl> psizey{};        /* Pixel size along y coordinate */
+  scale_t scale{};                        /* Level slicing table */
+  boost::optional<varfl> elevation{};     /* Antenna elevation angle */
+  boost::optional<int> ns_organisation{}; /* North south view organisation */
+  boost::optional<int> ew_organisation{}; /* East west view organisation */
+  std::vector<varfl> heights{};           /* Heights */
+  std::vector<varfl> cappi_heights{};     /* CAPPI heights */
 
   // These are present in some input BUFRs. These serve no useful purpose,
   // but we parse the respective messages in order to prevent warnings
   // and in order to provide useful debugging output.
 
-  boost::optional<int> calibration_method;
-  boost::optional<int> clutter_treatment;
-  boost::optional<varfl> ground_occultation_correction;
-  boost::optional<varfl> range_attenuation_correction;
-  boost::optional<varfl> bright_band_correction;
-  boost::optional<varfl> radome_attenuation_correction;
-  boost::optional<varfl> clear_air_attenuation_correction;
-  boost::optional<varfl> precipitation_attenuation_correction;
+  boost::optional<int> calibration_method{};
+  boost::optional<int> clutter_treatment{};
+  boost::optional<varfl> ground_occultation_correction{};
+  boost::optional<varfl> range_attenuation_correction{};
+  boost::optional<varfl> bright_band_correction{};
+  boost::optional<varfl> radome_attenuation_correction{};
+  boost::optional<varfl> clear_air_attenuation_correction{};
+  boost::optional<varfl> precipitation_attenuation_correction{};
 
   // Parsed image data
-  unsigned short *data;
+  unsigned short *data{nullptr};
 };
 
 /* Projection information */
 
 struct proj_t
 {
-  boost::optional<int> type;      /* Projection type */
-  boost::optional<varfl> majax;   /* Semi-major axis or rotation ellipsoid */
-  boost::optional<varfl> minax;   /* Semi-minor axis or rotation ellipsoid */
-  point_t origin;                 /* Projection origin */
-  boost::optional<int> xoff;      /* False easting */
-  boost::optional<int> yoff;      /* False northing */
-  boost::optional<varfl> stdpar1; /* 1st standard parallel */
-  boost::optional<varfl> stdpar2; /* 2nd standard parallel */
+  boost::optional<int> type{};      /* Projection type */
+  boost::optional<varfl> majax{};   /* Semi-major axis or rotation ellipsoid */
+  boost::optional<varfl> minax{};   /* Semi-minor axis or rotation ellipsoid */
+  point_t origin{};                 /* Projection origin */
+  boost::optional<int> xoff{};      /* False easting */
+  boost::optional<int> yoff{};      /* False northing */
+  boost::optional<varfl> stdpar1{}; /* 1st standard parallel */
+  boost::optional<varfl> stdpar2{}; /* 2nd standard parallel */
 };
 
 /* This is our internal data structure */
 
 struct radar_data_t
 {
-  boost::optional<int> wmoblock; /* WMO block number */
-  boost::optional<int> wmostat;  /* WMO station number */
-  meta_t meta;                   /* Meta information about the product */
-  img_t img;                     /* Radar reflectivity image */
-  proj_t proj;                   /* Projection information */
+  boost::optional<int> wmoblock{}; /* WMO block number */
+  boost::optional<int> wmostat{};  /* WMO station number */
+  meta_t meta{};                   /* Meta information about the product */
+  img_t img{};                     /* Radar reflectivity image */
+  proj_t proj{};                   /* Projection information */
 };
 
 // ----------------------------------------------------------------------

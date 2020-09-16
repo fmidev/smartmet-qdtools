@@ -99,7 +99,8 @@ LIBS += -L$(libdir) \
 	-lecbufr \
 	-lfmt \
 	-lbz2 -ljpeg -lpng -lz -lrt \
-	-lpthread
+	-lpthread \
+	-lstdc++ -lm
 
 # Common library compiling template
 
@@ -188,7 +189,7 @@ profile: objdir $(MAINPROGS)
 
 .SECONDEXPANSION:
 $(MAINPROGS): % : obj/%.o $(OBJFILES)
-	$(CXX) $(LDFLAGS) -o $@ obj/$@.o $(OBJFILES) $(LIBS)
+	$(CC) $(LDFLAGS) -o $@ obj/$@.o $(OBJFILES) $(LIBS)
 
 clean:
 	rm -f $(MAINPROGS) source/*~ include/*~

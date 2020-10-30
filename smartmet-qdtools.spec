@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 20.9.29
+Version: 20.10.28
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -21,12 +21,12 @@ BuildRequires: libbufr >= 3.2
 BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
-BuildRequires: fmt-devel
-BuildRequires: smartmet-library-calculator-devel >= 20.8.21
-BuildRequires: smartmet-library-gis-devel >= 20.9.29
+BuildRequires: fmt-devel >= 7.1
+BuildRequires: smartmet-library-calculator-devel >= 20.10.7
+BuildRequires: smartmet-library-gis-devel >= 20.10.28
 BuildRequires: smartmet-library-imagine-devel >= 20.9.11
-BuildRequires: smartmet-library-macgyver-devel >= 20.9.29
-BuildRequires: smartmet-library-newbase-devel >= 20.9.29
+BuildRequires: smartmet-library-macgyver-devel >= 20.10.28
+BuildRequires: smartmet-library-newbase-devel >= 20.10.28
 BuildRequires: smartmet-library-smarttools-devel >= 20.9.11
 BuildRequires: smartmet-timezones
 BuildRequires: mdsplib >= 20.8.26
@@ -35,14 +35,14 @@ BuildRequires: zlib-devel
 BuildRequires: jasper-devel
 BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
-Requires: smartmet-timezones >= 20.5.5
-Requires: smartmet-library-calculator >= 20.8.21
-Requires: smartmet-library-gis >= 20.9.29
+Requires: smartmet-timezones >= 20.10.28
+Requires: smartmet-library-calculator >= 20.10.7
+Requires: smartmet-library-gis >= 20.10.28
 Requires: smartmet-library-imagine >= 20.9.11
-Requires: smartmet-library-macgyver >= 20.9.29
-Requires: smartmet-library-newbase >= 20.9.29
+Requires: smartmet-library-macgyver >= 20.10.28
+Requires: smartmet-library-newbase >= 20.10.28
 Requires: smartmet-library-smarttools >= 20.9.11
-Requires: fmt
+Requires: fmt >= 7.1
 Requires: eccodes
 Requires: hdf5 >= 1.8.12
 Requires: jasper-libs >= 1.900.1
@@ -197,6 +197,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Oct 28 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.10.28-1.fmi
+- Upgrade to fmt 7.1
+
 * Tue Sep 29 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.9.29-1.fmi
 - qdinterpolatetime and qdinterpolatearea now fix U/V and WindVector components from wind speed and direction
 

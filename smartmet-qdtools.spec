@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 20.10.28
+Version: 20.10.30
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -21,7 +21,7 @@ BuildRequires: libbufr >= 3.2
 BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
-BuildRequires: fmt-devel >= 7.1
+BuildRequires: fmt-devel >= 7.1.0
 BuildRequires: smartmet-library-calculator-devel >= 20.10.7
 BuildRequires: smartmet-library-gis-devel >= 20.10.28
 BuildRequires: smartmet-library-imagine-devel >= 20.9.11
@@ -42,7 +42,7 @@ Requires: smartmet-library-imagine >= 20.9.11
 Requires: smartmet-library-macgyver >= 20.10.28
 Requires: smartmet-library-newbase >= 20.10.28
 Requires: smartmet-library-smarttools >= 20.9.11
-Requires: fmt >= 7.1
+Requires: fmt >= 7.1.0
 Requires: eccodes
 Requires: hdf5 >= 1.8.12
 Requires: jasper-libs >= 1.900.1
@@ -197,6 +197,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Fri Oct 30 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.10.30-1.fmi
+- Added qdsoundingindex -t option for enabling multiple threads
+
 * Wed Oct 28 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.10.28-1.fmi
 - Upgrade to fmt 7.1
 

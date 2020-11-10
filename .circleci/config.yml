@@ -17,6 +17,8 @@ jobs:
   test:
     docker:
       - image: fmidev/smartmet-cibase:latest
+    environment:
+      TZ: "Europe/Helsinki"
     steps:
       - checkout
       - attach_workspace:

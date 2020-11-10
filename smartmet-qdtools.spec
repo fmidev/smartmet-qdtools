@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 20.10.30
+Version: 20.11.10
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -197,6 +197,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Nov 10 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.11.10-1.fmi
+- qdinfo -a -T now prints UTC times and qdinfo -A -t local times
+
 * Fri Oct 30 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.10.30-1.fmi
 - Added qdsoundingindex -t option for enabling multiple threads
 

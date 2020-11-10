@@ -890,7 +890,7 @@ int domain(int argc, const char *argv[])
 
   string dateFormat = "";
 
-  if (cmdline.isOption('t') || opt_all)
+  if (cmdline.isOption('t') || (opt_all && !cmdline.isOption('T')))
   {
     if (cmdline.OptionValue('t') == nullptr)
       dateFormat = "%Y%m%d%H";
@@ -901,7 +901,7 @@ int domain(int argc, const char *argv[])
 
   // Option -T shows time information in UTC
 
-  if (cmdline.isOption('T') || opt_all_extended)
+  if (cmdline.isOption('T') || (opt_all_extended && !cmdline.isOption('t')))
   {
     if (cmdline.OptionValue('T') == nullptr)
       dateFormat = "%Y%m%d%H";

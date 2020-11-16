@@ -88,6 +88,12 @@ struct ParNameInfo
 typedef std::map<std::string, ParNameInfo> NameMap;
 // typedef std::map<std::string, FmiParameterName> NameMap;
 
+const std::string REMAP_IDENT("ident");
+const std::string REMAP_PHASE("phaseofflight");
+const std::string REMAP_ALTITUDE("flaltitude");
+
+typedef std::map<std::string, std::list<int>> MessageReMap;
+
 // ----------------------------------------------------------------------
 /*!
  * \brief Global since initialization is heavy
@@ -231,9 +237,122 @@ struct Options
   bool autoproducer = false;                                       // -a --autoproducer
   int messagenumber = 0;                                           // -m --message
   int roundtohours = 0;                                            // --roundtohours
+  bool requireident = false;                                       // -I --ident
+  std::string remapamdar;                                          // -r --remap
+  MessageReMap messageremap;                                       // -r --remap
+  int  minobservations = 3;                                        // -N --minobservations
+  int  maxdurationhours = 2;                                       // -M --maxdurationhours
 };
 
 Options options;
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Parse amdar bufr remapping option
+ */
+// ----------------------------------------------------------------------
+
+void parse_option_remap_amdar(const std::string &remapamdar)
+{
+  // Parse remapping option for amdar bufr codes
+  //
+  // All given amdar bufr codes are changed to first/primary code before loading the messages.
+  // Thus data can be loaded from multiple bufr codes to the same qd parameter, without
+  // defining multiple mappings in configuration (which would currenty result into duplicate
+  // qd parameters in parambag). Mapping 'ident' is used to list the codes to extract aircraft
+  // reg. nr or other identification to group/collect amdar messages
+  //
+  // name1,code1,code2,code3;name2,code1,...
+  //
+  // Name ("ident", "phaseofflight" or "flaltitude") is used only to override default remapping
+  // for aircraft identification, phase of flight and altitude. For other mappings the name is
+  // currently meaningless (the given codes are remapped regardless of whether they are mapped
+  // to qd -parameter or not)
+
+  std::string remapstr = Fmi::trim_copy(remapamdar);
+
+  if (!remapstr.empty())
+  {
+    if (options.debug)
+      fprintf(stderr, "remap = %s\n", remapstr.c_str());
+
+    remapstr += ";";
+
+    MessageReMap::iterator rit;
+    std::string token, name;
+    size_t pos0 = 0, pos;
+
+    while ((pos = remapstr.find(";", pos0)) != std::string::npos)
+    {
+      std::string remap = remapstr.substr(pos0, pos - pos0) + ",";
+
+      if (options.debug)
+        fprintf(stderr, "  remap = %s\n", remap.c_str());
+
+      pos0 = pos + 1;
+      size_t pos1 = 0, pos2;
+
+      while ((pos2 = remap.find(",", pos1)) != std::string::npos)
+      {
+        token = Fmi::trim_copy(remap.substr(pos1, pos2 - pos1));
+
+        if (pos1 == 0)
+        {
+          if (token.empty())
+            name = Fmi::to_string(pos0);
+          else
+            name = Fmi::ascii_tolower_copy(token);
+
+          auto remapping = options.messageremap.insert(std::make_pair(name, std::list<int>()));
+
+          if (!remapping.second)
+            throw std::runtime_error("Duplicate mapping name '" + name + "' for option --remap");
+
+          rit = remapping.first;
+        }
+        else if (token.empty())
+          throw std::runtime_error("Empty code for mapping '" + name + "' for option --remap");
+        else
+        {
+          try
+          {
+            rit->second.push_back(Fmi::stoi(token));
+          }
+          catch (...)
+          {
+            throw std::runtime_error("Invalid code '" + token + "' for mapping '" + name +
+                                     "' for option --remap");
+          }
+        }
+
+        if (options.debug)
+          fprintf(stderr, "    token = %s\n", token.c_str());
+
+        pos1 = pos2 + 1;
+      }
+    }
+  }
+
+  // Defaults for aircraft identification, phase of flight and altitude
+
+  if (options.messageremap.find(REMAP_IDENT) == options.messageremap.end())
+  {
+    std::list<int> ident { 1006, 1008 };
+    options.messageremap.insert(std::make_pair(REMAP_IDENT, ident));
+  }
+
+  if (options.messageremap.find(REMAP_PHASE) == options.messageremap.end())
+  {
+    std::list<int> phaseofflight { 8004, 8009 };
+    options.messageremap.insert(std::make_pair(REMAP_PHASE, phaseofflight));
+  }
+
+  if (options.messageremap.find(REMAP_ALTITUDE) == options.messageremap.end())
+  {
+    std::list<int> flaltitude { 7002, 7007, 7010 };
+    options.messageremap.insert(std::make_pair(REMAP_ALTITUDE, flaltitude ));
+  }
+}
 
 // ----------------------------------------------------------------------
 /*!
@@ -251,6 +370,10 @@ bool parse_options(int argc, char *argv[], Options &options)
 
   std::string msg1 = "BUFR parameter configuration file (default='" + options.conffile + "')";
   std::string msg2 = "stations CSV file (default='" + options.stationsfile + "')";
+  std::string msg3 = "minimum number of observations for acceptable amdar (default=" +
+                     Fmi::to_string(options.minobservations) + ")";
+  std::string msg4 = "maximum amdar takeoff/landing phase duration in hours (default=" +
+                     Fmi::to_string(options.maxdurationhours) + "), exceeding data ignored";
 
 #ifdef UNIX
   struct winsize wsz;
@@ -285,7 +408,15 @@ bool parse_options(int argc, char *argv[], Options &options)
       "autoproducer,a", po::bool_switch(&options.autoproducer), "guess producer automatically")(
       "usebufrname",
       po::bool_switch(&options.usebufrname),
-      "use BUFR parameter name instead of parameter code number from configuration file");
+      "use BUFR parameter name instead of parameter code number from configuration file") (
+      "Ident,I",
+      po::bool_switch(&options.requireident),
+      "load only amdar messages having aircraft reg.nr or other identification")(
+      "remap,r",
+      po::value(&options.remapamdar),
+      "remap amdar bufr message codes to first code; name1,code1,code2,code3;name2,code1,...")(
+      "minobservatios,N", po::value(&options.minobservations), msg3.c_str())(
+      "maxdurationhours,M", po::value(&options.maxdurationhours), msg4.c_str());
 
   po::positional_options_description p;
   p.add("infile", 1);
@@ -335,7 +466,9 @@ bool parse_options(int argc, char *argv[], Options &options)
            "lead to problems since codes 010004 and 007004 both have the same name PRESSURE.\n"
            "The current default is to use the BUFR code instead of the name so that parameters\n"
            "with the same name can be discerned. The old behaviour can be restored using the\n"
-           "option --usebufrname.\n";
+           "option --usebufrname.\n\n"
+           "New amdar processing (which handles data levels/altitudes) must be enabled with "
+           "-I option, other related (-r, -N, -M) settings have no effect without it\n";
 
     return false;
   }
@@ -370,6 +503,11 @@ bool parse_options(int argc, char *argv[], Options &options)
     options.producernumber = Fmi::stol(parts[0]);
     options.producername = parts[1];
   }
+
+  // Handle amdar message bufr code remapping
+
+  if (options.requireident)
+    parse_option_remap_amdar(options.remapamdar);
 
   return true;
 }
@@ -470,6 +608,12 @@ std::ostream &operator<<(std::ostream &out, const record &rec)
 
 typedef std::map<int, record> Message;
 typedef std::list<Message> Messages;
+
+typedef std::map<std::string, Messages> IdentMessageMap;
+typedef std::map<std::string, IdentMessageMap> TimeIdentMessageMap;
+typedef std::map<std::string, NFmiMetTime> IdentTimeMap;
+typedef std::list<std::string> TimeIdentList;
+typedef enum { None = 0, Flying = 3, Takeoff = 5, Landing = 6 } Phase;
 
 // ----------------------------------------------------------------------
 /*!
@@ -584,6 +728,71 @@ bool message_looks_valid(const Message &msg)
   if (mi->second.value < 0 || mi->second.value > 59) return false;
 
   return true;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Extract aircraft reg. nr or other identification from amdar message.
+ */
+// ----------------------------------------------------------------------
+
+void get_ident_amdar(const Message &msg, const MessageReMap &remap, std::string &ident)
+{
+  ident.clear();
+
+  auto codes = remap.find(REMAP_IDENT);
+
+  for (const auto code : codes->second)
+  {
+    auto iit = msg.find(code);
+
+    if (
+        (iit != msg.end()) &&
+        *(iit->second.svalue.c_str() + strspn(iit->second.svalue.c_str()," "))
+       )
+    {
+      ident = Fmi::trim_copy(iit->second.svalue);
+      return;
+    }
+  }
+}
+
+Message::iterator get_ident_amdar(Message &msg, const MessageReMap remap, std::string &ident)
+{
+  ident.clear();
+
+  Message::iterator iit = msg.end();
+
+  auto codes = remap.find(REMAP_IDENT);
+
+  for (const auto code : codes->second)
+  {
+    iit = msg.find(code);
+
+    if (
+        (iit != msg.end()) &&
+        *(iit->second.svalue.c_str() + strspn(iit->second.svalue.c_str()," "))
+       )
+    {
+      ident = Fmi::trim_copy(iit->second.svalue);
+      break;
+    }
+  }
+
+  return (ident.empty() ? msg.end() : iit);
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Accept only amdars with aircraft reg. nr or other identification if option -I is used
+ */
+// ----------------------------------------------------------------------
+
+bool message_has_ident(const Message &msg, std::string &ident)
+{
+  get_ident_amdar(msg, options.messageremap, ident);
+
+  return !ident.empty();
 }
 
 // ----------------------------------------------------------------------
@@ -1066,6 +1275,7 @@ NFmiAviationStationInfoSystem read_station_csv()
 NFmiParamDescriptor create_pdesc(const NameMap &namemap, BufrDataCategory category)
 {
   NFmiParamBag pbag;
+
   BOOST_FOREACH (const NameMap::value_type &values, namemap)
   {
     NFmiParam p(values.second.parId, values.second.shortName);
@@ -1131,7 +1341,8 @@ int count_sounding_levels(const Messages &messages)
  */
 // ----------------------------------------------------------------------
 
-NFmiVPlaceDescriptor create_vdesc(const Messages &messages, BufrDataCategory category)
+NFmiVPlaceDescriptor create_vdesc(const Messages &messages, BufrDataCategory category,
+                                  size_t levelcount)
 {
   switch (category)
   {
@@ -1142,7 +1353,23 @@ NFmiVPlaceDescriptor create_vdesc(const Messages &messages, BufrDataCategory cat
     case kBufrUpperAirLevel:
     {
       NFmiLevelBag lbag;
-      lbag.AddLevel(NFmiLevel(kFmiAmdarLevel, "AMDAR", 0));
+
+      if (options.requireident)
+      {
+        // Given level count was set to max number of messages/times per amdar.
+        // The data is in time order when filled to levels
+
+        for (size_t i = 0; i < levelcount; ++i)
+        {
+          char name[16];
+          sprintf(name, "%lu", i);
+          std::string levelName(name);
+          lbag.AddLevel(NFmiLevel(kFmiAmdarLevel, levelName.c_str(), static_cast<float>(i)));
+        }
+      }
+      else
+        lbag.AddLevel(NFmiLevel(kFmiAmdarLevel, "AMDAR", 0));
+
       return NFmiVPlaceDescriptor(lbag);
     }
     case kBufrSounding:
@@ -1475,9 +1702,11 @@ NFmiMetTime get_validtime(const Message &msg)
 /*!
  * \brief Establish valid time for individual AMDAR
  *
- * Each message is expected to get a unique time. If there is a previous
+ * Without -I option, each message is expected to get a unique time. If there is a previous
  * identical time, the next message gets a time that is incremented
  * by one second. This is a requirement of the smartmet editor.
+ *
+ * With -I option, each message for given amdar gets the same (earliest) time.
  *
  * 4001 YEAR
  * 4002 MONTH
@@ -1487,8 +1716,28 @@ NFmiMetTime get_validtime(const Message &msg)
  */
 // ----------------------------------------------------------------------
 
-NFmiMetTime get_validtime_amdar(std::set<NFmiMetTime> &used_times, const Message &message)
+NFmiMetTime get_validtime_amdar(std::set<NFmiMetTime> &used_times,
+                                const Message &message,
+                                std::string &ident,
+                                bool requireident = false,
+                                bool matchident = false,
+                                const IdentTimeMap &identtimemap = IdentTimeMap())
 {
+  // If selected/stored validtime is required and already exists for the amdar, use it
+
+  if (requireident && message_has_ident(message, ident))
+  {
+    IdentTimeMap::const_iterator tit = identtimemap.find(ident);
+
+    if (tit != identtimemap.end())
+      return tit->second;
+
+    if (matchident)
+      throw std::runtime_error(std::string("Internal error, no times for ident ") + ident);
+  }
+  else if (requireident)
+    throw std::runtime_error("Internal error, message has no ident");
+
   // We permit the seconds to be missing, since that seems
   // to be the case in actual messages
   short year = -1, month = -1, day = -1, hour = -1, minute = -1, second = 0;
@@ -1530,6 +1779,16 @@ NFmiMetTime get_validtime_amdar(std::set<NFmiMetTime> &used_times, const Message
   const int timestep = (options.roundtohours > 0 ? 60 * options.roundtohours : 1);
   NFmiMetTime t(year, month, day, hour, minute, second, timestep);
 
+  if (requireident)
+  {
+    // Use the time as is, just set the seconds (see API comment below)
+
+    if (timestep == 1)
+      t.SetSec(second);
+
+    return t;
+  }
+
   // Add up seconds until there is no previous such time.
   // The while test fails if the same time was already in the set.
 
@@ -1559,23 +1818,53 @@ NFmiMetTime get_validtime_amdar(std::set<NFmiMetTime> &used_times, const Message
  */
 // ----------------------------------------------------------------------
 
-NFmiTimeDescriptor create_tdesc_amdar(const Messages &messages)
+NFmiTimeDescriptor create_tdesc_amdar(const Messages &messages, const TimeIdentList &timeidentlist,
+                                      const IdentTimeMap &identtimemap)
 {
-  // Times used so far
-  std::set<NFmiMetTime> validtimes;
-
-  BOOST_FOREACH (const Message &msg, messages)
-  {
-    // Return value can be ignored here
-    get_validtime_amdar(validtimes, msg);
-  }
-
-  // Then the final timelist
-
   NFmiTimeList tlist;
-  BOOST_FOREACH (const NFmiMetTime &t, validtimes)
+
+  if (!options.requireident)
   {
-    tlist.Add(new NFmiMetTime(t));
+    // Times used so far
+
+    std::set<NFmiMetTime> validtimes;
+    std::string ident;
+
+    BOOST_FOREACH (const Message &msg, messages)
+    {
+      // Return value can be ignored here
+      get_validtime_amdar(validtimes, msg, ident);
+    }
+
+    // Then the final timelist
+
+    BOOST_FOREACH (const NFmiMetTime &t, validtimes)
+    {
+      tlist.Add(new NFmiMetTime(t));
+    }
+  }
+  else
+  {
+    // Use the earliest message time for all messages/data for each amdar
+
+    if (options.debug)
+    {
+      BOOST_FOREACH (auto const &identtime, identtimemap)
+      {
+        fprintf(stderr, "IdentTime %s %s\n", identtime.first.c_str(),
+                to_iso_string(identtime.second.PosixTime()).c_str());
+      }
+    }
+
+    BOOST_FOREACH (auto const &timeident, timeidentlist)
+    {
+      auto it = identtimemap.find(timeident);
+      tlist.Add(new NFmiMetTime(it->second, true));
+
+      if (options.debug)
+        fprintf(stderr, "TimeList %s %s\n", it->first.c_str(),
+                to_iso_string(it->second.PosixTime()).c_str());
+    }
   }
 
   NFmiMetTime origintime;
@@ -1588,11 +1877,13 @@ NFmiTimeDescriptor create_tdesc_amdar(const Messages &messages)
  */
 // ----------------------------------------------------------------------
 
-NFmiTimeDescriptor create_tdesc(const Messages &messages, BufrDataCategory category)
+NFmiTimeDescriptor create_tdesc(const Messages &messages, BufrDataCategory category,
+                                const TimeIdentList &timeidentlist, const IdentTimeMap &identtimemap)
 {
   // Special cases
 
-  if (category == kBufrUpperAirLevel) return create_tdesc_amdar(messages);
+  if (category == kBufrUpperAirLevel)
+    return create_tdesc_amdar(messages, timeidentlist, identtimemap);
 
   // Normal cases
 
@@ -1718,25 +2009,48 @@ void copy_records_sounding(NFmiFastQueryInfo &info,
  */
 // ----------------------------------------------------------------------
 
-void copy_records_amdar(NFmiFastQueryInfo &info, const Messages &messages, const NameMap &namemap)
+void copy_records_amdar(NFmiFastQueryInfo &info, const Messages &messages, const NameMap &namemap,
+                        const IdentTimeMap &identtimemap)
 {
   info.First();
+
+  if (options.requireident) info.ResetTime();
 
   // Valid times used so far. Algorithm must match create_tdesc at this point.
 
   std::set<NFmiMetTime> validtimes;
+  std::string ident, lastident;
 
   BOOST_FOREACH (const Message &msg, messages)
   {
+    // Without -I option:
     // There is only one station and only one level, so the initial
     // info.First() is sufficient for setting both correctly.
     // However, the time is different for each message, possibly by
     // artificially added seconds.
+    //
+    // With -I option:
+    // There is only one station. The level is different and the time is same
+    // for amdar's each message.
 
-    NFmiMetTime t = get_validtime_amdar(validtimes, msg);
+    NFmiMetTime t = get_validtime_amdar(validtimes, msg, ident, options.requireident,
+                                        options.requireident, identtimemap);
 
-    if (!info.Time(t))
-      throw std::runtime_error("Internal error in handling valid times of AMDAR message");
+    if (options.requireident && (ident != lastident))
+    {
+      info.ResetLevel();
+
+      if (!info.NextTime()) throw std::runtime_error("Changing to next time failed");
+
+      if (options.debug)
+        fprintf(stderr, "%s %s reset %s %lu\n", ident.c_str(), to_iso_string(t.PosixTime()).c_str(),
+                lastident.c_str(), info.TimeIndex());
+
+      lastident = ident;
+    }
+    else if (options.debug)
+      fprintf(stderr, "%s %s next %lu %lu\n", ident.c_str(), to_iso_string(t.PosixTime()).c_str(),
+              info.TimeIndex(), info.LevelIndex());
 
     // Copy the extra lon/lat parameters we added in create_pdesc
 
@@ -1766,13 +2080,14 @@ void copy_records_amdar(NFmiFastQueryInfo &info, const Messages &messages, const
     }
     else
     {
+      if (options.requireident && (!info.NextLevel()))
+        throw std::runtime_error("Changing to next level failed");
+
       info.Param(kFmiLongitude);
       info.FloatValue(lon);
 
       info.Param(kFmiLatitude);
       info.FloatValue(lat);
-
-      // Copy regular parameters
 
       copy_params(info, msg, namemap);
     }
@@ -1877,13 +2192,15 @@ void copy_records_buoy_ship(NFmiFastQueryInfo &info,
 void copy_records(NFmiFastQueryInfo &info,
                   const Messages &messages,
                   const NameMap &namemap,
-                  BufrDataCategory category)
+                  BufrDataCategory category,
+                  const std::map<std::string,NFmiMetTime> &messageTimes)
 {
   // Handle special cases
 
   if (category == kBufrSounding) return copy_records_sounding(info, messages, namemap);
 
-  if (category == kBufrUpperAirLevel) return copy_records_amdar(info, messages, namemap);
+  if (category == kBufrUpperAirLevel) return copy_records_amdar(info, messages, namemap,
+                                                                messageTimes);
 
   if (category == kBufrSeaSurface) return copy_records_buoy_ship(info, messages, namemap);
 
@@ -1963,6 +2280,879 @@ void guess_producer(BufrDataCategory category)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Extract phase of flight from amdar message
+ */
+// ----------------------------------------------------------------------
+
+Message::const_iterator get_phase_amdar(const Message &msg)
+{
+  auto codes = options.messageremap.find(REMAP_PHASE);
+
+  for (const auto code : codes->second)
+  {
+    auto it = msg.find(code);
+
+    if (
+        (it != msg.end()) &&
+        (
+         (it->second.value == Flying) ||
+         (it->second.value == Takeoff) ||
+         (it->second.value == Landing)
+        )
+       )
+      return it;
+  }
+
+  return msg.end();
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Extract phase of flight from amdar message and remap bufr code if requested
+ */
+// ----------------------------------------------------------------------
+
+Phase get_phase_amdar(Message &msg, bool remap)
+{
+  // Phase exists, it was checked at earlier state
+
+  auto pit = get_phase_amdar(msg);
+
+  Phase phase = (Phase) pit->second.value;
+
+  if (!remap)
+    return phase;
+
+  auto codes = options.messageremap.find(REMAP_PHASE);
+  const int msgcode = pit->first, primarycode = codes->second.front();
+
+  for (const auto code : codes->second)
+  {
+    auto it = msg.find(code);
+
+    if (code == primarycode)
+    {
+      // Primary/first code, no need to remap ?
+
+      if (code == msgcode)
+        continue;
+
+      // Erase old row with primary code if it exists
+
+      if (it != msg.end())
+        msg.erase(it);
+
+      // Insert new row with primary code
+
+      msg.insert(std::make_pair(code, pit->second));
+
+      msg.erase(pit);
+    }
+    else if (it != msg.end())
+      msg.erase(it);
+  }
+
+  return phase;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Extract altitude from amdar message
+ */
+// ----------------------------------------------------------------------
+
+Message::const_iterator get_altitude_amdar(const Message &msg)
+{
+  auto codes = options.messageremap.find(REMAP_ALTITUDE);
+
+  if (codes == options.messageremap.end())
+    return msg.end();
+
+  for (auto code : codes->second)
+  {
+    auto it = msg.find(code);
+
+    if ((it != msg.end()) && (it->second.value != kFloatMissing))
+      return it;
+  }
+
+  return msg.end();
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Extract altitude from amdar message and remap bufr code if requested
+ */
+// ----------------------------------------------------------------------
+
+double get_altitude_amdar(Message &msg, bool remap)
+{
+  // Altitude exists, it was checked at earlier state
+
+  auto hit = get_altitude_amdar(msg);
+
+  double height = hit->second.value;
+
+  if (!remap)
+    return height;
+
+  auto codes = options.messageremap.find(REMAP_ALTITUDE);
+  const int msgcode = hit->first, primarycode = codes->second.front();
+
+  for (auto const code : codes->second)
+  {
+    auto it = msg.find(code);
+
+    if (code == primarycode)
+    {
+      // Primary/first code, no need to remap ?
+
+      if (code == msgcode)
+        continue;
+
+      // Erase old row with primary code if it exists
+
+      if (it != msg.end())
+        msg.erase(it);
+
+      // Insert new row with primary code
+
+      msg.insert(std::make_pair(code, hit->second));
+
+      msg.erase(hit);
+    }
+    else if (it != msg.end())
+      msg.erase(it);
+  }
+
+  return height;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Get current phase of flight from amdar message and set flags indicating phase change.
+ *
+ *        Ascending part of level flight is stored to join to the end of takeoff and descending part
+ *        to the start of landing. Last takeoff message is stored to join with landing
+ */
+// ----------------------------------------------------------------------
+
+Phase get_phase_amdar(Message &msg, Message &lasttakeoffmsg, Phase curphase,
+                      Phase lastmsgphase, bool &phasechange, bool &phaserestart, bool &phasereset,
+                      double &lastaltitude, bool &altitudechange)
+{
+  Phase msgphase = get_phase_amdar(msg, true);
+  double altitude =  get_altitude_amdar(msg, true);
+
+  phasechange = phaserestart = phasereset = false;
+  altitudechange = (fabs(altitude - lastaltitude) > 1);
+
+  if (options.debug)
+  {
+    std::set<NFmiMetTime> dummytimes;
+    std::string ident;
+    NFmiMetTime t = get_validtime_amdar(dummytimes, msg, ident, true);
+
+    fprintf(stderr, "%s %s height=%.0f last=%.0f curphase=%d msgphase=%d\n", ident.c_str(),
+            Fmi::to_iso_string(t).c_str(), altitude, lastaltitude, (int) curphase, (int) msgphase);
+  }
+
+  if (curphase == Takeoff)
+  {
+    // Takeoff can be joined with ascending level flight
+
+    if ((msgphase == Landing) || ((msgphase == Takeoff) && (lastmsgphase == Flying)))
+      phasechange = true;
+
+    // If takeoff of level flight continues lower, start a new phase
+
+    else if (altitudechange && (altitude < lastaltitude))
+    {
+      if (msgphase == Takeoff)
+        phaserestart = true;
+      else
+        phasechange = true;
+    }
+  }
+  else if (curphase == Flying)
+  {
+    // Descending level flight can be joined with landing phase.
+    // If level flight or landing continues higher, start a new phase
+    //
+    if (msgphase == Takeoff)
+      phasechange = phasereset = true;
+    else if (altitudechange && (altitude > lastaltitude))
+      phaserestart = true;
+  }
+  else if (curphase == Landing)
+  {
+    // If landing continues higher, start new phase
+    //
+    if (msgphase != Landing)
+      phasechange = true;
+    else if (altitudechange && (altitude > lastaltitude))
+      phaserestart = true;
+  }
+  else
+    phasechange = true;
+
+  // Remember last takeoff phase message to possibly be joined with landing
+
+  if (msgphase == Takeoff)
+    lasttakeoffmsg = msg;
+
+  if (phasechange)
+  {
+    if (curphase == None)
+      altitudechange = true;
+
+    // If landing starts higher than last takeoff phase altitude, they cannot be joined
+
+    else if (
+             ((msgphase == Landing) && ((!altitudechange) || (altitude > lastaltitude))) ||
+             (msgphase == Flying)
+            )
+      lasttakeoffmsg.clear();
+
+    curphase = msgphase;
+  }
+
+  lastaltitude = altitude;
+
+  return curphase;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Get number of mapped parameters/observations from admar message
+ */
+// ----------------------------------------------------------------------
+
+int get_obscount_amdar(const NameMap &namemap, const Message &msg)
+{
+  int obscount = 0;
+
+  BOOST_FOREACH (const Message::value_type &value, msg)
+  {
+    auto key = fmt::format("{:0>6}", value.first);
+
+    NameMap::const_iterator it = namemap.find(key);
+
+    if (it != namemap.end())
+      obscount++;
+  }
+
+  return obscount;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Remove subsequent duplicate amdar messages based on time and
+ *        max. number of observations
+ */
+// ----------------------------------------------------------------------
+
+void remove_duplicate_messages_amdar(const NameMap &namemap, Phase phase, Messages &phasemessages,
+                                     IdentTimeMap &identtimemap)
+{
+  Messages::iterator mit = phasemessages.begin(), mit0 = phasemessages.end();
+  double lastaltitude = 0.0;
+  int obscount0 = -1;
+
+  for (; (mit != phasemessages.end()); )
+  {
+    Message &msg = *mit;
+
+    double altitude = get_altitude_amdar(msg, false);
+    bool altitudechange = ((mit == phasemessages.begin()) || (fabs(altitude - lastaltitude) > 1));
+
+    if (!altitudechange)
+    {
+      if (obscount0 < 0)
+      {
+        mit0 = prev(mit);
+        obscount0 = get_obscount_amdar(namemap, *mit0);
+      }
+
+      int obscount = get_obscount_amdar(namemap, msg);
+
+      if (obscount > obscount0)
+      {
+        phasemessages.erase(mit0);
+
+        mit0 = mit;
+        obscount0 = obscount;
+      }
+      else if ((obscount < obscount0) || (phase == Takeoff))
+      {
+        // Keep earliest message for takeoff, latest otherwise
+
+          mit = phasemessages.erase(mit);
+          continue;
+      }
+      else
+      {
+        // Keep latest message
+
+        phasemessages.erase(mit0);
+        mit0 = mit;
+      }
+    }
+    else
+    {
+      if (mit0 != phasemessages.end())
+      {
+        std::set<NFmiMetTime> dummytimes;
+        std::string ident;
+
+        NFmiMetTime t = get_validtime_amdar(dummytimes, *mit0, ident, true);
+
+        auto tit = identtimemap.find(ident);
+        tit->second = t;
+
+        mit0 = phasemessages.end();
+      }
+
+      lastaltitude = altitude;
+      obscount0 = -1;
+    }
+
+    mit++;
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Remove duplicate amdar messages and amdars with too few observations/times, and limit
+ *        amdar duration. Keep track of max number of levels (observations/times) per amdar
+ */
+// ----------------------------------------------------------------------
+
+void limit_duration_amdar(const NameMap &namemap, Phase phase, Messages &phasemessages,
+                          IdentTimeMap &identtimemap, size_t &levelcount)
+{
+  using namespace boost::posix_time;
+
+  remove_duplicate_messages_amdar(namemap, phase, phasemessages, identtimemap);
+
+  time_duration maxduration(hours(options.maxdurationhours)), td;
+
+  Messages::iterator mit = phasemessages.begin(),mit0;
+  std::set<NFmiMetTime> dummytimes;
+  NFmiMetTime t, t0;
+  std::string ident;
+
+  for (; (mit != phasemessages.end()); mit++)
+  {
+    t = get_validtime_amdar(dummytimes, *mit, ident, true);
+
+    if (mit != phasemessages.begin())
+    {
+      td = t.PosixTime() - t0.PosixTime();
+
+      if (options.debug)
+        fprintf(stderr, "  Duration %s %s %s %ld secs\n", ident.c_str(),
+                to_iso_string(t.PosixTime()).c_str(), to_iso_string(t0.PosixTime()).c_str(),
+                td.total_seconds());
+
+      if (td > maxduration)
+      {
+        if (phase == Takeoff)
+        {
+          phasemessages.erase(mit, phasemessages.end());
+          break;
+        }
+
+        for (; (mit0 != mit); )
+        {
+          mit0 = phasemessages.erase(mit0);
+
+          if (mit0 != mit)
+          {
+            t0 = get_validtime_amdar(dummytimes, *mit0, ident, true);
+
+            td = t.PosixTime() - t0.PosixTime();
+
+            if (options.debug)
+              fprintf(stderr, "    Duration %s %s %s %ld secs\n", ident.c_str(),
+                      to_iso_string(t.PosixTime()).c_str(), to_iso_string(t0.PosixTime()).c_str(),
+                      td.total_seconds());
+
+            if (td <= maxduration)
+              break;
+          }
+          else
+            t0 = t;
+        }
+      }
+    }
+    else
+    {
+      if (options.debug)
+        fprintf(stderr, "Duration %s %s\n", ident.c_str(), to_iso_string(t.PosixTime()).c_str());
+
+      t0 = t;
+      mit0 = mit;
+    }
+  }
+
+  // Remove amdars having too few observations/times (levels) and keep track of max number of levels
+
+  size_t lvlcnt = 0;
+
+  for (mit = phasemessages.begin(); ;)
+  {
+    if (mit != phasemessages.end())
+    {
+      t = get_validtime_amdar(dummytimes, *mit, ident, true);
+
+      if (options.debug)
+        fprintf(stderr, "  Limit %s %s\n", ident.c_str(), to_iso_string(t.PosixTime()).c_str());
+
+      mit++;
+      lvlcnt++;
+    }
+    else
+    {
+      if ((int) lvlcnt < options.minobservations)
+      {
+        phasemessages.clear();
+
+        if (options.debug)
+          fprintf(stderr, "  Limit erase %s\n", ident.c_str());
+
+        identtimemap.erase(ident);
+      }
+      else
+      {
+        if (options.debug)
+          fprintf(stderr, "  %s levelcount %lu\n", ident.c_str(), lvlcnt);
+
+        levelcount = std::max(levelcount, lvlcnt);
+      }
+
+      break;
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Remap amdar message bufr codes
+ */
+// ----------------------------------------------------------------------
+
+void remap_message_amdar(Message &msg)
+{
+  for (auto const &codes : options.messageremap)
+  {
+    // These have been remapped already
+
+    if (
+        (codes.first == REMAP_IDENT) ||
+        (codes.first == REMAP_PHASE) ||
+        (codes.first == REMAP_ALTITUDE)
+       )
+      continue;
+
+    Message::iterator mit = msg.end();
+
+    for (const auto code : codes.second)
+    {
+      mit = msg.find(code);
+
+      if ((mit != msg.end()) && (mit->second.value != kFloatMissing))
+        break;
+    }
+
+    const int msgcode = ((mit != msg.end()) ? mit->first : 0), primarycode = codes.second.front();
+
+    for (const auto code : codes.second)
+    {
+      auto it = msg.find(code);
+
+      if (code == primarycode)
+      {
+        // Primary/first code, no need to remap ?
+
+        if ((mit == msg.end()) || (code == msgcode))
+          continue;
+
+        // Erase old row with primary code if it exists
+
+        if (it != msg.end())
+          msg.erase(it);
+
+        // Insert new row with primary code
+
+        msg.insert(std::make_pair(code, mit->second));
+
+        msg.erase(mit);
+      }
+      else if (it != msg.end())
+        msg.erase(it);
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Set flight phase/state string for debug output
+ */
+// ----------------------------------------------------------------------
+
+void debug_state_amdar(const std::string &ident, const std::string &lastorigident,
+                       Phase curphase, Phase lastphase, std::string &state)
+{
+  state = (ident != lastorigident) ? "new " : "";
+
+  if ((ident == lastorigident) && (curphase != Flying) && (lastphase != Flying))
+  {
+    if (curphase == Flying)
+    {
+      if (lastphase == Landing)
+      {
+        state += "landing_fly !";
+      }
+      else if (lastphase == Takeoff)
+      {
+        state += "takeoff_fly";
+      }
+      else
+      {
+        state += "fly";
+      }
+    }
+    else if (curphase == Takeoff)
+    {
+      if (lastphase == Flying)
+      {
+        state += "fly_takeoff !";
+      }
+      else if (lastphase == Landing)
+      {
+        state += "landing_takeoff";
+      }
+      else
+        state += "takeoff";
+    }
+    else
+    {
+      if (lastphase == Flying)
+      {
+        state += "fly_landing";
+      }
+      else if (lastphase == Takeoff)
+      {
+        state += "takeoff_landing";
+      }
+      else
+        state += "landing";
+    }
+  }
+  else
+  {
+    if (curphase == Flying)
+      state += "fly";
+    else if (curphase == Takeoff)
+      state += "takeoff";
+    else
+      state += "landing";
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Sort amdar messages to time and ident (aircraft reg. nr or other identification) order.
+ *
+ *        Parameter mapping is set to namemap. Data times (the first time for each amdar)
+ *        for the idents/amdars are set to 'identtimemap' and idents are stored to 'timeidentlist'
+ *        in time and ident order.
+ *
+ *        Also set number of data levels from max number of time instants per amdar to 'levelcount'
+ *
+ *        Messages with missing/unknown ident, phase of flight or altitude are filtered off.
+ */
+// ----------------------------------------------------------------------
+
+void organize_messages_amdar(const Messages &origmessages, const NameMap &parammap,
+                             NameMap &namemap, Messages &sortedmessages,
+                             TimeIdentList &timeidentlist, IdentTimeMap &identtimemap,
+                             size_t &levelcount)
+{
+  typedef std::map<std::string, Message> TimeMessageMap;
+  typedef std::map<std::string, TimeMessageMap> MessageMap;
+  MessageMap messagemap;
+  Messages filteredmessages;
+  Message remappedmsg;
+  std::set<NFmiMetTime> dummytimes;
+  NFmiMetTime t;
+  std::string ident;
+  size_t msgnbr = 0;
+
+  // Store messages into a map using aircraft/amdar ident as the (main) key.
+  // Filter off messages with missing/unknown ident, phase of flight or altitude
+
+  BOOST_FOREACH (const Message &msg, origmessages)
+  {
+    try
+    {
+      // Messages must have aircraft reg. nr or other identification
+
+      msgnbr++;
+
+      if (!message_has_ident(msg, ident))
+        continue;
+
+      // Messages must have Takeoff, Flying (level flight) or Landing phase of flight
+
+      if (get_phase_amdar(msg) == msg.end())
+        continue;
+
+      // Messages must have altitude informatíon
+
+      if (get_altitude_amdar(msg) == msg.end())
+        continue;
+
+      // Remap bufr codes. There are 3 remappings by default; ident, phase of flight and altitude
+
+      const Message &fmsg = ((options.messageremap.size() > 3) ? remappedmsg : msg);
+
+      if (options.messageremap.size() > 3)
+      {
+        remappedmsg = msg;
+        remap_message_amdar(remappedmsg);
+      }
+
+      // Get aircraft/amdar ident and message time
+
+      t = get_validtime_amdar(dummytimes, fmsg, ident, true);
+
+      // Store messages into a list for parameter mapping
+
+      filteredmessages.push_back(fmsg);
+
+      // Store messages into a map for sorting by message time
+
+      auto it = messagemap.find(ident);
+
+      if (it == messagemap.end())
+      {
+        TimeMessageMap tm;
+        tm.insert(std::make_pair(to_iso_string(t.PosixTime()), fmsg));
+
+        messagemap.insert(std::make_pair(ident, tm));
+      }
+      else
+        it->second.insert(std::make_pair(to_iso_string(t.PosixTime()), fmsg));
+    }
+    catch (std::exception &e)
+    {
+      std::cerr << "Warning: " << e.what() << " ... skipping message " << msgnbr << std::endl;
+    }
+  }
+
+  // Build a list of all parameter names
+
+  std::set<std::string> names = collect_names(filteredmessages);
+
+  namemap = map_names(names, parammap);
+
+  // Collect/group data by ident, phase of flight and time
+
+  Phase curphase = None, lastphase = None;
+  TimeIdentMessageMap timeidentmessages;
+  Messages phasemessages;
+  Message lasttakeoffmsg;
+  std::string lastident,lastorigident;
+  boost::posix_time::ptime lasttime;
+  std::string msgident,state;
+  double lastaltitude = 0.0;
+  bool phasechange, phaserestart, phasereset, altitudechange;
+  int counter = 0;
+
+  levelcount = 0;
+
+  auto imm = messagemap.begin();
+  for (; imm != messagemap.end(); imm++)
+  {
+    auto imt = imm->second.begin();
+    NFmiMetTime t;
+
+    for (; imt != imm->second.end(); imt++)
+    {
+      auto &msg = imt->second;
+      auto iit = get_ident_amdar(msg, options.messageremap, msgident);
+      std::string ident = imm->first;
+      bool identchange = (ident != lastorigident);
+
+      // Get phase of flight. Join takeoff and flight or landing, and flight and landing messages
+      // when applicable.
+      //
+      // Remap phase of flight and altitude bufr codes if requested
+
+      curphase = get_phase_amdar(msg, lasttakeoffmsg, curphase, lastphase, phasechange,
+                                 phaserestart, phasereset, lastaltitude, altitudechange);
+
+      if (phasereset)
+        phasemessages.clear();
+
+      if (options.debug)
+        debug_state_amdar(ident, lastorigident, curphase, lastphase, state);
+
+      if (identchange || phasechange || phaserestart)
+      {
+        char cntrstr[16];
+        sprintf(cntrstr, "%06d", counter);
+        counter++;
+
+        lastident = ident + "_" + cntrstr + "_" + Fmi::to_string(curphase);
+        lastorigident = ident;
+
+        // Keep descending level flight messages to join with landing (do not store them)
+
+        if (
+            ((lastphase == Flying) && (identchange || (phasechange && (curphase != Landing)))) ||
+            ((curphase == Flying) && phaserestart)
+           )
+        {
+          if (options.debug)
+          {
+            t = get_validtime_amdar(dummytimes, msg, ident, true);
+            fprintf(stderr, "Set ident %s%s %s %d %s %5.0f %s\n",
+                    (curphase == Flying) ? " fly " : "", iit->second.svalue.c_str(),
+                    lastident.c_str(), (int) curphase, to_iso_string(t.PosixTime()).c_str(),
+                    lastaltitude, state.c_str());
+          }
+
+          phasemessages.clear();
+        }
+        else
+        {
+          auto *firstmessage = &msg;
+
+          if (!phasemessages.empty())
+          {
+            // Taking allowed max duration into account, ignore messages from the end of takeoff
+            // or the start of landing. Remove duplicate messages. Ignore the phase/amdar if it
+            // has too few messages/observations
+
+            limit_duration_amdar(namemap, lastphase, phasemessages, identtimemap, levelcount);
+
+            if (phasemessages.size() > 0)
+            {
+              if (options.debug)
+              {
+                t = get_validtime_amdar(dummytimes, phasemessages.front(), msgident, true);
+                fprintf(stderr, "TimeIdent %s next %s %s add %lu\n", msgident.c_str(),
+                        lastident.c_str(), to_iso_string(t.PosixTime()).c_str(),
+                        phasemessages.size());
+              }
+
+              // Store idents into a list in time order
+
+              identtimemap.insert(std::make_pair(msgident, t));
+
+              // Store messages into a map with time as the (main) key
+
+              auto ti = timeidentmessages.insert(std::make_pair(to_iso_string(t.PosixTime()),
+                                                 IdentMessageMap()));
+              auto im = ti.first->second.insert(std::make_pair(msgident, Messages()));
+              im.first->second.insert(im.first->second.begin(), phasemessages.begin(),
+                                      phasemessages.end());
+            }
+
+            phasemessages.clear();
+
+            if ((!identchange) && (!lasttakeoffmsg.empty()))
+            {
+              // Set message ident and join last takeoff message to the start of landing phase
+
+              auto fit = get_ident_amdar(lasttakeoffmsg, options.messageremap, msgident);
+              fit->second.svalue = lastident;
+
+              if (options.debug)
+                fprintf(stderr, "Set ident takeoff %s to %s\n", msgident.c_str(), lastident.c_str());
+
+              phasemessages.push_back(lasttakeoffmsg);
+
+              firstmessage = &lasttakeoffmsg;
+            }
+          }
+
+          // Time for all messages for current phase
+
+          t = get_validtime_amdar(dummytimes, *firstmessage, ident, true);
+
+          lasttakeoffmsg.clear();
+
+          if (options.debug)
+            fprintf(stderr, "Set ident %s %s %d %s %5.0f %s\n", iit->second.svalue.c_str(),
+                    lastident.c_str(), (int) curphase, to_iso_string(t.PosixTime()).c_str(),
+                    lastaltitude, state.c_str());
+        }
+      }
+      else if (options.debug)
+      {
+        t = get_validtime_amdar(dummytimes, msg, ident, true);
+        fprintf(stderr, "  set ident %s %s %d %s %5.0f %s\n", iit->second.svalue.c_str(),
+                lastident.c_str(), (int) curphase, to_iso_string(t.PosixTime()).c_str(),
+                lastaltitude, state.c_str());
+      }
+
+      iit->second.svalue = ident = lastident;
+
+      phasemessages.push_back(imt->second);
+
+      lastphase = curphase;
+    }
+  }
+
+  // Handle last ident/phase
+
+  if (!phasemessages.empty())
+  {
+    limit_duration_amdar(namemap, lastphase, phasemessages, identtimemap, levelcount);
+
+    if (phasemessages.size() > 0)
+    {
+      t = get_validtime_amdar(dummytimes, phasemessages.front(), msgident, true);
+
+      if (options.debug)
+        fprintf(stderr, "TimeIdent %s %s %s add %lu\n", msgident.c_str(), lastident.c_str(),
+                to_iso_string(t.PosixTime()).c_str(), phasemessages.size());
+
+      identtimemap.insert(std::make_pair(msgident, t));
+
+      auto ti = timeidentmessages.insert(std::make_pair(to_iso_string(t.PosixTime()),
+                                         IdentMessageMap()));
+      auto im = ti.first->second.insert(std::make_pair(msgident, Messages()));
+      im.first->second.insert(im.first->second.begin(), phasemessages.begin(), phasemessages.end());
+    }
+  }
+
+  // Store the amdar idents in time and messages in time and ident order into lists
+
+  BOOST_FOREACH (auto const &timeidents, timeidentmessages)
+  {
+    if (options.debug)
+      fprintf(stderr, "TimeIdent %s %lu idents\n", timeidents.first.c_str(),
+              timeidents.second.size());
+
+    BOOST_FOREACH (auto const &identmessages, timeidents.second)
+    {
+      if (options.debug)
+        fprintf(stderr, "  %s %lu messages\n", identmessages.first.c_str(),
+                identmessages.second.size());
+
+      timeidentlist.push_back(identmessages.first);
+      sortedmessages.insert(sortedmessages.end(), identmessages.second.begin(), identmessages.second.end());
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Main program without exception handling
  */
 // ----------------------------------------------------------------------
@@ -1994,9 +3184,32 @@ int run(int argc, char *argv[])
   bufr_end_api();
 
   BufrDataCategory category = tmp.first;
-  Messages &messages = tmp.second;
-
   validate_category(category);
+
+  options.requireident &= (category == kBufrUpperAirLevel);
+
+  // If requested sort messages to time and ident (aircraft reg. nr or other id) and
+  // filter off messages with no (or unknown) phase or altitude information
+
+  NameMap namemap;
+
+  Messages sortedmessages;
+  const Messages &messages = (options.requireident ? sortedmessages : tmp.second);
+  TimeIdentList timeidentlist;
+  IdentTimeMap identtimemap;
+  size_t levelcount = 0;
+
+  if (options.requireident)
+    organize_messages_amdar(tmp.second, parammap, namemap, sortedmessages, timeidentlist,
+                            identtimemap, levelcount);
+  else
+  {
+    // Build a list of all parameter names
+
+    std::set<std::string> names = collect_names(tmp.second);
+
+    namemap = map_names(names, parammap);
+  }
 
   // Guess the producer if so requested
 
@@ -2008,7 +3221,8 @@ int run(int argc, char *argv[])
   if (options.debug)
   {
     int i = 0;
-    BOOST_FOREACH (const Message &msg, messages)
+//  BOOST_FOREACH (const Message &msg, messages)
+    BOOST_FOREACH (const Message &msg, tmp.second)
     {
       std::cout << std::endl << "Message " << ++i << std::endl << std::endl;
 
@@ -2018,18 +3232,11 @@ int run(int argc, char *argv[])
     }
   }
 
-  // Build a list of all parameter names
-
-  std::set<std::string> names = collect_names(messages);
-
-  NameMap namemap = map_names(names, parammap);
-
   // Build the querydata descriptors from the file names etc
 
   NFmiParamDescriptor pdesc = create_pdesc(namemap, category);
-  NFmiVPlaceDescriptor vdesc = create_vdesc(messages, category);
-  NFmiTimeDescriptor tdesc = create_tdesc(messages, category);
-
+  NFmiVPlaceDescriptor vdesc = create_vdesc(messages, category, levelcount);
+  NFmiTimeDescriptor tdesc = create_tdesc(messages, category, timeidentlist, identtimemap);
   NFmiHPlaceDescriptor hdesc = create_hdesc(messages, stations, category);
 
   // Initialize the data to missing values
@@ -2044,7 +3251,7 @@ int run(int argc, char *argv[])
 
   // Add each file to the data
 
-  copy_records(info, messages, namemap, category);
+  copy_records(info, messages, namemap, category, identtimemap);
 
   // Output
 

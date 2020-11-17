@@ -2048,7 +2048,7 @@ void copy_records_amdar(NFmiFastQueryInfo &info, const Messages &messages, const
 
       lastident = ident;
     }
-    else if (options.debug)
+    else if (options.requireident && options.debug)
       fprintf(stderr, "%s %s next %lu %lu\n", ident.c_str(), to_iso_string(t.PosixTime()).c_str(),
               info.TimeIndex(), info.LevelIndex());
 

@@ -3041,17 +3041,16 @@ void organize_messages_amdar(const Messages &origmessages, const NameMap &paramm
 
             if (phasemessages.size() > 0)
             {
+              // Store idents into a list in time order
+
+              t = get_validtime_amdar(dummytimes, phasemessages.front(), msgident, true);
+
+              identtimemap.insert(std::make_pair(msgident, t));
+
               if (options.debug)
-              {
-                t = get_validtime_amdar(dummytimes, phasemessages.front(), msgident, true);
                 fprintf(stderr, "TimeIdent %s next %s %s add %lu\n", msgident.c_str(),
                         lastident.c_str(), to_iso_string(t.PosixTime()).c_str(),
                         phasemessages.size());
-              }
-
-              // Store idents into a list in time order
-
-              identtimemap.insert(std::make_pair(msgident, t));
 
               // Store messages into a map with time as the (main) key
 
@@ -3060,9 +3059,9 @@ void organize_messages_amdar(const Messages &origmessages, const NameMap &paramm
               auto im = ti.first->second.insert(std::make_pair(msgident, Messages()));
               im.first->second.insert(im.first->second.begin(), phasemessages.begin(),
                                       phasemessages.end());
-            }
 
-            phasemessages.clear();
+              phasemessages.clear();
+            }
 
             if ((!identchange) && (!lasttakeoffmsg.empty()))
             {
@@ -3080,16 +3079,15 @@ void organize_messages_amdar(const Messages &origmessages, const NameMap &paramm
             }
           }
 
-          // Time for all messages for current phase
-
-          t = get_validtime_amdar(dummytimes, *firstmessage, ident, true);
-
-          lasttakeoffmsg.clear();
-
           if (options.debug)
+          {
+            t = get_validtime_amdar(dummytimes, *firstmessage, ident, true);
             fprintf(stderr, "Set ident %s %s %d %s %5.0f %s\n", iit->second.svalue.c_str(),
                     lastident.c_str(), (int) curphase, to_iso_string(t.PosixTime()).c_str(),
                     lastaltitude, state.c_str());
+          }
+
+          lasttakeoffmsg.clear();
         }
       }
       else if (options.debug)

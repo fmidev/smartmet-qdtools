@@ -2036,21 +2036,26 @@ void copy_records_amdar(NFmiFastQueryInfo &info, const Messages &messages, const
     NFmiMetTime t = get_validtime_amdar(validtimes, msg, ident, options.requireident,
                                         options.requireident, identtimemap);
 
-    if (options.requireident && (ident != lastident))
+    if (options.requireident)
     {
-      info.ResetLevel();
+      if (ident != lastident)
+      {
+        info.ResetLevel();
 
-      if (!info.NextTime()) throw std::runtime_error("Changing to next time failed");
+        if (!info.NextTime()) throw std::runtime_error("Changing to next time failed");
 
-      if (options.debug)
-        fprintf(stderr, "%s %s reset %s %lu\n", ident.c_str(), to_iso_string(t.PosixTime()).c_str(),
-                lastident.c_str(), info.TimeIndex());
+        if (options.debug)
+          fprintf(stderr, "%s %s reset %s %lu\n", ident.c_str(),
+                  to_iso_string(t.PosixTime()).c_str(), lastident.c_str(), info.TimeIndex());
 
-      lastident = ident;
+        lastident = ident;
+      }
+      else if (options.debug)
+        fprintf(stderr, "%s %s next %lu %lu\n", ident.c_str(), to_iso_string(t.PosixTime()).c_str(),
+                info.TimeIndex(), info.LevelIndex());
     }
-    else if (options.requireident && options.debug)
-      fprintf(stderr, "%s %s next %lu %lu\n", ident.c_str(), to_iso_string(t.PosixTime()).c_str(),
-              info.TimeIndex(), info.LevelIndex());
+    else if (!info.Time(t))
+      throw std::runtime_error("Internal error in handling valid times of AMDAR message");
 
     // Copy the extra lon/lat parameters we added in create_pdesc
 

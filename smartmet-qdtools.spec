@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 20.11.17
+Version: 20.11.24
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -197,6 +197,10 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Nov 24 2020 Pertti Kinnia <pertti.kinnia@fmi.fi> - 20.11.24-1.fmi
+- Fixed bugs in joining takeoff, level flight and landing phase amdar messages; e.g. joined level flight and landing messages were lost when new takeoff phase was started
+- Set correct phase of flight for joined messages
+
 * Tue Nov 17 2020 Pertti Kinnia <pertti.kinnia@fmi.fi> - 20.11.17-1.fmi
 - Added level handling for amdars; BRAINSTORM-1934
 

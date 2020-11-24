@@ -2317,16 +2317,16 @@ Message::const_iterator get_phase_amdar(const Message &msg)
  */
 // ----------------------------------------------------------------------
 
-Phase get_phase_amdar(Message &msg, bool remap)
+Phase get_phase_amdar(Message &msg, bool remap, int &code)
 {
   // Phase exists, it was checked at earlier state
 
   auto pit = get_phase_amdar(msg);
 
-  Phase phase = (Phase) pit->second.value;
+  code = pit->first;
 
   if (!remap)
-    return phase;
+    return (Phase) pit->second.value;
 
   auto codes = options.messageremap.find(REMAP_PHASE);
   const int msgcode = pit->first, primarycode = codes->second.front();
@@ -2357,7 +2357,7 @@ Phase get_phase_amdar(Message &msg, bool remap)
       msg.erase(it);
   }
 
-  return phase;
+  return (Phase) pit->second.value;
 }
 
 // ----------------------------------------------------------------------
@@ -2442,15 +2442,15 @@ double get_altitude_amdar(Message &msg, bool remap)
  */
 // ----------------------------------------------------------------------
 
-Phase get_phase_amdar(Message &msg, Message &lasttakeoffmsg, Phase curphase,
-                      Phase lastmsgphase, bool &phasechange, bool &phaserestart, bool &phasereset,
-                      double &lastaltitude, bool &altitudechange)
+Phase get_phase_amdar(Message &msg, Message &lasttakeoffmsg, Phase curphase, Phase &lastmsgphase,
+                      bool &phasechange, bool &phaserestart, bool &phasereset, double &lastaltitude)
 {
-  Phase msgphase = get_phase_amdar(msg, true);
+  int code;
+  Phase msgphase = get_phase_amdar(msg, true, code);
   double altitude =  get_altitude_amdar(msg, true);
+  bool altitudechange = (fabs(altitude - lastaltitude) > 1);
 
   phasechange = phaserestart = phasereset = false;
-  altitudechange = (fabs(altitude - lastaltitude) > 1);
 
   if (options.debug)
   {
@@ -2466,10 +2466,15 @@ Phase get_phase_amdar(Message &msg, Message &lasttakeoffmsg, Phase curphase,
   {
     // Takeoff can be joined with ascending level flight
 
-    if ((msgphase == Landing) || ((msgphase == Takeoff) && (lastmsgphase == Flying)))
+    if (msgphase == Landing)
       phasechange = true;
 
-    // If takeoff of level flight continues lower, start a new phase
+    // Takeoff - LevelFlight - Takeoff ?
+
+    else if ((msgphase == Takeoff) && (lastmsgphase == Flying))
+      phaserestart = true;
+
+    // If takeoff or level flight continues lower, start a new phase
 
     else if (altitudechange && (altitude < lastaltitude))
     {
@@ -2481,18 +2486,30 @@ Phase get_phase_amdar(Message &msg, Message &lasttakeoffmsg, Phase curphase,
   }
   else if (curphase == Flying)
   {
-    // Descending level flight can be joined with landing phase.
-    // If level flight or landing continues higher, start a new phase
-    //
+    // Descending level flight can be joined with landing phase
+
     if (msgphase == Takeoff)
-      phasechange = phasereset = true;
+    {
+      phasechange = true;
+
+      if (lastmsgphase != Landing)
+        phasereset = true;
+    }
+
+    // If level flight or landing continues higher, start a new phase
+
     else if (altitudechange && (altitude > lastaltitude))
-      phaserestart = true;
+    {
+      if ((msgphase == Flying) || (lastmsgphase != Landing))
+        phasereset = true;
+      else
+        phasechange = true;
+    }
   }
   else if (curphase == Landing)
   {
     // If landing continues higher, start new phase
-    //
+
     if (msgphase != Landing)
       phasechange = true;
     else if (altitudechange && (altitude > lastaltitude))
@@ -2503,7 +2520,7 @@ Phase get_phase_amdar(Message &msg, Message &lasttakeoffmsg, Phase curphase,
 
   // Remember last takeoff phase message to possibly be joined with landing
 
-  if (msgphase == Takeoff)
+  if ((msgphase == Takeoff) || ((curphase == Takeoff) && (!phasechange)))
     lasttakeoffmsg = msg;
 
   if (phasechange)
@@ -2522,6 +2539,7 @@ Phase get_phase_amdar(Message &msg, Message &lasttakeoffmsg, Phase curphase,
     curphase = msgphase;
   }
 
+  lastmsgphase = msgphase;
   lastaltitude = altitude;
 
   return curphase;
@@ -2868,6 +2886,72 @@ void debug_state_amdar(const std::string &ident, const std::string &lastorigiden
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Set phase (takeoff for takeoff and level flight, and landing for
+ *        takeoff and landing or level flight and landing) for joined messages
+ */
+// ----------------------------------------------------------------------
+
+void set_phase_amdar(Phase phase, Messages &phasemessages)
+{
+  int code;
+
+  if (phase != Takeoff) phase = Landing;
+
+  for (auto &msg : phasemessages)
+  {
+    get_phase_amdar(msg, false, code);
+
+    auto pit = msg.find(code);
+
+    pit->second.value = phase;
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Store amdar i.e. messages from single takeoff or landing
+ */
+// ----------------------------------------------------------------------
+
+void store_messages_amdar(const NameMap &namemap, const std::string &nextident, Phase phase,
+                          Messages &phasemessages, IdentTimeMap &identtimemap,
+                          TimeIdentMessageMap &timeidentmessages, size_t &levelcount)
+{
+  // Taking allowed max duration into account, ignore messages from the end of takeoff
+  // or the start of landing. Remove duplicate messages. Ignore the phase/amdar if it
+  // has too few messages/observations
+
+  limit_duration_amdar(namemap, phase, phasemessages, identtimemap, levelcount);
+
+  if (phasemessages.empty())
+    return;
+
+  // Set phase for (possibly) joined messages
+
+  set_phase_amdar(phase, phasemessages);
+
+  // Store idents into a list in time order
+
+  std::set<NFmiMetTime> dummytimes;
+  std::string ident;
+  NFmiMetTime t = get_validtime_amdar(dummytimes, phasemessages.front(), ident, true);
+
+  identtimemap.insert(std::make_pair(ident, t));
+
+  if (options.debug)
+    fprintf(stderr, "TimeIdent %s next %s %s add %lu\n", ident.c_str(), nextident.c_str(),
+            to_iso_string(t.PosixTime()).c_str(), phasemessages.size());
+
+  // Store messages into a map with time as the (main) key
+
+  auto ti = timeidentmessages.insert(std::make_pair(to_iso_string(t.PosixTime()),
+                                     IdentMessageMap()));
+  auto im = ti.first->second.insert(std::make_pair(ident, Messages()));
+  im.first->second.insert(im.first->second.begin(), phasemessages.begin(), phasemessages.end());
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Sort amdar messages to time and ident (aircraft reg. nr or other identification) order.
  *
  *        Parameter mapping is set to namemap. Data times (the first time for each amdar)
@@ -2965,15 +3049,15 @@ void organize_messages_amdar(const Messages &origmessages, const NameMap &paramm
 
   // Collect/group data by ident, phase of flight and time
 
-  Phase curphase = None, lastphase = None;
+  Phase curphase = None, lastphase = None, lastmsgphase = None;
   TimeIdentMessageMap timeidentmessages;
   Messages phasemessages;
   Message lasttakeoffmsg;
-  std::string lastident,lastorigident;
+  std::string lastident, lastorigident;
   boost::posix_time::ptime lasttime;
-  std::string msgident,state;
+  std::string msgident, state;
   double lastaltitude = 0.0;
-  bool phasechange, phaserestart, phasereset, altitudechange;
+  bool phasechange, phaserestart, phasereset;
   int counter = 0;
 
   levelcount = 0;
@@ -2988,7 +3072,7 @@ void organize_messages_amdar(const Messages &origmessages, const NameMap &paramm
     {
       auto &msg = imt->second;
       auto iit = get_ident_amdar(msg, options.messageremap, msgident);
-      std::string ident = imm->first;
+      const std::string ident = imm->first;
       bool identchange = (ident != lastorigident);
 
       // Get phase of flight. Join takeoff and flight or landing, and flight and landing messages
@@ -2996,11 +3080,20 @@ void organize_messages_amdar(const Messages &origmessages, const NameMap &paramm
       //
       // Remap phase of flight and altitude bufr codes if requested
 
-      curphase = get_phase_amdar(msg, lasttakeoffmsg, curphase, lastphase, phasechange,
-                                 phaserestart, phasereset, lastaltitude, altitudechange);
+      curphase = get_phase_amdar(msg, lasttakeoffmsg, curphase, lastmsgphase, phasechange,
+                                 phaserestart, phasereset, lastaltitude);
 
       if (phasereset)
+      {
+        // Ignore collected descending level fligth messages on phase change or Flying phase
+        // restart; they can not be joined with landing phase messages
+
+        if (options.debug)
+          fprintf(stderr, "%s reset %lu messages curphase=%d lastphase=%d\n", ident.c_str(),
+                  phasemessages.size(), (int) curphase, (int) lastphase);
+
         phasemessages.clear();
+      }
 
       if (options.debug)
         debug_state_amdar(ident, lastorigident, curphase, lastphase, state);
@@ -3014,96 +3107,52 @@ void organize_messages_amdar(const Messages &origmessages, const NameMap &paramm
         lastident = ident + "_" + cntrstr + "_" + Fmi::to_string(curphase);
         lastorigident = ident;
 
-        // Keep descending level flight messages to join with landing (do not store them)
+        auto *firstmessage = &msg;
 
-        if (
-            ((lastphase == Flying) && (identchange || (phasechange && (curphase != Landing)))) ||
-            ((curphase == Flying) && phaserestart)
-           )
+        if (!phasemessages.empty())
         {
-          if (options.debug)
-          {
-            t = get_validtime_amdar(dummytimes, msg, ident, true);
-            fprintf(stderr, "Set ident %s%s %s %d %s %5.0f %s\n",
-                    (curphase == Flying) ? " fly " : "", iit->second.svalue.c_str(),
-                    lastident.c_str(), (int) curphase, to_iso_string(t.PosixTime()).c_str(),
-                    lastaltitude, state.c_str());
-          }
+          // Store the ident/amdar
 
+          store_messages_amdar(namemap, lastident, lastphase, phasemessages, identtimemap,
+                               timeidentmessages, levelcount);
           phasemessages.clear();
+
+          if ((!identchange) && (curphase == Landing) && (!lasttakeoffmsg.empty()))
+          {
+            // Set message ident and join last takeoff message to the start of landing phase
+
+            auto fit = get_ident_amdar(lasttakeoffmsg, options.messageremap, msgident);
+            fit->second.svalue = lastident;
+
+            if (options.debug)
+              fprintf(stderr, "Set ident takeoff %s to %s\n", msgident.c_str(), lastident.c_str());
+
+            phasemessages.push_back(lasttakeoffmsg);
+
+            firstmessage = &lasttakeoffmsg;
+          }
         }
-        else
+
+        if (options.debug)
         {
-          auto *firstmessage = &msg;
-
-          if (!phasemessages.empty())
-          {
-            // Taking allowed max duration into account, ignore messages from the end of takeoff
-            // or the start of landing. Remove duplicate messages. Ignore the phase/amdar if it
-            // has too few messages/observations
-
-            limit_duration_amdar(namemap, lastphase, phasemessages, identtimemap, levelcount);
-
-            if (phasemessages.size() > 0)
-            {
-              // Store idents into a list in time order
-
-              t = get_validtime_amdar(dummytimes, phasemessages.front(), msgident, true);
-
-              identtimemap.insert(std::make_pair(msgident, t));
-
-              if (options.debug)
-                fprintf(stderr, "TimeIdent %s next %s %s add %lu\n", msgident.c_str(),
-                        lastident.c_str(), to_iso_string(t.PosixTime()).c_str(),
-                        phasemessages.size());
-
-              // Store messages into a map with time as the (main) key
-
-              auto ti = timeidentmessages.insert(std::make_pair(to_iso_string(t.PosixTime()),
-                                                 IdentMessageMap()));
-              auto im = ti.first->second.insert(std::make_pair(msgident, Messages()));
-              im.first->second.insert(im.first->second.begin(), phasemessages.begin(),
-                                      phasemessages.end());
-
-              phasemessages.clear();
-            }
-
-            if ((!identchange) && (!lasttakeoffmsg.empty()))
-            {
-              // Set message ident and join last takeoff message to the start of landing phase
-
-              auto fit = get_ident_amdar(lasttakeoffmsg, options.messageremap, msgident);
-              fit->second.svalue = lastident;
-
-              if (options.debug)
-                fprintf(stderr, "Set ident takeoff %s to %s\n", msgident.c_str(), lastident.c_str());
-
-              phasemessages.push_back(lasttakeoffmsg);
-
-              firstmessage = &lasttakeoffmsg;
-            }
-          }
-
-          if (options.debug)
-          {
-            t = get_validtime_amdar(dummytimes, *firstmessage, ident, true);
-            fprintf(stderr, "Set ident %s %s %d %s %5.0f %s\n", iit->second.svalue.c_str(),
-                    lastident.c_str(), (int) curphase, to_iso_string(t.PosixTime()).c_str(),
-                    lastaltitude, state.c_str());
-          }
-
-          lasttakeoffmsg.clear();
+          t = get_validtime_amdar(dummytimes, *firstmessage, msgident, true);
+          fprintf(stderr, "Set ident %s %s %d %s %5.0f %s\n", iit->second.svalue.c_str(),
+                  lastident.c_str(), (int) curphase, to_iso_string(t.PosixTime()).c_str(),
+                  lastaltitude, state.c_str());
         }
+
+        if (curphase != Takeoff)
+          lasttakeoffmsg.clear();
       }
       else if (options.debug)
       {
-        t = get_validtime_amdar(dummytimes, msg, ident, true);
+        t = get_validtime_amdar(dummytimes, msg, msgident, true);
         fprintf(stderr, "  set ident %s %s %d %s %5.0f %s\n", iit->second.svalue.c_str(),
                 lastident.c_str(), (int) curphase, to_iso_string(t.PosixTime()).c_str(),
                 lastaltitude, state.c_str());
       }
 
-      iit->second.svalue = ident = lastident;
+      iit->second.svalue = lastident;
 
       phasemessages.push_back(imt->second);
 
@@ -3113,26 +3162,9 @@ void organize_messages_amdar(const Messages &origmessages, const NameMap &paramm
 
   // Handle last ident/phase
 
-  if (!phasemessages.empty())
-  {
-    limit_duration_amdar(namemap, lastphase, phasemessages, identtimemap, levelcount);
-
-    if (phasemessages.size() > 0)
-    {
-      t = get_validtime_amdar(dummytimes, phasemessages.front(), msgident, true);
-
-      if (options.debug)
-        fprintf(stderr, "TimeIdent %s %s %s add %lu\n", msgident.c_str(), lastident.c_str(),
-                to_iso_string(t.PosixTime()).c_str(), phasemessages.size());
-
-      identtimemap.insert(std::make_pair(msgident, t));
-
-      auto ti = timeidentmessages.insert(std::make_pair(to_iso_string(t.PosixTime()),
-                                         IdentMessageMap()));
-      auto im = ti.first->second.insert(std::make_pair(msgident, Messages()));
-      im.first->second.insert(im.first->second.begin(), phasemessages.begin(), phasemessages.end());
-    }
-  }
+  if ((!phasemessages.empty()) && ((curphase != Flying) || (lastmsgphase == Landing)))
+    store_messages_amdar(namemap, "null", lastphase, phasemessages, identtimemap,
+                         timeidentmessages, levelcount);
 
   // Store the amdar idents in time and messages in time and ident order into lists
 

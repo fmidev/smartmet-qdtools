@@ -3188,6 +3188,124 @@ void organize_messages_amdar(const Messages &origmessages, const NameMap &paramm
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Decode low/middle/high cloud types
+ */
+// ----------------------------------------------------------------------
+
+void decode_cloudtypes(const Messages &origmessages, Messages &messages)
+{
+  /*
+    B 08 002	Vertical significance (surface observation)
+    If CL are observed then B 08 002 = 07 (low clouds),
+    If CL are not observed and CM are observed, then B 08 002 = 08 (medium clouds),
+    If only CH are observed, B 08 002 = 0
+    If N = 9, then B 08 002 = 05
+    If N = 0, then B 08 002 = 62
+    If N = /, then B 08 002 = missing
+
+    B 20 012	Cloud type (low clouds)	CL
+    B 20 012 = CL + 30
+    If N = 0, then B 20 012 = 30
+    If N = 9 or /, then B 20 012 = 62
+
+    B 20 012	Cloud type (medium clouds)	CM
+    B 20 012 = CM + 20,
+    If N = 0, then B 20 012 = 20
+    If N = 9 or / or CM = /, then B 20 012 = 61
+
+    B 20 012	Cloud type (high clouds)	CH
+    0 20 012 = CH + 10,
+    If N = 0, then B 20 012 = 10,
+    If N = 9 or / or CH = /, then B 20 012 = 60
+
+    12.2.7 Group 8NhCLCMCH 12.2.7.1 This group shall be omitted in the following cases: (a) When
+    there are no clouds (N = 0); (b) When the sky is obscured by fog and/or other meteorological
+    phenomena (N = 9); (c) When the cloud cover is indiscernible for reasons other than (b) above,
+    or observation is not made (N = /). Note: All cloud observations at sea including no cloud
+    observation shall be reported in the SHIP message. 12.2.7.2 Certain regulations concerning the
+    coding of N shall also apply to the coding of Nh. 12.2.7.2.1 (a) If there are CL clouds then the
+    total amount on all CL clouds, as actually seen by the observer during the observation, shall be
+    reported for Nh; (b) If there are no CL clouds but there are CM clouds, then the total amount of
+    the CM clouds shall be reported for Nh; (c) If there are no CL clouds and there are no CM level
+    clouds, but there are CH clouds, then Nh shall be coded as 0. 12.2.7.2.2 If the variety of the
+    cloud reported for Nh is perlucidus (stratocumulus perlucidus for a CL cloud or altocumulus
+    perlucidus for a CM cloud) then Nh shall be coded as 7 or less. Note: See Regulation 12.2.2.2.2.
+    12.2.7.2.3 When the clouds reported for Nh are observed through fog or an analogous
+    phenomenon their amount shall be reported as if these phenomena were not present.
+    12.2.7.2.4 If the clouds reported for Nh include contrails, then Nh shall include the amount of
+    persistent contrails. Rapidly dissipating contrails shall not be included in the value for Nh.
+    Note: See Regulation 12.5 concerning the use of Section 4.
+  */
+
+  // Decode low/middle/high cloud types and store the types using hardcoded codes for mapping
+  // the data to LowCloudType, MiddleCloudType and HighCloudType qd parameters
+
+  const int QDMappingCodeLowCloudType = 990411;
+  const int QDMappingCodeMiddleCloudType = 990412;
+  const int QDMappingCodeHighCloudType = 990413;
+
+  Message msg;
+
+  for (auto const &message : origmessages)
+  {
+    msg = message;
+
+    auto itl = msg.find(8002);
+
+    if ((itl != msg.end()) && (itl->second.value != kFloatMissing))
+    {
+      auto itt = msg.find(20012);
+
+      if ((itt != msg.end()) && (itt->second.value != kFloatMissing))
+      {
+        int code = 0;
+
+        if (itl->second.value == 7)
+        {
+          // Low cloud
+
+          if (itt->second.value != 62)
+          {
+            code = QDMappingCodeLowCloudType;
+            itt->second.value -= 30;
+          }
+        }
+        else if (itl->second.value == 8)
+        {
+          // Middle cloud
+          //
+          // For some reason the coded type might also be 30, which means N/A ?
+
+          if ((itt->second.value != 61) && ((itt->second.value != 30)))
+          {
+            code = QDMappingCodeMiddleCloudType;
+            itt->second.value -= 20;
+          }
+        }
+        else if (itl->second.value == 0)
+        {
+          // High cloud
+          //
+          // For some reason the coded type might also be 30, which means N/A ?
+
+          if ((itt->second.value != 60) && ((itt->second.value != 30)))
+          {
+            code = QDMappingCodeHighCloudType;
+            itt->second.value -= 10;
+          }
+        }
+
+        if (code != 0)
+          msg.insert(std::make_pair(code, itt->second));
+      }
+    }
+
+    messages.push_back(msg);
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Main program without exception handling
  */
 // ----------------------------------------------------------------------
@@ -3228,20 +3346,28 @@ int run(int argc, char *argv[])
 
   NameMap namemap;
 
-  Messages sortedmessages;
-  const Messages &messages = (options.requireident ? sortedmessages : tmp.second);
+  Messages preparedmessages;
+  const Messages &messages = (options.requireident || (category == kBufrLandSurface))
+                             ? preparedmessages : tmp.second;
   TimeIdentList timeidentlist;
   IdentTimeMap identtimemap;
   size_t levelcount = 0;
 
   if (options.requireident)
-    organize_messages_amdar(tmp.second, parammap, namemap, sortedmessages, timeidentlist,
+    organize_messages_amdar(tmp.second, parammap, namemap, preparedmessages, timeidentlist,
                             identtimemap, levelcount);
   else
   {
+    if (category == kBufrLandSurface)
+    {
+      // Decode low/middle/high cloud types
+
+      decode_cloudtypes(tmp.second, preparedmessages);
+    }
+
     // Build a list of all parameter names
 
-    std::set<std::string> names = collect_names(tmp.second);
+    std::set<std::string> names = collect_names(messages);
 
     namemap = map_names(names, parammap);
   }
@@ -3256,8 +3382,7 @@ int run(int argc, char *argv[])
   if (options.debug)
   {
     int i = 0;
-//  BOOST_FOREACH (const Message &msg, messages)
-    BOOST_FOREACH (const Message &msg, tmp.second)
+    BOOST_FOREACH (const Message &msg, messages)
     {
       std::cout << std::endl << "Message " << ++i << std::endl << std::endl;
 

@@ -888,7 +888,7 @@ void append_message(Messages &messages, BUFR_Dataset *dts, BUFR_Tables *tables)
         }
 
         message = replicated_message;
-        message.insert(Message::value_type(desc, rec));
+        message[desc] = rec;
 
         if (--replication_count <= 0)
         {
@@ -898,7 +898,7 @@ void append_message(Messages &messages, BUFR_Dataset *dts, BUFR_Tables *tables)
       }
       else
       {
-        message.insert(Message::value_type(desc, rec));
+        message[desc] = rec;
       }
     }
 

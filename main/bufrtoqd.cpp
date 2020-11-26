@@ -242,6 +242,7 @@ struct Options
   MessageReMap messageremap;                                       // -r --remap
   int  minobservations = 3;                                        // -N --minobservations
   int  maxdurationhours = 2;                                       // -M --maxdurationhours
+  bool totalcloudoctas = false;                                    // -t --totalcloudoctas
 };
 
 Options options;
@@ -416,7 +417,10 @@ bool parse_options(int argc, char *argv[], Options &options)
       po::value(&options.remapamdar),
       "remap amdar bufr message codes to first code; name1,code1,code2,code3;name2,code1,...")(
       "minobservatios,N", po::value(&options.minobservations), msg3.c_str())(
-      "maxdurationhours,M", po::value(&options.maxdurationhours), msg4.c_str());
+      "maxdurationhours,M", po::value(&options.maxdurationhours), msg4.c_str()) (
+      "totalcloudoctas,t",
+      po::bool_switch(&options.totalcloudoctas),
+      "disable octas to percentage conversion for TotalCloudCover");
 
   po::positional_options_description p;
   p.add("infile", 1);
@@ -1926,7 +1930,7 @@ float normal_value(const record &rec)
   if (rec.units == "PA") return static_cast<float>(rec.value / 100.0);
 
   // Cloud 8ths to 0-100%. Note that obs may also be 9, hence a min check is needed
-  if (rec.name == "CLOUD AMOUNT" && rec.units == "CODE TABLE")
+  if (!options.totalcloudoctas && rec.name == "CLOUD AMOUNT" && rec.units == "CODE TABLE")
     return static_cast<float>(std::min(100.0, rec.value * 100 / 8));
 
   return static_cast<float>(rec.value);

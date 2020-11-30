@@ -38,31 +38,22 @@ using namespace std;  // tätä ei saa sitten laittaa headeriin, eikä ennen inc
 
 void usage(void)
 {
-  cout << "Usage: qdinterpolatearea [options] controlGridFile < inputData > outputData" << endl
-       << endl
-       << "Options:" << endl
-       << endl
-       << "\t-s <Columns_x_Rows>\tWanted grid size, default is 1x1" << endl
-       << "\t-p <projection>\tWanted projection, if given, overrides controlGridFile (fileName not "
-          "given then)."
-       << endl
-       << "\t-i <inputfile>\tInput file instead of standard input" << endl
-       << "\t-o <outputfile>\tOutput file instead of standard output" << endl
-       << endl
-       << "\tExample 1: qdinterpolatearea myGrid.dat < myData.sqd > newData.sqd" << endl
-       << "\t        2: qdinterpolatearea -p stereographic,10,90,60:-19.711,25.01,62.93,62.845 -s "
-          "40x50  < myData.sqd > newData.sqd"
-       << endl
-       << "\t        3: qdinterpolatearea -p stereographic,20,90,60:6,51.3,49,70.2 -s 63x70  < "
-          "myData.sqd > newData.sqd"
-       << endl
-       << "\t        4: qdinterpolatearea -p stereographic,20,90,60:6,51.3,49,70.2 -s 10x10km -i "
-          "myData.sqd -o newData.sqd"
-       << endl
-       << "\t        5: qdinterpolatearea -p stereographic,20,90,60:6,51.3,49,70.2:1000,1000m -i "
-          "myData.sqd -o newData.sqd"
-       << endl
-       << endl;
+  cout <<
+      "Usage: qdinterpolatearea [options] controlGridFile < inputData > outputData\n"
+      "\n"
+      "Options:\n"
+      "\n"
+      "\t-s <Columns_x_Rows>\tWanted grid size, default is 1x1\n"
+      "\t-p <projection>\tWanted projection, if given, overrides controlGridFile (fileName not given then)\n"
+      "\t-i <inputfile>\tInput file instead of standard input\n"
+      "\t-o <outputfile>\tOutput file instead of standard output\n"
+      "\n"
+      "\tExample 1: qdinterpolatearea myGrid.dat < in.sqd > out.sqd\n"
+      "\t        2: qdinterpolatearea -p stereographic,10,90,60:-19.711,25.01,62.93,62.845 -s 40x50  < in.sqd > out.sqd\n"
+      "\t        3: qdinterpolatearea -p stereographic,20,90,60:6,51.3,49,70.2 -s 63x70  < in.sqd > out.sqd\n"
+      "\t        4: qdinterpolatearea -p stereographic,20,90,60:6,51.3,49,70.2 -s 10x10km -i in.sqd -o out.sqd\n"
+      "\t        5: qdinterpolatearea -p stereographic,20,90,60:6,51.3,49,70.2:1000,1000m -i in.sqd -o out.sqd\n"
+      "\n";
 }
 
 void get_grid_size(const string &theGridSizeString, int &theXSize, int &theYSize)

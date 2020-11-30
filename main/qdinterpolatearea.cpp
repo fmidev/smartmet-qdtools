@@ -27,6 +27,7 @@
 #include <newbase/NFmiQueryDataUtil.h>
 #include <newbase/NFmiStringTools.h>
 #include <newbase/NFmiWindFix.h>
+#include <macgyver/StringConversion.h>
 #include <algorithm>
 #include <fstream>
 
@@ -47,6 +48,7 @@ void usage(void)
       "\t-p <projection>\tWanted projection, if given, overrides controlGridFile (fileName not given then)\n"
       "\t-i <inputfile>\tInput file instead of standard input\n"
       "\t-o <outputfile>\tOutput file instead of standard output\n"
+      "\t-t <threads>\tMaximum number of threads to use. Default is 50%\n"
       "\n"
       "\tExample 1: qdinterpolatearea myGrid.dat < in.sqd > out.sqd\n"
       "\t        2: qdinterpolatearea -p stereographic,10,90,60:-19.711,25.01,62.93,62.845 -s 40x50  < in.sqd > out.sqd\n"
@@ -79,10 +81,12 @@ void get_grid_size(const string &theGridSizeString, int &theXSize, int &theYSize
 
 void run(int argc, const char *argv[])
 {
-  NFmiCmdLine cmdline(argc, argv, "p!s!i!o!");
+  NFmiCmdLine cmdline(argc, argv, "p!s!i!o!t!");
 
   string inputfile = "-";
   string outputfile = "-";
+
+  unsigned int maxthreads = 0;
 
   // Tarkistetaan optioiden oikeus:
   if (cmdline.Status().IsError())
@@ -108,6 +112,21 @@ void run(int argc, const char *argv[])
     throw runtime_error("");
   }
 
+  if(cmdline.isOption('t'))
+  {
+    std::string str = cmdline.OptionValue('t');
+    if(str.empty()) throw std::runtime_error("Empty argument to option -t");
+    if(str.back() == '%')
+    {
+      auto n = Fmi::stoi(str.substr(0,str.size()-1));
+      auto max_hardware = boost::thread::hardware_concurrency();
+      maxthreads = n * max_hardware / 100;
+      maxthreads = std::max(1u,maxthreads);
+    }
+    else
+      maxthreads = Fmi::stoi(str);
+  }
+  
   NFmiGrid *wantedGrid = 0;
   if (projectionFromOptions)
   {
@@ -144,7 +163,7 @@ void run(int argc, const char *argv[])
   NFmiQueryData qd(inputfile);
 
   boost::shared_ptr<NFmiQueryData> newData(
-      NFmiQueryDataUtil::Interpolate2OtherGrid(&qd, wantedGrid, nullptr));
+      NFmiQueryDataUtil::Interpolate2OtherGrid(&qd, wantedGrid, nullptr, maxthreads));
 
   // Temporary fix until newbase interpolation has been corrected
   NFmiWindFix::FixWinds(*newData); 

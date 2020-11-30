@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 20.11.24
+Version: 20.11.30
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -25,8 +25,8 @@ BuildRequires: fmt-devel >= 7.1.0
 BuildRequires: smartmet-library-calculator-devel >= 20.10.7
 BuildRequires: smartmet-library-gis-devel >= 20.10.28
 BuildRequires: smartmet-library-imagine-devel >= 20.9.11
-BuildRequires: smartmet-library-macgyver-devel >= 20.10.28
-BuildRequires: smartmet-library-newbase-devel >= 20.10.28
+BuildRequires: smartmet-library-macgyver-devel >= 20.11.24
+BuildRequires: smartmet-library-newbase-devel >= 20.11.30
 BuildRequires: smartmet-library-smarttools-devel >= 20.9.11
 BuildRequires: smartmet-timezones
 BuildRequires: mdsplib >= 20.8.26
@@ -39,8 +39,8 @@ Requires: smartmet-timezones >= 20.10.28
 Requires: smartmet-library-calculator >= 20.10.7
 Requires: smartmet-library-gis >= 20.10.28
 Requires: smartmet-library-imagine >= 20.9.11
-Requires: smartmet-library-macgyver >= 20.10.28
-Requires: smartmet-library-newbase >= 20.10.28
+Requires: smartmet-library-macgyver >= 20.11.24
+Requires: smartmet-library-newbase >= 20.11.30
 Requires: smartmet-library-smarttools >= 20.9.11
 Requires: fmt >= 7.1.0
 Requires: eccodes
@@ -197,6 +197,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Mon Nov 30 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.11.30-1.fmi
+- Added qdinterpolate option -t for selecting the maximum thread count
+
 * Tue Nov 24 2020 Pertti Kinnia <pertti.kinnia@fmi.fi> - 20.11.24-1.fmi
 - Fixed bugs in joining takeoff, level flight and landing phase amdar messages; e.g. joined level flight and landing messages were lost when new takeoff phase was started
 - Set correct phase of flight for joined messages

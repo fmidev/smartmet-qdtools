@@ -48,7 +48,7 @@ void usage(void)
       "\t-p <projection>\tWanted projection, if given, overrides controlGridFile (fileName not given then)\n"
       "\t-i <inputfile>\tInput file instead of standard input\n"
       "\t-o <outputfile>\tOutput file instead of standard output\n"
-      "\t-t <threads>\tMaximum number of threads to use. Default is 50%\n"
+      "\t-t <threads>\tMaximum number of threads to use, or percentage of all cores. Default is 4 threads.\n"
       "\n"
       "\tExample 1: qdinterpolatearea myGrid.dat < in.sqd > out.sqd\n"
       "\t        2: qdinterpolatearea -p stereographic,10,90,60:-19.711,25.01,62.93,62.845 -s 40x50  < in.sqd > out.sqd\n"
@@ -86,7 +86,7 @@ void run(int argc, const char *argv[])
   string inputfile = "-";
   string outputfile = "-";
 
-  unsigned int maxthreads = 0;
+  unsigned int maxthreads = 4;
 
   // Tarkistetaan optioiden oikeus:
   if (cmdline.Status().IsError())

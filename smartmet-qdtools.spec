@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 20.11.30
+Version: 20.12.1
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -197,6 +197,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Dec  1 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.12.1-1.fmi
+- Changed qdinterpolatearea default number of threads to be 4 to avoid excessive cache trashing for large files
+
 * Mon Nov 30 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.11.30-1.fmi
 - Added qdinterpolate option -t for selecting the maximum thread count
 

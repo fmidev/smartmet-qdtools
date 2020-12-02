@@ -3207,7 +3207,7 @@ void decode_cloudtypes(const Messages &origmessages, Messages &messages)
     If N = 0, then B 08 002 = 62
     If N = /, then B 08 002 = missing
 
-    B 20 012	Cloud type (low clouds)	CL
+    B 20 012	Cloud type (low clouds)        	CL
     B 20 012 = CL + 30
     If N = 0, then B 20 012 = 30
     If N = 9 or /, then B 20 012 = 62
@@ -3241,8 +3241,64 @@ void decode_cloudtypes(const Messages &origmessages, Messages &messages)
     Note: See Regulation 12.5 concerning the use of Section 4.
   */
 
+  /* Test data contais following 8002 and 12002 combinations / value ranges:
+
+       CL, low clouds:
+
+         Stored as LowCloudType values
+
+           7	3-9	1-9 stored (if 0, not stored)
+
+         Other values not stored, unknown 20012 coding, N/A or missing observation
+
+           7	10	CH ?: If N = 0, then B 20 012 = 10 ?
+           7	11-19	shift to 1-9 ?
+           7	32,37	?
+           7	60	CH ?: If N = 9 or / or CH = /, then B 20 012 = 60 ?
+                        CL ?: If N = 9 or /, then B 20 012 = 62 ?
+
+       CM, middle clouds:
+
+         Stored as MiddleCloudType values
+
+           8	0-9	1-9 stored (if 0, not stored)
+
+         Other values not stored, unknown 20012 coding, N/A or missing observation
+
+           8	10	CH ?: If N = 0, then B 20 012 = 10 ?
+           8	11-19	shift to 1-9 ? wrong 8002 ?
+           8	60	CH ?: If N = 9 or / or CH = /, then B 20 012 = 60 ?
+                        CM ?: If N = 9 or /, then B 20 012 = 61 ?
+
+       CH, high clouds:
+
+         Stored as HighCloudType values
+
+           0	0-9	1-9 stored (if 0, not stored)
+
+         Other values not stored, unknown 20012 coding (or N/A or missing observation)
+
+           0	11-19	shift to 1-9 ? wrong 8002 ?
+
+       Not stored, unknown 8002 coding, N/A or missing observation
+
+         If N = 9, then B 08 002 = 05
+
+           5	59,60
+
+         Unknown 8002 coding
+
+           1,2,3,4,9,11
+
+         If N = 0, then B 08 002 = 62
+
+           62	6,7,10
+  */
+
   // Decode low/middle/high cloud types and store the types using hardcoded codes for mapping
-  // the data to LowCloudType, MiddleCloudType and HighCloudType qd parameters
+  // the data to LowCloudType, MiddleCloudType and HighCloudType qd parameters.
+  //
+  // Only types 1-9 are accepted, 0 (no clouds, and all others) get MissingValue
 
   const int QDMappingCodeLowCloudType = 990411;
   const int QDMappingCodeMiddleCloudType = 990412;
@@ -3268,35 +3324,22 @@ void decode_cloudtypes(const Messages &origmessages, Messages &messages)
         {
           // Low cloud
 
-          if (itt->second.value != 62)
-          {
+          if ((itt->second.value >= 1) && (itt->second.value <= 9))
             code = QDMappingCodeLowCloudType;
-            itt->second.value -= 30;
-          }
         }
         else if (itl->second.value == 8)
         {
           // Middle cloud
-          //
-          // For some reason the coded type might also be 30, which means N/A ?
 
-          if ((itt->second.value != 61) && ((itt->second.value != 30)))
-          {
+          if ((itt->second.value >= 1) && (itt->second.value <= 9))
             code = QDMappingCodeMiddleCloudType;
-            itt->second.value -= 20;
-          }
         }
         else if (itl->second.value == 0)
         {
           // High cloud
-          //
-          // For some reason the coded type might also be 30, which means N/A ?
 
-          if ((itt->second.value != 60) && ((itt->second.value != 30)))
-          {
+          if ((itt->second.value >= 1) && (itt->second.value <= 9))
             code = QDMappingCodeHighCloudType;
-            itt->second.value -= 10;
-          }
         }
 
         if (code != 0)

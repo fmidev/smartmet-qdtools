@@ -243,6 +243,7 @@ struct Options
   int  minobservations = 3;                                        // -N --minobservations
   int  maxdurationhours = 2;                                       // -M --maxdurationhours
   bool totalcloudoctas = false;                                    // -t --totalcloudoctas
+  bool forcepressurechangesign = false;                            // -f --forcepressurechangesign
 };
 
 Options options;
@@ -420,7 +421,10 @@ bool parse_options(int argc, char *argv[], Options &options)
       "maxdurationhours,M", po::value(&options.maxdurationhours), msg4.c_str()) (
       "totalcloudoctas,t",
       po::bool_switch(&options.totalcloudoctas),
-      "disable octas to percentage conversion for TotalCloudCover");
+      "disable octas to percentage conversion for TotalCloudCover") (
+      "forcepressurechangesign,f",
+      po::bool_switch(&options.forcepressurechangesign),
+      "Set PressureChange sign to match PressureTendency value");
 
   po::positional_options_description p;
   p.add("infile", 1);
@@ -3363,6 +3367,62 @@ void decode_cloudtypes(const Messages &origmessages, Messages &messages)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Set PressureChange sign to match PressureTendency
+ *        (positive when increasing tendency and vice versa)
+ */
+// ----------------------------------------------------------------------
+
+void set_pressurechange_sign_from_pressuretendency(Messages &messages)
+{
+  /*
+    0 Increasing, then decreasing; atmospheric pressure the same or higher than three hours ago
+    1 Increasing, then steady; or increasing, then increasing more slowly
+    2 Increasing (steadily or unsteadily)
+    3 Decreasing or steady, then increasing; or increasing, then increasing more rapidly
+    4 Steady; atmospheric pressure the same as three hours ago
+    5 Decreasing, then increasing; atmospheric pressure the same or lower than three hours ago
+    6 Decreasing, then steady; or decreasing, then decreasing more slowly
+    7 Decreasing (steadily or unsteadily)
+    8 Steady or increasing, then decreasing; or decreasing, then decreasing more rapidly
+
+    1-3 Atmospheric pressure now higher than three hours ago
+    6-8 Atmospheric pressure now lower than three hours ago
+
+    Data (e.g. Latvia) seems to have negative PressureChange values even though PressureTendency
+    is increasing and vice versa. PressureTendency 0 is taken as increasing and 5 decreasing
+  */
+
+  for (auto &msg : messages)
+  {
+    auto itc = msg.find(10061);
+
+    if ((itc != msg.end()) && (itc->second.value != kFloatMissing))
+    {
+      auto itt = msg.find(10063);
+
+      if ((itt != msg.end()) && (itt->second.value != kFloatMissing))
+      {
+        int tendency = (int) (itt->second.value + 0.1);
+
+        if ((tendency >= 0) && (tendency <= 3))
+        {
+          // Increasing; positive
+
+          itc->second.value = fabs(itc->second.value);
+        }
+        else if ((tendency >= 5) && (tendency <= 8))
+        {
+          // Decreasing; negative
+
+          itc->second.value = 0 - fabs(itc->second.value);
+        }
+      }
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Main program without exception handling
  */
 // ----------------------------------------------------------------------
@@ -3420,6 +3480,9 @@ int run(int argc, char *argv[])
       // Decode low/middle/high cloud types
 
       decode_cloudtypes(tmp.second, preparedmessages);
+
+      if (options.forcepressurechangesign)
+        set_pressurechange_sign_from_pressuretendency(preparedmessages);
     }
 
     // Build a list of all parameter names

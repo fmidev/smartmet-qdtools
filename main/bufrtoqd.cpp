@@ -3367,8 +3367,10 @@ void decode_cloudtypes(const Messages &origmessages, Messages &messages)
 
 // ----------------------------------------------------------------------
 /*!
- * \brief Set PressureChange sign to match PressureTendency
+ * \brief If requested with -f, set PressureChange sign to match PressureTendency
  *        (positive when increasing tendency and vice versa)
+ *
+ *        Allow only values 0-8 for PressureTendency, set it to missing value otherwise
  */
 // ----------------------------------------------------------------------
 
@@ -3394,27 +3396,39 @@ void set_pressurechange_sign_from_pressuretendency(Messages &messages)
 
   for (auto &msg : messages)
   {
+    // PressureChange
+
     auto itc = msg.find(10061);
 
-    if ((itc != msg.end()) && (itc->second.value != kFloatMissing))
+    if (
+        (!options.forcepressurechangesign) ||
+        ((itc != msg.end()) && (itc->second.value != kFloatMissing))
+       )
     {
+      // PressureTendency
+
       auto itt = msg.find(10063);
 
       if ((itt != msg.end()) && (itt->second.value != kFloatMissing))
       {
         int tendency = (int) (itt->second.value + 0.1);
 
-        if ((tendency >= 0) && (tendency <= 3))
+        if ((tendency < 0) || (tendency > 8))
+          itt->second.value = kFloatMissing;
+        else if (options.forcepressurechangesign)
         {
-          // Increasing; positive
+          if ((tendency >= 0) && (tendency <= 3))
+          {
+            // Increasing; positive
 
-          itc->second.value = fabs(itc->second.value);
-        }
-        else if ((tendency >= 5) && (tendency <= 8))
-        {
-          // Decreasing; negative
+            itc->second.value = fabs(itc->second.value);
+          }
+          else if (tendency >= 5)
+          {
+            // Decreasing; negative
 
-          itc->second.value = 0 - fabs(itc->second.value);
+            itc->second.value = 0 - fabs(itc->second.value);
+          }
         }
       }
     }
@@ -3481,8 +3495,10 @@ int run(int argc, char *argv[])
 
       decode_cloudtypes(tmp.second, preparedmessages);
 
-      if (options.forcepressurechangesign)
-        set_pressurechange_sign_from_pressuretendency(preparedmessages);
+      // Set PressureChange values's sign to match PressureTendency value and/or
+      // filter off unknown PressureTendency values
+
+      set_pressurechange_sign_from_pressuretendency(preparedmessages);
     }
 
     // Build a list of all parameter names

@@ -1933,6 +1933,16 @@ float normal_value(const record &rec)
   if (!options.totalcloudoctas && rec.name == "CLOUD AMOUNT" && rec.units == "CODE TABLE")
     return static_cast<float>(std::min(100.0, rec.value * 100 / 8));
 
+  if (rec.name.find("PRESENT WEATHER") != std::string::npos && rec.units == "CODE TABLE")
+  {
+    // 508 No significant phenomenon to report, present and past weather omitted
+
+    if (floor(rec.value + 0.5) == 508)
+      return 0;
+    else if (rec.value < 0 || floor(rec.value + 0.5) >= 200)
+      return kFloatMissing;
+  }
+
   return static_cast<float>(rec.value);
 }
 

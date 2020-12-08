@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 20.12.7
+Version: 20.12.8
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -197,6 +197,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Dec  8 2020 Pertti Kinnia <pertti.kinnia@fmi.fi> - 20.12.8-1.fmi
+- If requested with -t, set missing totalcloudcover octas from percentage
+
 * Mon Dec  7 2020 Pertti Kinnia <pertti.kinnia@fmi.fi> - 20.12.7-1.fmi
 - Added Low/Middle/HighCloudType and PresentWeater filtering (accept cloudtypes 1-9 and presentweather 0-199 only, otherwise missing value) and options to disable TotalCloudCover percentage conversion and to set PressureChange value's sign to match PressureTendency value (QDTOOLS-87)
 

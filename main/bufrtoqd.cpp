@@ -3437,6 +3437,51 @@ void set_pressurechange_sign_from_pressuretendency(Messages &messages)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Set missing totalcloudcover octas from percentage when available
+ */
+// ----------------------------------------------------------------------
+
+void set_totalcloud_octas_from_percentage(Messages &messages)
+{
+  for (auto &msg : messages)
+  {
+    // Totalcloudcover octas
+
+    auto ito = msg.find(20011);
+
+    if ((ito == msg.end()) || (ito->second.value == kFloatMissing))
+    {
+      // Totalcloudcover percentage
+
+      auto itp = msg.find(20010);
+
+      if ((itp != msg.end()) && (itp->second.value != kFloatMissing))
+      {
+        float octas;
+
+        if (itp->second.value < 0)        octas = kFloatMissing;
+        else if (itp->second.value > 100) octas = 9;
+        else                              octas = floor((itp->second.value / 12.5) + 0.00001);
+
+        if (ito != msg.end())
+          ito->second.value = octas;
+        else
+        {
+          auto r = itp->second;
+          r.value = octas;
+          r.svalue.clear();
+          r.name = "CLOUD AMOUNT";
+          r.units = "CODE TABLE";
+
+          msg.insert(std::make_pair(20011, r));
+        }
+      }
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Main program without exception handling
  */
 // ----------------------------------------------------------------------
@@ -3499,6 +3544,11 @@ int run(int argc, char *argv[])
       // filter off unknown PressureTendency values
 
       set_pressurechange_sign_from_pressuretendency(preparedmessages);
+
+      // If requested with -t, set missing totalcloudcover octas from percentage when available
+
+      if (options.totalcloudoctas)
+        set_totalcloud_octas_from_percentage(preparedmessages);
     }
 
     // Build a list of all parameter names

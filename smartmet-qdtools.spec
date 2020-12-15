@@ -2,75 +2,69 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 20.12.8
+Version: 20.12.15
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
 Source0: %{name}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot-%(%{__id_u} -n)
-BuildRequires: rpm-build
-BuildRequires: gcc-c++
-BuildRequires: make
 BuildRequires: boost169-devel
 BuildRequires: bzip2-devel
-BuildRequires: eccodes-devel
 BuildRequires: eccodes
+BuildRequires: eccodes-devel
+BuildRequires: fmt-devel >= 7.1.0
+BuildRequires: gcc-c++
+BuildRequires: gdal32-devel
 BuildRequires: hdf5-devel >= 1.8.12
+BuildRequires: jasper-devel
 BuildRequires: libbufr >= 3.2
 BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
-BuildRequires: fmt-devel >= 7.1.0
-BuildRequires: smartmet-library-calculator-devel >= 20.10.7
-BuildRequires: smartmet-library-gis-devel >= 20.10.28
-BuildRequires: smartmet-library-imagine-devel >= 20.9.11
-BuildRequires: smartmet-library-macgyver-devel >= 20.11.24
-BuildRequires: smartmet-library-newbase-devel >= 20.11.30
-BuildRequires: smartmet-library-smarttools-devel >= 20.9.11
-BuildRequires: smartmet-timezones
+BuildRequires: make
 BuildRequires: mdsplib >= 20.8.26
-BuildRequires: netcdf-devel >= 4.3.3.1
-BuildRequires: zlib-devel
-BuildRequires: jasper-devel
 BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
-Requires: smartmet-timezones >= 20.10.28
-Requires: smartmet-library-calculator >= 20.10.7
-Requires: smartmet-library-gis >= 20.10.28
-Requires: smartmet-library-imagine >= 20.9.11
-Requires: smartmet-library-macgyver >= 20.11.24
-Requires: smartmet-library-newbase >= 20.11.30
-Requires: smartmet-library-smarttools >= 20.9.11
-Requires: fmt >= 7.1.0
+BuildRequires: netcdf-devel >= 4.3.3.1
+BuildRequires: rpm-build
+BuildRequires: smartmet-library-calculator-devel >= 20.10.7
+BuildRequires: smartmet-library-gis-devel >= 20.12.15
+BuildRequires: smartmet-library-imagine-devel >= 20.12.15
+BuildRequires: smartmet-library-macgyver-devel >= 20.12.15
+BuildRequires: smartmet-library-newbase-devel >= 20.12.15
+BuildRequires: smartmet-library-smarttools-devel >= 20.12.15
+BuildRequires: smartmet-timezones
+BuildRequires: zlib-devel
+Requires: boost169-date-time
+Requires: boost169-filesystem
+Requires: boost169-iostreams
+Requires: boost169-program-options
+Requires: boost169-regex
+Requires: boost169-system
+Requires: boost169-thread
+Requires: bzip2-libs
 Requires: eccodes
+Requires: fmt >= 7.1.0
+Requires: gdal32-libs
+Requires: glibc
 Requires: hdf5 >= 1.8.12
 Requires: jasper-libs >= 1.900.1
-Requires: libecbufr
 Requires: libbufr >= 3.2
-Requires: netcdf >= 4.3.3.1
-Requires: boost169-regex
-Requires: boost169-iostreams
-Requires: boost169-date-time
-Requires: boost169-program-options
-Requires: boost169-thread
-Requires: boost169-filesystem
-Requires: boost169-system
-Requires: bzip2-libs
-Requires: glibc
+Requires: libecbufr
 Requires: libgcc
 Requires: libjpeg
 Requires: libpng
 Requires: libstdc++
+Requires: netcdf >= 4.3.3.1
+Requires: smartmet-library-calculator >= 20.10.7
+Requires: smartmet-library-gis >= 20.12.15
+Requires: smartmet-library-imagine >= 20.12.15
+Requires: smartmet-library-macgyver >= 20.12.15
+Requires: smartmet-library-newbase >= 20.12.15
+Requires: smartmet-library-smarttools >= 20.12.15
+Requires: smartmet-timezones >= 20.10.28
 Requires: zlib
-
-%if %{defined el7}
-Requires: gdal-libs
-BuildRequires: gdal-devel
-%else if %{defined el8}
-Requires: gdal30-libs
-BuildRequires: gdal30-devel
-%endif
 
 Provides: ashtoqd = %{Version} 
 Provides: bufrtoqd = %{Version} 
@@ -197,6 +191,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Dec 15 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.12.15-1.fmi
+- Upgrade to pgdg12
+
 * Tue Dec  8 2020 Pertti Kinnia <pertti.kinnia@fmi.fi> - 20.12.8-1.fmi
 - If requested with -t, set missing totalcloudcover octas from percentage
 

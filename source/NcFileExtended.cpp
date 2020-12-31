@@ -219,8 +219,10 @@ void NcFileExtended::copy_values(const Options &options, NcVar *var, NFmiFastQue
 
     // Only copy to correct time index
     NFmiTime targettime = info.Time();
-    const NFmiTime *sourcetimeptr = timeList().Time(sourcetimeindex);
 
+    auto tmp_tlist = timeList();
+    const NFmiTime *sourcetimeptr = tmp_tlist.Time(sourcetimeindex);
+    
     if (options.debug)
       std::cerr << "debug: targettimeindex=" << targettimeindex << " targettime=" << targettime
                 << " sourcetimeindex= " << sourcetimeindex << " sourcetimeptr=" << sourcetimeptr
@@ -324,7 +326,9 @@ void NcFileExtended::copy_values(NFmiFastQueryInfo &info,
   {
     // Only copy to correct time index
     NFmiTime targettime = info.Time();
-    const NFmiTime *sourcetimeptr = timeList().Time(sourcetimeindex);
+
+    auto tmp_tlist = timeList();
+    const NFmiTime *sourcetimeptr = tmp_tlist.Time(sourcetimeindex);
 
     if (options->debug)
       std::cerr << "debug: targettimeindex=" << targettimeindex << " targettime=" << targettime
@@ -738,6 +742,7 @@ NFmiTimeList NcFileExtended::timeList(std::string varName, std::string unitAttrN
   }
 
   this->timelist = tlist;
+
   return *this->timelist;
 }
 

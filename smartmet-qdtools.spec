@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 20.12.15
+Version: 20.12.31
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -191,6 +191,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Dec 31 2020 Mika Heiskanen <mheiskan@rhel8.dev.fmi.fi> - 20.12.31-1.fmi
+- Fixed nctoqd not to use pointers into temporaries
+
 * Tue Dec 15 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.12.15-1.fmi
 - Upgrade to pgdg12
 

@@ -29,7 +29,7 @@ BuildRequires: netcdf-cxx-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
 BuildRequires: smartmet-library-calculator-devel >= 20.10.7
-BuildRequires: smartmet-library-gis-devel >= 20.12.15
+BuildRequires: smartmet-library-gis-devel >= 20.12.31
 BuildRequires: smartmet-library-imagine-devel >= 20.12.15
 BuildRequires: smartmet-library-macgyver-devel >= 20.12.15
 BuildRequires: smartmet-library-newbase-devel >= 20.12.15
@@ -58,7 +58,7 @@ Requires: libpng
 Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
 Requires: smartmet-library-calculator >= 20.10.7
-Requires: smartmet-library-gis >= 20.12.15
+Requires: smartmet-library-gis >= 20.12.31
 Requires: smartmet-library-imagine >= 20.12.15
 Requires: smartmet-library-macgyver >= 20.12.15
 Requires: smartmet-library-newbase >= 20.12.15

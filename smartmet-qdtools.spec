@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 20.12.31
+Version: 21.1.5
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -13,7 +13,7 @@ BuildRequires: boost169-devel
 BuildRequires: bzip2-devel
 BuildRequires: eccodes
 BuildRequires: eccodes-devel
-BuildRequires: fmt-devel >= 7.1.0
+BuildRequires: fmt-devel >= 7.1.3
 BuildRequires: gcc-c++
 BuildRequires: gdal32-devel
 BuildRequires: hdf5-devel >= 1.8.12
@@ -29,11 +29,11 @@ BuildRequires: netcdf-cxx-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
 BuildRequires: smartmet-library-calculator-devel >= 20.10.7
-BuildRequires: smartmet-library-gis-devel >= 20.12.31
+BuildRequires: smartmet-library-gis-devel >= 21.1.5
 BuildRequires: smartmet-library-imagine-devel >= 20.12.15
-BuildRequires: smartmet-library-macgyver-devel >= 20.12.15
-BuildRequires: smartmet-library-newbase-devel >= 20.12.15
-BuildRequires: smartmet-library-smarttools-devel >= 20.12.15
+BuildRequires: smartmet-library-macgyver-devel >= 21.1.5
+BuildRequires: smartmet-library-newbase-devel >= 21.1.5
+BuildRequires: smartmet-library-smarttools-devel >= 21.1.5
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
 Requires: boost169-date-time
@@ -45,7 +45,7 @@ Requires: boost169-system
 Requires: boost169-thread
 Requires: bzip2-libs
 Requires: eccodes
-Requires: fmt >= 7.1.0
+Requires: fmt >= 7.1.3
 Requires: gdal32-libs
 Requires: glibc
 Requires: hdf5 >= 1.8.12
@@ -58,12 +58,12 @@ Requires: libpng
 Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
 Requires: smartmet-library-calculator >= 20.10.7
-Requires: smartmet-library-gis >= 20.12.31
+Requires: smartmet-library-gis >= 21.1.5
 Requires: smartmet-library-imagine >= 20.12.15
-Requires: smartmet-library-macgyver >= 20.12.15
-Requires: smartmet-library-newbase >= 20.12.15
-Requires: smartmet-library-smarttools >= 20.12.15
-Requires: smartmet-timezones >= 20.10.28
+Requires: smartmet-library-macgyver >= 21.1.5
+Requires: smartmet-library-newbase >= 21.1.5
+Requires: smartmet-library-smarttools >= 21.1.5
+Requires: smartmet-timezones >= 21.1.5
 Requires: zlib
 
 Provides: ashtoqd = %{Version} 
@@ -191,6 +191,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Jan  5 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.1.5-1.fmi
+- Upgrade to fmt 7.1.3
+
 * Thu Dec 31 2020 Mika Heiskanen <mheiskan@rhel8.dev.fmi.fi> - 20.12.31-1.fmi
 - Fixed nctoqd not to use pointers into temporaries
 

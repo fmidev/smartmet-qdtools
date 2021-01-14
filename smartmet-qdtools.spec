@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 21.1.5
+Version: 21.1.14
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -28,12 +28,12 @@ BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
-BuildRequires: smartmet-library-calculator-devel >= 20.10.7
-BuildRequires: smartmet-library-gis-devel >= 21.1.5
-BuildRequires: smartmet-library-imagine-devel >= 20.12.15
-BuildRequires: smartmet-library-macgyver-devel >= 21.1.5
-BuildRequires: smartmet-library-newbase-devel >= 21.1.5
-BuildRequires: smartmet-library-smarttools-devel >= 21.1.5
+BuildRequires: smartmet-library-calculator-devel >= 21.1.14
+BuildRequires: smartmet-library-gis-devel >= 21.1.14
+BuildRequires: smartmet-library-imagine-devel >= 21.1.14
+BuildRequires: smartmet-library-macgyver-devel >= 21.1.14
+BuildRequires: smartmet-library-newbase-devel >= 21.1.14
+BuildRequires: smartmet-library-smarttools-devel >= 21.1.14
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
 Requires: boost169-date-time
@@ -57,12 +57,12 @@ Requires: libjpeg
 Requires: libpng
 Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
-Requires: smartmet-library-calculator >= 20.10.7
-Requires: smartmet-library-gis >= 21.1.5
-Requires: smartmet-library-imagine >= 20.12.15
-Requires: smartmet-library-macgyver >= 21.1.5
-Requires: smartmet-library-newbase >= 21.1.5
-Requires: smartmet-library-smarttools >= 21.1.5
+Requires: smartmet-library-calculator >= 21.1.14
+Requires: smartmet-library-gis >= 21.1.14
+Requires: smartmet-library-imagine >= 21.1.14
+Requires: smartmet-library-macgyver >= 21.1.14
+Requires: smartmet-library-newbase >= 21.1.14
+Requires: smartmet-library-smarttools >= 21.1.14
 Requires: smartmet-timezones >= 21.1.5
 Requires: zlib
 
@@ -191,6 +191,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Jan 14 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.1.14-1.fmi
+- Repackaged smartmet to resolve debuginfo issues
+
 * Tue Jan  5 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.1.5-1.fmi
 - Upgrade to fmt 7.1.3
 

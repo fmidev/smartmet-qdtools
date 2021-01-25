@@ -66,6 +66,7 @@ Requires: smartmet-library-smarttools >= 21.1.14
 Requires: smartmet-timezones >= 21.1.5
 Requires: zlib
 #TestRequires: smartmet-library-macgyver-devel >= 21.1.14
+#TestRequires: gcc-c++
 
 Provides: ashtoqd = %{version}
 Provides: bufrtoqd = %{version}

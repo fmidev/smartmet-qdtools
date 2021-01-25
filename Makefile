@@ -1,72 +1,20 @@
 MODULE = qdtools
 SPEC = smartmet-qdtools
 
-MAINFLAGS = -MD -Wall -W -Wno-unused-parameter -fno-omit-frame-pointer
+REQUIRES = gdal fmt
 
-ifeq (6, $(RHEL_VERSION))
-  MAINFLAGS += -std=c++0x
-else
-  MAINFLAGS += -std=c++11 -fdiagnostics-color=always
-endif
+include $(shell echo $${PREFIX-/usr})/share/smartmet/devel/makefile.inc
 
 # mdsplib does not declare things correctly
 
 MAINFLAGS += -fpermissive
 
 
-EXTRAFLAGS = \
-	-Werror \
-	-Winline \
-	-Wpointer-arith \
-	-Wcast-qual \
-	-Wcast-align \
-	-Wwrite-strings \
-	-Wno-pmf-conversions \
-	-Wchar-subscripts \
-	-Woverloaded-virtual
-
-DIFFICULTFLAGS = \
-	-Wunreachable-code \
-	-Wconversion \
-	-Wsign-promo \
-	-Wnon-virtual-dtor \
-	-Wctor-dtor-privacy \
-	-Wredundant-decls \
-	-Weffc++ \
-	-Wold-style-cast \
-	-pedantic \
-	-Wshadow
-
 # Default compiler flags
 
 DEFINES = -DUNIX
 
-CFLAGS = $(DEFINES) -O2 -g -DNDEBUG $(MAINFLAGS)
-LDFLAGS = 
-
-# Special modes
-
-CFLAGS_DEBUG = $(DEFINES) -O0 -g $(MAINFLAGS) $(EXTRAFLAGS) -Werror
-CFLAGS_PROFILE = $(DEFINES) -O2 -g -pg -DNDEBUG $(MAINFLAGS)
-
-LDFLAGS_DEBUG =
-LDFLAGS_PROFILE =
-
-# Boost 1.69
-
-ifneq "$(wildcard /usr/include/boost169)" ""
-  INCLUDES += -isystem /usr/include/boost169
-  LIBS += -L/usr/lib64/boost169
-endif
-
 # gdal 32 from pgdg
-
-ifneq "$(wildcard /usr/gdal32/include)" ""
-  INCLUDES += -isystem /usr/gdal32/include
-  LIBS += -L/usr/gdal32/lib
-else
-  INCLUDES += -isystem /usr/include/gdal
-endif
 
 INCLUDES +=  \
 	-isystem $(includedir)/netcdf-3 \
@@ -89,7 +37,7 @@ LIBS += -L$(libdir) \
 	-lboost_thread \
 	-lboost_filesystem \
         -lboost_system \
-	-lgdal \
+	$(REQUIRED_LIBS) \
 	-lmetar \
 	-ljasper \
 	-leccodes \
@@ -97,55 +45,8 @@ LIBS += -L$(libdir) \
 	-lMXADataModel -lhdf5 \
 	-lbufr \
 	-lecbufr \
-	-lfmt \
 	-lbz2 -ljpeg -lpng -lz -lrt \
-	-lpthread \
-	-lstdc++ -lm
-
-# Common library compiling template
-
-# Installation directories
-
-processor := $(shell uname -p)
-
-ifeq ($(origin PREFIX), undefined)
-  PREFIX = /usr
-else
-  PREFIX = $(PREFIX)
-endif
-
-ifeq ($(processor), x86_64)
-  libdir = $(PREFIX)/lib64
-else
-  libdir = $(PREFIX)/lib
-endif
-
-objdir = obj
-includedir = $(PREFIX)/include
-
-ifeq ($(origin BINDIR), undefined)
-  bindir = $(PREFIX)/bin
-else
-  bindir = $(BINDIR)
-endif
-
-ifeq ($(origin DATADIR), undefined)
-  datadir = $(PREFIX)/share
-else
-  datadir = $(DATADIR)
-endif
-
-# Special modes
-
-ifneq (,$(findstring debug,$(MAKECMDGOALS)))
-  CFLAGS = $(CFLAGS_DEBUG)
-  LDFLAGS = $(LDFLAGS_DEBUG)
-endif
-
-ifneq (,$(findstring profile,$(MAKECMDGOALS)))
-  CFLAGS = $(CFLAGS_PROFILE)
-  LDFLAGS = $(LDFLAGS_PROFILE)
-endif
+	-lpthread
 
 # Compilation directories
 
@@ -153,11 +54,6 @@ vpath %.cpp source main
 vpath %.h include
 vpath %.o $(objdir)
 vpath %.d $(objdir)
-
-# How to install
-
-INSTALL_PROG = install -m 775
-INSTALL_DATA = install -m 664
 
 # The files to be compiled
 

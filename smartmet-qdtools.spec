@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 21.1.14
+Version: 21.1.25
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -67,52 +67,52 @@ Requires: smartmet-timezones >= 21.1.5
 Requires: zlib
 #TestRequires: smartmet-library-macgyver-devel >= 21.1.14
 
-Provides: ashtoqd = %{Version} 
-Provides: bufrtoqd = %{Version} 
-Provides: combinepgms2qd = %{Version} 
-Provides: combineHistory = %{Version}
-Provides: csv2qd = %{Version} 
-Provides: flash2qd = %{Version} 
-Provides: grib2tojpg = %{Version} 
-Provides: gribtoqd = %{Version} 
-Provides: grib2toqd = %{Version} 
-Provides: h5toqd = %{Version} 
-Provides: kriging2qd = %{Version}
-Provides: laps2qd = %{Version} 
-Provides: metar2qd = %{Version} 
-Provides: nctoqd = %{Version} 
-Provides: nc2qd = %{Version} 
-Provides: radartoqd = %{Version} 
-Provides: pgm2qd = %{Version} 
-Provides: qd2csv = %{Version} 
-Provides: qdtogrib = %{Version} 
-Provides: qdversionchange = %{Version} 
-Provides: synop2qd = %{Version} 
-Provides: temp2qd = %{Version} 
-Provides: wrftoqd = %{Version} 
-Provides: qdarea = %{Version} 
-Provides: qdcheck = %{Version} 
-Provides: qdcombine = %{Version} 
-Provides: qdcrop = %{Version} 
-Provides: qddiff = %{Version} 
-Provides: qddifference = %{Version} 
-Provides: qdextract = %{Version} 
-Provides: qdfilter = %{Version} 
-Provides: qdgridcalc = %{Version} 
-Provides: qdinfo = %{Version} 
-Provides: qdinterpolatearea = %{Version} 
-Provides: qdinterpolatetime = %{Version} 
-Provides: qdmissing = %{Version} 
-Provides: qdpoint = %{Version} 
-Provides: qdproject = %{Version} 
-Provides: qdscript = %{Version} 
-Provides: qdset = %{Version} 
-Provides: qdsmoother = %{Version} 
-Provides: qdsounding = %{Version} 
-Provides: qdsoundingindex = %{Version} 
-Provides: qdsplit = %{Version} 
-Provides: qdstat = %{Version} 
-Provides: qdview = %{Version} 
+Provides: ashtoqd = %{version}
+Provides: bufrtoqd = %{version}
+Provides: combinepgms2qd = %{version}
+Provides: combineHistory = %{version}
+Provides: csv2qd = %{version}
+Provides: flash2qd = %{version}
+Provides: grib2tojpg = %{version}
+Provides: gribtoqd = %{version}
+Provides: grib2toqd = %{version}
+Provides: h5toqd = %{version}
+Provides: kriging2qd = %{version}
+Provides: laps2qd = %{version}
+Provides: metar2qd = %{version}
+Provides: nctoqd = %{version}
+Provides: nc2qd = %{version}
+Provides: radartoqd = %{version}
+Provides: pgm2qd = %{version}
+Provides: qd2csv = %{version}
+Provides: qdtogrib = %{version}
+Provides: qdversionchange = %{version}
+Provides: synop2qd = %{version}
+Provides: temp2qd = %{version}
+Provides: wrftoqd = %{version}
+Provides: qdarea = %{version}
+Provides: qdcheck = %{version}
+Provides: qdcombine = %{version}
+Provides: qdcrop = %{version}
+Provides: qddiff = %{version}
+Provides: qddifference = %{version}
+Provides: qdextract = %{version}
+Provides: qdfilter = %{version}
+Provides: qdgridcalc = %{version}
+Provides: qdinfo = %{version}
+Provides: qdinterpolatearea = %{version}
+Provides: qdinterpolatetime = %{version}
+Provides: qdmissing = %{version}
+Provides: qdpoint = %{version}
+Provides: qdproject = %{version}
+Provides: qdscript = %{version}
+Provides: qdset = %{version}
+Provides: qdsmoother = %{version}
+Provides: qdsounding = %{version}
+Provides: qdsoundingindex = %{version}
+Provides: qdsplit = %{version}
+Provides: qdstat = %{version}
+Provides: qdview = %{version}
 Obsoletes: smartmet-qdconversion < 17.1.10
 Obsoletes: smartmet-qdconversion-debuginfo < 17.1.10
 Obsoletes: smartmet-qdtools < 17.1.10
@@ -125,7 +125,7 @@ Command line tools for handling querydata
 
 %prep
 %setup -q -n %{RPMNAME}
- 
+
 %build
 make %{_smp_mflags}
 
@@ -141,7 +141,7 @@ make %{_smp_mflags}
 %{_bindir}/combinepgms2qd
 %{_bindir}/combineHistory
 %{_bindir}/csv2qd
-%{_bindir}/flash2qd 
+%{_bindir}/flash2qd
 %{_bindir}/grib2tojpg
 %{_bindir}/grib2toqd
 %{_bindir}/gribtoqd
@@ -152,36 +152,36 @@ make %{_smp_mflags}
 %{_bindir}/nc2qd
 %{_bindir}/nctoqd
 %{_bindir}/pgm2qd
-%{_bindir}/qd2csv 
-%{_bindir}/qd2geotiff 
+%{_bindir}/qd2csv
+%{_bindir}/qd2geotiff
 %{_bindir}/qdarea
 %{_bindir}/qdcheck
 %{_bindir}/qdcombine
-%{_bindir}/qdcrop 
-%{_bindir}/qddiff 
+%{_bindir}/qdcrop
+%{_bindir}/qddiff
 %{_bindir}/qddifference
 %{_bindir}/qdextract
-%{_bindir}/qdfilter 
+%{_bindir}/qdfilter
 %{_bindir}/qdgridcalc
-%{_bindir}/qdinfo 
+%{_bindir}/qdinfo
 %{_bindir}/qdinterpolatearea
 %{_bindir}/qdinterpolatetime
-%{_bindir}/qdmissing 
-%{_bindir}/qdpoint 
-%{_bindir}/qdproject 
+%{_bindir}/qdmissing
+%{_bindir}/qdpoint
+%{_bindir}/qdproject
 %{_bindir}/qdscript
 %{_bindir}/qdset
-%{_bindir}/qdsmoother 
-%{_bindir}/qdsounding 
+%{_bindir}/qdsmoother
+%{_bindir}/qdsounding
 %{_bindir}/qdsoundingindex
-%{_bindir}/qdsplit 
+%{_bindir}/qdsplit
 %{_bindir}/qdstat
 %{_bindir}/qdtogrib
 %{_bindir}/qdversionchange
 %{_bindir}/qdview
 %{_bindir}/radartoqd
-%{_bindir}/synop2qd 
-%{_bindir}/temp2qd 
+%{_bindir}/synop2qd
+%{_bindir}/temp2qd
 %{_bindir}/wrftoqd
 %defattr(0664,root,root,0775)
 %{_datadir}/smartmet/dictionaries/*.conf
@@ -192,6 +192,10 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Mon Jan 25 2021 Andris Pavenis <andris.pavenis@fmi.fi> - 21.1.25-1.fmi
+- Build update: use makefile.inc
+- Fix build for C++17
+
 * Thu Jan 14 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.1.14-1.fmi
 - Repackaged smartmet to resolve debuginfo issues
 
@@ -274,7 +278,7 @@ make %{_smp_mflags}
 
 * Wed Dec  4 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.12.4-1.fmi
 - Fixed dependency to be on gdal-libs instead of gdal
-- Use -fno-omit-frame-pointer for a better profiling and debugging experience                                                                                              
+- Use -fno-omit-frame-pointer for a better profiling and debugging experience
 * Fri Nov 29 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.11.29-1.fmi
 - Increased space reserved for qdstat counters
 

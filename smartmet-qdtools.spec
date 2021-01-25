@@ -124,7 +124,7 @@ Command line tools for handling querydata
 
 %prep
 %setup -q -n %{RPMNAME}
- 
+
 %build
 make %{_smp_mflags}
 
@@ -140,7 +140,7 @@ make %{_smp_mflags}
 %{_bindir}/combinepgms2qd
 %{_bindir}/combineHistory
 %{_bindir}/csv2qd
-%{_bindir}/flash2qd 
+%{_bindir}/flash2qd
 %{_bindir}/grib2tojpg
 %{_bindir}/grib2toqd
 %{_bindir}/gribtoqd
@@ -151,36 +151,36 @@ make %{_smp_mflags}
 %{_bindir}/nc2qd
 %{_bindir}/nctoqd
 %{_bindir}/pgm2qd
-%{_bindir}/qd2csv 
-%{_bindir}/qd2geotiff 
+%{_bindir}/qd2csv
+%{_bindir}/qd2geotiff
 %{_bindir}/qdarea
 %{_bindir}/qdcheck
 %{_bindir}/qdcombine
-%{_bindir}/qdcrop 
-%{_bindir}/qddiff 
+%{_bindir}/qdcrop
+%{_bindir}/qddiff
 %{_bindir}/qddifference
 %{_bindir}/qdextract
-%{_bindir}/qdfilter 
+%{_bindir}/qdfilter
 %{_bindir}/qdgridcalc
-%{_bindir}/qdinfo 
+%{_bindir}/qdinfo
 %{_bindir}/qdinterpolatearea
 %{_bindir}/qdinterpolatetime
-%{_bindir}/qdmissing 
-%{_bindir}/qdpoint 
-%{_bindir}/qdproject 
+%{_bindir}/qdmissing
+%{_bindir}/qdpoint
+%{_bindir}/qdproject
 %{_bindir}/qdscript
 %{_bindir}/qdset
-%{_bindir}/qdsmoother 
-%{_bindir}/qdsounding 
+%{_bindir}/qdsmoother
+%{_bindir}/qdsounding
 %{_bindir}/qdsoundingindex
-%{_bindir}/qdsplit 
+%{_bindir}/qdsplit
 %{_bindir}/qdstat
 %{_bindir}/qdtogrib
 %{_bindir}/qdversionchange
 %{_bindir}/qdview
 %{_bindir}/radartoqd
-%{_bindir}/synop2qd 
-%{_bindir}/temp2qd 
+%{_bindir}/synop2qd
+%{_bindir}/temp2qd
 %{_bindir}/wrftoqd
 %defattr(0664,root,root,0775)
 %{_datadir}/smartmet/dictionaries/*.conf
@@ -273,7 +273,7 @@ make %{_smp_mflags}
 
 * Wed Dec  4 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.12.4-1.fmi
 - Fixed dependency to be on gdal-libs instead of gdal
-- Use -fno-omit-frame-pointer for a better profiling and debugging experience                                                                                              
+- Use -fno-omit-frame-pointer for a better profiling and debugging experience
 * Fri Nov 29 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.11.29-1.fmi
 - Increased space reserved for qdstat counters
 

@@ -65,6 +65,7 @@ Requires: smartmet-library-newbase >= 21.1.14
 Requires: smartmet-library-smarttools >= 21.1.14
 Requires: smartmet-timezones >= 21.1.5
 Requires: zlib
+#TestRequires: smartmet-library-macgyver-devel >= 21.1.14
 
 Provides: ashtoqd = %{Version} 
 Provides: bufrtoqd = %{Version} 

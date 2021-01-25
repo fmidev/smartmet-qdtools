@@ -1427,7 +1427,7 @@ vector<NFmiQueryData *> ConvertGrib2QData(FILE *theInput,
 
 struct LevelLessThan
 {
-  bool operator()(const NFmiLevel &l1, const NFmiLevel &l2)
+  bool operator()(const NFmiLevel &l1, const NFmiLevel &l2) const
   {
     if (l1.LevelType() < l2.LevelType())
       return true;

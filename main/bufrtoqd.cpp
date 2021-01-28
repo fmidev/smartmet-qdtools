@@ -2036,11 +2036,10 @@ void copy_records_sounding(NFmiFastQueryInfo &info,
 
         if (identchange || options.debug)
         {
-          // Time rounded to hour as when stored to tdesc
+          // Time rounded to nearest hour as when stored to tdesc
 
           t = get_validtime(msg);
-          t.SetMin(0);
-          t.SetSec(0);
+          t.NearestMetTime(60);
         }
 
         if (identchange)
@@ -3448,11 +3447,10 @@ void store_messages_sounding(const NameMap &namemap,
   if (soundingmessages.empty())
     return;
 
-  // Store idents into a list in time order. Round the time to hour
+  // Store idents into a list in time order. Round the time to nearest hour
 
   NFmiMetTime t = get_validtime(soundingmessages.front());
-  t.SetMin(0);
-  t.SetSec(0);
+  t.NearestMetTime(60);
 
   auto its = stationtimeset.find(station);
 

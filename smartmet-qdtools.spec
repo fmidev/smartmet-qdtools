@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 21.1.25
+Version: 21.1.28
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -193,12 +193,18 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Jan 28 2021 Pertti Kinnia <pertti.kinnia@fmi.fi> - 21.1.28-1.fmi
+- bufrtoqd: round sounding times to nearest hour; QDTOOLS-88
+
 * Mon Jan 25 2021 Andris Pavenis <andris.pavenis@fmi.fi> - 21.1.25-1.fmi
 - Build update: use makefile.inc
 - Fix build for C++17
 
 * Thu Jan 14 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.1.14-1.fmi
 - Repackaged smartmet to resolve debuginfo issues
+
+* Tue Jan 12 2021 Pertti Kinnia <pertti.kinnia@fmi.fi> - 21.1.12-1.fmi
+- Sort sounding messages prior storing to querydata and remove duplicate soundings; QDTOOLS-88
 
 * Tue Jan  5 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.1.5-1.fmi
 - Upgrade to fmt 7.1.3

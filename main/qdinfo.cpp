@@ -28,7 +28,8 @@ using namespace std;
 
 std::string ToString(float theValue)
 {
-  if (theValue == kFloatMissing) return "-";
+  if (theValue == kFloatMissing)
+    return "-";
   return Fmi::to_string(theValue);
 }
 
@@ -42,7 +43,8 @@ std::string ToString(float theValue)
 
 void ReportVersion(NFmiFastQueryInfo *q)
 {
-  if (q == 0) throw runtime_error("Option -q is required for the given options");
+  if (q == 0)
+    throw runtime_error("Option -q is required for the given options");
 
   double version = q->InfoVersion();
 
@@ -108,7 +110,8 @@ std::string interpolation_name(FmiInterpolationMethod method)
 
 void ReportParameters(NFmiFastQueryInfo *q, bool ignoresubs)
 {
-  if (q == 0) throw runtime_error("Option -q is required for the given options");
+  if (q == 0)
+    throw runtime_error("Option -q is required for the given options");
 
   NFmiEnumConverter converter;
 
@@ -210,7 +213,8 @@ void set_timezone(const string &theZone)
 
 const string TimeString(const NFmiMetTime &theTime, bool theUtcFlag, string dateFormat)
 {
-  if (theUtcFlag) set_timezone("UTC");
+  if (theUtcFlag)
+    set_timezone("UTC");
 
   string out = format_time(theTime, dateFormat, theUtcFlag);
 
@@ -232,7 +236,8 @@ const string TimeString(const NFmiMetTime &theTime, bool theUtcFlag, string date
 
 void ReportTimes(NFmiFastQueryInfo *q, bool theUtcFlag, string dateFormat)
 {
-  if (q == 0) throw runtime_error("Option -q is required for the given options");
+  if (q == 0)
+    throw runtime_error("Option -q is required for the given options");
 
   cout << endl << "Time information on the querydata:" << endl << endl;
 
@@ -382,7 +387,8 @@ string LevelName(FmiLevelType theLevel)
 
 void ReportLevels(NFmiFastQueryInfo *q)
 {
-  if (q == 0) throw runtime_error("Option -q is required for the given options");
+  if (q == 0)
+    throw runtime_error("Option -q is required for the given options");
 
   cout << endl
        << "Level information on the querydata:" << endl
@@ -415,7 +421,8 @@ void ReportLevels(NFmiFastQueryInfo *q)
 
 void ReportProducer(NFmiFastQueryInfo *q)
 {
-  if (q == 0) throw runtime_error("Option -q is required for the given options");
+  if (q == 0)
+    throw runtime_error("Option -q is required for the given options");
 
   // Must select some parameter, producer is parameter dependent
   q->FirstParam();
@@ -442,7 +449,8 @@ void ReportProducer(NFmiFastQueryInfo *q)
 
 void ReportProjection(NFmiFastQueryInfo *q)
 {
-  if (q == 0) throw runtime_error("Option -q is required for the given options");
+  if (q == 0)
+    throw runtime_error("Option -q is required for the given options");
 
   cout << endl << "Information on the querydata area:" << endl << endl;
 
@@ -547,7 +555,8 @@ void ReportProjection(NFmiFastQueryInfo *q)
   {
     OGRErr err = OGRERR_NONE;
     auto value = sr.GetNormProjParm(param.c_str(), -999, &err);
-    if (err == OGRERR_NONE) std::cout << param << "\t= " << value << endl;
+    if (err == OGRERR_NONE)
+      std::cout << param << "\t= " << value << endl;
   }
 
   std::cout << "\nproj options:\n";
@@ -611,7 +620,8 @@ void ReportProjection(NFmiFastQueryInfo *q)
 
 void ReportLocations(NFmiFastQueryInfo *q)
 {
-  if (q == 0) throw runtime_error("Option -q is required for the given options");
+  if (q == 0)
+    throw runtime_error("Option -q is required for the given options");
 
   cout << endl << "Information on the locations:" << endl << endl;
 
@@ -643,7 +653,8 @@ void ReportLocations(NFmiFastQueryInfo *q)
 
 void ReportMetadata(NFmiFastQueryInfo *q)
 {
-  if (q == 0) throw runtime_error("Option -q is required for the given options");
+  if (q == 0)
+    throw runtime_error("Option -q is required for the given options");
 
   cout << endl << "Metadata information:" << endl << endl;
 
@@ -782,7 +793,7 @@ int domain(int argc, const char *argv[])
 
   // Actual processing begins
 
-  auto_ptr<NFmiQueryInfo> qi;
+  unique_ptr<NFmiQueryInfo> qi;
 
   if (cmdline.isOption('q'))
   {
@@ -808,29 +819,34 @@ int domain(int argc, const char *argv[])
 
   // Option -v shows the queryinfo version number
 
-  if (cmdline.isOption('v') || opt_all) ReportVersion(q);
+  if (cmdline.isOption('v') || opt_all)
+    ReportVersion(q);
 
   // Option -l lists the known parameternames
 
-  if (cmdline.isOption('l') || opt_all_extended) ReportParameterNames();
+  if (cmdline.isOption('l') || opt_all_extended)
+    ReportParameterNames();
 
   // Option -p lists the parameters in the queryfile
 
-  if (cmdline.isOption('p') || opt_all_extended) ReportParameters(q, true);
+  if (cmdline.isOption('p') || opt_all_extended)
+    ReportParameters(q, true);
 
   // Option -P lists the parameters in the queryfile, including subparameters
 
-  if (cmdline.isOption('P') || opt_all) ReportParameters(q, false);
+  if (cmdline.isOption('P') || opt_all)
+    ReportParameters(q, false);
 
   // Option -r shows producer information
 
-  if (cmdline.isOption('r') || opt_all) ReportProducer(q);
+  if (cmdline.isOption('r') || opt_all)
+    ReportProducer(q);
 
   // Option -t shows time information
 
   string dateFormat = "";
 
-  if (cmdline.isOption('t') || opt_all)
+  if (cmdline.isOption('t') || (opt_all && !cmdline.isOption('T')))
   {
     if (cmdline.OptionValue('t') == nullptr)
       dateFormat = "%Y%m%d%H";
@@ -841,7 +857,7 @@ int domain(int argc, const char *argv[])
 
   // Option -T shows time information in UTC
 
-  if (cmdline.isOption('T') || opt_all_extended)
+  if (cmdline.isOption('T') || (opt_all_extended && !cmdline.isOption('t')))
   {
     if (cmdline.OptionValue('T') == nullptr)
       dateFormat = "%Y%m%d%H";
@@ -852,23 +868,28 @@ int domain(int argc, const char *argv[])
 
   // Option -x shows projection information
 
-  if (cmdline.isOption('x') || opt_all) ReportProjection(q);
+  if (cmdline.isOption('x') || opt_all)
+    ReportProjection(q);
 
   // Option -X shows location information
 
-  if (cmdline.isOption('X') || opt_all) ReportLocations(q);
+  if (cmdline.isOption('X') || opt_all)
+    ReportLocations(q);
 
   // Option -z shows level information
 
-  if (cmdline.isOption('z') || opt_all) ReportLevels(q);
+  if (cmdline.isOption('z') || opt_all)
+    ReportLevels(q);
 
   // Option -M shows all metadata information
 
-  if (cmdline.isOption('M') || opt_all) ReportMetadata(q);
+  if (cmdline.isOption('M') || opt_all)
+    ReportMetadata(q);
 
   // Option -m shows only the given metadata key
 
-  if (cmdline.isOption('m')) ReportMetadata(q, cmdline.OptionValue('m'));
+  if (cmdline.isOption('m'))
+    ReportMetadata(q, cmdline.OptionValue('m'));
 
   return 0;
 }

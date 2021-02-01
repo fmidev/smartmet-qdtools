@@ -112,7 +112,7 @@ void usage()
  */
 // ----------------------------------------------------------------------
 
-auto_ptr<NFmiArea> create_projection_from_querydata(const string& theFile)
+unique_ptr<NFmiArea> create_projection_from_querydata(const string& theFile)
 {
   NFmiQueryData qd(theFile);
   if (!qd.IsGrid()) throw runtime_error("The given querydata does not define a projection");
@@ -120,7 +120,7 @@ auto_ptr<NFmiArea> create_projection_from_querydata(const string& theFile)
   NFmiArea* area = qd.GridInfo().Area();
   if (!area) throw runtime_error("The given querydata does not define a projection");
 
-  return auto_ptr<NFmiArea>(area->Clone());
+  return unique_ptr<NFmiArea>(area->Clone());
 }
 
 // ----------------------------------------------------------------------

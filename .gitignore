@@ -34,6 +34,7 @@ obj/
 Dependencies*
 /ashtoqd
 /bufrtoqd
+/combineHistory
 /combinepgms2qd
 /csv2qd
 /flash2qd
@@ -41,6 +42,7 @@ Dependencies*
 /grib2toqd
 /gribtoqd
 /h5toqd
+/kriging2qd
 /laps2qd
 /metar2qd
 /nc2qd
@@ -83,3 +85,4 @@ test/*.tmp
 test/*.qdinfo
 *info_fail
 *info_ok
+/smartmet-qdtools.tar.gz

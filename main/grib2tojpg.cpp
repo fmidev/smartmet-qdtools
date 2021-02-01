@@ -303,7 +303,7 @@ static void HandleProjectionString(const string &theProjStr,
     }
   }
   NFmiGrid *wantedGrid = ::CreateWantedGrid(projStringUsed);
-  std::auto_ptr<NFmiGrid> wantedGridPtr(wantedGrid);  // tuhoaa lopuksi dynaamisen datan
+  std::unique_ptr<NFmiGrid> wantedGridPtr(wantedGrid);  // tuhoaa lopuksi dynaamisen datan
   if (wantedGrid == 0)
     throw std::runtime_error(
         "Error with -P option in HandleProjectionString-function, unable to create the wanted "
@@ -432,7 +432,7 @@ int main(int argc, const char **argv)
                               wantedGrid,
                               pressureDataGridSize,
                               hybridDataGridSize);
-    //		auto_ptr<NFmiQueryData> dataPtr(data);
+    //		unique_ptr<NFmiQueryData> dataPtr(data);
 
 #if 0
 		if(!datas.empty())
@@ -1412,7 +1412,7 @@ vector<NFmiQueryData *> ConvertGrib2QData(FILE *theInput,
 
 struct LevelLessThan
 {
-  bool operator()(const NFmiLevel &l1, const NFmiLevel &l2)
+  bool operator()(const NFmiLevel &l1, const NFmiLevel &l2) const
   {
     if (l1.LevelType() < l2.LevelType())
       return true;
@@ -1670,12 +1670,12 @@ bool FillQDataWithGribRecords(vector<GridRecordData *> &theGribRecordDatas)
     tmp = theGribRecordDatas[k];
 
     // Generate filename based on pattern
-    char pattern[255], jpegFilename[255];
+    char pattern[255], jpegFilename[300];
     struct tm *time_table;
     const time_t itsValidTime = tmp->itsValidTime.EpochTime();
     time_table = gmtime(&itsValidTime);
     strftime(pattern, 254, globalFilenamePattern.c_str(), time_table);
-    snprintf(jpegFilename, 254, "%s%s.jpg", globalFilenamePrefix.c_str(), pattern);
+    snprintf(jpegFilename, 299, "%s%s.jpg", globalFilenamePrefix.c_str(), pattern);
 
     // Initialize data matrix
     NFmiDataMatrix<float> gridValues = tmp->itsGridData;

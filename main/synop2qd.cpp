@@ -1070,7 +1070,7 @@ static NFmiParamBag MakeSynopParamBag(const NFmiProducer &theWantedProducer,
   params.Add(NFmiDataIdent(NFmiParam(kFmiHumidity, "RH"), theWantedProducer));
   NFmiTotalWind totWind;
   NFmiDataIdent *newDataIdent = totWind.CreateParam(theWantedProducer);
-  std::auto_ptr<NFmiDataIdent> newDataIdentPtr(newDataIdent);
+  std::unique_ptr<NFmiDataIdent> newDataIdentPtr(newDataIdent);
   params.Add(*newDataIdent);
   params.Add(NFmiDataIdent(NFmiParam(kFmiPressureTendency, "a"), theWantedProducer));
   params.Add(NFmiDataIdent(NFmiParam(kFmiPressureChange, "ppp"), theWantedProducer));
@@ -1803,7 +1803,7 @@ NFmiQueryData *MakeQueryDataFromSynopCodeDataVector(
 
   NFmiQueryInfo *innerInfo = MakeNewInnerInfoForSYNOP(
       theSynopCodeVector, theWantedProducer, fDoShipMessages, fDoBuoyMessages);
-  std::auto_ptr<NFmiQueryInfo> innerInfoPtr(innerInfo);
+  std::unique_ptr<NFmiQueryInfo> innerInfoPtr(innerInfo);
   if (innerInfo)
   {
     newData = NFmiQueryDataUtil::CreateEmptyData(*innerInfo);

@@ -14,7 +14,10 @@
 // int * fillIntRasterByQD(NFmiFastQueryInfo * theData, int width, int height);
 // NFmiArea * CreteEpsgArea(string epsgCode);
 
-void GeoTiffQD::SetTestMode(bool testMode) { isDrawGridLines = testMode; }
+void GeoTiffQD::SetTestMode(bool testMode)
+{
+  isDrawGridLines = testMode;
+}
 GeomDefinedType GeoTiffQD::ConverQD2GeoTiff(string aNameVersion,
                                             NFmiFastQueryInfo *theData,
                                             NFmiFastQueryInfo *theExternal,
@@ -37,8 +40,10 @@ GeomDefinedType GeoTiffQD::ConverQD2GeoTiff(string aNameVersion,
   else if (id == kNFmiStereographicArea)
   {
     ConvertToGeoTiff(aNameVersion, theData, theExternal, geomDefinedType = kStereoGeom);
-    if (area->ProjInfo().getDouble("lat_0") == 10.0) geomDefinedType = kStereoGeom10;
-    if (area->ProjInfo().getDouble("lat_0") == 20.0) geomDefinedType = kStereoGeom20;
+    if (area->ProjInfo().getDouble("lat_0") == 10.0)
+      geomDefinedType = kStereoGeom10;
+    if (area->ProjInfo().getDouble("lat_0") == 20.0)
+      geomDefinedType = kStereoGeom20;
   }
   else if (id == kNFmiRotatedLatLonArea)
     ConvertToGeoTiff(aNameVersion, theData, theExternal, geomDefinedType = kRotatedGeom);
@@ -69,8 +74,10 @@ double GeoTiffQD::calculateTrueNorthAzimuthValue(float value,
     else
     {
       retValue = value + realNorth;
-      if (retValue > 360) retValue = retValue - 360;
-      if (retValue < 0) retValue = 360 + retValue;
+      if (retValue > 360)
+        retValue = retValue - 360;
+      if (retValue < 0)
+        retValue = 360 + retValue;
     }
   }
 
@@ -81,12 +88,14 @@ void drawGridLines(const NFmiPoint &latLon, double &value)
 {
   for (int i = 55; i <= 65; i += 5)
   {
-    if (latLon.Y() > (i - 0.1) && latLon.Y() < (i + 0.1)) value = 0;
+    if (latLon.Y() > (i - 0.1) && latLon.Y() < (i + 0.1))
+      value = 0;
   }
 
   for (int k = -90; k <= 90; k += 5)
   {
-    if (latLon.X() > (k - 0.1) && latLon.X() < (k + 0.1)) value = 0;
+    if (latLon.X() > (k - 0.1) && latLon.X() < (k + 0.1))
+      value = 0;
   }
 }
 
@@ -138,7 +147,8 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
 
   poDriver = GetGDALDriverManager()->GetDriverByName(pszFormat);
 
-  if (poDriver == nullptr) exit(1);
+  if (poDriver == nullptr)
+    exit(1);
 
   // papszMetadata = poDriver->GetMetadata();
 
@@ -150,7 +160,8 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
   */
 
   int paramSize = 1;  // theData->ParamBag().GetSize();
-  if (theExternal != 0) paramSize = 2;
+  if (theExternal != 0)
+    paramSize = 2;
 
   char **papszOptions = nullptr;
   // papszOptions = CSLSetNameValue( papszOptions, "COMPRESS", "PACKBITS" );
@@ -266,7 +277,8 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
     // GDT_Int32   3/4
     auto err =
         poBand->RasterIO(GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Int32, 0, 0);
-    if (err) throw std::runtime_error("Error in raster handler");
+    if (err)
+      throw std::runtime_error("Error in raster handler");
   }
   else
   {
@@ -274,7 +286,8 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
     //  GDT_Float32  3/4
     auto err = poBand->RasterIO(
         GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Float32, 0, 0);
-    if (err) throw std::runtime_error("Error in raster handler");
+    if (err)
+      throw std::runtime_error("Error in raster handler");
   }
 
   // External Band parameter for data int
@@ -292,7 +305,8 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
       // GDT_Int32   3/4
       auto err = poBand->RasterIO(
           GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Int32, 0, 0);
-      if (err) throw std::runtime_error("Error in raster handler");
+      if (err)
+        throw std::runtime_error("Error in raster handler");
     }
     else
     {
@@ -300,7 +314,8 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
       //  GDT_Float32  3/4
       auto err = poBand->RasterIO(
           GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Float32, 0, 0);
-      if (err) throw std::runtime_error("Error in raster handler");
+      if (err)
+        throw std::runtime_error("Error in raster handler");
     }
 
     // abyRaster = fillIntRasterByQD(theExternal, theData, width, height, area);
@@ -921,9 +936,12 @@ int main(int argc, char *argv[])
 
         while (pch_scale != nullptr)
         {
-          if (i == 0) te.param = atoi(pch_scale);
-          if (i == 1) te.external = atoi(pch_scale);
-          if (i == 2) te.scale = atof(pch_scale);
+          if (i == 0)
+            te.param = atoi(pch_scale);
+          if (i == 1)
+            te.external = atoi(pch_scale);
+          if (i == 2)
+            te.scale = atof(pch_scale);
           i++;
 
           pch_scale = strtok(nullptr, ":");

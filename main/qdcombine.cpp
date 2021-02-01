@@ -216,7 +216,7 @@ static void FillCombinedData(const vector<string> &theDataFileNames,
 
 struct LevelLessThan
 {
-  bool operator()(const NFmiLevel &l1, const NFmiLevel &l2)
+  bool operator()(const NFmiLevel &l1, const NFmiLevel &l2) const
   {
     if (l1.LevelType() < l2.LevelType()) return true;
     if (l1.LevelValue() < l2.LevelValue()) return true;
@@ -408,7 +408,7 @@ int Run(int argc, const char *argv[])
     unsigned long prodId = NFmiStringTools::Convert<unsigned long>(strVector[0]);
     wantedProducer = new NFmiProducer(prodId, strVector[1]);
   }
-  auto_ptr<NFmiProducer> wantedProducerPtr(
+  unique_ptr<NFmiProducer> wantedProducerPtr(
       wantedProducer);  // tämä tuhoaa dynaamisen datan automaattisesti
 
   std::string outfile = "-";

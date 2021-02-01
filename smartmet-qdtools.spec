@@ -2,119 +2,118 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 20.8.27
+Version: 21.1.25
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
 Source0: %{name}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot-%(%{__id_u} -n)
-BuildRequires: rpm-build
-BuildRequires: gcc-c++
-BuildRequires: make
 BuildRequires: boost169-devel
 BuildRequires: bzip2-devel
-BuildRequires: eccodes-devel
 BuildRequires: eccodes
+BuildRequires: eccodes-devel
+BuildRequires: fmt-devel >= 7.1.3
+BuildRequires: gcc-c++
+BuildRequires: gdal32-devel
 BuildRequires: hdf5-devel >= 1.8.12
+BuildRequires: jasper-devel
 BuildRequires: libbufr >= 3.2
 BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
-BuildRequires: fmt-devel
-BuildRequires: smartmet-library-calculator-devel >= 20.8.27
-BuildRequires: smartmet-library-gis-devel >= 20.8.27
-BuildRequires: smartmet-library-imagine-devel >= 20.8.27
-BuildRequires: smartmet-library-macgyver-devel >= 20.8.21
-BuildRequires: smartmet-library-newbase-devel >= 20.8.27
-BuildRequires: smartmet-library-smarttools-devel >= 20.8.27
-BuildRequires: smartmet-timezones
-BuildRequires: smartmet-library-spine-devel
-BuildRequires: mdsplib >= 16.4.8
-BuildRequires: netcdf-devel >= 4.3.3.1
-BuildRequires: zlib-devel
-BuildRequires: gdal30-devel
-BuildRequires: jasper-devel
+BuildRequires: make
+BuildRequires: mdsplib >= 20.8.26
 BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
-BuildRequires: fmt-devel
-Requires: smartmet-timezones >= 20.5.5
-Requires: smartmet-library-calculator >= 20.8.27
-Requires: smartmet-library-gis >= 20.8.27
-Requires: smartmet-library-imagine >= 20.8.27
-Requires: smartmet-library-macgyver >= 20.8.21
-Requires: smartmet-library-newbase >= 20.8.27
-Requires: smartmet-library-smarttools >= 20.8.27
-Requires: smartmet-library-spine
-Requires: fmt
+BuildRequires: netcdf-devel >= 4.3.3.1
+BuildRequires: rpm-build
+BuildRequires: smartmet-library-calculator-devel >= 21.1.14
+BuildRequires: smartmet-library-gis-devel >= 21.1.14
+BuildRequires: smartmet-library-imagine-devel >= 21.1.14
+BuildRequires: smartmet-library-macgyver-devel >= 21.1.14
+BuildRequires: smartmet-library-newbase-devel >= 21.1.14
+BuildRequires: smartmet-library-smarttools-devel >= 21.1.14
+BuildRequires: smartmet-timezones
+BuildRequires: zlib-devel
+Requires: boost169-date-time
+Requires: boost169-filesystem
+Requires: boost169-iostreams
+Requires: boost169-program-options
+Requires: boost169-regex
+Requires: boost169-system
+Requires: boost169-thread
+Requires: bzip2-libs
 Requires: eccodes
-Requires: fmt
+Requires: fmt >= 7.1.3
+Requires: gdal32-libs
+Requires: glibc
 Requires: hdf5 >= 1.8.12
 Requires: jasper-libs >= 1.900.1
-Requires: libecbufr
 Requires: libbufr >= 3.2
-Requires: netcdf >= 4.3.3.1
-Requires: gdal30-libs
-Requires: boost169-regex
-Requires: boost169-iostreams
-Requires: boost169-date-time
-Requires: boost169-program-options
-Requires: boost169-thread
-Requires: boost169-filesystem
-Requires: boost169-system
-Requires: bzip2-libs
-Requires: glibc
+Requires: libecbufr
 Requires: libgcc
 Requires: libjpeg
 Requires: libpng
 Requires: libstdc++
+Requires: netcdf >= 4.3.3.1
+Requires: smartmet-library-calculator >= 21.1.14
+Requires: smartmet-library-gis >= 21.1.14
+Requires: smartmet-library-imagine >= 21.1.14
+Requires: smartmet-library-macgyver >= 21.1.14
+Requires: smartmet-library-newbase >= 21.1.14
+Requires: smartmet-library-smarttools >= 21.1.14
+Requires: smartmet-timezones >= 21.1.5
 Requires: zlib
-Provides: ashtoqd = %{Version} 
-Provides: bufrtoqd = %{Version} 
-Provides: combinepgms2qd = %{Version} 
-Provides: combineHistory = %{Version}
-Provides: csv2qd = %{Version} 
-Provides: flash2qd = %{Version} 
-Provides: grib2tojpg = %{Version} 
-Provides: gribtoqd = %{Version} 
-Provides: grib2toqd = %{Version} 
-Provides: h5toqd = %{Version} 
-Provides: kriging2qd = %{Version}
-Provides: laps2qd = %{Version} 
-Provides: metar2qd = %{Version} 
-Provides: nctoqd = %{Version} 
-Provides: nc2qd = %{Version} 
-Provides: radartoqd = %{Version} 
-Provides: pgm2qd = %{Version} 
-Provides: qd2csv = %{Version} 
-Provides: qdtogrib = %{Version} 
-Provides: qdversionchange = %{Version} 
-Provides: synop2qd = %{Version} 
-Provides: temp2qd = %{Version} 
-Provides: wrftoqd = %{Version} 
-Provides: qdarea = %{Version} 
-Provides: qdcheck = %{Version} 
-Provides: qdcombine = %{Version} 
-Provides: qdcrop = %{Version} 
-Provides: qddiff = %{Version} 
-Provides: qddifference = %{Version} 
-Provides: qdextract = %{Version} 
-Provides: qdfilter = %{Version} 
-Provides: qdgridcalc = %{Version} 
-Provides: qdinfo = %{Version} 
-Provides: qdinterpolatearea = %{Version} 
-Provides: qdinterpolatetime = %{Version} 
-Provides: qdmissing = %{Version} 
-Provides: qdpoint = %{Version} 
-Provides: qdproject = %{Version} 
-Provides: qdscript = %{Version} 
-Provides: qdset = %{Version} 
-Provides: qdsmoother = %{Version} 
-Provides: qdsounding = %{Version} 
-Provides: qdsoundingindex = %{Version} 
-Provides: qdsplit = %{Version} 
-Provides: qdstat = %{Version} 
-Provides: qdview = %{Version} 
+#TestRequires: smartmet-library-macgyver-devel >= 21.1.14
+#TestRequires: gcc-c++
+
+Provides: ashtoqd = %{version}
+Provides: bufrtoqd = %{version}
+Provides: combinepgms2qd = %{version}
+Provides: combineHistory = %{version}
+Provides: csv2qd = %{version}
+Provides: flash2qd = %{version}
+Provides: grib2tojpg = %{version}
+Provides: gribtoqd = %{version}
+Provides: grib2toqd = %{version}
+Provides: h5toqd = %{version}
+Provides: kriging2qd = %{version}
+Provides: laps2qd = %{version}
+Provides: metar2qd = %{version}
+Provides: nctoqd = %{version}
+Provides: nc2qd = %{version}
+Provides: radartoqd = %{version}
+Provides: pgm2qd = %{version}
+Provides: qd2csv = %{version}
+Provides: qdtogrib = %{version}
+Provides: qdversionchange = %{version}
+Provides: synop2qd = %{version}
+Provides: temp2qd = %{version}
+Provides: wrftoqd = %{version}
+Provides: qdarea = %{version}
+Provides: qdcheck = %{version}
+Provides: qdcombine = %{version}
+Provides: qdcrop = %{version}
+Provides: qddiff = %{version}
+Provides: qddifference = %{version}
+Provides: qdextract = %{version}
+Provides: qdfilter = %{version}
+Provides: qdgridcalc = %{version}
+Provides: qdinfo = %{version}
+Provides: qdinterpolatearea = %{version}
+Provides: qdinterpolatetime = %{version}
+Provides: qdmissing = %{version}
+Provides: qdpoint = %{version}
+Provides: qdproject = %{version}
+Provides: qdscript = %{version}
+Provides: qdset = %{version}
+Provides: qdsmoother = %{version}
+Provides: qdsounding = %{version}
+Provides: qdsoundingindex = %{version}
+Provides: qdsplit = %{version}
+Provides: qdstat = %{version}
+Provides: qdview = %{version}
 Obsoletes: smartmet-qdconversion < 17.1.10
 Obsoletes: smartmet-qdconversion-debuginfo < 17.1.10
 Obsoletes: smartmet-qdtools < 17.1.10
@@ -127,7 +126,7 @@ Command line tools for handling querydata
 
 %prep
 %setup -q -n %{RPMNAME}
- 
+
 %build
 make %{_smp_mflags}
 
@@ -143,7 +142,7 @@ make %{_smp_mflags}
 %{_bindir}/combinepgms2qd
 %{_bindir}/combineHistory
 %{_bindir}/csv2qd
-%{_bindir}/flash2qd 
+%{_bindir}/flash2qd
 %{_bindir}/grib2tojpg
 %{_bindir}/grib2toqd
 %{_bindir}/gribtoqd
@@ -154,36 +153,36 @@ make %{_smp_mflags}
 %{_bindir}/nc2qd
 %{_bindir}/nctoqd
 %{_bindir}/pgm2qd
-%{_bindir}/qd2csv 
-%{_bindir}/qd2geotiff 
+%{_bindir}/qd2csv
+%{_bindir}/qd2geotiff
 %{_bindir}/qdarea
 %{_bindir}/qdcheck
 %{_bindir}/qdcombine
-%{_bindir}/qdcrop 
-%{_bindir}/qddiff 
+%{_bindir}/qdcrop
+%{_bindir}/qddiff
 %{_bindir}/qddifference
 %{_bindir}/qdextract
-%{_bindir}/qdfilter 
+%{_bindir}/qdfilter
 %{_bindir}/qdgridcalc
-%{_bindir}/qdinfo 
+%{_bindir}/qdinfo
 %{_bindir}/qdinterpolatearea
 %{_bindir}/qdinterpolatetime
-%{_bindir}/qdmissing 
-%{_bindir}/qdpoint 
-%{_bindir}/qdproject 
+%{_bindir}/qdmissing
+%{_bindir}/qdpoint
+%{_bindir}/qdproject
 %{_bindir}/qdscript
 %{_bindir}/qdset
-%{_bindir}/qdsmoother 
-%{_bindir}/qdsounding 
+%{_bindir}/qdsmoother
+%{_bindir}/qdsounding
 %{_bindir}/qdsoundingindex
-%{_bindir}/qdsplit 
+%{_bindir}/qdsplit
 %{_bindir}/qdstat
 %{_bindir}/qdtogrib
 %{_bindir}/qdversionchange
 %{_bindir}/qdview
 %{_bindir}/radartoqd
-%{_bindir}/synop2qd 
-%{_bindir}/temp2qd 
+%{_bindir}/synop2qd
+%{_bindir}/temp2qd
 %{_bindir}/wrftoqd
 %defattr(0664,root,root,0775)
 %{_datadir}/smartmet/dictionaries/*.conf
@@ -194,6 +193,56 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Mon Jan 25 2021 Andris Pavenis <andris.pavenis@fmi.fi> - 21.1.25-1.fmi
+- Build update: use makefile.inc
+- Fix build for C++17
+
+* Thu Jan 14 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.1.14-1.fmi
+- Repackaged smartmet to resolve debuginfo issues
+
+* Tue Jan  5 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.1.5-1.fmi
+- Upgrade to fmt 7.1.3
+
+* Thu Dec 31 2020 Mika Heiskanen <mheiskan@rhel8.dev.fmi.fi> - 20.12.31-1.fmi
+- Fixed nctoqd not to use pointers into temporaries
+
+* Tue Dec 15 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.12.15-1.fmi
+- Upgrade to pgdg12
+
+* Tue Dec  8 2020 Pertti Kinnia <pertti.kinnia@fmi.fi> - 20.12.8-1.fmi
+- If requested with -t, set missing totalcloudcover octas from percentage
+
+* Mon Dec  7 2020 Pertti Kinnia <pertti.kinnia@fmi.fi> - 20.12.7-1.fmi
+- Added Low/Middle/HighCloudType and PresentWeater filtering (accept cloudtypes 1-9 and presentweather 0-199 only, otherwise missing value) and options to disable TotalCloudCover percentage conversion and to set PressureChange value's sign to match PressureTendency value (QDTOOLS-87)
+
+* Tue Dec  1 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.12.1-1.fmi
+- Changed qdinterpolatearea default number of threads to be 4 to avoid excessive cache trashing for large files
+
+* Mon Nov 30 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.11.30-1.fmi
+- Added qdinterpolate option -t for selecting the maximum thread count
+
+* Tue Nov 24 2020 Pertti Kinnia <pertti.kinnia@fmi.fi> - 20.11.24-1.fmi
+- Fixed bugs in joining takeoff, level flight and landing phase amdar messages; e.g. joined level flight and landing messages were lost when new takeoff phase was started
+- Set correct phase of flight for joined messages
+
+* Tue Nov 17 2020 Pertti Kinnia <pertti.kinnia@fmi.fi> - 20.11.17-1.fmi
+- Added level handling for amdars; BRAINSTORM-1934
+
+* Tue Nov 10 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.11.10-1.fmi
+- qdinfo -a -T now prints UTC times and qdinfo -A -t local times
+
+* Fri Oct 30 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.10.30-1.fmi
+- Added qdsoundingindex -t option for enabling multiple threads
+
+* Wed Oct 28 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.10.28-1.fmi
+- Upgrade to fmt 7.1
+
+* Tue Sep 29 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.9.29-1.fmi
+- qdinterpolatetime and qdinterpolatearea now fix U/V and WindVector components from wind speed and direction
+
+* Thu Sep  3 2020 Mika Heiskanen <mheiskan@rhel8.dev.fmi.fi> - 20.9.3-1.fmi
+- Removed spine dependency by using Fmi::Exception
+
 * Thu Aug 27 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.8.27-1.fmi
 - NFmiGrid API changed
 
@@ -263,7 +312,7 @@ make %{_smp_mflags}
 
 * Wed Dec  4 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.12.4-1.fmi
 - Fixed dependency to be on gdal-libs instead of gdal
-- Use -fno-omit-frame-pointer for a better profiling and debugging experience                                                                                              
+- Use -fno-omit-frame-pointer for a better profiling and debugging experience
 * Fri Nov 29 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.11.29-1.fmi
 - Increased space reserved for qdstat counters
 

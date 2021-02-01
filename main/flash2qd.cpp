@@ -96,7 +96,7 @@ void Domain(int argc, const char *argv[])
                         std::string(" ei saatu avattua"));
 
   NFmiQueryData *newData = CreateFlashQueryData(flashStrings, makeLocal2UtcTimeConversion);
-  auto_ptr<NFmiQueryData> dataPtr(newData);  // tämä tuhoaa dynaamisesti luodun datan
+  unique_ptr<NFmiQueryData> dataPtr(newData);  // tämä tuhoaa dynaamisesti luodun datan
                                              // automaattisesti (vaikka return paikkoja olisi kuinka
                                              // monta)
   if (newData)

@@ -478,7 +478,7 @@ void process_difference()
 
   NFmiFastQueryInfo info(q2.ParamDescriptor(), tdesc, q2.HPlaceDescriptor(), q2.VPlaceDescriptor());
 
-  auto_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
+  unique_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
   NFmiFastQueryInfo q(data.get());
 
   if (data.get() == 0) throw runtime_error("Could not allocate memory for result data");

@@ -1,74 +1,27 @@
 MODULE = qdtools
 SPEC = smartmet-qdtools
 
-MAINFLAGS = -MD -Wall -W -Wno-unused-parameter -fno-omit-frame-pointer
+REQUIRES = gdal fmt
 
-ifeq (6, $(RHEL_VERSION))
-  MAINFLAGS += -std=c++0x
-else
-  MAINFLAGS += -std=c++11 -fdiagnostics-color=always
-endif
+include $(shell echo $${PREFIX-/usr})/share/smartmet/devel/makefile.inc
 
 # mdsplib does not declare things correctly
 
 MAINFLAGS += -fpermissive
 
 
-EXTRAFLAGS = \
-	-Werror \
-	-Winline \
-	-Wpointer-arith \
-	-Wcast-qual \
-	-Wcast-align \
-	-Wwrite-strings \
-	-Wno-pmf-conversions \
-	-Wchar-subscripts \
-	-Woverloaded-virtual
-
-DIFFICULTFLAGS = \
-	-Wunreachable-code \
-	-Wconversion \
-	-Wsign-promo \
-	-Wnon-virtual-dtor \
-	-Wctor-dtor-privacy \
-	-Wredundant-decls \
-	-Weffc++ \
-	-Wold-style-cast \
-	-pedantic \
-	-Wshadow
-
-CC = g++
-
 # Default compiler flags
 
 DEFINES = -DUNIX -DWGS84
 
-CFLAGS = $(DEFINES) -O2 -DNDEBUG $(MAINFLAGS)
-LDFLAGS = 
+# gdal 32 from pgdg
 
-# Special modes
-
-CFLAGS_DEBUG = $(DEFINES) -O0 -g $(MAINFLAGS) $(EXTRAFLAGS) -Werror
-CFLAGS_PROFILE = $(DEFINES) -O2 -g -pg -DNDEBUG $(MAINFLAGS)
-
-LDFLAGS_DEBUG =
-LDFLAGS_PROFILE =
-
-# Boost 1.69
-
-ifneq "$(wildcard /usr/include/boost169)" ""
-  INCLUDES += -I/usr/include/boost169
-  LIBS += -L/usr/lib64/boost169
-endif
-
-
-INCLUDES += -I$(includedir) \
-	-I$(includedir)/netcdf-3 \
-	-I$(includedir)/bufr \
-	-I$(includedir)/libecbufr \
-	-I$(includedir)/ecbufr \
-	-I$(includedir)/smartmet \
-	-I$(PREFIX)/gdal30/include
+INCLUDES +=  \
+	-isystem $(includedir)/netcdf-3 \
+	-isystem $(includedir)/bufr \
+	-isystem $(includedir)/libecbufr \
+	-isystem $(includedir)/ecbufr \
+	-I$(includedir)/smartmet
 
 LIBS += -L$(libdir) \
 	-lsmartmet-calculator \
@@ -77,7 +30,6 @@ LIBS += -L$(libdir) \
 	-lsmartmet-macgyver \
 	-lsmartmet-gis \
 	-lsmartmet-imagine \
-	-lsmartmet-spine \
 	-lboost_regex \
 	-lboost_date_time \
 	-lboost_program_options \
@@ -85,8 +37,7 @@ LIBS += -L$(libdir) \
 	-lboost_thread \
 	-lboost_filesystem \
         -lboost_system \
-	-lfmt \
-	-L$(PREFIX)/gdal30/lib -lgdal \
+	$(REQUIRED_LIBS) \
 	-lmetar \
 	-ljasper \
 	-leccodes \
@@ -94,54 +45,8 @@ LIBS += -L$(libdir) \
 	-lMXADataModel -lhdf5 \
 	-lbufr \
 	-lecbufr \
-	-lfmt \
 	-lbz2 -ljpeg -lpng -lz -lrt \
 	-lpthread
-
-# Common library compiling template
-
-# Installation directories
-
-processor := $(shell uname -p)
-
-ifeq ($(origin PREFIX), undefined)
-  PREFIX = /usr
-else
-  PREFIX = $(PREFIX)
-endif
-
-ifeq ($(processor), x86_64)
-  libdir = $(PREFIX)/lib64
-else
-  libdir = $(PREFIX)/lib
-endif
-
-objdir = obj
-includedir = $(PREFIX)/include
-
-ifeq ($(origin BINDIR), undefined)
-  bindir = $(PREFIX)/bin
-else
-  bindir = $(BINDIR)
-endif
-
-ifeq ($(origin DATADIR), undefined)
-  datadir = $(PREFIX)/share
-else
-  datadir = $(DATADIR)
-endif
-
-# Special modes
-
-ifneq (,$(findstring debug,$(MAKECMDGOALS)))
-  CFLAGS = $(CFLAGS_DEBUG)
-  LDFLAGS = $(LDFLAGS_DEBUG)
-endif
-
-ifneq (,$(findstring profile,$(MAKECMDGOALS)))
-  CFLAGS = $(CFLAGS_PROFILE)
-  LDFLAGS = $(LDFLAGS_PROFILE)
-endif
 
 # Compilation directories
 
@@ -149,11 +54,6 @@ vpath %.cpp source main
 vpath %.h include
 vpath %.o $(objdir)
 vpath %.d $(objdir)
-
-# How to install
-
-INSTALL_PROG = install -m 775
-INSTALL_DATA = install -m 664
 
 # The files to be compiled
 
@@ -185,7 +85,7 @@ profile: objdir $(MAINPROGS)
 
 .SECONDEXPANSION:
 $(MAINPROGS): % : obj/%.o $(OBJFILES)
-	$(CC) $(LDFLAGS) -o $@ obj/$@.o $(OBJFILES) $(LIBS)
+	$(CXX) $(LDFLAGS) -o $@ obj/$@.o $(OBJFILES) $(LIBS)
 
 clean:
 	rm -f $(MAINPROGS) source/*~ include/*~
@@ -219,12 +119,12 @@ objdir:
 rpm: clean $(SPEC).spec
 	rm -f $(SPEC).tar.gz # Clean a possible leftover from previous attempt
 	tar -czvf $(SPEC).tar.gz --exclude test --exclude-vcs --transform "s,^,$(SPEC)/," *
-	rpmbuild -ta $(SPEC).tar.gz
+	rpmbuild -tb $(SPEC).tar.gz
 	rm -f $(SPEC).tar.gz
 
 .SUFFIXES: $(SUFFIXES) .cpp
 
 obj/%.o : %.cpp
-	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
+	$(CXX) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 
 -include obj/*.d

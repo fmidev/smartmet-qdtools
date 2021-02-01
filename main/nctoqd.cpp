@@ -17,6 +17,7 @@
 #include <boost/program_options.hpp>
 #include <fmt/format.h>
 #include <macgyver/CsvReader.h>
+#include <macgyver/Exception.h>
 #include <macgyver/StringConversion.h>
 #include <macgyver/TimeParser.h>
 #include <newbase/NFmiAreaFactory.h>
@@ -30,7 +31,6 @@
 #include <newbase/NFmiQueryDataUtil.h>
 #include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiVPlaceDescriptor.h>
-#include <spine/Exception.h>
 #include <cmath>
 #include <fstream>
 #include <functional>
@@ -43,7 +43,7 @@
 
 nctools::Options options;
 
-using SmartMet::Spine::Exception;
+using Fmi::Exception;
 
 // ----------------------------------------------------------------------
 /*!

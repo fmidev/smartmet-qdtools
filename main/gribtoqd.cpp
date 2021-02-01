@@ -195,7 +195,7 @@ struct GribFilterOptions
 
 struct LevelLessThan
 {
-  bool operator()(const NFmiLevel &l1, const NFmiLevel &l2)
+  bool operator()(const NFmiLevel &l1, const NFmiLevel &l2) const
   {
     if (l1.LevelType() < l2.LevelType())
       return true;
@@ -4668,7 +4668,7 @@ void FillGridData(float *theArray,
 
 struct GridLessThan
 {
-  bool operator()(const MyGrid &lhs, const MyGrid &rhs) { return lhs < rhs; }
+  bool operator()(const MyGrid &lhs, const MyGrid &rhs) const { return lhs < rhs; }
 };
 
 vector<NFmiHPlaceDescriptor> GetAllHPlaceDescriptors(vector<GridRecordData *> &theGribRecordDatas,

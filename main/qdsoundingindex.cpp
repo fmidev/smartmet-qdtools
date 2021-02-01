@@ -22,12 +22,13 @@ static void Usage(const std::string& theExecutableName)
             << "Options:" << std::endl
             << std::endl
             << "\t-n producer-name <default=qdin-producer-name>\tSets producer name." << std::endl
+            << "\t-t thread count <default=all>\tHow many worker threads will be doing the calculations." << std::endl
             << std::endl;
 }
 
 static void run(int argc, const char* argv[])
 {
-  NFmiCmdLine cmdLine(argc, argv, "n!");
+  NFmiCmdLine cmdLine(argc, argv, "n!t!");
   if (cmdLine.NumberofParameters() < 2)
   {
     Usage(argv[0]);
@@ -40,12 +41,16 @@ static void run(int argc, const char* argv[])
   std::string producerName;
   if (cmdLine.isOption('n')) producerName = cmdLine.OptionValue('n');
 
+  // Default 0 uses all available CPU cores
+  int workerThreadCount = 0;
+  if (cmdLine.isOption('t')) workerThreadCount = std::stoi(cmdLine.OptionValue('t'));
+
   std::cerr << "starting the " << argv[0] << " execution" << std::endl;
 
   NFmiMilliSecondTimer debugTimer;
   debugTimer.StartTimer();
-  boost::shared_ptr<NFmiQueryData> data =
-      NFmiSoundingIndexCalculator::CreateNewSoundingIndexData(fileIn, producerName, true, 0, false);
+  boost::shared_ptr<NFmiQueryData> data = NFmiSoundingIndexCalculator::CreateNewSoundingIndexData(
+      fileIn, producerName, true, 0, false, workerThreadCount);
   debugTimer.StopTimer();
 
   std::string debugStr("Making ");

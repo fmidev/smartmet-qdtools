@@ -1,7 +1,5 @@
 #include "GeoTiffQD.h"
 #include <boost/shared_ptr.hpp>
-#include <gdal_priv.h>
-#include <ogr_spatialref.h>
 #include <newbase/NFmiArea.h>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiLambertEqualArea.h>
@@ -10,15 +8,20 @@
 #include <newbase/NFmiRotatedLatLonArea.h>
 #include <newbase/NFmiStereographicArea.h>
 #include <newbase/NFmiYKJArea.h>
+#include <gdal_priv.h>
 #include <iomanip>
 #include <iostream>
+#include <ogr_spatialref.h>
 #include <stdio.h>
 
 // float * fillFloatRasterByQD(NFmiFastQueryInfo * theData, int width, int height);
 // int * fillIntRasterByQD(NFmiFastQueryInfo * theData, int width, int height);
 // NFmiArea * CreteEpsgArea(string epsgCode);
 
-void GeoTiffQD::SetTestMode(bool testMode) { isDrawGridLines = testMode; }
+void GeoTiffQD::SetTestMode(bool testMode)
+{
+  isDrawGridLines = testMode;
+}
 GeomDefinedType GeoTiffQD::ConverQD2GeoTiff(string aNameVersion,
                                             NFmiFastQueryInfo *theData,
                                             NFmiFastQueryInfo *theExternal,
@@ -61,8 +64,10 @@ GeomDefinedType GeoTiffQD::ConverQD2GeoTiff(string aNameVersion,
         {
           ConvertToGeoTiff(aNameVersion, theData, theExternal, geomDefinedType = kStereoGeom);
 
-          if (supportedStereoArea->CentralLongitude() == 10) geomDefinedType = kStereoGeom10;
-          if (supportedStereoArea->CentralLongitude() == 20) geomDefinedType = kStereoGeom20;
+          if (supportedStereoArea->CentralLongitude() == 10)
+            geomDefinedType = kStereoGeom10;
+          if (supportedStereoArea->CentralLongitude() == 20)
+            geomDefinedType = kStereoGeom20;
         }
         else
         {
@@ -96,8 +101,10 @@ double GeoTiffQD::calculateTrueNorthAzimuthValue(float value,
     else
     {
       retValue = value + realNorth;
-      if (retValue > 360) retValue = retValue - 360;
-      if (retValue < 0) retValue = 360 + retValue;
+      if (retValue > 360)
+        retValue = retValue - 360;
+      if (retValue < 0)
+        retValue = 360 + retValue;
     }
   }
 
@@ -108,12 +115,14 @@ void drawGridLines(const NFmiPoint &latLon, double &value)
 {
   for (int i = 55; i <= 65; i += 5)
   {
-    if (latLon.Y() > (i - 0.1) && latLon.Y() < (i + 0.1)) value = 0;
+    if (latLon.Y() > (i - 0.1) && latLon.Y() < (i + 0.1))
+      value = 0;
   }
 
   for (int k = -90; k <= 90; k += 5)
   {
-    if (latLon.X() > (k - 0.1) && latLon.X() < (k + 0.1)) value = 0;
+    if (latLon.X() > (k - 0.1) && latLon.X() < (k + 0.1))
+      value = 0;
   }
 }
 
@@ -165,7 +174,8 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
 
   poDriver = GetGDALDriverManager()->GetDriverByName(pszFormat);
 
-  if (poDriver == nullptr) exit(1);
+  if (poDriver == nullptr)
+    exit(1);
 
   // papszMetadata = poDriver->GetMetadata();
 
@@ -177,7 +187,8 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
        */
 
   int paramSize = 1;  // theData->ParamBag().GetSize();
-  if (theExternal != 0) paramSize = 2;
+  if (theExternal != 0)
+    paramSize = 2;
 
   char **papszOptions = nullptr;
   // papszOptions = CSLSetNameValue( papszOptions, "COMPRESS", "PACKBITS" );
@@ -293,13 +304,15 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
   {
     abyRaster = fillIntRasterByQD(theData, theExternal, width, height, area);
     // GDT_Int32   3/4
-    err = poBand->RasterIO(GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Int32, 0, 0);
+    err =
+        poBand->RasterIO(GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Int32, 0, 0);
   }
   else
   {
     abyRaster = fillFloatRasterByQD(theData, theExternal, width, height, area);
     //  GDT_Float32  3/4
-    err = poBand->RasterIO(GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Float32, 0, 0);
+    err = poBand->RasterIO(
+        GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Float32, 0, 0);
   }
 
   // External Band parameter for data int
@@ -315,17 +328,19 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
     {
       abyRaster = fillIntRasterByQD(theExternal, theData, width, height, area);
       // GDT_Int32   3/4
-      err = poBand->RasterIO(GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Int32, 0, 0);
+      err = poBand->RasterIO(
+          GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Int32, 0, 0);
     }
     else
     {
       abyRaster = fillFloatRasterByQD(theExternal, theData, width, height, area);
       //  GDT_Float32  3/4
-      err = poBand->RasterIO(GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Float32, 0, 0);
+      err = poBand->RasterIO(
+          GF_Write, 0, 0, width, height, abyRaster, width, height, GDT_Float32, 0, 0);
     }
 
-    if(err)
-	std::cout << "Warning: Encountered problems in raster band conversions\n";
+    if (err)
+      std::cout << "Warning: Encountered problems in raster band conversions\n";
 
     // abyRaster = fillIntRasterByQD(theExternal, theData, width, height, area);
     // abyRaster = fillFloatRasterByQD(theExternal, theData, width, height, area);
@@ -356,8 +371,7 @@ int *GeoTiffQD::fillIntRasterByQD(NFmiFastQueryInfo *theData,
 
   theData->FirstLocation();
 
-  NFmiDataMatrix<float> data;
-  theData->Values(data);
+  auto data = theData->Values();
   NFmiPoint *xy = new NFmiPoint(0, 0);
 
   // Second data for u/v - component
@@ -365,7 +379,7 @@ int *GeoTiffQD::fillIntRasterByQD(NFmiFastQueryInfo *theData,
   if (theSecondData != 0)
   {
     theSecondData->FirstLocation();
-    theSecondData->Values(dataSecond);
+    dataSecond = theSecondData->Values();
   }
 
   printf("Processing (int) with scale %f , QD to Gtiff raster convert for parameter %li\n",
@@ -484,8 +498,7 @@ float *GeoTiffQD::fillFloatRasterByQD(NFmiFastQueryInfo *theData,
 
   theData->FirstLocation();
 
-  NFmiDataMatrix<float> data;
-  theData->Values(data);
+  auto data = theData->Values();
   NFmiPoint *xy = new NFmiPoint(0, 0);
 
   // Second data for u/v - component
@@ -493,7 +506,7 @@ float *GeoTiffQD::fillFloatRasterByQD(NFmiFastQueryInfo *theData,
   if (theSecondData != 0)
   {
     theSecondData->FirstLocation();
-    theSecondData->Values(dataSecond);
+    dataSecond = theSecondData->Values();
   }
 
   printf("Processing (float) with scale %f, QD to Gtiff raster convert for parameter %li \n",
@@ -943,9 +956,12 @@ int main(int argc, char *argv[])
 
         while (pch_scale != nullptr)
         {
-          if (i == 0) te.param = atoi(pch_scale);
-          if (i == 1) te.external = atoi(pch_scale);
-          if (i == 2) te.scale = atof(pch_scale);
+          if (i == 0)
+            te.param = atoi(pch_scale);
+          if (i == 1)
+            te.external = atoi(pch_scale);
+          if (i == 2)
+            te.scale = atof(pch_scale);
           i++;
 
           pch_scale = strtok(nullptr, ":");

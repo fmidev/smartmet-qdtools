@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 21.2.15
+Version: 21.2.18
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -28,12 +28,12 @@ BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
-BuildRequires: smartmet-library-calculator-devel >= 21.2.15
+BuildRequires: smartmet-library-calculator-devel >= 21.2.18
 BuildRequires: smartmet-library-gis-devel >= 21.2.11
-BuildRequires: smartmet-library-imagine-devel >= 21.2.15
+BuildRequires: smartmet-library-imagine-devel >= 21.2.18
 BuildRequires: smartmet-library-macgyver-devel >= 21.1.25
-BuildRequires: smartmet-library-newbase-devel >= 21.2.15
-BuildRequires: smartmet-library-smarttools-devel >= 21.2.15
+BuildRequires: smartmet-library-newbase-devel >= 21.2.18
+BuildRequires: smartmet-library-smarttools-devel >= 21.2.18
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
 Requires: boost169-date-time
@@ -57,12 +57,12 @@ Requires: libjpeg
 Requires: libpng
 Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
-Requires: smartmet-library-calculator >= 21.2.15
+Requires: smartmet-library-calculator >= 21.2.18
 Requires: smartmet-library-gis >= 21.2.11
-Requires: smartmet-library-imagine >= 21.2.15
+Requires: smartmet-library-imagine >= 21.2.18
 Requires: smartmet-library-macgyver >= 21.1.25
-Requires: smartmet-library-newbase >= 21.2.15
-Requires: smartmet-library-smarttools >= 21.2.15
+Requires: smartmet-library-newbase >= 21.2.18
+Requires: smartmet-library-smarttools >= 21.2.18
 Requires: smartmet-timezones >= 21.2.2
 Requires: zlib
 #TestRequires: smartmet-library-macgyver-devel >= 21.1.25
@@ -193,6 +193,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Feb 18 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.2.18-1.fmi
+- Repackaged due to newbase ABI changes
+
 * Mon Feb 15 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.2.15-1.fmi
 - Ported to use new interpolation APIs
 

@@ -23,7 +23,7 @@ BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: make
-BuildRequires: mdsplib >= 20.8.26
+BuildRequires: mdsplib >= 21.2.25
 BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
 BuildRequires: netcdf-devel >= 4.3.3.1

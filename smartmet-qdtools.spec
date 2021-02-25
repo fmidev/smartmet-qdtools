@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 21.2.18
+Version: 21.2.25
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -193,6 +193,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Feb 25 2021 Pertti Kinnia <pertti.kinnia@fmi.fi> - 21.2.25-1.fmi
+- Repackaged due to mdsplib changes
+
 * Thu Feb 18 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.2.18-1.fmi
 - Repackaged due to newbase ABI changes
 

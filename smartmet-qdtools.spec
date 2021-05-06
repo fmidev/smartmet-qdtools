@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 21.4.5
+Version: 21.5.6
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -29,11 +29,11 @@ BuildRequires: netcdf-cxx-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
 BuildRequires: smartmet-library-calculator-devel >= 21.2.18
-BuildRequires: smartmet-library-gis-devel >= 21.3.29
-BuildRequires: smartmet-library-imagine-devel >= 21.2.18
+BuildRequires: smartmet-library-gis-devel >= 21.5.5
+BuildRequires: smartmet-library-imagine-devel >= 21.5.6
 BuildRequires: smartmet-library-macgyver-devel >= 21.2.25
-BuildRequires: smartmet-library-newbase-devel >= 21.3.20
-BuildRequires: smartmet-library-smarttools-devel >= 21.2.18
+BuildRequires: smartmet-library-newbase-devel >= 21.5.6
+BuildRequires: smartmet-library-smarttools-devel >= 21.5.6
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
 Requires: boost169-date-time
@@ -58,11 +58,11 @@ Requires: libpng
 Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
 Requires: smartmet-library-calculator >= 21.2.18
-Requires: smartmet-library-gis >= 21.3.29
-Requires: smartmet-library-imagine >= 21.2.18
+Requires: smartmet-library-gis >= 21.5.5
+Requires: smartmet-library-imagine >= 21.5.6
 Requires: smartmet-library-macgyver >= 21.2.25
-Requires: smartmet-library-newbase >= 21.3.20
-Requires: smartmet-library-smarttools >= 21.2.18
+Requires: smartmet-library-newbase >= 21.5.6
+Requires: smartmet-library-smarttools >= 21.5.6
 Requires: smartmet-timezones >= 21.2.2
 Requires: zlib
 #TestRequires: smartmet-library-macgyver-devel >= 21.2.25
@@ -193,6 +193,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu May  6 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.5.6-1.fmi
+- Repackaged due to NFmiAzimuthalArea ABI changes
+
 * Tue Apr  6 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.4.5-1.fmi
 - Optimized qdcrop for speed
 

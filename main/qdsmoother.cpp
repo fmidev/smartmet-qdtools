@@ -189,7 +189,8 @@ bool parse_command_line(int argc, const char* argv[])
 {
   NFmiCmdLine cmdline(argc, argv, "hvf");
 
-  if (cmdline.Status().IsError()) throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
+  if (cmdline.Status().IsError())
+    throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
 
   // help-option must be checked first
 
@@ -210,7 +211,8 @@ bool parse_command_line(int argc, const char* argv[])
 
   // Options
 
-  if (cmdline.isOption('v')) options.verbose = !options.verbose;
+  if (cmdline.isOption('v'))
+    options.verbose = !options.verbose;
 
   return true;
 }
@@ -227,7 +229,8 @@ bool parse_command_line(int argc, const char* argv[])
 
 const string make_output_name(const string& theInfile, const string& theOutpath)
 {
-  if (!NFmiFileSystem::DirectoryExists(theOutpath)) return theOutpath;
+  if (!NFmiFileSystem::DirectoryExists(theOutpath))
+    return theOutpath;
 
   string outfile = theOutpath + '/' + NFmiFileSystem::BaseName(theInfile);
 
@@ -287,18 +290,21 @@ void handle_times(const NFmiMetTime& theFirstTime,
   for (vector<string>::const_iterator it = theSpecs.begin(); it != theSpecs.end(); ++it)
   {
     vector<int> words = NFmiStringTools::Split<vector<int> >(*it, ":");
-    if (words.size() != 3) throw runtime_error("Invalid time specification '" + *it + "'");
+    if (words.size() != 3)
+      throw runtime_error("Invalid time specification '" + *it + "'");
     const int t1 = words[0];
     const int t2 = words[1];
     const int dt = words[2];
-    if (t1 < 0 || t2 < 0 || dt < 0) throw runtime_error("Invalid time specification '" + *it + "'");
+    if (t1 < 0 || t2 < 0 || dt < 0)
+      throw runtime_error("Invalid time specification '" + *it + "'");
 
     for (int t = t1; t <= t2; ++t)
     {
       NFmiMetTime tx = theFirstTime;
       tx.ChangeByHours(t);
 
-      if (theLastTime.IsLessThan(tx)) break;
+      if (theLastTime.IsLessThan(tx))
+        break;
 
       if (tx.GetHour() % dt == 0)
       {
@@ -368,7 +374,8 @@ void smoothen_data(NFmiQueryData& theQD, NFmiFastQueryInfo& theQ)
 
   for (q.ResetParam(); q.NextParam();)
   {
-    if (!theQ.Param(q.Param())) throw runtime_error("Parameter not available in source data");
+    if (!theQ.Param(q.Param()))
+      throw runtime_error("Parameter not available in source data");
 
     // Establish the smoothening options
 
@@ -390,7 +397,8 @@ void smoothen_data(NFmiQueryData& theQD, NFmiFastQueryInfo& theQ)
 
     for (q.ResetLevel(); q.NextLevel();)
     {
-      if (!theQ.Level(*q.Level())) throw runtime_error("Level not available in source data");
+      if (!theQ.Level(*q.Level()))
+        throw runtime_error("Level not available in source data");
 
       for (q.ResetTime(); q.NextTime();)
       {
@@ -425,7 +433,8 @@ boost::shared_ptr<NFmiQueryData> create_data(NFmiFastQueryInfo& theQ)
   NFmiFastQueryInfo info(pdesc, tdesc, hdesc, vdesc);
   boost::shared_ptr<NFmiQueryData> qd(NFmiQueryDataUtil::CreateEmptyData(info));
 
-  if (qd.get() == 0) throw runtime_error("Insufficient memory for result data");
+  if (qd.get() == 0)
+    throw runtime_error("Insufficient memory for result data");
 
   // Fill the querydata with smoothened values
 
@@ -442,13 +451,15 @@ boost::shared_ptr<NFmiQueryData> create_data(NFmiFastQueryInfo& theQ)
 
 int run(int argc, const char* argv[])
 {
-  if (!parse_command_line(argc, argv)) return 0;
+  if (!parse_command_line(argc, argv))
+    return 0;
 
   NFmiSettings::Read(options.config);
 
   // Establish input filename
   std::string infile = options.inputdata;
-  if (infile != "-") infile = NFmiFileSystem::FindQueryData(infile);
+  if (infile != "-")
+    infile = NFmiFileSystem::FindQueryData(infile);
 
   // Establish output filename
 
@@ -458,19 +469,24 @@ int run(int argc, const char* argv[])
 
   // Read the data and process it
 
-  if (options.verbose) cout << "Reading " << infile << endl;
+  if (options.verbose)
+    cout << "Reading " << infile << endl;
   NFmiQueryData qd(infile);
 
   NFmiFastQueryInfo q(&qd);
 
-  if (!q.IsGrid()) throw runtime_error("Cannot smoothen non-gridded querydata");
+  if (!q.IsGrid())
+    throw runtime_error("Cannot smoothen non-gridded querydata");
 
-  if (options.verbose) cout << "Smoothening data" << endl;
+  if (options.verbose)
+    cout << "Smoothening data" << endl;
   boost::shared_ptr<NFmiQueryData> outqd = create_data(q);
 
-  if (outqd.get() == 0) throw runtime_error("Failed to create a smoothened querydata object");
+  if (outqd.get() == 0)
+    throw runtime_error("Failed to create a smoothened querydata object");
 
-  if (options.verbose) cout << "Writing " << outfile << endl;
+  if (options.verbose)
+    cout << "Writing " << outfile << endl;
 
   outqd->Write(outfile);
 

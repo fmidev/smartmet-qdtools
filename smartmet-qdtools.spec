@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 21.1.25
+Version: 21.5.6
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -23,17 +23,17 @@ BuildRequires: libecbufr
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: make
-BuildRequires: mdsplib >= 20.8.26
+BuildRequires: mdsplib >= 21.3.1
 BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
-BuildRequires: smartmet-library-calculator-devel >= 21.1.14
-BuildRequires: smartmet-library-gis-devel >= 21.1.14
-BuildRequires: smartmet-library-imagine-devel >= 21.1.14
-BuildRequires: smartmet-library-macgyver-devel >= 21.1.14
-BuildRequires: smartmet-library-newbase-devel >= 21.1.14
-BuildRequires: smartmet-library-smarttools-devel >= 21.1.14
+BuildRequires: smartmet-library-calculator-devel >= 21.2.18
+BuildRequires: smartmet-library-gis-devel >= 21.5.5
+BuildRequires: smartmet-library-imagine-devel >= 21.5.6
+BuildRequires: smartmet-library-macgyver-devel >= 21.2.25
+BuildRequires: smartmet-library-newbase-devel >= 21.5.6
+BuildRequires: smartmet-library-smarttools-devel >= 21.5.6
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
 Requires: boost169-date-time
@@ -57,15 +57,15 @@ Requires: libjpeg
 Requires: libpng
 Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
-Requires: smartmet-library-calculator >= 21.1.14
-Requires: smartmet-library-gis >= 21.1.14
-Requires: smartmet-library-imagine >= 21.1.14
-Requires: smartmet-library-macgyver >= 21.1.14
-Requires: smartmet-library-newbase >= 21.1.14
-Requires: smartmet-library-smarttools >= 21.1.14
-Requires: smartmet-timezones >= 21.1.5
+Requires: smartmet-library-calculator >= 21.2.18
+Requires: smartmet-library-gis >= 21.5.5
+Requires: smartmet-library-imagine >= 21.5.6
+Requires: smartmet-library-macgyver >= 21.2.25
+Requires: smartmet-library-newbase >= 21.5.6
+Requires: smartmet-library-smarttools >= 21.5.6
+Requires: smartmet-timezones >= 21.2.2
 Requires: zlib
-#TestRequires: smartmet-library-macgyver-devel >= 21.1.14
+#TestRequires: smartmet-library-macgyver-devel >= 21.2.25
 #TestRequires: gcc-c++
 
 Provides: ashtoqd = %{version}
@@ -193,12 +193,39 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu May  6 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.5.6-1.fmi
+- Repackaged due to NFmiAzimuthalArea ABI changes
+
+* Tue Apr  6 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.4.5-1.fmi
+- Optimized qdcrop for speed
+
+* Fri Mar  1 2021 Pertti Kinnia <pertti.kinnia@fmi.fi> - 21.3.1-1.fmi
+- Repackaged due to mdsplib (metar2qd) changes
+
+* Fri Feb 26 2021 Pertti Kinnia <pertti.kinnia@fmi.fi> - 21.2.26-1.fmi
+- Repackaged due to mdsplib (metar2qd) changes
+
+* Thu Feb 25 2021 Pertti Kinnia <pertti.kinnia@fmi.fi> - 21.2.25-1.fmi
+- Repackaged due to mdsplib changes
+
+* Thu Feb 18 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.2.18-1.fmi
+- Repackaged due to newbase ABI changes
+
+* Mon Feb 15 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.2.15-1.fmi
+- Ported to use new interpolation APIs
+
+* Thu Jan 28 2021 Pertti Kinnia <pertti.kinnia@fmi.fi> - 21.1.28-1.fmi
+- bufrtoqd: round sounding times to nearest hour; QDTOOLS-88
+
 * Mon Jan 25 2021 Andris Pavenis <andris.pavenis@fmi.fi> - 21.1.25-1.fmi
 - Build update: use makefile.inc
 - Fix build for C++17
 
 * Thu Jan 14 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.1.14-1.fmi
 - Repackaged smartmet to resolve debuginfo issues
+
+* Tue Jan 12 2021 Pertti Kinnia <pertti.kinnia@fmi.fi> - 21.1.12-1.fmi
+- Sort sounding messages prior storing to querydata and remove duplicate soundings; QDTOOLS-88
 
 * Tue Jan  5 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.1.5-1.fmi
 - Upgrade to fmt 7.1.3

@@ -42,7 +42,8 @@ bool jscan_is_negative(grib_handle *theHandle)
 {
   long direction = 0;
   int status = grib_get_long(theHandle, "jScansPositively", &direction);
-  if (status != 0) return false;
+  if (status != 0)
+    return false;
   return (direction == 0);
 }
 
@@ -50,7 +51,8 @@ void check_jscan_direction(grib_handle *theHandle)
 {
   long direction = 0;
   int status = grib_get_long(theHandle, "jScansPositively", &direction);
-  if (status != 0) return;
+  if (status != 0)
+    return;
   if (direction == 0)
     throw std::runtime_error("GRIBs with a negative j-scan direction are not supported");
 }
@@ -128,7 +130,8 @@ struct GribFilterOptions
 
   ~GribFilterOptions(void)
   {
-    if (itsInputFile) fclose(itsInputFile);  // suljetaan tiedosto, josta gribi luettu
+    if (itsInputFile)
+      ::fclose(itsInputFile);  // suljetaan tiedosto, josta gribi luettu
   }
 
   bool DoGlobalFix(void) const
@@ -201,7 +204,8 @@ struct LevelLessThan
       return true;
     else if (l1.LevelType() == l2.LevelType())
     {
-      if (l1.LevelValue() < l2.LevelValue()) return true;
+      if (l1.LevelValue() < l2.LevelValue())
+        return true;
     }
     return false;
   }
@@ -258,8 +262,10 @@ float CalcRH(float P, float T, float Q)
   {
     float ES = (T >= -5) ? CalcESWater(T) : CalcESIce(T);
     float RH = (P * Q / 0.622f / ES) * (P - ES) / (P - Q * P / 0.622f);
-    if (RH > 1.f) RH = 1.f;
-    if (RH < 0.f) RH = 0.f;
+    if (RH > 1.f)
+      RH = 1.f;
+    if (RH < 0.f)
+      RH = 0.f;
     return RH * 100;
   }
 }
@@ -329,8 +335,10 @@ NFmiMetTime GetTime(grib_handle *theHandle, const std::string &dateStr, const st
   int err1 = grib_get_long(theHandle, dateStr.c_str(), &dataDate);
   int err2 = grib_get_long(theHandle, timeStr.c_str(), &dataTime);
 
-  if (err1) throw runtime_error("Could not extract dataDate from GRIB");
-  if (err2) throw runtime_error("Could not extract dataTime from GRIB");
+  if (err1)
+    throw runtime_error("Could not extract dataDate from GRIB");
+  if (err2)
+    throw runtime_error("Could not extract dataTime from GRIB");
 
   short year = static_cast<short>(dataDate / 10000);
   short month = static_cast<short>((dataDate / 100) % 100);
@@ -398,39 +406,72 @@ long GetUsedLevelType(grib_handle *theHandle)
 
   // See: http://www.ecmwf.int/publications/manuals/d/gribapi/fm92/grib1/detail/ctables/3/
 
-  if (name == "surface") return kFmiGroundSurface;
-  if (name == "cloudBase") return 2;
-  if (name == "cloudTop") return 3;
-  if (name == "isothermZero") return 4;
-  if (name == "adiabaticCondensation") return 5;
-  if (name == "maxWind") return 6;
-  if (name == "tropopause") return 7;
-  if (name == "nominalTop") return 8;
-  if (name == "seaBottom") return 9;
-  if (name == "isothermal") return 20;
-  if (name == "isobaricInhPa") return kFmiPressureLevel;
-  if (name == "isobaricInPa") return kFmiPressureLevel;
-  if (name == "isobaricLayer") return 101;
-  if (name == "meanSea") return kFmiMeanSeaLevel;
-  if (name == "heightAboveSea") return kFmiAltitude;
-  if (name == "heightAboveSeaLayer") return 104;
-  if (name == "heightAboveGround") return kFmiHeight;
-  if (name == "heightAboveGroundLayer") return 106;
-  if (name == "sigma") return 107;
-  if (name == "sigmaLayer") return 108;
-  if (name == "hybrid") return kFmiHybridLevel;
-  if (name == "hybridLayer") return 110;
-  if (name == "depthBelowLand") return 111;
-  if (name == "depthBelowLandLayer") return 112;
-  if (name == "theta") return 113;
-  if (name == "thetaLayer") return 114;
-  if (name == "pressureFromGround") return 115;
-  if (name == "pressureFromGroundLayer") return 116;
-  if (name == "potentialVorticity") return 117;
-  if (name == "eta") return 119;
-  if (name == "depthBelowSea") return 160;
-  if (name == "entireAtmosphere" || name == "atmosphere") return 200;
-  if (name == "entireOcean") return 201;
+  if (name == "surface")
+    return kFmiGroundSurface;
+  if (name == "cloudBase")
+    return 2;
+  if (name == "cloudTop")
+    return 3;
+  if (name == "isothermZero")
+    return 4;
+  if (name == "adiabaticCondensation")
+    return 5;
+  if (name == "maxWind")
+    return 6;
+  if (name == "tropopause")
+    return 7;
+  if (name == "nominalTop")
+    return 8;
+  if (name == "seaBottom")
+    return 9;
+  if (name == "isothermal")
+    return 20;
+  if (name == "isobaricInhPa")
+    return kFmiPressureLevel;
+  if (name == "isobaricInPa")
+    return kFmiPressureLevel;
+  if (name == "isobaricLayer")
+    return 101;
+  if (name == "meanSea")
+    return kFmiMeanSeaLevel;
+  if (name == "heightAboveSea")
+    return kFmiAltitude;
+  if (name == "heightAboveSeaLayer")
+    return 104;
+  if (name == "heightAboveGround")
+    return kFmiHeight;
+  if (name == "heightAboveGroundLayer")
+    return 106;
+  if (name == "sigma")
+    return 107;
+  if (name == "sigmaLayer")
+    return 108;
+  if (name == "hybrid")
+    return kFmiHybridLevel;
+  if (name == "hybridLayer")
+    return 110;
+  if (name == "depthBelowLand")
+    return 111;
+  if (name == "depthBelowLandLayer")
+    return 112;
+  if (name == "theta")
+    return 113;
+  if (name == "thetaLayer")
+    return 114;
+  if (name == "pressureFromGround")
+    return 115;
+  if (name == "pressureFromGroundLayer")
+    return 116;
+  if (name == "potentialVorticity")
+    return 117;
+  if (name == "eta")
+    return 119;
+  if (name == "depthBelowSea")
+    return 160;
+  if (name == "entireAtmosphere" || name == "atmosphere")
+    return 200;
+  if (name == "entireOcean")
+    return 201;
 
   throw runtime_error("Unknown level type: " + name);
 }
@@ -463,7 +504,8 @@ long GetMissingValue(grib_handle *theHandle)
   long missingValue = 0;
   int status = grib_get_long(theHandle, "missingValue", &missingValue);
 
-  if (status == 0) return missingValue;
+  if (status == 0)
+    return missingValue;
 
   throw runtime_error("Couldn't get missingValue from given grib_handle.");
 }
@@ -557,7 +599,8 @@ boost::shared_ptr<NFmiGrid> GetGridFromProjectionStr(string &theProjectionStr,
 
 boost::shared_ptr<NFmiGrid> CreateDeepGribCopy(boost::shared_ptr<NFmiGrid> &theGrid)
 {
-  if (!theGrid) return {};
+  if (!theGrid)
+    return {};
   return boost::make_shared<NFmiGrid>(*theGrid);
 }
 
@@ -607,7 +650,8 @@ void HandleProjectionString(const string &theProjStr, GridSettingsPackage &theGr
       throw std::runtime_error("Error with -P option, the projection string was incomplete.");
     string areaStr = projParts[0] + ":" + projParts[1];
     string gridSizeStr = "50,50";  // t‰m‰ on defaultti hila koko jos sit‰ ei ole annettu
-    if (projParts.size() >= 3) gridSizeStr = projParts[2];
+    if (projParts.size() >= 3)
+      gridSizeStr = projParts[2];
     vector<int> gridSizes = NFmiStringTools::Split<vector<int> >(gridSizeStr, ",");
     if (gridSizes.size() < 2)
       throw std::runtime_error(
@@ -615,11 +659,13 @@ void HandleProjectionString(const string &theProjStr, GridSettingsPackage &theGr
 
     theGridSettings.itsBaseGrid = GetGridFromProjectionStr(areaStr, gridSizes[0], gridSizes[1]);
     int indexOffset = 0;
-    if (gridSizes.size() >= 4) indexOffset = 2;
+    if (gridSizes.size() >= 4)
+      indexOffset = 2;
     theGridSettings.itsPressureGrid =
         GetGridFromProjectionStr(areaStr, gridSizes[0 + indexOffset], gridSizes[1 + indexOffset]);
 
-    if (gridSizes.size() >= 6) indexOffset = 4;
+    if (gridSizes.size() >= 6)
+      indexOffset = 4;
     theGridSettings.itsHybridGrid =
         GetGridFromProjectionStr(areaStr, gridSizes[0 + indexOffset], gridSizes[1 + indexOffset]);
   }
@@ -635,7 +681,8 @@ bool IsDifferentGridFileNamesUsed(vector<boost::shared_ptr<NFmiQueryData> > &the
     for (size_t i = 0; i < ssize; i++)
       levels.insert(theDatas[i]->Info()->Level()->LevelType());
 
-    if (levels.size() != ssize) return true;
+    if (levels.size() != ssize)
+      return true;
   }
   return false;
 }
@@ -655,7 +702,8 @@ bool GetIgnoreLevelList(NFmiCmdLine &theCmdLine, NFmiLevelBag &theIgnoredLevelLi
         string levelTypeStr(levelStrVec[0].begin() + 1, levelStrVec[0].end());
         unsigned long levelType = boost::lexical_cast<unsigned long>(levelTypeStr);
         float levelValue = gMissLevelValue;
-        if (levelStrVec[1] != "*") levelValue = boost::lexical_cast<float>(levelStrVec[1]);
+        if (levelStrVec[1] != "*")
+          levelValue = boost::lexical_cast<float>(levelStrVec[1]);
         theIgnoredLevelListOut.AddLevel(NFmiLevel(levelType, levelStrVec[1], levelValue));
       }
       else
@@ -717,7 +765,8 @@ GeneratedHybridParamInfo GetGeneratedHybridParamInfo(NFmiCmdLine &theCmdLine,
     if (hybridInfoStrings.size() >= 2)
       hybridPressureId = boost::lexical_cast<unsigned long>(hybridInfoStrings[1]);
     string hybridPressureName = theDefaultParamName;
-    if (hybridInfoStrings.size() >= 3) hybridPressureName = hybridInfoStrings[2];
+    if (hybridInfoStrings.size() >= 3)
+      hybridPressureName = hybridInfoStrings[2];
 
     hybridParamInfo.itsGeneratedHybridParam = NFmiParam(hybridPressureId,
                                                         hybridPressureName,
@@ -734,7 +783,8 @@ GeneratedHybridParamInfo GetGeneratedHybridParamInfo(NFmiCmdLine &theCmdLine,
 
 long GetLevelType(boost::shared_ptr<NFmiQueryData> &theQData)
 {
-  if (!theQData) return -1;
+  if (!theQData)
+    return -1;
 
   theQData->Info()->FirstLevel();
   return theQData->Info()->Level()->LevelType();
@@ -1025,14 +1075,16 @@ bool HasValidData(const NFmiDataMatrix<float> &theValues)
 {
   for (size_t j = 0; j < theValues.NY(); j++)
     for (size_t i = 0; i < theValues.NX(); i++)
-      if (theValues[i][j] != kFloatMissing) return true;
+      if (theValues[i][j] != kFloatMissing)
+        return true;
   return false;
 }
 
 bool FillQData(boost::shared_ptr<NFmiQueryData> &theQData,
                vector<boost::shared_ptr<NFmiQueryData> > &theTotalQDataCollector)
 {
-  if (!theQData) return false;
+  if (!theQData)
+    return false;
 
   bool filledAnyData = false;
   long levelType = GetLevelType(theQData);
@@ -1167,7 +1219,8 @@ bool IsConnectionEdgeIndexUsed(
   for (size_t i = 0; i < connectedDataIndexiesVector.size(); i++)
   {
     set<size_t>::iterator it = connectedDataIndexiesVector[i].first.find(index);
-    if (it != connectedDataIndexiesVector[i].first.end()) return true;
+    if (it != connectedDataIndexiesVector[i].first.end())
+      return true;
   }
   return false;
 }
@@ -1176,9 +1229,11 @@ bool CalcConnectedDataIndexies(set<size_t> &connectionDataIndexies,
                                const ConnectionEdgeInfo &edgeInfo)
 {
   set<size_t>::iterator it = connectionDataIndexies.find(edgeInfo.data1Index);
-  if (it != connectionDataIndexies.end()) return true;
+  if (it != connectionDataIndexies.end())
+    return true;
   it = connectionDataIndexies.find(edgeInfo.data2Index);
-  if (it != connectionDataIndexies.end()) return true;
+  if (it != connectionDataIndexies.end())
+    return true;
 
   return false;
 }
@@ -1402,8 +1457,9 @@ vector<pair<NFmiGrid, FmiLevelType> > CalcGrids2(
          ++it)
     {
       ConnectionEdgeInfo &connectionEdgeInfo = connectionEdgeInfoVector[*it];
-      if (leveltype == kFmiNoLevelType) leveltype = connectionEdgeInfo.levelType;
-      CalcAreaConnection(connectionEdgeInfo, bottomLeft, topRight, xSize, ySize);
+      if (leveltype == kFmiNoLevelType)
+        leveltype = connectionEdgeInfo.levelType;
+      ::CalcAreaConnection(connectionEdgeInfo, bottomLeft, topRight, xSize, ySize);
     }
 
     auto *area = NFmiAreaTools::CreateLegacyLatLonArea(bottomLeft, topRight);
@@ -1664,7 +1720,8 @@ std::string GetParamName(grib_handle *theHandle)
   bool ok1 = GetGribStringValue(theHandle, "parameter.name", name);
   bool ok2 = GetGribStringValue(theHandle, "parameter.units", units);
 
-  if (ok1 && ok2) return (name + " [" + units + "]");
+  if (ok1 && ok2)
+    return (name + " [" + units + "]");
 
   // Let's try other methods to obtain name
   std::string cfName;
@@ -1673,13 +1730,17 @@ std::string GetParamName(grib_handle *theHandle)
   bool shortNameOk = GetGribStringValue(theHandle, "shortName", shortName);
 
   std::string usedParameterName;
-  if (shortNameOk) usedParameterName = shortName;
-  if (usedParameterName.empty() == false && cfNameOk) usedParameterName += " - ";
-  if (cfNameOk) usedParameterName += cfName;
+  if (shortNameOk)
+    usedParameterName = shortName;
+  if (usedParameterName.empty() == false && cfNameOk)
+    usedParameterName += " - ";
+  if (cfNameOk)
+    usedParameterName += cfName;
 
   if (ok2)
   {  // jos onnistui, liitet‰‰n yksikkˆ hakasuluissa parametrin nimen per‰‰n
-    if (usedParameterName.empty() == false) usedParameterName += " ";
+    if (usedParameterName.empty() == false)
+      usedParameterName += " ";
     usedParameterName += "[" + units + "]";
   }
 
@@ -1690,27 +1751,31 @@ long GetUsedParamId(grib_handle *theHandle)
 {
   // 1. Kokeillaan lˆytyykˆ paramId -hakusanalla
   long paramid;
-  bool ok = GetGribLongValue(theHandle, "paramId", paramid);
-  if (ok && paramid != 0) return paramid;
+  bool ok = ::GetGribLongValue(theHandle, "paramId", paramid);
+  if (ok && paramid != 0)
+    return paramid;
 
   // 2. Katsotaan onko indicatorOfParameter -id k‰ytˆss‰, jos on, k‰ytet‰‰n sit‰.
   long indicatorOfParameter = 0;
   bool indicatorOfParameterOk =
-      GetGribLongValue(theHandle, "indicatorOfParameter", indicatorOfParameter);
-  if (indicatorOfParameterOk) return indicatorOfParameter;
+      ::GetGribLongValue(theHandle, "indicatorOfParameter", indicatorOfParameter);
+  if (indicatorOfParameterOk)
+    return indicatorOfParameter;
 
   // 3. kokeillaan parameterCategory + parameterNumber yhdistelm‰‰, jossa lopullinen arvo saadaan
   // ((paramCategory * 1000) + paramNumber)
   long parameterCategory = 0;
   bool parameterCategoryOk = GetGribLongValue(theHandle, "parameterCategory", parameterCategory);
   long parameterNumber = 0;
-  bool parameterNumberOk = GetGribLongValue(theHandle, "parameterNumber", parameterNumber);
-  if (parameterCategoryOk && parameterNumberOk) return (parameterCategory * 1000) + parameterNumber;
+  bool parameterNumberOk = ::GetGribLongValue(theHandle, "parameterNumber", parameterNumber);
+  if (parameterCategoryOk && parameterNumberOk)
+    return (parameterCategory * 1000) + parameterNumber;
 
   // 4. Kokeillaan lˆytyykˆ parameter -hakusanalla
   long parameter = 0;
-  bool parameterOk = GetGribLongValue(theHandle, "parameter", parameter);
-  if (parameterOk) return parameter;
+  bool parameterOk = ::GetGribLongValue(theHandle, "parameter", parameter);
+  if (parameterOk)
+    return parameter;
 
   throw runtime_error("Couldn't get paramId from given grib_handle.");
 }
@@ -1761,9 +1826,10 @@ NFmiDataIdent GetParam(grib_handle *theHandle, const NFmiProducer &theWantedProd
 {
   // TODO producerin voisi p‰‰tell‰ originating center numeroista
 
-  std::string usedParameterName = GetParamName(theHandle);
+  std::string usedParameterName = ::GetParamName(theHandle);
   long usedParId = GetUsedParamId(theHandle);
-  if (usedParameterName.empty()) usedParameterName = NFmiStringTools::Convert(usedParId);
+  if (usedParameterName.empty())
+    usedParameterName = NFmiStringTools::Convert(usedParId);
   return NFmiDataIdent(NFmiParam(usedParId,
                                  usedParameterName,
                                  kFloatMissing,
@@ -1793,11 +1859,14 @@ void DoPossibleGlobalLongitudeFixes(double &Lo1,
                                     GribFilterOptions &theGribFilterOptions)
 {
   // Fix GRIB2 range 0...360 to QD range -180...180
-  if (Lo1 > 180) Lo1 -= 360;
-  if (Lo2 > 180) Lo2 -= 360;
+  if (Lo1 > 180)
+    Lo1 -= 360;
+  if (Lo2 > 180)
+    Lo2 -= 360;
 
   // If input was 0...360 this will fix it back to 0...360 (BAM data)
-  if (Lo1 == Lo2) Lo2 += 360;
+  if (Lo1 == Lo2)
+    Lo2 += 360;
 
   // Select Atlantic or Pacific view
 
@@ -1851,7 +1920,8 @@ NFmiArea *CreateLatlonArea(grib_handle *theHandle, GribFilterOptions &theGribFil
   grib_get_long(theHandle, "editionNumber", &version);
 
   // Fix BAM data which uses zero for both longitudes
-  if (Lo1 == 0 && Lo2 == 0) Lo2 = 360;
+  if (Lo1 == 0 && Lo2 == 0)
+    Lo2 = 360;
 
   // Not needed:
   // check_jscan_direction(theHandle);
@@ -1869,9 +1939,24 @@ NFmiArea *CreateLatlonArea(grib_handle *theHandle, GribFilterOptions &theGribFil
   else if (Lo1 > Lo2)
     std::swap(Lo1, Lo2);
 
+#ifdef WGS84
   NFmiPoint bl(Lo1, La1);
   NFmiPoint tr(Lo2, La2);
   return NFmiAreaTools::CreateLegacyLatLonArea(bl, tr);
+#else
+  DoPossibleGlobalLongitudeFixes(Lo1, Lo2, theGribFilterOptions);
+
+  if (La1 > La2)
+    std::swap(La1, La2);
+
+  NFmiPoint bl(Lo1, La1);
+  NFmiPoint tr(Lo2, La2);
+  bool usePacificView = NFmiArea::IsPacificView(bl, tr);
+  if (usePacificView)
+    ::FixPacificLongitude(tr);
+
+  return new NFmiLatLonArea(bl, tr, NFmiPoint(0, 0), NFmiPoint(1, 1), usePacificView);
+#endif
 }
 
 // ----------------------------------------------------------------------
@@ -1919,7 +2004,8 @@ NFmiArea *CreateRotatedLatlonArea(grib_handle *theHandle, GribFilterOptions &the
 
 #ifndef WGS84
   DoPossibleGlobalLongitudeFixes(Lo1, Lo2, theGribFilterOptions);
-  if (Lo1 > Lo2) std::swap(Lo1, Lo2);
+  if (Lo1 > Lo2)
+    std::swap(Lo1, Lo2);
 #endif
 
   // Not needed:
@@ -1966,31 +2052,52 @@ NFmiArea *CreateMercatorArea(grib_handle *theHandle)
   int status4 = grib_get_double(theHandle, "longitudeOfLastGridPointInDegrees", &Lo2);
 
   if (status1 == 0 && status2 == 0 && status3 == 0 && status4 == 0)
+#ifdef WGS84
     return NFmiAreaTools::CreateLegacyMercatorArea(NFmiPoint(Lo1, La1), NFmiPoint(Lo2, La2));
+#else
+    return new NFmiMercatorArea(NFmiPoint(Lo1, FmiMin(La1, La2)), NFmiPoint(Lo2, FmiMax(La1, La2)));
+#endif
 
   if (status1 || status2)
     throw runtime_error("Unable to retrieve mercator-projection information from grib.");
 
-  long nx = 0, ny = 0;
-  int status6 = grib_get_long(theHandle, "numberOfPointsAlongAMeridian", &ny);
-  if (status6 != 0) status6 = grib_get_long(theHandle, "numberOfPointsAlongYAxis", &ny);
+  long nx = 0;
+  long ny = 0;
+  int status9 = ::grib_get_long(theHandle, "numberOfPointsAlongAParallel", &nx);
+  if (status9 != 0)
+    status9 = ::grib_get_long(theHandle, "numberOfPointsAlongXAxis", &nx);
 
-  int status9 = grib_get_long(theHandle, "numberOfPointsAlongAParallel", &nx);
-  if (status9 != 0) status9 = grib_get_long(theHandle, "numberOfPointsAlongXAxis", &nx);
+  int status6 = ::grib_get_long(theHandle, "numberOfPointsAlongAMeridian", &ny);
+  if (status6 != 0)
+    status6 = ::grib_get_long(theHandle, "numberOfPointsAlongYAxis", &ny);
 
-  double dx = 0, dy = 0;
+  double dx = 0;
+  double dy = 0;
   int status7 = grib_get_double(theHandle, "xDirectionGridLength", &dx);
   int status8 = grib_get_double(theHandle, "yDirectionGridLength", &dy);
 
   if (status9 || status6 || status7 || status8)
     throw std::runtime_error("Failed to create Mercator area");
 
-  // Not needed:
-  // check_jscan_direction(theHandle);
+    // Not needed:
+    // check_jscan_direction(theHandle);
 
+#ifdef WGS84
   auto proj = fmt::format("+proj=merc +R={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs", kRearth);
   return NFmiArea::CreateFromCornerAndSize(
       proj, "FMI", NFmiPoint(Lo1, La1), (nx - 1) * dx / 1000, (ny - 1) * dy / 1000);
+#else
+  NFmiPoint bottomLeft(Lo1, La1);
+  NFmiPoint dummyTopRight(Lo1 + 5, La1 + 5);
+  NFmiMercatorArea dummyArea(bottomLeft, dummyTopRight);
+  NFmiPoint xyBottomLeft = dummyArea.LatLonToWorldXY(dummyArea.BottomLeftLatLon());
+  NFmiPoint xyTopRight(xyBottomLeft);
+  xyTopRight.X(xyTopRight.X() + (nx - 1) * dx / 1000.);
+  xyTopRight.Y(xyTopRight.Y() + (ny - 1) * dy / 1000.);
+
+  NFmiPoint topRight(dummyArea.WorldXYToLatLon(xyTopRight));
+  return new NFmiMercatorArea(bottomLeft, topRight);
+#endif
 }
 
 //----------------------------------------------------------------------
@@ -2021,7 +2128,8 @@ NFmiArea *CreatePolarStereographicArea(grib_handle *theHandle)
   long pcentre = -999;
   int badPcentre = grib_get_long(theHandle, "projectionCentreFlag", &pcentre);
 
-  if (badPcentre) throw runtime_error("Failed to extract projectionCentreFlag");
+  if (badPcentre)
+    throw runtime_error("Failed to extract projectionCentreFlag");
 
   long nx = 0, ny = 0;
   int badNx = grib_get_long(theHandle, "numberOfPointsAlongXAxis", &nx);
@@ -2088,7 +2196,8 @@ NFmiArea *CreateLambertArea(grib_handle *theHandle)
   long pcentre = 0;
   int badPcentre = grib_get_long(theHandle, "projectionCentreFlag", &pcentre);
 
-  if (!badPcentre && pcentre != 0) throw runtime_error("South pole not supported for lambert");
+  if (!badPcentre && pcentre != 0)
+    throw runtime_error("South pole not supported for lambert");
 
   long nx = 0, ny = 0;
   int badNx = grib_get_long(theHandle, "numberOfPointsAlongXAxis", &nx);
@@ -2188,9 +2297,11 @@ struct EarthShape
 
 std::string GetEarthProj(const EarthShape &theShape)
 {
-  if (!theShape.datum.empty()) return fmt::format("+datum={}", theShape.datum);
+  if (!theShape.datum.empty())
+    return fmt::format("+datum={}", theShape.datum);
 
-  if (theShape.a == theShape.b) return fmt::format("+R={:.0f} +towgs84=0,0,0", theShape.a);
+  if (theShape.a == theShape.b)
+    return fmt::format("+R={:.0f} +towgs84=0,0,0", theShape.a);
 
   return fmt::format("+a={:.0f} +b={:.0f} +towgs84=0,0,0", theShape.a, theShape.b);
 }
@@ -2203,7 +2314,8 @@ std::string GetEarthProj(const EarthShape &theShape)
 
 std::string GetEarthProjFull(const EarthShape &theShape)
 {
-  if (!theShape.datum.empty()) return fmt::format("+datum={}", theShape.datum);
+  if (!theShape.datum.empty())
+    return fmt::format("+datum={}", theShape.datum);
 
   if (theShape.a == theShape.b)
     return fmt::format("+proj=longlat +R={:.0f} +towgs84=0,0,0", theShape.a);
@@ -2258,7 +2370,8 @@ EarthShape GetEarthShape(grib_handle *theHandle)
   {
     // Earth assumed spherical with radius specified (in m) by data producer
     if (GetGribLongValue(theHandle, "scaleFactorOfRadiusOfSphericalEarth", scalefactor))
-      if (scalefactor != GRIB_MISSING_LONG) scale = pow(10.0, scalefactor);
+      if (scalefactor != GRIB_MISSING_LONG)
+        scale = pow(10.0, scalefactor);
 
     if (!GetGribDoubleValue(theHandle, "scaledValueOfRadiusOfSphericalEarth", shape.a))
       throw std::runtime_error("Failed to read scaledValueOfRadiusOfSphericalEarth");
@@ -2277,7 +2390,8 @@ EarthShape GetEarthShape(grib_handle *theHandle)
   {
     // Earth assumed oblate spheroid with major and minor axes specified (in m or km) by data
     // producer
-    if (shapeOfTheEarth == 3) scale = 1000;  // from kilometers to meters
+    if (shapeOfTheEarth == 3)
+      scale = 1000;  // from kilometers to meters
 
     if (!GetGribDoubleValue(theHandle, "scaledValueOfEarthMajorAxis", shape.a) ||
         !GetGribDoubleValue(theHandle, "scaledValueOfEarthMinorAxis", shape.b))
@@ -2285,9 +2399,11 @@ EarthShape GetEarthShape(grib_handle *theHandle)
     shape.a *= scale;
     shape.b *= scale;
     if (GetGribLongValue(theHandle, "scaleFactorOfMajorAxisOfOblateSpheroidEarth", scalefactor))
-      if (scalefactor != GRIB_MISSING_LONG) shape.a *= pow(10.0, scalefactor);
+      if (scalefactor != GRIB_MISSING_LONG)
+        shape.a *= pow(10.0, scalefactor);
     if (GetGribLongValue(theHandle, "scaleFactorOfMinorAxisOfOblateSpheroidEarth", scalefactor))
-      if (scalefactor != GRIB_MISSING_LONG) shape.b *= pow(10.0, scalefactor);
+      if (scalefactor != GRIB_MISSING_LONG)
+        shape.b *= pow(10.0, scalefactor);
   }
   else if (shapeOfTheEarth == 4)
   {
@@ -2372,7 +2488,8 @@ std::string GetProjString(grib_handle *theHandle)
         !GetGribDoubleValue(theHandle, "angleOfRotationInDegrees", rotation))
       throw std::runtime_error("Failed to extract rotated_ll parameters");
 
-    if (rotation != 0) throw std::runtime_error("Rotated latlon rotation not supported");  // TODO
+    if (rotation != 0)
+      throw std::runtime_error("Rotated latlon rotation not supported");  // TODO
 
     // Note:: convert to eqc == legacy NFmiRotatedLatLonArea
     return fmt::format(
@@ -2558,8 +2675,10 @@ NFmiArea *GetGribArea(grib_handle *theHandle)
     if (!GetGribLongValue(theHandle, "iDirectionIncrement", direction))
       throw std::runtime_error(fmt::format(err, "iDirectionIncrement", proj_name));
 
-    if (lon1 >= 0 && lon2 < 0 && direction > 0) lon2 += 360;
-    if (lon1 >= 0 && lon2 < lon1 && direction > 0) lon1 -= 360;
+    if (lon1 >= 0 && lon2 < 0 && direction > 0)
+      lon2 += 360;
+    if (lon1 >= 0 && lon2 < lon1 && direction > 0)
+      lon1 -= 360;
 
     // return NFmiArea::CreateFromCorners(proj, earth_proj, NFmiPoint(lon1, lat1), NFmiPoint(lon2,
     // lat2));
@@ -2690,7 +2809,8 @@ void ExtractGridInfo(grib_handle *theHandle,
        !GetGribLongValue(theHandle, "Ny", ny)))
     throw runtime_error("Couldn't get grid x-y sizes from given grib_handle.");
 
-  if (nx == -1 || nx == static_cast<uint32_t>(-1)) throw Reduced_ll_grib_exception();
+  if (nx == -1 || nx == static_cast<uint32_t>(-1))
+    throw Reduced_ll_grib_exception();
 
   theGridRecordData->fDoProjectionConversion = false;
   theGridRecordData->itsOrigGrid = MyGrid(area, nx, ny);
@@ -2797,7 +2917,8 @@ void ChangeParamSettingsIfNeeded(vector<ParamChangeItem> &theParamChangeTable,
             theGribData->ChangeParam(paramChangeItem.itsWantedParam);
             theGribData->itsLevel =
                 NFmiLevel(1, "sfc", 0);  // tarkista ett‰ t‰st‰ tulee pinta level dataa
-            if (verbose) cerr << " level -> sfc";
+            if (verbose)
+              cerr << " level -> sfc";
             break;
           }
         }
@@ -2884,7 +3005,8 @@ bool IgnoreThisLevel(GridRecordData *data, NFmiLevelBag &theIgnoredLevelList)
       if (theIgnoredLevelList.Level()->LevelValue() == gMissLevelValue &&
           theIgnoredLevelList.Level()->LevelType() == data->itsLevel.LevelType())
         return true;  // skipataan jokerin valuen yhteydess‰ kaikki kyseisen level tyypin kent‰t
-      if (*(theIgnoredLevelList.Level()) == data->itsLevel) return true;
+      if (*(theIgnoredLevelList.Level()) == data->itsLevel)
+        return true;
     }
   }
   return false;
@@ -2952,7 +3074,8 @@ void DoGlobalFix(NFmiDataMatrix<float> &theOrigValues, const GribFilterOptions &
   // oikealle
   // puolelle ja toisin p‰in.
 
-  if (theOptions.fVerbose) cerr << " swapping sides";
+  if (theOptions.fVerbose)
+    cerr << " swapping sides";
   int nx = static_cast<int>(theOrigValues.NX());
   int ny = static_cast<int>(theOrigValues.NY());
   for (int j = 0; j < ny; j++)
@@ -2966,7 +3089,8 @@ void ProjectData(GridRecordData *theGridRecordData,
 {
   static std::map<std::string, NFmiDataMatrix<NFmiLocationCache> > locationCacheMap;
 
-  if (theOptions.fVerbose) cerr << " p";
+  if (theOptions.fVerbose)
+    cerr << " p";
 
   NFmiGrid targetGrid(theGridRecordData->itsGrid.itsArea,
                       theGridRecordData->itsGrid.itsNX,
@@ -3012,7 +3136,8 @@ void CropData(GridRecordData *theGridRecordData,
               const GribFilterOptions &theOptions)
 {
   // t‰ss‰ raaka hila croppaus
-  if (theOptions.fVerbose) cerr << " c";
+  if (theOptions.fVerbose)
+    cerr << " c";
   int x1 = static_cast<int>(theGridRecordData->itsGridPointCropOffset.X());
   int y1 = static_cast<int>(theGridRecordData->itsGridPointCropOffset.Y());
   int destSizeX = theGridRecordData->itsGrid.itsNX;
@@ -3024,8 +3149,10 @@ void CropData(GridRecordData *theGridRecordData,
   {
     for (int i = 0; i < destSizeX; i++)
     {
-      if ((x1 + i < 0) || (x1 + i >= origSizeX)) break;
-      if ((y1 + j < 0) || (y1 + j >= origSizeY)) break;
+      if ((x1 + i < 0) || (x1 + i >= origSizeX))
+        break;
+      if ((y1 + j < 0) || (y1 + j >= origSizeY))
+        break;
       theGridRecordData->itsGridData[i][j] = theOrigValues[x1 + i][y1 + j];
     }
   }
@@ -3093,7 +3220,8 @@ void FillGridData(grib_handle *theHandle,
   int gridXSize = theGridRecordData->itsOrigGrid.itsNX;
   int gridYSize = theGridRecordData->itsOrigGrid.itsNY;
   NFmiDataMatrix<float> origValues(gridXSize, gridYSize);
-  if (status1 || status2) throw runtime_error("Couldn't get values-data from given grib_handle.");
+  if (status1 || status2)
+    throw runtime_error("Couldn't get values-data from given grib_handle.");
 
   long scanningMode = 0;
   int status4 = grib_get_long(theHandle, "scanningMode", &scanningMode);
@@ -3138,7 +3266,8 @@ void FillGridData(grib_handle *theHandle,
     }
   }
 
-  if (theOptions.DoGlobalFix()) DoGlobalFix(origValues, theOptions);
+  if (theOptions.DoGlobalFix())
+    DoGlobalFix(origValues, theOptions);
   DoAreaManipulations(theGridRecordData, origValues, theOptions);
 
   // 3. Tarkista viel‰, jos lˆytyy paramChangeTablesta parametrille muunnos kaavat jotka pit‰‰ tehd‰
@@ -3237,8 +3366,9 @@ vector<NFmiVPlaceDescriptor> GetAllVPlaceDescriptors(vector<GridRecordData *> &t
     map<int, int>::iterator lt = levelTypeCounter.begin();
     for (; lt != levelTypeCounter.end(); ++lt)
     {
-      NFmiVPlaceDescriptor vDesc = MakeVPlaceDescriptor(theGribRecordDatas, lt->first);
-      if (vDesc.Size() > 0) vPlaces.push_back(vDesc);
+      NFmiVPlaceDescriptor vDesc = ::MakeVPlaceDescriptor(theGribRecordDatas, lt->first);
+      if (vDesc.Size() > 0)
+        vPlaces.push_back(vDesc);
     }
   }
   else
@@ -3247,8 +3377,9 @@ vector<NFmiVPlaceDescriptor> GetAllVPlaceDescriptors(vector<GridRecordData *> &t
     map<int, int>::iterator lt = FindHighesLevelType(levelTypeCounter);
     if (lt != levelTypeCounter.end())
     {
-      NFmiVPlaceDescriptor vDesc = MakeVPlaceDescriptor(theGribRecordDatas, lt->first);
-      if (vDesc.Size() > 0) vPlaces.push_back(vDesc);
+      NFmiVPlaceDescriptor vDesc = ::MakeVPlaceDescriptor(theGribRecordDatas, lt->first);
+      if (vDesc.Size() > 0)
+        vPlaces.push_back(vDesc);
     }
   }
   return vPlaces;
@@ -3374,7 +3505,8 @@ bool ConvertTimeList2TimeBag(NFmiTimeList &theTimeList, NFmiTimeBag &theTimeBag)
   // Examine if times are at equal intervals, and there are at least 3 times
   // so that creating a TimeBag makes sense.
 
-  if (theTimeList.NumberOfItems() <= 2) return false;
+  if (theTimeList.NumberOfItems() <= 2)
+    return false;
 
   theTimeList.First();
   theTimeList.Next();
@@ -3416,13 +3548,15 @@ NFmiTimeDescriptor GetTimeDesc(vector<GridRecordData *> &theGribRecordDatas,
                                       // antamassa datassa oli aika 1919 vuodelta ja se ja
                                       // nykyaikainen aika sekoitti mm. metkun editorin pahasti
   for (; it != timesSet.end(); ++it)
-    if (*it > dummyTime) timeList.Add(new NFmiMetTime(*it));
+    if (*it > dummyTime)
+      timeList.Add(new NFmiMetTime(*it));
 
   NFmiTimeBag timeBag;
   bool fUseTimeBag = ConvertTimeList2TimeBag(timeList, timeBag);  // jos mahd.
 
   // Oletus kaikki origintimet ovat samoja, en tutki niita nyt yhtaan.
-  if (fUseTimeBag) return NFmiTimeDescriptor(theGribRecordDatas[0]->itsOrigTime, timeBag);
+  if (fUseTimeBag)
+    return NFmiTimeDescriptor(theGribRecordDatas[0]->itsOrigTime, timeBag);
 
   return NFmiTimeDescriptor(theGribRecordDatas[0]->itsOrigTime, timeList);
 }
@@ -3435,7 +3569,8 @@ bool FillQDataWithGribRecords(boost::shared_ptr<NFmiQueryData> &theQData,
   int gribCount = static_cast<int>(theGribRecordDatas.size());
   GridRecordData *tmp = 0;
   int filledGridCount = 0;
-  if (verbose) cerr << "Filling qdata grids ";
+  if (verbose)
+    cerr << "Filling qdata grids ";
   for (int i = 0; i < gribCount; i++)
   {
     tmp = theGribRecordDatas[i];
@@ -3446,11 +3581,13 @@ bool FillQDataWithGribRecords(boost::shared_ptr<NFmiQueryData> &theQData,
         if (!info.SetValues(tmp->itsGridData))
           throw runtime_error("qdatan t‰yttˆ gribi datalla ep‰onnistui, lopetetaan...");
         filledGridCount++;
-        if (verbose) cerr << NFmiStringTools::Convert(filledGridCount) << " ";
+        if (verbose)
+          cerr << NFmiStringTools::Convert(filledGridCount) << " ";
       }
     }
   }
-  if (verbose) cerr << endl;
+  if (verbose)
+    cerr << endl;
   return filledGridCount > 0;
 }
 
@@ -3473,7 +3610,8 @@ boost::shared_ptr<NFmiQueryData> CreateQueryData(vector<GridRecordData *> &theGr
     bool anyDataFilled =
         FillQDataWithGribRecords(qdata, theGribRecordDatas, theGribFilterOptions.fVerbose);
 
-    if (anyDataFilled == false) qdata = boost::shared_ptr<NFmiQueryData>();
+    if (anyDataFilled == false)
+      qdata = boost::shared_ptr<NFmiQueryData>();
   }
   return qdata;
 }
@@ -3670,12 +3808,14 @@ void CalcRelativeHumidityData(FmiParameterName RH_id,
               T_info.LocationIndex(RH_info.LocationIndex());
 
               float P = P_info.FloatValue();
-              if (pressureData) P = P_info.Level()->LevelValue();
+              if (pressureData)
+                P = P_info.Level()->LevelValue();
               float T = T_info.FloatValue();
               float SH = SH_info.FloatValue();
 
-              float RH = CalcRH(P, T, SH);
-              if (RH != kFloatMissing) RH_info.FloatValue(RH);
+              float RH = ::CalcRH(P, T, SH);
+              if (RH != kFloatMissing)
+                RH_info.FloatValue(RH);
             }
           }
         }
@@ -3713,7 +3853,8 @@ void CreateQueryDatas(vector<GridRecordData *> &theGribRecordDatas,
                       GribFilterOptions &theGribFilterOptions,
                       map<int, pair<double, double> > *theVerticalCoordinateMap)
 {
-  if (theGribFilterOptions.fVerbose) cerr << "Creating querydatas" << endl;
+  if (theGribFilterOptions.fVerbose)
+    cerr << "Creating querydatas" << endl;
   int gribCount = static_cast<int>(theGribRecordDatas.size());
   if (gribCount > 0)
   {
@@ -3729,7 +3870,8 @@ void CreateQueryDatas(vector<GridRecordData *> &theGribRecordDatas,
           cerr << "L" << NFmiStringTools::Convert(j) << "H" << NFmiStringTools::Convert(i) << " ";
         boost::shared_ptr<NFmiQueryData> qdata = CreateQueryData(
             theGribRecordDatas, hPlaceDescriptors[i], vPlaceDescriptors[j], theGribFilterOptions);
-        if (qdata) theGribFilterOptions.itsGeneratedDatas.push_back(qdata);
+        if (qdata)
+          theGribFilterOptions.itsGeneratedDatas.push_back(qdata);
       }
     }
 
@@ -3836,7 +3978,8 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
 
       counter++;
 
-      if (theGribFilterOptions.fVerbose) cerr << counter << " ";
+      if (theGribFilterOptions.fVerbose)
+        cerr << counter << " ";
       GridRecordData *tmpData = new GridRecordData;
 
       theGribFilterOptions.fDoYAxisFlip = jscan_is_negative(gribHandle);
@@ -3936,7 +4079,8 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
     }  // while-loop
     CreateQueryDatas(gribRecordDatas, theGribFilterOptions, &verticalCoordinateMap);
 
-    if (err) throw runtime_error(grib_get_error_message(err));
+    if (err)
+      throw runtime_error(grib_get_error_message(err));
   }
   catch (...)
   {
@@ -4041,7 +4185,8 @@ NFmiMetTime GetGribTime(unsigned char *pds, bool fOrigTime)
   }
   else  // valid time
   {
-    if (verf_time(pds, &year, &month, &day, &hour) != 0) cerr << "Ongelma ajan purussa" << endl;
+    if (verf_time(pds, &year, &month, &day, &hour) != 0)
+      cerr << "Ongelma ajan purussa" << endl;
   }
   return NFmiMetTime(static_cast<short>(year),
                      static_cast<short>(month),
@@ -4108,7 +4253,8 @@ string GetGridInfoStr(unsigned char *gds, unsigned char *bds)
       for (unsigned int i = 0; i < variableLengthRows.size(); i++)
       {
         variyngRowLengthStr += NFmiStringTools::Convert(variableLengthRows[i]);
-        if (i < variableLengthRows.size() - 1) variyngRowLengthStr += ",";
+        if (i < variableLengthRows.size() - 1)
+          variyngRowLengthStr += ",";
       }
       variyngRowLengthStr += "\n";
     }
@@ -4319,8 +4465,10 @@ NFmiArea *CreateLatlonArea(unsigned char *gds,
   DoPossibleGlobalLongitudeFixes(lo1, lo2, theGribFilterOptions);
 #endif
 
-  if (!scanIModePos) std::swap(lo1, lo2);
-  if (!scanJModePos) std::swap(la1, la2);
+  if (!scanIModePos)
+    std::swap(lo1, lo2);
+  if (!scanJModePos)
+    std::swap(la1, la2);
   if (fDoYAxisFlip)
     std::swap(la1, la2);  // jos y-akselin k‰‰ntˆ, pit‰‰ la1 ja la2 kanssa k‰‰nt‰‰
   else if (la1 > la2)
@@ -4335,10 +4483,9 @@ NFmiArea *CreateLatlonArea(unsigned char *gds,
   return NFmiArea::CreateFromBBox(proj, bl, tr);
 #else
   bool usePacificView = NFmiArea::IsPacificView(bl, tr);
-  if (usePacificView) FixPacificLongitude(tr);
-  NFmiLatLonArea *area =
-      new NFmiLatLonArea(bl, tr, NFmiPoint(0, 0), NFmiPoint(1, 1), usePacificView);
-  return area;
+  if (usePacificView)
+    FixPacificLongitude(tr);
+  return new NFmiLatLonArea(bl, tr, NFmiPoint(0, 0), NFmiPoint(1, 1), usePacificView);
 #endif
 }
 
@@ -4375,7 +4522,8 @@ NFmiArea *CreateRotatedLatlonArea(unsigned char *gds, unsigned char * /* bds */,
   double lo2 = 0.001 * GDS_RotLL_Lo2(gds);
   double la1 = 0.001 * GDS_RotLL_La1(gds);
   double la2 = 0.001 * GDS_RotLL_La2(gds);
-  if (fDoYAxisFlip) std::swap(la1, la2);  // jos y-akselin k‰‰ntˆ, pit‰‰ la1 ja la2 kanssa k‰‰nt‰‰
+  if (fDoYAxisFlip)
+    std::swap(la1, la2);  // jos y-akselin k‰‰ntˆ, pit‰‰ la1 ja la2 kanssa k‰‰nt‰‰
   NFmiPoint bl(lo1, la1);
   NFmiPoint tr(lo2, la2);
   NFmiPoint southernPole(0.001 * GDS_RotLL_LoSP(gds), 0.001 * GDS_RotLL_LaSP(gds));
@@ -4396,7 +4544,8 @@ NFmiArea *CreateMercatorArea(unsigned char *gds, unsigned char * /* bds */, bool
   double lo2 = 0.001 * GDS_Merc_Lo2(gds);
   double la1 = 0.001 * GDS_Merc_La1(gds);
   double la2 = 0.001 * GDS_Merc_La2(gds);
-  if (fDoYAxisFlip) std::swap(la1, la2);  // jos y-akselin k‰‰ntˆ, pit‰‰ la1 ja la2 kanssa k‰‰nt‰‰
+  if (fDoYAxisFlip)
+    std::swap(la1, la2);  // jos y-akselin k‰‰ntˆ, pit‰‰ la1 ja la2 kanssa k‰‰nt‰‰
   NFmiPoint bl(lo1, la1);
   NFmiPoint tr(lo2, la2);
 
@@ -4766,7 +4915,8 @@ vector<NFmiVPlaceDescriptor> GetAllVPlaceDescriptors(vector<GridRecordData *> &t
     for (; it != levelTypeCounter.end(); ++it)
     {
       NFmiVPlaceDescriptor vDesc = wgrib2qd::MakeVPlaceDescriptor(theGribRecordDatas, (*it).first);
-      if (vDesc.Size() > 0) vPlaces.push_back(vDesc);
+      if (vDesc.Size() > 0)
+        vPlaces.push_back(vDesc);
     }
   }
   else
@@ -4776,7 +4926,8 @@ vector<NFmiVPlaceDescriptor> GetAllVPlaceDescriptors(vector<GridRecordData *> &t
     if (it != levelTypeCounter.end())
     {
       NFmiVPlaceDescriptor vDesc = wgrib2qd::MakeVPlaceDescriptor(theGribRecordDatas, (*it).first);
-      if (vDesc.Size() > 0) vPlaces.push_back(vDesc);
+      if (vDesc.Size() > 0)
+        vPlaces.push_back(vDesc);
     }
   }
   return vPlaces;
@@ -4856,7 +5007,8 @@ NFmiTimeDescriptor GetTimeDesc(vector<GridRecordData *> &theGribRecordDatas)
                                       // antamassa datassa oli aika 1919 vuodelta ja se ja
                                       // nykyaikainen aika sekoitti mm. metkun editorin pahasti
   for (; it != timesSet.end(); ++it)
-    if (*it > dummyTime) timeList.Add(new NFmiMetTime(*it));
+    if (*it > dummyTime)
+      timeList.Add(new NFmiMetTime(*it));
 
   timeList.First();
   return NFmiTimeDescriptor(*timeList.Current(), timeList);
@@ -4902,7 +5054,8 @@ vector<boost::shared_ptr<NFmiQueryData> > CreateQueryDatas(
       {
         boost::shared_ptr<NFmiQueryData> qdata = wgrib2qd::CreateQueryData(
             theGribRecordDatas, hPlaceDescriptors[i], vPlaceDescriptors[j]);
-        if (qdata) qdatas.push_back(qdata);
+        if (qdata)
+          qdatas.push_back(qdata);
       }
     }
   }
@@ -4916,8 +5069,10 @@ void FreeDatas(vector<GridRecordData *> &theGribRecordDatas, float *array, unsig
   for (; it != endIter; ++it)
     delete *it;
 
-  if (array) free(array);
-  if (buffer) free(buffer);
+  if (array)
+    free(array);
+  if (buffer)
+    free(buffer);
 }
 
 void ConvertGrib(GribFilterOptions &theGribFilterOptions)
@@ -4950,14 +5105,16 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
     for (;;)
     {
       msg = seek_grib(theGribFilterOptions.itsInputFile, &pos, &len_grib, buffer, MSEEK);
-      if (msg == nullptr) break;  // tultiin recordien loppuun
+      if (msg == nullptr)
+        break;  // tultiin recordien loppuun
 
       /* read all whole grib record */
       if (len_grib + msg - buffer > buffer_size)
       {
         buffer_size = static_cast<long>(len_grib + msg - buffer + 1000);
         buffer = (unsigned char *)realloc((void *)buffer, buffer_size);
-        if (buffer == nullptr) throw runtime_error("ran out of memory");
+        if (buffer == nullptr)
+          throw runtime_error("ran out of memory");
       }
       read_grib(theGribFilterOptions.itsInputFile, pos, len_grib, buffer);
 
@@ -5040,7 +5197,8 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
 
       if (nxny > last_nxny)  // tarkistetaan pit‰‰kˆ varata isompi taulukko
       {
-        if (array) free(array);
+        if (array)
+          free(array);
         if ((array = (float *)malloc(sizeof(float) * nxny)) == nullptr)
           throw runtime_error("End of memory, exiting...");
         last_nxny = nxny;
@@ -5084,7 +5242,8 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
                              adjacentIMode,
                              theGribFilterOptions,
                              theGribFilterOptions.fDoYAxisFlip);
-      if (theGribFilterOptions.fDoYAxisFlip) scanJModePos = scanJModePos == false;
+      if (theGribFilterOptions.fDoYAxisFlip)
+        scanJModePos = scanJModePos == false;
       tmpData->itsGridData.Resize(tmpData->itsGrid.itsNX, tmpData->itsGrid.itsNY);
 
       ChangeParamSettingsIfNeeded(
@@ -5132,7 +5291,8 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
       }
       else
       {
-        if (theGribFilterOptions.fVerbose) cerr << endl;
+        if (theGribFilterOptions.fVerbose)
+          cerr << endl;
       }
 
     }  // for-loop
@@ -5209,7 +5369,8 @@ void MakeTotalCombineQDatas(vector<boost::shared_ptr<NFmiQueryData> > &theTotalQ
       {
         boost::shared_ptr<NFmiQueryData> qData =
             CreateEmptyQData(*it, hplaceDescriptors[i], theTotalQDataCollector);
-        if (qData) generatedEmptyQDatas.push_back(qData);
+        if (qData)
+          generatedEmptyQDatas.push_back(qData);
       }
     }
     // 3. t‰yt‰ eri datat
@@ -5367,8 +5528,10 @@ bool GetProducer(NFmiCmdLine &theCmdLine, GribFilterOptions &theGribFilterOption
     theGribFilterOptions.itsWantedSurfaceProducer = NFmiProducer(prodId, strVector[1]);
     theGribFilterOptions.itsWantedPressureProducer = theGribFilterOptions.itsWantedSurfaceProducer;
     theGribFilterOptions.itsWantedHybridProducer = theGribFilterOptions.itsWantedSurfaceProducer;
-    if (strVector.size() >= 3) theGribFilterOptions.itsWantedPressureProducer.SetName(strVector[2]);
-    if (strVector.size() >= 4) theGribFilterOptions.itsWantedHybridProducer.SetName(strVector[3]);
+    if (strVector.size() >= 3)
+      theGribFilterOptions.itsWantedPressureProducer.SetName(strVector[2]);
+    if (strVector.size() >= 4)
+      theGribFilterOptions.itsWantedHybridProducer.SetName(strVector[3]);
   }
   return true;
 }
@@ -5376,8 +5539,10 @@ bool GetProducer(NFmiCmdLine &theCmdLine, GribFilterOptions &theGribFilterOption
 int GetIntegerOptionValue(const NFmiCmdLine &theCmdline, char theOption)
 {
   NFmiValueString valStr(theCmdline.OptionValue(theOption));
-  if (valStr.IsInt()) return static_cast<int>(valStr);
-  throw runtime_error(string("'") + theOption + "' option value must be integer, exiting...");
+  if (valStr.IsInt())
+    return static_cast<int>(valStr);
+  throw runtime_error(string("Error: '") + theOption +
+                      "' option value must be integer, exiting...");
 }
 
 void GetStepRangeOptions(const NFmiCmdLine &theCmdline, GribFilterOptions &theGribFilterOptions)
@@ -5426,17 +5591,21 @@ int GetOptions(NFmiCmdLine &theCmdLine, GribFilterOptions &theGribFilterOptions)
 #else
   string paramChangeTableFileName = "";
 #endif
-  if (theCmdLine.isOption('c')) paramChangeTableFileName = theCmdLine.OptionValue('c');
+  if (theCmdLine.isOption('c'))
+    paramChangeTableFileName = theCmdLine.OptionValue('c');
   if (!paramChangeTableFileName.empty())
     theGribFilterOptions.itsParamChangeTable = ReadGribConf(paramChangeTableFileName);
 
   if (theCmdLine.isOption('g'))
     theGribFilterOptions.itsGridInfoPrintCount =
         boost::lexical_cast<int>(theCmdLine.OptionValue('g'));
-  if (theCmdLine.isOption('d')) theGribFilterOptions.fCropParamsNotMensionedInTable = true;
+  if (theCmdLine.isOption('d'))
+    theGribFilterOptions.fCropParamsNotMensionedInTable = true;
 
-  if (theCmdLine.isOption('a')) theGribFilterOptions.fDoAtlanticFix = true;
-  if (theCmdLine.isOption('A')) theGribFilterOptions.fDoPacificFix = true;
+  if (theCmdLine.isOption('a'))
+    theGribFilterOptions.fDoAtlanticFix = true;
+  if (theCmdLine.isOption('A'))
+    theGribFilterOptions.fDoPacificFix = true;
   if (theGribFilterOptions.fDoAtlanticFix && theGribFilterOptions.fDoPacificFix)
     throw runtime_error(
         "Error with pacific and atlantic fix options, both 'a' and 'A' options can't be on at "
@@ -5450,19 +5619,26 @@ int GetOptions(NFmiCmdLine &theCmdLine, GribFilterOptions &theGribFilterOptions)
               << std::endl;
   }
 
-  if (theCmdLine.isOption('S')) theGribFilterOptions.fDoLeftRightSwap = true;
+  if (theCmdLine.isOption('S'))
+    theGribFilterOptions.fDoLeftRightSwap = true;
 
-  if (theCmdLine.isOption('i')) theGribFilterOptions.fIgnoreReducedLLData = true;
+  if (theCmdLine.isOption('i'))
+    theGribFilterOptions.fIgnoreReducedLLData = true;
 
-  if (theCmdLine.isOption('z')) theGribFilterOptions.fDoZigzagMode = true;
+  if (theCmdLine.isOption('z'))
+    theGribFilterOptions.fDoZigzagMode = true;
 
-  if (theCmdLine.isOption('C')) theGribFilterOptions.fTryAreaCombination = true;
+  if (theCmdLine.isOption('C'))
+    theGribFilterOptions.fTryAreaCombination = true;
 
-  if (theCmdLine.isOption('n')) theGribFilterOptions.fUseLevelTypeFileNaming = true;
+  if (theCmdLine.isOption('n'))
+    theGribFilterOptions.fUseLevelTypeFileNaming = true;
 
-  if (GetProducer(theCmdLine, theGribFilterOptions) == false) return 1;
+  if (::GetProducer(theCmdLine, theGribFilterOptions) == false)
+    return 1;
 
-  if (GetIgnoreLevelList(theCmdLine, theGribFilterOptions.itsIgnoredLevelList) == false) return 8;
+  if (::GetIgnoreLevelList(theCmdLine, theGribFilterOptions.itsIgnoredLevelList) == false)
+    return 8;
 
   theGribFilterOptions.itsAcceptOnlyLevelTypes = GetAcceptedLevelTypes(theCmdLine);
 
@@ -5482,9 +5658,11 @@ int GetOptions(NFmiCmdLine &theCmdLine, GribFilterOptions &theGribFilterOptions)
     theGribFilterOptions.itsLatlonCropRect = GetLatlonCropRect(opt_bounds);
   }
 
-  if (GetGridOptions(theCmdLine, theGribFilterOptions.itsGridSettings) == false) return 9;
+  if (::GetGridOptions(theCmdLine, theGribFilterOptions.itsGridSettings) == false)
+    return 9;
 
-  if (theCmdLine.isOption('v')) theGribFilterOptions.fVerbose = true;
+  if (theCmdLine.isOption('v'))
+    theGribFilterOptions.fVerbose = true;
 
   GetStepRangeOptions(theCmdLine, theGribFilterOptions);
 
@@ -5499,12 +5677,16 @@ int Run(int argc, const char **argv, bool &fReportExecutionTime)
   NFmiCmdLine cmdline(argc, argv, "o!m!l!g!p!aASnL!G!c!dvP!D!tH!r!yzCiR!");
 
   // Jonkin n‰ist‰ avulla muodostetaan lista, jossa voi olla 0-n kpl tiedoston nimi‰.
-  if (DoCommandLineCheck(cmdline) == false) return 1;
+  if (::DoCommandLineCheck(cmdline) == false)
+    return 1;
 
-  if (cmdline.isOption('t')) fReportExecutionTime = true;
-  if (GribDefinitionPath(cmdline) == false) return 1;
-  int status = GetOptions(cmdline, gribFilterOptions);
-  if (status != 0) return status;
+  if (cmdline.isOption('t'))
+    fReportExecutionTime = true;
+  if (::GribDefinitionPath(cmdline) == false)
+    return 1;
+  int status = ::GetOptions(cmdline, gribFilterOptions);
+  if (status != 0)
+    return status;
 
   vector<string> fileList = GetDataFiles(cmdline);
 
@@ -5584,7 +5766,8 @@ int main(int argc, const char **argv)
   }
 
   timer.StopTimer();
-  if (reportExecutionTime) cerr << "Execution run time: " << timer.EasyTimeDiffStr() << endl;
+  if (reportExecutionTime)
+    cerr << "Execution run time: " << timer.EasyTimeDiffStr() << endl;
 
   return returnStatus;
 }

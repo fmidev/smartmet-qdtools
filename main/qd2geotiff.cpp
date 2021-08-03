@@ -4,6 +4,13 @@
 #include <newbase/NFmiArea.h>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiQueryData.h>
+
+#ifndef WGS84
+#include <newbase/NFmiRotatedLatLonArea.h>
+#include <newbase/NFmiStereographicArea.h>
+#include <newbase/NFmiYKJArea.h>
+#endif
+
 #include <gdal_priv.h>
 #include <iomanip>
 #include <iostream>
@@ -40,10 +47,17 @@ GeomDefinedType GeoTiffQD::ConverQD2GeoTiff(string aNameVersion,
   else if (id == kNFmiStereographicArea)
   {
     ConvertToGeoTiff(aNameVersion, theData, theExternal, geomDefinedType = kStereoGeom);
+#ifdef WGS84
     if (area->ProjInfo().getDouble("lat_0") == 10.0)
       geomDefinedType = kStereoGeom10;
     if (area->ProjInfo().getDouble("lat_0") == 20.0)
       geomDefinedType = kStereoGeom20;
+#else
+    if (supportedStereoArea->CentralLongitude() == 10)
+      geomDefinedType = kStereoGeom10;
+    if (supportedStereoArea->CentralLongitude() == 20)
+      geomDefinedType = kStereoGeom20;
+#endif
   }
   else if (id == kNFmiRotatedLatLonArea)
     ConvertToGeoTiff(aNameVersion, theData, theExternal, geomDefinedType = kRotatedGeom);

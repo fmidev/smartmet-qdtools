@@ -12,7 +12,7 @@ MAINFLAGS += -fpermissive
 
 # Default compiler flags
 
-DEFINES = -DUNIX -DWGS84
+DEFINES = -DUNIX
 
 # gdal 32 from pgdg
 

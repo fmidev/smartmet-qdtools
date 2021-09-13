@@ -43,6 +43,12 @@
 #include <sys/ioctl.h>
 #endif
 
+#ifndef WGS84
+#include <newbase/NFmiEquidistArea.h>
+#include <newbase/NFmiMercatorArea.h>
+#include <newbase/NFmiStereographicArea.h>
+#endif
+
 // Global to get better error messages outside param descriptor builder
 
 NFmiEnumConverter converter;
@@ -1286,9 +1292,30 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
       double LR_lat = get_attribute_value<double>(hid, "/where", "LR_lat");
       double UL_lon = get_attribute_value<double>(hid, "/where", "UL_lon");
       double UL_lat = get_attribute_value<double>(hid, "/where", "UL_lat");
+#ifdef WGS84
       boost::shared_ptr<NFmiArea> area(NFmiArea::CreateFromReverseCorners(
           projdef, sphere, NFmiPoint(UL_lon, UL_lat), NFmiPoint(LR_lon, LR_lat)));
+#else
+      boost::shared_ptr<NFmiArea> tmparea = NFmiAreaFactory::CreateProj(
+          projdef, NFmiPoint(UL_lon, LR_lat), NFmiPoint(LR_lon, UL_lat));
+      // Convert real corners to world xy
 
+      NFmiPoint ul = tmparea->LatLonToWorldXY(NFmiPoint(UL_lon, UL_lat));
+      NFmiPoint lr = tmparea->LatLonToWorldXY(NFmiPoint(LR_lon, LR_lat));
+
+      // Switched corners
+
+      NFmiPoint ll = NFmiPoint(ul.X(), lr.Y());
+      NFmiPoint ur = NFmiPoint(lr.X(), ul.Y());
+
+      // Back to lat lon
+
+      NFmiPoint LL = tmparea->WorldXYToLatLon(ll);
+      NFmiPoint UR = tmparea->WorldXYToLatLon(ur);
+
+      boost::shared_ptr<NFmiArea> area = NFmiAreaFactory::CreateProj(projdef, LL, UR);
+      
+#endif      
       NFmiGrid grid(area->Clone(), xsize, ysize);
       return NFmiHPlaceDescriptor(grid);
     }
@@ -1301,8 +1328,13 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
       double UR_lon = get_attribute_value<double>(hid, "/where", "UR_lon");
       double UR_lat = get_attribute_value<double>(hid, "/where", "UR_lat");
 
+#ifdef WGS84      
       boost::shared_ptr<NFmiArea> area(NFmiArea::CreateFromCorners(
           projdef, sphere, NFmiPoint(LL_lon, LL_lat), NFmiPoint(UR_lon, UR_lat)));
+#else
+      boost::shared_ptr<NFmiArea> area = NFmiAreaFactory::CreateProj(
+          projdef, NFmiPoint(LL_lon, LL_lat), NFmiPoint(UR_lon, UR_lat));
+#endif      
 
       NFmiGrid grid(area->Clone(), xsize, ysize);
       return NFmiHPlaceDescriptor(grid);
@@ -1320,6 +1352,7 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
     const double range_m = calculate_pvol_range(hid);
     const double range_km = std::ceil(range_m / 1000);
 
+#ifdef WGS84    
     auto proj4 = fmt::format(
         "+proj=aeqd +lat_0={} +lon_0={} +x_0=0 +y_0=0 +R={:.0f} +units=m +wktext "
         "+towgs84=0,0,0 +no_defs",
@@ -1330,6 +1363,11 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
     // WGS84: Not sure if we should multiply by 2 for legacy reasons
     NFmiArea *area = NFmiArea::CreateFromCenter(
         proj4, "FMI", NFmiPoint(lon, lat), 1000 * range_km, 1000 * range_km);
+#else
+
+    NFmiArea *area = new NFmiEquidistArea(1000 * range_km, NFmiPoint(lon, lat), xy0, xy1);
+    
+#endif    
 
     // We set the grid resolution based on the number of bins in the data
 

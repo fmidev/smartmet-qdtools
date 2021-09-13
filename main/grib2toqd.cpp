@@ -45,7 +45,6 @@
 #include <boost/thread.hpp>
 #include <fmt/format.h>
 #include <newbase/NFmiAreaFactory.h>
-#include <newbase/NFmiAreaTools.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiCommentStripper.h>
 #include <newbase/NFmiDataMatrixUtils.h>
@@ -68,6 +67,15 @@
 #include <set>
 #include <sstream>
 #include <stdexcept>
+
+#ifdef WGS84
+#include <newbase/NFmiAreaTools.h>
+#else
+#include <newbase/NFmiLatLonArea.h>
+#include <newbase/NFmiMercatorArea.h>
+#include <newbase/NFmiRotatedLatLonArea.h>
+#include <newbase/NFmiStereographicArea.h>
+#endif
 
 using namespace std;
 
@@ -1405,7 +1413,11 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
   int status4 = grib_get_double(theGribHandle, "longitudeOfLastGridPointInDegrees", &Lo2);
 
   if (status1 == 0 && status2 == 0 && status3 == 0 && status4 == 0)
+#ifdef WGS84
     return NFmiAreaTools::CreateLegacyMercatorArea(NFmiPoint(Lo1, La1), NFmiPoint(Lo2, La2));
+#else
+    return new NFmiMercatorArea(NFmiPoint(Lo1, FmiMin(La1, La2)), NFmiPoint(Lo2, FmiMax(La1, La2)));
+#endif
 
   if (status1 == 0 && status2 == 0)
   {
@@ -1430,10 +1442,22 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
     {
       NFmiPoint bottomLeft(Lo1, La1);
 
+#ifdef WGS84
       auto proj =
           fmt::format("+proj=merc +R={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs", kRearth);
       return NFmiArea::CreateFromCornerAndSize(
           proj, "FMI", bottomLeft, (nx - 1) * dx / 1000, (ny - 1) * dy / 1000);
+#else
+      NFmiPoint dummyTopRight(Lo1 + 5, La1 + 5);
+      NFmiMercatorArea dummyArea(bottomLeft, dummyTopRight);
+      NFmiPoint xyBottomLeft = dummyArea.LatLonToWorldXY(dummyArea.BottomLeftLatLon());
+      NFmiPoint xyTopRight(xyBottomLeft);
+      xyTopRight.X(xyTopRight.X() + (nx - 1) * dx / 1000.);
+      xyTopRight.Y(xyTopRight.Y() + (ny - 1) * dy / 1000.);
+
+      NFmiPoint topRight(dummyArea.WorldXYToLatLon(xyTopRight));
+      return new NFmiMercatorArea(bottomLeft, topRight);
+#endif
     }
   }
   throw runtime_error("Error: Unable to retrieve mercator-projection information from grib.");
@@ -1483,6 +1507,7 @@ static NFmiArea *CreatePolarStereographicArea(grib_handle *theGribHandle)
     double width_in_meters = (nx - 1) * dx / 1000.0;
     double height_in_meters = (ny - 1) * dy / 1000.0;
 
+#ifdef WGS84
     auto proj = fmt::format(
         "+proj=stere +lat_0={} +lon_0={} +R={:.0f}  +units=m +wktext "
         "+towgs84=0,0,0 +no_defs",
@@ -1492,6 +1517,19 @@ static NFmiArea *CreatePolarStereographicArea(grib_handle *theGribHandle)
 
     return NFmiArea::CreateFromCornerAndSize(
         proj, "FMI", bottom_left, width_in_meters, height_in_meters);
+#else
+    NFmiPoint top_left_xy(0, 0);
+    NFmiPoint top_right_xy(1, 1);
+
+    return new NFmiStereographicArea(bottom_left,
+                                     width_in_meters,
+                                     height_in_meters,
+                                     Lov,
+                                     top_left_xy,
+                                     top_right_xy,
+                                     90,
+                                     usedLad);
+#endif
   }
 
   throw runtime_error("Error: Unable to retrieve polster-projection information from grib.");
@@ -1526,7 +1564,11 @@ static void CalcCroppedGrid(GridRecordData *theGridRecordData)
   NFmiPoint latlon2 = grid.GridToLatLon(xy2);
   NFmiArea *newArea = 0;
   if (theGridRecordData->itsOrigGrid.itsArea->ClassId() == kNFmiLatLonArea)
+#ifdef WGS84
     newArea = NFmiAreaTools::CreateLegacyLatLonArea(latlon1, latlon2);
+#else
+    newArea = new NFmiLatLonArea(latlon1, latlon2);
+#endif
   else
     throw runtime_error("Error: CalcCroppedGrid doesn't support this projection yet.");
 
@@ -1563,14 +1605,12 @@ static void FillGridInfoFromGribHandle(grib_handle *theGribHandle,
       case 0:
         area = ::CreateLatlonArea(theGribHandle, doGlobeFix);
         break;
-#ifdef WGS84
       case 10:
         doGlobeFix = false;  // T‰m‰ doGlobeFix -systeemi on rakennettu v‰‰rin. Pit‰isi olla
                              // allowGlobeFix-optio ja t‰m‰ doGlobeFix olisi muuten false, paitsi
                              // jos allowGlobeFix=true ja latlon area, jossa 0-360-maailma.
         area = ::CreateMercatorArea(theGribHandle);
         break;
-#endif
       case 20:
         doGlobeFix = false;  // T‰m‰ doGlobeFix -systeemi on rakennettu v‰‰rin. Pit‰isi olla
                              // allowGlobeFix-optio ja t‰m‰ doGlobeFix olisi muuten false, paitsi

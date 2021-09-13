@@ -2,11 +2,16 @@
 
 $program = (-x "../pgm2qd" ? "../pgm2qd" : "pgm2qd");
 
+system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h');
+$wgs84 = 1-($? >> 8);
+
 $results = "results";
 
 %usednames = ();
 
-DoTest("dbz","dbz","data/pgm","201906071000_tutka_suomi_dbz.sqd");
+$resultfile = "201906071000_tutka_suomi_dbz.sqd";
+
+DoTest("dbz","dbz","data/pgm",$resultfile);
 
 print "Done\n";
 
@@ -27,6 +32,15 @@ sub DoTest
 
     $cmd = "$program $arguments $results";
     
+    $expectedresult = "${resultfile}.ok";
+    if($wgs84)
+    {
+	my($wgs84expectedresult) = "${expectedresult}.wgs84";
+	if(-e "$results/$wgs84expectedresult")
+	{  $expectedresult = $wgs84expectedresult; }
+    }
+
+
     # print "$cmd\n";
     # $output = `$cmd 2>/dev/null`;
     $output = `$cmd`;
@@ -37,14 +51,14 @@ sub DoTest
     {
 	print " FAILED TO PRODUCE OUTPUT FILE results/$resultfile\n";
     }
-    elsif(! -e "results/${resultfile}.ok")
+    elsif(! -e "results/$expectedresult")
     {
-	print " FAILED: TRUE RESULT results/${resultfile}.ok MISSING\n";
+	print " FAILED: TRUE RESULT results/expectedresult MISSING\n";
 	# unlink("$results/$resultfile");
     }
     else
     {
-	my($difference) = `../qddifference results/$resultfile results/${resultfile}.ok`;
+	my($difference) = `../qddifference results/$resultfile results/$expectedresult`;
 
 	$difference =~ s/^\s+//;
 	$difference =~ s/\s+$//;

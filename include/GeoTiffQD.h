@@ -9,6 +9,10 @@
 #include <cstdio>
 #include <string>
 
+#ifndef WGS84
+class NFmiRotatedLatLonArea;
+#endif
+
 using namespace std;
 
 #define BOTTOMLEFT 0

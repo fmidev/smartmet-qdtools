@@ -20,6 +20,11 @@
 #include <map>
 #include <string>
 
+#ifndef WGS84
+#include <newbase/NFmiRotatedLatLonArea.h>
+#include <newbase/NFmiStereographicArea.h>
+#endif
+
 #ifdef UNIX
 #include <sys/ioctl.h>
 #endif
@@ -468,7 +473,11 @@ void set_rotated_latlon_geometry(NFmiFastQueryInfo &theInfo,
 {
   gset(gribHandle, "gridType", "rotated_ll");
 
+#ifdef WGS84  
   const auto &a = *theInfo.Area();
+#else
+  const NFmiRotatedLatLonArea &a = *dynamic_cast<const NFmiRotatedLatLonArea *>(theInfo.Area());
+#endif  
   NFmiPoint bl(a.LatLonToWorldXY(a.BottomLeftLatLon()));
   NFmiPoint tr(a.LatLonToWorldXY(a.TopRightLatLon()));
 
@@ -490,20 +499,31 @@ void set_rotated_latlon_geometry(NFmiFastQueryInfo &theInfo,
   gset(gribHandle, "iDirectionIncrementInDegrees", gridCellWidthInDegrees);
   gset(gribHandle, "jDirectionIncrementInDegrees", gridCellHeightInDegrees);
 
+  gset(gribHandle, "jScansPositively", 1);
+  gset(gribHandle, "iScansNegatively", 0);
+
   // Get north pole location
+
+#ifdef WGS84
 
   auto plat = a.ProjInfo().getDouble("o_lat_p");
   auto plon = a.ProjInfo().getDouble("o_lon_p");
-
   if (!plat || !plon) throw std::runtime_error("Rotated latlon north pole location not set");
-
   // Calculate respective south pole location
 
   gset(gribHandle, "longitudeOfSouthernPoleInDegrees", *plon);
   gset(gribHandle, "latitudeOfSouthernPoleInDegrees", -(*plat));
 
-  gset(gribHandle, "jScansPositively", 1);
-  gset(gribHandle, "iScansNegatively", 0);
+#else
+
+  if (a.SouthernPole().X() != 0)
+    throw std::runtime_error(
+        "GRIB does not support rotated latlon areas where longitude is also rotated");
+
+  gset(gribHandle, "longitudeOfSouthernPoleInDegrees", a.SouthernPole().X());
+  gset(gribHandle, "latitudeOfSouthernPoleInDegrees", a.SouthernPole().Y());
+
+#endif  
 
   // DUMP(gribHandle, "geography");
 
@@ -559,6 +579,11 @@ void set_stereographic_geometry(NFmiFastQueryInfo &theInfo,
   gset(gribHandle, "DxInMetres", dx);
   gset(gribHandle, "DyInMetres", dy);
 
+    gset(gribHandle, "jScansPositively", 1);
+  gset(gribHandle, "iScansNegatively", 0);
+
+#ifdef WGS84  
+
   auto *a = theInfo.Area();
 
   auto clon = a->ProjInfo().getDouble("lon_0");
@@ -592,10 +617,34 @@ void set_stereographic_geometry(NFmiFastQueryInfo &theInfo,
     // "scaleFactorOfMinorAxisOfOblateSpheroidEarth"
     // "scaledValueOfMinorAxisOfOblateSpheroidEarth"
   }
+  
+#else
 
-  gset(gribHandle, "jScansPositively", 1);
-  gset(gribHandle, "iScansNegatively", 0);
+  const NFmiStereographicArea *a = dynamic_cast<const NFmiStereographicArea *>(theInfo.Area());
 
+  double lon_0 = a->CentralLongitude();
+  double lat_0 = a->CentralLatitude();
+  double lat_ts = a->TrueLatitude();
+
+  gset(gribHandle, "orientationOfTheGridInDegrees", lon_0);
+
+  if (options.grib2)
+    gset(gribHandle, "LaDInDegrees", lat_ts);
+  else if (lat_ts != 60)
+    throw std::runtime_error(
+        "GRIB1 true latitude can only be 60 for polar stereographic projections with grib_api "
+                "library");
+
+  if (lat_0 != 90 && lat_0 != -90)
+    throw std::runtime_error("GRIB format supports only polar stereographic projections");
+
+  if (lat_0 != 90)
+    throw std::runtime_error("Only N-pole polar stereographic projections are supported");
+  
+  
+#endif
+
+ 
   // DUMP(gribHandle,"geography");
 
   theValueArray.resize(nx * ny);  // tehd‰‰ datan siirto taulusta oikean kokoinen
@@ -695,6 +744,7 @@ static void set_geometry(NFmiFastQueryInfo &theInfo,
                          grib_handle *gribHandle,
                          std::vector<double> &theValueArray)
 {
+#ifdef WGS84
   auto id = theInfo.Area()->DetectClassId();
 
   if (id == kNFmiLatLonArea)
@@ -707,6 +757,36 @@ static void set_geometry(NFmiFastQueryInfo &theInfo,
     set_mercator_geometry(theInfo, gribHandle, theValueArray);
   else
     throw std::runtime_error("Projection '" + theInfo.Area()->ProjStr() + "' is not supported");
+#else
+  switch (theInfo.Area()->ClassId())
+  {
+    case kNFmiLatLonArea:
+      set_latlon_geometry(theInfo, gribHandle, theValueArray);
+      break;
+    case kNFmiRotatedLatLonArea:
+      set_rotated_latlon_geometry(theInfo, gribHandle, theValueArray);
+      break;
+    case kNFmiStereographicArea:
+      set_stereographic_geometry(theInfo, gribHandle, theValueArray);
+      break;
+    case kNFmiMercatorArea:
+      set_mercator_geometry(theInfo, gribHandle, theValueArray);
+      break;
+    case kNFmiEquiDistArea:
+      throw std::runtime_error("Equidistant projection is not supported by GRIB");
+    case kNFmiGnomonicArea:
+      throw std::runtime_error("Gnomonic projection is not supported by GRIB");
+    case kNFmiPKJArea:
+      throw std::runtime_error("PKJ projection is not supported by GRIB");
+    case kNFmiYKJArea:
+      throw std::runtime_error("YKJ projection is not supported by GRIB");
+    case kNFmiKKJArea:
+      throw std::runtime_error("KKJ projection is not supported by GRIB");
+    default:
+      throw std::runtime_error("Unsupported projection in input data");
+  }
+
+#endif
 }
 
 // ----------------------------------------------------------------------

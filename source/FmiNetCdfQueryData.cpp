@@ -6,6 +6,13 @@
 #include <newbase/NFmiQueryDataUtil.h>
 #include <netcdfcpp.h>
 
+
+#ifdef WGS84
+#else
+#include <newbase/NFmiLatLonArea.h>
+#include <newbase/NFmiStereographicArea.h>
+#endif
+
 void FmiTDimVarInfo::CalcTimeList(void)
 {
   itsTimeList.Clear(true);
@@ -721,11 +728,9 @@ void FmiNetCdfQueryData::InitializeStreographicGrid(void)
   const double tlat = (itsProjectionInfo.Latin1 != kFloatMissing) ? itsProjectionInfo.Latin1 : 60;
   const double clon = itsProjectionInfo.LoV;
 
-  double gridWidth = (itsProjectionInfo.Nx - 1) * itsProjectionInfo.Dx;
-  double gridHeight = (itsProjectionInfo.Ny - 1) * itsProjectionInfo.Dy;
-
   NFmiPoint bottomLeftLatlon(itsProjectionInfo.Lo1, itsProjectionInfo.La1);
 
+#ifdef WGS84
   auto proj = fmt::format(
       "+proj=stere +lat_0={} +lat_ts={} +lon_0={} +k=1 +x_0=0 +y_0=0 +R={:.0f} "
       "+units=m +wktext +towgs84=0,0,0 +no_defs",
@@ -734,12 +739,52 @@ void FmiNetCdfQueryData::InitializeStreographicGrid(void)
       clon,
       kRearth);
 
-#ifdef WGS84
-  // TODO: should extract correct sphere from the NetCDF metadata
-#endif
   auto *area =
       NFmiArea::CreateFromCornerAndSize(proj, "FMI", bottomLeftLatlon, gridWidth, gridHeight);
+
   itsGrid = NFmiGrid(area, itsProjectionInfo.Nx, itsProjectionInfo.Ny);
+
+#else
+
+  NFmiPoint topRightLatlon(itsProjectionInfo.Lo1 + 1,
+                           itsProjectionInfo.La1 + 1);  // temporary fake corner
+
+  NFmiStereographicArea tmpArea1(bottomLeftLatlon,
+                                 topRightLatlon,
+                                 clon,
+                                 NFmiPoint(0, 0),
+                                 NFmiPoint(1, 1),
+                                 clon,
+                                 tlat);
+  if (itsProjectionInfo.Nx > 1 && itsProjectionInfo.Ny > 1)
+  {
+    double gridWidth = (itsProjectionInfo.Nx - 1) * itsProjectionInfo.Dx;
+    double gridHeight = (itsProjectionInfo.Ny - 1) * itsProjectionInfo.Dy;
+    NFmiPoint worldXyBottomLeft = tmpArea1.WorldXYPlace();
+    NFmiPoint worldXyTopRight(worldXyBottomLeft);
+    worldXyTopRight.X(worldXyTopRight.X() + gridWidth);
+    worldXyTopRight.Y(worldXyTopRight.Y() + gridHeight);
+    NFmiPoint realTopRightLatlon = tmpArea1.WorldXYToLatLon(worldXyTopRight);
+    NFmiStereographicArea realArea(bottomLeftLatlon,
+                                   realTopRightLatlon,
+                                   clon,
+                                   NFmiPoint(0, 0),
+                                   NFmiPoint(1, 1),
+                                   clat,
+                                   tlat);
+
+    itsGrid = NFmiGrid(&realArea, itsProjectionInfo.Nx, itsProjectionInfo.Ny);
+  }
+  else
+    throw std::runtime_error(
+        "Error in FmiNetCdfQueryData::InitializeStreographicGrid - unable to make grid or projection "
+        "for data.");
+#endif
+
+
+
+
+
 }
 
 // Jos ei löytynyt lat-lon asetuksia, pitää etsiä, löytyykö muita projektio määrityksiä.

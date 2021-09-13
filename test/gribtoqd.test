@@ -2,13 +2,26 @@
 
 if [ -x ../gribtoqd ]; then
   PROG=../gribtoqd
+  QDINFO=../qdinfo
 else
   PROG=gribtoqd
+  QDINFO=qdinfo
 fi
+
+grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h
+wgs84=$(expr $? == 0)
 
 for f in data/grib/*; do
     name=$(basename $f)
     resultfile=results/gribtoqd/${name}.sqd
+
+    if [[ $wgs84 == 1 ]]; then
+	wgs84resultfile=${resultfile}.wgs84
+	if [ -e $wgs84resultfile ]; then
+	    resultfile=$wgs84resultfile
+	fi
+    fi
+
     tmpfile=${resultfile}.tmp
     $PROG -c ../cnf/grib.conf -o $tmpfile $f
     cmp --quiet $resultfile $tmpfile
@@ -19,8 +32,8 @@ for f in data/grib/*; do
 	rm -f $tmpfile
     else
 	echo FAILED
-	../qdinfo -a -q $resultfile > ${tmpfile}.info_ok
-	../qdinfo -a -q $tmpfile > ${tmpfile}.info_fail
+	$QDINFO -a -q $resultfile > ${tmpfile}.info_ok
+	$QDINFO -a -q $tmpfile > ${tmpfile}.info_fail
 #	diff ${tmpfile}.info_ok ${tmpfile}.info_fail
     fi
 done

@@ -2,6 +2,9 @@
 
 $program = (-x "../qdarea" ? "../qdarea" : "qdarea");
 
+system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h');
+$wgs84 = 1-($? >> 8);
+
 $coordinatefile = "conf/coordinates.txt";
 $results = "results";
 $data = "data/qdarea.sqd";
@@ -90,6 +93,14 @@ sub DoTest
     $usednames{$name} = 1;
 
     my($resultfile) = "qdarea_$name";
+
+    if($wgs84)
+    {
+	my($wgs84resultfile) = "${resultfile}.wgs84";
+	if(-e "$results/$wgs84resultfile")
+	{  $resultfile = $wgs84resultfile; }
+    }
+
     my($tmpfile) = "${resultfile}.tmp";
     $cmd = "$program -c $coordinatefile $arguments -q $data 2>&1";
 

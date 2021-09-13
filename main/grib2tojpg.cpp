@@ -29,6 +29,13 @@
 #include <sstream>
 #include <stdexcept>
 
+#ifndef WGS84
+#include <newbase/NFmiLatLonArea.h>
+#include <newbase/NFmiMercatorArea.h>
+#include <newbase/NFmiRotatedLatLonArea.h>
+#include <newbase/NFmiStereographicArea.h>
+#endif
+
 extern "C"
 {
 #include <jpeglib.h>
@@ -612,7 +619,11 @@ static NFmiArea *CreateLatlonArea(grib_handle *theGribHandle, bool &doGlobeFix)
     else
       doGlobeFix = false;
 
+#ifdef WGS84
     return NFmiAreaTools::CreateLegacyLatLonArea(NFmiPoint(Lo1, La1), NFmiPoint(Lo2, La2));
+#else
+    return new NFmiLatLonArea(NFmiPoint(Lo1, FmiMin(La1, La2)), NFmiPoint(Lo2, FmiMax(La1, La2)));
+#endif    
   }
   else
     throw runtime_error("Error: Unable to retrieve latlon-projection information from grib.");
@@ -638,7 +649,11 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
     La2 /= grib1divider;
     Lo2 /= grib1divider;
 
+#ifdef WGS84
     return NFmiAreaTools::CreateLegacyMercatorArea(NFmiPoint(Lo1, La1), NFmiPoint(Lo2, La2));
+#else
+    return new NFmiMercatorArea(NFmiPoint(Lo1, FmiMin(La1, La2)), NFmiPoint(Lo2, FmiMax(La1, La2)));
+#endif    
   }
   else if (status1 == 0 && status2 == 0 && status5 == 0)
   {
@@ -659,10 +674,24 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
 
     if (status9 == 0 && status6 == 0 && status7 == 0 && status8 == 0)
     {
+#ifdef WGS84      
       auto proj =
           fmt::format("+proj=merc +R={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs", kRearth);
       return NFmiArea::CreateFromCornerAndSize(
           proj, "FMI", NFmiPoint(Lo1, La1), (nx - 1) * dx / 1000, (ny - 1) * dy + 1000);
+#else
+      NFmiPoint bottomLeft(Lo1, La1);
+      NFmiPoint dummyTopRight(Lo1 + 5, La1 + 5);
+      NFmiMercatorArea dummyArea(bottomLeft, dummyTopRight);
+      NFmiPoint xyBottomLeft = dummyArea.LatLonToWorldXY(dummyArea.BottomLeftLatLon());
+      NFmiPoint xyTopRight(xyBottomLeft);
+      xyTopRight.X(xyTopRight.X() + (nx - 1) * dx / 1000.);
+      xyTopRight.Y(xyTopRight.Y() + (ny - 1) * dy / 1000.);
+
+      NFmiPoint topRight(dummyArea.WorldXYToLatLon(xyTopRight));
+
+      return new NFmiMercatorArea(bottomLeft, topRight);
+#endif      
     }
   }
   throw runtime_error("Error: Unable to retrieve mercator-projection information from grib.");
@@ -697,7 +726,11 @@ static void CalcCroppedGrid(GridRecordData *theGridRecordData)
   NFmiPoint latlon2 = grid.GridToLatLon(xy2);
   NFmiArea *newArea = 0;
   if (theGridRecordData->itsOrigGrid.itsArea->ClassId() == kNFmiLatLonArea)
+#ifdef WGS84
     newArea = NFmiAreaTools::CreateLegacyLatLonArea(latlon1, latlon2);
+#else
+    newArea = new NFmiLatLonArea(latlon1, latlon2);
+#endif
   else
     throw runtime_error("Error: CalcCroppedGrid doesn't support this projection yet.");
 
@@ -728,11 +761,9 @@ static void FillGridInfoFromGribHandle(grib_handle *theGribHandle,
       case 0:  // 0 = latlonArea
         area = ::CreateLatlonArea(theGribHandle, doGlobeFix);
         break;
-#ifdef WGS84
       case 20:  // 0 = mercatorArea
         area = ::CreateMercatorArea(theGribHandle);
         break;
-#endif
       default:
         throw runtime_error(
             "Error: Handling of projection found from grib is not implemented yet.");

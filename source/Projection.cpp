@@ -12,8 +12,20 @@
 #include <imagine/NFmiPath.h>
 #include <newbase/NFmiGlobals.h>
 #include <newbase/NFmiPoint.h>
-
 #include <stdexcept>
+
+#ifdef WGS84
+#include <newbase/NFmiAreaTools.h>
+#else
+#include <newbase/NFmiEquidistArea.h>
+#include <newbase/NFmiGlobals.h>
+#include <newbase/NFmiGnomonicArea.h>
+#include <newbase/NFmiLatLonArea.h>
+#include <newbase/NFmiMercatorArea.h>
+#include <newbase/NFmiPoint.h>
+#include <newbase/NFmiStereographicArea.h>
+#include <newbase/NFmiYKJArea.h>
+#endif
 
 using namespace Imagine;
 
@@ -249,6 +261,8 @@ boost::shared_ptr<NFmiArea> Projection::area(unsigned int theWidth, unsigned int
   NFmiPoint topleftxy = NFmiPoint(0, 0);
   NFmiPoint bottomrightxy = NFmiPoint(theWidth, theHeight);
 
+
+#ifdef WGS84  
   std::string sphere = itsPimple->itsEllipsoid;
 
   if (sphere.empty()) throw std::runtime_error("Reference ellipsoid not set");
@@ -321,6 +335,65 @@ boost::shared_ptr<NFmiArea> Projection::area(unsigned int theWidth, unsigned int
 
   proj->SetXYArea(NFmiRect(topleftxy, bottomrightxy));
 
+#else
+  if (itsPimple->itsType == "latlon")
+    proj.reset(new NFmiLatLonArea(bottomleft, topright, topleftxy, bottomrightxy));
+
+  else if (itsPimple->itsType == "ykj")
+    proj.reset(new NFmiYKJArea(bottomleft, topright, topleftxy, bottomrightxy));
+
+  else if (itsPimple->itsType == "mercator")
+    proj.reset(new NFmiMercatorArea(bottomleft, topright, topleftxy, bottomrightxy));
+
+  else if (itsPimple->itsType == "stereographic")
+    proj.reset(new NFmiStereographicArea(bottomleft,
+                                         topright,
+                                         itsPimple->itsCentralLongitude,
+                                         topleftxy,
+                                         bottomrightxy,
+                                         itsPimple->itsCentralLatitude,
+                                         itsPimple->itsTrueLatitude));
+  else if (itsPimple->itsType == "gnomonic")
+    proj.reset(new NFmiGnomonicArea(bottomleft,
+                                    topright,
+                                    itsPimple->itsCentralLongitude,
+                                    topleftxy,
+                                    bottomrightxy,
+                                    itsPimple->itsCentralLatitude,
+                                    itsPimple->itsTrueLatitude));
+
+  else if (itsPimple->itsType == "equidist")
+    proj.reset(new NFmiEquidistArea(bottomleft,
+                                    topright,
+                                    itsPimple->itsCentralLongitude,
+                                    topleftxy,
+                                    bottomrightxy,
+                                    itsPimple->itsCentralLatitude));
+  else
+  {
+    std::string msg = "Unrecognized projection type ";
+    msg += itsPimple->itsType;
+    msg += " in Projection::project()";
+    throw std::runtime_error(msg);
+  }
+
+  // Recalculate topleft and bottom right if center was set
+  if (has_center)
+  {
+    const float pscale = 1000 * itsPimple->itsScale;
+    const NFmiPoint c = proj->LatLonToWorldXY(itsPimple->itsCenter);
+    const NFmiPoint bl(c.X() - pscale * theWidth, c.Y() - pscale * theHeight);
+    const NFmiPoint tr(c.X() + pscale * theWidth, c.Y() + pscale * theHeight);
+
+    const NFmiPoint BL = proj->WorldXYToLatLon(bl);
+    const NFmiPoint TR = proj->WorldXYToLatLon(tr);
+
+    proj.reset(proj->NewArea(BL, TR));
+  }
+  
+#endif  
+
+  
   return proj;
 }
 }  // namespace RadContour

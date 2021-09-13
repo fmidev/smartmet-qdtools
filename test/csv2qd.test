@@ -2,6 +2,9 @@
 
 $program = (-x "../csv2qd" ? "../csv2qd" : "csv2qd");
 
+system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h');
+$wgs84 = 1-($? >> 8);
+
 $results = "results";
 $common = "-S conf/stations.csv -P ../cnf/parameters.csv";
 
@@ -78,6 +81,14 @@ sub DoTest
     $usednames{$name} = 1;
 
     my($resultfile) = "csv2qd_$name";
+
+    if($wgs84)
+    {
+	my($wgs84resultfile) = "${resultfile}.wgs84";
+	if(-e "$results/$wgs84resultfile")
+	{  $resultfile = $wgs84resultfile; }
+    }
+
     my($tmpfile) = "${resultfile}.tmp";
     $cmd = "$program $arguments $results/$tmpfile";
     

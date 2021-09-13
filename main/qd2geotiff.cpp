@@ -38,7 +38,12 @@ GeomDefinedType GeoTiffQD::ConverQD2GeoTiff(string aNameVersion,
   GeomDefinedType geomDefinedType = kUndefinedGeom;
 
   const NFmiArea *area = theData->HPlaceDescriptor().Area();
+
+#ifdef WGS84
   auto id = area->DetectClassId();
+#else
+  auto id = area->ClassId();
+#endif
 
   if (id == kNFmiLatLonArea)
     ConvertToGeoTiff(aNameVersion, theData, theExternal, geomDefinedType = kLatLonGeom);
@@ -53,6 +58,7 @@ GeomDefinedType GeoTiffQD::ConverQD2GeoTiff(string aNameVersion,
     if (area->ProjInfo().getDouble("lat_0") == 20.0)
       geomDefinedType = kStereoGeom20;
 #else
+    const auto *supportedStereoArea = dynamic_cast<const NFmiStereographicArea *>(area);
     if (supportedStereoArea->CentralLongitude() == 10)
       geomDefinedType = kStereoGeom10;
     if (supportedStereoArea->CentralLongitude() == 20)
@@ -220,11 +226,19 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
   {
     if (geomDefinedType == kRotatedGeom)
     {
+#ifdef WGS84
       double tlLon = area->WorldRect().Left();
       double tlLat = area->WorldRect().Top();
-
       double aLon = area->XScale() / width;
       double aLat = area->YScale() / height;
+#else
+      const NFmiRotatedLatLonArea *rotLatLon = dynamic_cast<const NFmiRotatedLatLonArea *>(area);
+      double tlLon = rotLatLon->ToRotLatLon(rotLatLon->TopLeftLatLon()).X();
+      double tlLat = rotLatLon->ToRotLatLon(rotLatLon->TopLeftLatLon()).Y();
+
+      double aLon = rotLatLon->XScale() / width;
+      double aLat = rotLatLon->YScale() / height;
+#endif
 
       // double adfGeoTransformTmp[6] = {tlLon, aLon, 0, tlLat, 0, aLat};  // decree
       // adfGeoTransform = adfGeoTransformTmp;
@@ -370,17 +384,20 @@ int *GeoTiffQD::fillIntRasterByQD(NFmiFastQueryInfo *theData,
     dataSecond = theSecondData->Values();
   }
 
+#ifdef WGS84
   bool is_rotlatlon = (area->ProjInfo().getString("proj") == std::string("ob_tran") &&
                        area->ProjInfo().getString("o_proj") == std::string("eqc") &&
                        area->ProjInfo().getString("towgs84") == std::string("0,0,0"));
+#else
+  const NFmiRotatedLatLonArea *rotArea = dynamic_cast<const NFmiRotatedLatLonArea*>(area);
+  bool is_rotlatlon = rotArea != nullptr;
+#endif
 
   printf("Processing (int) with scale %f , QD to Gtiff raster convert for parameter %li\n",
          itsScale,
          theData->Param().GetParamIdent());
   int ref = height / 10;
   int refCount = 0;
-
-  // const NFmiRotatedLatLonArea *rotArea = dynamic_cast<const NFmiRotatedLatLonArea*>(area);
 
   for (int y = 0; y < height; y++)
   {
@@ -505,11 +522,14 @@ float *GeoTiffQD::fillFloatRasterByQD(NFmiFastQueryInfo *theData,
   int ref = height / 10;
   int refCount = 0;
 
+#ifdef WGS84
   bool is_rotlatlon = (area->ProjInfo().getString("proj") == std::string("ob_tran") &&
                        area->ProjInfo().getString("o_proj") == std::string("eqc") &&
                        area->ProjInfo().getString("towgs84") == std::string("0,0,0"));
-
-  // const NFmiRotatedLatLonArea *rotArea = dynamic_cast<const NFmiRotatedLatLonArea*>(area);
+#else
+  const NFmiRotatedLatLonArea *rotArea = dynamic_cast<const NFmiRotatedLatLonArea*>(area);
+  bool is_rotlatlon = rotArea != nullptr;
+#endif
 
   for (int y = 0; y < height; y++)
   {

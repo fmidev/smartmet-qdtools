@@ -525,8 +525,12 @@ NFmiHPlaceDescriptor MakeHPlaceDescriptor(NFmiFastQueryInfo& theQ,
   NFmiPoint bl(theQ.Grid()->GridToWorldXY(NFmiPoint(x1, y1)));
   NFmiPoint tr(theQ.Grid()->GridToWorldXY(NFmiPoint(x2, y2)));
 
+#ifdef WGS84  
   boost::shared_ptr<NFmiArea> area(
       NFmiArea::CreateFromBBox(theQ.Grid()->Area()->SpatialReference(), bl, tr));
+#else
+  boost::shared_ptr<NFmiArea> area(theQ.Grid()->Area()->CreateNewArea(bl, tr));
+#endif  
 
   if (area.get() == 0)
     throw runtime_error("Failed to create the new projection");

@@ -34,6 +34,12 @@
 
 #ifdef WGS84
 #include <newbase/NFmiAreaTools.h>
+#else
+#include <newbase/NFmiLambertConformalConicArea.h>
+#include <newbase/NFmiLatLonArea.h>
+#include <newbase/NFmiMercatorArea.h>
+#include <newbase/NFmiRotatedLatLonArea.h>
+#include <newbase/NFmiStereographicArea.h>
 #endif
 
 using namespace std;
@@ -1462,7 +1468,11 @@ vector<pair<NFmiGrid, FmiLevelType> > CalcGrids2(
       ::CalcAreaConnection(connectionEdgeInfo, bottomLeft, topRight, xSize, ySize);
     }
 
+#ifdef WGS84
     auto *area = NFmiAreaTools::CreateLegacyLatLonArea(bottomLeft, topRight);
+#else
+    auto *area = new NFmiLatLonArea(bottomLeft, topRight);
+#endif
 
     NFmiGrid grid(area, xSize, ySize);
     gridVector.push_back(make_pair(grid, leveltype));
@@ -2018,7 +2028,7 @@ NFmiArea *CreateRotatedLatlonArea(grib_handle *theHandle, GribFilterOptions &the
 #ifdef WGS84
   return NFmiAreaTools::CreateLegacyRotatedLatLonArea(bottomleft, topright, southpole);
 #else
-  NFmiRotatedLatLonArea rot(bottomleft, topright, pole);
+  NFmiRotatedLatLonArea rot(bottomleft, topright, southpole);
   return new NFmiRotatedLatLonArea(
       rot.ToRegLatLon(bottomleft), rot.ToRegLatLon(topright), southpole);
 #endif
@@ -2158,8 +2168,17 @@ NFmiArea *CreatePolarStereographicArea(grib_handle *theHandle)
       Lov,
       kRearth);
 
+#ifdef WGS84
   return NFmiArea::CreateFromCornerAndSize(
       proj, "FMI", bottom_left, width_in_meters, height_in_meters);
+#else
+
+  NFmiPoint top_left_xy(0, 0);
+  NFmiPoint top_right_xy(1, 1);
+
+  return new NFmiStereographicArea(
+      bottom_left, width_in_meters, height_in_meters, Lov, top_left_xy, top_right_xy, 90, Lad);
+#endif
 }
 
 // ----------------------------------------------------------------------
@@ -2216,6 +2235,8 @@ NFmiArea *CreateLambertArea(grib_handle *theHandle)
 
   NFmiPoint bottom_left(Lo1, La1);
 
+#ifdef WGS84
+
   double width_in_meters = (nx - 1) * dx / 1000.0;
   double height_in_meters = (ny - 1) * dy / 1000.0;
 
@@ -2230,6 +2251,17 @@ NFmiArea *CreateLambertArea(grib_handle *theHandle)
 
   return NFmiArea::CreateFromCornerAndSize(
       proj, "FMI", bottom_left, width_in_meters, height_in_meters);
+#else
+
+  std::unique_ptr<NFmiArea> tmparea(new NFmiLambertConformalConicArea(
+      bottom_left, bottom_left + NFmiPoint(1, 1), Lov, Lad, Lad1, Lad2));
+  auto worldxy1 = tmparea->LatLonToWorldXY(bottom_left);
+  auto worldxy2 = worldxy1 + NFmiPoint((nx - 1) * dx, (ny - 1) * dy);
+  auto top_right = tmparea->WorldXYToLatLon(worldxy2);
+
+  return new NFmiLambertConformalConicArea(bottom_left, top_right, Lov, Lad, Lad1, Lad2);
+
+#endif
 }
 
 // laske sellainen gridi, joka menee originaali hilan hilapisteikön mukaan, mutta peittää sen
@@ -2262,8 +2294,12 @@ void CalcCroppedGrid(GridRecordData *theGridRecordData)
   NFmiArea *newArea = 0;
   if (theGridRecordData->itsOrigGrid.itsArea->ClassId() == kNFmiLatLonArea)
   {
+#ifdef WGS84
     auto proj = fmt::format("+proj=eqc +R={:.0f} +wktext +over +no_defs +towgs84=0,0,0", kRearth);
     newArea = NFmiArea::CreateFromBBox(proj, latlon1, latlon2);
+#else
+    newArea = new NFmiLatLonArea(latlon1, latlon2);
+#endif
   }
   else
     throw runtime_error("CalcCroppedGrid doesn't support this projection yet.");
@@ -2680,9 +2716,13 @@ NFmiArea *GetGribArea(grib_handle *theHandle)
     if (lon1 >= 0 && lon2 < lon1 && direction > 0)
       lon1 -= 360;
 
-    // return NFmiArea::CreateFromCorners(proj, earth_proj, NFmiPoint(lon1, lat1), NFmiPoint(lon2,
-    // lat2));
+      // return NFmiArea::CreateFromCorners(proj, earth_proj, NFmiPoint(lon1, lat1), NFmiPoint(lon2,
+      // lat2));
+#ifdef WGS84
     return NFmiArea::CreateFromCorners(proj, "WGS84", NFmiPoint(lon1, lat1), NFmiPoint(lon2, lat2));
+#else
+    TODO();
+#endif
   }
 
   if (proj_name == "rotated_ll" || proj_name == "rotated_gg")
@@ -2704,9 +2744,10 @@ NFmiArea *GetGribArea(grib_handle *theHandle)
     if (rotation != 0)
       throw std::runtime_error("Rotated latlon rotation parameter nonzero, what to do???");
 
-    // the legacy corners are in rotated spherical latlon coordinate.
-    // the +to_meter setting is necessary to avoid radians
+      // the legacy corners are in rotated spherical latlon coordinate.
+      // the +to_meter setting is necessary to avoid radians
 
+#ifdef WGS84
     std::string sphere;
     if (earth_shape.a == earth_shape.b)
       sphere = fmt::format(
@@ -2727,6 +2768,9 @@ NFmiArea *GetGribArea(grib_handle *theHandle)
           earth_shape.b);
 
     return NFmiArea::CreateFromCorners(proj, sphere, NFmiPoint(lon1, lat1), NFmiPoint(lon2, lat2));
+#else
+    TODO();
+#endif
   }
 
   if (proj_name == "mercator")
@@ -2750,8 +2794,12 @@ NFmiArea *GetGribArea(grib_handle *theHandle)
       lat2 = static_cast<int>(lat2);
     }
 
+#ifdef WGS84
     return NFmiArea::CreateFromCorners(
         proj, earth_proj, NFmiPoint(lon1, lat1), NFmiPoint(lon2, lat2));
+#else
+    TODO()
+#endif
   }
 
   if (proj_name == "polar_stereographic" || proj_name == "lambert" || proj_name == "albers" ||
@@ -2777,8 +2825,12 @@ NFmiArea *GetGribArea(grib_handle *theHandle)
       dy *= 1000;
     }
 
+#ifdef WGS84
     return NFmiArea::CreateFromCornerAndSize(
         proj, earth_proj, NFmiPoint(lon1, lat1), dx * (ni - 1), dy * (nj - 1));
+#else
+    TODO();
+#endif
   }
 
   if (proj_name == "space_view")
@@ -4505,6 +4557,7 @@ NFmiArea *CreateStereographicArea(unsigned char *gds, unsigned char *bds)
   double centralLatitude = GDS_Polar_pole(gds) == 0 ? 90. : -90;
   double trueLatitude = GDS_Polar_pole(gds) == 0 ? 60. : -60;
 
+#ifdef WGS84
   auto proj = fmt::format(
       "+proj=stere +lat_0={} +lat_ts={} +lon_0={} +R={:.0f} +units=m +wktext "
       "+towgs84=0,0,0 +no_defs",
@@ -4514,6 +4567,19 @@ NFmiArea *CreateStereographicArea(unsigned char *gds, unsigned char *bds)
       kRearth);
 
   return NFmiArea::CreateFromCornerAndSize(proj, "FMI", bl, widthInMeters, heightInMeters);
+#else
+  NFmiPoint topLeftXY(0.f, 0.f);
+  NFmiPoint bottomRightXY(1.f, 1.f);
+
+  return new NFmiStereographicArea(bl,
+                                   widthInMeters,
+                                   heightInMeters,
+                                   orientation,
+                                   topLeftXY,
+                                   bottomRightXY,
+                                   centralLatitude,
+                                   trueLatitude);
+#endif
 }
 
 NFmiArea *CreateRotatedLatlonArea(unsigned char *gds, unsigned char * /* bds */, bool fDoYAxisFlip)
@@ -4528,6 +4594,7 @@ NFmiArea *CreateRotatedLatlonArea(unsigned char *gds, unsigned char * /* bds */,
   NFmiPoint tr(lo2, la2);
   NFmiPoint southernPole(0.001 * GDS_RotLL_LoSP(gds), 0.001 * GDS_RotLL_LaSP(gds));
 
+#ifdef WGS84
   auto proj = fmt::format(
       "+to_meter=.0174532925199433 +proj=ob_tran +o_proj=eqc +o_lon_p={} +o_lat_p={} "
       "+R={:.0f} +wktext +over +towgs84=0,0,0 +no_defs",
@@ -4536,6 +4603,12 @@ NFmiArea *CreateRotatedLatlonArea(unsigned char *gds, unsigned char * /* bds */,
       kRearth);
 
   return NFmiArea::CreateFromBBox(proj, bl, tr);
+#else
+  NFmiRotatedLatLonArea tmpArea(bl, tr, southernPole);
+  NFmiPoint real_bl(tmpArea.ToRegLatLon(bl));
+  NFmiPoint real_tr(tmpArea.ToRegLatLon(tr));
+  return new NFmiRotatedLatLonArea(real_bl, real_tr, southernPole);
+#endif
 }
 
 NFmiArea *CreateMercatorArea(unsigned char *gds, unsigned char * /* bds */, bool fDoYAxisFlip)
@@ -4549,8 +4622,12 @@ NFmiArea *CreateMercatorArea(unsigned char *gds, unsigned char * /* bds */, bool
   NFmiPoint bl(lo1, la1);
   NFmiPoint tr(lo2, la2);
 
+#ifdef WGS84
   auto proj = fmt::format("+proj=merc +R={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs", kRearth);
   return NFmiArea::CreateFromCorners(proj, "FMI", bl, tr);
+#else
+  return new NFmiMercatorArea(bl, tr);
+#endif
 }
 
 NFmiArea *CreateArea(unsigned char *gds,

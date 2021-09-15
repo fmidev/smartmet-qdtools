@@ -479,7 +479,7 @@ void ReportProjection(NFmiFastQueryInfo *q)
 
   cout << "projection\t\t= " << area->ClassName() << endl;
 
-#ifdef WGS84  
+#ifdef WGS84
   auto tl = area->ToNativeLatLon(area->TopLeft());
   auto tr = area->ToNativeLatLon(area->TopRight());
   auto bl = area->ToNativeLatLon(area->BottomLeft());
@@ -489,7 +489,7 @@ void ReportProjection(NFmiFastQueryInfo *q)
   auto tr = area->TopRightLatLon();
   auto bl = area->BottomLeftLatLon();
   auto br = area->BottomRightLatLon();
-#endif  
+#endif
 
   cout << "top left lonlat\t\t= " << tl.X() << ',' << tl.Y() << endl;
   cout << "top right lonlat\t= " << tr.X() << ',' << tr.Y() << endl;
@@ -515,8 +515,15 @@ void ReportProjection(NFmiFastQueryInfo *q)
        << std::min(rect.Bottom(), rect.Top()) << " " << std::max(rect.Bottom(), rect.Top()) << "]"
        << std::setprecision(6) << endl
        << endl;
-#endif
+#else
+  cout << "center lonlat\t\t= " << area->CenterLatLon().X() << ',' << area->CenterLatLon().Y()
+       << endl
+       << std::setprecision(9) << "bbox\t\t\t= [" << rect.Left() << " " << rect.Right() << " "
+       << std::min(rect.Bottom(), rect.Top()) << " " << std::max(rect.Bottom(), rect.Top()) << "]"
+       << std::setprecision(6) << endl
+       << endl;
 
+#endif
 
 #ifdef WGS84
 
@@ -544,6 +551,8 @@ void ReportProjection(NFmiFastQueryInfo *q)
 
 #else
 
+  cout << "fmiarea\t= " << area->AreaStr() << endl;
+
   const auto wkt = area->WKT();
   OGRSpatialReference crs;
   if (crs.SetFromUserInput(wkt.c_str()) != OGRERR_NONE)
@@ -556,8 +565,6 @@ void ReportProjection(NFmiFastQueryInfo *q)
   CPLFree(proj4);
 
 #endif
-
-
 
 #ifdef WGS84
   std::list<std::string> srs_params{SRS_PP_CENTRAL_MERIDIAN,
@@ -611,11 +618,9 @@ void ReportProjection(NFmiFastQueryInfo *q)
        << "bottom\t= " << area->Bottom() << endl
        << endl;
 
-
+  const NFmiGrid *grid = q->Grid();
 
 #ifdef WGS84
-
-  const NFmiGrid *grid = q->Grid();
 
   if (grid)
   {
@@ -658,6 +663,21 @@ void ReportProjection(NFmiFastQueryInfo *q)
   }
 
 #else
+
+  if (grid)
+  {
+    cout << "xnumber\t\t= " << grid->XNumber() << endl
+         << "ynumber\t\t= " << grid->YNumber() << endl
+         << "dx\t\t= " << area->WorldXYWidth() / grid->XNumber() / 1000.0 << " km" << endl
+         << "dy\t\t= " << area->WorldXYHeight() / grid->YNumber() / 1000.0 << " km" << endl
+         << endl;
+  }
+
+  cout << "xywidth\t\t= " << area->WorldXYWidth() / 1000.0 << " km" << endl
+       << "xyheight\t= " << area->WorldXYHeight() / 1000.0 << " km" << endl
+       << "aspectratio\t= " << area->WorldXYAspectRatio() << endl
+       << endl;
+
   unsigned long classid = area->ClassId();
 
   switch (classid)
@@ -713,8 +733,6 @@ void ReportProjection(NFmiFastQueryInfo *q)
   }
 
 #endif
-
-
 }
 
 // ----------------------------------------------------------------------

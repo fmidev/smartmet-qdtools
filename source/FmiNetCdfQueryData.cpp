@@ -6,7 +6,6 @@
 #include <newbase/NFmiQueryDataUtil.h>
 #include <netcdfcpp.h>
 
-
 #ifdef WGS84
 #else
 #include <newbase/NFmiLatLonArea.h>
@@ -20,7 +19,8 @@ void FmiTDimVarInfo::CalcTimeList(void)
   {
     NFmiMetTime aTime = itsEpochTime;
     long changeByMinutesValue = itsOffsetValues[i];
-    if (itsTimeOffsetType == kFmiNcSeconds) changeByMinutesValue /= 60;
+    if (itsTimeOffsetType == kFmiNcSeconds)
+      changeByMinutesValue /= 60;
     aTime.ChangeByMinutes(changeByMinutesValue);
     itsTimeList.Add(new NFmiMetTime(aTime));
   }
@@ -37,7 +37,10 @@ FmiNcMetaData::FmiNcMetaData(bool useSurfaceInfo)
 {
 }
 
-FmiNcMetaData::~FmiNcMetaData(void) { delete itsMetaInfo; }
+FmiNcMetaData::~FmiNcMetaData(void)
+{
+  delete itsMetaInfo;
+}
 void FmiNcMetaData::MakeMetaInfo(FmiTDimVarInfo &theTimeInfo, NFmiGrid &theGrid)
 {
   delete itsMetaInfo;
@@ -135,7 +138,8 @@ static NFmiQueryData *MakeQueryData(NcFile &theNcFile,
               float value = vals->as_float(counter);
               // jos ei ole fill-value, laitetaan arvo queryDataan, jos oli, jätetään qDatan missing
               // arvo voimaan (data luodan alustettuna puuttuvilla arvoilla)
-              if (value != theVarInfos[i].itsFillValue) fInfo.FloatValue(value);
+              if (value != theVarInfos[i].itsFillValue)
+                fInfo.FloatValue(value);
               counter++;
             }
           }
@@ -149,7 +153,8 @@ static NFmiQueryData *MakeQueryData(NcFile &theNcFile,
 
 static void AddToVector(std::vector<NFmiQueryData *> &theQDataVec, NFmiQueryData *theQData)
 {
-  if (theQData) theQDataVec.push_back(theQData);
+  if (theQData)
+    theQDataVec.push_back(theQData);
 }
 
 std::vector<NFmiQueryData *> FmiNetCdfQueryData::CreateQueryDatas(const std::string &theNcFileName)
@@ -242,7 +247,8 @@ void FmiNetCdfQueryData::MakeWantedParamBag(void)
 
 void FmiNetCdfQueryData::MakeWantedGrid(void)
 {
-  if (itsGrid.Area() != 0) return;  // jos lat-lon projektiosta poikkeava, hila on jo rakennettu
+  if (itsGrid.Area() != 0)
+    return;  // jos lat-lon projektiosta poikkeava, hila on jo rakennettu
   size_t xSize = itsXInfo.itsValues.size();
   size_t ySize = itsYInfo.itsValues.size();
   if (xSize >= 2 && ySize >= 2)
@@ -343,7 +349,10 @@ static NFmiMetTime GetEpochTime(const std::string &theEpochTimeStr)
   throw std::runtime_error("Error in GetEpochTime - unknown error.");
 }
 
-void FmiNetCdfQueryData::CalcTimeList(void) { itsTInfo.CalcTimeList(); }
+void FmiNetCdfQueryData::CalcTimeList(void)
+{
+  itsTInfo.CalcTimeList();
+}
 void FmiNetCdfQueryData::InitTimeDim(NcVar &theVar, const std::string &theVarName, int theIndex)
 {
   if (itsTInfo.itsTimeList.NumberOfItems() > 0)
@@ -384,7 +393,8 @@ void InitXYDim(FmiXYDimVarInfo &theInfo, NcVar &theVar, const std::string &theVa
   theInfo.itsVarName = theVarName;
   theInfo.itsIndex = theIndex;
   NcValues *vals = theVar.values();
-  if (vals == 0) throw std::runtime_error("Error in InitXYDim - no lat/lon or X/Y values found.");
+  if (vals == 0)
+    throw std::runtime_error("Error in InitXYDim - no lat/lon or X/Y values found.");
   for (long i = 0; i < vals->num(); i++)
     theInfo.itsValues.push_back(vals->as_float(i));
   delete vals;
@@ -450,7 +460,8 @@ void FmiNetCdfQueryData::InitZDim(NcVar &theVar,
           "Error in FmiNetCdfQueryData::InitZDim - dimensions for variable was not 1.");
     usedLevelInfo.itsVarName = theVarName;
     NcDim *dim = theVar.get_dim(0);
-    if (dim) usedLevelInfo.itsDimName = dim->name();
+    if (dim)
+      usedLevelInfo.itsDimName = dim->name();
     usedLevelInfo.itsIndex = theIndex;
     usedLevelInfo.itsNcLevelType = theLevelType;
   }
@@ -463,7 +474,8 @@ void FmiNetCdfQueryData::InitZDim(NcVar &theVar,
     usedLevelInfo.itsValues.clear();
     usedLevelInfo.itsVarName = theVarName;
     NcDim *dim = theVar.get_dim(0);
-    if (dim) usedLevelInfo.itsDimName = dim->name();
+    if (dim)
+      usedLevelInfo.itsDimName = dim->name();
     usedLevelInfo.itsIndex = theIndex;
     usedLevelInfo.itsNcLevelType = theLevelType;
 
@@ -495,7 +507,8 @@ FmiParameterName FmiNetCdfQueryData::GetParameterName(NcVar &theVar,
     delete vals;
     delete stdNameAttr;
     std::map<std::string, FmiParameterName>::iterator it = itsKnownParameterMap.find(stdParName);
-    if (it != itsKnownParameterMap.end()) return (*it).second;
+    if (it != itsKnownParameterMap.end())
+      return (*it).second;
   }
   // jos ei löytynyt mitään, palautetaan defaultti par-name
   return theDefaultParName;
@@ -520,7 +533,8 @@ static bool CheckDimName(NcVar &theVar, const std::string &theDimName)
   for (int d = 0; d < theVar.num_dims(); d++)
   {
     NcDim *dim = theVar.get_dim(d);
-    if (dim->name() == theDimName) return true;
+    if (dim->name() == theDimName)
+      return true;
   }
   return false;
 }
@@ -598,11 +612,13 @@ static bool CheckAttribute(NcVar &theVar,
     if (fJustContains)
     {
       size_t pos = attrValue.find(theAttrValue);
-      if (pos != std::string::npos) return true;
+      if (pos != std::string::npos)
+        return true;
     }
     else
     {
-      if (attrValue == theAttrValue) return true;
+      if (attrValue == theAttrValue)
+        return true;
     }
   }
   return false;
@@ -632,8 +648,10 @@ static bool IsLevelVariable(NcVar &theVar, FmiNcLevelType &theLevelTypeOut)
   bool status = false;
   if (theVar.num_dims() == 1)
   {
-    if (::CheckAttribute(theVar, "axis", "Z")) status = true;
-    if (status == false && std::string(theVar.name()) == "level") status = true;
+    if (::CheckAttribute(theVar, "axis", "Z"))
+      status = true;
+    if (status == false && std::string(theVar.name()) == "level")
+      status = true;
     if (status == false && std::string(theVar.name()) == "hybrid")
     {
       suggestedLevelType = kFmiNcHybrid;
@@ -672,9 +690,12 @@ static bool IsTimeVariable(NcVar &theVar)
 {
   if (theVar.num_dims() == 1)
   {
-    if (::CheckAttribute(theVar, "standard_name", "time")) return true;
-    if (::CheckAttribute(theVar, "units", "seconds since", true)) return true;
-    if (::CheckAttribute(theVar, "units", "minutes since", true)) return true;
+    if (::CheckAttribute(theVar, "standard_name", "time"))
+      return true;
+    if (::CheckAttribute(theVar, "units", "seconds since", true))
+      return true;
+    if (::CheckAttribute(theVar, "units", "minutes since", true))
+      return true;
   }
   return false;
 }
@@ -683,7 +704,8 @@ static bool IsXVariable(NcVar &theVar)
 {
   if (::CheckAttribute(theVar, "axis", "X"))
   {
-    if (theVar.num_dims() == 1) return true;
+    if (theVar.num_dims() == 1)
+      return true;
   }
   return false;
 }
@@ -692,12 +714,16 @@ static bool IsYVariable(NcVar &theVar)
 {
   if (::CheckAttribute(theVar, "axis", "Y"))
   {
-    if (theVar.num_dims() == 1) return true;
+    if (theVar.num_dims() == 1)
+      return true;
   }
   return false;
 }
 
-static long GetVarLongValue(NcVar &theVar, long theIndex = 0) { return theVar.as_long(theIndex); }
+static long GetVarLongValue(NcVar &theVar, long theIndex = 0)
+{
+  return theVar.as_long(theIndex);
+}
 static float GetVarFloatValue(NcVar &theVar, long theIndex = 0)
 {
   return theVar.as_float(theIndex);
@@ -707,7 +733,8 @@ static FmiNcProjectionType GetProjectionType(NcVar &theVar)
 {
   std::string projTypeStr = theVar.as_string(0);
   size_t pos = projTypeStr.find("polar stereographic");
-  if (pos != std::string::npos) return kFmiNcStreographic;
+  if (pos != std::string::npos)
+    return kFmiNcStreographic;
 
   throw std::runtime_error(std::string("Error in GetProjectionType - ") + projTypeStr +
                            " is not supported yet.");
@@ -730,61 +757,48 @@ void FmiNetCdfQueryData::InitializeStreographicGrid(void)
 
   NFmiPoint bottomLeftLatlon(itsProjectionInfo.Lo1, itsProjectionInfo.La1);
 
-#ifdef WGS84
-  auto proj = fmt::format(
-      "+proj=stere +lat_0={} +lat_ts={} +lon_0={} +k=1 +x_0=0 +y_0=0 +R={:.0f} "
-      "+units=m +wktext +towgs84=0,0,0 +no_defs",
-      clat,
-      tlat,
-      clon,
-      kRearth);
-
-  auto *area =
-      NFmiArea::CreateFromCornerAndSize(proj, "FMI", bottomLeftLatlon, gridWidth, gridHeight);
-
-  itsGrid = NFmiGrid(area, itsProjectionInfo.Nx, itsProjectionInfo.Ny);
-
-#else
-
-  NFmiPoint topRightLatlon(itsProjectionInfo.Lo1 + 1,
-                           itsProjectionInfo.La1 + 1);  // temporary fake corner
-
-  NFmiStereographicArea tmpArea1(bottomLeftLatlon,
-                                 topRightLatlon,
-                                 clon,
-                                 NFmiPoint(0, 0),
-                                 NFmiPoint(1, 1),
-                                 clon,
-                                 tlat);
   if (itsProjectionInfo.Nx > 1 && itsProjectionInfo.Ny > 1)
   {
     double gridWidth = (itsProjectionInfo.Nx - 1) * itsProjectionInfo.Dx;
     double gridHeight = (itsProjectionInfo.Ny - 1) * itsProjectionInfo.Dy;
+
+#ifdef WGS84
+    auto proj = fmt::format(
+        "+proj=stere +lat_0={} +lat_ts={} +lon_0={} +k=1 +x_0=0 +y_0=0 +R={:.0f} "
+        "+units=m +wktext +towgs84=0,0,0 +no_defs",
+        clat,
+        tlat,
+        clon,
+        kRearth);
+
+    auto *area =
+        NFmiArea::CreateFromCornerAndSize(proj, "FMI", bottomLeftLatlon, gridWidth, gridHeight);
+
+    itsGrid = NFmiGrid(area, itsProjectionInfo.Nx, itsProjectionInfo.Ny);
+
+#else
+
+    NFmiPoint topRightLatlon(itsProjectionInfo.Lo1 + 1,
+                             itsProjectionInfo.La1 + 1);  // temporary fake corner
+
+    NFmiStereographicArea tmpArea1(
+        bottomLeftLatlon, topRightLatlon, clon, NFmiPoint(0, 0), NFmiPoint(1, 1), clon, tlat);
     NFmiPoint worldXyBottomLeft = tmpArea1.WorldXYPlace();
     NFmiPoint worldXyTopRight(worldXyBottomLeft);
     worldXyTopRight.X(worldXyTopRight.X() + gridWidth);
     worldXyTopRight.Y(worldXyTopRight.Y() + gridHeight);
     NFmiPoint realTopRightLatlon = tmpArea1.WorldXYToLatLon(worldXyTopRight);
-    NFmiStereographicArea realArea(bottomLeftLatlon,
-                                   realTopRightLatlon,
-                                   clon,
-                                   NFmiPoint(0, 0),
-                                   NFmiPoint(1, 1),
-                                   clat,
-                                   tlat);
+    NFmiStereographicArea realArea(
+        bottomLeftLatlon, realTopRightLatlon, clon, NFmiPoint(0, 0), NFmiPoint(1, 1), clat, tlat);
 
     itsGrid = NFmiGrid(&realArea, itsProjectionInfo.Nx, itsProjectionInfo.Ny);
+#endif
   }
   else
     throw std::runtime_error(
-        "Error in FmiNetCdfQueryData::InitializeStreographicGrid - unable to make grid or projection "
+        "Error in FmiNetCdfQueryData::InitializeStreographicGrid - unable to make grid or "
+        "projection "
         "for data.");
-#endif
-
-
-
-
-
 }
 
 // Jos ei löytynyt lat-lon asetuksia, pitää etsiä, löytyykö muita projektio määrityksiä.

@@ -1914,6 +1914,7 @@ void DoPossibleGlobalLongitudeFixes(double &Lo1,
  */
 // ----------------------------------------------------------------------
 
+#ifndef WGS84
 NFmiArea *CreateLatlonArea(grib_handle *theHandle, GribFilterOptions &theGribFilterOptions)
 {
   double La1 = 0, Lo1 = 0, La2 = 0, Lo2 = 0;
@@ -1949,11 +1950,6 @@ NFmiArea *CreateLatlonArea(grib_handle *theHandle, GribFilterOptions &theGribFil
   else if (Lo1 > Lo2)
     std::swap(Lo1, Lo2);
 
-#ifdef WGS84
-  NFmiPoint bl(Lo1, La1);
-  NFmiPoint tr(Lo2, La2);
-  return NFmiAreaTools::CreateLegacyLatLonArea(bl, tr);
-#else
   DoPossibleGlobalLongitudeFixes(Lo1, Lo2, theGribFilterOptions);
 
   if (La1 > La2)
@@ -1966,8 +1962,8 @@ NFmiArea *CreateLatlonArea(grib_handle *theHandle, GribFilterOptions &theGribFil
     ::FixPacificLongitude(tr);
 
   return new NFmiLatLonArea(bl, tr, NFmiPoint(0, 0), NFmiPoint(1, 1), usePacificView);
-#endif
 }
+#endif
 
 // ----------------------------------------------------------------------
 /* Version independent keys:
@@ -1989,6 +1985,7 @@ NFmiArea *CreateLatlonArea(grib_handle *theHandle, GribFilterOptions &theGribFil
  */
 // ----------------------------------------------------------------------
 
+#ifndef WGS84
 NFmiArea *CreateRotatedLatlonArea(grib_handle *theHandle, GribFilterOptions &theGribFilterOptions)
 {
   double La1 = 0;
@@ -2012,11 +2009,9 @@ NFmiArea *CreateRotatedLatlonArea(grib_handle *theHandle, GribFilterOptions &the
   long version = 2;
   grib_get_long(theHandle, "editionNumber", &version);
 
-#ifndef WGS84
   DoPossibleGlobalLongitudeFixes(Lo1, Lo2, theGribFilterOptions);
   if (Lo1 > Lo2)
     std::swap(Lo1, Lo2);
-#endif
 
   // Not needed:
   // check_jscan_direction(theHandle);
@@ -2025,14 +2020,11 @@ NFmiArea *CreateRotatedLatlonArea(grib_handle *theHandle, GribFilterOptions &the
   NFmiPoint topright(Lo2, FmiMax(La1, La2));
   NFmiPoint southpole(PoleLon, PoleLat);
 
-#ifdef WGS84
-  return NFmiAreaTools::CreateLegacyRotatedLatLonArea(bottomleft, topright, southpole);
-#else
   NFmiRotatedLatLonArea rot(bottomleft, topright, southpole);
   return new NFmiRotatedLatLonArea(
       rot.ToRegLatLon(bottomleft), rot.ToRegLatLon(topright), southpole);
-#endif
 }
+#endif
 
 // ----------------------------------------------------------------------
 /* Version independent keys:
@@ -2053,6 +2045,7 @@ NFmiArea *CreateRotatedLatlonArea(grib_handle *theHandle, GribFilterOptions &the
  */
 // ----------------------------------------------------------------------
 
+#ifndef WGS84
 NFmiArea *CreateMercatorArea(grib_handle *theHandle)
 {
   double La1 = 0, Lo1 = 0, La2 = 0, Lo2 = 0;
@@ -2062,11 +2055,7 @@ NFmiArea *CreateMercatorArea(grib_handle *theHandle)
   int status4 = grib_get_double(theHandle, "longitudeOfLastGridPointInDegrees", &Lo2);
 
   if (status1 == 0 && status2 == 0 && status3 == 0 && status4 == 0)
-#ifdef WGS84
-    return NFmiAreaTools::CreateLegacyMercatorArea(NFmiPoint(Lo1, La1), NFmiPoint(Lo2, La2));
-#else
     return new NFmiMercatorArea(NFmiPoint(Lo1, FmiMin(La1, La2)), NFmiPoint(Lo2, FmiMax(La1, La2)));
-#endif
 
   if (status1 || status2)
     throw runtime_error("Unable to retrieve mercator-projection information from grib.");
@@ -2089,14 +2078,9 @@ NFmiArea *CreateMercatorArea(grib_handle *theHandle)
   if (status9 || status6 || status7 || status8)
     throw std::runtime_error("Failed to create Mercator area");
 
-    // Not needed:
-    // check_jscan_direction(theHandle);
+  // Not needed:
+  // check_jscan_direction(theHandle);
 
-#ifdef WGS84
-  auto proj = fmt::format("+proj=merc +R={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs", kRearth);
-  return NFmiArea::CreateFromCornerAndSize(
-      proj, "FMI", NFmiPoint(Lo1, La1), (nx - 1) * dx / 1000, (ny - 1) * dy / 1000);
-#else
   NFmiPoint bottomLeft(Lo1, La1);
   NFmiPoint dummyTopRight(Lo1 + 5, La1 + 5);
   NFmiMercatorArea dummyArea(bottomLeft, dummyTopRight);
@@ -2107,8 +2091,8 @@ NFmiArea *CreateMercatorArea(grib_handle *theHandle)
 
   NFmiPoint topRight(dummyArea.WorldXYToLatLon(xyTopRight));
   return new NFmiMercatorArea(bottomLeft, topRight);
-#endif
 }
+#endif
 
 //----------------------------------------------------------------------
 /* Version independent keys:
@@ -2127,6 +2111,7 @@ NFmiArea *CreateMercatorArea(grib_handle *theHandle)
  */
 // ----------------------------------------------------------------------
 
+#ifndef WGS84
 NFmiArea *CreatePolarStereographicArea(grib_handle *theHandle)
 {
   double La1 = 0, Lo1 = 0, Lov = 0, Lad = 0;
@@ -2160,26 +2145,13 @@ NFmiArea *CreatePolarStereographicArea(grib_handle *theHandle)
   double width_in_meters = (nx - 1) * dx / 1000.0;
   double height_in_meters = (ny - 1) * dy / 1000.0;
 
-  auto proj = fmt::format(
-      "+proj=stere +lat_0={} +lat_ts={} +lon_0={} +R={:.0f} +units=m +wktext "
-      "+towgs84=0,0,0 +no_defs",
-      (pcentre == 0 ? 90 : -90),
-      Lad,
-      Lov,
-      kRearth);
-
-#ifdef WGS84
-  return NFmiArea::CreateFromCornerAndSize(
-      proj, "FMI", bottom_left, width_in_meters, height_in_meters);
-#else
-
   NFmiPoint top_left_xy(0, 0);
   NFmiPoint top_right_xy(1, 1);
 
   return new NFmiStereographicArea(
       bottom_left, width_in_meters, height_in_meters, Lov, top_left_xy, top_right_xy, 90, Lad);
-#endif
 }
+#endif
 
 // ----------------------------------------------------------------------
 /* Version independent keys:
@@ -2202,6 +2174,7 @@ NFmiArea *CreatePolarStereographicArea(grib_handle *theHandle)
  */
 // ----------------------------------------------------------------------
 
+#ifndef WGS84
 NFmiArea *CreateLambertArea(grib_handle *theHandle)
 {
   double La1 = 0, Lo1 = 0, Lov = 0, Lad = 0, Lad1 = 0, Lad2 = 0;
@@ -2235,24 +2208,6 @@ NFmiArea *CreateLambertArea(grib_handle *theHandle)
 
   NFmiPoint bottom_left(Lo1, La1);
 
-#ifdef WGS84
-
-  double width_in_meters = (nx - 1) * dx / 1000.0;
-  double height_in_meters = (ny - 1) * dy / 1000.0;
-
-  auto proj = fmt::format(
-      "+proj=lcc +lat_0={} +lon_0={} +lat_1={} +lat_2={} +R={:.0f} +units=m +wktext "
-      "+towgs84=0,0,0 +no_defs",
-      Lad,
-      Lov,
-      Lad1,
-      Lad2,
-      kRearth);
-
-  return NFmiArea::CreateFromCornerAndSize(
-      proj, "FMI", bottom_left, width_in_meters, height_in_meters);
-#else
-
   std::unique_ptr<NFmiArea> tmparea(new NFmiLambertConformalConicArea(
       bottom_left, bottom_left + NFmiPoint(1, 1), Lov, Lad, Lad1, Lad2));
   auto worldxy1 = tmparea->LatLonToWorldXY(bottom_left);
@@ -2260,9 +2215,8 @@ NFmiArea *CreateLambertArea(grib_handle *theHandle)
   auto top_right = tmparea->WorldXYToLatLon(worldxy2);
 
   return new NFmiLambertConformalConicArea(bottom_left, top_right, Lov, Lad, Lad1, Lad2);
-
-#endif
 }
+#endif
 
 // laske sellainen gridi, joka menee originaali hilan hilapisteikön mukaan, mutta peittää sen
 // alueen,
@@ -2669,8 +2623,33 @@ std::string GetProjString(grib_handle *theHandle)
                            " found from grib is not implemented");
 }
 
+#ifdef WGS84
 NFmiArea *GetGribArea(grib_handle *theHandle)
+#else
+NFmiArea *GetGribArea(grib_handle *theHandle, GribFilterOptions &theGribFilterOptions)
+#endif
 {
+  // Establish projection variant
+  std::string proj_name;
+  if (!GetGribStringValue(theHandle, "gridType", proj_name))
+    throw runtime_error("Could not extract gridType from the GRIB metadata");
+
+#ifndef WGS84
+  if (proj_name == "regular_ll")
+    return CreateLatlonArea(theHandle, theGribFilterOptions);
+  if (proj_name == "rotated_ll")
+    return CreateRotatedLatlonArea(theHandle, theGribFilterOptions);
+  if (proj_name == "mercator")
+    return CreateMercatorArea(theHandle);
+  if (proj_name == "polar_stereographic")
+    return CreatePolarStereographicArea(theHandle);
+  if (proj_name == "lambert")
+    return CreateLambertArea(theHandle);
+
+  throw std::runtime_error("Error: Handling of projection " + proj_name +
+                           " found from grib is not implemented yet.");
+#else
+
   const std::string err = "Failed to extract {} for '{}' projection";
 
   // PROJ.4 string
@@ -2680,11 +2659,6 @@ NFmiArea *GetGribArea(grib_handle *theHandle)
   // Note that rotated latlong needs special handling
   auto earth_shape = GetEarthShape(theHandle);
   auto earth_proj = GetEarthProjFull(earth_shape);
-
-  // Establish projection variant
-  std::string proj_name;
-  if (!GetGribStringValue(theHandle, "gridType", proj_name))
-    throw runtime_error("Could not extract gridType from the GRIB metadata");
 
   // Used only for some projections
   double grib2divider = 1;
@@ -2716,13 +2690,7 @@ NFmiArea *GetGribArea(grib_handle *theHandle)
     if (lon1 >= 0 && lon2 < lon1 && direction > 0)
       lon1 -= 360;
 
-      // return NFmiArea::CreateFromCorners(proj, earth_proj, NFmiPoint(lon1, lat1), NFmiPoint(lon2,
-      // lat2));
-#ifdef WGS84
     return NFmiArea::CreateFromCorners(proj, "WGS84", NFmiPoint(lon1, lat1), NFmiPoint(lon2, lat2));
-#else
-    TODO();
-#endif
   }
 
   if (proj_name == "rotated_ll" || proj_name == "rotated_gg")
@@ -2744,10 +2712,9 @@ NFmiArea *GetGribArea(grib_handle *theHandle)
     if (rotation != 0)
       throw std::runtime_error("Rotated latlon rotation parameter nonzero, what to do???");
 
-      // the legacy corners are in rotated spherical latlon coordinate.
-      // the +to_meter setting is necessary to avoid radians
+    // the legacy corners are in rotated spherical latlon coordinate.
+    // the +to_meter setting is necessary to avoid radians
 
-#ifdef WGS84
     std::string sphere;
     if (earth_shape.a == earth_shape.b)
       sphere = fmt::format(
@@ -2768,9 +2735,6 @@ NFmiArea *GetGribArea(grib_handle *theHandle)
           earth_shape.b);
 
     return NFmiArea::CreateFromCorners(proj, sphere, NFmiPoint(lon1, lat1), NFmiPoint(lon2, lat2));
-#else
-    TODO();
-#endif
   }
 
   if (proj_name == "mercator")
@@ -2794,19 +2758,19 @@ NFmiArea *GetGribArea(grib_handle *theHandle)
       lat2 = static_cast<int>(lat2);
     }
 
-#ifdef WGS84
     return NFmiArea::CreateFromCorners(
         proj, earth_proj, NFmiPoint(lon1, lat1), NFmiPoint(lon2, lat2));
-#else
-    TODO()
-#endif
   }
 
   if (proj_name == "polar_stereographic" || proj_name == "lambert" || proj_name == "albers" ||
       proj_name == "equatorial_azimuthal_equidistant" ||
       proj_name == "lambert_azimuthal_equal_area")
   {
-    double lon1, lat1, dx, dy;
+    double lon1 = 0;
+    double lat1 = 0;
+    double dx = 0;
+    double dy = 0;
+
     if (!GetGribDoubleValue(theHandle, "longitudeOfFirstGridPointInDegrees", lon1) ||
         !GetGribDoubleValue(theHandle, "latitudeOfFirstGridPointInDegrees", lat1))
       throw std::runtime_error(fmt::format(err, "latlon corner", proj_name));
@@ -2825,12 +2789,8 @@ NFmiArea *GetGribArea(grib_handle *theHandle)
       dy *= 1000;
     }
 
-#ifdef WGS84
     return NFmiArea::CreateFromCornerAndSize(
         proj, earth_proj, NFmiPoint(lon1, lat1), dx * (ni - 1), dy * (nj - 1));
-#else
-    TODO();
-#endif
   }
 
   if (proj_name == "space_view")
@@ -2841,6 +2801,7 @@ NFmiArea *GetGribArea(grib_handle *theHandle)
 
   throw std::runtime_error("Handling of projection " + proj_name +
                            " found from grib is not implemented");
+#endif  // WGS84
 }
 
 void ExtractGridInfo(grib_handle *theHandle,
@@ -2848,7 +2809,11 @@ void ExtractGridInfo(grib_handle *theHandle,
                      GribFilterOptions &theGribFilterOptions,
                      GridSettingsPackage &theGridSettings)
 {
+#ifdef WGS84
   NFmiArea *area = GetGribArea(theHandle);
+#else
+  NFmiArea *area = GetGribArea(theHandle, theGribFilterOptions);
+#endif
 
   long nx = 0;
   long ny = 0;

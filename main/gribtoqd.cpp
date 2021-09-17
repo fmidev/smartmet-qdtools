@@ -2082,6 +2082,11 @@ NFmiArea *CreateMercatorArea(grib_handle *theHandle)
   // check_jscan_direction(theHandle);
 
   NFmiPoint bottomLeft(Lo1, La1);
+
+  // Fix data going over 180 degrees
+  if (bottomLeft.X() > 180)
+    bottomLeft.X(bottomLeft.X() - 360);
+
   NFmiPoint dummyTopRight(Lo1 + 5, La1 + 5);
   NFmiMercatorArea dummyArea(bottomLeft, dummyTopRight);
   NFmiPoint xyBottomLeft = dummyArea.LatLonToWorldXY(dummyArea.BottomLeftLatLon());
@@ -2090,6 +2095,7 @@ NFmiArea *CreateMercatorArea(grib_handle *theHandle)
   xyTopRight.Y(xyTopRight.Y() + (ny - 1) * dy / 1000.);
 
   NFmiPoint topRight(dummyArea.WorldXYToLatLon(xyTopRight));
+
   return new NFmiMercatorArea(bottomLeft, topRight);
 }
 #endif
@@ -2207,6 +2213,10 @@ NFmiArea *CreateLambertArea(grib_handle *theHandle)
   check_jscan_direction(theHandle);
 
   NFmiPoint bottom_left(Lo1, La1);
+
+  // Fix data going over 360 degrees (danish.grb2 in tests)
+  if (bottom_left.X() > 180)
+    bottom_left.X(bottom_left.X() - 360);
 
   std::unique_ptr<NFmiArea> tmparea(new NFmiLambertConformalConicArea(
       bottom_left, bottom_left + NFmiPoint(1, 1), Lov, Lad, Lad1, Lad2));
@@ -2543,6 +2553,9 @@ std::string GetProjString(grib_handle *theHandle)
 
     if (pole_lon != 0 || pole_lat != -90)
       throw std::runtime_error("Rotated Lambert projection not supported");  // TODO
+
+    if (lon_0 > 180)
+      lon_0 -= 360;
 
     return fmt::format("+proj=lcc +lon_0={} +lat_0={} +lat_1={} +lat_2={} {}",
                        lon_0,

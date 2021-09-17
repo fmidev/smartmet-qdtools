@@ -2,6 +2,9 @@
 
 $program = (-x "../qdinterpolatetime" ? "../qdinterpolatetime" : "qdinterpolatetime");
 
+system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h');
+$wgs84 = 1-($? >> 8);
+
 use IO::Handle;
 autoflush STDOUT 1;
 
@@ -24,6 +27,14 @@ sub DoTest
     my($title,$command,$dataname) = @_;
 
     my($resultfile) = "results/$dataname";
+
+    if($wgs84)
+    {
+	my($wgs84resultfile) = "${resultfile}.wgs84";
+	if(-e "$results/$wgs84resultfile")
+	{  $resultfile = $wgs84resultfile; }
+    }
+
     my($tmpfile) = "/tmp/$dataname";
     
     print padname($title);
@@ -55,6 +66,14 @@ sub DoSqdTest
 
     # Saadut tulokset
     my($tmpfile) = "/tmp/$dataname";
+
+
+    if($wgs84)
+    {
+	my($wgs84resultfile) = "${resultfile}.wgs84";
+	if(-e $wgs84resultfile)
+	{  $resultfile = $wgs84resultfile; }
+    }
 
     # Aja käsky
     

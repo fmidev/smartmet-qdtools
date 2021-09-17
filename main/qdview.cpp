@@ -5,21 +5,23 @@
  */
 // ======================================================================
 
+#include <boost/lexical_cast.hpp>
+#include <imagine/NFmiGshhsTools.h>
+#include <imagine/NFmiImage.h>
+#include <imagine/NFmiPath.h>
 #include <newbase/NFmiArea.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileSystem.h>
-#include <newbase/NFmiLatLonArea.h>
 #include <newbase/NFmiQueryData.h>
-
-#include <imagine/NFmiGshhsTools.h>
-#include <imagine/NFmiImage.h>
-#include <imagine/NFmiPath.h>
-
-#include <boost/lexical_cast.hpp>
-
 #include <string>
+
+#ifdef WGS84
+#include <newbase/NFmiAreaTools.h>
+#else
+#include <newbase/NFmiLatLonArea.h>
+#endif
 
 using namespace std;
 using namespace boost;
@@ -213,8 +215,13 @@ NFmiArea* create_bbox(NFmiFastQueryInfo& q)
       maxlat = max(maxlat, q.LatLon().Y());
     }
   }
-  NFmiArea* tmp = new NFmiLatLonArea(NFmiPoint(minlon, minlat), NFmiPoint(maxlon, maxlat));
-  return tmp;
+
+#ifdef WGS84  
+  return NFmiAreaTools::CreateLegacyLatLonArea(NFmiPoint(minlon, minlat),
+                                               NFmiPoint(maxlon, maxlat));
+#else
+  return new NFmiLatLonArea(NFmiPoint(minlon, minlat), NFmiPoint(maxlon, maxlat));
+#endif  
 }
 
 // ----------------------------------------------------------------------

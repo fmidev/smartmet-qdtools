@@ -812,7 +812,7 @@ void NcFileExtended::parse_time_units(boost::posix_time::ptime *origintime, long
   std::string datestr = parts[2];
   std::string timestr = (parts.size() >= 4 ? parts[3] : "00:00:00");
 
-  *origintime = Fmi::TimeParser::parse_iso(datestr + "T" + timestr);
+  *origintime = Fmi::TimeParser::parse(datestr + " " + timestr);
 
   if (parts.size() == 5 && boost::iequals(parts[4], "UTC") == false)
     *origintime += boost::posix_time::duration_from_string(parts[4]);

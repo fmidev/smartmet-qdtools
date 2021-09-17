@@ -15,6 +15,7 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
+#include <fmt/format.h>
 #include <macgyver/CsvReader.h>
 #include <macgyver/Exception.h>
 #include <macgyver/StringConversion.h>
@@ -23,14 +24,11 @@
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiHPlaceDescriptor.h>
-#include <newbase/NFmiLambertEqualArea.h>
-#include <newbase/NFmiLatLonArea.h>
 #include <newbase/NFmiParam.h>
 #include <newbase/NFmiParamBag.h>
 #include <newbase/NFmiParamDescriptor.h>
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
-#include <newbase/NFmiStereographicArea.h>
 #include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiVPlaceDescriptor.h>
 #include <cmath>
@@ -42,6 +40,12 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+
+#ifndef WGS84
+#include <newbase/NFmiLambertEqualArea.h>
+#include <newbase/NFmiLatLonArea.h>
+#include <newbase/NFmiStereographicArea.h>
+#endif
 
 nctools::Options options;
 
@@ -118,7 +122,6 @@ NFmiHPlaceDescriptor create_hdesc(nctools::NcFileExtended& ncfile)
   double y2 = ncfile.ymax();
   double nx = ncfile.xsize();
   double ny = ncfile.ysize();
-  double centralLongitude = ncfile.longitudeOfProjectionOrigin;
 
   if (options.verbose)
   {
@@ -142,13 +145,33 @@ NFmiHPlaceDescriptor create_hdesc(nctools::NcFileExtended& ncfile)
   NFmiArea* area = nullptr;
 
   if (ncfile.grid_mapping() == POLAR_STEREOGRAPHIC)
-    area = new NFmiStereographicArea(NFmiPoint(x1, y1), NFmiPoint(x2, y2), centralLongitude);
-  else if (ncfile.grid_mapping() == LATITUDE_LONGITUDE)
-    area = new NFmiLatLonArea(NFmiPoint(x1, y1), NFmiPoint(x2, y2));
-  else if (ncfile.grid_mapping() == LAMBERT_CONFORMAL_CONIC)
-    throw Exception(BCP, "Lambert conformal conic projection not supported");
+  {
+#ifdef WGS84    
+    auto proj4 = fmt::format(
+        "+proj=stere +lat_0={} +lon_0={} +lat_ts={} +k=1 +x_0=0 +y_0=0 +R={:.0f} +units=m +wktext "
+        "+towgs84=0,0,0 +no_defs",
+        ncfile.latitudeOfProjectionOrigin,
+        ncfile.longitudeOfProjectionOrigin,
+        ncfile.latitudeOfProjectionOrigin,
+        kRearth);
+    area = NFmiArea::CreateFromCorners(proj4, "FMI", NFmiPoint(x1, y1), NFmiPoint(x2, y2));
+#else
+    area = new NFmiStereographicArea(NFmiPoint(x1, y1), NFmiPoint(x2, y2), ncfile.longitudeOfProjectionOrigin);
+#endif    
+  }
   else if (ncfile.grid_mapping() == LAMBERT_AZIMUTHAL)
   {
+#ifdef WGS84    
+    auto proj4 = fmt::format(
+        "+proj=laea +lat_0={} +lon_0={} +k=1 +x_0=0 +y_0=0 +R={:.0f} +units=m +wktext "
+        "+towgs84=0,0,0 +no_defs",
+        ncfile.latitudeOfProjectionOrigin,
+        ncfile.longitudeOfProjectionOrigin,
+        kRearth);
+    area = NFmiArea::CreateFromBBox(proj4,
+                                    NFmiPoint(ncfile.x_scale() * x1, ncfile.y_scale() * y1),
+                                    NFmiPoint(ncfile.x_scale() * x2, ncfile.y_scale() * y2));
+#else
     NFmiLambertEqualArea tmp(NFmiPoint(-90, 0),
                              NFmiPoint(90, 0),
                              ncfile.longitudeOfProjectionOrigin,
@@ -165,6 +188,16 @@ NFmiHPlaceDescriptor create_hdesc(nctools::NcFileExtended& ncfile)
                                     NFmiPoint(0, 0),
                                     NFmiPoint(1, 1),
                                     ncfile.latitudeOfProjectionOrigin);
+#endif    
+  }
+  else if (ncfile.grid_mapping() == LATITUDE_LONGITUDE)
+  {
+#ifdef WGS84
+    auto proj4 = fmt::format("+proj=eqc +R={:.0f} +wktext +over +no_defs +towgs84=0,0,0", kRearth);
+    area = NFmiArea::CreateFromCorners(proj4, "FMI", NFmiPoint(x1, y1), NFmiPoint(x2, y2));
+#else
+    area = new NFmiLatLonArea(NFmiPoint(x1, y1), NFmiPoint(x2, y2));
+#endif
   }
   else
     throw Exception(BCP, "Projection " + ncfile.grid_mapping() + " is not supported");

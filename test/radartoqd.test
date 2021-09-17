@@ -2,6 +2,9 @@
 
 $program = (-x "../radartoqd" ? "../radartoqd" : "radartoqd");
 
+system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h');
+$wgs84 = 1-($? >> 8);
+
 $results = "results";
 
 %usednames = ();
@@ -29,6 +32,14 @@ sub DoTest
     $usednames{$name} = 1;
 
     my($resultfile) = "radartoqd_$name";
+
+    if($wgs84)
+    {
+	my($wgs84resultfile) = "${resultfile}.wgs84";
+	if(-e "$results/$wgs84resultfile")
+	{  $resultfile = $wgs84resultfile; }
+    }
+
     my($tmpfile) = "${resultfile}.tmp";
     $cmd = "$program $arguments $results/$tmpfile";
     

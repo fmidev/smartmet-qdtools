@@ -14,19 +14,15 @@
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 #include <boost/shared_ptr.hpp>
+#include <fmt/format.h>
 #include <macgyver/StringConversion.h>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiEnumConverter.h>
-#include <newbase/NFmiEquidistArea.h>
 #include <newbase/NFmiFastQueryInfo.h>
-#include <newbase/NFmiGnomonicArea.h>
 #include <newbase/NFmiGrid.h>
 #include <newbase/NFmiHPlaceDescriptor.h>
-#include <newbase/NFmiLambertEqualArea.h>
-#include <newbase/NFmiMercatorArea.h>
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
-#include <newbase/NFmiStereographicArea.h>
 #include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiVPlaceDescriptor.h>
@@ -36,12 +32,21 @@
 #include <string>
 #include <vector>
 
+#ifndef WGS84
+#include <newbase/NFmiEquidistArea.h>
+#include <newbase/NFmiGnomonicArea.h>
+#include <newbase/NFmiLambertEqualArea.h>
+#include <newbase/NFmiMercatorArea.h>
+#include <newbase/NFmiStereographicArea.h>
+#endif
+
 #ifdef UNIX
 #include <sys/ioctl.h>
 #endif
 
 // compression
 #include <zlib.h>
+
 #define MAXBLOCK 65534
 
 // libbufr
@@ -983,7 +988,9 @@ NFmiHPlaceDescriptor create_hdesc()
 {
   if (!radar_data.proj.type) throw std::runtime_error("Projection type not set in BUFR");
 
+#ifndef WGS84
   bool pacific_view = false;
+#endif  
   double central_lon = 0;
   double central_lat = 90;
   double true_lat = 0;
@@ -1015,10 +1022,17 @@ NFmiHPlaceDescriptor create_hdesc()
   {
     case 0:
     {
-      // throw std::runtime_error("Gnomonic projection is not supported");
-      // true latitude = 90 makes this a tangential case!!
-      // See comments in NFmiAzimuthalArea::LatLonToWorldXY!
-
+#ifdef WGS84
+      auto proj = fmt::format(
+          "+proj=gnom +lat_0={} +lat_ts={} +lon_0={} +k=1 +x_0=0 +y_0=0 +R={:.0f} "
+          "+units=m +wktext +towgs84=0,0,0 +no_defs",
+          central_lat,
+          true_lat,
+          central_lon,
+          kRearth);
+      auto *area = NFmiArea::CreateFromCorners(proj, "FMI", bottomleft, topright);
+#else
+      // tlat=90 makes this a tangential case
       NFmiArea *area = new NFmiGnomonicArea(bottomleft,
                                             topright,
                                             *radar_data.meta.radar.lon,
@@ -1026,33 +1040,83 @@ NFmiHPlaceDescriptor create_hdesc()
                                             corner2,
                                             *radar_data.meta.radar.lat,
                                             90);
+#endif      
       return NFmiHPlaceDescriptor(NFmiGrid(area, nx, ny));
     }
     case 1:
     {
+#ifdef WGS84      
+      auto proj = fmt::format(
+          "+proj=stere +lat_0={} +lat_ts={} +lon_0={} +k=1 +x_0=0 +y_0=0 +R={:.0f} "
+          "+units=m +wktext +towgs84=0,0,0 +no_defs",
+          central_lat,
+          true_lat,
+          central_lon,
+          kRearth);
+      auto *area = NFmiArea::CreateFromCorners(proj, "FMI", bottomleft, topright);
+#else
       NFmiArea *area = new NFmiStereographicArea(
           bottomleft, topright, central_lon, corner1, corner2, central_lat, true_lat, pacific_view);
+#endif      
       return NFmiHPlaceDescriptor(NFmiGrid(area, nx, ny));
     }
     case 2:
+    {
+#ifdef WGS84
+      auto proj = fmt::format(
+          "+proj=lcc +lat_0={} +lon_0={} +x_0=0 +y_0=0 +R={:.0f} +units=m +wktext "
+          "+towgs84=0,0,0 +no_defs",
+          central_lat,
+          central_lon,
+          kRearth);
+      auto *area = NFmiArea::CreateFromCorners(proj, "FMI", bottomleft, topright);
+      return NFmiHPlaceDescriptor(NFmiGrid(area, nx, ny));
+#else      
       throw std::runtime_error("Lambert's conic projection is not supported");
+#endif      
+    }
     case 3:
     {
-      if (central_lon != 0) throw std::runtime_error("Oblique Mercator is not supported");
+#ifdef WGS84      
+      auto proj =
+          fmt::format("+proj=merc +lon_0={} +wktext +over +towgs84=0,0,0 +no_defs", central_lon);
+      auto *area = NFmiArea::CreateFromCorners(proj, "FMI", bottomleft, topright);
+#else
       NFmiArea *area = new NFmiMercatorArea(bottomleft, topright, corner1, corner2, pacific_view);
+#endif      
       return NFmiHPlaceDescriptor(NFmiGrid(area, nx, ny));
     }
     case 4:
     {
+#ifdef WGS84      
+      auto proj = fmt::format(
+          "+proj=aeqd +lat_0={} +lon_0={} +x_0=0 +y_0=0 +R={:.0f} +units=m +wktext "
+          "+towgs84=0,0,0 +no_defs",
+          central_lat,
+          central_lon,
+          kRearth);
+      auto *area = NFmiArea::CreateFromCorners(proj, "FMI", bottomleft, topright);
+#else
       // Do not let the default central_latitude to be 90 as in the API! It messes things up
       NFmiArea *area =
           new NFmiEquidistArea(bottomleft, topright, 0, corner1, corner2, 0, pacific_view);
+#endif      
       return NFmiHPlaceDescriptor(NFmiGrid(area, nx, ny));
     }
     case 5:
     {
+#ifdef WGS84      
+      auto proj = fmt::format(
+          "+proj=laea +lat_0={} +lon_0={} +x_0=0 +y_0=0 +R={:.0f} +units=m +wktext "
+          "+towgs84=0,0,0 +no_defs",
+          central_lat,
+          central_lon,
+          kRearth);
+      auto *area = NFmiArea::CreateFromCorners(proj, "FMI", bottomleft, topright);
+#else
       NFmiArea *area = new NFmiLambertEqualArea(
           bottomleft, topright, central_lon, corner1, corner2, central_lat, true_lat, pacific_view);
+#endif      
       return NFmiHPlaceDescriptor(NFmiGrid(area, nx, ny));
     }
     default:

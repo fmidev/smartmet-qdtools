@@ -5,38 +5,16 @@ autoflush STDOUT 1;
 
 $program = (-x "../qdset" ? "../qdset" : "qdset");
 
+system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h');
+$wgs84 = 1-($? >> 8);
+
 DoSqdTest("qdset name and id",
-	  "cp data/pal_xh.sqd /tmp/qdset_palxh.sqd ; $program -n foobar -d 5 /tmp/qdset_palxh.sqd Temperature",
-	  "qdset_palxh.sqd");
+	  "cp data/pal_xh.sqd results/qdset_pal_xh.sqd.tmp ; $program -n foobar -d 5 results/qdset_pal_xh.sqd.tmp Temperature",
+	  "qdset_pal_xh.sqd");
 
 DoSqdTest("qdset station name and id",
-	  "cp data/synop.sqd /tmp/qdset_synop.sqd ; $program -w 2701 -W \"testi asema\" /tmp/qdset_synop.sqd 5115",
+	  "cp data/synop.sqd results/qdset_synop.sqd.tmp ; $program -w 2701 -W \"testi asema\" results/qdset_synop.sqd.tmp 5115",
 	  "qdset_synop.sqd");
-
-# ----------------------------------------------------------------------
-# Run a single test
-# ----------------------------------------------------------------------
-
-sub DoTest
-{
-    my($title,$command,$dataname) = @_;
-
-    my($resultfile) = "results/$dataname";
-    my($tmpfile) = "/tmp/$dataname";
-    print padname($title);
-    system("$command");
-
-    if(equalcontent($resultfile,$tmpfile))
-    {
-	print " OK\n";
-	unlink($tmpfile);
-    }
-    else
-    {
-	print " FAILED!\n";
-	print "( $resultfile <> $tmpfile)\n";
-    }
-}
 
 # ----------------------------------------------------------------------
 # Run a single test, allowing for a small difference in sqd results
@@ -51,7 +29,14 @@ sub DoSqdTest
     my($resultfile) = "results/$dataname";
 
     # Saadut tulokset
-    my($tmpfile) = "/tmp/$dataname";
+    my($tmpfile) = "results/${dataname}.tmp";
+
+    if($wgs84)
+    {
+	my($wgs84resultfile) = "${resultfile}.wgs84";
+	if(-e $wgs84resultfile)
+	{  $resultfile = $wgs84resultfile; }
+    }
 
     # Aja käsky
     
@@ -67,7 +52,7 @@ sub DoSqdTest
     if($difference < 0.00001)
     {
 	print " OK (diff <= $difference)\n";
-	unlink($tmpfile);
+	# unlink($tmpfile);
     }
     else
     {

@@ -270,17 +270,38 @@ make %{_smp_mflags}
 * Thu Sep  3 2020 Mika Heiskanen <mheiskan@rhel8.dev.fmi.fi> - 20.9.3-1.fmi
 - Removed spine dependency by using Fmi::Exception
 
+* Thu Aug 27 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.8.27-1.fmi
+- NFmiGrid API changed
+
+* Tue Aug 25 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.8.25-1.fmi
+- Repackaged due to eccodes upgrade
+
 * Fri Aug 21 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.8.21-1.fmi
 - Upgrade to fmt 6.2
 
+* Wed Jul  1 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.7.1-1.fmi
+- gribtoqd now produces WGS84 latlon data by default instead of using +R +towgs84=0,0,0
+
+* Tue Jun  2 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.6.2-1.fmi
+- Repackaged with the latest newbase
+
+* Thu May 28 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.5.28-1.fmi
+- Use Gis-library ProjInfo
+
 * Wed May 13 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.5.13-1.fmi
 - gribtoqd now assumes the level value is zero if vertical.level setting is not available
+
+* Fri Apr 24 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.4.24-1.fmi
+- Repackaged
 
 * Sat Apr 18 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.4.18-1.fmi
 - Upgrade to Boost 1.69
 
 * Thu Apr  2 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.4.2-1.fmi
 - Added combineHistory
+
+* Wed Apr  1 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.4.1-1.fmi
+- Use NFmiCoordinateMatrix instead of NFmiDataMatrix<NFmiPoint>
 
 * Fri Mar 27 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.3.27-1.fmi
 - Added kriging2qd
@@ -301,8 +322,20 @@ make %{_smp_mflags}
 - bufrtoqd now uses config file column 1 (code) instead of column 2 (name) to avoid ambiguities for parameters with the same name
 - Added bufrtoqd --usebufrname to revert to the old behaviour
 
+* Thu Feb  6 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.2.6-1.fmi
+- NFmiPoint Z-coordinate was removed from the ABI
+
 * Fri Jan 17 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.1.17-1.fmi
 - qdcombine can now combine point data too
+
+* Wed Jan  8 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.1.8-1.fmi
+- NFmiPoint ABI changed
+
+* Fri Dec 13 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.12.13-1.fmi
+- Repackaged due to NFmiArea API changes
+
+* Wed Dec 11 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.12.11-1.fmi
+- Upgrade to GDAL 3.0
 
 * Wed Dec  4 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.12.4-1.fmi
 - Fixed dependency to be on gdal-libs instead of gdal
@@ -312,6 +345,9 @@ make %{_smp_mflags}
 
 * Fri Nov 22 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.11.22-1.fmi
 - qdinfo now displays parameter limits with "-" instead of 32700
+
+* Thu Nov 21 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.11.21-1.fmi
+- gribtoqd now supports shape of the earth parameters
 
 * Wed Nov 20 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.11.20-1.fmi
 - Repackaged due to newbase API changes

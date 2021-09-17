@@ -5,6 +5,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
+#include <gis/ProjInfo.h>
 #include <macgyver/StringConversion.h>
 #include <newbase/NFmiArea.h>
 #include <newbase/NFmiCmdLine.h>
@@ -12,14 +13,17 @@
 #include <newbase/NFmiFileString.h>
 #include <newbase/NFmiGrid.h>
 #include <newbase/NFmiQueryData.h>
-#include <newbase/NFmiRotatedLatLonArea.h>
-#include <newbase/NFmiStereographicArea.h>
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
 #include <grib_api.h>
 #include <map>
 #include <string>
+
+#ifndef WGS84
+#include <newbase/NFmiRotatedLatLonArea.h>
+#include <newbase/NFmiStereographicArea.h>
+#endif
 
 #ifdef UNIX
 #include <sys/ioctl.h>
@@ -424,7 +428,7 @@ void set_latlon_geometry(NFmiFastQueryInfo &theInfo,
                          grib_handle *gribHandle,
                          std::vector<double> &theValueArray)
 {
-  gset(gribHandle, "typeOfGrid", "regular_ll");
+  gset(gribHandle, "gridType", "regular_ll");
 
   NFmiPoint bl(theInfo.Area()->BottomLeftLatLon());
   NFmiPoint tr(theInfo.Area()->TopRightLatLon());
@@ -467,12 +471,15 @@ void set_rotated_latlon_geometry(NFmiFastQueryInfo &theInfo,
                                  grib_handle *gribHandle,
                                  std::vector<double> &theValueArray)
 {
+  gset(gribHandle, "gridType", "rotated_ll");
+
+#ifdef WGS84  
+  const auto &a = *theInfo.Area();
+#else
   const NFmiRotatedLatLonArea &a = *dynamic_cast<const NFmiRotatedLatLonArea *>(theInfo.Area());
-
-  gset(gribHandle, "typeOfGrid", "rotated_ll");
-
-  NFmiPoint bl(a.ToRotLatLon(theInfo.Area()->BottomLeftLatLon()));
-  NFmiPoint tr(a.ToRotLatLon(theInfo.Area()->TopRightLatLon()));
+#endif  
+  NFmiPoint bl(a.LatLonToWorldXY(a.BottomLeftLatLon()));
+  NFmiPoint tr(a.LatLonToWorldXY(a.TopRightLatLon()));
 
   gset(gribHandle, "longitudeOfFirstGridPointInDegrees", fix_longitude(bl.X()));
   gset(gribHandle, "latitudeOfFirstGridPointInDegrees", bl.Y());
@@ -492,6 +499,23 @@ void set_rotated_latlon_geometry(NFmiFastQueryInfo &theInfo,
   gset(gribHandle, "iDirectionIncrementInDegrees", gridCellWidthInDegrees);
   gset(gribHandle, "jDirectionIncrementInDegrees", gridCellHeightInDegrees);
 
+  gset(gribHandle, "jScansPositively", 1);
+  gset(gribHandle, "iScansNegatively", 0);
+
+  // Get north pole location
+
+#ifdef WGS84
+
+  auto plat = a.ProjInfo().getDouble("o_lat_p");
+  auto plon = a.ProjInfo().getDouble("o_lon_p");
+  if (!plat || !plon) throw std::runtime_error("Rotated latlon north pole location not set");
+  // Calculate respective south pole location
+
+  gset(gribHandle, "longitudeOfSouthernPoleInDegrees", *plon);
+  gset(gribHandle, "latitudeOfSouthernPoleInDegrees", -(*plat));
+
+#else
+
   if (a.SouthernPole().X() != 0)
     throw std::runtime_error(
         "GRIB does not support rotated latlon areas where longitude is also rotated");
@@ -499,8 +523,7 @@ void set_rotated_latlon_geometry(NFmiFastQueryInfo &theInfo,
   gset(gribHandle, "longitudeOfSouthernPoleInDegrees", a.SouthernPole().X());
   gset(gribHandle, "latitudeOfSouthernPoleInDegrees", a.SouthernPole().Y());
 
-  gset(gribHandle, "jScansPositively", 1);
-  gset(gribHandle, "iScansNegatively", 0);
+#endif  
 
   // DUMP(gribHandle, "geography");
 
@@ -536,7 +559,7 @@ void set_stereographic_geometry(NFmiFastQueryInfo &theInfo,
                                 grib_handle *gribHandle,
                                 std::vector<double> &theValueArray)
 {
-  gset(gribHandle, "typeOfGrid", "polar_stereographic");
+  gset(gribHandle, "gridType", "polar_stereographic");
 
   NFmiPoint bl(theInfo.Area()->BottomLeftLatLon());
   NFmiPoint tr(theInfo.Area()->TopRightLatLon());
@@ -556,6 +579,47 @@ void set_stereographic_geometry(NFmiFastQueryInfo &theInfo,
   gset(gribHandle, "DxInMetres", dx);
   gset(gribHandle, "DyInMetres", dy);
 
+    gset(gribHandle, "jScansPositively", 1);
+  gset(gribHandle, "iScansNegatively", 0);
+
+#ifdef WGS84  
+
+  auto *a = theInfo.Area();
+
+  auto clon = a->ProjInfo().getDouble("lon_0");
+  auto clat = a->ProjInfo().getDouble("lat_0");
+  auto tlat = a->ProjInfo().getDouble("lat_ts");
+
+  if (!clon) clon = 0;
+  if (!clat) clat = 90;
+  if (!tlat) tlat = 90;
+
+  if (*clat == 90)
+    gset(gribHandle, "projecionCenterFlag", 0);
+  else if (*clat == -90)
+    gset(gribHandle, "projectionCenterFlag", 1);
+  else
+    throw std::runtime_error("GRIB format supports only polar stereographic projections");
+
+  gset(gribHandle, "orientationOfTheGridInDegrees", *clon);
+
+  if (!options.grib2)
+  {
+  }
+  else
+  {
+    gset(gribHandle, "LaDInDegrees", *clat);
+    // "shapeOfTheEarth"
+    // "scaleFactorOfRadiusOfSphericalEarth"
+    // "scaledValueOfRadiusOfSphericalEarth"
+    // "scaleFactorOfMajorAxisOfOblateSpheroidEarth"
+    // "scaledValueOfMajorAxisOfOblateSpheroidEarth"
+    // "scaleFactorOfMinorAxisOfOblateSpheroidEarth"
+    // "scaledValueOfMinorAxisOfOblateSpheroidEarth"
+  }
+  
+#else
+
   const NFmiStereographicArea *a = dynamic_cast<const NFmiStereographicArea *>(theInfo.Area());
 
   double lon_0 = a->CentralLongitude();
@@ -569,17 +633,18 @@ void set_stereographic_geometry(NFmiFastQueryInfo &theInfo,
   else if (lat_ts != 60)
     throw std::runtime_error(
         "GRIB1 true latitude can only be 60 for polar stereographic projections with grib_api "
-        "library");
+                "library");
 
   if (lat_0 != 90 && lat_0 != -90)
     throw std::runtime_error("GRIB format supports only polar stereographic projections");
 
   if (lat_0 != 90)
     throw std::runtime_error("Only N-pole polar stereographic projections are supported");
+  
+  
+#endif
 
-  gset(gribHandle, "jScansPositively", 1);
-  gset(gribHandle, "iScansNegatively", 0);
-
+ 
   // DUMP(gribHandle,"geography");
 
   theValueArray.resize(nx * ny);  // tehd‰‰ datan siirto taulusta oikean kokoinen
@@ -596,7 +661,7 @@ void set_mercator_geometry(NFmiFastQueryInfo &theInfo,
                            grib_handle *gribHandle,
                            std::vector<double> &theValueArray)
 {
-  gset(gribHandle, "typeOfGrid", "mercator");
+  gset(gribHandle, "gridType", "mercator");
 
   NFmiPoint bl(theInfo.Area()->BottomLeftLatLon());
   NFmiPoint tr(theInfo.Area()->TopRightLatLon());
@@ -679,6 +744,20 @@ static void set_geometry(NFmiFastQueryInfo &theInfo,
                          grib_handle *gribHandle,
                          std::vector<double> &theValueArray)
 {
+#ifdef WGS84
+  auto id = theInfo.Area()->DetectClassId();
+
+  if (id == kNFmiLatLonArea)
+    set_latlon_geometry(theInfo, gribHandle, theValueArray);
+  else if (id == kNFmiRotatedLatLonArea)
+    set_rotated_latlon_geometry(theInfo, gribHandle, theValueArray);
+  else if (id == kNFmiStereographicArea)
+    set_stereographic_geometry(theInfo, gribHandle, theValueArray);
+  else if (id == kNFmiMercatorArea)
+    set_mercator_geometry(theInfo, gribHandle, theValueArray);
+  else
+    throw std::runtime_error("Projection '" + theInfo.Area()->ProjStr() + "' is not supported");
+#else
   switch (theInfo.Area()->ClassId())
   {
     case kNFmiLatLonArea:
@@ -706,6 +785,8 @@ static void set_geometry(NFmiFastQueryInfo &theInfo,
     default:
       throw std::runtime_error("Unsupported projection in input data");
   }
+
+#endif
 }
 
 // ----------------------------------------------------------------------

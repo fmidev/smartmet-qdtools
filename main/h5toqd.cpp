@@ -18,20 +18,19 @@
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 #include <boost/shared_ptr.hpp>
+#include <fmt/format.h>
+#include <gis/ProjInfo.h>
 #include <macgyver/StringConversion.h>
 #include <macgyver/TimeParser.h>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiEnumConverter.h>
-#include <newbase/NFmiEquidistArea.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiGrid.h>
 #include <newbase/NFmiHPlaceDescriptor.h>
 #include <newbase/NFmiLevelType.h>
-#include <newbase/NFmiMercatorArea.h>
 #include <newbase/NFmiParamDescriptor.h>
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
-#include <newbase/NFmiStereographicArea.h>
 #include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiVPlaceDescriptor.h>
@@ -42,6 +41,12 @@
 
 #ifdef UNIX
 #include <sys/ioctl.h>
+#endif
+
+#ifndef WGS84
+#include <newbase/NFmiEquidistArea.h>
+#include <newbase/NFmiMercatorArea.h>
+#include <newbase/NFmiStereographicArea.h>
 #endif
 
 // Global to get better error messages outside param descriptor builder
@@ -1276,6 +1281,7 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
   if (object == "COMP" || object == "IMAGE" || object == "CVOL")
   {
     std::string projdef = get_attribute_value<std::string>(hid, "/where", "projdef");
+    std::string sphere = Fmi::ProjInfo(projdef).inverseProjStr();
     long xsize = get_attribute_value<long>(hid, "/where", "xsize");
     long ysize = get_attribute_value<long>(hid, "/where", "ysize");
 
@@ -1286,9 +1292,12 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
       double LR_lat = get_attribute_value<double>(hid, "/where", "LR_lat");
       double UL_lon = get_attribute_value<double>(hid, "/where", "UL_lon");
       double UL_lat = get_attribute_value<double>(hid, "/where", "UL_lat");
+#ifdef WGS84
+      boost::shared_ptr<NFmiArea> area(NFmiArea::CreateFromReverseCorners(
+          projdef, sphere, NFmiPoint(UL_lon, UL_lat), NFmiPoint(LR_lon, LR_lat)));
+#else
       boost::shared_ptr<NFmiArea> tmparea = NFmiAreaFactory::CreateProj(
           projdef, NFmiPoint(UL_lon, LR_lat), NFmiPoint(LR_lon, UL_lat));
-
       // Convert real corners to world xy
 
       NFmiPoint ul = tmparea->LatLonToWorldXY(NFmiPoint(UL_lon, UL_lat));
@@ -1305,6 +1314,8 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
       NFmiPoint UR = tmparea->WorldXYToLatLon(ur);
 
       boost::shared_ptr<NFmiArea> area = NFmiAreaFactory::CreateProj(projdef, LL, UR);
+      
+#endif      
       NFmiGrid grid(area->Clone(), xsize, ysize);
       return NFmiHPlaceDescriptor(grid);
     }
@@ -1317,8 +1328,13 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
       double UR_lon = get_attribute_value<double>(hid, "/where", "UR_lon");
       double UR_lat = get_attribute_value<double>(hid, "/where", "UR_lat");
 
+#ifdef WGS84      
+      boost::shared_ptr<NFmiArea> area(NFmiArea::CreateFromCorners(
+          projdef, sphere, NFmiPoint(LL_lon, LL_lat), NFmiPoint(UR_lon, UR_lat)));
+#else
       boost::shared_ptr<NFmiArea> area = NFmiAreaFactory::CreateProj(
           projdef, NFmiPoint(LL_lon, LL_lat), NFmiPoint(UR_lon, UR_lat));
+#endif      
 
       NFmiGrid grid(area->Clone(), xsize, ysize);
       return NFmiHPlaceDescriptor(grid);
@@ -1336,7 +1352,22 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
     const double range_m = calculate_pvol_range(hid);
     const double range_km = std::ceil(range_m / 1000);
 
+#ifdef WGS84    
+    auto proj4 = fmt::format(
+        "+proj=aeqd +lat_0={} +lon_0={} +x_0=0 +y_0=0 +R={:.0f} +units=m +wktext "
+        "+towgs84=0,0,0 +no_defs",
+        lat,
+        lon,
+        kRearth);
+
+    // WGS84: Not sure if we should multiply by 2 for legacy reasons
+    NFmiArea *area = NFmiArea::CreateFromCenter(
+        proj4, "FMI", NFmiPoint(lon, lat), 1000 * range_km, 1000 * range_km);
+#else
+
     NFmiArea *area = new NFmiEquidistArea(1000 * range_km, NFmiPoint(lon, lat), xy0, xy1);
+    
+#endif    
 
     // We set the grid resolution based on the number of bins in the data
 

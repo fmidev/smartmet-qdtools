@@ -4,6 +4,9 @@ $program = (-x "../nctoqd" ? "../nctoqd" : "nctoqd");
 $qdinfo = (-x "../qdinfo" ? "../qdinfo" : "qdinfo");
 $qddifference = (-x "../qddifference" ? "../qddifference" : "qddifference");
 
+system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h');
+$wgs84 = 1-($? >> 8);
+
 $results = "results";
 
 %usednames = ();
@@ -71,6 +74,14 @@ sub DoTest {
 	$usednames{$name} = 1;
 
 	my ($resultfile) = "nctoqd_$name";
+
+	if($wgs84)
+	{
+	    my($wgs84resultfile) = "${resultfile}.wgs84";
+	    if(-e "$results/$wgs84resultfile")
+	    {  $resultfile = $wgs84resultfile; }
+	}
+
 	my ($tmpfile)    = "${resultfile}.tmp";
 	$cmd = "$program $arguments $results/$tmpfile";
 	if ( "$text" =~ m/^merge/ ) {
@@ -83,7 +94,8 @@ sub DoTest {
 	$retcode = $?;
 	if ( $retcode != 0 ) {
 		print $output ;
-		die("Failed to run $cmd: $!");
+		print "Failed to run $cmd: $!";
+		return;
 	}
 
 	print padname($text);

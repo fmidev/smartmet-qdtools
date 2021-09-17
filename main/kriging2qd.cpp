@@ -53,6 +53,7 @@
  */
 // ======================================================================
 
+#include <boost/algorithm/string.hpp>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiFastQueryInfo.h>
@@ -63,10 +64,6 @@
 #include <newbase/NFmiQueryDataUtil.h>
 #include <newbase/NFmiStringTools.h>
 #include <newbase/NFmiTimeList.h>
-#include <newbase/NFmiYKJArea.h>
-
-#include <boost/algorithm/string.hpp>
-
 #include <fstream>
 #include <iomanip>
 #include <map>
@@ -74,6 +71,12 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+#ifdef WGS84
+#include <newbase/NFmiAreaTools.h>
+#else
+#include <newbase/NFmiYKJArea.h>
+#endif
 
 using namespace std;
 
@@ -436,7 +439,11 @@ const NFmiHPlaceDescriptor make_hdesc(const KrigingData& theData)
 
   // Now we can create the projection
 
+#ifdef WGS84  
+  NFmiArea* area = NFmiAreaTools::CreateLegacyYKJArea(NFmiPoint(xmin, ymin), NFmiPoint(xmax, ymax));
+#else
   NFmiArea* area = new NFmiYKJArea(NFmiPoint(xmin, ymin), NFmiPoint(xmax, ymax), true);
+#endif  
 
   if (area == 0) throw runtime_error("Failed to construct the YKJ projection");
 

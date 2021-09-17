@@ -8,7 +8,7 @@
 
 #include "NcFileExtended.h"
 #include "nctools.h"
-
+#include <boost/algorithm/string.hpp>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiHPlaceDescriptor.h>
@@ -20,8 +20,6 @@
 #include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiVPlaceDescriptor.h>
-
-#include <boost/algorithm/string.hpp>
 
 nctools::Options options;
 

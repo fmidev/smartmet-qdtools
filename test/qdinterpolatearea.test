@@ -2,6 +2,9 @@
 
 $program = (-x "../qdinterpolatearea" ? "../qdinterpolatearea" : "qdinterpolatearea");
 
+system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h');
+$wgs84 = 1-($? >> 8);
+
 use IO::Handle;
 autoflush STDOUT 1;
 
@@ -25,31 +28,6 @@ DoSqdTest("qdinterpolatearea resolution option",
 	  "$program -t 1 -p stereographic,20,90,60:6,51.3,49,70.2 -s 50x50km -i data/pal_xh.sqd -o results/qdinterpolatearea_resolution.sqd.tmp",
 	  "qdinterpolatearea_resolution.sqd");
 
-# ----------------------------------------------------------------------
-# Run a single test
-# ----------------------------------------------------------------------
-
-sub DoTest
-{
-    my($title,$command,$dataname) = @_;
-
-    my($resultfile) = "results/$dataname";
-    my($tmpfile) = "$resultfile.tmp";
-
-    print padname($title);
-    system("$command");
-
-    if(equalcontent($resultfile,$tmpfile))
-    {
-	print " OK\n";
-	unlink($tmpfile);
-    }
-    else
-    {
-	print " FAILED!\n";
-	print "( $resultfile <> $tmpfile)\n";
-    }
-}
 
 # ----------------------------------------------------------------------
 # Run a single test, allowing for a small difference in sqd results
@@ -65,6 +43,13 @@ sub DoSqdTest
 
     # Saadut tulokset
     my($tmpfile) = "$resultfile.tmp";
+
+    if($wgs84)
+    {
+	my($wgs84resultfile) = "${resultfile}.wgs84";
+	if(-e $wgs84resultfile)
+	{  $resultfile = $wgs84resultfile; }
+    }
 
     # Aja käsky
     

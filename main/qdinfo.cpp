@@ -1,103 +1,26 @@
-// ======================================================================
-/*!
- * \file qdinfo.cpp
- * \brief Implementation of the qdinfo program
- */
-// ======================================================================
-/*!
- * \page qdinfo
- *
- * The qdinfo program prints information relating to newbase, or
- * the given querydata.
- *
- * The known options are
- *
- * <dl>
- * <dt>-q [queryfile]</dt>
- * <dd>
- * Specifies the name of the queryfile.
- * </dd>
- * <dt>-A</dt>
- * <dd>
- * All the options below combined.
- * </dd>
- * <dt>-l</dt>
- * <dd>
- * Produces a listing of recognized parameternames. This option
- * does not require a queryfile to be specified.
- * <dt>-p</dt>
- * <dd>
- * Produces a listing of parameters in the given queryfile.
- * </dd>
- * <dt>-T</dt>
- * <dd>
- * Shows querydata origin time and data times in UTC.
- * </dd>
- * <dt>-a</dt>
- * <dd>
- * All the options below combined.
- * </dd>
- * <dt>-v</dt>
- * <dd>
- * Display the queryinfo version number.
- * </dd>
- * <dt>-P</dt>
- * <dd>
- * Produces a listing of parameters in the given queryfile.
- * The difference to -p is that subparameters are also listed.
- * </dd>
- * <dt>-t</dt>
- * <dd>
- * Shows querydata origin time and data times in local time.
- * </dd>
- * <dt>-x</dt>
- * <dd>
- * Shows information of querydata projection.
- * <dt>-X</dt>
- * <dd>
- * Shows information of querydata locations.
- * </dd>
- * <dt>-z</dt>
- * <dd>
- * Shows querydata level information.
- * </dd>
- * <dt>-r</dt>
- * <dd>
- * Shows querydata producer information.
- * </dd>
- * <dt>-m key</dt>
- * <dd>
- * Shows the metadata value for the given key
- * </dd>
- * <dt>-M</dt>
- * <dd>
- * Shows the metadata values for all keys in the data.
- * </dd>
- * </dl>
- */
-// ======================================================================
-
+#include <gis/ProjInfo.h>
 #include <macgyver/StringConversion.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiEnumConverter.h>
-#include <newbase/NFmiEquidistArea.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileString.h>
 #include <newbase/NFmiFileSystem.h>
-#include <newbase/NFmiGnomonicArea.h>
 #include <newbase/NFmiGrid.h>
+#include <newbase/NFmiSettings.h>
+#include <newbase/NFmiStringList.h>
+
+#ifndef WGS84
+#include <newbase/NFmiGnomonicArea.h>
 #include <newbase/NFmiKKJArea.h>
 #include <newbase/NFmiLatLonArea.h>
 #include <newbase/NFmiMercatorArea.h>
 #include <newbase/NFmiPKJArea.h>
 #include <newbase/NFmiRotatedLatLonArea.h>
-#include <newbase/NFmiSettings.h>
 #include <newbase/NFmiStereographicArea.h>
-#include <newbase/NFmiStringList.h>
 #include <newbase/NFmiYKJArea.h>
+#endif
 
 #ifdef UNIX
-#include <gdal_version.h>
 #include <ogr_spatialref.h>
 #endif
 
@@ -116,7 +39,8 @@ using namespace std;
 
 std::string ToString(float theValue)
 {
-  if (theValue == kFloatMissing) return "-";
+  if (theValue == kFloatMissing)
+    return "-";
   return Fmi::to_string(theValue);
 }
 
@@ -130,7 +54,8 @@ std::string ToString(float theValue)
 
 void ReportVersion(NFmiFastQueryInfo *q)
 {
-  if (q == 0) throw runtime_error("Option -q is required for the given options");
+  if (q == 0)
+    throw runtime_error("Option -q is required for the given options");
 
   double version = q->InfoVersion();
 
@@ -196,7 +121,8 @@ std::string interpolation_name(FmiInterpolationMethod method)
 
 void ReportParameters(NFmiFastQueryInfo *q, bool ignoresubs)
 {
-  if (q == 0) throw runtime_error("Option -q is required for the given options");
+  if (q == 0)
+    throw runtime_error("Option -q is required for the given options");
 
   NFmiEnumConverter converter;
 
@@ -298,7 +224,8 @@ void set_timezone(const string &theZone)
 
 const string TimeString(const NFmiMetTime &theTime, bool theUtcFlag, string dateFormat)
 {
-  if (theUtcFlag) set_timezone("UTC");
+  if (theUtcFlag)
+    set_timezone("UTC");
 
   string out = format_time(theTime, dateFormat, theUtcFlag);
 
@@ -320,7 +247,8 @@ const string TimeString(const NFmiMetTime &theTime, bool theUtcFlag, string date
 
 void ReportTimes(NFmiFastQueryInfo *q, bool theUtcFlag, string dateFormat)
 {
-  if (q == 0) throw runtime_error("Option -q is required for the given options");
+  if (q == 0)
+    throw runtime_error("Option -q is required for the given options");
 
   cout << endl << "Time information on the querydata:" << endl << endl;
 
@@ -470,7 +398,8 @@ string LevelName(FmiLevelType theLevel)
 
 void ReportLevels(NFmiFastQueryInfo *q)
 {
-  if (q == 0) throw runtime_error("Option -q is required for the given options");
+  if (q == 0)
+    throw runtime_error("Option -q is required for the given options");
 
   cout << endl
        << "Level information on the querydata:" << endl
@@ -503,7 +432,8 @@ void ReportLevels(NFmiFastQueryInfo *q)
 
 void ReportProducer(NFmiFastQueryInfo *q)
 {
-  if (q == 0) throw runtime_error("Option -q is required for the given options");
+  if (q == 0)
+    throw runtime_error("Option -q is required for the given options");
 
   // Must select some parameter, producer is parameter dependent
   q->FirstParam();
@@ -530,12 +460,12 @@ void ReportProducer(NFmiFastQueryInfo *q)
 
 void ReportProjection(NFmiFastQueryInfo *q)
 {
-  if (q == 0) throw runtime_error("Option -q is required for the given options");
+  if (q == 0)
+    throw runtime_error("Option -q is required for the given options");
 
   cout << endl << "Information on the querydata area:" << endl << endl;
 
   const NFmiArea *area = q->Area();
-  const NFmiGrid *grid = q->Grid();
 
   // IsArea may return false even though Area may return one (for grids!)
   if (area == 0)
@@ -544,26 +474,48 @@ void ReportProjection(NFmiFastQueryInfo *q)
     return;
   }
 
-  unsigned long classid = area->ClassId();
+  // unsigned long classid = area->ClassId();
   const auto rect = area->WorldRect();
-
-#ifdef UNIX
-  const auto wkt = area->WKT();
-  OGRSpatialReference crs;
-  if (crs.SetFromUserInput(wkt.c_str()) != OGRERR_NONE)
-    throw std::runtime_error("GDAL does not understand the WKT in the data");
-#endif
 
   cout << "projection\t\t= " << area->ClassName() << endl;
 
-  cout << "top left lonlat\t\t= " << area->TopLeftLatLon().X() << ',' << area->TopLeftLatLon().Y()
+#ifdef WGS84
+  auto tl = area->ToNativeLatLon(area->TopLeft());
+  auto tr = area->ToNativeLatLon(area->TopRight());
+  auto bl = area->ToNativeLatLon(area->BottomLeft());
+  auto br = area->ToNativeLatLon(area->BottomRight());
+#else
+  auto tl = area->TopLeftLatLon();
+  auto tr = area->TopRightLatLon();
+  auto bl = area->BottomLeftLatLon();
+  auto br = area->BottomRightLatLon();
+#endif
+
+  cout << "top left lonlat\t\t= " << tl.X() << ',' << tl.Y() << endl;
+  cout << "top right lonlat\t= " << tr.X() << ',' << tr.Y() << endl;
+  cout << "bottom left lonlat\t= " << bl.X() << ',' << bl.Y() << endl;
+  cout << "bottom right lonlat\t= " << br.X() << ',' << br.Y() << endl;
+
+#ifdef WGS84
+  tl = area->TopLeftLatLon();
+  tr = area->TopRightLatLon();
+  bl = area->BottomLeftLatLon();
+  br = area->BottomRightLatLon();
+
+  cout << "\n";
+
+  cout << "top left WGS84\t\t= " << tl.X() << ',' << tl.Y() << endl;
+  cout << "top right WGS84\t\t= " << tr.X() << ',' << tr.Y() << endl;
+  cout << "bottom left WGS84\t= " << bl.X() << ',' << bl.Y() << endl;
+  cout << "bottom right WGS84\t= " << br.X() << ',' << br.Y() << endl;
+
+  cout << "center WGS84\t\t= " << area->CenterLatLon().X() << ',' << area->CenterLatLon().Y()
+       << "\n\n"
+       << std::setprecision(9) << "bbox\t\t\t= [" << rect.Left() << " " << rect.Right() << " "
+       << std::min(rect.Bottom(), rect.Top()) << " " << std::max(rect.Bottom(), rect.Top()) << "]"
+       << std::setprecision(6) << endl
        << endl;
-  cout << "top right lonlat\t= " << area->TopRightLatLon().X() << ',' << area->TopRightLatLon().Y()
-       << endl;
-  cout << "bottom left lonlat\t= " << area->BottomLeftLatLon().X() << ','
-       << area->BottomLeftLatLon().Y() << endl;
-  cout << "bottom right lonlat\t= " << area->BottomRightLatLon().X() << ','
-       << area->BottomRightLatLon().Y() << endl;
+#else
   cout << "center lonlat\t\t= " << area->CenterLatLon().X() << ',' << area->CenterLatLon().Y()
        << endl
        << std::setprecision(9) << "bbox\t\t\t= [" << rect.Left() << " " << rect.Right() << " "
@@ -571,17 +523,91 @@ void ReportProjection(NFmiFastQueryInfo *q)
        << std::setprecision(6) << endl
        << endl;
 
+#endif
+
+#ifdef WGS84
+
+  //   auto *sr = const_cast<NFmiArea *>(area)->SpatialReference();
+  const auto &sr = *area->SpatialReference();
+  cout << "projstr\t= " << area->ProjStr() << endl
+       << "wkt\t= " << area->WKT() << endl
+       << endl
+       << "prettywkt =\n"
+       << area->PrettyWKT() << endl
+       << endl
+       << "EPSGTreatsAsLatLong\t\t= " << sr.EPSGTreatsAsLatLong() << endl
+       << "EPSGTreatsAsNorthingEasting\t= " << sr.EPSGTreatsAsNorthingEasting() << endl
+       << "PrimeMeridian\t\t\t= " << sr.GetPrimeMeridian() << endl
+       << "IsGeographic\t\t\t= " << sr.IsGeographic() << endl
+       << "IsProjected\t\t\t= " << sr.IsProjected() << endl
+       << "IsGeocentric\t\t\t= " << sr.IsGeocentric() << endl
+       << "IsLocal\t\t\t\t= " << sr.IsLocal() << endl
+       << "IsVertical\t\t\t= " << sr.IsVertical() << endl
+       << "IsCompound\t\t\t= " << sr.IsCompound() << endl
+       << std::setprecision(10) << "SemiMajor\t\t\t= " << sr.GetSemiMajor() << endl
+       << "SemiMinor\t\t\t= " << sr.GetSemiMinor() << endl
+       << "InvFlattening\t\t\t= " << sr.GetInvFlattening() << endl
+       << "EPSG\t\t\t\t= " << sr.GetEPSGGeogCS() << endl;
+
+#else
+
   cout << "fmiarea\t= " << area->AreaStr() << endl;
-#ifdef UNIX
+
+  const auto wkt = area->WKT();
+  OGRSpatialReference crs;
+  if (crs.SetFromUserInput(wkt.c_str()) != OGRERR_NONE)
+    throw std::runtime_error("GDAL does not understand the WKT in the data");
+
   char *proj4 = nullptr;
   crs.exportToProj4(&proj4);
   cout << "wktarea\t= " << area->WKT() << endl << "proj4\t= " << proj4 << endl;
 
-#if GDAL_VERSION_MAJOR < 2
-  OGRFree(proj4);
-#else
   CPLFree(proj4);
+
 #endif
+
+#ifdef WGS84
+  std::list<std::string> srs_params{SRS_PP_CENTRAL_MERIDIAN,
+                                    SRS_PP_SCALE_FACTOR,
+                                    SRS_PP_STANDARD_PARALLEL_1,
+                                    SRS_PP_STANDARD_PARALLEL_2,
+                                    SRS_PP_PSEUDO_STD_PARALLEL_1,
+                                    SRS_PP_LONGITUDE_OF_CENTER,
+                                    SRS_PP_LATITUDE_OF_CENTER,
+                                    SRS_PP_LONGITUDE_OF_ORIGIN,
+                                    SRS_PP_LATITUDE_OF_ORIGIN,
+                                    SRS_PP_FALSE_EASTING,
+                                    SRS_PP_FALSE_NORTHING,
+                                    SRS_PP_AZIMUTH,
+                                    SRS_PP_LONGITUDE_OF_POINT_1,
+                                    SRS_PP_LATITUDE_OF_POINT_1,
+                                    SRS_PP_LONGITUDE_OF_POINT_2,
+                                    SRS_PP_LATITUDE_OF_POINT_2,
+                                    SRS_PP_LONGITUDE_OF_POINT_3,
+                                    SRS_PP_LATITUDE_OF_POINT_3,
+                                    SRS_PP_RECTIFIED_GRID_ANGLE,
+                                    SRS_PP_LANDSAT_NUMBER,
+                                    SRS_PP_PATH_NUMBER,
+                                    SRS_PP_PERSPECTIVE_POINT_HEIGHT,
+                                    SRS_PP_SATELLITE_HEIGHT,
+                                    SRS_PP_FIPSZONE,
+                                    SRS_PP_ZONE,
+                                    SRS_PP_LATITUDE_OF_1ST_POINT,
+                                    SRS_PP_LONGITUDE_OF_1ST_POINT,
+                                    SRS_PP_LATITUDE_OF_2ND_POINT,
+                                    SRS_PP_LONGITUDE_OF_2ND_POINT};
+
+  std::cout << endl;
+  for (const auto &param : srs_params)
+  {
+    OGRErr err = OGRERR_NONE;
+    auto value = sr.GetNormProjParm(param.c_str(), -999, &err);
+    if (err == OGRERR_NONE)
+      std::cout << param << "\t= " << value << endl;
+  }
+
+  std::cout << "\nproj options:\n";
+  area->ProjInfo().dump(std::cout);
 
 #endif
 
@@ -591,6 +617,52 @@ void ReportProjection(NFmiFastQueryInfo *q)
        << "right\t= " << area->Right() << endl
        << "bottom\t= " << area->Bottom() << endl
        << endl;
+
+  const NFmiGrid *grid = q->Grid();
+
+#ifdef WGS84
+
+  if (grid)
+  {
+    auto opt_to_meter = area->ProjInfo().getDouble("to_meter");
+    auto to_meter = (opt_to_meter ? *opt_to_meter : 1.0);
+
+    cout << "xnumber\t\t= " << grid->XNumber() << endl
+         << "ynumber\t\t= " << grid->YNumber() << endl;
+
+    if (sr.IsGeographic())
+    {
+      cout << "dx\t\t= " << area->WorldXYWidth() / grid->XNumber() << " deg" << endl
+           << "dy\t\t= " << area->WorldXYHeight() / grid->YNumber() << " deg" << endl
+           << endl
+           << "xywidth\t\t= " << area->WorldXYWidth() << " deg" << endl
+           << "xyheight\t= " << area->WorldXYHeight() << " deg" << endl
+           << "aspectratio\t= " << area->WorldXYAspectRatio() << endl;
+    }
+    else if (area->ProjInfo().getString("proj") == std::string("ob_tran") &&
+             area->ProjInfo().getString("o_proj") == std::string("latlon"))
+    {
+      cout << "dx\t\t= " << area->WorldXYWidth() / grid->XNumber() << " deg" << endl
+           << "dy\t\t= " << area->WorldXYHeight() / grid->YNumber() << " deg" << endl
+           << endl
+           << "xywidth\t\t= " << area->WorldXYWidth() << " deg" << endl
+           << "xyheight\t= " << area->WorldXYHeight() << " deg" << endl
+           << "aspectratio\t= " << area->WorldXYAspectRatio() << endl;
+    }
+    else
+    {
+      cout << "dx\t\t= " << area->WorldXYWidth() / grid->XNumber() / 1000.0 * to_meter << " km"
+           << endl
+           << "dy\t\t= " << area->WorldXYHeight() / grid->YNumber() / 1000.0 * to_meter << " km"
+           << endl
+           << endl
+           << "xywidth\t\t= " << area->WorldXYWidth() / 1000.0 * to_meter << " km" << endl
+           << "xyheight\t= " << area->WorldXYHeight() / 1000.0 * to_meter << " km" << endl
+           << "aspectratio\t= " << area->WorldXYAspectRatio() << endl;
+    }
+  }
+
+#else
 
   if (grid)
   {
@@ -606,13 +678,15 @@ void ReportProjection(NFmiFastQueryInfo *q)
        << "aspectratio\t= " << area->WorldXYAspectRatio() << endl
        << endl;
 
+  unsigned long classid = area->ClassId();
+
   switch (classid)
   {
     case kNFmiEquiDistArea:
     case kNFmiGnomonicArea:
     case kNFmiStereographicArea:
 #if 0
-	case kNFmiPerspectiveArea:
+        case kNFmiPerspectiveArea:
 #endif
     {
       const NFmiAzimuthalArea *a = dynamic_cast<const NFmiAzimuthalArea *>(area);
@@ -621,14 +695,14 @@ void ReportProjection(NFmiFastQueryInfo *q)
            << "true latitude\t\t= " << a->TrueLatitude() << endl;
 
 #if 0
-		if(classid == kFmiPerspectiveArea)
-		  {
-			NFmiPerspectiveArea * b = dynamic_cast<const NFmiAzimuthalArea *>(area);
-			cout << "distancetosurface\t= " << b->DistanceToSurface() << endl
-				 << "viewangle\t\t= " << b->ViewAngle() << endl
-				 << "zoomfactor\t\t= " << b->ZoomFactor() << endl
-				 << "globeradius\t\t= " << b->GlobeRadius() << endl;
-		  }
+                if(classid == kFmiPerspectiveArea)
+                  {
+                        NFmiPerspectiveArea * b = dynamic_cast<const NFmiAzimuthalArea *>(area);
+                        cout << "distancetosurface\t= " << b->DistanceToSurface() << endl
+                                 << "viewangle\t\t= " << b->ViewAngle() << endl
+                                 << "zoomfactor\t\t= " << b->ZoomFactor() << endl
+                                 << "globeradius\t\t= " << b->GlobeRadius() << endl;
+                  }
 #endif
       break;
     }
@@ -658,7 +732,7 @@ void ReportProjection(NFmiFastQueryInfo *q)
       break;
   }
 
-  return;
+#endif
 }
 
 // ----------------------------------------------------------------------
@@ -671,7 +745,8 @@ void ReportProjection(NFmiFastQueryInfo *q)
 
 void ReportLocations(NFmiFastQueryInfo *q)
 {
-  if (q == 0) throw runtime_error("Option -q is required for the given options");
+  if (q == 0)
+    throw runtime_error("Option -q is required for the given options");
 
   cout << endl << "Information on the locations:" << endl << endl;
 
@@ -703,7 +778,8 @@ void ReportLocations(NFmiFastQueryInfo *q)
 
 void ReportMetadata(NFmiFastQueryInfo *q)
 {
-  if (q == 0) throw runtime_error("Option -q is required for the given options");
+  if (q == 0)
+    throw runtime_error("Option -q is required for the given options");
 
   cout << endl << "Metadata information:" << endl << endl;
 
@@ -868,23 +944,28 @@ int domain(int argc, const char *argv[])
 
   // Option -v shows the queryinfo version number
 
-  if (cmdline.isOption('v') || opt_all) ReportVersion(q);
+  if (cmdline.isOption('v') || opt_all)
+    ReportVersion(q);
 
   // Option -l lists the known parameternames
 
-  if (cmdline.isOption('l') || opt_all_extended) ReportParameterNames();
+  if (cmdline.isOption('l') || opt_all_extended)
+    ReportParameterNames();
 
   // Option -p lists the parameters in the queryfile
 
-  if (cmdline.isOption('p') || opt_all_extended) ReportParameters(q, true);
+  if (cmdline.isOption('p') || opt_all_extended)
+    ReportParameters(q, true);
 
   // Option -P lists the parameters in the queryfile, including subparameters
 
-  if (cmdline.isOption('P') || opt_all) ReportParameters(q, false);
+  if (cmdline.isOption('P') || opt_all)
+    ReportParameters(q, false);
 
   // Option -r shows producer information
 
-  if (cmdline.isOption('r') || opt_all) ReportProducer(q);
+  if (cmdline.isOption('r') || opt_all)
+    ReportProducer(q);
 
   // Option -t shows time information
 
@@ -912,23 +993,28 @@ int domain(int argc, const char *argv[])
 
   // Option -x shows projection information
 
-  if (cmdline.isOption('x') || opt_all) ReportProjection(q);
+  if (cmdline.isOption('x') || opt_all)
+    ReportProjection(q);
 
   // Option -X shows location information
 
-  if (cmdline.isOption('X') || opt_all) ReportLocations(q);
+  if (cmdline.isOption('X') || opt_all)
+    ReportLocations(q);
 
   // Option -z shows level information
 
-  if (cmdline.isOption('z') || opt_all) ReportLevels(q);
+  if (cmdline.isOption('z') || opt_all)
+    ReportLevels(q);
 
   // Option -M shows all metadata information
 
-  if (cmdline.isOption('M') || opt_all) ReportMetadata(q);
+  if (cmdline.isOption('M') || opt_all)
+    ReportMetadata(q);
 
   // Option -m shows only the given metadata key
 
-  if (cmdline.isOption('m')) ReportMetadata(q, cmdline.OptionValue('m'));
+  if (cmdline.isOption('m'))
+    ReportMetadata(q, cmdline.OptionValue('m'));
 
   return 0;
 }

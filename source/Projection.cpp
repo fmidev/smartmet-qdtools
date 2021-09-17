@@ -7,9 +7,16 @@
 
 #include "Projection.h"
 
+#include <fmt/format.h>
 #include <imagine/NFmiImage.h>
 #include <imagine/NFmiPath.h>
+#include <newbase/NFmiGlobals.h>
+#include <newbase/NFmiPoint.h>
+#include <stdexcept>
 
+#ifdef WGS84
+#include <newbase/NFmiAreaTools.h>
+#else
 #include <newbase/NFmiEquidistArea.h>
 #include <newbase/NFmiGlobals.h>
 #include <newbase/NFmiGnomonicArea.h>
@@ -18,8 +25,7 @@
 #include <newbase/NFmiPoint.h>
 #include <newbase/NFmiStereographicArea.h>
 #include <newbase/NFmiYKJArea.h>
-
-#include <stdexcept>
+#endif
 
 using namespace Imagine;
 
@@ -36,26 +42,15 @@ namespace RadContour
 //! The implementation hiding pimple for class Projection
 struct ProjectionPimple
 {
-  ProjectionPimple()
-      : itsType(""),
-        itsCentralLatitude(kFloatMissing),
-        itsCentralLongitude(kFloatMissing),
-        itsTrueLatitude(kFloatMissing),
-        itsBottomLeft(NFmiPoint(kFloatMissing, kFloatMissing)),
-        itsTopRight(NFmiPoint(kFloatMissing, kFloatMissing)),
-        itsCenter(NFmiPoint(kFloatMissing, kFloatMissing)),
-        itsScale(kFloatMissing)
-  {
-  }
-
   std::string itsType;
-  float itsCentralLatitude;
-  float itsCentralLongitude;
-  float itsTrueLatitude;
-  NFmiPoint itsBottomLeft;
-  NFmiPoint itsTopRight;
-  NFmiPoint itsCenter;
-  float itsScale;
+  std::string itsEllipsoid;
+  float itsCentralLatitude = kFloatMissing;
+  float itsCentralLongitude = kFloatMissing;
+  float itsTrueLatitude = kFloatMissing;
+  NFmiPoint itsBottomLeft{kFloatMissing, kFloatMissing};
+  NFmiPoint itsTopRight{kFloatMissing, kFloatMissing};
+  NFmiPoint itsCenter{kFloatMissing, kFloatMissing};
+  float itsScale = kFloatMissing;
 };
 
 // ----------------------------------------------------------------------
@@ -194,6 +189,18 @@ void Projection::center(float theLon, float theLat)
 // ----------------------------------------------------------------------
 
 void Projection::scale(float theScale) { itsPimple->itsScale = theScale; }
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Set the ellipsoid
+ */
+// ----------------------------------------------------------------------
+
+void Projection::ellipsoid(const std::string& theEllipsoid)
+{
+  itsPimple->itsEllipsoid = theEllipsoid;
+}
+
 // ----------------------------------------------------------------------
 /*!
  * The projection service provided by the class.
@@ -254,6 +261,81 @@ boost::shared_ptr<NFmiArea> Projection::area(unsigned int theWidth, unsigned int
   NFmiPoint topleftxy = NFmiPoint(0, 0);
   NFmiPoint bottomrightxy = NFmiPoint(theWidth, theHeight);
 
+
+#ifdef WGS84  
+  std::string sphere = itsPimple->itsEllipsoid;
+
+  if (sphere.empty()) throw std::runtime_error("Reference ellipsoid not set");
+
+  std::string proj4;
+
+  if (itsPimple->itsType == "latlon")
+    proj4 = sphere;
+
+  else if (itsPimple->itsType == "ykj")
+  {
+    proj4 =
+        "+proj=tmerc +lat_0=0 +lon_0=27 +k=1 +x_0=3500000 +y_0=0 +ellps=intl +units=m +wktext "
+        "+towgs84=-96.0617,-82.4278,-121.7535,4.80107,0.34543,-1.37646,1.4964 +no_defs";
+    sphere = "+proj=longlat +ellps=intl +no_defs";
+  }
+
+  else if (itsPimple->itsType == "stereographic")
+  {
+    if (sphere == "FMI")
+      proj4 = fmt::format(
+          "+proj=stere +lat_0={} +lat_ts={} +lon_0={} +k=1 +x_0=0 +y_0=0 +R={:.0f} "
+          "+units=m +wktext +towgs84=0,0,0 +no_defs",
+          itsPimple->itsCentralLatitude,
+          itsPimple->itsTrueLatitude,
+          itsPimple->itsCentralLongitude,
+          kRearth);
+    proj4 = fmt::format(
+        "+proj=stere +lat_0={} +lat_ts={} +lon_0={} +k=1 +x_0=0 +y_0=0 +ellps={} "
+        "+units=m +wktext +towgs84=0,0,0 +no_defs",
+        itsPimple->itsCentralLatitude,
+        itsPimple->itsTrueLatitude,
+        itsPimple->itsCentralLongitude,
+        sphere);
+  }
+  else if (itsPimple->itsType == "equidist")
+  {
+    if (sphere == "FMI")
+      proj4 = fmt::format(
+          "+proj=aeqd +lat_0={} +lon_0={} +x_0=0 +y_0=0 +R={:.0f} +units=m +wktext "
+          "+towgs84=0,0,0 +no_defs",
+          itsPimple->itsCentralLatitude,
+          itsPimple->itsCentralLongitude,
+          kRearth);
+    else
+      proj4 = fmt::format(
+          "+proj=aeqd +lat_0={} +lon_0={} +x_0=0 +y_0=0 +ellps={} +units=m +wktext "
+          "+towgs84=0,0,0 +no_defs",
+          itsPimple->itsCentralLatitude,
+          itsPimple->itsCentralLongitude,
+          sphere);
+  }
+  else
+  {
+    std::string msg = "Unrecognized projection type ";
+    msg += itsPimple->itsType;
+    msg += " in Projection::project()";
+    throw std::runtime_error(msg);
+  }
+
+  if (!has_center)
+    proj.reset(NFmiArea::CreateFromCorners(proj4, sphere, bottomleft, topright));
+  else
+  {
+    // 2 is for a handling legacy coding mistake
+    auto pscale = 2 * 1000 * itsPimple->itsScale;
+    proj.reset(NFmiArea::CreateFromCenter(
+        proj4, sphere, itsPimple->itsCenter, pscale * theWidth, pscale * theHeight));
+  }
+
+  proj->SetXYArea(NFmiRect(topleftxy, bottomrightxy));
+
+#else
   if (itsPimple->itsType == "latlon")
     proj.reset(new NFmiLatLonArea(bottomleft, topright, topleftxy, bottomrightxy));
 
@@ -308,7 +390,10 @@ boost::shared_ptr<NFmiArea> Projection::area(unsigned int theWidth, unsigned int
 
     proj.reset(proj->NewArea(BL, TR));
   }
+  
+#endif  
 
+  
   return proj;
 }
 }  // namespace RadContour

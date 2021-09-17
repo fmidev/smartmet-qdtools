@@ -2,11 +2,15 @@
 
 $program = (-x "../qdpoint" ? "../qdpoint" : "qdpoint");
 
+system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h');
+$wgs84 = 1-($? >> 8);
+
 $coordinatefile = "conf/coordinates.txt";
 $results = "results";
 $griddata = "data/griddata.sqd";
 $pointdata = "data/pointdata.sqd";
 $synopdata = "data/synop.sqd";
+$harmoniedata = "data/harmonie_hybrid.sqd";
 
 %usednames = ();
 
@@ -191,6 +195,10 @@ DoTest("-n 1 -p Helsinki,Turku -P MetaNorth -q",
        "north_Helsinki_Turku",
        "-n 1 -p Helsinki,Turku -P MetaNorth -q $griddata");
 
+DoTest("-p Sipoo for rotated latlon data",
+       "Sipoo_rotated_latlon",
+       "-p Sipoo -P Temperature,GeomHeight -q $harmoniedata");
+
 print "Done\n";
 
 # ----------------------------------------------------------------------
@@ -209,6 +217,14 @@ sub DoTest
     $usednames{$name} = 1;
 
     my($resultfile) = "qdpoint_$name";
+
+    if($wgs84)
+    {
+	my($wgs84resultfile) = "${resultfile}.wgs84";
+	if(-e "$results/$wgs84resultfile")
+	{  $resultfile = $wgs84resultfile; }
+    }
+
     my($tmpfile) = "${resultfile}.tmp";
     $cmd = "$program -c $coordinatefile $arguments 2>&1";
     $output = `$cmd`;

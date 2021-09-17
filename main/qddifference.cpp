@@ -193,12 +193,16 @@ double analyze_all_parameters(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2
 
           const double value1 = theQ1.FloatValue();
           const double value2 = theQ2.FloatValue();
-          double diff = abs(value2 - value1);
-          if (iswinddir) diff = min(diff, abs(abs(value2 - value1) - 360));
 
-          maxdiff = max(diff, maxdiff);
-          ++points;
-          if (diff != 0.0) ++differentpoints;
+          if (value1 != kFloatMissing && value2 != kFloatMissing)
+          {
+            double diff = abs(value2 - value1);
+            if (iswinddir) diff = min(diff, abs(abs(value2 - value1) - 360));
+
+            maxdiff = max(diff, maxdiff);
+            ++points;
+            if (diff != 0.0) ++differentpoints;
+          }
         }
 
   if (options.percentage)
@@ -233,13 +237,17 @@ double analyze_given_parameters(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& the
         {
           const double value1 = theQ1.FloatValue();
           const double value2 = theQ2.FloatValue();
-          double diff = abs(value2 - value1);
 
-          if (iswinddir) diff = min(diff, abs(abs(value2 - value1) - 360));
+          if (value1 != kFloatMissing && value2 != kFloatMissing)
+          {
+            double diff = abs(value2 - value1);
 
-          maxdiff = max(diff, maxdiff);
-          ++points;
-          if (diff != 0.0) ++differentpoints;
+            if (iswinddir) diff = min(diff, abs(abs(value2 - value1) - 360));
+
+            maxdiff = max(diff, maxdiff);
+            ++points;
+            if (diff != 0.0) ++differentpoints;
+          }
         }
   }
 
@@ -269,13 +277,17 @@ double analyze_this_parameter(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2
       {
         const double value1 = theQ1.FloatValue();
         const double value2 = theQ2.FloatValue();
-        double diff = abs(value2 - value1);
 
-        if (iswinddir) diff = min(diff, abs(abs(value2 - value1) - 360));
+        if (value1 != kFloatMissing && value2 != kFloatMissing)
+        {
+          double diff = abs(value2 - value1);
 
-        maxdiff = max(diff, maxdiff);
-        ++points;
-        if (diff != 0.0) ++differentpoints;
+          if (iswinddir) diff = min(diff, abs(abs(value2 - value1) - 360));
+
+          maxdiff = max(diff, maxdiff);
+          ++points;
+          if (diff != 0.0) ++differentpoints;
+        }
       }
 
   if (options.percentage)
@@ -305,12 +317,15 @@ double analyze_all_parameters_now(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& t
         bool iswinddir = (theQ1.Param().GetParam()->GetIdent() == kFmiWindDirection);
         const double value1 = theQ1.FloatValue();
         const double value2 = theQ2.FloatValue();
-        double diff = abs(value2 - value1);
-        if (iswinddir) diff = min(diff, abs(abs(value2 - value1) - 360));
+        if (value1 != kFloatMissing && value2 != kFloatMissing)
+        {
+          double diff = abs(value2 - value1);
+          if (iswinddir) diff = min(diff, abs(abs(value2 - value1) - 360));
 
-        maxdiff = max(diff, maxdiff);
-        ++points;
-        if (diff != 0.0) ++differentpoints;
+          maxdiff = max(diff, maxdiff);
+          ++points;
+          if (diff != 0.0) ++differentpoints;
+        }
       }
 
   if (options.percentage)
@@ -344,13 +359,17 @@ double analyze_given_parameters_now(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo&
       {
         const double value1 = theQ1.FloatValue();
         const double value2 = theQ2.FloatValue();
-        double diff = abs(value2 - value1);
 
-        if (iswinddir) diff = min(diff, abs(abs(value2 - value1) - 360));
+        if (value1 != kFloatMissing && value2 != kFloatMissing)
+        {
+          double diff = abs(value2 - value1);
 
-        maxdiff = max(diff, maxdiff);
-        ++points;
-        if (diff != 0.0) ++differentpoints;
+          if (iswinddir) diff = min(diff, abs(abs(value2 - value1) - 360));
+
+          maxdiff = max(diff, maxdiff);
+          ++points;
+          if (diff != 0.0) ++differentpoints;
+        }
       }
   }
 

@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 21.9.17
+Version: 21.9.20
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -193,6 +193,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Mon Sep 20 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.9.20-1.fmi
+- Added new parameters to cnf/parameters.csv used by csv2qd
+
 * Fri Sep 17 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.9.17-1.fmi
 - Fixed gribtoqd to handle data going over longitude 360
 

@@ -23,7 +23,7 @@ void Domain(int argc, const char *argv[]);
 // ----------------------------------------------------------------------
 // Kaytto-ohjeet
 // ----------------------------------------------------------------------
-void Usage(void)
+void Usage()
 {
   cout << "Usage: qdgridcalc [options] projectionstring x_km y_km" << endl
        << endl
@@ -94,8 +94,10 @@ static void PrintGridSizeInfo(const NFmiArea *area,
   double ylaMidY = loc1.Distance(loc2) / 1000.;
 
   string verbiStr("would be");
-  if (fActualGridUsed) verbiStr = "is";
-  if (fActualGridUsed) cout << "Given querydata projection: " << area->ProjStr() << endl;
+  if (fActualGridUsed)
+    verbiStr = "is";
+  if (fActualGridUsed)
+    cout << "Given querydata projection: " << area->ProjStr() << endl;
   cout << "Grid size " << verbiStr << ": " << closestXGridSize << " x " << closestYGridSize << endl;
   cout << "Grid size " << verbiStr << " at center of bottom edge: " << alaMidX << " x " << alaMidY
        << " km" << endl;
@@ -147,7 +149,7 @@ void Domain(int argc, const char *argv[])
   }
 
   int numOfParams = cmdline.NumberofParameters();
-  if (doDataGridSizeCheck == false && numOfParams != 3)
+  if (!doDataGridSizeCheck && numOfParams != 3)
   {
     cout << "Error: Atleast 3 parameter expected, 'projectionstring x_km y_km'\n\n";
     ::Usage();
@@ -162,13 +164,14 @@ void Domain(int argc, const char *argv[])
   }
 
   bool useGridSizes = false;
-  if (cmdline.isOption('s')) useGridSizes = true;
+  if (cmdline.isOption('s'))
+    useGridSizes = true;
 
   std::string projStr = cmdline.Parameter(1);
   std::string xKmStr = cmdline.Parameter(2);
-  double xRes = NFmiStringTools::Convert<double>(xKmStr);
+  auto xRes = NFmiStringTools::Convert<double>(xKmStr);
   std::string yKmStr = cmdline.Parameter(3);
-  double yRes = NFmiStringTools::Convert<double>(yKmStr);
+  auto yRes = NFmiStringTools::Convert<double>(yKmStr);
 
   boost::shared_ptr<NFmiArea> areaPtr = NFmiAreaFactory::Create(projStr);
   if (areaPtr.get())
@@ -197,7 +200,8 @@ void Domain(int argc, const char *argv[])
           minDist = currDist;
           closestXGridSize = i;
         }
-        if (lastDist < currDist) break;  // jos ero haluttuun alkaa taas kasvamaan, lopetetaan
+        if (lastDist < currDist)
+          break;  // jos ero haluttuun alkaa taas kasvamaan, lopetetaan
         lastDist = currDist;
       }
 
@@ -216,7 +220,8 @@ void Domain(int argc, const char *argv[])
           minDist = currDist;
           closestYGridSize = i;
         }
-        if (lastDist < currDist) break;  // jos ero haluttuun alkaa taas kasvamaan, lopetetaan
+        if (lastDist < currDist)
+          break;  // jos ero haluttuun alkaa taas kasvamaan, lopetetaan
         lastDist = currDist;
       }
       ::PrintGridSizeInfo(areaPtr.get(), closestXGridSize, closestYGridSize, doDataGridSizeCheck);

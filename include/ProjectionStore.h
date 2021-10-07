@@ -30,18 +30,18 @@ class Projection;
 class ProjectionStore
 {
  public:
-  ~ProjectionStore(void);
-  ProjectionStore(void);
+  ~ProjectionStore();
+  ProjectionStore();
 
   void add(const std::string& theName, const Projection& theProjection);
 
-  std::set<std::string> names(void) const;
+  std::set<std::string> names() const;
 
   const Projection& projection(const std::string& theName) const;
 
  private:
-  ProjectionStore(const ProjectionStore& theStore);
-  ProjectionStore& operator=(const ProjectionStore& theStore);
+  ProjectionStore(const ProjectionStore& theStore) = delete;
+  ProjectionStore& operator=(const ProjectionStore& theStore) = delete;
 
   boost::shared_ptr<ProjectionStorePimple> itsPimple;
 

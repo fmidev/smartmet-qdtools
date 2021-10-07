@@ -60,22 +60,33 @@ using Fmi::Exception;
 void check_xaxis_units(NcVar* var)
 {
   NcAtt* att = var->get_att("units");
-  if (att == 0) throw Exception(BCP, "X-axis has no units attribute");
+  if (att == nullptr)
+    throw Exception(BCP, "X-axis has no units attribute");
 
   std::string units = att->values()->as_string(0);
 
   // Ref: CF conventions section 4.2 Longitude Coordinate
-  if (units == "degrees_east") return;
-  if (units == "degree_east") return;
-  if (units == "degree_E") return;
-  if (units == "degrees_E") return;
-  if (units == "degreeE") return;
-  if (units == "degreesE") return;
-  if (units == "100  km") return;
-  if (units == "m") return;
-  if (units == "km") return;
+  if (units == "degrees_east")
+    return;
+  if (units == "degree_east")
+    return;
+  if (units == "degree_E")
+    return;
+  if (units == "degrees_E")
+    return;
+  if (units == "degreeE")
+    return;
+  if (units == "degreesE")
+    return;
+  if (units == "100  km")
+    return;
+  if (units == "m")
+    return;
+  if (units == "km")
+    return;
 
-  if (units == "Meter") return;
+  if (units == "Meter")
+    return;
 
   throw Exception(BCP, "X-axis has unknown units: " + units);
 }
@@ -89,22 +100,33 @@ void check_xaxis_units(NcVar* var)
 void check_yaxis_units(NcVar* var)
 {
   NcAtt* att = var->get_att("units");
-  if (att == 0) throw Exception(BCP, "Y-axis has no units attribute");
+  if (att == nullptr)
+    throw Exception(BCP, "Y-axis has no units attribute");
 
   std::string units = att->values()->as_string(0);
 
   // Ref: CF conventions section 4.1 Latitude Coordinate
-  if (units == "degrees_north") return;
-  if (units == "degree_north") return;
-  if (units == "degree_N") return;
-  if (units == "degrees_N") return;
-  if (units == "degreeN") return;
-  if (units == "degreesN") return;
-  if (units == "100  km") return;
-  if (units == "m") return;
-  if (units == "km") return;
+  if (units == "degrees_north")
+    return;
+  if (units == "degree_north")
+    return;
+  if (units == "degree_N")
+    return;
+  if (units == "degrees_N")
+    return;
+  if (units == "degreeN")
+    return;
+  if (units == "degreesN")
+    return;
+  if (units == "100  km")
+    return;
+  if (units == "m")
+    return;
+  if (units == "km")
+    return;
 
-  if (units == "Meter") return;
+  if (units == "Meter")
+    return;
 
   throw Exception(BCP, "Y-axis has unknown units: " + units);
 }
@@ -125,7 +147,8 @@ NFmiHPlaceDescriptor create_hdesc(nctools::NcFileExtended& ncfile)
 
   if (options.verbose)
   {
-    if (options.infiles.size() > 1) std::cout << std::endl;
+    if (options.infiles.size() > 1)
+      std::cout << std::endl;
     std::cout << "Input file: " << ncfile.path << std::endl;
     std::cout << "  x1 => " << x1 << std::endl;
     std::cout << "  y1 => " << y1 << std::endl;
@@ -133,8 +156,10 @@ NFmiHPlaceDescriptor create_hdesc(nctools::NcFileExtended& ncfile)
     std::cout << "  y2 => " << y2 << std::endl;
     std::cout << "  nx => " << nx << std::endl;
     std::cout << "  ny => " << ny << std::endl;
-    if (ncfile.xinverted()) std::cout << "  x-axis is inverted" << std::endl;
-    if (ncfile.yinverted()) std::cout << "  y-axis is inverted" << std::endl;
+    if (ncfile.xinverted())
+      std::cout << "  x-axis is inverted" << std::endl;
+    if (ncfile.yinverted())
+      std::cout << "  y-axis is inverted" << std::endl;
     std::cout << "  x-scaling multiplier to meters => " << ncfile.x_scale() << std::endl;
     std::cout << "  y-scaling multiplier to meters => " << ncfile.y_scale() << std::endl;
     std::cout << "  latitude_origin => " << ncfile.latitudeOfProjectionOrigin << std::endl;
@@ -146,7 +171,7 @@ NFmiHPlaceDescriptor create_hdesc(nctools::NcFileExtended& ncfile)
 
   if (ncfile.grid_mapping() == POLAR_STEREOGRAPHIC)
   {
-#ifdef WGS84    
+#ifdef WGS84
     auto proj4 = fmt::format(
         "+proj=stere +lat_0={} +lon_0={} +lat_ts={} +k=1 +x_0=0 +y_0=0 +R={:.0f} +units=m +wktext "
         "+towgs84=0,0,0 +no_defs",
@@ -156,12 +181,13 @@ NFmiHPlaceDescriptor create_hdesc(nctools::NcFileExtended& ncfile)
         kRearth);
     area = NFmiArea::CreateFromCorners(proj4, "FMI", NFmiPoint(x1, y1), NFmiPoint(x2, y2));
 #else
-    area = new NFmiStereographicArea(NFmiPoint(x1, y1), NFmiPoint(x2, y2), ncfile.longitudeOfProjectionOrigin);
-#endif    
+    area = new NFmiStereographicArea(
+        NFmiPoint(x1, y1), NFmiPoint(x2, y2), ncfile.longitudeOfProjectionOrigin);
+#endif
   }
   else if (ncfile.grid_mapping() == LAMBERT_AZIMUTHAL)
   {
-#ifdef WGS84    
+#ifdef WGS84
     auto proj4 = fmt::format(
         "+proj=laea +lat_0={} +lon_0={} +k=1 +x_0=0 +y_0=0 +R={:.0f} +units=m +wktext "
         "+towgs84=0,0,0 +no_defs",
@@ -188,7 +214,7 @@ NFmiHPlaceDescriptor create_hdesc(nctools::NcFileExtended& ncfile)
                                     NFmiPoint(0, 0),
                                     NFmiPoint(1, 1),
                                     ncfile.latitudeOfProjectionOrigin);
-#endif    
+#endif
   }
   else if (ncfile.grid_mapping() == LATITUDE_LONGITUDE)
   {
@@ -221,7 +247,8 @@ NFmiVPlaceDescriptor create_vdesc(const nctools::NcFileExtended& ncfile)
   // Defaults if there are no levels
   if (z == nullptr)
   {
-    if (options.verbose) std::cerr << "  Extracting default level only\n";
+    if (options.verbose)
+      std::cerr << "  Extracting default level only\n";
     NFmiLevelBag bag(kFmiAnyLevelType, 0, 0, 0);
     return NFmiVPlaceDescriptor(bag);
   }
@@ -248,17 +275,20 @@ NFmiVPlaceDescriptor create_vdesc(const nctools::NcFileExtended& ncfile)
 
   NcValues* zvalues = z->values();
 
-  if (options.verbose) std::cerr << "  Extracting " << z->num_vals() << " levels:";
+  if (options.verbose)
+    std::cerr << "  Extracting " << z->num_vals() << " levels:";
 
   for (int i = 0; i < z->num_vals(); i++)
   {
     auto value = zvalues->as_long(i);
-    if (options.verbose) std::cerr << " " << value << std::flush;
+    if (options.verbose)
+      std::cerr << " " << value << std::flush;
     NFmiLevel level(leveltype, value);
     bag.AddLevel(level);
   }
 
-  if (options.verbose) std::cout << std::endl;
+  if (options.verbose)
+    std::cout << std::endl;
 
   return NFmiVPlaceDescriptor(bag);
 }
@@ -292,7 +322,8 @@ void add_calculated_params_to_pbag(NFmiParamBag& pbag)
   {
     auto id = nctools::get_enumconverter().ToEnum(name);
 
-    if (id == kFmiBadParameter) throw std::runtime_error("Unknown parameter name '" + name + "'");
+    if (id == kFmiBadParameter)
+      throw std::runtime_error("Unknown parameter name '" + name + "'");
 
     NFmiParam param(id, name);
 
@@ -454,20 +485,26 @@ int add_to_pbag(const nctools::NcFileExtended& ncfile,
 
   // Number of dimensions the parameter must have
   int wanted_dims = 0;
-  if (ncfile.x_axis() != nullptr) ++wanted_dims;
-  if (ncfile.y_axis() != nullptr) ++wanted_dims;
-  if (ncfile.z_axis() != nullptr) ++wanted_dims;
-  if (ncfile.t_axis() != nullptr) ++wanted_dims;
+  if (ncfile.x_axis() != nullptr)
+    ++wanted_dims;
+  if (ncfile.y_axis() != nullptr)
+    ++wanted_dims;
+  if (ncfile.z_axis() != nullptr)
+    ++wanted_dims;
+  if (ncfile.t_axis() != nullptr)
+    ++wanted_dims;
 
   // Note: We loop over variables the same way as in copy_values
 
   for (int i = 0; i < ncfile.num_vars(); i++)
   {
     NcVar* var = ncfile.get_var(i);
-    if (var == 0) continue;
+    if (var == nullptr)
+      continue;
 
     // Skip dimension variables
-    if (ncfile.is_dim(var->name())) continue;
+    if (ncfile.is_dim(var->name()))
+      continue;
 
     // Check dimensions
 
@@ -508,7 +545,8 @@ int add_to_pbag(const nctools::NcFileExtended& ncfile,
                     precision,
                     interpolation);
     NFmiDataIdent ident(param);
-    if (pbag.Add(ident, true)) added_variables++;
+    if (pbag.Add(ident, true))
+      added_variables++;
   }
 
   return added_variables;
@@ -525,7 +563,8 @@ int run(int argc, char* argv[])
   try
   {
     // Parse options
-    if (!parse_options(argc, argv, options)) return 0;
+    if (!parse_options(argc, argv, options))
+      return 0;
 
     // Parameter conversions
     const nctools::ParamConversions paramconvs = nctools::read_netcdf_configs(options);
@@ -549,7 +588,7 @@ int run(int argc, char* argv[])
 
     // Loop through the files once to check and to prepare the descriptors first
 
-    for (std::string infile : options.infiles)
+    for (const std::string& infile : options.infiles)
     {
       ++file_counter;
 
@@ -581,8 +620,10 @@ int run(int argc, char* argv[])
 
         std::string grid_mapping(ncfile->grid_mapping());
 
-        if (ncfile->x_axis()->num_vals() < 1) throw Exception(BCP, "X-axis has no values");
-        if (ncfile->y_axis()->num_vals() < 1) throw Exception(BCP, "Y-axis has no values");
+        if (ncfile->x_axis()->num_vals() < 1)
+          throw Exception(BCP, "X-axis has no values");
+        if (ncfile->y_axis()->num_vals() < 1)
+          throw Exception(BCP, "Y-axis has no values");
         if (ncfile->z_axis() != nullptr && ncfile->zsize() < 1)
           throw Exception(BCP, "Z-axis has no values");
         if (ncfile->t_axis() != nullptr && ncfile->tsize() < 1)
@@ -591,9 +632,12 @@ int run(int argc, char* argv[])
         check_xaxis_units(ncfile->x_axis());
         check_yaxis_units(ncfile->y_axis());
 
-        if (ncfile->xsize() == 0) throw Exception(BCP, "X-dimension is of size zero");
-        if (ncfile->ysize() == 0) throw Exception(BCP, "Y-dimension is of size zero");
-        if (ncfile->zsize() == 0) throw Exception(BCP, "Z-dimension is of size zero");
+        if (ncfile->xsize() == 0)
+          throw Exception(BCP, "X-dimension is of size zero");
+        if (ncfile->ysize() == 0)
+          throw Exception(BCP, "Y-dimension is of size zero");
+        if (ncfile->zsize() == 0)
+          throw Exception(BCP, "Z-dimension is of size zero");
 
         // Crate initial descriptors based on the first NetCDF file
         if (file_counter == 1)
@@ -608,11 +652,11 @@ int run(int argc, char* argv[])
         {
           // Try to merge times and parameters from other files with the same grid and levels
           std::vector<std::string> failreasons;
-          if (ncfile->joinable(*first_ncfile, &failreasons) == false)
+          if (!ncfile->joinable(*first_ncfile, &failreasons))
           {
             std::cerr << "Unable to combine " << first_ncfile->path << " and " << infile << ":"
                       << std::endl;
-            for (auto error : failreasons)
+            for (const auto& error : failreasons)
               std::cerr << "  " << error << std::endl;
 
             throw Exception(BCP, "Files not joinable", nullptr);
@@ -637,7 +681,8 @@ int run(int argc, char* argv[])
       }
     }
 
-    if (options.info) return 0;
+    if (options.info)
+      return 0;
 
     // Check parameters
     if (known_variables == 0)
@@ -658,7 +703,7 @@ int run(int argc, char* argv[])
     info.SetProducer(NFmiProducer(options.producernumber, options.producername));
 
     // Copy data from input files
-    for (auto i = 0ul; i < options.infiles.size(); i++)
+    for (auto i = 0UL; i < options.infiles.size(); i++)
     {
       try
       {

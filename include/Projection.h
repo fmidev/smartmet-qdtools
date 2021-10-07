@@ -55,15 +55,15 @@ struct ProjectionPimple;
 class Projection
 {
  public:
-  ~Projection(void);
-  Projection(void);
+  ~Projection();
+  Projection();
   Projection(const Projection& theProjection);
   Projection& operator=(const Projection& theProjection);
 
   void type(const std::string& theType);
   void centralLatitude(float theLatitude);
   void centralLongitude(float theLongitude);
-  void trueLatitude(float theLongitude);
+  void trueLatitude(float theLatitude);
 
   void bottomLeft(float theLon, float theLat);
   void topRight(float theLon, float theLat);

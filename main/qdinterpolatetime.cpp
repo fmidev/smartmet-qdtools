@@ -61,9 +61,11 @@ int run(int argc, const char* argv[])
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
   }
 
-  if (cmdline.isOption('i')) inputfile = cmdline.OptionValue('i');
+  if (cmdline.isOption('i'))
+    inputfile = cmdline.OptionValue('i');
 
-  if (cmdline.isOption('o')) outputfile = cmdline.OptionValue('o');
+  if (cmdline.isOption('o'))
+    outputfile = cmdline.OptionValue('o');
 
   int numpar = cmdline.NumberofParameters();
 
@@ -79,8 +81,10 @@ int run(int argc, const char* argv[])
 
   int timeResolutionInMinutes = boost::lexical_cast<int>(cmdline.Parameter(1));
 
-  if (numpar >= 2) startTimeResolutionInMinutes = boost::lexical_cast<int>(cmdline.Parameter(2));
-  if (numpar >= 3) maxSearchRangeInMinutes = boost::lexical_cast<int>(cmdline.Parameter(3));
+  if (numpar >= 2)
+    startTimeResolutionInMinutes = boost::lexical_cast<int>(cmdline.Parameter(2));
+  if (numpar >= 3)
+    maxSearchRangeInMinutes = boost::lexical_cast<int>(cmdline.Parameter(3));
   if (numpar >= 4)
   {
     int interp = boost::lexical_cast<int>(cmdline.Parameter(4));
@@ -94,13 +98,13 @@ int run(int argc, const char* argv[])
   NFmiQueryData* newData = NFmiQueryDataUtil::InterpolateTimes(&qd,
                                                                timeResolutionInMinutes,
                                                                startTimeResolutionInMinutes,
-                                                               0,
+                                                               nullptr,
                                                                maxSearchRangeInMinutes,
                                                                generalInterpolationMethod);
 
   // Temporary fix until newbase interpolation has been corrected
-  NFmiWindFix::FixWinds(*newData); 
-  
+  NFmiWindFix::FixWinds(*newData);
+
   if (outputfile == "-")
     newData->Write();
   else

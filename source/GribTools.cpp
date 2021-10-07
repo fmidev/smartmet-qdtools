@@ -29,7 +29,8 @@ void DUMP(grib_handle *grib, const char *ns)
   else
     kiter = grib_keys_iterator_new(grib, GRIB_KEYS_ITERATOR_ALL_KEYS, const_cast<char *>(ns));
 
-  if (!kiter) throw std::runtime_error("Failed to get iterator for grib keys");
+  if (!kiter)
+    throw std::runtime_error("Failed to get iterator for grib keys");
 
   const int MAX_STRING_LEN = 1024;
   char buffer[MAX_STRING_LEN];
@@ -122,21 +123,21 @@ void gset(grib_handle *g, const char *name, long value)
 {
   if (grib_set_long(g, name, value))
     throw std::runtime_error(std::string("Failed to set ") + name + " to value " +
-                             boost::lexical_cast<std::string>(value));
+                             std::to_string(value));
 }
 
 void gset(grib_handle *g, const char *name, unsigned long value)
 {
   if (grib_set_long(g, name, value))
     throw std::runtime_error(std::string("Failed to set ") + name + " to value " +
-                             boost::lexical_cast<std::string>(value));
+                             std::to_string(value));
 }
 
 void gset(grib_handle *g, const char *name, int value)
 {
   if (grib_set_long(g, name, value))
     throw std::runtime_error(std::string("Failed to set ") + name + " to value " +
-                             boost::lexical_cast<std::string>(value));
+                             std::to_string(value));
 }
 
 void gset(grib_handle *g, const char *name, const char *value)
@@ -158,8 +159,7 @@ void gset(grib_handle *g, const char *name, const std::string &value)
 // ----------------------------------------------------------------------
 
 ParamChangeItem::ParamChangeItem()
-    : itsOriginalParamId(0),
-      itsWantedParam(0,
+    : itsWantedParam(0,
                      "",
                      kFloatMissing,
                      kFloatMissing,
@@ -167,10 +167,7 @@ ParamChangeItem::ParamChangeItem()
                      kFloatMissing,
                      "%.1f",
                      kLinearly)  // laitetaan lineaarinen interpolointi päälle
-      ,
-      itsConversionBase(0),
-      itsConversionScale(1.f),
-      itsLevel(0)
+
 {
 }
 
@@ -179,11 +176,14 @@ ParamChangeItem::ParamChangeItem(const ParamChangeItem &theOther)
       itsWantedParam(theOther.itsWantedParam),
       itsConversionBase(theOther.itsConversionBase),
       itsConversionScale(theOther.itsConversionScale),
-      itsLevel(theOther.itsLevel ? new NFmiLevel(*theOther.itsLevel) : 0)
+      itsLevel(theOther.itsLevel ? new NFmiLevel(*theOther.itsLevel) : nullptr)
 {
 }
 
-ParamChangeItem::~ParamChangeItem() { delete itsLevel; }
+ParamChangeItem::~ParamChangeItem()
+{
+  delete itsLevel;
+}
 ParamChangeItem &ParamChangeItem::operator=(const ParamChangeItem &theOther)
 {
   if (this != &theOther)
@@ -192,7 +192,7 @@ ParamChangeItem &ParamChangeItem::operator=(const ParamChangeItem &theOther)
     itsWantedParam = theOther.itsWantedParam;
     itsConversionBase = theOther.itsConversionBase;
     itsConversionScale = theOther.itsConversionScale;
-    itsLevel = theOther.itsLevel ? new NFmiLevel(*theOther.itsLevel) : 0;
+    itsLevel = theOther.itsLevel ? new NFmiLevel(*theOther.itsLevel) : nullptr;
   }
   return *this;
 }
@@ -209,9 +209,9 @@ void ParamChangeItem::Reset()
                              "%.1f",
                              kLinearly);  // laitetaan lineaarinen interpolointi päälle
   itsConversionBase = 0;
-  itsConversionScale = 1.f;
-  if (itsLevel) delete itsLevel;
-  itsLevel = 0;
+  itsConversionScale = 1.F;
+  delete itsLevel;
+  itsLevel = nullptr;
 }
 
 // ----------------------------------------------------------------------
@@ -231,7 +231,8 @@ bool GetParamChangeItemFromString(const std::string &buffer,
                                   ParamChangeItem &theParamChangeItemOut)
 {
   std::vector<std::string> strVector = NFmiStringTools::Split(buffer, ";");
-  if (strVector.size() <= 1) return false;  // skipataan tyhjät rivit
+  if (strVector.size() <= 1)
+    return false;  // skipataan tyhjät rivit
   if (strVector.size() < 3)
   {
     std::string errStr(
@@ -275,8 +276,8 @@ bool GetParamChangeItemFromString(const std::string &buffer,
   {
     if (!strVector[5].empty() && !strVector[6].empty())
     {
-      unsigned long levelType = boost::lexical_cast<unsigned long>(strVector[5]);
-      float levelValue = boost::lexical_cast<float>(strVector[6]);
+      auto levelType = boost::lexical_cast<unsigned long>(strVector[5]);
+      auto levelValue = boost::lexical_cast<float>(strVector[6]);
       theParamChangeItemOut.itsLevel =
           new NFmiLevel(levelType, NFmiStringTools::Convert(levelValue), levelValue);
     }
@@ -295,7 +296,7 @@ bool GetParamChangeItemFromString(const std::string &buffer,
   {
     if (!strVector[7].empty())
     {
-      FmiInterpolationMethod interpMethod =
+      auto interpMethod =
           static_cast<FmiInterpolationMethod>(boost::lexical_cast<int>(strVector[7]));
       theParamChangeItemOut.itsWantedParam.InterpolationMethod(interpMethod);
     }

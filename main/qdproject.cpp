@@ -115,10 +115,12 @@ void usage()
 unique_ptr<NFmiArea> create_projection_from_querydata(const string& theFile)
 {
   NFmiQueryData qd(theFile);
-  if (!qd.IsGrid()) throw runtime_error("The given querydata does not define a projection");
+  if (!qd.IsGrid())
+    throw runtime_error("The given querydata does not define a projection");
 
   NFmiArea* area = qd.GridInfo().Area();
-  if (!area) throw runtime_error("The given querydata does not define a projection");
+  if (!area)
+    throw runtime_error("The given querydata does not define a projection");
 
   return unique_ptr<NFmiArea>(area->Clone());
 }
@@ -159,7 +161,8 @@ boost::shared_ptr<NFmiArea> create_projection_from_conf(const string& theFile)
     }
   }
 
-  if (area.get() == 0) throw runtime_error("Failed to find a projection from '" + theFile + "'");
+  if (area.get() == nullptr)
+    throw runtime_error("Failed to find a projection from '" + theFile + "'");
 
   return area;
 }
@@ -187,42 +190,46 @@ void project_coordinates(bool verbose,
     {
       string opt = theParameters.Parameter(i);
       vector<double> nums = NFmiStringTools::Split<vector<double> >(opt);
-      if (nums.size() != 2) throw runtime_error("Could not convert '" + opt + "' to a coordinate");
-      coords.push_back(NFmiPoint(nums[0], nums[1]));
+      if (nums.size() != 2)
+        throw runtime_error("Could not convert '" + opt + "' to a coordinate");
+      coords.emplace_back(nums[0], nums[1]);
     }
   }
   else
   {
-    double x, y;
+    double x;
+    double y;
     while (cin >> x >> y)
-      coords.push_back(NFmiPoint(x, y));
-    if (cin.bad()) throw runtime_error("Error while reading coordinates from standard input");
+      coords.emplace_back(x, y);
+    if (cin.bad())
+      throw runtime_error("Error while reading coordinates from standard input");
   }
 
   // Now project the coordinates and print them
 
   NFmiPoint result;
-  for (vector<NFmiPoint>::const_iterator it = coords.begin(); it != coords.end(); ++it)
+  for (auto coord : coords)
   {
     switch (theOption)
     {
       case 'l':
-        result = theArea.ToXY(*it);
+        result = theArea.ToXY(coord);
         break;
       case 'L':
-        result = theArea.LatLonToWorldXY(*it);
+        result = theArea.LatLonToWorldXY(coord);
         break;
       case 'i':
-        result = theArea.ToLatLon(*it);
+        result = theArea.ToLatLon(coord);
         break;
       case 'I':
-        result = theArea.WorldXYToLatLon(*it);
+        result = theArea.WorldXYToLatLon(coord);
         break;
       default:
         throw runtime_error("Internal error - unhandled projection while projecting");
     }
     cout << setprecision(10) << result.X() << ' ' << result.Y();
-    if (verbose) cout << ' ' << it->X() << ' ' << it->Y();
+    if (verbose)
+      cout << ' ' << coord.X() << ' ' << coord.Y();
     cout << endl;
   }
 }
@@ -239,7 +246,8 @@ int run(int argc, const char* argv[])
 
   NFmiCmdLine cmdline(argc, argv, "hvd!c!q!lLiIgGwW");
 
-  if (cmdline.Status().IsError()) throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
+  if (cmdline.Status().IsError())
+    throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
 
   if (cmdline.isOption('h'))
   {
@@ -255,9 +263,11 @@ int run(int argc, const char* argv[])
 
   int projcount = (cmdline.isOption('d') + cmdline.isOption('c') + cmdline.isOption('q'));
 
-  if (projcount > 1) throw runtime_error("Options -d -c and -q are mutually exclusive");
+  if (projcount > 1)
+    throw runtime_error("Options -d -c and -q are mutually exclusive");
 
-  if (projcount == 0) throw runtime_error("At least one of options -d -c or -q must be used");
+  if (projcount == 0)
+    throw runtime_error("At least one of options -d -c or -q must be used");
 
   if (cmdline.isOption('d'))
     area = NFmiAreaFactory::Create(cmdline.OptionValue('d'));
@@ -266,7 +276,8 @@ int run(int argc, const char* argv[])
   else if (cmdline.isOption('q'))
     area = create_projection_from_querydata(cmdline.OptionValue('q'));
 
-  if (area.get() == 0) throw runtime_error("Failed to create a projection");
+  if (area.get() == nullptr)
+    throw runtime_error("Failed to create a projection");
 
   // Check how many of the conversion options are given
 

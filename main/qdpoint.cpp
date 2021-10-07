@@ -34,7 +34,6 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
-#include <ogr_geometry.h>
 #include <macgyver/StringConversion.h>
 #include <macgyver/WorldTimeZones.h>
 #include <newbase/NFmiCmdLine.h>
@@ -52,6 +51,7 @@
 #include <newbase/NFmiStringTools.h>
 #include <newbase/NFmiValueString.h>
 #include <list>
+#include <ogr_geometry.h>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -77,7 +77,7 @@ struct Location
   Location(const string& theName, const NFmiPoint& theLatLon) : name(theName), latlon(theLatLon) {}
 };
 
-typedef list<Location> LocationList;
+using LocationList = list<Location>;
 
 // ----------------------------------------------------------------------
 // Lue LocationList annetusta tiedostosta
@@ -89,14 +89,16 @@ LocationList read_locationlist(const string& theFile)
 
   const bool strip_pound = true;
   NFmiPreProcessor processor(strip_pound);
-  if (!processor.ReadAndStripFile(theFile)) throw runtime_error("Unable to preprocess " + theFile);
+  if (!processor.ReadAndStripFile(theFile))
+    throw runtime_error("Unable to preprocess " + theFile);
 
   string text = processor.GetString();
   istringstream input(text);
   string line;
   while (getline(input, line))
   {
-    if (line.empty()) continue;
+    if (line.empty())
+      continue;
     vector<string> parts = NFmiStringTools::Split(line, ",");
     if (parts.size() != 3)
       cerr << "Warning: Invalid line '" + line + "' in file '" + theFile + "'" << endl;
@@ -105,8 +107,8 @@ LocationList read_locationlist(const string& theFile)
       try
       {
         string name = parts[0];
-        double lon = NFmiStringTools::Convert<double>(parts[1]);
-        double lat = NFmiStringTools::Convert<double>(parts[2]);
+        auto lon = NFmiStringTools::Convert<double>(parts[1]);
+        auto lat = NFmiStringTools::Convert<double>(parts[2]);
         ret.push_back(Location(name, NFmiPoint(lon, lat)));
       }
       catch (...)
@@ -149,7 +151,7 @@ struct Options
   bool multimode = false;
   double max_distance = 100;  // km
   int nearest_stations = 1;
-  string locationfile = "";
+  string locationfile;
   LocationList locations;
   string missingvalue = "-";
   string uid;
@@ -167,7 +169,8 @@ vector<int> parse_stations(const std::string& str)
 {
   vector<int> ret;
 
-  if (str.empty()) return ret;
+  if (str.empty())
+    return ret;
 
   list<string> parts;
   boost::algorithm::split(parts, str, boost::is_any_of(","));
@@ -189,7 +192,6 @@ vector<int> parse_stations(const std::string& str)
 bool parse_options(int argc, char* argv[])
 {
   namespace po = boost::program_options;
-  namespace fs = boost::filesystem;
 
   string opt_stations;
   string opt_places;
@@ -286,7 +288,8 @@ bool parse_options(int argc, char* argv[])
               << std::endl;
   }
 
-  if (!options.locationfile.empty()) options.locations = read_locationlist(options.locationfile);
+  if (!options.locationfile.empty())
+    options.locations = read_locationlist(options.locationfile);
 
   if (opt_stations == "all")
     options.all_stations = true;
@@ -316,7 +319,7 @@ std::map<std::string, NFmiPoint> FindPlaces(const std::vector<std::string>& theP
                                             const std::string& theCoordFile,
                                             bool theForceFlag)
 {
-  typedef std::map<std::string, NFmiPoint> ReturnType;
+  using ReturnType = std::map<std::string, NFmiPoint>;
   ReturnType ret;
 
   if (!NFmiFileSystem::FileExists(theCoordFile))
@@ -326,16 +329,16 @@ std::map<std::string, NFmiPoint> FindPlaces(const std::vector<std::string>& theP
   if (!locfinder.AddFile(theCoordFile, false))
     throw std::runtime_error("Reading file " + theCoordFile + " failed");
 
-  for (vector<string>::const_iterator it = thePlaces.begin(); it != thePlaces.end(); ++it)
+  for (const auto& thePlace : thePlaces)
   {
-    NFmiPoint lonlat = locfinder.Find(it->c_str());
+    NFmiPoint lonlat = locfinder.Find(thePlace.c_str());
 
     // Tarkistetaan nimen loytyminen.
 
     if (locfinder.LastSearchFailed() && !theForceFlag)
-      throw std::runtime_error("Location " + *it + " is not in the database");
+      throw std::runtime_error("Location " + thePlace + " is not in the database");
     else
-      ret.insert(ReturnType::value_type(*it, lonlat));
+      ret.insert(ReturnType::value_type(thePlace, lonlat));
   }
 
   return ret;
@@ -347,7 +350,7 @@ std::map<std::string, NFmiPoint> FindPlaces(const std::vector<std::string>& theP
 
 bool IsDst(NFmiFastQueryInfo& qd)
 {
-  NFmiMetTime t = qd.ValidTime();
+  const NFmiMetTime& t = qd.ValidTime();
 
   struct ::tm utc;
   utc.tm_sec = t.GetSec();
@@ -412,23 +415,27 @@ double ElevationAngle(const NFmiPoint& theLatLon, const NFmiTime& theTime)
 
 float WindChill(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 {
-  float temperature, windspeed;
+  float temperature;
+  float windspeed;
 
-  if (!qd.Param(kFmiTemperature)) return kFloatMissing;
+  if (!qd.Param(kFmiTemperature))
+    return kFloatMissing;
 
   if (qd.IsGrid())
     temperature = qd.InterpolatedValue(theLatLon);
   else
     temperature = qd.FloatValue();
 
-  if (!qd.Param(kFmiWindSpeedMS)) return kFloatMissing;
+  if (!qd.Param(kFmiWindSpeedMS))
+    return kFloatMissing;
 
   if (qd.IsGrid())
     windspeed = qd.InterpolatedValue(theLatLon);
   else
     windspeed = qd.FloatValue();
 
-  if (temperature == kFloatMissing || windspeed == kFloatMissing) return kFloatMissing;
+  if (temperature == kFloatMissing || windspeed == kFloatMissing)
+    return kFloatMissing;
 
   return FmiWindChill(windspeed, temperature);
 }
@@ -439,25 +446,32 @@ float WindChill(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 
 float FeelsLike(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 {
-  float temperature, windspeed, humidity, radiation;
+  float temperature;
+  float windspeed;
+  float humidity;
+  float radiation;
 
-  if (!qd.Param(kFmiTemperature)) return kFloatMissing;
+  if (!qd.Param(kFmiTemperature))
+    return kFloatMissing;
 
   if (qd.IsGrid())
     temperature = qd.InterpolatedValue(theLatLon);
   else
     temperature = qd.FloatValue();
 
-  if (!qd.Param(kFmiWindSpeedMS)) return kFloatMissing;
+  if (!qd.Param(kFmiWindSpeedMS))
+    return kFloatMissing;
 
   if (qd.IsGrid())
     windspeed = qd.InterpolatedValue(theLatLon);
   else
     windspeed = qd.FloatValue();
 
-  if (temperature == kFloatMissing || windspeed == kFloatMissing) return kFloatMissing;
+  if (temperature == kFloatMissing || windspeed == kFloatMissing)
+    return kFloatMissing;
 
-  if (!qd.Param(kFmiHumidity)) return kFloatMissing;
+  if (!qd.Param(kFmiHumidity))
+    return kFloatMissing;
 
   if (qd.IsGrid())
     humidity = qd.InterpolatedValue(theLatLon);
@@ -482,16 +496,19 @@ float FeelsLike(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 
 float SummerSimmer(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 {
-  float temperature, humidity;
+  float temperature;
+  float humidity;
 
-  if (!qd.Param(kFmiTemperature)) return kFloatMissing;
+  if (!qd.Param(kFmiTemperature))
+    return kFloatMissing;
 
   if (qd.IsGrid())
     temperature = qd.InterpolatedValue(theLatLon);
   else
     temperature = qd.FloatValue();
 
-  if (!qd.Param(kFmiHumidity)) return kFloatMissing;
+  if (!qd.Param(kFmiHumidity))
+    return kFloatMissing;
 
   if (qd.IsGrid())
     humidity = qd.InterpolatedValue(theLatLon);
@@ -507,15 +524,19 @@ float SummerSimmer(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 
 float ThetaE(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 {
-  float temperature, pressure, humidity;
+  float temperature;
+  float pressure;
+  float humidity;
 
-  if (!qd.Param(kFmiTemperature)) return kFloatMissing;
+  if (!qd.Param(kFmiTemperature))
+    return kFloatMissing;
   if (qd.IsGrid())
     temperature = qd.InterpolatedValue(theLatLon);
   else
     temperature = qd.FloatValue();
 
-  if (!qd.Param(kFmiHumidity)) return kFloatMissing;
+  if (!qd.Param(kFmiHumidity))
+    return kFloatMissing;
   if (qd.IsGrid())
     humidity = qd.InterpolatedValue(theLatLon);
   else
@@ -564,9 +585,11 @@ float ThetaE(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 
 float RainProbability(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 {
-  if (qd.Grid() == 0) return kFloatMissing;
+  if (qd.Grid() == nullptr)
+    return kFloatMissing;
 
-  if (!qd.Param(kFmiPrecipitation1h)) return kFloatMissing;
+  if (!qd.Param(kFmiPrecipitation1h))
+    return kFloatMissing;
 
   const NFmiTime validTime = qd.ValidTime();
   const NFmiTime originTime = qd.OriginTime();
@@ -609,14 +632,16 @@ float CloudinessN(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 {
   float n;
 
-  if (!qd.Param(kFmiTotalCloudCover)) return kFloatMissing;
+  if (!qd.Param(kFmiTotalCloudCover))
+    return kFloatMissing;
 
   if (qd.IsGrid())
     n = qd.InterpolatedValue(theLatLon);
   else
     n = qd.FloatValue();
 
-  if (n == kFloatMissing) return kFloatMissing;
+  if (n == kFloatMissing)
+    return kFloatMissing;
 
   return round(n / 100 * 8);
 }
@@ -629,14 +654,16 @@ float CloudinessNN(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 {
   float n;
 
-  if (!qd.Param(kFmiMiddleAndLowCloudCover)) return kFloatMissing;
+  if (!qd.Param(kFmiMiddleAndLowCloudCover))
+    return kFloatMissing;
 
   if (qd.IsGrid())
     n = qd.InterpolatedValue(theLatLon);
   else
     n = qd.FloatValue();
 
-  if (n == kFloatMissing) return kFloatMissing;
+  if (n == kFloatMissing)
+    return kFloatMissing;
 
   return round(n / 100 * 8);
 }
@@ -650,19 +677,22 @@ float SnowProb(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
   float t2m = kFloatMissing;
   float rh = kFloatMissing;
 
-  if (!qd.Param(kFmiTemperature)) return kFloatMissing;
+  if (!qd.Param(kFmiTemperature))
+    return kFloatMissing;
   if (qd.IsGrid())
     t2m = qd.InterpolatedValue(theLatLon);
   else
     t2m = qd.FloatValue();
 
-  if (!qd.Param(kFmiHumidity)) return kFloatMissing;
+  if (!qd.Param(kFmiHumidity))
+    return kFloatMissing;
   if (qd.IsGrid())
     rh = qd.InterpolatedValue(theLatLon);
   else
     rh = qd.FloatValue();
 
-  if (t2m == kFloatMissing || rh == kFloatMissing) return kFloatMissing;
+  if (t2m == kFloatMissing || rh == kFloatMissing)
+    return kFloatMissing;
 
   return static_cast<float>(100 * (1 - 1 / (1 + exp(22 - 2.7 * t2m - 0.2 * rh))));
 }
@@ -684,8 +714,9 @@ float MoonIlluminatedFraction(const NFmiTime& theTime)
 
 float North(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 {
-  auto area = qd.Area();
-  if (!area) return kFloatMissing;
+  const auto* area = qd.Area();
+  if (!area)
+    return kFloatMissing;
 
   return qd.Area()->TrueNorthAzimuth(theLatLon).ToDeg();
 }
@@ -789,8 +820,9 @@ const char* MetaPrecision(const string& name)
 
 FmiParameterName ParamEnum(const string& theParam)
 {
-  FmiParameterName num = FmiParameterName(converter.ToEnum(theParam));
-  if (num != kFmiBadParameter) return num;
+  auto num = FmiParameterName(converter.ToEnum(theParam));
+  if (num != kFmiBadParameter)
+    return num;
 
   try
   {
@@ -806,9 +838,10 @@ FmiParameterName ParamEnum(const string& theParam)
 // Irrottaa parametrinimen speksistä param:level
 // ----------------------------------------------------------------------
 
-const string ParamName(const string& theParam)
+string ParamName(const string& theParam)
 {
-  if (theParam.empty()) return theParam;
+  if (theParam.empty())
+    return theParam;
 
   vector<string> parts = NFmiStringTools::Split(theParam, ":");
   return parts[0];
@@ -820,10 +853,12 @@ const string ParamName(const string& theParam)
 
 long ParamLevel(const string& theParam)
 {
-  if (theParam.empty()) return -1;
+  if (theParam.empty())
+    return -1;
 
   vector<string> parts = NFmiStringTools::Split(theParam, ":");
-  if (parts.size() != 2) return -1;
+  if (parts.size() != 2)
+    return -1;
   return NFmiStringTools::Convert<long>(parts[1]);
 }
 
@@ -848,7 +883,8 @@ bool ValidRow(NFmiFastQueryInfo& qd,
 
     if (options.params.empty())
     {
-      if (!qd.NextParam(ignoresubs)) break;
+      if (!qd.NextParam(ignoresubs))
+        break;
       if (qd.IsGrid())
         value = qd.InterpolatedValue(lonlat);
       else
@@ -856,7 +892,8 @@ bool ValidRow(NFmiFastQueryInfo& qd,
     }
     else
     {
-      if (iter == options.params.end()) break;
+      if (iter == options.params.end())
+        break;
 
       string name = ParamName(*iter);
       long level = ParamLevel(*iter);
@@ -866,7 +903,8 @@ bool ValidRow(NFmiFastQueryInfo& qd,
       else
       {
         for (qd.ResetLevel(); qd.NextLevel();)
-          if (qd.Level()->LevelValue() == static_cast<unsigned int>(level)) break;
+          if (qd.Level()->LevelValue() == static_cast<unsigned int>(level))
+            break;
       }
 
       if (!qd.IsLevel())
@@ -950,12 +988,14 @@ int MissingGap(NFmiFastQueryInfo& qd,
 float InterpolatedValue(NFmiFastQueryInfo& qd, int maxmissminutes, const NFmiPoint& lonlat)
 {
   float value = qd.InterpolatedValue(lonlat);
-  if (maxmissminutes <= 0 || value != kFloatMissing) return value;
+  if (maxmissminutes <= 0 || value != kFloatMissing)
+    return value;
 
   // Try to interpolate the value
 
   int gap = MissingGap(qd, lonlat);
-  if (gap > maxmissminutes) return kFloatMissing;
+  if (gap > maxmissminutes)
+    return kFloatMissing;
 
   return qd.InterpolatedValue(lonlat, qd.ValidTime(), maxmissminutes);
 }
@@ -967,12 +1007,14 @@ float InterpolatedValue(NFmiFastQueryInfo& qd, int maxmissminutes, const NFmiPoi
 float InterpolatedValue(NFmiFastQueryInfo& qd, int maxmissminutes)
 {
   float value = qd.FloatValue();
-  if (maxmissminutes <= 0 || value != kFloatMissing) return value;
+  if (maxmissminutes <= 0 || value != kFloatMissing)
+    return value;
 
   // Try to interpolate the value
 
   int gap = MissingGap(qd);
-  if (gap > maxmissminutes) return kFloatMissing;
+  if (gap > maxmissminutes)
+    return kFloatMissing;
 
   return qd.InterpolatedValue(qd.ValidTime(), maxmissminutes);
 }
@@ -997,7 +1039,8 @@ void PrintRow(NFmiFastQueryInfo& qd,
 
   // Ei näytetä, jos käyttäjä ei halua menneisyyttä
 
-  if (options.future && utctime.IsLessThan(now)) return;
+  if (options.future && utctime.IsLessThan(now))
+    return;
 
   // Rivi näytetään
 
@@ -1015,7 +1058,7 @@ void PrintRow(NFmiFastQueryInfo& qd,
 	  else
 		t = utctime.LocalTime(static_cast<float>(lonlat.X()));
 #else
-    string tz = zones.zone_name(lonlat.X(), lonlat.Y());
+    const string& tz = zones.zone_name(lonlat.X(), lonlat.Y());
     t = TimeTools::timezone_time(utctime, tz);
 #endif
   }
@@ -1035,7 +1078,8 @@ void PrintRow(NFmiFastQueryInfo& qd,
 
     if (options.params.empty())
     {
-      if (!qd.NextParam(ignoresubs)) break;
+      if (!qd.NextParam(ignoresubs))
+        break;
       precision = qd.Param().GetParam()->Precision();
 
       if (qd.IsGrid())
@@ -1045,7 +1089,8 @@ void PrintRow(NFmiFastQueryInfo& qd,
     }
     else
     {
-      if (iter == options.params.end()) break;
+      if (iter == options.params.end())
+        break;
 
       string name = ParamName(*iter);
       long level = ParamLevel(*iter);
@@ -1055,7 +1100,8 @@ void PrintRow(NFmiFastQueryInfo& qd,
       else
       {
         for (qd.ResetLevel(); qd.NextLevel();)
-          if (qd.Level()->LevelValue() == static_cast<unsigned int>(level)) break;
+          if (qd.Level()->LevelValue() == static_cast<unsigned int>(level))
+            break;
       }
 
       if (!qd.IsLevel())
@@ -1086,7 +1132,8 @@ void PrintRow(NFmiFastQueryInfo& qd,
     }
 
     // Pyöristetään negatiivinen nolla nollaksi
-    if (value == -0) value = 0;
+    if (value == -0)
+      value = 0;
 
     NFmiString tmp;
     if (value == kFloatMissing)
@@ -1133,7 +1180,8 @@ void PrintLocationInfo(QueryDataManager& theMgr,
 
 void ReportTimes(QueryDataManager& theMgr)
 {
-  if (!theMgr.isset()) return;
+  if (!theMgr.isset())
+    return;
 
   const char separator = '\t';
 
@@ -1160,16 +1208,19 @@ void ReportTimes(QueryDataManager& theMgr)
 // Print location info for the user
 // ----------------------------------------------------------------------
 
-void ReportStations(QueryDataManager& theMgr, const vector<int> theWmos, const NFmiPoint& theLonLat)
+void ReportStations(QueryDataManager& theMgr,
+                    const vector<int>& theWmos,
+                    const NFmiPoint& theLonLat)
 {
   if (theWmos.empty())
     PrintLocationInfo(theMgr, !IsBad(theLonLat), theLonLat);
   else
   {
-    if (options.verbose) cout << "# Stations " << theWmos.size() << endl;
-    vector<int>::const_iterator begin = theWmos.begin();
-    vector<int>::const_iterator end = theWmos.end();
-    for (vector<int>::const_iterator iter = begin; iter != end; ++iter)
+    if (options.verbose)
+      cout << "# Stations " << theWmos.size() << endl;
+    auto begin = theWmos.begin();
+    auto end = theWmos.end();
+    for (auto iter = begin; iter != end; ++iter)
     {
       theMgr.setstation(*iter);
       PrintLocationInfo(theMgr, !IsBad(theLonLat), theLonLat);
@@ -1185,10 +1236,12 @@ void ReportParams(QueryDataManager& theMgr,
                   const vector<int>& theWmos,
                   const vector<string>& theParams)
 {
-  if (!theMgr.isset()) return;
+  if (!theMgr.isset())
+    return;
 
   int sarake = 1;
-  if (!theWmos.empty()) cout << "# Column " << sarake++ << ": WMO-number" << endl;
+  if (!theWmos.empty())
+    cout << "# Column " << sarake++ << ": WMO-number" << endl;
   cout << "# Column " << sarake++ << ": Local time" << endl;
 
   NFmiFastQueryInfo& qd = theMgr.info();
@@ -1257,9 +1310,10 @@ void ReportParams(QueryDataManager& theMgr,
 
 int run(int argc, char* argv[])
 {
-  if (!parse_options(argc, argv)) return 0;
+  if (!parse_options(argc, argv))
+    return 0;
 
-  typedef map<string, NFmiPoint> PlacesType;
+  using PlacesType = map<string, NFmiPoint>;
   PlacesType places;
 
   // Initialize the querydata manager
@@ -1268,7 +1322,8 @@ int run(int argc, char* argv[])
   qmgr.searchpath(NFmiSettings::Optional<string>("qdpoint::querydata_path", "."));
   qmgr.addfiles(NFmiStringTools::Split(options.queryfile));
 
-  if (options.multimode) qmgr.multimode();
+  if (options.multimode)
+    qmgr.multimode();
 
   // Initialize timezone finder
 
@@ -1304,7 +1359,8 @@ int run(int argc, char* argv[])
   // Referenssipiste lähimpiä pisteitä haettaessa
 
   NFmiPoint referencelonlat(kFloatMissing, kFloatMissing);
-  if (options.nearest_stations >= 1 && places.size() == 1) referencelonlat = places.begin()->second;
+  if (options.nearest_stations >= 1 && places.size() == 1)
+    referencelonlat = places.begin()->second;
 
   // Listataan kaikki asemat tarvittaessa
 
@@ -1341,17 +1397,20 @@ int run(int argc, char* argv[])
 
   if (options.list_stations || options.verbose)
   {
-    if (!places.empty()) qmgr.setpoint(places.begin()->second, 1000 * options.max_distance);
+    if (!places.empty())
+      qmgr.setpoint(places.begin()->second, 1000 * options.max_distance);
     ReportStations(qmgr, options.stations, referencelonlat);
   }
 
   // Näytetään aika-askeleet, jos -v on annettu
 
-  if (options.verbose) ReportTimes(qmgr);
+  if (options.verbose)
+    ReportTimes(qmgr);
 
   // Näytetään parametrinimet, jos -v on annettu
 
-  if (options.verbose) ReportParams(qmgr, options.stations, options.params);
+  if (options.verbose)
+    ReportParams(qmgr, options.stations, options.params);
 
   // Jos options.rows > 0, halutaan N viimeisintä aikaa, muutoin kaikki ajat
 
@@ -1363,14 +1422,15 @@ int run(int argc, char* argv[])
   {
     vector<int>::const_iterator begin = options.stations.begin();
     vector<int>::const_iterator end = options.stations.end();
-    for (vector<int>::const_iterator iter = begin; iter != end; ++iter)
+    for (auto iter = begin; iter != end; ++iter)
     {
       qmgr.setstation(*iter);
       qi = &qmgr.info();
 
       qi->FirstLevel();
 
-      if (!qi->Location(*iter)) continue;
+      if (!qi->Location(*iter))
+        continue;
 
       NFmiPoint lonlat = qi->Location()->GetLocation();
 
@@ -1381,7 +1441,8 @@ int run(int argc, char* argv[])
         {
           // Taaksepäin yhteensopivuus vaatii, että
           // tulostetaan WMO-numero vain kun niitä on useita
-          if (options.stations.size() > 1) cout << NFmiValueString(*iter, "%05d").CharPtr() << ' ';
+          if (options.stations.size() > 1)
+            cout << NFmiValueString(*iter, "%05d").CharPtr() << ' ';
           PrintRow(*qi, ignoresubs, zones, lonlat);
         }
       }
@@ -1421,7 +1482,8 @@ int run(int argc, char* argv[])
       }
       catch (...)
       {
-        if (options.force) continue;
+        if (options.force)
+          continue;
         throw;
       }
 
@@ -1461,7 +1523,8 @@ int run(int argc, char* argv[])
   {
     for (PlacesType::const_iterator it = places.begin(); it != places.end(); ++it)
     {
-      if (places.size() > 1) cout << "Location: " << it->first << endl;
+      if (places.size() > 1)
+        cout << "Location: " << it->first << endl;
 
       NFmiPoint lonlat = it->second;
       try
@@ -1471,7 +1534,8 @@ int run(int argc, char* argv[])
       }
       catch (...)
       {
-        if (options.force) continue;
+        if (options.force)
+          continue;
         throw;
       }
 

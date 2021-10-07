@@ -160,13 +160,13 @@ void usage()
 
 struct Options
 {
-  bool verbose;
+  bool verbose{false};
 
   string config;
   string inputdata;
   string outputdata;
 
-  Options() : verbose(false) {}
+  Options() = default;
 };
 
 // ----------------------------------------------------------------------
@@ -227,7 +227,7 @@ bool parse_command_line(int argc, const char* argv[])
  */
 // ----------------------------------------------------------------------
 
-const string make_output_name(const string& theInfile, const string& theOutpath)
+string make_output_name(const string& theInfile, const string& theOutpath)
 {
   if (!NFmiFileSystem::DirectoryExists(theOutpath))
     return theOutpath;
@@ -243,7 +243,7 @@ const string make_output_name(const string& theInfile, const string& theOutpath)
  */
 // ----------------------------------------------------------------------
 
-const NFmiParamDescriptor make_param_descriptor(NFmiFastQueryInfo& theQ)
+NFmiParamDescriptor make_param_descriptor(NFmiFastQueryInfo& theQ)
 {
   NFmiParamBag bag;
 
@@ -255,13 +255,13 @@ const NFmiParamDescriptor make_param_descriptor(NFmiFastQueryInfo& theQ)
 
   NFmiEnumConverter converter;
 
-  for (vector<string>::const_iterator it = params.begin(); it != params.end(); ++it)
+  for (const auto& param : params)
   {
-    FmiParameterName paramnum = FmiParameterName(converter.ToEnum(*it));
+    auto paramnum = FmiParameterName(converter.ToEnum(param));
     if (paramnum == kFmiBadParameter)
-      throw runtime_error("Parameter '" + *it + "' is not known to newbase");
+      throw runtime_error("Parameter '" + param + "' is not known to newbase");
     if (!theQ.Param(paramnum))
-      throw runtime_error("Source data does not contain parameter '" + *it + "'");
+      throw runtime_error("Source data does not contain parameter '" + param + "'");
     bag.Add(theQ.Param());
   }
 
@@ -287,16 +287,16 @@ void handle_times(const NFmiMetTime& theFirstTime,
                   const vector<string>& theSpecs,
                   bool theFlag)
 {
-  for (vector<string>::const_iterator it = theSpecs.begin(); it != theSpecs.end(); ++it)
+  for (const auto& theSpec : theSpecs)
   {
-    vector<int> words = NFmiStringTools::Split<vector<int> >(*it, ":");
+    vector<int> words = NFmiStringTools::Split<vector<int> >(theSpec, ":");
     if (words.size() != 3)
-      throw runtime_error("Invalid time specification '" + *it + "'");
+      throw runtime_error("Invalid time specification '" + theSpec + "'");
     const int t1 = words[0];
     const int t2 = words[1];
     const int dt = words[2];
     if (t1 < 0 || t2 < 0 || dt < 0)
-      throw runtime_error("Invalid time specification '" + *it + "'");
+      throw runtime_error("Invalid time specification '" + theSpec + "'");
 
     for (int t = t1; t <= t2; ++t)
     {
@@ -323,7 +323,7 @@ void handle_times(const NFmiMetTime& theFirstTime,
  */
 // ----------------------------------------------------------------------
 
-const NFmiTimeDescriptor make_time_descriptor(NFmiFastQueryInfo& theQ)
+NFmiTimeDescriptor make_time_descriptor(NFmiFastQueryInfo& theQ)
 {
   // Build a set of available times
 
@@ -351,8 +351,8 @@ const NFmiTimeDescriptor make_time_descriptor(NFmiFastQueryInfo& theQ)
   // Build the final timelist
 
   NFmiTimeList tlist;
-  for (set<NFmiMetTime>::const_iterator it = times.begin(); it != times.end(); ++it)
-    tlist.Add(new NFmiMetTime(*it));
+  for (const auto& time : times)
+    tlist.Add(new NFmiMetTime(time));
 
   NFmiTimeDescriptor desc(theQ.OriginTime(), tlist);
   return desc;
@@ -388,7 +388,7 @@ void smoothen_data(NFmiQueryData& theQD, NFmiFastQueryInfo& theQ)
     const string factorvar = var + "::factor";
 
     const string method = NFmiSettings::Optional<string>(typevar.c_str(), "None");
-    const double radius = NFmiSettings::Optional<double>(radiusvar.c_str(), 0);
+    const auto radius = NFmiSettings::Optional<double>(radiusvar.c_str(), 0);
     const int factor = NFmiSettings::Optional<int>(factorvar.c_str(), 0);
 
     if (options.verbose)
@@ -433,7 +433,7 @@ boost::shared_ptr<NFmiQueryData> create_data(NFmiFastQueryInfo& theQ)
   NFmiFastQueryInfo info(pdesc, tdesc, hdesc, vdesc);
   boost::shared_ptr<NFmiQueryData> qd(NFmiQueryDataUtil::CreateEmptyData(info));
 
-  if (qd.get() == 0)
+  if (qd.get() == nullptr)
     throw runtime_error("Insufficient memory for result data");
 
   // Fill the querydata with smoothened values
@@ -482,7 +482,7 @@ int run(int argc, const char* argv[])
     cout << "Smoothening data" << endl;
   boost::shared_ptr<NFmiQueryData> outqd = create_data(q);
 
-  if (outqd.get() == 0)
+  if (outqd.get() == nullptr)
     throw runtime_error("Failed to create a smoothened querydata object");
 
   if (options.verbose)

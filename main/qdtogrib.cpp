@@ -34,7 +34,7 @@
                                  // tulee varoituksia (MSVC++ k‰‰nt‰j‰n 4996)
 #endif
 
-typedef std::vector<ParamChangeItem> ParamChangeTable;
+using ParamChangeTable = std::vector<ParamChangeItem>;
 
 // ----------------------------------------------------------------------
 /*!
@@ -48,7 +48,7 @@ struct Options
 
   std::string infile = "-";        // -i --infile
   std::string outfile = "-";       // -o --outfile
-  std::string packing = "";        // -p --packing, empty implies use ECCODES default
+  std::string packing;             // -p --packing, empty implies use ECCODES default
   bool grib1 = false;              // -1, --grib1
   bool grib2 = false;              // -2, --grib2
   bool split = false;              // -s --split
@@ -56,7 +56,7 @@ struct Options
   bool ignore_origintime = false;  // -I --ignore-origintime
   bool verbose = false;            // -v --verbose
   bool dump = false;               // -D --dump ; generate a grib_api dump
-  std::string centre = "";         // -C --centre
+  std::string centre;              // -C --centre
   int subcentre = 0;               // -S --subcentre
   bool list_centres = false;       // -L --list-centres
   NFmiLevel level;                 // -l --level
@@ -339,28 +339,34 @@ bool parse_options(int argc, char *argv[])
     return false;
   }
 
-  if (opt.count("infile") == 0) throw std::runtime_error("Expecting input file as parameter 1");
+  if (opt.count("infile") == 0)
+    throw std::runtime_error("Expecting input file as parameter 1");
 
-  if (opt.count("outfile") == 0) throw std::runtime_error("Expecting output file as parameter 2");
+  if (opt.count("outfile") == 0)
+    throw std::runtime_error("Expecting output file as parameter 2");
 
   if (!fs::exists(options.infile))
     throw std::runtime_error("Input file '" + options.infile + "' does not exist");
 
   // Handle the level argument
 
-  if (!level.empty()) options.level = parse_level(level);
+  if (!level.empty())
+    options.level = parse_level(level);
 
   // Validate GRIB selection
 
-  if (options.grib1 && options.grib2) throw std::runtime_error("Must select either GRIB1 or GRIB2");
+  if (options.grib1 && options.grib2)
+    throw std::runtime_error("Must select either GRIB1 or GRIB2");
 
   // Make default selection if none was chosen
 
-  if (!options.grib1) options.grib2 = true;
+  if (!options.grib1)
+    options.grib2 = true;
 
   // Read the configuration file
 
-  if (!config.empty()) options.ptable = ReadGribConf(config);
+  if (!config.empty())
+    options.ptable = ReadGribConf(config);
 
   return true;
 }
@@ -373,10 +379,11 @@ bool parse_options(int argc, char *argv[])
 
 bool ignore_param(long id)
 {
-  for (size_t i = 0; i < options.ptable.size(); ++i)
+  for (auto &i : options.ptable)
   {
     // Note: conversion in reverse direction!
-    if (id == options.ptable[i].itsWantedParam.GetIdent()) return false;
+    if (id == i.itsWantedParam.GetIdent())
+      return false;
   }
   return true;
 }
@@ -389,8 +396,10 @@ bool ignore_param(long id)
 
 double fix_longitude(double lon)
 {
-  if (options.grib1) return lon;
-  if (lon < 0) return 360 + lon;
+  if (options.grib1)
+    return lon;
+  if (lon < 0)
+    return 360 + lon;
   return lon;
 }
 
@@ -410,7 +419,8 @@ long get_smallest_timestep(NFmiFastQueryInfo &theInfo)
     if (last_time)
     {
       long diff = theInfo.ValidTime().DifferenceInMinutes(*last_time);
-      if (timestep == 0 || diff < timestep) timestep = diff;
+      if (timestep == 0 || diff < timestep)
+        timestep = diff;
     }
     last_time = theInfo.ValidTime();
   }
@@ -473,11 +483,11 @@ void set_rotated_latlon_geometry(NFmiFastQueryInfo &theInfo,
 {
   gset(gribHandle, "gridType", "rotated_ll");
 
-#ifdef WGS84  
+#ifdef WGS84
   const auto &a = *theInfo.Area();
 #else
   const NFmiRotatedLatLonArea &a = *dynamic_cast<const NFmiRotatedLatLonArea *>(theInfo.Area());
-#endif  
+#endif
   NFmiPoint bl(a.LatLonToWorldXY(a.BottomLeftLatLon()));
   NFmiPoint tr(a.LatLonToWorldXY(a.TopRightLatLon()));
 
@@ -508,7 +518,8 @@ void set_rotated_latlon_geometry(NFmiFastQueryInfo &theInfo,
 
   auto plat = a.ProjInfo().getDouble("o_lat_p");
   auto plon = a.ProjInfo().getDouble("o_lon_p");
-  if (!plat || !plon) throw std::runtime_error("Rotated latlon north pole location not set");
+  if (!plat || !plon)
+    throw std::runtime_error("Rotated latlon north pole location not set");
   // Calculate respective south pole location
 
   gset(gribHandle, "longitudeOfSouthernPoleInDegrees", *plon);
@@ -523,7 +534,7 @@ void set_rotated_latlon_geometry(NFmiFastQueryInfo &theInfo,
   gset(gribHandle, "longitudeOfSouthernPoleInDegrees", a.SouthernPole().X());
   gset(gribHandle, "latitudeOfSouthernPoleInDegrees", a.SouthernPole().Y());
 
-#endif  
+#endif
 
   // DUMP(gribHandle, "geography");
 
@@ -579,10 +590,10 @@ void set_stereographic_geometry(NFmiFastQueryInfo &theInfo,
   gset(gribHandle, "DxInMetres", dx);
   gset(gribHandle, "DyInMetres", dy);
 
-    gset(gribHandle, "jScansPositively", 1);
+  gset(gribHandle, "jScansPositively", 1);
   gset(gribHandle, "iScansNegatively", 0);
 
-#ifdef WGS84  
+#ifdef WGS84
 
   auto *a = theInfo.Area();
 
@@ -590,9 +601,12 @@ void set_stereographic_geometry(NFmiFastQueryInfo &theInfo,
   auto clat = a->ProjInfo().getDouble("lat_0");
   auto tlat = a->ProjInfo().getDouble("lat_ts");
 
-  if (!clon) clon = 0;
-  if (!clat) clat = 90;
-  if (!tlat) tlat = 90;
+  if (!clon)
+    clon = 0;
+  if (!clat)
+    clat = 90;
+  if (!tlat)
+    tlat = 90;
 
   if (*clat == 90)
     gset(gribHandle, "projecionCenterFlag", 0);
@@ -617,10 +631,10 @@ void set_stereographic_geometry(NFmiFastQueryInfo &theInfo,
     // "scaleFactorOfMinorAxisOfOblateSpheroidEarth"
     // "scaledValueOfMinorAxisOfOblateSpheroidEarth"
   }
-  
+
 #else
 
-  const NFmiStereographicArea *a = dynamic_cast<const NFmiStereographicArea *>(theInfo.Area());
+  const auto *a = dynamic_cast<const NFmiStereographicArea *>(theInfo.Area());
 
   double lon_0 = a->CentralLongitude();
   double lat_0 = a->CentralLatitude();
@@ -633,18 +647,16 @@ void set_stereographic_geometry(NFmiFastQueryInfo &theInfo,
   else if (lat_ts != 60)
     throw std::runtime_error(
         "GRIB1 true latitude can only be 60 for polar stereographic projections with grib_api "
-                "library");
+        "library");
 
   if (lat_0 != 90 && lat_0 != -90)
     throw std::runtime_error("GRIB format supports only polar stereographic projections");
 
   if (lat_0 != 90)
     throw std::runtime_error("Only N-pole polar stereographic projections are supported");
-  
-  
+
 #endif
 
- 
   // DUMP(gribHandle,"geography");
 
   theValueArray.resize(nx * ny);  // tehd‰‰ datan siirto taulusta oikean kokoinen
@@ -698,7 +710,8 @@ void set_mercator_geometry(NFmiFastQueryInfo &theInfo,
 
 static void set_producer(grib_handle *gribHandle)
 {
-  if (options.centre.empty()) return;
+  if (options.centre.empty())
+    return;
 
   auto it = centres.find(options.centre);
   int centre = 0;
@@ -729,7 +742,8 @@ static void set_producer(grib_handle *gribHandle)
 
 static void set_packing(grib_handle *gribHandle)
 {
-  if (options.packing.empty()) return;
+  if (options.packing.empty())
+    return;
 
   gset(gribHandle, "packingType", options.packing);
 }
@@ -793,7 +807,8 @@ static void set_geometry(NFmiFastQueryInfo &theInfo,
 
 static NFmiMetTime get_origintime(NFmiFastQueryInfo &theInfo)
 {
-  if (!options.ignore_origintime) return theInfo.OriginTime();
+  if (!options.ignore_origintime)
+    return theInfo.OriginTime();
 
   // Get first time without altering the time index
   auto idx = theInfo.TimeIndex();
@@ -812,13 +827,15 @@ static void set_times(NFmiFastQueryInfo &theInfo, grib_handle *gribHandle, bool 
   long dateLong = orig_time.GetYear() * 10000 + orig_time.GetMonth() * 100 + orig_time.GetDay();
 
   long timeLong = orig_time.GetHour() * 100;
-  if (use_minutes) timeLong += orig_time.GetMin();
+  if (use_minutes)
+    timeLong += orig_time.GetMin();
 
   gset(gribHandle, "dataDate", dateLong);
   gset(gribHandle, "dataTime", timeLong);
 
   // P1 max 255 minutes is not enough, we need to enable P2
-  if (use_minutes && options.grib1) gset(gribHandle, "timeRangeIndicator", 10);
+  if (use_minutes && options.grib1)
+    gset(gribHandle, "timeRangeIndicator", 10);
 
   // step units in stepUnits.table: m h D M Y 10Y 30Y C 3h 6h 12h s 15m 30m
 
@@ -838,12 +855,12 @@ void set_parameters(grib_handle *gribHandle, const NFmiParam &theParam)
 
   long usedParId = theParam.GetIdent();
 
-  for (size_t i = 0; i < options.ptable.size(); ++i)
+  for (auto &i : options.ptable)
   {
     // Note: conversion in reverse direction!
-    if (usedParId == options.ptable[i].itsWantedParam.GetIdent())
+    if (usedParId == i.itsWantedParam.GetIdent())
     {
-      usedParId = options.ptable[i].itsOriginalParamId;
+      usedParId = i.itsOriginalParamId;
       break;
     }
   }
@@ -855,13 +872,13 @@ void set_parameters(grib_handle *gribHandle, const NFmiParam &theParam)
 
 void get_conversion(long id, float *scale, float *offset)
 {
-  for (size_t i = 0; i < options.ptable.size(); ++i)
+  for (auto &i : options.ptable)
   {
     // Note: conversion in reverse direction!
-    if (id == options.ptable[i].itsWantedParam.GetIdent())
+    if (id == i.itsWantedParam.GetIdent())
     {
-      *scale = options.ptable[i].itsConversionScale;
-      *offset = options.ptable[i].itsConversionBase;
+      *scale = i.itsConversionScale;
+      *offset = i.itsConversionBase;
       break;
     }
   }
@@ -1023,7 +1040,8 @@ void write_grib(NFmiFastQueryInfo &theInfo, grib_handle *gribHandle, const std::
   std::string fullSplitFileName(theFileName);
   fullSplitFileName += ::make_file_suffix(theInfo);
   FILE *out = fopen(fullSplitFileName.c_str(), "wb");
-  if (!out) throw std::runtime_error("ERROR: cannot open file for writing: " + fullSplitFileName);
+  if (!out)
+    throw std::runtime_error("ERROR: cannot open file for writing: " + fullSplitFileName);
 
   const void *mesg;
   size_t mesg_len;
@@ -1036,9 +1054,11 @@ void write_grib(NFmiFastQueryInfo &theInfo, grib_handle *gribHandle, const std::
 
 int run(const int argc, char *argv[])
 {
-  if (!parse_options(argc, argv)) return 0;
+  if (!parse_options(argc, argv))
+    return 0;
 
-  if (options.verbose) std::cout << "Opening file '" << options.infile << "'" << std::endl;
+  if (options.verbose)
+    std::cout << "Opening file '" << options.infile << "'" << std::endl;
 
   NFmiQueryData qd(options.infile);
   NFmiFastQueryInfo qi(&qd);
@@ -1062,16 +1082,18 @@ int run(const int argc, char *argv[])
   int option_flags = GRIB_DUMP_FLAG_VALUES | GRIB_DUMP_FLAG_READ_ONLY;
 #endif
 
-  if (gribHandle == 0) throw std::runtime_error("ERROR: Unable to create grib handle\n");
+  if (gribHandle == nullptr)
+    throw std::runtime_error("ERROR: Unable to create grib handle\n");
 
-  if (qi.IsGrid() == false)
+  if (!qi.IsGrid())
     throw std::runtime_error("ERROR: data wasn't grid data, but station data.\n");
 
-  FILE *out = 0;
+  FILE *out = nullptr;
   if (!options.split)
   {
     out = fopen(options.outfile.c_str(), "wb");
-    if (!out) throw std::runtime_error("ERROR: cannot open file for writing: " + options.outfile);
+    if (!out)
+      throw std::runtime_error("ERROR: cannot open file for writing: " + options.outfile);
   }
 
   try
@@ -1086,7 +1108,8 @@ int run(const int argc, char *argv[])
     const bool use_minutes = (timestep < 60);
     set_times(qi, gribHandle, use_minutes);
 
-    if (options.verbose) std::cout << "Smallest timestep = " << timestep << std::endl;
+    if (options.verbose)
+      std::cout << "Smallest timestep = " << timestep << std::endl;
 
     for (qi.ResetLevel(); qi.NextLevel();)
     {
@@ -1118,17 +1141,20 @@ int run(const int argc, char *argv[])
   }
   catch (...)
   {
-    if (out) fclose(out);  // suljetaan outputfile myˆs virhe tilanteessa
-    throw;                 // paiskataan kiinniotettu poikkeus edelleen matkaan
+    if (out)
+      fclose(out);  // suljetaan outputfile myˆs virhe tilanteessa
+    throw;          // paiskataan kiinniotettu poikkeus edelleen matkaan
   }
-  if (out) fclose(out);  // lopuksi suljetaan outputfile
+  if (out)
+    fclose(out);  // lopuksi suljetaan outputfile
 
   return 0;
 }
 
 // ----------------------------------------------------------------------
 
-int main(const int argc, char *argv[]) try
+int main(const int argc, char *argv[])
+try
 {
   return run(argc, argv);
 }

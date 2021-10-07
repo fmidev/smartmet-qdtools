@@ -25,63 +25,51 @@ enum FmiNcLevelType
 class FmiVarInfo
 {
  public:
-  FmiVarInfo(void)
-      : itsVarName(),
-        itsDimName(),
-        itsParId(0),
-        itsIndex(-1),
-        itsFillValue(kFloatMissing),
-        itsNcLevelType(kFmiNcNoLevelType)
+  FmiVarInfo()
+      :
+
+        itsFillValue(kFloatMissing)
+
   {
   }
 
   // private:
   std::string itsVarName;
   std::string itsDimName;
-  int itsParId;        // t‰h‰n haluttu FMI par id
-  int itsIndex;        // muuttujan (var) indeksi NC-tiedostossa
+  int itsParId{0};     // t‰h‰n haluttu FMI par id
+  int itsIndex{-1};    // muuttujan (var) indeksi NC-tiedostossa
   float itsFillValue;  // mik‰ arvo on nc:ss‰ puuttuva arvo (_FillValue -atribuutti), n‰m‰ pit‰‰
                        // sitten korvata kFloatMissing:ill‰
-  FmiNcLevelType itsNcLevelType;  // tarkoittaa ett‰ t‰m‰ muuttuja kuuluu joko pinta dataan tai
-                                  // multi-level-dataan
+  FmiNcLevelType itsNcLevelType{kFmiNcNoLevelType};  // tarkoittaa ett‰ t‰m‰ muuttuja kuuluu joko
+                                                     // pinta dataan tai multi-level-dataan
 };
 
 class FmiXYDimVarInfo
 {
  public:
-  FmiXYDimVarInfo(void) : itsVarName(), itsIndex(-1), itsValues() {}
-  bool IsEmpty(void) { return (itsIndex == -1); }
+  FmiXYDimVarInfo() {}
+  bool IsEmpty() const { return (itsIndex == -1); }
   // private:
   std::string itsVarName;
-  int itsIndex;  // muuttujan (var) indeksi NC-tiedostossa
+  int itsIndex{-1};  // muuttujan (var) indeksi NC-tiedostossa
   std::vector<float> itsValues;
 };
 
 class FmiZDimVarInfo
 {
  public:
-  FmiZDimVarInfo(void)
-      : itsVarName(),
-        itsDimName(),
-        itsLevelUnitName(),
-        itsIndex(-1),
-        itsLevelType(0),
-        itsValues(),
-        itsLevels(),
-        itsNcLevelType(kFmiNcNoLevelType)
-  {
-  }
+  FmiZDimVarInfo() {}
 
   // private:
   std::string itsVarName;
   std::string itsDimName;
   std::string itsLevelUnitName;
-  int itsIndex;      // muuttujan (var) indeksi NC-tiedostossa
-  int itsLevelType;  // NC type vai FMI type?
+  int itsIndex{-1};     // muuttujan (var) indeksi NC-tiedostossa
+  int itsLevelType{0};  // NC type vai FMI type?
   std::vector<float> itsValues;
   NFmiLevelBag itsLevels;
-  FmiNcLevelType itsNcLevelType;  // tarkoittaa ett‰ t‰m‰ muuttuja kuuluu joko pinta dataan tai
-                                  // multi-level-dataan
+  FmiNcLevelType itsNcLevelType{kFmiNcNoLevelType};  // tarkoittaa ett‰ t‰m‰ muuttuja kuuluu joko
+                                                     // pinta dataan tai multi-level-dataan
 };
 
 enum FmiNcTimeOffsetType
@@ -94,26 +82,17 @@ enum FmiNcTimeOffsetType
 class FmiTDimVarInfo
 {
  public:
-  FmiTDimVarInfo(void)
-      : itsVarName(),
-        itsIndex(-1),
-        itsOffsetValues(),
-        itsEpochTimeStr(),
-        itsEpochTime(),
-        itsTimeList(),
-        itsTimeOffsetType(kFmiNcNoTimeType)
-  {
-  }
-  void CalcTimeList(void);
+  FmiTDimVarInfo() : itsTimeList() {}
+  void CalcTimeList();
 
   // private:
   std::string itsVarName;
-  int itsIndex;  // muuttujan (var) indeksi NC-tiedostossa
+  int itsIndex{-1};  // muuttujan (var) indeksi NC-tiedostossa
   std::vector<long> itsOffsetValues;
   std::string itsEpochTimeStr;
   NFmiMetTime itsEpochTime;
   NFmiTimeList itsTimeList;
-  FmiNcTimeOffsetType itsTimeOffsetType;
+  FmiNcTimeOffsetType itsTimeOffsetType{kFmiNcNoTimeType};
 };
 
 enum FmiNcProjectionType
@@ -125,12 +104,10 @@ enum FmiNcProjectionType
 class FmiProjectionInfo
 {
  public:
-  FmiProjectionInfo(void)
-      : itsProjectionType(kFmiNcNoProjection),
-        La1(kFloatMissing),
+  FmiProjectionInfo()
+      : La1(kFloatMissing),
         Lo1(kFloatMissing),
-        Nx(-1),
-        Ny(-1),
+
         LoV(kFloatMissing),
         Latin1(kFloatMissing),
         Latin2(kFloatMissing),
@@ -140,14 +117,14 @@ class FmiProjectionInfo
   }
 
   // private:
-  FmiNcProjectionType itsProjectionType;
+  FmiNcProjectionType itsProjectionType{kFmiNcNoProjection};
 
   // Seuraavia arvoja tarvitaan ainakin LAPS-datassa stereograafisessa projektiossa
   // Muuttuja nimet t‰ss‰ ovat samoja kuin nc-datassa.
   float La1;     // projektion 1. kulmapisteen lat-arvo (bottom-left?)
   float Lo1;     // projektion 1. kulmapisteen lon-arvo (bottom-left?)
-  long Nx;       // hilan x-koko
-  long Ny;       // hilan y-koko
+  long Nx{-1};   // hilan x-koko
+  long Ny{-1};   // hilan y-koko
   float LoV;     // orientation of grid (central-longitude)
   float Latin1;  // orientation of grid (true-latitude)
   float Latin2;  // orientation of grid (central-latitude)
@@ -159,11 +136,11 @@ class FmiNcMetaData
 {
  public:
   FmiNcMetaData(bool useSurfaceInfo);
-  ~FmiNcMetaData(void);
+  ~FmiNcMetaData();
 
   void MakeMetaInfo(FmiTDimVarInfo &theTimeInfo, NFmiGrid &theGrid);
-  std::string GetLevelDimName(void);
-  FmiNcLevelType GetLevelType(void);
+  std::string GetLevelDimName() const;
+  FmiNcLevelType GetLevelType() const;
 
   // private:
   bool fUseSurfaceInfo;
@@ -176,36 +153,36 @@ class FmiNcMetaData
 class FmiNetCdfQueryData
 {
  public:
-  FmiNetCdfQueryData(void);
-  ~FmiNetCdfQueryData(void);
+  FmiNetCdfQueryData();
+  ~FmiNetCdfQueryData();
 
-  bool DataOk(void) const { return fDataOk; }
+  bool DataOk() const { return fDataOk; }
   std::vector<NFmiQueryData *> CreateQueryDatas(const std::string &theNcFileName);
   void Producer(const NFmiProducer &theProducer) { itsProducer = theProducer; }
-  const std::string &ErrorMessage(void) const { return itsErrorMessage; }
+  const std::string &ErrorMessage() const { return itsErrorMessage; }
 
  private:
   void InitMetaInfo(NcFile &theNcFile);  // throws exceptions!
-  void MakeAllMetaInfos(void);
-  void InitKnownParamMap(void);
-  void Clear(void);
+  void MakeAllMetaInfos();
+  void InitKnownParamMap();
+  void Clear();
   void InitTimeDim(NcVar &theVar, const std::string &theVarName, int theIndex);
-  void CalcTimeList(void);
+  void CalcTimeList();
   void InitZDim(NcVar &theVar,
                 const std::string &theVarName,
                 int theIndex,
                 FmiNcLevelType theLevelType);
   void InitNormalVar(NcVar &theVar, const std::string &theVarName, int theIndex);
-  void MakeWantedGrid(void);
-  void MakeWantedParamBag(void);
+  void MakeWantedGrid();
+  void MakeWantedParamBag();
   FmiParameterName GetParameterName(NcVar &theVar, FmiParameterName theDefaultParName);
   void SeekProjectionInfo(NcFile &theNcFile);
-  void InitializeStreographicGrid(void);
+  void InitializeStreographicGrid();
   FmiZDimVarInfo &GetLevelInfo(FmiNcLevelType theLevelType);
-  bool IsSurfaceVariable(NcVar &theVar);
+  bool IsSurfaceVariable(NcVar &theVar) const;
   void MakesureSurfaceMetaDataIsInitialized();
 
-  bool fDataOk;                         // onko t‰m‰ initialisoitu ja onko annettu NcFile ollut ok.
+  bool fDataOk{false};                  // onko t‰m‰ initialisoitu ja onko annettu NcFile ollut ok.
   FmiTDimVarInfo itsTInfo;              // aika muuttujan tiedot t‰h‰n
   FmiXYDimVarInfo itsXInfo;             // X eli hilan longitude piste muuttujan tiedot t‰h‰n
   FmiXYDimVarInfo itsYInfo;             // Y eli hilan latitude piste muuttujan tiedot t‰h‰n

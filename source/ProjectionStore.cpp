@@ -16,7 +16,7 @@ namespace FMI
 {
 namespace RadContour
 {
-typedef std::map<std::string, Projection> NamedProjections;
+using NamedProjections = std::map<std::string, Projection>;
 
 // ----------------------------------------------------------------------
 /*!
@@ -27,7 +27,7 @@ typedef std::map<std::string, Projection> NamedProjections;
 //! Implementation hiding pimple for class ProjectionStore
 struct ProjectionStorePimple
 {
-  ProjectionStorePimple(void) : itsStore() {}
+  ProjectionStorePimple() {}
   NamedProjections itsStore;
 };
 
@@ -37,14 +37,14 @@ struct ProjectionStorePimple
  */
 // ----------------------------------------------------------------------
 
-ProjectionStore::~ProjectionStore(void) {}
+ProjectionStore::~ProjectionStore() = default;
 // ----------------------------------------------------------------------
 /*!
  * The void constructor merely initializes the implementation pimple
  */
 // ----------------------------------------------------------------------
 
-ProjectionStore::ProjectionStore(void) : itsPimple(new ProjectionStorePimple()) {}
+ProjectionStore::ProjectionStore() : itsPimple(new ProjectionStorePimple()) {}
 // ----------------------------------------------------------------------
 /*!
  * Add a new named Projection.
@@ -83,7 +83,7 @@ void ProjectionStore::add(const std::string& theName, const Projection& theProje
  */
 // ----------------------------------------------------------------------
 
-std::set<std::string> ProjectionStore::names(void) const
+std::set<std::string> ProjectionStore::names() const
 {
   std::set<std::string> result;
 

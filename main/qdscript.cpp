@@ -55,7 +55,7 @@ void Run(int argc, const char *argv[])
   if (cmdline.NumberofParameters() > 1)
   {
     for (int i = 2; i <= cmdline.NumberofParameters(); i++)
-      helperFileNameList.push_back(cmdline.Parameter(i));
+      helperFileNameList.emplace_back(cmdline.Parameter(i));
   }
 
 #ifndef UNIX
@@ -63,15 +63,18 @@ void Run(int argc, const char *argv[])
 #else
   string dictionaryFile("/usr/share/smartmet/dictionaries/en.conf");
 #endif
-  if (cmdline.isOption('d')) dictionaryFile = cmdline.OptionValue('d');
+  if (cmdline.isOption('d'))
+    dictionaryFile = cmdline.OptionValue('d');
 
   bool makeStaticIfOneTimeStepData = false;
-  if (cmdline.isOption('s')) makeStaticIfOneTimeStepData = true;
+  if (cmdline.isOption('s'))
+    makeStaticIfOneTimeStepData = true;
 
   bool goThroughAllLevels = true;
-  if (cmdline.isOption('l')) goThroughAllLevels = false;
+  if (cmdline.isOption('l'))
+    goThroughAllLevels = false;
 
-  if (NFmiSettings::Read(dictionaryFile) == false)
+  if (!NFmiSettings::Read(dictionaryFile))
     cerr << "Warning: dictionary string was not found, continuing..." << endl;
 
   string smartToolScript;
@@ -81,10 +84,11 @@ void Run(int argc, const char *argv[])
   }
 
   string infile = "-";
-  if (cmdline.isOption('i')) infile = cmdline.OptionValue('i');
+  if (cmdline.isOption('i'))
+    infile = cmdline.OptionValue('i');
 
-  NFmiQueryData *qd = new NFmiQueryData(infile);
-  NFmiQueryData *newData = 0;
+  auto *qd = new NFmiQueryData(infile);
+  NFmiQueryData *newData = nullptr;
   if (!cmdline.isOption('a'))
   {
     // true = vapautetaan querydata, silla sen omistus siirtyy NF
@@ -150,7 +154,8 @@ bool ReadScriptFile(const std::string &theFileName, std::string *theScript)
     ifstream in(theFileName.c_str());
     if (in)
     {
-      string rowbuffer, bigstring;
+      string rowbuffer;
+      string bigstring;
 
       // luetaan tiedostoa rivi kerrallaan ja testataan löytyykö yhden rivin kommentteja
 
@@ -158,7 +163,8 @@ bool ReadScriptFile(const std::string &theFileName, std::string *theScript)
       {
         if (!rowbuffer.empty())
         {
-          if (rowbuffer[rowbuffer.size() - 1] == '\r') rowbuffer.resize(rowbuffer.size() - 1);
+          if (rowbuffer[rowbuffer.size() - 1] == '\r')
+            rowbuffer.resize(rowbuffer.size() - 1);
         }
         bigstring += rowbuffer + "\n";
       }
@@ -209,8 +215,9 @@ FmiParameterName parse_param(const string &theName)
   // Try ascii name
 
   static NFmiEnumConverter converter;
-  FmiParameterName paramnum = FmiParameterName(converter.ToEnum(theName));
-  if (paramnum != kFmiBadParameter) return paramnum;
+  auto paramnum = FmiParameterName(converter.ToEnum(theName));
+  if (paramnum != kFmiBadParameter)
+    return paramnum;
 
   // Try numerical value
 
@@ -232,14 +239,14 @@ NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo &qi, const std::string
   vector<string> names = NFmiStringTools::Split<vector<string> >(opts);
 
   const NFmiProducer &producer = qi.FirstParamProducer();
-  for (vector<string>::const_iterator it = names.begin(); it != names.end(); ++it)
+  for (const auto &name : names)
   {
-    FmiParameterName paramnum = parse_param(*it);
+    FmiParameterName paramnum = parse_param(name);
     // If the parameter is already in the data - we simply keep it
     if (!qi.Param(paramnum))
     {
       NFmiParam param(paramnum,
-                      *it,
+                      name,
                       kFloatMissing,
                       kFloatMissing,
                       kFloatMissing,

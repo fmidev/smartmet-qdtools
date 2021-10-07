@@ -59,7 +59,7 @@ struct ProjectionPimple
  */
 // ----------------------------------------------------------------------
 
-Projection::~Projection() {}
+Projection::~Projection() = default;
 // ----------------------------------------------------------------------
 /*!
  * The void constructor merely initializes the implementation pimple
@@ -106,7 +106,10 @@ Projection& Projection::operator=(const Projection& theProjection)
  */
 // ----------------------------------------------------------------------
 
-void Projection::type(const std::string& theType) { itsPimple->itsType = theType; }
+void Projection::type(const std::string& theType)
+{
+  itsPimple->itsType = theType;
+}
 // ----------------------------------------------------------------------
 /*!
  * Set the central longitude of the projection.
@@ -128,7 +131,10 @@ void Projection::centralLongitude(float theLongitude)
  */
 // ----------------------------------------------------------------------
 
-void Projection::centralLatitude(float theLatitude) { itsPimple->itsCentralLatitude = theLatitude; }
+void Projection::centralLatitude(float theLatitude)
+{
+  itsPimple->itsCentralLatitude = theLatitude;
+}
 // ----------------------------------------------------------------------
 /*!
  * Set the true latitude of the projection.
@@ -137,7 +143,10 @@ void Projection::centralLatitude(float theLatitude) { itsPimple->itsCentralLatit
  */
 // ----------------------------------------------------------------------
 
-void Projection::trueLatitude(float theLatitude) { itsPimple->itsTrueLatitude = theLatitude; }
+void Projection::trueLatitude(float theLatitude)
+{
+  itsPimple->itsTrueLatitude = theLatitude;
+}
 // ----------------------------------------------------------------------
 /*!
  * Set the bottom left coordinates of the projection
@@ -188,7 +197,10 @@ void Projection::center(float theLon, float theLat)
  */
 // ----------------------------------------------------------------------
 
-void Projection::scale(float theScale) { itsPimple->itsScale = theScale; }
+void Projection::scale(float theScale)
+{
+  itsPimple->itsScale = theScale;
+}
 
 // ----------------------------------------------------------------------
 /*!
@@ -261,11 +273,11 @@ boost::shared_ptr<NFmiArea> Projection::area(unsigned int theWidth, unsigned int
   NFmiPoint topleftxy = NFmiPoint(0, 0);
   NFmiPoint bottomrightxy = NFmiPoint(theWidth, theHeight);
 
-
-#ifdef WGS84  
+#ifdef WGS84
   std::string sphere = itsPimple->itsEllipsoid;
 
-  if (sphere.empty()) throw std::runtime_error("Reference ellipsoid not set");
+  if (sphere.empty())
+    throw std::runtime_error("Reference ellipsoid not set");
 
   std::string proj4;
 
@@ -390,10 +402,9 @@ boost::shared_ptr<NFmiArea> Projection::area(unsigned int theWidth, unsigned int
 
     proj.reset(proj->NewArea(BL, TR));
   }
-  
-#endif  
 
-  
+#endif
+
   return proj;
 }
 }  // namespace RadContour

@@ -69,17 +69,13 @@ struct Options
   vector<string> locations;
   string timezone;
   string coordfile;
-  bool printlevelvalue;
+  bool printlevelvalue{false};
 
   Options()
-      : inputfile(),
-        parameters(),
-        stations(),
-        locations(),
-        timezone(NFmiSettings::Optional<string>("qdpoint::timezone", "Europe/Helsinki")),
+      : timezone(NFmiSettings::Optional<string>("qdpoint::timezone", "Europe/Helsinki")),
         coordfile(NFmiSettings::Optional<string>("qdpoint::coordinates",
-                                                 "/smartmet/share/coordinates/default.txt")),
-        printlevelvalue(false)
+                                                 "/smartmet/share/coordinates/default.txt"))
+
   {
   }
 };
@@ -145,7 +141,8 @@ bool parse_command_line(int argc, const char *argv[])
 {
   NFmiCmdLine cmdline(argc, argv, "hw!p!P!t!c!zx!y!");
 
-  if (cmdline.Status().IsError()) throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
+  if (cmdline.Status().IsError())
+    throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
 
   // help-option must be checked first
 
@@ -167,11 +164,11 @@ bool parse_command_line(int argc, const char *argv[])
   if (cmdline.isOption('P'))
   {
     const vector<string> args = NFmiStringTools::Split(cmdline.OptionValue('P'));
-    for (vector<string>::const_iterator it = args.begin(); it != args.end(); ++it)
+    for (const auto &arg : args)
     {
-      FmiParameterName param = FmiParameterName(converter.ToEnum(*it));
+      auto param = FmiParameterName(converter.ToEnum(arg));
       if (param == kFmiBadParameter)
-        throw runtime_error(string("Parameter '" + *it + "' is not recognized"));
+        throw runtime_error(string("Parameter '" + arg + "' is not recognized"));
       options.parameters.push_back(param);
     }
   }
@@ -181,12 +178,13 @@ bool parse_command_line(int argc, const char *argv[])
     options.timezone = cmdline.OptionValue('t');
   }
 
-  if (cmdline.isOption('p')) options.locations = NFmiStringTools::Split(cmdline.OptionValue('p'));
+  if (cmdline.isOption('p'))
+    options.locations = NFmiStringTools::Split(cmdline.OptionValue('p'));
 
   if (cmdline.isOption('x') && cmdline.isOption('y'))
   {
-    options.locations.push_back(cmdline.OptionValue('x'));
-    options.locations.push_back(cmdline.OptionValue('y'));
+    options.locations.emplace_back(cmdline.OptionValue('x'));
+    options.locations.emplace_back(cmdline.OptionValue('y'));
   }
   else if (cmdline.isOption('x') || cmdline.isOption('y'))
     throw runtime_error("Always use both -x and -y options simultaneously");
@@ -196,9 +194,11 @@ bool parse_command_line(int argc, const char *argv[])
     options.stations = NFmiStringTools::Split<vector<int> >(cmdline.OptionValue('w'));
   }
 
-  if (cmdline.isOption('c')) options.coordfile = cmdline.OptionValue('c');
+  if (cmdline.isOption('c'))
+    options.coordfile = cmdline.OptionValue('c');
 
-  if (cmdline.isOption('z')) options.printlevelvalue = true;
+  if (cmdline.isOption('z'))
+    options.printlevelvalue = true;
 
   if (!options.locations.empty() && !options.stations.empty())
     throw runtime_error("Options -p and -w are not allowed simultaneously");
@@ -212,7 +212,7 @@ bool parse_command_line(int argc, const char *argv[])
  */
 // ----------------------------------------------------------------------
 
-const string format_date(const NFmiTime &theTime)
+string format_date(const NFmiTime &theTime)
 {
   NFmiTime localtime = TimeTools::toLocalTime(theTime);
   return localtime.ToStr(kYYYYMMDDHHMM).CharPtr();
@@ -224,7 +224,7 @@ const string format_date(const NFmiTime &theTime)
  */
 // ----------------------------------------------------------------------
 
-const vector<NFmiPoint> find_places(const vector<string> & /* theNames */)
+vector<NFmiPoint> find_places(const vector<string> & /* theNames */)
 {
   string coordpath = NFmiSettings::Optional<string>("qdpoint::coordinates_path", ".");
   string coordfile = NFmiFileSystem::FileComplete(options.coordfile, coordpath);
@@ -251,10 +251,10 @@ const vector<NFmiPoint> find_places(const vector<string> & /* theNames */)
     {
       try
       {
-        float lon = NFmiStringTools::Convert<float>(options.locations[i]);
-        float lat = NFmiStringTools::Convert<float>(options.locations[i + 1]);
+        auto lon = NFmiStringTools::Convert<float>(options.locations[i]);
+        auto lat = NFmiStringTools::Convert<float>(options.locations[i + 1]);
         options.locations[i] = options.locations[i] + "," + options.locations[i + 1];
-        coords.push_back(NFmiPoint(lon, lat));
+        coords.emplace_back(lon, lat);
         options.locations.erase(options.locations.begin() + i + 1);
       }
       catch (...)
@@ -281,7 +281,8 @@ const vector<NFmiPoint> find_places(const vector<string> & /* theNames */)
 
 void print_locations(NFmiFastQueryInfo &theQ)
 {
-  if (!theQ.IsGrid()) throw runtime_error("Cannot use option -p for point data");
+  if (!theQ.IsGrid())
+    throw runtime_error("Cannot use option -p for point data");
 
   const vector<NFmiPoint> coords = find_places(options.locations);
 
@@ -294,16 +295,15 @@ void print_locations(NFmiFastQueryInfo &theQ)
         out << options.locations[i] << ' ' << format_date(theQ.ValidTime()) << ' '
             << theQ.LevelIndex();
 
-        if (options.printlevelvalue) out << ' ' << theQ.Level()->LevelValue();
+        if (options.printlevelvalue)
+          out << ' ' << theQ.Level()->LevelValue();
 
         bool foundvalid = false;
 
-        for (vector<FmiParameterName>::const_iterator it = options.parameters.begin();
-             it != options.parameters.end();
-             ++it)
+        for (auto parameter : options.parameters)
         {
-          if (!theQ.Param(*it))
-            throw runtime_error("Parameter '" + converter.ToString(*it) +
+          if (!theQ.Param(parameter))
+            throw runtime_error("Parameter '" + converter.ToString(parameter) +
                                 "' is not available in the query data");
 
           float value = theQ.InterpolatedValue(coords[i]);
@@ -315,7 +315,8 @@ void print_locations(NFmiFastQueryInfo &theQ)
             foundvalid = true;
           }
         }
-        if (foundvalid) cout << out.str() << endl;
+        if (foundvalid)
+          cout << out.str() << endl;
       }
   }
 }
@@ -328,7 +329,8 @@ void print_locations(NFmiFastQueryInfo &theQ)
 
 void print_stations(NFmiFastQueryInfo &theQ)
 {
-  if (theQ.IsGrid()) throw runtime_error("Cannot use option -w for grid data");
+  if (theQ.IsGrid())
+    throw runtime_error("Cannot use option -w for grid data");
 
   for (vector<int>::const_iterator wt = options.stations.begin(); wt != options.stations.end();
        ++wt)
@@ -344,16 +346,15 @@ void print_stations(NFmiFastQueryInfo &theQ)
         out << theQ.Location()->GetIdent() << ' ' << format_date(theQ.ValidTime()) << ' '
             << theQ.LevelIndex();
 
-        if (options.printlevelvalue) out << ' ' << theQ.Level()->LevelValue();
+        if (options.printlevelvalue)
+          out << ' ' << theQ.Level()->LevelValue();
 
         bool foundvalid = false;
 
-        for (vector<FmiParameterName>::const_iterator it = options.parameters.begin();
-             it != options.parameters.end();
-             ++it)
+        for (auto parameter : options.parameters)
         {
-          if (!theQ.Param(*it))
-            throw runtime_error("Parameter '" + converter.ToString(*it) +
+          if (!theQ.Param(parameter))
+            throw runtime_error("Parameter '" + converter.ToString(parameter) +
                                 "' is not available in the query data");
 
           float value = theQ.FloatValue();
@@ -365,7 +366,8 @@ void print_stations(NFmiFastQueryInfo &theQ)
             foundvalid = true;
           }
         }
-        if (foundvalid) cout << out.str() << endl;
+        if (foundvalid)
+          cout << out.str() << endl;
       }
   }
 }
@@ -378,7 +380,8 @@ void print_stations(NFmiFastQueryInfo &theQ)
 
 void print_all_stations(NFmiFastQueryInfo &theQ)
 {
-  if (theQ.IsGrid()) throw runtime_error("Must use option -p for grid data");
+  if (theQ.IsGrid())
+    throw runtime_error("Must use option -p for grid data");
 
   for (theQ.ResetLocation(); theQ.NextLocation();)
     for (theQ.ResetTime(); theQ.NextTime();)
@@ -388,16 +391,15 @@ void print_all_stations(NFmiFastQueryInfo &theQ)
         out << theQ.Location()->GetIdent() << ' ' << format_date(theQ.ValidTime()) << ' '
             << theQ.LevelIndex();
 
-        if (options.printlevelvalue) out << ' ' << theQ.Level()->LevelValue();
+        if (options.printlevelvalue)
+          out << ' ' << theQ.Level()->LevelValue();
 
         bool foundvalid = false;
 
-        for (vector<FmiParameterName>::const_iterator it = options.parameters.begin();
-             it != options.parameters.end();
-             ++it)
+        for (auto parameter : options.parameters)
         {
-          if (!theQ.Param(*it))
-            throw runtime_error("Parameter '" + converter.ToString(*it) +
+          if (!theQ.Param(parameter))
+            throw runtime_error("Parameter '" + converter.ToString(parameter) +
                                 "' is not available in the query data");
 
           float value = theQ.FloatValue();
@@ -409,7 +411,8 @@ void print_all_stations(NFmiFastQueryInfo &theQ)
             foundvalid = true;
           }
         }
-        if (foundvalid) cout << out.str() << endl;
+        if (foundvalid)
+          cout << out.str() << endl;
       }
 }
 
@@ -437,7 +440,8 @@ void set_timezone(const string &theZone)
 int domain(int argc, const char *argv[])
 {
   // Parse the command line
-  if (!parse_command_line(argc, argv)) return 0;
+  if (!parse_command_line(argc, argv))
+    return 0;
 
   // Read the querydata
 

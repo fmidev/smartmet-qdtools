@@ -2,12 +2,12 @@
 #ifndef WGRIB_FUNCTIONS_H
 #define WGRIB_FUNCTIONS_H
 
-#include <float.h>
-#include <math.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cfloat>
+#include <cmath>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <vector>
 
 #ifndef INT2
@@ -271,7 +271,7 @@ unsigned char *seek_grib(
 
 int read_grib(FILE *file, long pos, long len_grib, unsigned char *buffer);
 
-double ibm2flt(unsigned char *ibm);
+double ibm2flt(const unsigned char *ibm);
 
 void BDS_unpack(float *flt,
                 unsigned char *bds,
@@ -288,16 +288,16 @@ int flt2ieee(float x, unsigned char *ieee);
 int wrtieee(float *array, int n, int header, FILE *output);
 int wrtieee_header(unsigned int n, FILE *output);
 
-void levels(int, int, int);
+void levels(int /*kpds6*/, int /*kpds7*/, int /*center*/);
 
 void PDStimes(int time_range, int p1, int p2, int time_unit);
 
 int missing_points(unsigned char *bitmap, int n);
 
-void EC_ext(unsigned char *pds, char *prefix, char *suffix);
+void EC_ext(const unsigned char *pds, char *prefix, char *suffix);
 
-int GDS_grid(unsigned char *gds,
-             unsigned char *bds,
+int GDS_grid(const unsigned char *gds,
+             const unsigned char *bds,
              int *nx,
              int *ny,
              long int *nxny,
@@ -306,13 +306,13 @@ int GDS_grid(unsigned char *gds,
 
 void GDS_prt_thin_lon(unsigned char *gds);
 
-void GDS_winds(unsigned char *gds, int verbose);
+void GDS_winds(const unsigned char *gds, int verbose);
 
-int PDS_date(unsigned char *pds, int option, int verf_time);
+int PDS_date(unsigned char *pds, int option, int v_time);
 
 int add_time(int *year, int *month, int *day, int *hour, int dtime, int unit);
 
-int verf_time(unsigned char *pds, int *year, int *month, int *day, int *hour);
+int verf_time(const unsigned char *pds, int *year, int *month, int *day, int *hour);
 
 void print_pds(unsigned char *pds, int print_PDS, int print_PDS10, int verbose);
 void print_gds(unsigned char *gds, int print_GDS, int print_GDS10, int verbose);

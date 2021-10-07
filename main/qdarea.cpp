@@ -59,9 +59,9 @@ struct ParameterRequest
   boost::shared_ptr<Acceptor> tester;
 
  private:
-  ParameterRequest();
+  ParameterRequest() = delete;
   WeatherParameter parse_parameter(const string& theParameter) const;
-  WeatherFunction parse_function(const string& theString) const;
+  WeatherFunction parse_function(const string& theFunction) const;
   boost::shared_ptr<Acceptor> parse_acceptor(const string& theString) const;
 
   string extract_function(const string& theString) const;
@@ -108,7 +108,8 @@ string ParameterRequest::extract_function(const string& theString) const
 string ParameterRequest::extract_acceptor(const string& theString) const
 {
   string::size_type pos1 = theString.find('[');
-  if (pos1 == string::npos) return "";
+  if (pos1 == string::npos)
+    return "";
 
   string::size_type pos2 = theString.find(']', pos1);
   if (pos2 == string::npos && pos2 != theString.size() - 1)
@@ -134,7 +135,8 @@ boost::shared_ptr<Acceptor> ParameterRequest::parse_acceptor(const string& theSt
 {
   const string::size_type pos = theString.find(':');
 
-  if (pos == string::npos) throw runtime_error("Unrecognized modifier format '" + theString + "'");
+  if (pos == string::npos)
+    throw runtime_error("Unrecognized modifier format '" + theString + "'");
 
   const string lo = theString.substr(0, pos);
   const string hi = theString.substr(pos + 1);
@@ -144,8 +146,10 @@ boost::shared_ptr<Acceptor> ParameterRequest::parse_acceptor(const string& theSt
 
   boost::shared_ptr<RangeAcceptor> acceptor(new RangeAcceptor);
 
-  if (!lo.empty()) acceptor->lowerLimit(NFmiStringTools::Convert<float>(lo));
-  if (!hi.empty()) acceptor->upperLimit(NFmiStringTools::Convert<float>(hi));
+  if (!lo.empty())
+    acceptor->lowerLimit(NFmiStringTools::Convert<float>(lo));
+  if (!hi.empty())
+    acceptor->upperLimit(NFmiStringTools::Convert<float>(hi));
 
   return acceptor;
 }
@@ -270,7 +274,8 @@ WeatherParameter ParameterRequest::parse_parameter(const string& theParameter) c
 
   for (unsigned int i = 0; strlen(names[i]) > 0; i++)
   {
-    if (names[i] == theParameter) return parameters[i];
+    if (names[i] == theParameter)
+      return parameters[i];
   }
 
   throw runtime_error("Unrecognized parameter name '" + theParameter + "'");
@@ -297,7 +302,8 @@ WeatherFunction ParameterRequest::parse_function(const string& theFunction) cons
 
   for (unsigned int i = 0; strlen(names[i]) > 0; i++)
   {
-    if (names[i] == theFunction) return functions[i];
+    if (names[i] == theFunction)
+      return functions[i];
   }
 
   throw runtime_error("Unrecognized function name '" + theFunction + "'");
@@ -318,8 +324,10 @@ ParameterRequest::ParameterRequest(const string& theRequest)
   {
     string::size_type pos2 = pos1;
     for (; pos2 < theRequest.size(); ++pos2)
-      if (theRequest[pos2] == '(' || theRequest[pos2] == ')') break;
-    if (pos2 - pos1 > 0) parts.push_back(theRequest.substr(pos1, pos2 - pos1));
+      if (theRequest[pos2] == '(' || theRequest[pos2] == ')')
+        break;
+    if (pos2 - pos1 > 0)
+      parts.push_back(theRequest.substr(pos1, pos2 - pos1));
     pos1 = pos2 + 1;
   }
 
@@ -445,9 +453,9 @@ void parse_parameter_option(const string& theRequest)
   const vector<string> requests = NFmiStringTools::Split(theRequest);
 
   // Parse the individual requests
-  for (vector<string>::const_iterator it = requests.begin(); it != requests.end(); ++it)
+  for (const auto& request : requests)
   {
-    options.parameters.push_back(ParameterRequest(*it));
+    options.parameters.emplace_back(request);
   }
 }
 
@@ -493,10 +501,10 @@ void parse_php_names_option(const string& theRequest)
 void parse_area_option(const string& theRequest)
 {
   vector<string> areas = NFmiStringTools::Split(theRequest, "::");
-  for (vector<string>::const_iterator it = areas.begin(); it != areas.end(); ++it)
+  for (const auto& it : areas)
   {
-    WeatherArea area(*it);
-    options.areas.insert(make_pair(*it, area));
+    WeatherArea area(it);
+    options.areas.insert(make_pair(it, area));
   }
 }
 
@@ -574,7 +582,7 @@ void make_data_timestep_generator()
 
 void parse_interval_option(const string& theRequest)
 {
-  if (options.period.get() == 0)
+  if (options.period.get() == nullptr)
     throw runtime_error("Trying to parse interval before data period is established");
 
   vector<string> words = NFmiStringTools::Split(theRequest, "-");
@@ -597,7 +605,8 @@ void parse_interval_option(const string& theRequest)
       }
 
       list<string> words2 = NFmiStringTools::Split<list<string> >(words.front(), ":");
-      if (words2.size() > 3) throw runtime_error("Invalid period definition '" + theRequest + "'");
+      if (words2.size() > 3)
+        throw runtime_error("Invalid period definition '" + theRequest + "'");
       int starthour = 0;
       int interval = NFmiStringTools::Convert<int>(words2.back());
       int mininterval = interval;
@@ -607,7 +616,8 @@ void parse_interval_option(const string& theRequest)
         starthour = NFmiStringTools::Convert<int>(words2.front());
         words2.pop_front();
       }
-      if (words2.size() >= 1) interval = NFmiStringTools::Convert<int>(words2.front());
+      if (words2.size() >= 1)
+        interval = NFmiStringTools::Convert<int>(words2.front());
 
       options.generator = boost::shared_ptr<WeatherPeriodGenerator>(
           new IntervalPeriodGenerator(*options.period, starthour, interval, mininterval));
@@ -626,7 +636,8 @@ void parse_interval_option(const string& theRequest)
     case 3:  // starthour-endhour:maxstarthour-minendhour
     {
       vector<string> words2 = NFmiStringTools::Split(*(++words.begin()), ":");
-      if (words2.size() != 2) throw runtime_error("Invalid period definition '" + theRequest + "'");
+      if (words2.size() != 2)
+        throw runtime_error("Invalid period definition '" + theRequest + "'");
       const int starthour = NFmiStringTools::Convert<int>(words.front());
       const int endhour = NFmiStringTools::Convert<int>(words2.front());
       const int maxstarthour = NFmiStringTools::Convert<int>(words2.back());
@@ -670,7 +681,8 @@ void parse_command_line(int argc, const char* argv[])
 
   NFmiCmdLine cmdline(argc, argv, "P!p!T!t!q!c!S!EsvhQ");
 
-  if (cmdline.Status().IsError()) throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
+  if (cmdline.Status().IsError())
+    throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
 
   if (cmdline.NumberofParameters() != 0)
     throw runtime_error("No command line parameters are expected");
@@ -683,11 +695,14 @@ void parse_command_line(int argc, const char* argv[])
 
   // verbose mode check first, so we can be verbose from the start
 
-  if (cmdline.isOption('v')) options.verbose = true;
+  if (cmdline.isOption('v'))
+    options.verbose = true;
 
-  if (cmdline.isOption('Q')) options.quiet = true;
+  if (cmdline.isOption('Q'))
+    options.quiet = true;
 
-  if (cmdline.isOption('E')) options.epoch_time = true;
+  if (cmdline.isOption('E'))
+    options.epoch_time = true;
 
   // -q option must be parsed before -T option
   if (cmdline.isOption('q'))
@@ -700,18 +715,18 @@ void parse_command_line(int argc, const char* argv[])
 
   options.sources.resize(options.querydata.size());
 
-  for (vector<AnalysisSources>::iterator it = options.sources.begin(); it != options.sources.end();
-       ++it)
+  for (auto& source : options.sources)
   {
     boost::shared_ptr<WeatherSource> weathersource(new LatestWeatherSource());
     boost::shared_ptr<MaskSource> masksource(new RegularMaskSource());
 
-    it->setWeatherSource(weathersource);
-    it->setMaskSource(masksource);
+    source.setWeatherSource(weathersource);
+    source.setMaskSource(masksource);
   }
 
   // Must set timezone before parsing -T option
-  if (cmdline.isOption('t')) options.timezone = cmdline.OptionValue('t');
+  if (cmdline.isOption('t'))
+    options.timezone = cmdline.OptionValue('t');
   TextGenPosixTime::SetThreadTimeZone(options.timezone);
 
   // This must be done after the timezone has been set and data has been read
@@ -729,7 +744,8 @@ void parse_command_line(int argc, const char* argv[])
 
   // NOTE: -S must be parsed after the -P option
 
-  if (cmdline.isOption('s')) options.php = true;
+  if (cmdline.isOption('s'))
+    options.php = true;
 
   if (cmdline.isOption('S'))
   {
@@ -737,20 +753,22 @@ void parse_command_line(int argc, const char* argv[])
     parse_php_names_option(cmdline.OptionValue('S'));
   }
 
-  if (cmdline.isOption('c')) options.coordinatefile = cmdline.OptionValue('c');
+  if (cmdline.isOption('c'))
+    options.coordinatefile = cmdline.OptionValue('c');
 
-  if (options.timezone.empty()) throw runtime_error("The specified timezone string is empty");
+  if (options.timezone.empty())
+    throw runtime_error("The specified timezone string is empty");
 
-  if (options.querydata.empty()) throw runtime_error("The specified querydata string is empty");
+  if (options.querydata.empty())
+    throw runtime_error("The specified querydata string is empty");
 
   if (options.coordinatefile.empty())
     throw runtime_error("The specified coordinatefile string is empty");
 
-  for (vector<string>::const_iterator qt = options.querydata.begin(); qt != options.querydata.end();
-       ++qt)
+  for (const auto& qt : options.querydata)
   {
-    if (!NFmiFileSystem::FileExists(*qt) && !NFmiFileSystem::DirectoryExists(*qt))
-      throw runtime_error("The querydata '" + *qt + "' does not exist");
+    if (!NFmiFileSystem::FileExists(qt) && !NFmiFileSystem::DirectoryExists(qt))
+      throw runtime_error("The querydata '" + qt + "' does not exist");
   }
 
   if (!NFmiFileSystem::FileExists(options.coordinatefile))
@@ -772,9 +790,9 @@ void parse_command_line(int argc, const char* argv[])
  */
 // ----------------------------------------------------------------------
 
-typedef vector<WeatherResult> Results;
-typedef map<WeatherPeriod, Results> TimedResults;
-typedef map<string, TimedResults> AreaResults;
+using Results = vector<WeatherResult>;
+using TimedResults = map<WeatherPeriod, Results>;
+using AreaResults = map<string, TimedResults>;
 
 static AreaResults results;
 
@@ -803,13 +821,14 @@ AnalysisSources find_source(const WeatherArea& theArea)
     if (theArea.isPoint())
     {
       const NFmiPoint& p = theArea.point();
-      if (q.Area()->IsInside(p)) break;
+      if (q.Area()->IsInside(p))
+        break;
     }
     else
     {
       const NFmiSvgPath& p = theArea.path();
       bool inside = true;
-      for (NFmiSvgPath::const_iterator it = p.begin(); inside && it != p.end(); ++it)
+      for (auto it = p.begin(); inside && it != p.end(); ++it)
       {
         switch (it->itsType)
         {
@@ -821,7 +840,8 @@ AnalysisSources find_source(const WeatherArea& theArea)
             break;
         }
       }
-      if (inside) break;
+      if (inside)
+        break;
     }
   }
 
@@ -958,12 +978,12 @@ void print_results()
 {
   for (AreaResults::const_iterator at = results.begin(); at != results.end(); ++at)
   {
-    for (TimedResults::const_iterator it = at->second.begin(); it != at->second.end(); ++it)
+    for (auto it = at->second.begin(); it != at->second.end(); ++it)
     {
       cout << at->first << ' ' << format_time_period(it->first, ' ');
-      for (Results::const_iterator jt = it->second.begin(); jt != it->second.end(); ++jt)
+      for (auto jt : it->second)
       {
-        cout << ' ' << format_value(jt->value(), "-");
+        cout << ' ' << format_value(jt.value(), "-");
       }
       cout << endl;
     }
@@ -987,17 +1007,19 @@ void print_php_results()
 
     // Print the values themselves
     cout << "  \"values\" => array(" << endl;
-    for (TimedResults::const_iterator it = at->second.begin(); it != at->second.end();)
+    for (auto it = at->second.begin(); it != at->second.end();)
     {
       cout << "   \"" << format_time_period(it->first, '-') << "\" => array(";
 
       unsigned int j = 0;
-      for (Results::const_iterator jt = it->second.begin(); jt != it->second.end();)
+      for (auto jt = it->second.begin(); jt != it->second.end();)
       {
-        if (print_names) cout << '"' << options.php_names[j++] << "\"=>";
+        if (print_names)
+          cout << '"' << options.php_names[j++] << "\"=>";
         cout << format_value(jt->value(), "x");
         ++jt;
-        if (jt != it->second.end()) cout << ',';
+        if (jt != it->second.end())
+          cout << ',';
       }
       ++it;
       if (it == at->second.end())
@@ -1013,11 +1035,13 @@ void print_php_results()
     for (unsigned int i = 0; i < options.parameters.size(); i++)
     {
       MaximumCalculator calculator;
-      for (TimedResults::const_iterator it = at->second.begin(); it != at->second.end(); ++it)
-        calculator(it->second[i].value());
+      for (const auto& it : at->second)
+        calculator(it.second[i].value());
 
-      if (i > 0) cout << ',';
-      if (print_names) cout << '"' << options.php_names[j++] << "\"=>";
+      if (i > 0)
+        cout << ',';
+      if (print_names)
+        cout << '"' << options.php_names[j++] << "\"=>";
       cout << format_value(calculator(), "x");
     }
     cout << ")," << endl;
@@ -1028,11 +1052,13 @@ void print_php_results()
     for (unsigned int i = 0; i < options.parameters.size(); i++)
     {
       MinimumCalculator calculator;
-      for (TimedResults::const_iterator it = at->second.begin(); it != at->second.end(); ++it)
-        calculator(it->second[i].value());
+      for (const auto& it : at->second)
+        calculator(it.second[i].value());
 
-      if (i > 0) cout << ',';
-      if (print_names) cout << '"' << options.php_names[j++] << "\"=>";
+      if (i > 0)
+        cout << ',';
+      if (print_names)
+        cout << '"' << options.php_names[j++] << "\"=>";
       cout << format_value(calculator(), "x");
     }
     cout << ")" << endl;

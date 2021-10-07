@@ -20,6 +20,7 @@
  *  parametreille.
  */
 
+#include <macgyver/StringConversion.h>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiGrid.h>
@@ -27,7 +28,6 @@
 #include <newbase/NFmiQueryDataUtil.h>
 #include <newbase/NFmiStringTools.h>
 #include <newbase/NFmiWindFix.h>
-#include <macgyver/StringConversion.h>
 #include <algorithm>
 #include <fstream>
 
@@ -37,25 +37,30 @@ using namespace std;  // tätä ei saa sitten laittaa headeriin, eikä ennen inc
 // Kaytto-ohjeet
 // ----------------------------------------------------------------------
 
-void usage(void)
+void usage()
 {
-  cout <<
-      "Usage: qdinterpolatearea [options] controlGridFile < inputData > outputData\n"
-      "\n"
-      "Options:\n"
-      "\n"
-      "\t-s <Columns_x_Rows>\tWanted grid size, default is 1x1\n"
-      "\t-p <projection>\tWanted projection, if given, overrides controlGridFile (fileName not given then)\n"
-      "\t-i <inputfile>\tInput file instead of standard input\n"
-      "\t-o <outputfile>\tOutput file instead of standard output\n"
-      "\t-t <threads>\tMaximum number of threads to use, or percentage of all cores. Default is 4 threads.\n"
-      "\n"
-      "\tExample 1: qdinterpolatearea myGrid.dat < in.sqd > out.sqd\n"
-      "\t        2: qdinterpolatearea -p stereographic,10,90,60:-19.711,25.01,62.93,62.845 -s 40x50  < in.sqd > out.sqd\n"
-      "\t        3: qdinterpolatearea -p stereographic,20,90,60:6,51.3,49,70.2 -s 63x70  < in.sqd > out.sqd\n"
-      "\t        4: qdinterpolatearea -p stereographic,20,90,60:6,51.3,49,70.2 -s 10x10km -i in.sqd -o out.sqd\n"
-      "\t        5: qdinterpolatearea -p stereographic,20,90,60:6,51.3,49,70.2:1000,1000m -i in.sqd -o out.sqd\n"
-      "\n";
+  cout << "Usage: qdinterpolatearea [options] controlGridFile < inputData > outputData\n"
+          "\n"
+          "Options:\n"
+          "\n"
+          "\t-s <Columns_x_Rows>\tWanted grid size, default is 1x1\n"
+          "\t-p <projection>\tWanted projection, if given, overrides controlGridFile (fileName not "
+          "given then)\n"
+          "\t-i <inputfile>\tInput file instead of standard input\n"
+          "\t-o <outputfile>\tOutput file instead of standard output\n"
+          "\t-t <threads>\tMaximum number of threads to use, or percentage of all cores. Default "
+          "is 4 threads.\n"
+          "\n"
+          "\tExample 1: qdinterpolatearea myGrid.dat < in.sqd > out.sqd\n"
+          "\t        2: qdinterpolatearea -p stereographic,10,90,60:-19.711,25.01,62.93,62.845 -s "
+          "40x50  < in.sqd > out.sqd\n"
+          "\t        3: qdinterpolatearea -p stereographic,20,90,60:6,51.3,49,70.2 -s 63x70  < "
+          "in.sqd > out.sqd\n"
+          "\t        4: qdinterpolatearea -p stereographic,20,90,60:6,51.3,49,70.2 -s 10x10km -i "
+          "in.sqd -o out.sqd\n"
+          "\t        5: qdinterpolatearea -p stereographic,20,90,60:6,51.3,49,70.2:1000,1000m -i "
+          "in.sqd -o out.sqd\n"
+          "\n";
 }
 
 void get_grid_size(const string &theGridSizeString, int &theXSize, int &theYSize)
@@ -97,9 +102,11 @@ void run(int argc, const char *argv[])
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
   }
 
-  if (cmdline.isOption('i')) inputfile = cmdline.OptionValue('i');
+  if (cmdline.isOption('i'))
+    inputfile = cmdline.OptionValue('i');
 
-  if (cmdline.isOption('o')) outputfile = cmdline.OptionValue('o');
+  if (cmdline.isOption('o'))
+    outputfile = cmdline.OptionValue('o');
 
   bool projectionFromOptions = cmdline.isOption('p') != 0;
   int minParams = projectionFromOptions ? 0 : 1;
@@ -112,22 +119,23 @@ void run(int argc, const char *argv[])
     throw runtime_error("");
   }
 
-  if(cmdline.isOption('t'))
+  if (cmdline.isOption('t'))
   {
     std::string str = cmdline.OptionValue('t');
-    if(str.empty()) throw std::runtime_error("Empty argument to option -t");
-    if(str.back() == '%')
+    if (str.empty())
+      throw std::runtime_error("Empty argument to option -t");
+    if (str.back() == '%')
     {
-      auto n = Fmi::stoi(str.substr(0,str.size()-1));
+      auto n = Fmi::stoi(str.substr(0, str.size() - 1));
       auto max_hardware = boost::thread::hardware_concurrency();
       maxthreads = n * max_hardware / 100;
-      maxthreads = std::max(1u,maxthreads);
+      maxthreads = std::max(1U, maxthreads);
     }
     else
       maxthreads = Fmi::stoi(str);
   }
-  
-  NFmiGrid *wantedGrid = 0;
+
+  NFmiGrid *wantedGrid = nullptr;
   if (projectionFromOptions)
   {
     string projectionString = cmdline.OptionValue('p');
@@ -166,8 +174,8 @@ void run(int argc, const char *argv[])
       NFmiQueryDataUtil::Interpolate2OtherGrid(&qd, wantedGrid, nullptr, maxthreads));
 
   // Temporary fix until newbase interpolation has been corrected
-  NFmiWindFix::FixWinds(*newData); 
-  
+  NFmiWindFix::FixWinds(*newData);
+
   newData->Write(outputfile);
 }
 

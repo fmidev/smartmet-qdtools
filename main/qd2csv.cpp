@@ -37,7 +37,8 @@ bool goodcolumn(NFmiFastQueryInfo& theQ)
 {
   for (theQ.ResetLocation(); theQ.NextLocation();)
     for (theQ.ResetTime(); theQ.NextTime();)
-      if (theQ.FloatValue() != kFloatMissing) return true;
+      if (theQ.FloatValue() != kFloatMissing)
+        return true;
   return false;
 }
 
@@ -47,7 +48,7 @@ bool goodcolumn(NFmiFastQueryInfo& theQ)
  */
 // ----------------------------------------------------------------------
 
-const string makename(const NFmiFastQueryInfo& theQ)
+string makename(const NFmiFastQueryInfo& theQ)
 {
   NFmiEnumConverter converter;
 
@@ -117,7 +118,7 @@ int domain(int argc, const char* argv[])
   // First the headers
 
   NFmiEnumConverter converter;
-  cout << "\"id\",\"date\"";
+  cout << R"("id","date")";
   for (q->ResetLevel(); q->NextLevel();)
     for (q->ResetParam(); q->NextParam();)
     {
@@ -158,7 +159,8 @@ int domain(int argc, const char* argv[])
           }
           ++column;
         }
-      if (printedcolumns > 0) cout << endl;
+      if (printedcolumns > 0)
+        cout << endl;
     }
   }
 

@@ -42,7 +42,8 @@ bool locationvalid(NFmiFastQueryInfo& theQD)
     theQD.ResetParam();
     while (theQD.NextParam(ignoresubparameters))
     {
-      if (theQD.FloatValue() != kFloatMissing) return true;
+      if (theQD.FloatValue() != kFloatMissing)
+        return true;
     }
   }
   return false;
@@ -57,7 +58,7 @@ bool locationvalid(NFmiFastQueryInfo& theQD)
  */
 // ----------------------------------------------------------------------
 
-QueryDataManager::QueryDataManager() : itsSearchPath(), itsData(), itsCurrentData()
+QueryDataManager::QueryDataManager()
 {
   itsCurrentData = itsData.end();
 }
@@ -73,10 +74,10 @@ QueryDataManager::QueryDataManager() : itsSearchPath(), itsData(), itsCurrentDat
 
 QueryDataManager::~QueryDataManager()
 {
-  for (storage_type::iterator it = itsData.begin(); it != itsData.end(); ++it)
+  for (auto& it : itsData)
   {
-    delete it->get<1>();  // querydata
-    delete it->get<2>();  // fastqueryinfo
+    delete it.get<1>();  // querydata
+    delete it.get<2>();  // fastqueryinfo
   }
 }
 
@@ -113,7 +114,7 @@ void QueryDataManager::searchpath(const std::string& theSearchPath)
 
 void QueryDataManager::addfile(const std::string& theFile)
 {
-  itsData.push_back(value_type(theFile, 0));
+  itsData.push_back(value_type(theFile, nullptr));
 }
 
 // ----------------------------------------------------------------------
@@ -126,9 +127,9 @@ void QueryDataManager::addfile(const std::string& theFile)
 
 void QueryDataManager::addfiles(const std::vector<std::string>& theFiles)
 {
-  for (std::vector<std::string>::const_iterator it = theFiles.begin(); it != theFiles.end(); ++it)
+  for (const auto& theFile : theFiles)
   {
-    addfile(*it);
+    addfile(theFile);
   }
 }
 
@@ -140,7 +141,10 @@ void QueryDataManager::addfiles(const std::vector<std::string>& theFiles)
  */
 // ----------------------------------------------------------------------
 
-bool QueryDataManager::isset(void) const { return (itsCurrentData != itsData.end()); }
+bool QueryDataManager::isset() const
+{
+  return (itsCurrentData != itsData.end());
+}
 // ----------------------------------------------------------------------
 /*!
  * \brief Return the current query info
@@ -154,9 +158,10 @@ bool QueryDataManager::isset(void) const { return (itsCurrentData != itsData.end
  */
 // ----------------------------------------------------------------------
 
-NFmiFastQueryInfo& QueryDataManager::info(void) const
+NFmiFastQueryInfo& QueryDataManager::info() const
 {
-  if (isset()) return *itsCurrentData->get<2>();
+  if (isset())
+    return *itsCurrentData->get<2>();
 
   throw std::runtime_error("Trying to access querydata before setting a location");
 }
@@ -176,12 +181,12 @@ void QueryDataManager::setstation(int theWmoNumber)
   // Set "no data" condition until we've found a station
   itsCurrentData = itsData.end();
 
-  for (storage_type::iterator it = itsData.begin(); it != itsData.end(); ++it)
+  for (auto it = itsData.begin(); it != itsData.end(); ++it)
   {
     if (!it->get<1>())
     {
       std::string filename = NFmiFileSystem::FileComplete(it->get<0>(), itsSearchPath);
-      NFmiQueryData* qd = new NFmiQueryData(filename);
+      auto* qd = new NFmiQueryData(filename);
       it->get<1>() = qd;
       it->get<2>() = new NFmiFastQueryInfo(qd);
     }
@@ -215,12 +220,12 @@ void QueryDataManager::setpoint(const NFmiPoint& theLonLat, double theMaxDistanc
 
   double smallest_distance = -1;
 
-  for (storage_type::iterator it = itsData.begin(); it != itsData.end(); ++it)
+  for (auto it = itsData.begin(); it != itsData.end(); ++it)
   {
     if (!it->get<1>())
     {
       std::string filename = NFmiFileSystem::FileComplete(it->get<0>(), itsSearchPath);
-      NFmiQueryData* qd = new NFmiQueryData(filename);
+      auto* qd = new NFmiQueryData(filename);
       it->get<1>() = qd;
       it->get<2>() = new NFmiFastQueryInfo(qd);
     }
@@ -260,17 +265,17 @@ std::set<int> QueryDataManager::stations()
 {
   std::set<int> ret;
 
-  for (storage_type::iterator it = itsData.begin(); it != itsData.end(); ++it)
+  for (auto& it : itsData)
   {
-    if (!it->get<1>())
+    if (!it.get<1>())
     {
-      std::string filename = NFmiFileSystem::FileComplete(it->get<0>(), itsSearchPath);
-      NFmiQueryData* qd = new NFmiQueryData(filename);
-      it->get<1>() = qd;
-      it->get<2>() = new NFmiFastQueryInfo(qd);
+      std::string filename = NFmiFileSystem::FileComplete(it.get<0>(), itsSearchPath);
+      auto* qd = new NFmiQueryData(filename);
+      it.get<1>() = qd;
+      it.get<2>() = new NFmiFastQueryInfo(qd);
     }
 
-    NFmiFastQueryInfo& qi = *(it->get<2>());
+    NFmiFastQueryInfo& qi = *(it.get<2>());
 
     qi.ResetLocation();
     while (qi.NextLocation())
@@ -304,23 +309,24 @@ std::map<double, int> QueryDataManager::nearest(const NFmiPoint& theLonLat,
                                                 double theMaxDistance,
                                                 bool theCheckingFlag)
 {
-  typedef std::map<double, int> ReturnType;
+  using ReturnType = std::map<double, int>;
   ReturnType ret;
 
-  for (storage_type::iterator it = itsData.begin(); it != itsData.end(); ++it)
+  for (auto& it : itsData)
   {
-    if (!it->get<1>())
+    if (!it.get<1>())
     {
-      std::string filename = NFmiFileSystem::FileComplete(it->get<0>(), itsSearchPath);
-      NFmiQueryData* qd = new NFmiQueryData(filename);
-      it->get<1>() = qd;
-      it->get<2>() = new NFmiFastQueryInfo(qd);
+      std::string filename = NFmiFileSystem::FileComplete(it.get<0>(), itsSearchPath);
+      auto* qd = new NFmiQueryData(filename);
+      it.get<1>() = qd;
+      it.get<2>() = new NFmiFastQueryInfo(qd);
     }
 
-    NFmiFastQueryInfo& qi = *(it->get<2>());
+    NFmiFastQueryInfo& qi = *(it.get<2>());
 
     // Won't find nearest points from grids
-    if (qi.IsGrid()) continue;
+    if (qi.IsGrid())
+      continue;
 
     qi.ResetLocation();
     while (qi.NextLocation())
@@ -335,7 +341,7 @@ std::map<double, int> QueryDataManager::nearest(const NFmiPoint& theLonLat,
 
   if (theMaxNumber > 0 && ret.size() > static_cast<unsigned long>(theMaxNumber))
   {
-    ReturnType::iterator it = ret.begin();
+    auto it = ret.begin();
     // For some reason advance() won't compile with g++ v3.2
     // std::advance(ret,theMaxNumber);
     for (int i = 0; i < theMaxNumber; i++)

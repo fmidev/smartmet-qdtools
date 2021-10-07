@@ -37,7 +37,10 @@ int unknownParIdCounter = nctools::unknownParIdCounterBegin;  // jos tuntematon 
 
 namespace nctools
 {
-NFmiEnumConverter &get_enumconverter(void) { return converter; }
+NFmiEnumConverter &get_enumconverter()
+{
+  return converter;
+}
 // ----------------------------------------------------------------------
 /*!
  * \brief Parse command line options
@@ -167,7 +170,8 @@ bool parse_options(int argc, char *argv[], Options &options)
   if (strstr(argv[0], "wrftoqd") != nullptr)
   {
     // Running wrftoqd
-    if (opt.count("infile") == 0) throw std::runtime_error("Expecting input file as parameter 1");
+    if (opt.count("infile") == 0)
+      throw std::runtime_error("Expecting input file as parameter 1");
 
     if (opt.count("infile") > 2)
       throw std::runtime_error("Multiple input files for wrtoqd not supported");
@@ -178,7 +182,8 @@ bool parse_options(int argc, char *argv[], Options &options)
   else
   {
     // Running nctoqd
-    if (opt.count("infile") == 0) throw std::runtime_error("Expecting input file as parameter 1");
+    if (opt.count("infile") == 0)
+      throw std::runtime_error("Expecting input file as parameter 1");
 
     if (!options.info)
     {
@@ -236,12 +241,10 @@ bool parse_options(int argc, char *argv[], Options &options)
     // erotelty ;-merkeill� ja avain/arvot on eroteltu = -merkeill�
     std::list<std::string> attributeListParts =
         NFmiStringTools::Split<std::list<std::string>>(tmpCmdLineGlobalAttributesStr, ";");
-    for (std::list<std::string>::iterator it = attributeListParts.begin();
-         it != attributeListParts.end();
-         ++it)
+    for (auto &attributeListPart : attributeListParts)
     {
       std::vector<std::string> attributeParts =
-          NFmiStringTools::Split<std::vector<std::string>>(*it, "=");
+          NFmiStringTools::Split<std::vector<std::string>>(attributeListPart, "=");
       if (attributeParts.size() == 2)
         options.cmdLineGlobalAttributes.insert(
             std::make_pair(attributeParts[0], attributeParts[1]));
@@ -268,18 +271,18 @@ ParamConversions read_netcdf_configs(const Options &options)
 
   // Command line
   if (options.parameters.size() > 0)
-    for (auto line : options.parameters)
+    for (const auto &line : options.parameters)
       try
       {
         if (line.length() < 1)
-          throw Fmi::Exception(BCP,
-                                           "A parameter given on command line is of zero length");
-        if (options.verbose) std::cout << "Adding parameter mapping " << line << std::endl;
+          throw Fmi::Exception(BCP, "A parameter given on command line is of zero length");
+        if (options.verbose)
+          std::cout << "Adding parameter mapping " << line << std::endl;
         std::vector<std::string> row;
         std::size_t delimpos = line.find(',');
         if (delimpos < 1 || delimpos >= line.length() - 1)
-          throw Fmi::Exception(
-              BCP, "Parameter from command line is not of correct format: " + line);
+          throw Fmi::Exception(BCP,
+                               "Parameter from command line is not of correct format: " + line);
         row.push_back(line.substr(0, delimpos));
         row.push_back(line.substr(delimpos + 1));
         csv.paramconvs.push_back(row);
@@ -292,10 +295,11 @@ ParamConversions read_netcdf_configs(const Options &options)
 
   // Additional config files
   if (options.configs.size() > 0)
-    for (auto file : options.configs)
+    for (const auto &file : options.configs)
       try
       {
-        if (options.verbose) std::cout << "Reading " << file << std::endl;
+        if (options.verbose)
+          std::cout << "Reading " << file << std::endl;
 
         Fmi::CsvReader::read(file, boost::bind(&CsvParams::add, &csv, _1));
       }
@@ -305,9 +309,11 @@ ParamConversions read_netcdf_configs(const Options &options)
       }
 
   // Base config file
-  if (!options.configfile.empty()) try
+  if (!options.configfile.empty())
+    try
     {
-      if (options.verbose) std::cout << "Reading " << options.configfile << std::endl;
+      if (options.verbose)
+        std::cout << "Reading " << options.configfile << std::endl;
 
       Fmi::CsvReader::read(options.configfile, boost::bind(&CsvParams::add, &csv, _1));
     }
@@ -320,11 +326,13 @@ ParamConversions read_netcdf_configs(const Options &options)
   return csv.paramconvs;
 }
 
-CsvParams::CsvParams(const Options &optionsIn) : paramconvs(), options(optionsIn) {}
+CsvParams::CsvParams(const Options &optionsIn) : options(optionsIn) {}
 void CsvParams::add(const Fmi::CsvReader::row_type &row)
 {
-  if (row.size() == 0) return;
-  if (row[0].substr(0, 1) == "#") return;
+  if (row.size() == 0)
+    return;
+  if (row[0].substr(0, 1) == "#")
+    return;
 
   if (row.size() != 2 && row.size() != 4)
     throw Fmi::Exception(
@@ -348,7 +356,8 @@ void CsvParams::add(const Fmi::CsvReader::row_type &row)
 static FmiParameterName getIdFromString(NFmiEnumConverter &converter, const std::string &name)
 {
   // Convert numbers directly to int, other through the converter
-  if (name.empty()) return kFmiBadParameter;
+  if (name.empty())
+    return kFmiBadParameter;
 
   // Is it a name?
   if (name.find_first_not_of("012345678") != std::string::npos)
@@ -410,7 +419,7 @@ ParamInfo parse_parameter(const std::string &name,
   {
     // We either have a numeric conversion done or should use autogenerated ids
     // Let's first check for already encountered ids
-    std::map<std::string, int>::iterator it = unknownParIdMap.find(name);
+    auto it = unknownParIdMap.find(name);
     if (it != unknownParIdMap.end())
     {
       info.name = name;

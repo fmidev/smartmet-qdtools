@@ -51,7 +51,8 @@ static void Domain(int argc, const char *argv[])
   std::string qdFileOut = cmdLine.Parameter(2);
 
   NFmiProducer producer(1201, "ncprod");
-  if (cmdLine.isOption('p')) producer = ::GetProducer(cmdLine.OptionValue('p'));
+  if (cmdLine.isOption('p'))
+    producer = ::GetProducer(cmdLine.OptionValue('p'));
 
   std::cerr << "starting the " << argv[0] << " execution" << std::endl;
 
@@ -60,7 +61,8 @@ static void Domain(int argc, const char *argv[])
   FmiNetCdfQueryData nc2QdFilter;
   nc2QdFilter.Producer(producer);
   std::vector<NFmiQueryData *> qDatas = nc2QdFilter.CreateQueryDatas(ncFileIn);
-  if (qDatas.size() == 0) throw std::runtime_error(nc2QdFilter.ErrorMessage());
+  if (qDatas.size() == 0)
+    throw std::runtime_error(nc2QdFilter.ErrorMessage());
   debugTimer.StopTimer();
 
   std::string debugStr("Making conversion from ");
@@ -70,25 +72,24 @@ static void Domain(int argc, const char *argv[])
   std::cerr << debugStr << std::endl;
 
   NFmiStreamQueryData sQueryData;
-  for (size_t i = 0; i < qDatas.size(); i++)
+  for (auto &qData : qDatas)
   {
-    if (qDatas[i])
+    if (qData)
     {
       NFmiFileString usedFileName(qdFileOut);
-      qDatas[i]->Info()->FirstLevel();
-      FmiLevelType levelType = qDatas[i]->Info()->Level()->LevelType();
+      qData->Info()->FirstLevel();
+      FmiLevelType levelType = qData->Info()->Level()->LevelType();
       if (levelType == kFmiHybridLevel)
         usedFileName.Header(usedFileName.Header() + "_hyb");
       else if (levelType == kFmiHeight)
         usedFileName.Header(usedFileName.Header() + "_hgt");
       else if (levelType == kFmiPressureLevel)
         usedFileName.Header(usedFileName.Header() + "_pre");
-      else if (qDatas[i]->Info()->SizeLevels() == 1)
+      else if (qData->Info()->SizeLevels() == 1)
         usedFileName.Header(usedFileName.Header() + "_sfc");
       else
         usedFileName.Header(usedFileName.Header() + "_xxx");
-      if (sQueryData.WriteData(
-              usedFileName, qDatas[i], static_cast<long>(qDatas[i]->InfoVersion())))
+      if (sQueryData.WriteData(usedFileName, qData, static_cast<long>(qData->InfoVersion())))
         std::cerr << "stored data to file: " << usedFileName.CharPtr() << std::endl;
       else
         throw std::runtime_error(std::string("ERROR when trying to store data to file: ") +

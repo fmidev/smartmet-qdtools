@@ -699,7 +699,7 @@ int flt2ieee(float x, unsigned char *ieee)
  *     Bob Farquhar
  */
 
-#define BSIZ 1024 * 4
+#define BSIZ (1024 * 4)
 
 int wrtieee(float *array, int n, int header, FILE *output)
 {
@@ -5391,7 +5391,7 @@ void GDS_winds(const unsigned char *gds, int verbose)
   }
 }
 
-#define START -1
+#define START (-1)
 
 static int user_center = 0, user_subcenter = 0, user_ptable = 0;
 static enum { filled, not_found, not_checked, no_file, init } status = init;

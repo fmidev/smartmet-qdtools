@@ -60,8 +60,8 @@ class ProjectionParser
   static void parse(std::istream& is, ProjectionStore& theStore, const std::string& theEllipsoid);
 
  private:
-  ~ProjectionParser() = delete;
-  ProjectionParser() = delete;
+  ~ProjectionParser(void);
+  ProjectionParser(void);
 
 };  // class ProjectionParser
 }  // namespace RadContour

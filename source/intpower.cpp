@@ -1,4 +1,4 @@
-#include <cstdio>
+#include <stdio.h>
 
 /*
  * w. ebisuzaki

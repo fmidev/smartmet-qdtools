@@ -39,7 +39,7 @@ bool ReadFlashFile(const std::string &theFileName,
                    std::vector<std::string> &theFlashStrings);
 NFmiQueryData *CreateFlashQueryData(std::vector<std::string> &theFlashStrings,
                                     bool fMakeLocal2UtcTimeConversion);
-void Usage();
+void Usage(void);
 void Domain(int argc, const char *argv[]);
 int GetIntegerOptionValue(const NFmiCmdLine &theCmdline, char theOption);
 
@@ -87,10 +87,8 @@ void Domain(int argc, const char *argv[])
   else
     flashFileName = cmdline.Parameter(1);
 
-  if (cmdline.isOption('s'))
-    skipLines = GetIntegerOptionValue(cmdline, 's');
-  if (cmdline.isOption('t'))
-    makeLocal2UtcTimeConversion = true;
+  if (cmdline.isOption('s')) skipLines = GetIntegerOptionValue(cmdline, 's');
+  if (cmdline.isOption('t')) makeLocal2UtcTimeConversion = true;
 
   std::vector<std::string> flashStrings;
   if (!ReadFlashFile(flashFileName, skipLines, flashStrings))
@@ -99,8 +97,8 @@ void Domain(int argc, const char *argv[])
 
   NFmiQueryData *newData = CreateFlashQueryData(flashStrings, makeLocal2UtcTimeConversion);
   unique_ptr<NFmiQueryData> dataPtr(newData);  // tämä tuhoaa dynaamisesti luodun datan
-                                               // automaattisesti (vaikka return paikkoja olisi
-                                               // kuinka monta)
+                                             // automaattisesti (vaikka return paikkoja olisi kuinka
+                                             // monta)
   if (newData)
   {
     NFmiStreamQueryData streamQDataTulos;
@@ -145,14 +143,14 @@ bool ParseFlashDataLine(const std::string &theLineStr, FlashData &theData)
   return false;
 }
 
-NFmiHPlaceDescriptor MakeHPlaceDescriptor()
+NFmiHPlaceDescriptor MakeHPlaceDescriptor(void)
 {
   NFmiLocationBag locs;
   locs.AddLocation(NFmiLocation());
   return NFmiHPlaceDescriptor(locs);
 }
 
-NFmiParamDescriptor MakeParamDescriptor()
+NFmiParamDescriptor MakeParamDescriptor(void)
 {
   NFmiProducer prod(1012, "flash");
   NFmiParamBag params;
@@ -178,7 +176,7 @@ NFmiQueryData *CreateQueryData(const NFmiTimeList &theTimes)
 NFmiQueryData *CreateFlashQueryData(std::vector<std::string> &theFlashStrings,
                                     bool fMakeLocal2UtcTimeConversion)
 {
-  NFmiQueryData *data = nullptr;
+  NFmiQueryData *data = 0;
   if (!theFlashStrings.empty())
   {
     NFmiTimeList times;
@@ -195,8 +193,7 @@ NFmiQueryData *CreateFlashQueryData(std::vector<std::string> &theFlashStrings,
     {
       if (ParseFlashDataLine(theFlashStrings[i], tmp))
       {
-        if (fMakeLocal2UtcTimeConversion)
-          tmp.itsTime = NFmiMetTime(tmp.itsTime.UTCTime(), 1);
+        if (fMakeLocal2UtcTimeConversion) tmp.itsTime = NFmiMetTime(tmp.itsTime.UTCTime(), 1);
 
         times.Add(new NFmiMetTime(tmp.itsTime), true, true);
         lons[counter] = tmp.lon;
@@ -249,8 +246,7 @@ bool ReadFlashFile(const std::string &theFileName,
       while (std::getline(in, rowbuffer))
       {
         counter++;
-        if (theSkipLines >= counter)
-          continue;
+        if (theSkipLines >= counter) continue;
         if (!rowbuffer.empty())
         {
           theFlashStrings.push_back(rowbuffer);
@@ -263,7 +259,7 @@ bool ReadFlashFile(const std::string &theFileName,
   return false;
 }
 
-void Usage()
+void Usage(void)
 {
   cout << "Usage: flash2qd [-s lineCount] [-t] flashData > flash.sqd" << endl
        << endl
@@ -278,8 +274,7 @@ void Usage()
 int GetIntegerOptionValue(const NFmiCmdLine &theCmdline, char theOption)
 {
   NFmiValueString valStr(theCmdline.OptionValue(theOption));
-  if (valStr.IsInt())
-    return static_cast<int>(valStr);
+  if (valStr.IsInt()) return static_cast<int>(valStr);
   throw runtime_error(string("Error: '") + theOption +
                       "' option value must be integer, exiting...");
 }

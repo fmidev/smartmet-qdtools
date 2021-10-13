@@ -10,17 +10,17 @@
 class NFmiDataModifierDataChecking : public NFmiDataModifier
 {
  public:
-  NFmiDataModifierDataChecking() = default;
-  ~NFmiDataModifierDataChecking() override = default;
-  void Clear() override
+  NFmiDataModifierDataChecking(void) : itsCheckedDataCount(0), itsFoundDataCount(0){};
+  virtual ~NFmiDataModifierDataChecking(void){};
+  void Clear(void)
   {
     itsCheckedDataCount = 0;
     itsFoundDataCount = 0;
   };
-  int CheckedDataCount() const { return itsCheckedDataCount; }
-  int FoundDataCount() const { return itsFoundDataCount; }
+  int CheckedDataCount(void) { return itsCheckedDataCount; }
+  int FoundDataCount(void) { return itsFoundDataCount; }
   using NFmiDataModifier::CalculationResult;
-  float CalculationResult() override
+  float CalculationResult(void)
   {
     float result =
         itsCheckedDataCount ? itsFoundDataCount / float(itsCheckedDataCount) * 100 : kFloatMissing;
@@ -28,39 +28,38 @@ class NFmiDataModifierDataChecking : public NFmiDataModifier
   };
 
  protected:
-  int itsCheckedDataCount{0};
-  int itsFoundDataCount{0};
+  int itsCheckedDataCount;
+  int itsFoundDataCount;
 };
 
 class NFmiDataModifierDataMissing : public NFmiDataModifierDataChecking
 {
  public:
-  NFmiDataModifierDataMissing(){};
-  ~NFmiDataModifierDataMissing() override = default;
+  NFmiDataModifierDataMissing(void) : NFmiDataModifierDataChecking(){};
+  virtual ~NFmiDataModifierDataMissing(void){};
   using NFmiDataModifierDataChecking::Calculate;
-  void Calculate(float theValue) override
+  virtual void Calculate(float theValue)
   {
     itsCheckedDataCount++;
-    if (theValue == kFloatMissing)
-      itsFoundDataCount++;
+    if (theValue == kFloatMissing) itsFoundDataCount++;
   };
 };
 class NFmiDataModifierDataStraight : public NFmiDataModifierDataChecking
 {
  public:
-  NFmiDataModifierDataStraight() : itsLastValue(kFloatMissing){};
-  ~NFmiDataModifierDataStraight() override = default;
-  void Clear() override
+  NFmiDataModifierDataStraight(void)
+      : NFmiDataModifierDataChecking(), itsLastValue(kFloatMissing){};
+  virtual ~NFmiDataModifierDataStraight(void){};
+  void Clear(void)
   {
     NFmiDataModifierDataChecking::Clear();
     itsLastValue = kFloatMissing;
   };
   using NFmiDataModifierDataChecking::Calculate;
-  void Calculate(float theValue) override
+  virtual void Calculate(float theValue)
   {
     itsCheckedDataCount++;
-    if (theValue == itsLastValue)
-      itsFoundDataCount++;
+    if (theValue == itsLastValue) itsFoundDataCount++;
     itsLastValue = theValue;
   };
 

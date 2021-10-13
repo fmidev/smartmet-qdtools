@@ -56,12 +56,21 @@ struct Options
   string inputfile1;
   string inputfile2;
   vector<FmiParameterName> parameters;
-  bool allparams{false};
-  bool alltimesteps{false};
-  bool percentage{false};
-  double epsilon{0};
+  bool allparams;
+  bool alltimesteps;
+  bool percentage;
+  double epsilon;
 
-  Options() {}
+  Options()
+      : inputfile1(),
+        inputfile2(),
+        parameters(),
+        allparams(false),
+        alltimesteps(false),
+        percentage(false),
+        epsilon(0)
+  {
+  }
 };
 
 // ----------------------------------------------------------------------
@@ -114,8 +123,7 @@ bool parse_command_line(int argc, const char* argv[])
 {
   NFmiCmdLine cmdline(argc, argv, "htpP!e!");
 
-  if (cmdline.Status().IsError())
-    throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
+  if (cmdline.Status().IsError()) throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
 
   // help-option must be checked first
 
@@ -135,11 +143,9 @@ bool parse_command_line(int argc, const char* argv[])
 
   // options
 
-  if (cmdline.isOption('t'))
-    options.alltimesteps = true;
+  if (cmdline.isOption('t')) options.alltimesteps = true;
 
-  if (cmdline.isOption('p'))
-    options.percentage = true;
+  if (cmdline.isOption('p')) options.percentage = true;
 
   if (cmdline.isOption('e'))
     options.epsilon = boost::lexical_cast<double>(cmdline.OptionValue('e'));
@@ -151,11 +157,11 @@ bool parse_command_line(int argc, const char* argv[])
       options.allparams = true;
     else
     {
-      for (const auto& arg : args)
+      for (vector<string>::const_iterator it = args.begin(); it != args.end(); ++it)
       {
-        auto param = FmiParameterName(converter.ToEnum(arg));
+        FmiParameterName param = FmiParameterName(converter.ToEnum(*it));
         if (param == kFmiBadParameter)
-          throw runtime_error(string("Parameter '" + arg + "' is not recognized"));
+          throw runtime_error(string("Parameter '" + *it + "' is not recognized"));
         options.parameters.push_back(param);
       }
     }
@@ -191,13 +197,11 @@ double analyze_all_parameters(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2
           if (value1 != kFloatMissing && value2 != kFloatMissing)
           {
             double diff = abs(value2 - value1);
-            if (iswinddir)
-              diff = min(diff, abs(abs(value2 - value1) - 360));
+            if (iswinddir) diff = min(diff, abs(abs(value2 - value1) - 360));
 
             maxdiff = max(diff, maxdiff);
             ++points;
-            if (diff != 0.0)
-              ++differentpoints;
+            if (diff != 0.0) ++differentpoints;
           }
         }
 
@@ -219,9 +223,9 @@ double analyze_given_parameters(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& the
   int points = 0;
   int differentpoints = 0;
 
-  for (auto& parameter : options.parameters)
+  for (unsigned int i = 0; i < options.parameters.size(); i++)
   {
-    if (!theQ1.Param(parameter) || !theQ2.Param(parameter))
+    if (!theQ1.Param(options.parameters[i]) || !theQ2.Param(options.parameters[i]))
       throw runtime_error("The files must contain the parameters given with -P");
 
     bool iswinddir = (theQ1.Param().GetParam()->GetIdent() == kFmiWindDirection);
@@ -238,13 +242,11 @@ double analyze_given_parameters(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& the
           {
             double diff = abs(value2 - value1);
 
-            if (iswinddir)
-              diff = min(diff, abs(abs(value2 - value1) - 360));
+            if (iswinddir) diff = min(diff, abs(abs(value2 - value1) - 360));
 
             maxdiff = max(diff, maxdiff);
             ++points;
-            if (diff != 0.0)
-              ++differentpoints;
+            if (diff != 0.0) ++differentpoints;
           }
         }
   }
@@ -280,13 +282,11 @@ double analyze_this_parameter(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2
         {
           double diff = abs(value2 - value1);
 
-          if (iswinddir)
-            diff = min(diff, abs(abs(value2 - value1) - 360));
+          if (iswinddir) diff = min(diff, abs(abs(value2 - value1) - 360));
 
           maxdiff = max(diff, maxdiff);
           ++points;
-          if (diff != 0.0)
-            ++differentpoints;
+          if (diff != 0.0) ++differentpoints;
         }
       }
 
@@ -320,13 +320,11 @@ double analyze_all_parameters_now(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& t
         if (value1 != kFloatMissing && value2 != kFloatMissing)
         {
           double diff = abs(value2 - value1);
-          if (iswinddir)
-            diff = min(diff, abs(abs(value2 - value1) - 360));
+          if (iswinddir) diff = min(diff, abs(abs(value2 - value1) - 360));
 
           maxdiff = max(diff, maxdiff);
           ++points;
-          if (diff != 0.0)
-            ++differentpoints;
+          if (diff != 0.0) ++differentpoints;
         }
       }
 
@@ -348,9 +346,9 @@ double analyze_given_parameters_now(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo&
   int points = 0;
   int differentpoints = 0;
 
-  for (auto& parameter : options.parameters)
+  for (unsigned int i = 0; i < options.parameters.size(); i++)
   {
-    if (!theQ1.Param(parameter) || !theQ2.Param(parameter))
+    if (!theQ1.Param(options.parameters[i]) || !theQ2.Param(options.parameters[i]))
       throw runtime_error("The files must contain the parameters given with -P");
 
     bool iswinddir = (theQ1.Param().GetParam()->GetIdent() == kFmiWindDirection);
@@ -366,13 +364,11 @@ double analyze_given_parameters_now(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo&
         {
           double diff = abs(value2 - value1);
 
-          if (iswinddir)
-            diff = min(diff, abs(abs(value2 - value1) - 360));
+          if (iswinddir) diff = min(diff, abs(abs(value2 - value1) - 360));
 
           maxdiff = max(diff, maxdiff);
           ++points;
-          if (diff != 0.0)
-            ++differentpoints;
+          if (diff != 0.0) ++differentpoints;
         }
       }
   }
@@ -410,8 +406,7 @@ void validate_comparison(NFmiFastQueryInfo& q1, NFmiFastQueryInfo& q2)
 
   if (q1.IsArea() && q2.IsArea())
   {
-    if (*q1.Area() != *q2.Area())
-      throw runtime_error("Data not comparable, areas differ");
+    if (*q1.Area() != *q2.Area()) throw runtime_error("Data not comparable, areas differ");
   }
 
   if (q1.GridHashValue() != q2.GridHashValue())
@@ -427,8 +422,7 @@ void validate_comparison(NFmiFastQueryInfo& q1, NFmiFastQueryInfo& q2)
 int domain(int argc, const char* argv[])
 {
   // Parse the command line
-  if (!parse_command_line(argc, argv))
-    return 0;
+  if (!parse_command_line(argc, argv)) return 0;
 
   // Read the querydata
 

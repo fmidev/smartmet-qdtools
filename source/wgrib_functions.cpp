@@ -4,8 +4,7 @@
 
 void print_pds(unsigned char *pds, int print_PDS, int print_PDS10, int verbose)
 {
-  int i;
-  int j;
+  int i, j;
 
   j = PDS_LEN(pds);
   if (verbose < 2)
@@ -34,8 +33,7 @@ void print_pds(unsigned char *pds, int print_PDS, int print_PDS10, int verbose)
       printf("  PDS(1..%d)=", j);
       for (i = 0; i < j; i++)
       {
-        if (i % 20 == 0)
-          printf("\n    %4d:", i + 1);
+        if (i % 20 == 0) printf("\n    %4d:", i + 1);
         printf(" %3.2x", (int)pds[i]);
       }
       printf("\n");
@@ -45,8 +43,7 @@ void print_pds(unsigned char *pds, int print_PDS, int print_PDS10, int verbose)
       printf("  PDS10(1..%d)=", j);
       for (i = 0; i < j; i++)
       {
-        if (i % 20 == 0)
-          printf("\n    %4d:", i + 1);
+        if (i % 20 == 0) printf("\n    %4d:", i + 1);
         printf(" %3d", (int)pds[i]);
       }
       printf("\n");
@@ -56,8 +53,7 @@ void print_pds(unsigned char *pds, int print_PDS, int print_PDS10, int verbose)
 
 void print_gds(unsigned char *gds, int print_GDS, int print_GDS10, int verbose)
 {
-  int i;
-  int j;
+  int i, j;
 
   j = GDS_LEN(gds);
   if (verbose < 2)
@@ -86,8 +82,7 @@ void print_gds(unsigned char *gds, int print_GDS, int print_GDS10, int verbose)
       printf("  GDS(1..%d)=", j);
       for (i = 0; i < j; i++)
       {
-        if (i % 20 == 0)
-          printf("\n    %4d:", i + 1);
+        if (i % 20 == 0) printf("\n    %4d:", i + 1);
         printf(" %3.2x", (int)gds[i]);
       }
       printf("\n");
@@ -97,8 +92,7 @@ void print_gds(unsigned char *gds, int print_GDS, int print_GDS10, int verbose)
       printf("  GDS10(1..%d)=", j);
       for (i = 0; i < j; i++)
       {
-        if (i % 20 == 0)
-          printf("\n    %4d:", i + 1);
+        if (i % 20 == 0) printf("\n    %4d:", i + 1);
         printf(" %3d", (int)gds[i]);
       }
       printf("\n");
@@ -141,19 +135,15 @@ void print_gds(unsigned char *gds, int print_GDS, int print_GDS10, int verbose)
 unsigned char *seek_grib(
     FILE *file, long *pos, long *len_grib, unsigned char *buffer, unsigned int buf_len)
 {
-  int i;
-  int j;
-  int len;
+  int i, j, len;
 
   j = 1;
   clearerr(file);
   while (!feof(file))
   {
-    if (fseek(file, *pos, SEEK_SET) == -1)
-      break;
+    if (fseek(file, *pos, SEEK_SET) == -1) break;
     i = static_cast<int>(fread(buffer, sizeof(unsigned char), buf_len, file));
-    if (ferror(file))
-      break;
+    if (ferror(file)) break;
     len = i - LEN_HEADER_PDS;
 
     for (i = 0; i < len; i++)
@@ -187,18 +177,15 @@ unsigned char *seek_grib(
  *
  */
 
-double ibm2flt(const unsigned char *ibm)
+double ibm2flt(unsigned char *ibm)
 {
-  int positive;
-  int power;
+  int positive, power;
   unsigned int abspower;
   long int mant;
-  double value;
-  double exp;
+  double value, exp;
 
   mant = (ibm[1] << 16) + (ibm[2] << 8) + ibm[3];
-  if (mant == 0)
-    return 0.0;
+  if (mant == 0) return 0.0;
 
   positive = (ibm[0] & 0x80) == 0;
   power = (int)(ibm[0] & 0x7f) - 64;
@@ -217,11 +204,9 @@ double ibm2flt(const unsigned char *ibm)
     abspower >>= 1;
   }
 
-  if (power < 0)
-    value = 1.0 / value;
+  if (power < 0) value = 1.0 / value;
   value = value * mant / 16777216.0;
-  if (positive == 0)
-    value = -value;
+  if (positive == 0) value = -value;
   return value;
 }
 
@@ -330,15 +315,10 @@ enum Def_NCEP_Table def_ncep_table = DEF_T62_NCEP_TABLE;
  * returns pointer to the parameter table
  */
 
-static struct ParmTable *Parm_Table(const unsigned char *pds)
+static struct ParmTable *Parm_Table(unsigned char *pds)
 {
-  int i;
-  int center;
-  int subcenter;
-  int ptable;
-  int process;
-  static int missing_count = 0;
-  static int reanal_opn_count = 0;
+  int i, center, subcenter, ptable, process;
+  static int missing_count = 0, reanal_opn_count = 0;
 
   center = PDS_Center(pds);
   subcenter = PDS_Subcenter(pds);
@@ -346,23 +326,19 @@ static struct ParmTable *Parm_Table(const unsigned char *pds)
 
 #ifdef P_TABLE_FIRST
   i = setup_user_table(center, subcenter, ptable);
-  if (i == 1)
-    return &parm_table_user[0];
+  if (i == 1) return &parm_table_user[0];
 #endif
   /* figure out if NCEP opn or reanalysis */
   if (center == NMC && ptable <= 3)
   {
-    if (subcenter == 1)
-      return &parm_table_ncep_reanal[0];
+    if (subcenter == 1) return &parm_table_ncep_reanal[0];
     process = PDS_Model(pds);
     if (subcenter != 0 || (process != 80 && process != 180) || (ptable != 1 && ptable != 2))
       return &parm_table_ncep_opn[0];
 
     /* at this point could be either the opn or reanalysis table */
-    if (def_ncep_table == opn_nowarn)
-      return &parm_table_ncep_opn[0];
-    if (def_ncep_table == rean_nowarn)
-      return &parm_table_ncep_reanal[0];
+    if (def_ncep_table == opn_nowarn) return &parm_table_ncep_opn[0];
+    if (def_ncep_table == rean_nowarn) return &parm_table_ncep_reanal[0];
     if (reanal_opn_count++ == 0)
     {
       fprintf(stderr,
@@ -374,57 +350,38 @@ static struct ParmTable *Parm_Table(const unsigned char *pds)
 
   if (center == NMC)
   {
-    if (ptable == 128)
-      return &parm_table_omb[0];
-    if (ptable == 129)
-      return &parm_table_nceptab_129[0];
-    if (ptable == 130)
-      return &parm_table_nceptab_130[0];
-    if (ptable == 131)
-      return &parm_table_nceptab_131[0];
+    if (ptable == 128) return &parm_table_omb[0];
+    if (ptable == 129) return &parm_table_nceptab_129[0];
+    if (ptable == 130) return &parm_table_nceptab_130[0];
+    if (ptable == 131) return &parm_table_nceptab_131[0];
   }
   if (center == ECMWF)
   {
-    if (ptable == 128)
-      return &parm_table_ecmwf_128[0];
-    if (ptable == 129)
-      return &parm_table_ecmwf_129[0];
-    if (ptable == 130)
-      return &parm_table_ecmwf_130[0];
-    if (ptable == 131)
-      return &parm_table_ecmwf_131[0];
-    if (ptable == 140)
-      return &parm_table_ecmwf_140[0];
-    if (ptable == 150)
-      return &parm_table_ecmwf_150[0];
-    if (ptable == 160)
-      return &parm_table_ecmwf_160[0];
-    if (ptable == 170)
-      return &parm_table_ecmwf_170[0];
-    if (ptable == 180)
-      return &parm_table_ecmwf_180[0];
+    if (ptable == 128) return &parm_table_ecmwf_128[0];
+    if (ptable == 129) return &parm_table_ecmwf_129[0];
+    if (ptable == 130) return &parm_table_ecmwf_130[0];
+    if (ptable == 131) return &parm_table_ecmwf_131[0];
+    if (ptable == 140) return &parm_table_ecmwf_140[0];
+    if (ptable == 150) return &parm_table_ecmwf_150[0];
+    if (ptable == 160) return &parm_table_ecmwf_160[0];
+    if (ptable == 170) return &parm_table_ecmwf_170[0];
+    if (ptable == 180) return &parm_table_ecmwf_180[0];
   }
   if (center == DWD)
   {
-    if (ptable == 2)
-      return &parm_table_dwd_002[0];
-    if (ptable == 201)
-      return &parm_table_dwd_201[0];
-    if (ptable == 202)
-      return &parm_table_dwd_202[0];
-    if (ptable == 203)
-      return &parm_table_dwd_203[0];
+    if (ptable == 2) return &parm_table_dwd_002[0];
+    if (ptable == 201) return &parm_table_dwd_201[0];
+    if (ptable == 202) return &parm_table_dwd_202[0];
+    if (ptable == 203) return &parm_table_dwd_203[0];
   }
   if (center == CPTEC)
   {
-    if (ptable == 254)
-      return &parm_table_cptec_254[0];
+    if (ptable == 254) return &parm_table_cptec_254[0];
   }
 
 #ifndef P_TABLE_FIRST
   i = setup_user_table(center, subcenter, ptable);
-  if (i == 1)
-    return &parm_table_user[0];
+  if (i == 1) return &parm_table_user[0];
 #endif
 
   if (center == 86 || center == 96)  // HKI eli FMI taulu kayttoon (86 on FMI center numero, mutta
@@ -445,18 +402,12 @@ static struct ParmTable *Parm_Table(const unsigned char *pds)
  * return name field of PDS_PARAM(pds)
  */
 
-const char *k5toa(unsigned char *pds)
-{
-  return (Parm_Table(pds) + PDS_PARAM(pds))->name;
-}
+const char *k5toa(unsigned char *pds) { return (Parm_Table(pds) + PDS_PARAM(pds))->name; }
 /*
  * return comment field of the PDS_PARAM(pds)
  */
 
-const char *k5_comments(unsigned char *pds)
-{
-  return (Parm_Table(pds) + PDS_PARAM(pds))->comment;
-}
+const char *k5_comments(unsigned char *pds) { return (Parm_Table(pds) + PDS_PARAM(pds))->comment; }
 /* 1996				wesley ebisuzaki
  *
  * Unpack BDS section
@@ -491,16 +442,8 @@ void BDS_unpack(float *flt,
 {
   unsigned char *bits;
 
-  int i;
-  int mask_idx;
-  int t_bits;
-  int c_bits;
-  int j_bits;
-  unsigned int j;
-  unsigned int map_mask;
-  unsigned int tbits;
-  unsigned int jmask;
-  unsigned int bbits;
+  int i, mask_idx, t_bits, c_bits, j_bits;
+  unsigned int j, map_mask, tbits, jmask, bbits;
   double jj;
 
   if (BDS_Harmonic(bds))
@@ -529,8 +472,7 @@ void BDS_unpack(float *flt,
       {
         /* check bitmap */
         mask_idx = i & 7;
-        if (mask_idx == 0)
-          bbits = *bitmap++;
+        if (mask_idx == 0) bbits = *bitmap++;
         if ((bbits & map_masks[mask_idx]) == 0)
         {
           *flt++ = static_cast<float>(UNDEFINED);
@@ -613,6 +555,7 @@ void BDS_unpack(float *flt,
       *flt++ = static_cast<float>(ref + scale * jj);
     }
   }
+  return;
 }
 
 /*
@@ -626,8 +569,7 @@ void BDS_unpack(float *flt,
 
 int flt2ieee(float x, unsigned char *ieee)
 {
-  int sign;
-  int exp;
+  int sign, exp;
   unsigned int umant;
   double mant;
 
@@ -704,8 +646,7 @@ int flt2ieee(float x, unsigned char *ieee)
 int wrtieee(float *array, int n, int header, FILE *output)
 {
   unsigned long int l;
-  int i;
-  int nbuf;
+  int i, nbuf;
   unsigned char buff[BSIZ];
   unsigned char h4[4];
 
@@ -745,8 +686,7 @@ int wrtieee(float *array, int n, int header, FILE *output)
     buff[nbuf++] = h4[1];
     buff[nbuf++] = h4[0];
   }
-  if (nbuf)
-    fwrite(buff, 1, nbuf, output);
+  if (nbuf) fwrite(buff, 1, nbuf, output);
   return 0;
 }
 
@@ -793,8 +733,7 @@ int wrtieee_header(unsigned int n, FILE *output)
 
 void levels(int kpds6, int kpds7, int center)
 {
-  int o11;
-  int o12;
+  int o11, o12;
 
   /* octets 11 and 12 */
   o11 = kpds7 / 256;
@@ -987,8 +926,7 @@ void levels(int kpds6, int kpds7, int center)
       printf("%d cm above gnd", kpds7);
       break;
     case 126:
-      if (center == NMC)
-        printf("%.2f mb", kpds7 * 0.01);
+      if (center == NMC) printf("%.2f mb", kpds7 * 0.01);
       break;
     case 128:
       printf("%.3f-%.3f (sigma)", 1.1 - o11 / 1000.0, 1.1 - o12 / 1000.0);
@@ -1109,8 +1047,7 @@ void PDStimes(int time_range, int p1, int p2, int time_unit)
     case 10: /* way NMC uses it, should be unknown? */
       type = fcst;
       fcst_len = p1 * 256 + p2;
-      if (fcst_len == 0)
-        type = anal;
+      if (fcst_len == 0) type = anal;
       break;
 
     case 51:
@@ -1133,8 +1070,7 @@ void PDStimes(int time_range, int p1, int p2, int time_unit)
 
   if (time_range == 123 || time_range == 124)
   {
-    if (p1 != 0)
-      printf("start@%d%s:", p1, unit);
+    if (p1 != 0) printf("start@%d%s:", p1, unit);
   }
 
   /* print time range */
@@ -1225,8 +1161,7 @@ int missing_points(unsigned char *bitmap, int n)
 {
   int count;
   unsigned int tmp;
-  if (bitmap == nullptr)
-    return 0;
+  if (bitmap == nullptr) return 0;
 
   count = 0;
   while (n >= 8)
@@ -5160,7 +5095,7 @@ struct ParmTable parm_table_omb[256] = {
  * prefix and suffix are only printed if EC_ext has text
  */
 
-void EC_ext(const unsigned char *pds, char *prefix, char *suffix)
+void EC_ext(unsigned char *pds, char *prefix, char *suffix)
 {
   /* int i;
   printf("\n");
@@ -5196,19 +5131,15 @@ void EC_ext(const unsigned char *pds, char *prefix, char *suffix)
  * 7/25/03 wind fix Dusan Jovic
  */
 
-int GDS_grid(const unsigned char *gds,
-             const unsigned char *bds,
+int GDS_grid(unsigned char *gds,
+             unsigned char *bds,
              int *nx,
              int *ny,
              long int *nxny,
              std::vector<long> &theVariableLengthRows,
              long *theUsedOutputGridRowLength)
 {
-  int i;
-  int d;
-  int ix;
-  int iy;
-  int pl;
+  int i, d, ix, iy, pl;
   long int isum;
 
   theVariableLengthRows.clear();  // tyhjennet‰‰n varmuuden vuoksi
@@ -5264,10 +5195,7 @@ int GDS_grid(const unsigned char *gds,
 #define NCOL 15
 void GDS_prt_thin_lon(unsigned char *gds)
 {
-  int iy;
-  int i;
-  int col;
-  int pl;
+  int iy, i, col, pl;
 
   iy = GDS_LatLon_ny(gds);
   iy = (iy + 1) / 2;
@@ -5280,8 +5208,7 @@ void GDS_prt_thin_lon(unsigned char *gds)
   }
   for (col = i = 0; i < iy; i++)
   {
-    if (col == 0)
-      printf("   ");
+    if (col == 0) printf("   ");
     printf("%5d", (gds[pl + i * 2] << 8) + gds[pl + i * 2 + 1]);
     col++;
     if (col == NCOL)
@@ -5290,8 +5217,7 @@ void GDS_prt_thin_lon(unsigned char *gds)
       printf("\n");
     }
   }
-  if (col != 0)
-    printf("\n");
+  if (col != 0) printf("\n");
 }
 
 /*
@@ -5310,10 +5236,9 @@ static const char *scan_mode[8] = {"EW/NS",
                                    "WE/SN",
                                    "SN/WE"};
 
-void GDS_winds(const unsigned char *gds, int verbose)
+void GDS_winds(unsigned char *gds, int verbose)
 {
-  int scan = -1;
-  int mode = -1;
+  int scan = -1, mode = -1;
 
   if (gds != nullptr)
   {
@@ -5404,11 +5329,7 @@ struct ParmTable parm_table_user[256];
 
 int setup_user_table(int center, int subcenter, int ptable)
 {
-  int i;
-  int j;
-  int c0;
-  int c1;
-  int c2;
+  int i, j, c0, c1, c2;
   FILE *input;
   const char *filename;
   char line[300];
@@ -5422,26 +5343,21 @@ int setup_user_table(int center, int subcenter, int ptable)
     status = not_checked;
   }
 
-  if (status == no_file)
-    return 0;
+  if (status == no_file) return 0;
 
   if ((user_center == -1 || center == user_center) &&
       (user_subcenter == -1 || subcenter == user_subcenter) &&
       (user_ptable == -1 || ptable == user_ptable))
   {
-    if (status == filled)
-      return 1;
-    if (status == not_found)
-      return 0;
+    if (status == filled) return 1;
+    if (status == not_found) return 0;
   }
 
   /* open gribtab file */
 
   filename = getenv("GRIBTAB");
-  if (filename == nullptr)
-    filename = getenv("gribtab");
-  if (filename == nullptr)
-    filename = "gribtab";
+  if (filename == nullptr) filename = getenv("gribtab");
+  if (filename == nullptr) filename = "gribtab";
 
   if ((input = fopen(filename, "r")) == nullptr)
   {
@@ -5461,8 +5377,7 @@ int setup_user_table(int center, int subcenter, int ptable)
       status = not_found;
       return 0;
     }
-    if (atoi(line) != START)
-      continue;
+    if (atoi(line) != START) continue;
     i = sscanf(line, "%d:%d:%d:%d", &j, &center, &subcenter, &ptable);
     if (i != 4)
     {
@@ -5492,24 +5407,20 @@ int setup_user_table(int center, int subcenter, int ptable)
 
   for (;;)
   {
-    if (fgets(line, 299, input) == nullptr)
-      break;
-    if ((i = atoi(line)) == START)
-      break;
+    if (fgets(line, 299, input) == nullptr) break;
+    if ((i = atoi(line)) == START) break;
     line[299] = 0;
 
     /* find the colons and end-of-line */
     for (c0 = 0; line[c0] != ':' && line[c0] != 0; c0++)
       ;
     /* skip blank lines */
-    if (line[c0] == 0)
-      continue;
+    if (line[c0] == 0) continue;
 
     for (c1 = c0 + 1; line[c1] != ':' && line[c1] != 0; c1++)
       ;
     c2 = static_cast<int>(strlen(line));
-    if (line[c2 - 1] == '\n')
-      line[--c2] = '\0';
+    if (line[c2 - 1] == '\n') line[--c2] = '\0';
     if (c2 <= c1)
     {
       fprintf(stderr, "illegal gribtab line:%s\n", line);
@@ -5562,10 +5473,7 @@ static int msg_count = 0;
 
 int PDS_date(unsigned char *pds, int option, int v_time)
 {
-  int year;
-  int month;
-  int day;
-  int hour;
+  int year, month, day, hour;
 
   if (v_time == 0)
   {
@@ -5578,8 +5486,7 @@ int PDS_date(unsigned char *pds, int option, int v_time)
   {
     if (verf_time(pds, &year, &month, &day, &hour) != 0)
     {
-      if (msg_count++ < 5)
-        fprintf(stderr, "PDS_date: problem\n");
+      if (msg_count++ < 5) fprintf(stderr, "PDS_date: problem\n");
     }
   }
 
@@ -5603,21 +5510,14 @@ static int monthjday[12] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 33
 
 static int leap(int year)
 {
-  if (year % 4 != 0)
-    return 0;
-  if (year % 100 != 0)
-    return 1;
+  if (year % 4 != 0) return 0;
+  if (year % 100 != 0) return 1;
   return (year % 400 == 0);
 }
 
 int add_time(int *year, int *month, int *day, int *hour, int dtime, int unit)
 {
-  int y;
-  int m;
-  int d;
-  int h;
-  int jday;
-  int i;
+  int y, m, d, h, jday, i;
 
   y = *year;
   m = *month;
@@ -5693,8 +5593,7 @@ int add_time(int *year, int *month, int *day, int *hour, int dtime, int unit)
   {
     /* set m and day to Jan 0, and readjust dtime */
     jday = d + monthjday[m - 1];
-    if (leap(y) && m > 2)
-      jday++;
+    if (leap(y) && m > 2) jday++;
     dtime += jday;
 
     /* 4 year chuncks */
@@ -5709,8 +5608,7 @@ int add_time(int *year, int *month, int *day, int *hour, int dtime, int unit)
       {
         /* crossed the feb 28, xx00 */
         /* correct for only one century mark */
-        if ((y / 100) % 4 != 0)
-          dtime++;
+        if ((y / 100) % 4 != 0) dtime++;
       }
     }
 
@@ -5730,8 +5628,7 @@ int add_time(int *year, int *month, int *day, int *hour, int dtime, int unit)
     }
     else
     {
-      if (leap(y) && dtime > FEB29)
-        dtime--;
+      if (leap(y) && dtime > FEB29) dtime--;
       for (i = 11; monthjday[i] >= dtime; --i)
         ;
       m = i + 1;
@@ -5754,11 +5651,9 @@ int add_time(int *year, int *month, int *day, int *hour, int dtime, int unit)
  *
  */
 
-int verf_time(const unsigned char *pds, int *year, int *month, int *day, int *hour)
+int verf_time(unsigned char *pds, int *year, int *month, int *day, int *hour)
 {
-  int tr;
-  int dtime;
-  int unit;
+  int tr, dtime, unit;
 
   *year = PDS_Year4(pds);
   *month = PDS_Month(pds);
@@ -5771,13 +5666,10 @@ int verf_time(const unsigned char *pds, int *year, int *month, int *day, int *ho
   tr = PDS_TimeRange(pds);
   unit = PDS_ForecastTimeUnit(pds);
 
-  if (tr == 10)
-    dtime = PDS_P1(pds) * 256 + PDS_P2(pds);
-  if (tr > 1 && tr < 6)
-    dtime = PDS_P2(pds);
+  if (tr == 10) dtime = PDS_P1(pds) * 256 + PDS_P2(pds);
+  if (tr > 1 && tr < 6) dtime = PDS_P2(pds);
 
-  if (dtime == 0)
-    return 0;
+  if (dtime == 0) return 0;
 
   return add_time(year, month, day, hour, dtime, unit);
 }

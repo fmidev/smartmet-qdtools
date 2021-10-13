@@ -323,7 +323,7 @@ FmiParameterName parse_param(const string& theName)
 {
   // Try ascii name
 
-  auto paramnum = FmiParameterName(converter.ToEnum(theName));
+  FmiParameterName paramnum = FmiParameterName(converter.ToEnum(theName));
   if (paramnum != kFmiBadParameter)
     return paramnum;
 
@@ -446,10 +446,7 @@ NFmiHPlaceDescriptor MakeHPlaceDescriptor(NFmiFastQueryInfo& theQ,
   int nx = theQ.Grid()->XNumber();
   int ny = theQ.Grid()->YNumber();
 
-  int width;
-  int height;
-  int xoff;
-  int yoff;
+  int width, height, xoff, yoff;
 
   if (!theGeometry.empty())
   {
@@ -554,7 +551,7 @@ NFmiHPlaceDescriptor MakeHPlaceDescriptor(NFmiFastQueryInfo& theQ,
   boost::shared_ptr<NFmiArea> area(theQ.Grid()->Area()->CreateNewArea(bl, tr));
 #endif
 
-  if (area.get() == nullptr)
+  if (area.get() == 0)
     throw runtime_error("Failed to create the new projection");
 
   NFmiGrid grid(area.get(), width, height);
@@ -617,11 +614,11 @@ NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo& theQ,
 
   if (!theParams.empty())
   {
-    for (const auto& theParam : theParams)
+    for (vector<string>::const_iterator it = theParams.begin(); it != theParams.end(); ++it)
     {
-      FmiParameterName paramnum = parse_param(theParam);
+      FmiParameterName paramnum = parse_param(*it);
       if (!theQ.Param(paramnum))
-        throw runtime_error("Source data does not contain parameter " + theParam);
+        throw runtime_error("Source data does not contain parameter " + *it);
 
       pbag.Add(theQ.Param());
     }
@@ -629,13 +626,13 @@ NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo& theQ,
   else if (!theDelParams.empty())
   {
     pbag = theQ.ParamBag();
-    for (const auto& theDelParam : theDelParams)
+    for (vector<string>::const_iterator it = theDelParams.begin(); it != theDelParams.end(); ++it)
     {
-      FmiParameterName paramnum = parse_param(theDelParam);
+      FmiParameterName paramnum = parse_param(*it);
       if (!pbag.SetCurrent(paramnum))
-        throw runtime_error("Source data does not contain standalone parameter " + theDelParam);
+        throw runtime_error("Source data does not contain standalone parameter " + *it);
       if (!pbag.Remove())
-        throw runtime_error("Failed to remove parameter " + theDelParam + " from querydata");
+        throw runtime_error("Failed to remove parameter " + *it + " from querydata");
     }
   }
   else
@@ -645,11 +642,13 @@ NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo& theQ,
 
   // Keep analysis parameters
   {
-    for (const auto& theAnalysisParam : theAnalysisParams)
+    for (vector<string>::const_iterator it = theAnalysisParams.begin();
+         it != theAnalysisParams.end();
+         ++it)
     {
-      FmiParameterName paramnum = parse_param(theAnalysisParam);
+      FmiParameterName paramnum = parse_param(*it);
       if (!theQ.Param(paramnum))
-        throw runtime_error("Source data does not contain parameter " + theAnalysisParam);
+        throw runtime_error("Source data does not contain parameter " + *it);
       if (!pbag.SetCurrent(paramnum))
         pbag.Add(theQ.Param());
     }
@@ -658,13 +657,13 @@ NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo& theQ,
   // Add new parameters
 
   {
-    for (const auto& theNewParam : theNewParams)
+    for (vector<string>::const_iterator it = theNewParams.begin(); it != theNewParams.end(); ++it)
     {
-      FmiParameterName paramnum = parse_param(theNewParam);
+      FmiParameterName paramnum = parse_param(*it);
       // If the parameter is already in the data - we simply keep it
       if (!theQ.Param(paramnum))
       {
-        NFmiParam param(paramnum, theNewParam);
+        NFmiParam param(paramnum, *it);
         pbag.Add(param);
       }
     }
@@ -707,11 +706,12 @@ NFmiTimeDescriptor MakeTimeDescriptor(NFmiFastQueryInfo& theQ,
   if (!theCrops.empty())
   {
     NFmiMetTime origintime = theQ.OriginTime();
+    NFmiMetTime reftime = origintime;
     NFmiTimeList datatimes;
-    for (const auto& theCrop : theCrops)
+    for (vector<NFmiTime>::const_iterator it = theCrops.begin(); it != theCrops.end(); ++it)
     {
-      if (theQ.Time(theCrop))
-        datatimes.Add(new NFmiMetTime(theCrop));
+      if (theQ.Time(*it))
+        datatimes.Add(new NFmiMetTime(*it));
     }
     NFmiTimeDescriptor tdesc(origintime, datatimes);
     return tdesc;
@@ -720,9 +720,7 @@ NFmiTimeDescriptor MakeTimeDescriptor(NFmiFastQueryInfo& theQ,
   if (theTimes.size() > 3)
     throw runtime_error("Cannot extract timeinterval containing more than 3 values");
 
-  int dt1;
-  int dt2;
-  int dt;
+  int dt1, dt2, dt;
   if (theTimes.size() == 0)
   {
     dt1 = -24 * 365 * 100;  // 100 years should be enough for any use
@@ -763,7 +761,7 @@ NFmiTimeDescriptor MakeTimeDescriptor(NFmiFastQueryInfo& theQ,
   NFmiTimeList datatimes;
   for (theQ.ResetTime(); theQ.NextTime();)
   {
-    const NFmiMetTime& t = theQ.ValidTime();
+    NFmiMetTime t = theQ.ValidTime();
     if (t.IsLessThan(starttime))
       continue;
     if (endtime.IsLessThan(t))
@@ -825,7 +823,7 @@ NFmiTimeDescriptor MakeTimeDescriptor(NFmiFastQueryInfo& theQ,
  */
 // ----------------------------------------------------------------------
 
-NFmiTime toUtcTime(const NFmiTime& theLocalTime)
+const NFmiTime toUtcTime(const NFmiTime& theLocalTime)
 {
   ::tm tlocal;
   tlocal.tm_sec = theLocalTime.GetSec();
@@ -864,11 +862,11 @@ NFmiTime ParseDate(const string& theTime)
     throw runtime_error("The time stamp '" + theTime + "' must be of the form YYYYMMDDHHMI");
   try
   {
-    auto year = NFmiStringTools::Convert<short>(theTime.substr(0, 4));
-    auto month = NFmiStringTools::Convert<short>(theTime.substr(4, 2));
-    auto day = NFmiStringTools::Convert<short>(theTime.substr(6, 2));
-    auto hour = NFmiStringTools::Convert<short>(theTime.substr(8, 2));
-    auto minute = NFmiStringTools::Convert<short>(theTime.substr(10, 2));
+    short year = NFmiStringTools::Convert<short>(theTime.substr(0, 4));
+    short month = NFmiStringTools::Convert<short>(theTime.substr(4, 2));
+    short day = NFmiStringTools::Convert<short>(theTime.substr(6, 2));
+    short hour = NFmiStringTools::Convert<short>(theTime.substr(8, 2));
+    short minute = NFmiStringTools::Convert<short>(theTime.substr(10, 2));
     return NFmiTime(year, month, day, hour, minute);
   }
   catch (...)
@@ -883,7 +881,7 @@ NFmiTime ParseDate(const string& theTime)
  */
 // ----------------------------------------------------------------------
 
-set<NFmiMetTime> FindBadTimes(NFmiFastQueryInfo& theQ, double theLimit, const string& theParam)
+set<NFmiMetTime> FindBadTimes(NFmiFastQueryInfo& theQ, double theLimit, string theParam)
 {
   // the parameter to be checked, if any
   FmiParameterName paramnum = kFmiBadParameter;
@@ -975,7 +973,7 @@ void RemoveBadTimes(NFmiQueryData& theQD,
   NFmiFastQueryInfo tmpinfo(
       theQ.ParamDescriptor(), tdesc, theQ.HPlaceDescriptor(), theQ.VPlaceDescriptor(), theVersion);
   NFmiQueryData* data2 = NFmiQueryDataUtil::CreateEmptyData(tmpinfo);
-  if (data2 == nullptr)
+  if (data2 == 0)
     throw runtime_error("Could not allocate memory for result data");
   NFmiFastQueryInfo dstinfo(data2);
 
@@ -1157,7 +1155,7 @@ int run(int argc, const char* argv[])
 
   if (cmdline.NumberofParameters() > 2)
     throw runtime_error("Two command line arguments are expected, not " +
-                        std::to_string(cmdline.NumberofParameters()));
+                        lexical_cast<string>(cmdline.NumberofParameters()));
 
   if (cmdline.NumberofParameters() >= 1)
     opt_infile = cmdline.Parameter(1);
@@ -1294,8 +1292,8 @@ int run(int argc, const char* argv[])
   if (cmdline.isOption('S'))
   {
     vector<string> times = NFmiStringTools::Split(cmdline.OptionValue('S'), ",");
-    for (const auto& time : times)
-      opt_crops.push_back(ParseDate(time));
+    for (vector<string>::const_iterator it = times.begin(); it != times.end(); ++it)
+      opt_crops.push_back(ParseDate(*it));
   }
 
   if (cmdline.isOption('R'))
@@ -1357,10 +1355,7 @@ int run(int argc, const char* argv[])
 
   // create new descriptors for the new data
 
-  int x1;
-  int y1;
-  int dx;
-  int dy;
+  int x1, y1, dx, dy;
   NFmiHPlaceDescriptor hdesc(MakeHPlaceDescriptor(*srcinfo,
                                                   opt_stations,
                                                   opt_nostations,
@@ -1389,7 +1384,7 @@ int run(int argc, const char* argv[])
 
   NFmiFastQueryInfo info(pdesc, tdesc, hdesc, vdesc, version);
   boost::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
-  if (data.get() == nullptr)
+  if (data.get() == 0)
     throw runtime_error("Could not allocate memory for result data");
 
   NFmiFastQueryInfo dstinfo(data.get());
@@ -1423,7 +1418,7 @@ int run(int argc, const char* argv[])
       NFmiTimeDescriptor tdesc2(MakeTimeDescriptor(dstinfo, badtimes));
       NFmiFastQueryInfo info2(pdesc, tdesc2, hdesc, vdesc, version);
       NFmiQueryData* data2 = NFmiQueryDataUtil::CreateEmptyData(info2);
-      if (data2 == nullptr)
+      if (data2 == 0)
         throw runtime_error("Could not allocate memory for result data");
       NFmiFastQueryInfo dstinfo2(data2);
 

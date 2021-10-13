@@ -14,7 +14,10 @@ typedef struct NFmiParamCheckData__
 {
   NFmiParamCheckData__(void)
       : itsParamId(0),
-
+        itsParamMissingDataMaxProcent(),
+        itsParamStraightDataMaxProcent(),
+        itsParamLowerLimits(),
+        itsParamUpperLimits(),
         itsCheckedParamMissingDataMaxProcent(kFloatMissing),
         itsCheckedParamStraightDataMaxProcent(kFloatMissing),
         itsCheckedParamOutOfLimitWarning(false),
@@ -104,8 +107,7 @@ class NFmiOhjausData
   int ParamIdIndex(int theParId)
   {
     for (unsigned int i = 0; i < itsParamIdCheckList.size(); i++)
-      if (theParId == itsParamIdCheckList[i].itsParamId)
-        return i;
+      if (theParId == itsParamIdCheckList[i].itsParamId) return i;
     return -1;  // ei löytynyt vastaavaa!!
   }
   int itsLocationCheckingType;  // 0=kaikki pisteet, 1=haluttu locationbagi, 2=n kpl satunnaisia

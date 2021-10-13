@@ -82,8 +82,7 @@ int parse_command_line(int argc, const char *argv[])
 {
   NFmiCmdLine cmdline(argc, argv, "hvfp!t!l!");
 
-  if (cmdline.Status().IsError())
-    throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
+  if (cmdline.Status().IsError()) throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
 
   if (cmdline.isOption('h'))
   {
@@ -97,20 +96,16 @@ int parse_command_line(int argc, const char *argv[])
   options.indata = cmdline.Parameter(1);
   options.outdata = cmdline.Parameter(2);
 
-  if (cmdline.isOption('v'))
-    options.verbose = true;
+  if (cmdline.isOption('v')) options.verbose = true;
 
-  if (cmdline.isOption('f'))
-    options.force = true;
+  if (cmdline.isOption('f')) options.force = true;
 
-  if (cmdline.isOption('t'))
-    options.tmpdir = cmdline.OptionValue('t');
+  if (cmdline.isOption('t')) options.tmpdir = cmdline.OptionValue('t');
 
   if (cmdline.isOption('p'))
   {
     vector<string> tmp = NFmiStringTools::Split(cmdline.OptionValue('p'));
-    if (tmp.size() != 2)
-      throw runtime_error("Invalid argument to option -p, int,name expected");
+    if (tmp.size() != 2) throw runtime_error("Invalid argument to option -p, int,name expected");
     options.producer_number = NFmiStringTools::Convert<int>(tmp[0]);
     options.producer_name = tmp[1];
   }
@@ -118,12 +113,10 @@ int parse_command_line(int argc, const char *argv[])
   if (cmdline.isOption('l'))
   {
     options.agelimit = NFmiStringTools::Convert<int>(cmdline.OptionValue('l'));
-    if (options.agelimit <= 0)
-      throw runtime_error("Age limit given by -l must be positive");
+    if (options.agelimit <= 0) throw runtime_error("Age limit given by -l must be positive");
   }
 
-  if (cmdline.isOption('e'))
-    options.ellipsoid = cmdline.OptionValue('e');
+  if (cmdline.isOption('e')) options.ellipsoid = cmdline.OptionValue('e');
 
   return true;
 }
@@ -141,8 +134,7 @@ int parse_command_line(int argc, const char *argv[])
 int run(int argc, const char *argv[])
 {
   // Parse the command line arguments
-  if (!parse_command_line(argc, argv))
-    return 0;
+  if (!parse_command_line(argc, argv)) return 0;
 
   std::list<std::string> infiles;
 
@@ -176,8 +168,7 @@ int run(int argc, const char *argv[])
 
       if (NFmiFileSystem::FileExists(outname) && !options.force)
       {
-        if (options.verbose)
-          cout << "Already converted " << *it << " to " << outname << endl;
+        if (options.verbose) cout << "Already converted " << *it << " to " << outname << endl;
         continue;
       }
 
@@ -195,8 +186,7 @@ int run(int argc, const char *argv[])
         continue;
       }
 
-      if (options.verbose)
-        cout << "writing " << outname << endl;
+      if (options.verbose) cout << "writing " << outname << endl;
       data->UseBinaryStorage(true);
       tmpfile << *data;
       tmpfile.close();

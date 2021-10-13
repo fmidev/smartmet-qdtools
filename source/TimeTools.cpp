@@ -21,7 +21,7 @@ namespace TimeTools
  */
 // ----------------------------------------------------------------------
 
-NFmiTime toLocalTime(const NFmiTime &theUtcTime)
+const NFmiTime toLocalTime(const NFmiTime &theUtcTime)
 {
   // The UTC time
   struct ::tm utc;
@@ -63,7 +63,7 @@ NFmiTime toLocalTime(const NFmiTime &theUtcTime)
  */
 // ----------------------------------------------------------------------
 
-NFmiTime timezone_time(const NFmiTime &theUTCTime, const string &theZone)
+const NFmiTime timezone_time(const NFmiTime &theUTCTime, const string &theZone)
 {
   string zone = theZone;
   if (theZone == "fin")

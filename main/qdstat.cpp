@@ -33,10 +33,7 @@ const int column_width = 10;
 
 const std::set<std::string> ignored_params{"WindVectorMS"};
 
-bool ignore_param(const std::string& p)
-{
-  return (ignored_params.find(p) != ignored_params.end());
-}
+bool ignore_param(const std::string& p) { return (ignored_params.find(p) != ignored_params.end()); }
 
 // ----------------------------------------------------------------------
 /*!
@@ -77,8 +74,7 @@ std::set<boost::posix_time::ptime> parse_times(const std::string& str)
 {
   std::set<boost::posix_time::ptime> ret;
 
-  if (str.empty())
-    return ret;
+  if (str.empty()) return ret;
 
   std::list<std::string> parts;
   boost::algorithm::split(parts, str, boost::is_any_of(","));
@@ -101,17 +97,15 @@ std::set<FmiParameterName> parse_params(const std::string& str)
 {
   std::set<FmiParameterName> ret;
 
-  if (str.empty())
-    return ret;
+  if (str.empty()) return ret;
 
   std::list<std::string> parts;
   boost::algorithm::split(parts, str, boost::is_any_of(","));
 
   for (const auto& param : parts)
   {
-    auto p = FmiParameterName(converter.ToEnum(param));
-    if (p == kFmiBadParameter)
-      throw std::runtime_error("Bad parameter name: '" + param + "'");
+    FmiParameterName p = FmiParameterName(converter.ToEnum(param));
+    if (p == kFmiBadParameter) throw std::runtime_error("Bad parameter name: '" + param + "'");
     ret.insert(p);
   }
 
@@ -128,8 +122,7 @@ std::set<int> parse_stations(const std::string& str)
 {
   std::set<int> ret;
 
-  if (str.empty())
-    return ret;
+  if (str.empty()) return ret;
 
   std::list<std::string> parts;
   boost::algorithm::split(parts, str, boost::is_any_of(","));
@@ -152,8 +145,7 @@ std::set<float> parse_levels(const std::string& str)
 {
   std::set<float> ret;
 
-  if (str.empty())
-    return ret;
+  if (str.empty()) return ret;
 
   std::list<std::string> parts;
   boost::algorithm::split(parts, str, boost::is_any_of(","));
@@ -250,11 +242,9 @@ bool parse_options(int argc, char* argv[])
 
   // Check invalid values
 
-  if (options.bins < 2)
-    throw std::runtime_error("Must have at least 2 bins");
+  if (options.bins < 2) throw std::runtime_error("Must have at least 2 bins");
 
-  if (options.barsize < 10)
-    throw std::runtime_error("Bar graph width must be at leats 10");
+  if (options.barsize < 10) throw std::runtime_error("Bar graph width must be at leats 10");
 
   // Check incompatible options
 
@@ -287,12 +277,12 @@ class Stats
   const char* desc(double value) const;
 
  private:
-  FmiParameterName itsParam{kFmiBadParameter};  // parameter name
-  std::size_t itsCount{0};                      // total count
-  std::size_t itsValidCount{0};                 // finite and not kFloatMissing
-  std::size_t itsMissingCount{0};               // kFloatMissing
-  std::size_t itsInfCount{0};                   // -Inf or +Inf
-  std::size_t itsNaNCount{0};                   // NaN
+  FmiParameterName itsParam;    // parameter name
+  std::size_t itsCount;         // total count
+  std::size_t itsValidCount;    // finite and not kFloatMissing
+  std::size_t itsMissingCount;  // kFloatMissing
+  std::size_t itsInfCount;      // -Inf or +Inf
+  std::size_t itsNaNCount;      // NaN
   double itsSum;
   double itsMin;
   double itsMax;
@@ -300,7 +290,13 @@ class Stats
 };
 
 Stats::Stats()
-    : itsSum(std::numeric_limits<double>::quiet_NaN()),
+    : itsParam(kFmiBadParameter),
+      itsCount(0),
+      itsValidCount(0),
+      itsMissingCount(0),
+      itsInfCount(0),
+      itsNaNCount(0),
+      itsSum(std::numeric_limits<double>::quiet_NaN()),
       itsMin(std::numeric_limits<double>::quiet_NaN()),
       itsMax(std::numeric_limits<double>::quiet_NaN())
 {
@@ -308,16 +304,12 @@ Stats::Stats()
 
 void Stats::operator()(double value)
 {
-  if (value == options.ignored_value)
-    return;
+  if (value == options.ignored_value) return;
 
   ++itsCount;
-  if (value == kFloatMissing)
-    ++itsMissingCount;
-  if (std::isnan(value))
-    ++itsNaNCount;
-  if (std::isinf(value))
-    ++itsInfCount;
+  if (value == kFloatMissing) ++itsMissingCount;
+  if (std::isnan(value)) ++itsNaNCount;
+  if (std::isinf(value)) ++itsInfCount;
   if (std::isfinite(value) && value != kFloatMissing)
   {
     if (itsValidCount == 0)
@@ -337,8 +329,7 @@ void Stats::operator()(double value)
   }
 
   // Count only normal values
-  if (options.distribution && std::isfinite(value) && value != kFloatMissing)
-    ++itsCounts[value];
+  if (options.distribution && std::isfinite(value) && value != kFloatMissing) ++itsCounts[value];
 }
 
 std::string Stats::header()
@@ -917,8 +908,7 @@ void autotick(double theRange, std::size_t maxbins, double& tick, int& precision
     double xx = theRange / maxbins;
     double xlog = log10(xx);
     int ilog = static_cast<int>(xlog);
-    if (xlog < 0)
-      --ilog;
+    if (xlog < 0) --ilog;
     precision = -ilog;
 
     double pwr = pow(10, ilog);
@@ -952,11 +942,9 @@ void autoscale(const double theMin,
   if (theMin == theMax)
   {
     newmin = std::floor(theMin);
-    if (newmin == theMin)
-      newmin -= 1;
+    if (newmin == theMin) newmin -= 1;
     newmax = std::ceil(theMax);
-    if (newmax == theMax)
-      newmax += 1;
+    if (newmax == theMax) newmax += 1;
     tick = 1;
     precision = 0;
   }
@@ -994,8 +982,7 @@ std::string Stats::report() const
   std::ostringstream out;
 
   double mean = std::numeric_limits<double>::quiet_NaN();
-  if (itsValidCount > 0)
-    mean = itsSum / itsValidCount;
+  if (itsValidCount > 0) mean = itsSum / itsValidCount;
 
   if (options.percentages)
   {
@@ -1056,17 +1043,14 @@ std::string Stats::report() const
     }
     else
     {
-      double binmin;
-      double binmax;
-      double tick;
+      double binmin, binmax, tick;
       int precision;
       autoscale(itsMin, itsMax, options.bins, binmin, binmax, tick, precision);
 
       for (std::size_t i = 0;; i++)
       {
         double minvalue = binmin + i * tick;
-        if (minvalue >= itsMax)
-          break;
+        if (minvalue >= itsMax) break;
         double maxvalue = minvalue + tick;
         std::size_t count = 0;
         for (const auto& value_count : itsCounts)
@@ -1125,8 +1109,7 @@ std::size_t max_param_width(NFmiFastQueryInfo& qi)
   {
     qi.Param(p);
     std::string name = converter.ToString(qi.Param().GetParam()->GetIdent());
-    if (name.empty())
-      name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
+    if (name.empty()) name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
     widest = std::max(widest, name.size());
   }
   return widest;
@@ -1159,8 +1142,7 @@ void set_level(NFmiFastQueryInfo& qi, float levelvalue)
 {
   for (qi.ResetLevel(); qi.NextLevel();)
   {
-    if (qi.Level()->LevelValue() == levelvalue)
-      return;
+    if (qi.Level()->LevelValue() == levelvalue) return;
   }
   throw std::runtime_error("Level value " + Fmi::to_string(levelvalue) +
                            " not available in the data");
@@ -1187,11 +1169,9 @@ void stat_locations_times(NFmiFastQueryInfo& qi)
   {
     qi.Param(p);
     std::string name = converter.ToString(qi.Param().GetParam()->GetIdent());
-    if (name.empty())
-      name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
+    if (name.empty()) name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
 
-    if (ignore_param(name))
-      continue;
+    if (ignore_param(name)) continue;
 
     if (options.these_levels.empty())
     {
@@ -1237,11 +1217,9 @@ void stat_locations_these_times(NFmiFastQueryInfo& qi)
   {
     qi.Param(p);
     std::string name = converter.ToString(qi.Param().GetParam()->GetIdent());
-    if (name.empty())
-      name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
+    if (name.empty()) name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
 
-    if (ignore_param(name))
-      continue;
+    if (ignore_param(name)) continue;
 
     if (options.these_levels.empty())
       std::cout << std::setw(param_width) << std::right << "Parameter" << std::setw(18)
@@ -1303,10 +1281,8 @@ void stat_these_stations_these_times(NFmiFastQueryInfo& qi)
 
     qi.Param(p);
     std::string name = converter.ToString(qi.Param().GetParam()->GetIdent());
-    if (name.empty())
-      name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
-    if (ignore_param(name))
-      continue;
+    if (name.empty()) name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
+    if (ignore_param(name)) continue;
 
     std::cout << name << std::endl;
 
@@ -1349,11 +1325,9 @@ void stat_these_stations_times(NFmiFastQueryInfo& qi)
   {
     qi.Param(p);
     std::string name = converter.ToString(qi.Param().GetParam()->GetIdent());
-    if (name.empty())
-      name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
+    if (name.empty()) name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
 
-    if (ignore_param(name))
-      continue;
+    if (ignore_param(name)) continue;
 
     for (int wmo : options.these_stations)
     {
@@ -1379,8 +1353,7 @@ void stat_these_stations_times(NFmiFastQueryInfo& qi)
 
 int run(int argc, char* argv[])
 {
-  if (!parse_options(argc, argv))
-    return 0;
+  if (!parse_options(argc, argv)) return 0;
 
   NFmiQueryData qd(options.infile);
   NFmiFastQueryInfo qi(&qd);
@@ -1461,8 +1434,7 @@ int run(int argc, char* argv[])
  */
 // ----------------------------------------------------------------------
 
-int main(int argc, char* argv[])
-try
+int main(int argc, char* argv[]) try
 {
   return run(argc, argv);
 }

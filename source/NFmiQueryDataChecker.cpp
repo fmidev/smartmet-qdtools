@@ -30,29 +30,30 @@
 #include <newbase/NFmiQueryData.h>
 
 #include <algorithm>
-#include <ctime>
 #include <fstream>
 #include <set>
+#include <time.h>
 
 //--------------------------------------------------------
 // Constructor/Destructor
 //--------------------------------------------------------
 NFmiQueryDataChecker::NFmiQueryDataChecker(NFmiOhjausData* theOhjausData)
-    : fCheckOnlyWantedParams(false),
-
+    : itsParamBag(),
+      fCheckOnlyWantedParams(false),
+      itsCheckedTimeDescriptor(),
       fCheckOnlyWantedTimes(false),
-
+      itsCheckedLocations(),
       itsRandomlyCheckedLocationCount(0),
       itsLocationCheckType(0),
       itsCheckList(0),
-      itsData(nullptr),
-      itsInfo(nullptr),
-
+      itsData(0),
+      itsInfo(0),
+      itsRandomLocationIndexies(),
       fDoIndexRandomizing(true),
       itsOhjausData(theOhjausData)
 {
 }
-NFmiQueryDataChecker::~NFmiQueryDataChecker()
+NFmiQueryDataChecker::~NFmiQueryDataChecker(void)
 {
   delete itsData;
   delete itsInfo;
@@ -60,21 +61,16 @@ NFmiQueryDataChecker::~NFmiQueryDataChecker()
 //--------------------------------------------------------
 // DoTotalCheck
 //--------------------------------------------------------
-bool NFmiQueryDataChecker::DoTotalCheck()
+bool NFmiQueryDataChecker::DoTotalCheck(void)
 {
   bool status = true;
-  if (!itsInfo)
-    return false;
+  if (!itsInfo) return false;
   itsInfo->First();
 
-  if (fDoIndexRandomizing)
-    MakeRandomLocationIndexies();
-  if (itsCheckList & 1)
-    status &= DoMissingDataCheck();
-  if (itsCheckList & 2)
-    status &= DoStraightDataCheck();
-  if (itsCheckList & 4)
-    status &= DoOutOfLimitsDataCheck();
+  if (fDoIndexRandomizing) MakeRandomLocationIndexies();
+  if (itsCheckList & 1) status &= DoMissingDataCheck();
+  if (itsCheckList & 2) status &= DoStraightDataCheck();
+  if (itsCheckList & 4) status &= DoOutOfLimitsDataCheck();
 
   return status;
 }
@@ -111,9 +107,9 @@ bool NFmiQueryDataChecker::CheckedLocations(const NFmiString& theFileName)
   return false;
 }
 
-const NFmiParamBag* NFmiQueryDataChecker::DatasParamBag() const
+const NFmiParamBag* NFmiQueryDataChecker::DatasParamBag(void) const
 {
-  NFmiParamBag* params = nullptr;
+  NFmiParamBag* params = 0;
   if (itsInfo)
   {
     return &itsInfo->ParamBag();
@@ -158,8 +154,8 @@ void NFmiQueryDataChecker::Data(const NFmiQueryData* value)
     {
       delete itsData;
       delete itsInfo;
-      itsData = nullptr;
-      itsInfo = nullptr;
+      itsData = 0;
+      itsInfo = 0;
     }
     itsData = value->Clone();
     itsInfo = new NFmiFastQueryInfo(itsData);
@@ -175,8 +171,8 @@ bool NFmiQueryDataChecker::Data(const NFmiString& theFileName)
     {
       delete itsData;
       delete itsInfo;
-      itsData = nullptr;
-      itsInfo = nullptr;
+      itsData = 0;
+      itsInfo = 0;
     }
     itsData = new NFmiQueryData;
     try
@@ -215,7 +211,7 @@ void NFmiQueryDataChecker::CheckOnlyWantedTimes(bool value)
 //--------------------------------------------------------
 // DoMissingDataCheck
 //--------------------------------------------------------
-bool NFmiQueryDataChecker::DoMissingDataCheck()
+bool NFmiQueryDataChecker::DoMissingDataCheck(void)
 {
   NFmiDataModifierDataMissing modifier;
   itsCheckOperationIndex = 1;
@@ -225,7 +221,7 @@ bool NFmiQueryDataChecker::DoMissingDataCheck()
 //--------------------------------------------------------
 // DoStraightDataCheck
 //--------------------------------------------------------
-bool NFmiQueryDataChecker::DoStraightDataCheck()
+bool NFmiQueryDataChecker::DoStraightDataCheck(void)
 {
   NFmiDataModifierDataStraight modifier;
   itsCheckOperationIndex = 2;
@@ -234,7 +230,7 @@ bool NFmiQueryDataChecker::DoStraightDataCheck()
 //--------------------------------------------------------
 // DoOutOfLimitsDataCheck
 //--------------------------------------------------------
-bool NFmiQueryDataChecker::DoOutOfLimitsDataCheck()
+bool NFmiQueryDataChecker::DoOutOfLimitsDataCheck(void)
 {
   NFmiDataModifierMinMax modifier;
   itsCheckOperationIndex = 4;
@@ -305,7 +301,8 @@ bool NFmiQueryDataChecker::GoThroughData(NFmiDataModifier* theModifier)
 void NFmiQueryDataChecker::CheckOutOfLimitsTerms(NFmiParamCheckData& theParamCheckData,
                                                  NFmiDataModifier* theModifier)
 {
-  auto* modifier = static_cast<NFmiDataModifierMinMax*>(theModifier);  // rumaa, mutta voi voi
+  NFmiDataModifierMinMax* modifier =
+      static_cast<NFmiDataModifierMinMax*>(theModifier);  // rumaa, mutta voi voi
   float minValue = modifier->MinValue();
   float maxValue = modifier->MaxValue();
   theParamCheckData.itsCheckedParamMinValue = minValue;
@@ -322,11 +319,11 @@ void NFmiQueryDataChecker::CheckOutOfLimitsTerms(NFmiParamCheckData& theParamChe
   }
   if (maxValue != kFloatMissing)
   {
-    if (theParamCheckData.itsParamLowerLimits[2] != kFloatMissing &&
-        maxValue > theParamCheckData.itsParamLowerLimits[2])
+    if (theParamCheckData.itsParamUpperLimits[2] != kFloatMissing &&
+        maxValue > theParamCheckData.itsParamUpperLimits[2])
       theParamCheckData.itsCheckedParamOutOfLimitWarning = true;
-    if (theParamCheckData.itsParamLowerLimits[1] != kFloatMissing &&
-        maxValue > theParamCheckData.itsParamLowerLimits[1])
+    if (theParamCheckData.itsParamUpperLimits[1] != kFloatMissing &&
+        maxValue > theParamCheckData.itsParamUpperLimits[1])
       theParamCheckData.itsCheckedParamOutOfLimitError = true;
     // HUOM!! fataalirajan tarkastusta ei tehd‰!!!
   }
@@ -405,7 +402,7 @@ bool NFmiQueryDataChecker::GoThroughAllLocationsDataInTime(NFmiDataModifier* the
 // HUOM!!! laita t‰m‰ viimeiseksi niin varoitukset tulevat loppuun.
 // tyhjent‰‰ ja taytt‰‰ paikkaindex listan
 // K‰ytet‰‰n apuna set luokkaa, ett‰ ei tule samoja indeksej‰ vahingossa.
-void NFmiQueryDataChecker::MakeRandomLocationIndexies()
+void NFmiQueryDataChecker::MakeRandomLocationIndexies(void)
 {
   if (itsInfo)
   {

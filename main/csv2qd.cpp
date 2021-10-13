@@ -51,7 +51,7 @@ using namespace std;
 
 const string default_paramsfile = "/usr/share/smartmet/parameters.csv";
 const string default_stationsfile = "/smartmet/share/csv/stations.csv";
-const string default_missingvalue;
+const string default_missingvalue = "";
 const int default_producer_number = kFmiSYNOP;
 const string default_producer_name = "SYNOP";
 
@@ -107,7 +107,7 @@ bool parse_options(int argc, char* argv[], Options& options)
   string params;
 
   string prodnumdesc =
-      ("producer number (default=" + std::to_string(default_producer_number) + ")");
+      ("producer number (default=" + boost::lexical_cast<string>(default_producer_number) + ")");
 
   string prodnamedesc = "producer name (default=" + string(default_producer_name + ")");
 
@@ -171,11 +171,9 @@ bool parse_options(int argc, char* argv[], Options& options)
 
   if (opt.count("files") == 0)
   {
-    if (opt.count("infile") == 0)
-      throw runtime_error("Expecting input file as parameter 1");
+    if (opt.count("infile") == 0) throw runtime_error("Expecting input file as parameter 1");
 
-    if (opt.count("outfile") == 0)
-      throw runtime_error("Expecting output file as parameter 2");
+    if (opt.count("outfile") == 0) throw runtime_error("Expecting output file as parameter 2");
 
     options.files.push_back(opt["infile"].as<string>());
   }
@@ -192,8 +190,7 @@ bool parse_options(int argc, char* argv[], Options& options)
       options.files.pop_back();
     }
 
-    if (options.files.empty())
-      throw runtime_error("Output file not specified");
+    if (options.files.empty()) throw runtime_error("Output file not specified");
   }
 
   if (!fs::exists(options.paramsfile))
@@ -204,8 +201,7 @@ bool parse_options(int argc, char* argv[], Options& options)
 
   // Parse parameter settings
 
-  if (params.empty())
-    throw runtime_error("Parameter list must be given");
+  if (params.empty()) throw runtime_error("Parameter list must be given");
 
   NFmiEnumConverter converter;
   vector<string> parts;
@@ -301,7 +297,7 @@ bool parse_options(int argc, char* argv[], Options& options)
  */
 // ----------------------------------------------------------------------
 
-using CsvTable = list<Fmi::CsvReader::row_type>;
+typedef list<Fmi::CsvReader::row_type> CsvTable;
 
 // ----------------------------------------------------------------------
 /*!
@@ -330,7 +326,7 @@ struct ParamInfo
   string interpolation;
   string precision;
 };
-using Params = map<int, ParamInfo>;
+typedef map<int, ParamInfo> Params;
 
 // ----------------------------------------------------------------------
 /*!
@@ -349,7 +345,7 @@ Params parse_params(const CsvTable& csv)
     try
     {
       if (row.size() != 6)
-        throw runtime_error("Invalid row of size " + std::to_string(row.size()));
+        throw runtime_error("Invalid row of size " + boost::lexical_cast<string>(row.size()));
 
       ParamInfo info;
       info.id = boost::lexical_cast<int>(row[0]);
@@ -362,8 +358,8 @@ Params parse_params(const CsvTable& csv)
     }
     catch (exception& e)
     {
-      throw runtime_error(string(e.what()) + " in row " + std::to_string(rownum) + " of file '" +
-                          options.paramsfile + "'");
+      throw runtime_error(string(e.what()) + " in row " + boost::lexical_cast<string>(rownum) +
+                          " of file '" + options.paramsfile + "'");
     }
   }
   if (options.verbose)
@@ -387,7 +383,7 @@ struct StationInfo
   string name;
 };
 
-using Stations = map<string, StationInfo>;
+typedef map<string, StationInfo> Stations;
 
 // ----------------------------------------------------------------------
 /*!
@@ -406,7 +402,7 @@ Stations parse_stations(const CsvTable& csv)
     try
     {
       if (row.size() != 5)
-        throw runtime_error("Invalid row of size " + std::to_string(row.size()));
+        throw runtime_error("Invalid row of size " + boost::lexical_cast<string>(row.size()));
 
       StationInfo info;
       info.id = row[0];
@@ -418,8 +414,8 @@ Stations parse_stations(const CsvTable& csv)
     }
     catch (exception& e)
     {
-      throw runtime_error(string(e.what()) + " in row " + std::to_string(rownum) + " of file '" +
-                          options.stationsfile + "'");
+      throw runtime_error(string(e.what()) + " in row " + boost::lexical_cast<string>(rownum) +
+                          " of file '" + options.stationsfile + "'");
     }
   }
   if (options.verbose)
@@ -442,7 +438,7 @@ NFmiHPlaceDescriptor create_hdesc(const CsvTable& csv, const Stations& stations)
   // List all stations
 
   set<string> used;
-  string last_id;
+  string last_id = "";
   BOOST_FOREACH (const CsvTable::value_type& row, csv)
   {
     const string& id = row[options.stationcolumn];
@@ -453,8 +449,7 @@ NFmiHPlaceDescriptor create_hdesc(const CsvTable& csv, const Stations& stations)
     }
   }
 
-  if (options.verbose)
-    cout << "Found " << used.size() << " stations from input" << endl;
+  if (options.verbose) cout << "Found " << used.size() << " stations from input" << endl;
 
   // Build LocationBag
 
@@ -463,11 +458,10 @@ NFmiHPlaceDescriptor create_hdesc(const CsvTable& csv, const Stations& stations)
   {
     BOOST_FOREACH (const string& id, used)
     {
-      auto it = stations.find(id);
+      Stations::const_iterator it = stations.find(id);
       if (it == stations.end())
       {
-        if (!options.quiet)
-          std::cerr << "Warning: Unknown station id '" << id << "'" << std::endl;
+        if (!options.quiet) std::cerr << "Warning: Unknown station id '" << id << "'" << std::endl;
       }
       else
       {
@@ -500,8 +494,7 @@ NFmiVPlaceDescriptor create_vdesc(const CsvTable& csv)
 {
   // default is sufficient for point data
 
-  if (options.levelcolumn < 0)
-    return NFmiVPlaceDescriptor();
+  if (options.levelcolumn < 0) return NFmiVPlaceDescriptor();
 
   // List all unique levels
 
@@ -519,12 +512,11 @@ NFmiVPlaceDescriptor create_vdesc(const CsvTable& csv)
     }
   }
 
-  if (options.verbose)
-    cout << "Found " << used.size() << " levels from input" << endl;
+  if (options.verbose) cout << "Found " << used.size() << " levels from input" << endl;
 
   // Build LevelBag
 
-  auto ltype = static_cast<FmiLevelType>(options.leveltype);
+  FmiLevelType ltype = static_cast<FmiLevelType>(options.leveltype);
   NFmiLevelBag lbag;
   BOOST_FOREACH (int value, used)
   {
@@ -547,9 +539,9 @@ NFmiParamDescriptor create_pdesc(const Params& params)
 
   BOOST_FOREACH (int id, options.params)
   {
-    auto it = params.find(id);
+    Params::const_iterator it = params.find(id);
     if (it == params.end())
-      throw runtime_error("Unknown parameter number " + std::to_string(id) +
+      throw runtime_error("Unknown parameter number " + boost::lexical_cast<string>(id) +
                           ", add definition to '" + options.paramsfile + "'");
 
     FmiInterpolationMethod interp;
@@ -608,7 +600,7 @@ NFmiTimeDescriptor create_tdesc(const CsvTable& csv, const boost::local_time::ti
   // List all times
 
   set<ptime> used;
-  string last_t;
+  string last_t = "";
   BOOST_FOREACH (const CsvTable::value_type& row, csv)
   {
     const string& t = row[options.timecolumn];
@@ -619,8 +611,7 @@ NFmiTimeDescriptor create_tdesc(const CsvTable& csv, const boost::local_time::ti
     }
   }
 
-  if (options.verbose)
-    cout << "Found " << used.size() << " unique times from input" << endl;
+  if (options.verbose) cout << "Found " << used.size() << " unique times from input" << endl;
 
   // Build TimeList
 
@@ -647,7 +638,7 @@ NFmiTimeDescriptor create_tdesc(const CsvTable& csv, const boost::local_time::ti
  */
 // ----------------------------------------------------------------------
 
-using LocationIndex = map<string, unsigned int>;
+typedef map<string, unsigned int> LocationIndex;
 
 LocationIndex make_location_index(NFmiFastQueryInfo& info,
                                   const CsvTable& csv,
@@ -655,7 +646,7 @@ LocationIndex make_location_index(NFmiFastQueryInfo& info,
 {
   LocationIndex index;
 
-  auto station = stations.end();
+  Stations::const_iterator station = stations.end();
 
   BOOST_FOREACH (const CsvTable::value_type& row, csv)
   {
@@ -723,12 +714,12 @@ void copy_values(NFmiFastQueryInfo& info,
       info.NextParam();
       try
       {
-        if (row[i] != options.missingvalue)
-          info.FloatValue(boost::lexical_cast<double>(row[i]));
+        if (row[i] != options.missingvalue) info.FloatValue(boost::lexical_cast<double>(row[i]));
       }
       catch (...)
       {
-        throw runtime_error("Invalid number at row " + std::to_string(rownum) + ": " + row[i]);
+        throw runtime_error("Invalid number at row " + boost::lexical_cast<string>(rownum) + ": " +
+                            row[i]);
       }
     }
   }
@@ -745,21 +736,18 @@ void validate_csv(const CsvTable& csv)
   // Each row must contain time,id and params
 
   unsigned int columns = options.params.size();
-  if (options.levelcolumn >= 0)
-    ++columns;
-  if (options.timecolumn >= 0)
-    ++columns;
-  if (options.stationcolumn >= 0)
-    ++columns;
+  if (options.levelcolumn >= 0) ++columns;
+  if (options.timecolumn >= 0) ++columns;
+  if (options.stationcolumn >= 0) ++columns;
 
   int rownum = 0;
   BOOST_FOREACH (const CsvTable::value_type& row, csv)
   {
     ++rownum;
     if (row.size() != columns)
-      throw runtime_error("Row " + std::to_string(rownum) + " contains " +
-                          std::to_string(row.size()) + " elements but should contain " +
-                          std::to_string(columns));
+      throw runtime_error("Row " + boost::lexical_cast<string>(rownum) + " contains " +
+                          boost::lexical_cast<string>(row.size()) +
+                          " elements but should contain " + boost::lexical_cast<string>(columns));
   }
 }
 
@@ -785,8 +773,7 @@ void write_querydata(const CsvTable& csv, const Params& params, const Stations& 
   unique_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(qi));
   NFmiFastQueryInfo info(data.get());
 
-  if (data.get() == nullptr)
-    throw runtime_error("Could not allocate memory for result data");
+  if (data.get() == 0) throw runtime_error("Could not allocate memory for result data");
 
   info.SetProducer(NFmiProducer(options.producernumber, options.producername));
 
@@ -804,12 +791,9 @@ void write_querydata(const CsvTable& csv, const Params& params, const Stations& 
 
 int run(int argc, char* argv[])
 {
-  if (!parse_options(argc, argv, options))
-    return 0;
+  if (!parse_options(argc, argv, options)) return 0;
 
-  Csv csv;
-  Csv csvparams;
-  Csv csvstations;
+  Csv csv, csvparams, csvstations;
   Fmi::CsvReader::read(options.paramsfile, boost::bind(&Csv::addrow, &csvparams, _1));
   Fmi::CsvReader::read(options.stationsfile, boost::bind(&Csv::addrow, &csvstations, _1));
   BOOST_FOREACH (const string& infile, options.files)

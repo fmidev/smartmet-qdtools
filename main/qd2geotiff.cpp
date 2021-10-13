@@ -11,11 +11,11 @@
 #include <newbase/NFmiYKJArea.h>
 #endif
 
-#include <cstdio>
 #include <gdal_priv.h>
 #include <iomanip>
 #include <iostream>
 #include <ogr_spatialref.h>
+#include <stdio.h>
 
 // float * fillFloatRasterByQD(NFmiFastQueryInfo * theData, int width, int height);
 // int * fillIntRasterByQD(NFmiFastQueryInfo * theData, int width, int height);
@@ -25,10 +25,10 @@ void GeoTiffQD::SetTestMode(bool testMode)
 {
   isDrawGridLines = testMode;
 }
-GeomDefinedType GeoTiffQD::ConverQD2GeoTiff(const string &aNameVersion,
+GeomDefinedType GeoTiffQD::ConverQD2GeoTiff(string aNameVersion,
                                             NFmiFastQueryInfo *theData,
                                             NFmiFastQueryInfo *theExternal,
-                                            const string & /*tsrs*/,
+                                            string tsrs,
                                             bool selectedDataType,
                                             double scale)
 {
@@ -79,7 +79,7 @@ double GeoTiffQD::calculateTrueNorthAzimuthValue(float value,
 {
   double retValue = value;
 
-  if (area != nullptr)
+  if (area != 0)
   {
     double realNorth = area->TrueNorthAzimuth(*point).Value();
     if (realNorth > 180)
@@ -87,6 +87,11 @@ double GeoTiffQD::calculateTrueNorthAzimuthValue(float value,
       realNorth = -(360 - realNorth);
     }
 
+    if (false)
+    {
+      retValue = realNorth;
+    }
+    else
     {
       retValue = value + realNorth;
       if (retValue > 360)
@@ -114,7 +119,7 @@ void drawGridLines(const NFmiPoint &latLon, double &value)
   }
 }
 
-void GeoTiffQD::ConvertToGeoTiff(const string &aNameVersion,
+void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
                                  NFmiFastQueryInfo *orginData,
                                  NFmiFastQueryInfo *theExternal,
                                  GeomDefinedType geomDefinedType)
@@ -175,7 +180,7 @@ void GeoTiffQD::ConvertToGeoTiff(const string &aNameVersion,
   */
 
   int paramSize = 1;  // theData->ParamBag().GetSize();
-  if (theExternal != nullptr)
+  if (theExternal != 0)
     paramSize = 2;
 
   char **papszOptions = nullptr;
@@ -227,7 +232,7 @@ void GeoTiffQD::ConvertToGeoTiff(const string &aNameVersion,
       double aLon = area->XScale() / width;
       double aLat = area->YScale() / height;
 #else
-      const auto *rotLatLon = dynamic_cast<const NFmiRotatedLatLonArea *>(area);
+      const NFmiRotatedLatLonArea *rotLatLon = dynamic_cast<const NFmiRotatedLatLonArea *>(area);
       double tlLon = rotLatLon->ToRotLatLon(rotLatLon->TopLeftLatLon()).X();
       double tlLat = rotLatLon->ToRotLatLon(rotLatLon->TopLeftLatLon()).Y();
 
@@ -314,7 +319,7 @@ void GeoTiffQD::ConvertToGeoTiff(const string &aNameVersion,
   }
 
   // External Band parameter for data int
-  if (theExternal != nullptr)
+  if (theExternal != 0)
   {
     poBand = poDstDS->GetRasterBand(bandIndex++);
     char paramIdent[10];
@@ -369,11 +374,11 @@ int *GeoTiffQD::fillIntRasterByQD(NFmiFastQueryInfo *theData,
   theData->FirstLocation();
 
   auto data = theData->Values();
-  auto *xy = new NFmiPoint(0, 0);
+  NFmiPoint *xy = new NFmiPoint(0, 0);
 
   // Second data for u/v - component
   NFmiDataMatrix<float> dataSecond;
-  if (theSecondData != nullptr)
+  if (theSecondData != 0)
   {
     theSecondData->FirstLocation();
     dataSecond = theSecondData->Values();
@@ -384,7 +389,7 @@ int *GeoTiffQD::fillIntRasterByQD(NFmiFastQueryInfo *theData,
                        area->ProjInfo().getString("o_proj") == std::string("eqc") &&
                        area->ProjInfo().getString("towgs84") == std::string("0,0,0"));
 #else
-  const auto *rotArea = dynamic_cast<const NFmiRotatedLatLonArea *>(area);
+  const NFmiRotatedLatLonArea *rotArea = dynamic_cast<const NFmiRotatedLatLonArea*>(area);
   bool is_rotlatlon = rotArea != nullptr;
 #endif
 
@@ -405,7 +410,7 @@ int *GeoTiffQD::fillIntRasterByQD(NFmiFastQueryInfo *theData,
 
       if (theData->Param().GetParamIdent() == 23 || theData->Param().GetParamIdent() == 24)
       {  // kFmiWindUMS||kFmiWindVMS
-        if (area != nullptr)
+        if (area != 0)
         {
           if (value != 32700)
           {
@@ -501,11 +506,11 @@ float *GeoTiffQD::fillFloatRasterByQD(NFmiFastQueryInfo *theData,
   theData->FirstLocation();
 
   auto data = theData->Values();
-  auto *xy = new NFmiPoint(0, 0);
+  NFmiPoint *xy = new NFmiPoint(0, 0);
 
   // Second data for u/v - component
   NFmiDataMatrix<float> dataSecond;
-  if (theSecondData != nullptr)
+  if (theSecondData != 0)
   {
     theSecondData->FirstLocation();
     dataSecond = theSecondData->Values();
@@ -522,7 +527,7 @@ float *GeoTiffQD::fillFloatRasterByQD(NFmiFastQueryInfo *theData,
                        area->ProjInfo().getString("o_proj") == std::string("eqc") &&
                        area->ProjInfo().getString("towgs84") == std::string("0,0,0"));
 #else
-  const auto *rotArea = dynamic_cast<const NFmiRotatedLatLonArea *>(area);
+  const NFmiRotatedLatLonArea *rotArea = dynamic_cast<const NFmiRotatedLatLonArea*>(area);
   bool is_rotlatlon = rotArea != nullptr;
 #endif
 
@@ -537,7 +542,7 @@ float *GeoTiffQD::fillFloatRasterByQD(NFmiFastQueryInfo *theData,
 
       if (theData->Param().GetParamIdent() == 23 || theData->Param().GetParamIdent() == 24)
       {  // kFmiWindUMS||kFmiWindVMS
-        if (area != nullptr)
+        if (area != 0)
         {
           if (value != 32700)
           {
@@ -705,11 +710,11 @@ NFmiArea * CreteEpsgArea(string epsgCode){
 #endif
 
 void spawn_new_process(char *const *argv,
-                       const string &tsrs,
-                       const string &gdalParams,
+                       string tsrs,
+                       string gdalParams,
                        GeomDefinedType geomType,
-                       const string &tempFile,
-                       const string &fileName);
+                       string tempFile,
+                       string fileName);
 int pid;
 
 enum data_Type
@@ -771,22 +776,22 @@ static bool fexists(const std::string &name)
   }
 }
 
-static bool isSelectedParam(const std::vector<paramTypes> &ids, int id, paramTypes &paramValues)
+static bool isSelectedParam(std::vector<paramTypes> ids, int id, paramTypes &paramValues)
 {
   if (ids.size() == 0)
   {
     return true;
   }
 
-  for (const auto &it : ids)
+  for (std::vector<paramTypes>::iterator it = ids.begin(); it != ids.end(); ++it)
   {
-    if (it.param == id)
+    if (it->param == id)
     {
-      paramValues.param = it.param;
-      paramValues.external = it.external;
-      paramValues.scale = it.scale;
-      paramValues.dataType = it.dataType;
-      paramValues.dataTypeExternal = it.dataTypeExternal;
+      paramValues.param = it->param;
+      paramValues.external = it->external;
+      paramValues.scale = it->scale;
+      paramValues.dataType = it->dataType;
+      paramValues.dataTypeExternal = it->dataTypeExternal;
 
       return true;
     }
@@ -794,16 +799,16 @@ static bool isSelectedParam(const std::vector<paramTypes> &ids, int id, paramTyp
   return false;
 }
 
-static bool isSelectedLevel(const std::vector<int> &ids, int id)
+static bool isSelectedLevel(std::vector<int> ids, int id)
 {
   if (ids.size() == 0)
   {
     return true;
   }
 
-  for (int it : ids)
+  for (std::vector<int>::iterator it = ids.begin(); it != ids.end(); ++it)
   {
-    if (it == id)
+    if (*it == id)
     {
       return true;
     }
@@ -816,7 +821,7 @@ static void writeRotatedLatLonWKT(const std::string &name)
   std::ostringstream ret;
   ret << std::setprecision(16) << "PROJCS[\"Fmi_Rotated_LatLon\","
       << "GEOGCS[\"Fmi_Sphere\","
-      << R"(DATUM["Fmi_2007",SPHEROID["Fmi_Sphere",6371220,0]],)"
+      << "DATUM[\"Fmi_2007\",SPHEROID[\"Fmi_Sphere\",6371220,0]],"
       << "PRIMEM[\"Greenwich\",0],"
       << "UNIT[\"Degree\",0.0174532925199433]],"
       << "PARAMETER[\"latitude_of_origin\","
@@ -875,7 +880,7 @@ static void writeStereoWKT(const std::string &name, int centralLongitude)
   std::ostringstream ret;
   ret << std::setprecision(16) << "PROJCS[\"FMI_Polar_Stereographic\","
       << "GEOGCS[\"FMI_Sphere\","
-      << R"(DATUM["FMI_2007",SPHEROID["FMI_Sphere",6371220,0]],)"
+      << "DATUM[\"FMI_2007\",SPHEROID[\"FMI_Sphere\",6371220,0]],"
       << "PRIMEM[\"Greenwich\",0],"
       << "UNIT[\"Degree\",0.0174532925199433]],"
       << "PROJECTION[\"Polar_Stereographic\"],"
@@ -941,9 +946,9 @@ int main(int argc, char *argv[])
         pch = strtok(nullptr, ",");
       }
 
-      for (auto &it : paramStrs)
+      for (std::vector<char *>::iterator it = paramStrs.begin(); it != paramStrs.end(); ++it)
       {
-        string paramStr = string(it);
+        string paramStr = string(*it);
 
         size_t found = paramStr.find("::");
         if (found != string::npos)
@@ -1068,9 +1073,9 @@ int main(int argc, char *argv[])
   if (argc >= 3)
   {
     GeoTiffQD geoTiffQD;
-    auto *qd = new NFmiQueryData(qdName, true);
+    NFmiQueryData *qd = new NFmiQueryData(qdName, true);
 
-    if (qd != nullptr)
+    if (qd != 0)
     {
       geoTiffQD.SetTestMode(isTest);
 
@@ -1096,7 +1101,7 @@ int main(int argc, char *argv[])
         geoTiffQD.DestinationProjection(NFmiAreaFactory::Create(def)->Clone());
       }
 
-      auto *qi = new NFmiFastQueryInfo(qd);
+      NFmiFastQueryInfo *qi = new NFmiFastQueryInfo(qd);
       qi->Reset();
 
       int testCount = 0;
@@ -1160,7 +1165,7 @@ int main(int argc, char *argv[])
                 string tmpname = "tmp_";
                 tmpname += filename;
 
-                NFmiFastQueryInfo *qiExternal = nullptr;
+                NFmiFastQueryInfo *qiExternal = 0;
                 if (paramValues.external > 0)
                 {
                   qiExternal = (NFmiFastQueryInfo *)qi->Clone();
@@ -1207,12 +1212,12 @@ int main(int argc, char *argv[])
 }  // main
 
 bool isProjectedDone = false;
-void spawn_new_process(char *const * /*argv*/,
-                       const string &tsrs,
-                       const string &gdalParams,
+void spawn_new_process(char *const *argv,
+                       string tsrs,
+                       string gdalParams,
                        GeomDefinedType geomType,
-                       const string &tempFile,
-                       const string &fileName)
+                       string tempFile,
+                       string fileName)
 {
   string gdalWrap = "gdalwarp ";
   if (geomType == kRotatedGeom)

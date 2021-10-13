@@ -13,12 +13,12 @@ class NcFileExtended : public NcFile
 {
  public:
   std::string path;
-  NcFileExtended(const std::string &path,
+  NcFileExtended(std::string path,
                  long timeshift,
-                 FileMode /*fm*/ = ReadOnly,
+                 FileMode = ReadOnly,
                  size_t *bufrsizeptr = nullptr,  // optional tuning parameters
                  size_t initialsize = 0,
-                 FileFormat /*ff*/ = Classic);
+                 FileFormat = Classic);
 
   void initAxis(const boost::optional<std::string> &xname,
                 const boost::optional<std::string> &yname,
@@ -73,8 +73,7 @@ class NcFileExtended : public NcFile
 
   bool joinable(NcFileExtended &ncfile, std::vector<std::string> *failreasons = nullptr);
   NcVar *find_variable(const std::string &name);
-  NFmiTimeList timeList(const std::string &varName = "time",
-                        const std::string &unitAttrName = "units");
+  NFmiTimeList timeList(std::string varName = "time", std::string unitAttrName = "units");
   long timeshift;  // Desired timeshift in minutes for time axis reading
   void require_conventions(const std::string *reference);  // Validate data conforms to the
                                                            // reference in string(nullptr or empty
@@ -95,7 +94,7 @@ class NcFileExtended : public NcFile
 
   NcVar *axis(const std::set<std::string> &axisnames);  // Find generic axis by name
   void find_axis_bounds(
-      NcVar * /*var*/, int n, double &x1, double &x2, const char *name, bool &isdescending) const;
+      NcVar *, int n, double &x1, double &x2, const char *name, bool &isdescending);
   void find_lonlat_bounds(double &lon1, double &lat1, double &lon2, double &lat2);
   void find_bounds();
   void parse_time_units(boost::posix_time::ptime *origintime, long *timeunit) const;
@@ -117,7 +116,7 @@ void report_units(NcVar *var,
                   const std::string &units,
                   const Options &options,
                   bool ignoreUnitChange = false);
-unsigned long get_units_in_seconds(const std::string &unit_str);
+unsigned long get_units_in_seconds(std::string unit_str);
 NFmiMetTime tomettime(const boost::posix_time::ptime &t);
 void parse_time_units(NcVar *t, boost::posix_time::ptime *origintime, long *timeunit);
 }  // namespace nctools

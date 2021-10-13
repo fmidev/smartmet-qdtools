@@ -37,10 +37,10 @@ struct Options
 {
   Options();
 
-  bool check_tdew{false};  // --check-tdew
-  std::string config;      // arg 1
-  std::string infile;      // arg 2
-  std::string outfile;     // arg 3
+  bool check_tdew;      // --check-tdew
+  std::string config;   // arg 1
+  std::string infile;   // arg 2
+  std::string outfile;  // arg 3
 };
 
 Options options;
@@ -51,7 +51,7 @@ Options options;
  */
 // ----------------------------------------------------------------------
 
-Options::Options() {}
+Options::Options() : check_tdew(false), config(), infile(), outfile() {}
 // ----------------------------------------------------------------------
 /*!
  * \brief Parse the command line
@@ -111,11 +111,9 @@ bool ParseOptions(int argc, char *argv[], Options &options)
   if (opt.count("config") == 0)
     throw std::runtime_error("Expecting configuration file as parameter 1");
 
-  if (opt.count("infile") == 0)
-    throw std::runtime_error("Expecting input file as parameter 2");
+  if (opt.count("infile") == 0) throw std::runtime_error("Expecting input file as parameter 2");
 
-  if (opt.count("outfile") == 0)
-    throw std::runtime_error("Expecting output file as parameter 3");
+  if (opt.count("outfile") == 0) throw std::runtime_error("Expecting output file as parameter 3");
 
   if (!fs::exists(options.config))
     throw std::runtime_error("Config file '" + options.config + "' does not exist");
@@ -215,8 +213,7 @@ bool CheckErrorLevelAndProduceStatusTextAndUpdateErrorCode(const std::vector<flo
       break;
     }
   }
-  if (i >= size)
-    theText = "Ok.";
+  if (i >= size) theText = "Ok.";
 
   return true;
 }
@@ -274,10 +271,8 @@ bool IsDewPointOK(NFmiFastQueryInfo &info)
 {
   info.First();
 
-  if (!info.Param(kFmiTemperature))
-    return true;
-  if (!info.Param(kFmiDewPoint))
-    return true;
+  if (!info.Param(kFmiTemperature)) return true;
+  if (!info.Param(kFmiDewPoint)) return true;
 
   for (info.ResetLocation(); info.NextLocation();)
     for (info.ResetLevel(); info.NextLevel();)
@@ -287,8 +282,7 @@ bool IsDewPointOK(NFmiFastQueryInfo &info)
         float t2m = info.FloatValue();
         info.Param(kFmiDewPoint);
         float tdew = info.FloatValue();
-        if (t2m != kFloatMissing && tdew != kFloatMissing && tdew > t2m)
-          return false;
+        if (t2m != kFloatMissing && tdew != kFloatMissing && tdew > t2m) return false;
       }
   return true;
 }
@@ -301,8 +295,7 @@ bool IsDewPointOK(NFmiFastQueryInfo &info)
 
 int run(int argc, char *argv[])
 {
-  if (!ParseOptions(argc, argv, options))
-    return 0;
+  if (!ParseOptions(argc, argv, options)) return 0;
 
   NFmiOhjausData ohjausData;
   NFmiString ohjausfileName;
@@ -340,9 +333,9 @@ int run(int argc, char *argv[])
   dataChecker.Data(&data);
   NFmiParamBag params(*dataChecker.DatasParamBag());
   params.SetActivities(false);
-  for (auto &i : ohjausData.itsParamIdCheckList)
+  for (unsigned int i = 0; i < ohjausData.itsParamIdCheckList.size(); i++)
   {
-    if (params.SetCurrent(i.itsParamId, false))
+    if (params.SetCurrent(ohjausData.itsParamIdCheckList[i].itsParamId, false))
       params.Current(false)->SetActive(true);
   }
   dataChecker.ParamBag(params);

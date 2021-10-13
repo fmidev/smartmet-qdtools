@@ -39,7 +39,7 @@ class QueryDataManager
   void addfiles(const std::vector<std::string> &theFiles);
 
   void setstation(int theWmoNumber);
-  void setpoint(const NFmiPoint &theLonLat, double theMaxDistance);
+  void setpoint(const NFmiPoint &thePoint, double theMaxDistance);
 
   bool isset() const;
   NFmiFastQueryInfo &info() const;
@@ -56,9 +56,9 @@ class QueryDataManager
   std::string itsSearchPath;
   bool itsMultiMode;
 
-  using value_type = boost::tuple<std::string, NFmiQueryData *, NFmiFastQueryInfo *>;
+  typedef boost::tuple<std::string, NFmiQueryData *, NFmiFastQueryInfo *> value_type;
 
-  using storage_type = std::vector<value_type>;
+  typedef std::vector<value_type> storage_type;
   storage_type itsData;
   storage_type::const_iterator itsCurrentData;
 

@@ -40,7 +40,7 @@ Options options;
  */
 // ----------------------------------------------------------------------
 
-Options::Options() : infile("-"), outfile("-") {}
+Options::Options() : infile("-"), outfile("-"), locationfile("") {}
 // ----------------------------------------------------------------------
 /*!
  * \brief Parse command line options
@@ -61,16 +61,10 @@ bool parse_options(int argc, char* argv[])
 #endif
 
   po::options_description desc("Available options", desc_width);
-  desc.add_options()("help,h", "print out help message")(
-      "version,V",
-      "display version number")("infile,i",
-                                po::value(&options.infile),
-                                "input querydata")("outfile,o",
-                                                   po::value(&options.outfile),
-                                                   "output querydata")("locations,l",
-                                                                       po::value(
-                                                                           &options.locationfile),
-                                                                       "location descriptions");
+  desc.add_options()("help,h", "print out help message")("version,V", "display version number")(
+      "infile,i", po::value(&options.infile), "input querydata")(
+      "outfile,o", po::value(&options.outfile), "output querydata")(
+      "locations,l", po::value(&options.locationfile), "location descriptions");
 
   po::positional_options_description p;
   p.add("locations", 1);
@@ -177,8 +171,7 @@ NFmiLocationBag ReadLocationsFromFile(const std::string& locationfile, NFmiFastQ
       strippedControlFile >> locId;
       strippedControlFile.getline(buffer, 511);
       strippedControlFile.getline(locName, 511);
-      double lat;
-      double lon;
+      double lat, lon;
       strippedControlFile >> lon >> lat;
       if (!strippedControlFile.fail())
       {
@@ -204,8 +197,7 @@ NFmiLocationBag ReadLocationsFromFile(const std::string& locationfile, NFmiFastQ
     NFmiProducer producer(*qi.Producer());
     int locId;
     string locName;
-    double lat;
-    double lon;
+    double lat, lon;
     while (strippedControlFile >> locId >> locName >> lon >> lat)
     {
       if (qi.Location(locId))
@@ -235,8 +227,7 @@ NFmiLocationBag ReadLocationsFromFile(const std::string& locationfile, NFmiFastQ
 
 int run(int argc, char* argv[])
 {
-  if (!parse_options(argc, argv))
-    return 0;
+  if (!parse_options(argc, argv)) return 0;
 
   // Read input data
 
@@ -259,8 +250,7 @@ int run(int argc, char* argv[])
  */
 // ----------------------------------------------------------------------
 
-int main(int argc, char* argv[])
-try
+int main(int argc, char* argv[]) try
 {
   return run(argc, argv);
 }

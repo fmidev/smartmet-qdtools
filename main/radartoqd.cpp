@@ -229,8 +229,7 @@ std::ostream &operator<<(std::ostream &out, const std::vector<T> &ob)
     out << '[';
     BOOST_FOREACH (const T &o, ob)
     {
-      if (!first)
-        out << ",";
+      if (!first) out << ",";
       out << o;
       first = false;
     }
@@ -379,17 +378,17 @@ struct Options
 {
   Options();
 
-  bool verbose{false};         // -v --verbose
-  bool quiet{false};           // -q --quiet
-  bool debug{false};           //    --debug
-  bool allow_overflow{false};  // --allow-overflow
-  std::string tabdir;          // -t --tables
-  std::string infile;          // -i --infile
-  std::string outfile;         // -o --outfile
-  std::string parameter;       // -p --param
-  std::string projection;      // -P --projection
-  std::string producername;    //    --producername
-  long producernumber{1014};   //    --producernumber
+  bool verbose;              // -v --verbose
+  bool quiet;                // -q --quiet
+  bool debug;                //    --debug
+  bool allow_overflow;       // --allow-overflow
+  std::string tabdir;        // -t --tables
+  std::string infile;        // -i --infile
+  std::string outfile;       // -o --outfile
+  std::string parameter;     // -p --param
+  std::string projection;    // -P --projection
+  std::string producername;  //    --producername
+  long producernumber;       //    --producernumber
 };
 
 Options options;
@@ -401,12 +400,17 @@ Options options;
 // ----------------------------------------------------------------------
 
 Options::Options()
-    : tabdir(default_tabdir),
+    : verbose(false),
+      quiet(false),
+      debug(false),
+      allow_overflow(false),
+      tabdir(default_tabdir),
       infile("-"),
       outfile("-"),
-
-      producername("RADAR")
-
+      parameter(),
+      projection(),
+      producername("RADAR"),
+      producernumber(1014)
 {
 }
 // ----------------------------------------------------------------------
@@ -479,8 +483,7 @@ bool parse_options(int argc, char *argv[], Options &options)
   if (opt.count("infile") == 0)
     throw std::runtime_error("Expecting input BUFR file as parameter 1");
 
-  if (opt.count("outfile") == 0)
-    throw std::runtime_error("Expecting output file as parameter 2");
+  if (opt.count("outfile") == 0) throw std::runtime_error("Expecting output file as parameter 2");
 
   if (!fs::exists(options.infile))
     throw std::runtime_error("Input BUFR '" + options.infile + "' does not exist");
@@ -516,10 +519,9 @@ void byteswap64(unsigned char *buf, int n)
   unsigned char c;
 
   unsigned one = 1;
-  auto *test = (unsigned char *)&one;
+  unsigned char *test = (unsigned char *)&one;
 
-  if (*test == 1)
-    return;
+  if (*test == 1) return;
 
   for (i = 0; i < n; i += 8)
   {
@@ -553,6 +555,8 @@ static int bufr_callback(varfl val, int ind)
   static int first_in_seq; /* flag to indicate first element in sequence */
 
   std::string imgfile = "bufr_image";
+
+  std::string fname = imgfile;
 
   /* element descriptor */
 
@@ -598,8 +602,7 @@ static int bufr_callback(varfl val, int ind)
           fprintf(stdout, "%s            %s\n", sval, des[ind]->el->elname);
         else
         {
-          if (!first_in_seq)
-            fprintf(stdout, "          ");
+          if (!first_in_seq) fprintf(stdout, "          ");
 
           fprintf(stdout, "%s  %2d %2d %3d %s\n", sval, d->f, d->x, d->y, des[ind]->el->elname);
           first_in_seq = 0;
@@ -771,8 +774,7 @@ static int bufr_callback(varfl val, int ind)
 
     /* output descriptor if not inside another sequence descriptor */
 
-    if (options.debug && !in_seq)
-      fprintf(stdout, "%2d %2d %3d ", d->f, d->x, d->y);
+    if (options.debug && !in_seq) fprintf(stdout, "%2d %2d %3d ", d->f, d->x, d->y);
 
     // Detect bitmaps. From desc.c: 3,21,192 3,21,193 3,21,194 3,21,195 3,21,196 3,21,197 3,21,200
     // 3,21,202
@@ -784,8 +786,7 @@ static int bufr_callback(varfl val, int ind)
       /* read bitmap and run length decode */
 
       bufrval_t *vals = bufr_open_val_array();
-      if (vals == nullptr)
-        return 0;
+      if (vals == nullptr) return 0;
 
       if (!bufr_parse_out(des[ind]->seq->del, 0, des[ind]->seq->nel - 1, bufr_val_to_global, 0))
       {
@@ -794,9 +795,7 @@ static int bufr_callback(varfl val, int ind)
       }
 
       // Decode vals to our output array
-      int nvals;
-      int nrows;
-      int ncols;
+      int nvals, nrows, ncols;
 
       if (!rldec_to_mem(vals->vals, &(radar_data.img.data), &nvals, &nrows, &ncols))
       {
@@ -825,8 +824,7 @@ static int bufr_callback(varfl val, int ind)
     /* normal sequence descriptor - just call bufr_parse_out and
            remember that we are in a sequence */
 
-    if (in_seq == 0)
-      first_in_seq = 1;
+    if (in_seq == 0) first_in_seq = 1;
     in_seq++;
     int ok = bufr_parse_out(des[ind]->seq->del, 0, des[ind]->seq->nel - 1, &bufr_callback, 1);
     bufr_close_val_array();
@@ -887,8 +885,7 @@ void read_bufr()
   int desch = bufr_open_descsec_r(&bufr_msg, &subsets);
   bool ok = (desch >= 0);
 
-  if (ok)
-    ok = (bufr_open_datasect_r(&bufr_msg) >= 0);
+  if (ok) ok = (bufr_open_datasect_r(&bufr_msg) >= 0);
 
   // Calculate number of data descriptors
 
@@ -897,8 +894,7 @@ void read_bufr()
   // Allocate memory and read data descriptors from bitstream
 
   dd *dds = nullptr;
-  if (ok)
-    ok = bufr_in_descsec(&dds, ndescs, desch);
+  if (ok) ok = bufr_in_descsec(&dds, ndescs, desch);
 
   if (!ok)
     throw std::runtime_error("Failed to parse the BUFR data according to Opera specifications");
@@ -911,8 +907,7 @@ void read_bufr()
 
   // Close bitstreams and free descriptor array
 
-  if (dds != nullptr)
-    free(dds);
+  if (dds != nullptr) free(dds);
   bufr_close_descsec_r(desch);
   bufr_close_datasect_r();
 
@@ -935,7 +930,7 @@ NFmiParamDescriptor create_pdesc()
 
   if (!options.parameter.empty())
   {
-    auto p = FmiParameterName(converter.ToEnum(options.parameter));
+    FmiParameterName p = FmiParameterName(converter.ToEnum(options.parameter));
     if (p == kFmiBadParameter)
       throw std::runtime_error("Unknown parameter name: '" + options.parameter + "'");
 
@@ -991,22 +986,18 @@ NFmiVPlaceDescriptor create_vdesc()
 
 NFmiHPlaceDescriptor create_hdesc()
 {
-  if (!radar_data.proj.type)
-    throw std::runtime_error("Projection type not set in BUFR");
+  if (!radar_data.proj.type) throw std::runtime_error("Projection type not set in BUFR");
 
 #ifndef WGS84
   bool pacific_view = false;
-#endif
+#endif  
   double central_lon = 0;
   double central_lat = 90;
   double true_lat = 0;
 
-  if (radar_data.proj.origin.lon)
-    central_lon = *radar_data.proj.origin.lon;
-  if (radar_data.proj.origin.lat)
-    central_lat = *radar_data.proj.origin.lat;
-  if (radar_data.proj.stdpar1)
-    true_lat = *radar_data.proj.stdpar1;  // TODO: Is this correct???
+  if (radar_data.proj.origin.lon) central_lon = *radar_data.proj.origin.lon;
+  if (radar_data.proj.origin.lat) central_lat = *radar_data.proj.origin.lat;
+  if (radar_data.proj.stdpar1) true_lat = *radar_data.proj.stdpar1;  // TODO: Is this correct???
 
   if (!radar_data.img.sw.lat || !radar_data.img.sw.lon)
     throw std::runtime_error("SW corner coordinate not set");
@@ -1018,10 +1009,8 @@ NFmiHPlaceDescriptor create_hdesc()
   NFmiPoint topright(*radar_data.img.ne.lon, *radar_data.img.ne.lat);
   NFmiPoint topleft(*radar_data.img.nw.lon, *radar_data.img.nw.lat);
 
-  if (!radar_data.img.nrows)
-    throw std::runtime_error("Number of rows not set in metadata");
-  if (!radar_data.img.ncols)
-    throw std::runtime_error("Number of columns not set in metadata");
+  if (!radar_data.img.nrows) throw std::runtime_error("Number of rows not set in metadata");
+  if (!radar_data.img.ncols) throw std::runtime_error("Number of columns not set in metadata");
 
   int ny = *radar_data.img.nrows;
   int nx = *radar_data.img.ncols;
@@ -1051,12 +1040,12 @@ NFmiHPlaceDescriptor create_hdesc()
                                             corner2,
                                             *radar_data.meta.radar.lat,
                                             90);
-#endif
+#endif      
       return NFmiHPlaceDescriptor(NFmiGrid(area, nx, ny));
     }
     case 1:
     {
-#ifdef WGS84
+#ifdef WGS84      
       auto proj = fmt::format(
           "+proj=stere +lat_0={} +lat_ts={} +lon_0={} +k=1 +x_0=0 +y_0=0 +R={:.0f} "
           "+units=m +wktext +towgs84=0,0,0 +no_defs",
@@ -1068,7 +1057,7 @@ NFmiHPlaceDescriptor create_hdesc()
 #else
       NFmiArea *area = new NFmiStereographicArea(
           bottomleft, topright, central_lon, corner1, corner2, central_lat, true_lat, pacific_view);
-#endif
+#endif      
       return NFmiHPlaceDescriptor(NFmiGrid(area, nx, ny));
     }
     case 2:
@@ -1082,24 +1071,24 @@ NFmiHPlaceDescriptor create_hdesc()
           kRearth);
       auto *area = NFmiArea::CreateFromCorners(proj, "FMI", bottomleft, topright);
       return NFmiHPlaceDescriptor(NFmiGrid(area, nx, ny));
-#else
+#else      
       throw std::runtime_error("Lambert's conic projection is not supported");
-#endif
+#endif      
     }
     case 3:
     {
-#ifdef WGS84
+#ifdef WGS84      
       auto proj =
           fmt::format("+proj=merc +lon_0={} +wktext +over +towgs84=0,0,0 +no_defs", central_lon);
       auto *area = NFmiArea::CreateFromCorners(proj, "FMI", bottomleft, topright);
 #else
       NFmiArea *area = new NFmiMercatorArea(bottomleft, topright, corner1, corner2, pacific_view);
-#endif
+#endif      
       return NFmiHPlaceDescriptor(NFmiGrid(area, nx, ny));
     }
     case 4:
     {
-#ifdef WGS84
+#ifdef WGS84      
       auto proj = fmt::format(
           "+proj=aeqd +lat_0={} +lon_0={} +x_0=0 +y_0=0 +R={:.0f} +units=m +wktext "
           "+towgs84=0,0,0 +no_defs",
@@ -1111,12 +1100,12 @@ NFmiHPlaceDescriptor create_hdesc()
       // Do not let the default central_latitude to be 90 as in the API! It messes things up
       NFmiArea *area =
           new NFmiEquidistArea(bottomleft, topright, 0, corner1, corner2, 0, pacific_view);
-#endif
+#endif      
       return NFmiHPlaceDescriptor(NFmiGrid(area, nx, ny));
     }
     case 5:
     {
-#ifdef WGS84
+#ifdef WGS84      
       auto proj = fmt::format(
           "+proj=laea +lat_0={} +lon_0={} +x_0=0 +y_0=0 +R={:.0f} +units=m +wktext "
           "+towgs84=0,0,0 +no_defs",
@@ -1127,11 +1116,12 @@ NFmiHPlaceDescriptor create_hdesc()
 #else
       NFmiArea *area = new NFmiLambertEqualArea(
           bottomleft, topright, central_lon, corner1, corner2, central_lat, true_lat, pacific_view);
-#endif
+#endif      
       return NFmiHPlaceDescriptor(NFmiGrid(area, nx, ny));
     }
     default:
-      throw std::runtime_error("Unknown projection type " + std::to_string(*radar_data.proj.type));
+      throw std::runtime_error("Unknown projection type " +
+                               boost::lexical_cast<std::string>(*radar_data.proj.type));
   }
 }
 
@@ -1143,14 +1133,11 @@ NFmiHPlaceDescriptor create_hdesc()
 
 NFmiTimeDescriptor create_tdesc()
 {
-  if (!radar_data.meta.year)
-    throw std::runtime_error("Year has not been set in the BUFR metadata");
+  if (!radar_data.meta.year) throw std::runtime_error("Year has not been set in the BUFR metadata");
   if (!radar_data.meta.month)
     throw std::runtime_error("Month has not been set in the BUFR metadata");
-  if (!radar_data.meta.day)
-    throw std::runtime_error("Day has not been set in the BUFR metadata");
-  if (!radar_data.meta.hour)
-    throw std::runtime_error("Hour has not been set in the BUFR metadata");
+  if (!radar_data.meta.day) throw std::runtime_error("Day has not been set in the BUFR metadata");
+  if (!radar_data.meta.hour) throw std::runtime_error("Hour has not been set in the BUFR metadata");
   if (!radar_data.meta.min)
     throw std::runtime_error("Minute has not been set in the BUFR metadata");
 
@@ -1192,8 +1179,8 @@ float decode_value(unsigned short value)
     else if (static_cast<size_t>(value - 1) < n)
       ret = radar_data.img.scale.dbz_values[value - 1];
     else if (!options.allow_overflow)
-      throw std::runtime_error("Overflow index " + std::to_string(value) + ", size of legend is " +
-                               std::to_string(n));
+      throw std::runtime_error("Overflow index " + boost::lexical_cast<std::string>(value) +
+                               ", size of legend is " + boost::lexical_cast<std::string>(n));
     else
     {
       ret = radar_data.img.scale.dbz_values[n - 1];
@@ -1211,8 +1198,8 @@ float decode_value(unsigned short value)
     else if (static_cast<size_t>(value - 1) < n)
       ret = radar_data.img.scale.intensity_values[value - 1];
     else if (!options.allow_overflow)
-      throw std::runtime_error("Overflow index " + std::to_string(value) + ", size of legend is " +
-                               std::to_string(n));
+      throw std::runtime_error("Overflow index " + boost::lexical_cast<std::string>(value) +
+                               ", size of legend is " + boost::lexical_cast<std::string>(n));
     else
     {
       ret = radar_data.img.scale.intensity_values[n - 1];
@@ -1245,10 +1232,8 @@ void copy_data(NFmiFastQueryInfo &info)
 
   // We assume bitmap data starts from NW corner, we have no other sample data
 
-  if (radar_data.img.ns_organisation)
-    throw std::runtime_error("North-South view not supported");
-  if (radar_data.img.ew_organisation)
-    throw std::runtime_error("East-West view not supported");
+  if (radar_data.img.ns_organisation) throw std::runtime_error("North-South view not supported");
+  if (radar_data.img.ew_organisation) throw std::runtime_error("East-West view not supported");
 
   info.First();
   long pos = 0;
@@ -1309,8 +1294,7 @@ boost::shared_ptr<NFmiQueryData> make_querydata()
   // work so that the user gets a fast response to a possible syntax error
 
   boost::shared_ptr<NFmiArea> area;
-  if (!options.projection.empty())
-    area = NFmiAreaFactory::Create(options.projection);
+  if (!options.projection.empty()) area = NFmiAreaFactory::Create(options.projection);
 
   // Parse the BUFR data
 
@@ -1322,8 +1306,7 @@ boost::shared_ptr<NFmiQueryData> make_querydata()
 
   // Print metadata
 
-  if (options.debug || options.verbose)
-    print_metadata();
+  if (options.debug || options.verbose) print_metadata();
 
   // Build descriptors from parsed BUFR
 
@@ -1336,8 +1319,7 @@ boost::shared_ptr<NFmiQueryData> make_querydata()
 
   NFmiFastQueryInfo qi(pdesc, tdesc, hdesc, vdesc);
   boost::shared_ptr<NFmiQueryData> qd(NFmiQueryDataUtil::CreateEmptyData(qi));
-  if (qd.get() == nullptr)
-    throw std::runtime_error("Failed to allocate memory for resulting querydata");
+  if (qd.get() == 0) throw std::runtime_error("Failed to allocate memory for resulting querydata");
 
   NFmiFastQueryInfo info(qd.get());
   info.SetProducer(NFmiProducer(options.producernumber, options.producername));
@@ -1368,8 +1350,7 @@ boost::shared_ptr<NFmiQueryData> make_querydata()
 
 int run(int argc, char *argv[])
 {
-  if (!parse_options(argc, argv, options))
-    return 0;
+  if (!parse_options(argc, argv, options)) return 0;
 
   auto qd = make_querydata();
 
@@ -1387,8 +1368,7 @@ int run(int argc, char *argv[])
  */
 // ----------------------------------------------------------------------
 
-int main(int argc, char *argv[])
-try
+int main(int argc, char *argv[]) try
 {
   return run(argc, argv);
 }

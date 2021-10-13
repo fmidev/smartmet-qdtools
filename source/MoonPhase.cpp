@@ -4,14 +4,8 @@
 
 using namespace std;
 
-double rad(double d)
-{
-  return d * 0.017453292519943295;
-}
-double Deg(double d1)
-{
-  return (d1 * 180) / 3.1415926535897931;
-}
+double rad(double d) { return d * 0.017453292519943295; }
+double Deg(double d1) { return (d1 * 180) / 3.1415926535897931; }
 double julianDay(int day, int month, int year, int hour, int minute, int second)
 {
   double d3 = hour * 3600 + minute * 60 + second;
@@ -31,8 +25,7 @@ double julianDay(int day, int month, int year, int hour, int minute, int second)
 double reduce(double d1)
 {
   d1 -= 6.2831853071795862 * static_cast<int>(d1 / 6.2831853071795862);
-  if (d1 < 0.0)
-    d1 += 6.2831853071795862;
+  if (d1 < 0.0) d1 += 6.2831853071795862;
   return d1;
 }
 

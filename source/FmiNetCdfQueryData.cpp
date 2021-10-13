@@ -12,12 +12,13 @@
 #include <newbase/NFmiStereographicArea.h>
 #endif
 
-void FmiTDimVarInfo::CalcTimeList()
+void FmiTDimVarInfo::CalcTimeList(void)
 {
   itsTimeList.Clear(true);
-  for (long changeByMinutesValue : itsOffsetValues)
+  for (size_t i = 0; i < itsOffsetValues.size(); i++)
   {
     NFmiMetTime aTime = itsEpochTime;
+    long changeByMinutesValue = itsOffsetValues[i];
     if (itsTimeOffsetType == kFmiNcSeconds)
       changeByMinutesValue /= 60;
     aTime.ChangeByMinutes(changeByMinutesValue);
@@ -29,19 +30,21 @@ void FmiTDimVarInfo::CalcTimeList()
 
 FmiNcMetaData::FmiNcMetaData(bool useSurfaceInfo)
     : fUseSurfaceInfo(useSurfaceInfo),
-
-      itsMetaInfo(nullptr)
+      itsMultiLevelInfo(),
+      itsSurfaceLevelInfo(),
+      itsParams(),
+      itsMetaInfo(0)
 {
 }
 
-FmiNcMetaData::~FmiNcMetaData()
+FmiNcMetaData::~FmiNcMetaData(void)
 {
   delete itsMetaInfo;
 }
 void FmiNcMetaData::MakeMetaInfo(FmiTDimVarInfo &theTimeInfo, NFmiGrid &theGrid)
 {
   delete itsMetaInfo;
-  itsMetaInfo = nullptr;
+  itsMetaInfo = 0;
   if (itsParams.GetSize())
   {
     if (itsMultiLevelInfo.itsNcLevelType != kFmiNcNoLevelType ||
@@ -55,7 +58,7 @@ void FmiNcMetaData::MakeMetaInfo(FmiTDimVarInfo &theTimeInfo, NFmiGrid &theGrid)
       NFmiTimeDescriptor timeDesc(origTime, theTimeInfo.itsTimeList);
       NFmiHPlaceDescriptor hplaceDesc(theGrid);
       NFmiVPlaceDescriptor vplaceDesc;  // defaulttina normaali 'pinta' data descriptor
-      if (!doSurfaceInfo)
+      if (doSurfaceInfo == false)
       {
         if (itsMultiLevelInfo.itsLevels.GetSize() >
             0)  // jos leveleitä on yksi tai useita, tehdään niistä sitten oikea levelDescriptor
@@ -68,7 +71,7 @@ void FmiNcMetaData::MakeMetaInfo(FmiTDimVarInfo &theTimeInfo, NFmiGrid &theGrid)
   }
 }
 
-std::string FmiNcMetaData::GetLevelDimName() const
+std::string FmiNcMetaData::GetLevelDimName(void)
 {
   if (fUseSurfaceInfo)
     return itsSurfaceLevelInfo.itsDimName;
@@ -76,7 +79,7 @@ std::string FmiNcMetaData::GetLevelDimName() const
     return itsMultiLevelInfo.itsDimName;
 }
 
-FmiNcLevelType FmiNcMetaData::GetLevelType() const
+FmiNcLevelType FmiNcMetaData::GetLevelType(void)
 {
   if (fUseSurfaceInfo)
     return itsSurfaceLevelInfo.itsNcLevelType;
@@ -84,9 +87,13 @@ FmiNcLevelType FmiNcMetaData::GetLevelType() const
     return itsMultiLevelInfo.itsNcLevelType;
 }
 
-FmiNetCdfQueryData::FmiNetCdfQueryData()
-    :
-
+FmiNetCdfQueryData::FmiNetCdfQueryData(void)
+    : fDataOk(false),
+      itsTInfo(),
+      itsXInfo(),
+      itsYInfo(),
+      itsProjectionInfo(),
+      itsNormalParameters(),
       itsGrid(),
       itsProducer(123, "NetCdf-Prod"),
       itsSurfaceMetaData(true),
@@ -96,7 +103,7 @@ FmiNetCdfQueryData::FmiNetCdfQueryData()
 {
 }
 
-FmiNetCdfQueryData::~FmiNetCdfQueryData() = default;
+FmiNetCdfQueryData::~FmiNetCdfQueryData(void) {}
 static NFmiQueryData *MakeQueryData(NcFile &theNcFile,
                                     NFmiQueryInfo &theMetaInfo,
                                     std::vector<FmiVarInfo> &theVarInfos)
@@ -104,17 +111,17 @@ static NFmiQueryData *MakeQueryData(NcFile &theNcFile,
   NFmiQueryData *qData = NFmiQueryDataUtil::CreateEmptyData(theMetaInfo);
   NFmiFastQueryInfo fInfo(qData);
 
-  for (auto &theVarInfo : theVarInfos)
+  for (size_t i = 0; i < theVarInfos.size(); i++)
   {
-    if (fInfo.Param(static_cast<FmiParameterName>(theVarInfo.itsParId)))  // theVarInfos:issa on
-                                                                          // kaikki parametrit
-                                                                          // surface ja level
-                                                                          // paramit, joten
-                                                                          // pitää tarkistaa,
-                                                                          // löytyykö tästä
-                                                                          // datasta erikseen
+    if (fInfo.Param(static_cast<FmiParameterName>(theVarInfos[i].itsParId)))  // theVarInfos:issa on
+                                                                              // kaikki parametrit
+                                                                              // surface ja level
+                                                                              // paramit, joten
+                                                                              // pitää tarkistaa,
+                                                                              // löytyykö tästä
+                                                                              // datasta erikseen
     {
-      NcVar *varPtr = theNcFile.get_var(theVarInfo.itsIndex);
+      NcVar *varPtr = theNcFile.get_var(theVarInfos[i].itsIndex);
       if (varPtr)  // Pitäisi löytyä!!
       {
         // NetCDF conventioiden mukaan juoksu järjestys on:
@@ -131,7 +138,7 @@ static NFmiQueryData *MakeQueryData(NcFile &theNcFile,
               float value = vals->as_float(counter);
               // jos ei ole fill-value, laitetaan arvo queryDataan, jos oli, jätetään qDatan missing
               // arvo voimaan (data luodan alustettuna puuttuvilla arvoilla)
-              if (value != theVarInfo.itsFillValue)
+              if (value != theVarInfos[i].itsFillValue)
                 fInfo.FloatValue(value);
               counter++;
             }
@@ -192,7 +199,7 @@ std::vector<NFmiQueryData *> FmiNetCdfQueryData::CreateQueryDatas(const std::str
   return qDatas;
 }
 
-void FmiNetCdfQueryData::MakeAllMetaInfos()
+void FmiNetCdfQueryData::MakeAllMetaInfos(void)
 {
   itsSurfaceMetaData.MakeMetaInfo(itsTInfo, itsGrid);
   itsHeightLevelMetaData.MakeMetaInfo(itsTInfo, itsGrid);
@@ -200,7 +207,7 @@ void FmiNetCdfQueryData::MakeAllMetaInfos()
   itsHybridLevelMetaData.MakeMetaInfo(itsTInfo, itsGrid);
 }
 
-void FmiNetCdfQueryData::InitKnownParamMap()
+void FmiNetCdfQueryData::InitKnownParamMap(void)
 {
   itsKnownParameterMap.clear();
   // tässä on listattu tunnettuja parametrien standardi nimiä ja niiden vastineet FMI
@@ -208,14 +215,14 @@ void FmiNetCdfQueryData::InitKnownParamMap()
   itsKnownParameterMap.insert(std::make_pair("sea_water_temperature", kFmiTemperatureSea));
 }
 
-void FmiNetCdfQueryData::MakeWantedParamBag()
+void FmiNetCdfQueryData::MakeWantedParamBag(void)
 {
   if (itsNormalParameters.size())
   {
-    for (auto &itsNormalParameter : itsNormalParameters)
+    for (size_t i = 0; i < itsNormalParameters.size(); i++)
     {
-      NFmiParam param(itsNormalParameter.itsParId,
-                      itsNormalParameter.itsVarName,
+      NFmiParam param(itsNormalParameters[i].itsParId,
+                      itsNormalParameters[i].itsVarName,
                       kFloatMissing,
                       kFloatMissing,
                       1,
@@ -223,13 +230,13 @@ void FmiNetCdfQueryData::MakeWantedParamBag()
                       "%.1f",
                       kLinearly);
       NFmiDataIdent dataIdent(param, itsProducer);
-      if (itsNormalParameter.itsNcLevelType == kFmiNcSurface)
+      if (itsNormalParameters[i].itsNcLevelType == kFmiNcSurface)
         itsSurfaceMetaData.itsParams.Add(dataIdent);
-      else if (itsNormalParameter.itsNcLevelType == kFmiNcHeight)
+      else if (itsNormalParameters[i].itsNcLevelType == kFmiNcHeight)
         itsHeightLevelMetaData.itsParams.Add(dataIdent);
-      else if (itsNormalParameter.itsNcLevelType == kFmiNcPressureLevel)
+      else if (itsNormalParameters[i].itsNcLevelType == kFmiNcPressureLevel)
         itsPressureLevelMetaData.itsParams.Add(dataIdent);
-      else if (itsNormalParameter.itsNcLevelType == kFmiNcHybrid)
+      else if (itsNormalParameters[i].itsNcLevelType == kFmiNcHybrid)
         itsHybridLevelMetaData.itsParams.Add(dataIdent);
     }
   }
@@ -238,9 +245,9 @@ void FmiNetCdfQueryData::MakeWantedParamBag()
         "Error in FmiNetCdfQueryData::MakeWantedParamBag - parameters were missing.");
 }
 
-void FmiNetCdfQueryData::MakeWantedGrid()
+void FmiNetCdfQueryData::MakeWantedGrid(void)
 {
-  if (itsGrid.Area() != nullptr)
+  if (itsGrid.Area() != 0)
     return;  // jos lat-lon projektiosta poikkeava, hila on jo rakennettu
   size_t xSize = itsXInfo.itsValues.size();
   size_t ySize = itsYInfo.itsValues.size();
@@ -264,7 +271,7 @@ void FmiNetCdfQueryData::MakeWantedGrid()
 static FmiNcTimeOffsetType GetOffsetType(const std::string &theEpochTimeStr)
 {
   FmiNcTimeOffsetType timeOffsetType = kFmiNcNoTimeType;
-  if (!theEpochTimeStr.empty())
+  if (theEpochTimeStr.empty() == false)
   {
     std::vector<std::string> wordVec = NFmiStringTools::Split(theEpochTimeStr, " ");
     if (wordVec.size() >= 3)
@@ -289,7 +296,7 @@ static FmiNcTimeOffsetType GetOffsetType(const std::string &theEpochTimeStr)
 static NFmiMetTime GetEpochTime(const std::string &theEpochTimeStr)
 {
   NFmiMetTime aTime = NFmiMetTime::gMissingTime;
-  if (!theEpochTimeStr.empty())
+  if (theEpochTimeStr.empty() == false)
   {
     std::vector<std::string> wordVec = NFmiStringTools::Split(theEpochTimeStr, " ");
     if (wordVec.size() == 3)
@@ -342,7 +349,7 @@ static NFmiMetTime GetEpochTime(const std::string &theEpochTimeStr)
   throw std::runtime_error("Error in GetEpochTime - unknown error.");
 }
 
-void FmiNetCdfQueryData::CalcTimeList()
+void FmiNetCdfQueryData::CalcTimeList(void)
 {
   itsTInfo.CalcTimeList();
 }
@@ -357,13 +364,13 @@ void FmiNetCdfQueryData::InitTimeDim(NcVar &theVar, const std::string &theVarNam
   itsTInfo.itsVarName = theVarName;
   itsTInfo.itsIndex = theIndex;
   NcAtt *epochAttribute = theVar.get_att("units");
-  if (epochAttribute == nullptr)
+  if (epochAttribute == 0)
     throw std::runtime_error("Error in FmiNetCdfQueryData::InitTimeDim - no epoch attribute");
   NcValues *epochTimeValueStr = epochAttribute->values();
   itsTInfo.itsEpochTimeStr = epochTimeValueStr->as_string(0);
   delete epochTimeValueStr;
   NcValues *vals = theVar.values();
-  if (vals == nullptr)
+  if (vals == 0)
     throw std::runtime_error("Error in FmiNetCdfQueryData::InitTimeDim - no offset values");
   for (long i = 0; i < vals->num(); i++)
     itsTInfo.itsOffsetValues.push_back(vals->as_long(i));
@@ -386,7 +393,7 @@ void InitXYDim(FmiXYDimVarInfo &theInfo, NcVar &theVar, const std::string &theVa
   theInfo.itsVarName = theVarName;
   theInfo.itsIndex = theIndex;
   NcValues *vals = theVar.values();
-  if (vals == nullptr)
+  if (vals == 0)
     throw std::runtime_error("Error in InitXYDim - no lat/lon or X/Y values found.");
   for (long i = 0; i < vals->num(); i++)
     theInfo.itsValues.push_back(vals->as_float(i));
@@ -473,13 +480,13 @@ void FmiNetCdfQueryData::InitZDim(NcVar &theVar,
     usedLevelInfo.itsNcLevelType = theLevelType;
 
     NcAtt *levelUnitAttribute = theVar.get_att("units");
-    if (levelUnitAttribute == nullptr)
+    if (levelUnitAttribute == 0)
       throw std::runtime_error(
           "Error in FmiNetCdfQueryData::InitZDim - no level type unit attribute");
     NcValues *unitStr = levelUnitAttribute->values();
     usedLevelInfo.itsLevelUnitName = unitStr->as_string(0);
     NcValues *vals = theVar.values();
-    if (vals == nullptr)
+    if (vals == 0)
       throw std::runtime_error("Error in FmiNetCdfQueryData::InitZDim - no level values found.");
     for (long i = 0; i < vals->num(); i++)
       usedLevelInfo.itsValues.push_back(vals->as_float(i));
@@ -499,7 +506,7 @@ FmiParameterName FmiNetCdfQueryData::GetParameterName(NcVar &theVar,
     std::string stdParName = vals->as_string(0);
     delete vals;
     delete stdNameAttr;
-    auto it = itsKnownParameterMap.find(stdParName);
+    std::map<std::string, FmiParameterName>::iterator it = itsKnownParameterMap.find(stdParName);
     if (it != itsKnownParameterMap.end())
       return (*it).second;
   }
@@ -533,7 +540,7 @@ static bool CheckDimName(NcVar &theVar, const std::string &theDimName)
 }
 
 // Tarkistaa että muuttujalla on kolme dimensiota, ja ne ovat x, y ja time
-bool FmiNetCdfQueryData::IsSurfaceVariable(NcVar &theVar) const
+bool FmiNetCdfQueryData::IsSurfaceVariable(NcVar &theVar)
 {
   if (theVar.num_dims() == 3)
   {
@@ -600,7 +607,7 @@ static bool CheckAttribute(NcVar &theVar,
 {
   std::string attrValue = GetAttributeStringValue(theVar, theAttrName);
 
-  if (!attrValue.empty())
+  if (attrValue.empty() == false)
   {
     if (fJustContains)
     {
@@ -643,9 +650,9 @@ static bool IsLevelVariable(NcVar &theVar, FmiNcLevelType &theLevelTypeOut)
   {
     if (::CheckAttribute(theVar, "axis", "Z"))
       status = true;
-    if (!status && std::string(theVar.name()) == "level")
+    if (status == false && std::string(theVar.name()) == "level")
       status = true;
-    if (!status && std::string(theVar.name()) == "hybrid")
+    if (status == false && std::string(theVar.name()) == "hybrid")
     {
       suggestedLevelType = kFmiNcHybrid;
       status = true;
@@ -733,7 +740,7 @@ static FmiNcProjectionType GetProjectionType(NcVar &theVar)
                            " is not supported yet.");
 }
 
-void FmiNetCdfQueryData::InitializeStreographicGrid()
+void FmiNetCdfQueryData::InitializeStreographicGrid(void)
 {
   if (itsProjectionInfo.La1 == kFloatMissing || itsProjectionInfo.Lo1 == kFloatMissing ||
       itsProjectionInfo.LoV == kFloatMissing || itsProjectionInfo.Dx == kFloatMissing ||
@@ -799,10 +806,10 @@ void FmiNetCdfQueryData::InitializeStreographicGrid()
 // määritykset!!!
 void FmiNetCdfQueryData::SeekProjectionInfo(NcFile &theNcFile)
 {
-  NcVar *varPtr = nullptr;
+  NcVar *varPtr = 0;
   // Käydään ensin läpi vain yksi-ulotteiset muuttujat ja etsitään tiettyjä muutujia ja niiden
   // arvoja.
-  for (int n = 0; (varPtr = theNcFile.get_var(n)) != nullptr; n++)
+  for (int n = 0; (varPtr = theNcFile.get_var(n)) != 0; n++)
   {
     if (varPtr->num_dims() == 1)
     {
@@ -846,11 +853,11 @@ void FmiNetCdfQueryData::InitMetaInfo(NcFile &theNcFile)
   InitKnownParamMap();
   if (theNcFile.is_valid())
   {
-    NcVar *varPtr = nullptr;
+    NcVar *varPtr = 0;
     // Käydään ensin läpi vain yksi-ulotteisen muuttuja, että saamme kokoon kaaiken tarvittavan
     // tiedon
     // moni ulotteisten muuttujien määritykseen.
-    for (int n = 0; (varPtr = theNcFile.get_var(n)) != nullptr; n++)
+    for (int n = 0; (varPtr = theNcFile.get_var(n)) != 0; n++)
     {
       if (varPtr->num_dims() == 1)
       {
@@ -874,7 +881,7 @@ void FmiNetCdfQueryData::InitMetaInfo(NcFile &theNcFile)
                                       // huom! jos ei löydy, poikkeus lentää.
 
     // Sitten käydään läpi ns. normaalit moniulotteisen parametrit
-    for (int n = 0; (varPtr = theNcFile.get_var(n)) != nullptr; n++)
+    for (int n = 0; (varPtr = theNcFile.get_var(n)) != 0; n++)
     {
       if (varPtr->num_dims() >= 3)
       {
@@ -892,7 +899,7 @@ void FmiNetCdfQueryData::InitMetaInfo(NcFile &theNcFile)
   }
 }
 
-void FmiNetCdfQueryData::Clear()
+void FmiNetCdfQueryData::Clear(void)
 {
   itsTInfo = FmiTDimVarInfo();
   itsXInfo = FmiXYDimVarInfo();

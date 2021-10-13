@@ -33,14 +33,14 @@ enum GeomDefinedType
 class GeoTiffQD
 {
  public:
-  virtual ~GeoTiffQD() = default;
+  virtual ~GeoTiffQD(void) {}
   GeoTiffQD(int code = 0);
 
-  GeomDefinedType ConverQD2GeoTiff(const string &aNameVersion,
+  GeomDefinedType ConverQD2GeoTiff(string aNameVersion,
                                    NFmiFastQueryInfo *theData,
                                    NFmiFastQueryInfo *theExternal,
-                                   const string &tsrs,
-                                   bool selectedDataType,
+                                   string tsrs,
+                                   bool isIntDataType,
                                    double scale);
   void DestinationProjection(NFmiArea *destProjection);
   void SetTestMode(bool testMode);
@@ -62,11 +62,12 @@ class GeoTiffQD
                              const NFmiArea *area);
   double calculateTrueNorthAzimuthValue(float value, const NFmiArea *area, const NFmiPoint *point);
 
-  void ConvertToGeoTiff(const string &aNameVersion,
-                        NFmiFastQueryInfo *orginData,
+  void ConvertToGeoTiff(string aNameVersion,
+                        NFmiFastQueryInfo *theData,
                         NFmiFastQueryInfo *theExternal,
                         GeomDefinedType geomDefinedType);
 
+ private:
   int itsCode;
   bool isIntDataType;
   double itsScale;

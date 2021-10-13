@@ -55,16 +55,26 @@ using namespace std;
 
 struct Options
 {
-  bool verbose{false};
-  bool shortnames{false};
-  bool setorigintime{false};
-  bool memorymapping{false};
-  int simultaneoustimes{1};
-  float missinglimit{100};
+  bool verbose;
+  bool shortnames;
+  bool setorigintime;
+  bool memorymapping;
+  int simultaneoustimes;
+  float missinglimit;
   string inputfile;
   string outputdir;
 
-  Options() {}
+  Options()
+      : verbose(false),
+        shortnames(false),
+        setorigintime(false),
+        memorymapping(false),
+        simultaneoustimes(1),
+        missinglimit(100),
+        inputfile(),
+        outputdir()
+  {
+  }
 };
 
 // ----------------------------------------------------------------------
@@ -112,8 +122,7 @@ bool parse_command_line(int argc, const char* argv[])
 {
   NFmiCmdLine cmdline(argc, argv, "hvst!T!m!O");
 
-  if (cmdline.Status().IsError())
-    throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
+  if (cmdline.Status().IsError()) throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
 
   // help-option must be checked first
 
@@ -156,8 +165,7 @@ bool parse_command_line(int argc, const char* argv[])
     options.memorymapping = true;
   }
 
-  if (options.simultaneoustimes < 1)
-    throw runtime_error("Option t/T argument must be at least 1");
+  if (options.simultaneoustimes < 1) throw runtime_error("Option t/T argument must be at least 1");
 
   return true;
 }
@@ -168,7 +176,7 @@ bool parse_command_line(int argc, const char* argv[])
  */
 // ----------------------------------------------------------------------
 
-NFmiTimeDescriptor make_timedescriptor(const NFmiFastQueryInfo& theQ)
+NFmiTimeDescriptor make_timedescriptor(const NFmiFastQueryInfo theQ)
 {
   NFmiTimeList times;
   times.Add(new NFmiMetTime(theQ.ValidTime()));
@@ -187,8 +195,7 @@ NFmiTimeDescriptor make_timedescriptor(const NFmiFastQueryInfo& theQ)
 
 float calc_missing(NFmiFastQueryInfo& info)
 {
-  if (options.missinglimit >= 100)
-    return -1;
+  if (options.missinglimit >= 100) return -1;
 
   int total = 0;
   int missing = 0;
@@ -202,8 +209,7 @@ float calc_missing(NFmiFastQueryInfo& info)
         for (info.ResetTime(); info.NextTime();)
         {
           float value = info.FloatValue();
-          if (value == kFloatMissing)
-            ++missing;
+          if (value == kFloatMissing) ++missing;
           ++total;
         }
       }
@@ -264,8 +270,7 @@ void extract_time(NFmiFastQueryInfo& theQ)
   unique_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
   NFmiFastQueryInfo dstinfo(data.get());
 
-  if (data.get() == nullptr)
-    throw runtime_error("Could not allocate memory for result data");
+  if (data.get() == 0) throw runtime_error("Could not allocate memory for result data");
 
   // copy the data for time selected time
 
@@ -299,14 +304,12 @@ void extract_time(NFmiFastQueryInfo& theQ)
   {
     // write the data out
 
-    if (options.verbose)
-      cout << "Writing '" << outname << " (missing " << misses << "%)" << endl;
+    if (options.verbose) cout << "Writing '" << outname << " (missing " << misses << "%)" << endl;
 
     // Use dotfile to prevent for example roadmodel crashes
 
     data->Write(tmpname);
-    if (boost::filesystem::exists(outname))
-      boost::filesystem::remove(outname);
+    if (boost::filesystem::exists(outname)) boost::filesystem::remove(outname);
     boost::filesystem::rename(tmpname, outname);
   }
 }
@@ -335,7 +338,7 @@ void extract_times(NFmiFastQueryInfo& theQ, unsigned long index1, unsigned long 
     NFmiFastQueryInfo tmpinfo(
         theQ.ParamDescriptor(), tdesc, theQ.HPlaceDescriptor(), theQ.VPlaceDescriptor());
 
-    NFmiQueryData* qd = nullptr;
+    NFmiQueryData* qd = 0;
 
     if (!options.memorymapping)
       qd = NFmiQueryDataUtil::CreateEmptyData(tmpinfo);
@@ -345,7 +348,7 @@ void extract_times(NFmiFastQueryInfo& theQ, unsigned long index1, unsigned long 
       qd = NFmiQueryDataUtil::CreateEmptyData(tmpinfo, names.second, false);
     }
 
-    auto* info = new NFmiFastQueryInfo(qd);
+    NFmiFastQueryInfo* info = new NFmiFastQueryInfo(qd);
 
     datas.push_back(qd);
     infos.push_back(info);
@@ -355,18 +358,18 @@ void extract_times(NFmiFastQueryInfo& theQ, unsigned long index1, unsigned long 
 
   for (theQ.ResetParam(); theQ.NextParam();)
   {
-    for (auto& info : infos)
-      info->ParamIndex(theQ.ParamIndex());
+    for (std::size_t i = 0; i < infos.size(); i++)
+      infos[i]->ParamIndex(theQ.ParamIndex());
 
     for (theQ.ResetLocation(); theQ.NextLocation();)
     {
-      for (auto& info : infos)
-        info->LocationIndex(theQ.LocationIndex());
+      for (std::size_t i = 0; i < infos.size(); i++)
+        infos[i]->LocationIndex(theQ.LocationIndex());
 
       for (theQ.ResetLevel(); theQ.NextLevel();)
       {
-        for (auto& info : infos)
-          info->LevelIndex(theQ.LevelIndex());
+        for (std::size_t i = 0; i < infos.size(); i++)
+          infos[i]->LevelIndex(theQ.LevelIndex());
         {
           for (unsigned long i = index1; i < index2; ++i)
           {
@@ -397,8 +400,7 @@ void extract_times(NFmiFastQueryInfo& theQ, unsigned long index1, unsigned long 
       if (options.verbose)
       {
         cout << "Skipping " << outname << " since missing percentage is " << misses << endl;
-        if (options.memorymapping)
-          boost::filesystem::remove(tmpname);
+        if (options.memorymapping) boost::filesystem::remove(tmpname);
       }
     }
     else
@@ -415,11 +417,9 @@ void extract_times(NFmiFastQueryInfo& theQ, unsigned long index1, unsigned long 
 
       // Use dotfile to prevent for example roadmodel crashes
 
-      if (!options.memorymapping)
-        datas[i]->Write(tmpname);
+      if (!options.memorymapping) datas[i]->Write(tmpname);
 
-      if (boost::filesystem::exists(outname))
-        boost::filesystem::remove(outname);
+      if (boost::filesystem::exists(outname)) boost::filesystem::remove(outname);
       boost::filesystem::rename(tmpname, outname);
     }
 
@@ -436,8 +436,7 @@ void extract_times(NFmiFastQueryInfo& theQ, unsigned long index1, unsigned long 
 
 int run(int argc, const char* argv[])
 {
-  if (!parse_command_line(argc, argv))
-    return 0;
+  if (!parse_command_line(argc, argv)) return 0;
 
   // Read the data
 

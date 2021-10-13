@@ -41,11 +41,12 @@ struct ParamChangeItem
   ParamChangeItem &operator=(const ParamChangeItem &theOther);
   void Reset();
 
-  long itsOriginalParamId{0};
+ public:
+  long itsOriginalParamId;
   NFmiParam itsWantedParam;
-  float itsConversionBase{0};  // jos ei 0 ja scale ei 1, tehdään parametrille muunnos konversio
-  float itsConversionScale{1.F};
-  NFmiLevel *itsLevel{nullptr};  // jos ei 0-pointer, tehdään tästä levelistä pintaparametri
+  float itsConversionBase;  // jos ei 0 ja scale ei 1, tehdään parametrille muunnos konversio
+  float itsConversionScale;
+  NFmiLevel *itsLevel;  // jos ei 0-pointer, tehdään tästä levelistä pintaparametri
 };
 
 bool GetParamChangeItemFromString(const std::string &buffer,

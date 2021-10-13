@@ -54,44 +54,44 @@ class NFmiQueryDataChecker
 {
  public:
   NFmiQueryDataChecker(NFmiOhjausData* theOhjausData);
-  ~NFmiQueryDataChecker();
-  bool DoTotalCheck();
+  ~NFmiQueryDataChecker(void);
+  bool DoTotalCheck(void);
   void ParamBag(const NFmiParamBag& value);
   bool ParamBag(const NFmiString& theFileName);
-  const NFmiParamBag& ParamBag() const { return itsParamBag; }
-  const NFmiParamBag* DatasParamBag() const;
+  const NFmiParamBag& ParamBag(void) const { return itsParamBag; }
+  const NFmiParamBag* DatasParamBag(void) const;
   void CheckOnlyWantedParams(bool value);
-  bool CheckOnlyWantedParams() const { return fCheckOnlyWantedParams; }
+  bool CheckOnlyWantedParams(void) const { return fCheckOnlyWantedParams; }
   void CheckedTimeDescriptor(const NFmiTimeDescriptor& value);
-  const NFmiTimeDescriptor& CheckedTimeDescriptor() const { return itsCheckedTimeDescriptor; }
+  const NFmiTimeDescriptor& CheckedTimeDescriptor(void) const { return itsCheckedTimeDescriptor; }
   void CheckOnlyWantedTimes(bool value);
-  bool CheckOnlyWantedTimes() const { return fCheckOnlyWantedTimes; }
+  bool CheckOnlyWantedTimes(void) const { return fCheckOnlyWantedTimes; }
   void CheckedLocations(const NFmiLocationBag& value);
   bool CheckedLocations(const NFmiString& theFileName);
-  const NFmiLocationBag& CheckedLocations() const { return itsCheckedLocations; }
+  const NFmiLocationBag& CheckedLocations(void) const { return itsCheckedLocations; }
   void RandomlyCheckedLocationCount(int value);
-  int RandomlyCheckedLocationCount() const { return itsRandomlyCheckedLocationCount; }
+  int RandomlyCheckedLocationCount(void) const { return itsRandomlyCheckedLocationCount; }
   void LocationCheckType(int value) { itsLocationCheckType = value; }
-  int LocationCheckType() const { return itsLocationCheckType; }
+  int LocationCheckType(void) const { return itsLocationCheckType; }
   // checklist 0=ei mit‰‰n, 1=missing data,2=straight data, 4=limit check (e.g. 1+4=5 = missing and
   // limit check)
   void CheckList(int value) { itsCheckList = value; }
-  int CheckList() const { return itsCheckList; }
+  int CheckList(void) const { return itsCheckList; }
   void Data(const NFmiQueryData* value);     // tekee kopion!
   bool Data(const NFmiString& theFileName);  // tekee kopion!
-  const NFmiQueryData* Data() const { return itsData; }
-  NFmiFastQueryInfo* Info() const { return itsInfo; }
+  const NFmiQueryData* Data(void) const { return itsData; }
+  NFmiFastQueryInfo* Info(void) const { return itsInfo; }
   void SetRandomLocationIndexies(
       const std::vector<int>& value);  // jos arvonta ei kelpaa, aseta itse indeksit
-  const std::vector<int>& RandomLocationIndexies() const { return itsRandomLocationIndexies; }
+  const std::vector<int>& RandomLocationIndexies(void) const { return itsRandomLocationIndexies; }
   void DoIndexRandomizing(bool value) { fDoIndexRandomizing = value; }
-  bool DoIndexRandomizing() const { return fDoIndexRandomizing; }
+  bool DoIndexRandomizing(void) { return fDoIndexRandomizing; }
 
  private:
-  bool DoMissingDataCheck();
-  bool DoStraightDataCheck();
-  bool DoOutOfLimitsDataCheck();
-  void MakeRandomLocationIndexies();
+  bool DoMissingDataCheck(void);
+  bool DoStraightDataCheck(void);
+  bool DoOutOfLimitsDataCheck(void);
+  void MakeRandomLocationIndexies(void);
   bool GoThroughData(NFmiDataModifier* theModifier);
   bool GoThroughLocationDataDataInTime(NFmiDataModifier* theModifier);
   bool GoThroughRandomLocationsDataInTime(NFmiDataModifier* theModifier);

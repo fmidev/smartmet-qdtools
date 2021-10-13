@@ -54,7 +54,7 @@ std::string ToString(float theValue)
 
 void ReportVersion(NFmiFastQueryInfo *q)
 {
-  if (q == nullptr)
+  if (q == 0)
     throw runtime_error("Option -q is required for the given options");
 
   double version = q->InfoVersion();
@@ -69,16 +69,16 @@ void ReportVersion(NFmiFastQueryInfo *q)
  */
 // ----------------------------------------------------------------------
 
-void ReportParameterNames()
+void ReportParameterNames(void)
 {
   NFmiEnumConverter converter;
   const list<string> names = converter.Names();
 
   cout << "The list of parameters known by newbase is:" << endl << endl;
 
-  for (const auto &name : names)
+  for (list<string>::const_iterator it = names.begin(); it != names.end(); ++it)
   {
-    cout << converter.ToEnum(name) << '\t' << name << endl;
+    cout << converter.ToEnum(*it) << '\t' << *it << endl;
   }
   cout << endl << "There are " << names.size() << " known parameters in total" << endl;
 }
@@ -121,7 +121,7 @@ std::string interpolation_name(FmiInterpolationMethod method)
 
 void ReportParameters(NFmiFastQueryInfo *q, bool ignoresubs)
 {
-  if (q == nullptr)
+  if (q == 0)
     throw runtime_error("Option -q is required for the given options");
 
   NFmiEnumConverter converter;
@@ -161,6 +161,7 @@ void ReportParameters(NFmiFastQueryInfo *q, bool ignoresubs)
          << ToString(q->Param().GetParam()->MaxValue()) << endl;
   }
   cout << endl << "There are " << count << " stored parameters in total" << endl;
+  return;
 }
 
 // ----------------------------------------------------------------------
@@ -170,7 +171,7 @@ void ReportParameters(NFmiFastQueryInfo *q, bool ignoresubs)
  */
 // ----------------------------------------------------------------------
 
-string format_time(const NFmiMetTime &mtime, const string &dateFormat, bool /*theUtcFlag*/)
+const string format_time(const NFmiMetTime &mtime, const string &dateFormat, bool theUtcFlag)
 {
   // The UTC time
   struct ::tm utc;
@@ -221,7 +222,7 @@ void set_timezone(const string &theZone)
  */
 // ----------------------------------------------------------------------
 
-string TimeString(const NFmiMetTime &theTime, bool theUtcFlag, const string &dateFormat)
+const string TimeString(const NFmiMetTime &theTime, bool theUtcFlag, string dateFormat)
 {
   if (theUtcFlag)
     set_timezone("UTC");
@@ -244,9 +245,9 @@ string TimeString(const NFmiMetTime &theTime, bool theUtcFlag, const string &dat
  */
 // ----------------------------------------------------------------------
 
-void ReportTimes(NFmiFastQueryInfo *q, bool theUtcFlag, const string &dateFormat)
+void ReportTimes(NFmiFastQueryInfo *q, bool theUtcFlag, string dateFormat)
 {
-  if (q == nullptr)
+  if (q == 0)
     throw runtime_error("Option -q is required for the given options");
 
   cout << endl << "Time information on the querydata:" << endl << endl;
@@ -281,6 +282,8 @@ void ReportTimes(NFmiFastQueryInfo *q, bool theUtcFlag, const string &dateFormat
   cout << endl;
 
   cout << "Timesteps\t= " << q->SizeTimes() << endl;
+
+  return;
 }
 
 // ----------------------------------------------------------------------
@@ -395,7 +398,7 @@ string LevelName(FmiLevelType theLevel)
 
 void ReportLevels(NFmiFastQueryInfo *q)
 {
-  if (q == nullptr)
+  if (q == 0)
     throw runtime_error("Option -q is required for the given options");
 
   cout << endl
@@ -415,6 +418,8 @@ void ReportLevels(NFmiFastQueryInfo *q)
   }
 
   cout << endl << "There are " << q->SizeLevels() << " levels in total" << endl;
+
+  return;
 }
 
 // ----------------------------------------------------------------------
@@ -427,7 +432,7 @@ void ReportLevels(NFmiFastQueryInfo *q)
 
 void ReportProducer(NFmiFastQueryInfo *q)
 {
-  if (q == nullptr)
+  if (q == 0)
     throw runtime_error("Option -q is required for the given options");
 
   // Must select some parameter, producer is parameter dependent
@@ -441,6 +446,8 @@ void ReportProducer(NFmiFastQueryInfo *q)
   cout << "name\t= " << prod.GetName().CharPtr() << endl;
 
   cout << endl;
+
+  return;
 }
 
 // ----------------------------------------------------------------------
@@ -453,7 +460,7 @@ void ReportProducer(NFmiFastQueryInfo *q)
 
 void ReportProjection(NFmiFastQueryInfo *q)
 {
-  if (q == nullptr)
+  if (q == 0)
     throw runtime_error("Option -q is required for the given options");
 
   cout << endl << "Information on the querydata area:" << endl << endl;
@@ -461,7 +468,7 @@ void ReportProjection(NFmiFastQueryInfo *q)
   const NFmiArea *area = q->Area();
 
   // IsArea may return false even though Area may return one (for grids!)
-  if (area == nullptr)
+  if (area == 0)
   {
     cout << "The querydata has no area" << endl;
     return;
@@ -682,7 +689,7 @@ void ReportProjection(NFmiFastQueryInfo *q)
         case kNFmiPerspectiveArea:
 #endif
     {
-      const auto *a = dynamic_cast<const NFmiAzimuthalArea *>(area);
+      const NFmiAzimuthalArea *a = dynamic_cast<const NFmiAzimuthalArea *>(area);
       cout << "central longitude\t= " << a->CentralLongitude() << endl
            << "central latitude\t= " << a->CentralLatitude() << endl
            << "true latitude\t\t= " << a->TrueLatitude() << endl;
@@ -710,13 +717,13 @@ void ReportProjection(NFmiFastQueryInfo *q)
     case kNFmiLatLonArea:
     case kNFmiRotatedLatLonArea:
     {
-      const auto *a = dynamic_cast<const NFmiLatLonArea *>(area);
+      const NFmiLatLonArea *a = dynamic_cast<const NFmiLatLonArea *>(area);
       cout << "xscale\t\t= " << a->XScale() << endl << "yscale\t\t= " << a->YScale() << endl;
       break;
     }
     case kNFmiMercatorArea:
     {
-      const auto *a = dynamic_cast<const NFmiMercatorArea *>(area);
+      const NFmiMercatorArea *a = dynamic_cast<const NFmiMercatorArea *>(area);
       cout << "xscale\t\t= " << a->XScale() << endl << "yscale\t\t= " << a->YScale() << endl;
       break;
     }
@@ -738,7 +745,7 @@ void ReportProjection(NFmiFastQueryInfo *q)
 
 void ReportLocations(NFmiFastQueryInfo *q)
 {
-  if (q == nullptr)
+  if (q == 0)
     throw runtime_error("Option -q is required for the given options");
 
   cout << endl << "Information on the locations:" << endl << endl;
@@ -759,6 +766,8 @@ void ReportLocations(NFmiFastQueryInfo *q)
   }
 
   cout << endl << "There are " << q->SizeLocations() << " locations in total" << endl;
+
+  return;
 }
 
 // ----------------------------------------------------------------------
@@ -769,7 +778,7 @@ void ReportLocations(NFmiFastQueryInfo *q)
 
 void ReportMetadata(NFmiFastQueryInfo *q)
 {
-  if (q == nullptr)
+  if (q == 0)
     throw runtime_error("Option -q is required for the given options");
 
   cout << endl << "Metadata information:" << endl << endl;
@@ -856,7 +865,7 @@ void ReportMetadata(NFmiFastQueryInfo *q, const string &theKey)
 
 int domain(int argc, const char *argv[])
 {
-  string opt_queryfile;
+  string opt_queryfile = "";
 
   NFmiCmdLine cmdline(argc, argv, "hq!avAlpPt:rT:xXzm!M");
 
@@ -928,7 +937,7 @@ int domain(int argc, const char *argv[])
     qi.reset(new NFmiQueryInfo(filename));
   }
 
-  NFmiFastQueryInfo *q = (qi.get() == nullptr ? nullptr : new NFmiFastQueryInfo(*qi));
+  NFmiFastQueryInfo *q = (qi.get() == 0 ? 0 : new NFmiFastQueryInfo(*qi));
 
   bool opt_all_extended = cmdline.isOption('A');
   bool opt_all = cmdline.isOption('a') || opt_all_extended;
@@ -960,7 +969,7 @@ int domain(int argc, const char *argv[])
 
   // Option -t shows time information
 
-  string dateFormat;
+  string dateFormat = "";
 
   if (cmdline.isOption('t') || (opt_all && !cmdline.isOption('T')))
   {

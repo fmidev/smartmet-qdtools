@@ -56,8 +56,7 @@ int parse_command_line(int argc, const char *argv[], FMI::RadContour::PgmReadOpt
 {
   NFmiCmdLine cmdline(argc, argv, "hvp!t!");
 
-  if (cmdline.Status().IsError())
-    throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
+  if (cmdline.Status().IsError()) throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
 
   if (cmdline.isOption('h'))
   {
@@ -71,8 +70,7 @@ int parse_command_line(int argc, const char *argv[], FMI::RadContour::PgmReadOpt
   theOptions.indata = cmdline.Parameter(1);
   theOptions.outdata = cmdline.Parameter(2);
 
-  if (cmdline.isOption('v'))
-    theOptions.verbose = true;
+  if (cmdline.isOption('v')) theOptions.verbose = true;
 
   if (cmdline.isOption('t'))
   {
@@ -82,8 +80,7 @@ int parse_command_line(int argc, const char *argv[], FMI::RadContour::PgmReadOpt
   if (cmdline.isOption('p'))
   {
     vector<string> tmp = NFmiStringTools::Split(cmdline.OptionValue('p'));
-    if (tmp.size() != 2)
-      throw runtime_error("Invalid argument to option -p, int,name expected");
+    if (tmp.size() != 2) throw runtime_error("Invalid argument to option -p, int,name expected");
     theOptions.producer_number = NFmiStringTools::Convert<int>(tmp[0]);
     theOptions.producer_name = tmp[1];
   }
@@ -106,8 +103,7 @@ int domain(int argc, const char *argv[])
   FMI::RadContour::PgmReadOptions options;
 
   // Parse the command line arguments
-  if (!parse_command_line(argc, argv, options))
-    return 0;
+  if (!parse_command_line(argc, argv, options)) return 0;
 
   std::list<std::string> infiles = NFmiFileSystem::PatternFiles(options.indata);
   if (infiles.empty())
@@ -123,8 +119,7 @@ int domain(int argc, const char *argv[])
   for (it = infiles.begin(); it != infiles.end(); ++it)
   {
     NFmiQueryData *data = FMI::RadContour::Pgm2QueryData(dirName + *it, options, cout);
-    if (data)
-      qDataList.emplace_back(data);
+    if (data) qDataList.push_back(boost::shared_ptr<NFmiQueryData>(data));
   }
 
   // create combined qinfo
@@ -137,19 +132,18 @@ int domain(int argc, const char *argv[])
       qDataList,
       false,
       options.maxtimesteps,
-      nullptr);  // false = yhdistely sliceista, 0 = ei lopetus funktoria käytössä
-  if (data == nullptr)
+      0);  // false = yhdistely sliceista, 0 = ei lopetus funktoria käytössä
+  if (data == 0)
     throw std::runtime_error(std::string("Error, unable to create combined queryData"));
 
   std::unique_ptr<NFmiQueryData> dataPtr(data);  // tuhoaa automaattisesti datan lopuksi
   NFmiStreamQueryData sQData;
-  if (!sQData.WriteData(options.outdata, data, static_cast<long>(data->InfoVersion())))
+  if (sQData.WriteData(options.outdata, data, static_cast<long>(data->InfoVersion())) == false)
     throw std::runtime_error(std::string("Error, unable to store combined queryData to file:\n") +
                              options.outdata);
   else
   {
-    if (options.verbose)
-      cout << std::string("Writing to file: ") + options.outdata << endl;
+    if (options.verbose) cout << std::string("Writing to file: ") + options.outdata << endl;
   }
 
   return 0;

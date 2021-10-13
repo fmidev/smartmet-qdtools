@@ -42,7 +42,7 @@
 
 using namespace std;
 
-void Usage();
+void Usage(void);
 void run(int argc, const char *argv[]);
 int GetIntegerOptionValue(const NFmiCmdLine &theCmdline, char theOption);
 
@@ -93,9 +93,9 @@ static std::vector<int> GetOptionalParamIdList(const NFmiCmdLine &cmdline, char 
 static float convertOctaToProcent(float octas)
 {
   if (octas >= 0 && octas <= 8)
-    return octas * 12.5F;
+    return octas * 12.5f;
   else if (octas == 9)
-    return 100.F;
+    return 100.f;
   else
     return kFloatMissing;
 }
@@ -164,26 +164,19 @@ void run(int argc, const char *argv[])
     return;
   }
 
-  if (cmdline.isOption('t'))
-    doTotalWind = GetIntegerOptionValue(cmdline, 't') != 0;
-  if (cmdline.isOption('w'))
-    doWeatherAndCloudiness = GetIntegerOptionValue(cmdline, 'w') != 0;
+  if (cmdline.isOption('t')) doTotalWind = GetIntegerOptionValue(cmdline, 't') != 0;
+  if (cmdline.isOption('w')) doWeatherAndCloudiness = GetIntegerOptionValue(cmdline, 'w') != 0;
   if (cmdline.isOption('g'))
     windGustParId = static_cast<FmiParameterName>(GetIntegerOptionValue(cmdline, 'g'));
-  if (cmdline.isOption('a'))
-    allowLessParamsWhenCreatingWeather = true;
-  if (cmdline.isOption('i'))
-    inputfile = cmdline.OptionValue('i');
+  if (cmdline.isOption('a')) allowLessParamsWhenCreatingWeather = true;
+  if (cmdline.isOption('i')) inputfile = cmdline.OptionValue('i');
   if (cmdline.isOption('m'))
     maxUsedThreadCount = static_cast<FmiParameterName>(GetIntegerOptionValue(cmdline, 'm'));
-  if (cmdline.isOption('b'))
-    buildTimeBag = true;
+  if (cmdline.isOption('b')) buildTimeBag = true;
 
   bool doAccuratePrecip = false;
-  if (cmdline.isOption('p'))
-    doAccuratePrecip = true;
-  if (cmdline.isOption('N'))
-    convertNfromOctasToProcent = true;
+  if (cmdline.isOption('p')) doAccuratePrecip = true;
+  if (cmdline.isOption('N')) convertNfromOctasToProcent = true;
 
   // -f optiolla voidaan antaa lista parId:tä, joita käytetään Weather-parametrin
   // precipForm -aliparametrin täyttämisessä.
@@ -217,8 +210,7 @@ void run(int argc, const char *argv[])
                                            maxUsedThreadCount,
                                            doAccuratePrecip,
                                            buildTimeBag));
-  if (convertNfromOctasToProcent)
-    ::ConvertNfromOctasToProcent(uusiData, sourceInfo);
+  if (convertNfromOctasToProcent) ::ConvertNfromOctasToProcent(uusiData, sourceInfo);
   uusiData->Write();
 }
 
@@ -226,7 +218,7 @@ void run(int argc, const char *argv[])
 // Kaytto-ohjeet
 // ----------------------------------------------------------------------
 
-void Usage()
+void Usage(void)
 {
   cout << "Usage: qdversionchange [options] [qdVersion=7 keepCloudSymbol=0] < inputdata" << endl
        << " > outputData" << endl
@@ -263,8 +255,7 @@ void Usage()
 int GetIntegerOptionValue(const NFmiCmdLine &theCmdline, char theOption)
 {
   NFmiValueString valStr(theCmdline.OptionValue(theOption));
-  if (valStr.IsInt())
-    return static_cast<int>(valStr);
+  if (valStr.IsInt()) return static_cast<int>(valStr);
   throw runtime_error(string("Error: '") + theOption +
                       "' option value must be integer, exiting...");
 }

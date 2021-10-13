@@ -68,7 +68,7 @@ using namespace std;
  */
 // ----------------------------------------------------------------------
 
-void Usage()
+void Usage(void)
 {
   cout << "combineHistory [options] <directory> [<directory2> ...] > output" << endl
        << "combineHistory [options] -O outfile <directory> [<directory2> ...]" << endl
@@ -167,29 +167,22 @@ int main(int argc, const char *argv[])
   list<string> datapaths;
   {
     for (int i = 1; i <= cmdline.NumberofParameters(); i++)
-      datapaths.emplace_back(cmdline.Parameter(i));
+      datapaths.push_back(cmdline.Parameter(i));
   }
 
-  if (cmdline.isOption('v'))
-    verbose = true;
+  if (cmdline.isOption('v')) verbose = true;
 
-  if (cmdline.isOption('r'))
-    newestorigin = !newestorigin;
+  if (cmdline.isOption('r')) newestorigin = !newestorigin;
 
-  if (cmdline.isOption('p'))
-    maxPastAge = boost::lexical_cast<long>(cmdline.OptionValue('p'));
+  if (cmdline.isOption('p')) maxPastAge = boost::lexical_cast<long>(cmdline.OptionValue('p'));
 
-  if (cmdline.isOption('f'))
-    maxFutureAge = boost::lexical_cast<long>(cmdline.OptionValue('f'));
+  if (cmdline.isOption('f')) maxFutureAge = boost::lexical_cast<long>(cmdline.OptionValue('f'));
 
-  if (cmdline.isOption('1'))
-    latest = true;
+  if (cmdline.isOption('1')) latest = true;
 
-  if (cmdline.isOption('o'))
-    sameorigin = true;
+  if (cmdline.isOption('o')) sameorigin = true;
 
-  if (cmdline.isOption('O'))
-    outfile = cmdline.OptionValue('O');
+  if (cmdline.isOption('O')) outfile = cmdline.OptionValue('O');
 
   // Check arguments
 
@@ -276,15 +269,13 @@ int main(int argc, const char *argv[])
   {
     const string filename = *it;
 
-    if (verbose)
-      cerr << "Reading " << filename << " header" << endl;
+    if (verbose) cerr << "Reading " << filename << " header" << endl;
 
     NFmiQueryInfo qi;
     try
     {
       ifstream in(filename.c_str(), ios::in | ios::binary);
-      if (!in)
-        continue;
+      if (!in) continue;
       in >> qi;
       in.close();
     }
@@ -298,8 +289,7 @@ int main(int argc, const char *argv[])
     {
       if (origintime != qi.OriginTime())
       {
-        if (verbose)
-          cerr << ".. discared due to different origin time" << endl;
+        if (verbose) cerr << ".. discared due to different origin time" << endl;
         continue;
       }
     }
@@ -354,8 +344,8 @@ int main(int argc, const char *argv[])
 
   // Now a second pass reads all files which contained valid time stamps
 
-  NFmiQueryData *outqd = nullptr;
-  NFmiFastQueryInfo *outqi = nullptr;
+  NFmiQueryData *outqd = 0;
+  NFmiFastQueryInfo *outqi = 0;
 
   // This will contain all times that have already been handled
   set<NFmiMetTime> handled_times;
@@ -363,15 +353,14 @@ int main(int argc, const char *argv[])
   for (auto it = accepted_files.rbegin(); it != accepted_files.rend(); ++it)
   {
     const string &filename = it->second;
-    if (verbose)
-      cerr << "Reading " << filename << endl;
+    if (verbose) cerr << "Reading " << filename << endl;
 
     NFmiQueryData qd(filename);
     NFmiFastQueryInfo qi(&qd);
 
     // If first file, create output file
 
-    if (outqd == nullptr)
+    if (outqd == 0)
     {
       NFmiTimeBag timeBag;
       bool fUseTimeBag = false;
@@ -387,12 +376,10 @@ int main(int argc, const char *argv[])
 
       // Change producer name if so requested
       NFmiProducer producer(*tmpInfo.Producer());
-      if (cmdline.isOption('N'))
-        producer.SetName(cmdline.OptionValue('N'));
+      if (cmdline.isOption('N')) producer.SetName(cmdline.OptionValue('N'));
       if (cmdline.isOption('D'))
         producer.SetIdent(NFmiStringTools::Convert<unsigned long>(cmdline.OptionValue('D')));
-      if (cmdline.isOption('N') || cmdline.isOption('D'))
-        tmpInfo.SetProducer(producer);
+      if (cmdline.isOption('N') || cmdline.isOption('D')) tmpInfo.SetProducer(producer);
 
       if (outfile == "-")
         outqd = NFmiQueryDataUtil::CreateEmptyData(tmpInfo);
@@ -419,8 +406,7 @@ int main(int argc, const char *argv[])
       }
     }
 
-    if (verbose && slowcopy)
-      cerr << "Must perform slow copy of point data, locations differ\n";
+    if (verbose && slowcopy) cerr << "Must perform slow copy of point data, locations differ\n";
 
     // Collect time indexes which will be copied, from and to
 
@@ -435,8 +421,7 @@ int main(int argc, const char *argv[])
         input_time_indexes.push_back(qi.TimeIndex());
         output_time_indexes.push_back(outqi->TimeIndex());
         handled_times.insert(qi.ValidTime());
-        if (verbose)
-          cerr << "\ttaking " << qi.ValidTime().ToStr(kYYYYMMDDHHMM).CharPtr() << endl;
+        if (verbose) cerr << "\ttaking " << qi.ValidTime().ToStr(kYYYYMMDDHHMM).CharPtr() << endl;
       }
     }
 
@@ -493,8 +478,7 @@ int main(int argc, const char *argv[])
 
   // Done
 
-  if (outfile == "-")
-    cout << *outqd;
+  if (outfile == "-") cout << *outqd;
 
   // Clean up memory, flush mmapped file to disk
 

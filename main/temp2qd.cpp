@@ -23,7 +23,7 @@ using namespace std;
 const char *default_stations_file = "/usr/share/smartmet/stations.csv";
 
 void Domain(int argc, const char *argv[]);
-void Usage();
+void Usage(void);
 
 int main(int argc, const char *argv[])
 {
@@ -43,7 +43,7 @@ int main(int argc, const char *argv[])
 // Kaytto-ohjeet
 // ----------------------------------------------------------------------
 
-void Usage()
+void Usage(void)
 {
   //	cout << "Usage: temp2qd [options] fileFilter1[,fileFilter2,...] > output" << endl
   cerr << "Usage: temp2qd fileFilter1[,fileFilter2,...] > output" << endl
@@ -73,9 +73,9 @@ struct PointerDestroyer
 static void FillCombinedSoundingData(vector<NFmiQueryData *> &theDataList,
                                      NFmiFastQueryInfo &theInfo)
 {
-  for (auto &i : theDataList)
+  for (unsigned int i = 0; i < theDataList.size(); i++)
   {
-    NFmiFastQueryInfo sourceInfo(i);
+    NFmiFastQueryInfo sourceInfo(theDataList[i]);
     for (sourceInfo.ResetTime(); sourceInfo.NextTime();)
     {
       if (theInfo.Time(sourceInfo.Time()))
@@ -108,20 +108,19 @@ static NFmiQueryInfo MakeCombinedInnerInfo(vector<NFmiQueryData *> &theDataList,
   if (theDataList.size() == 0)
     throw runtime_error("Error in MakeCombinedInnerInfo: no query datas in list.");
 
-  if (theDataList.size() == 1)
-    return *(theDataList[0]->Info());
+  if (theDataList.size() == 1) return *(theDataList[0]->Info());
 
   set<NFmiMetTime> allTimes;
   set<NFmiStation> allStations;
   unsigned int maxLevelSize = 0;
 
   const NFmiVPlaceDescriptor *maxLevelVPlaceDesc =
-      nullptr;  // otetaan talteen sen datan vplaceDesc, jossa eniten leveleit‰
+      0;  // otetaan talteen sen datan vplaceDesc, jossa eniten leveleit‰
 
   NFmiMetTime originTime;  // otetaan vain currentti aika origin timeksi
-  for (auto &i : theDataList)
+  for (unsigned int i = 0; i < theDataList.size(); i++)
   {
-    NFmiFastQueryInfo info(i);
+    NFmiFastQueryInfo info(theDataList[i]);
 
     for (info.ResetTime(); info.NextTime();)
       allTimes.insert(info.Time());
@@ -131,14 +130,14 @@ static NFmiQueryInfo MakeCombinedInnerInfo(vector<NFmiQueryData *> &theDataList,
     if (maxLevelSize < info.SizeLevels())
     {
       maxLevelSize = info.SizeLevels();
-      maxLevelVPlaceDesc = &(i->Info()->VPlaceDescriptor());
+      maxLevelVPlaceDesc = &(theDataList[i]->Info()->VPlaceDescriptor());
     }
   }
 
   // Tehd‰‰n kaikkia datoja yhdist‰v‰ timeDescriptor
   NFmiTimeList timeList;
-  for (const auto &allTime : allTimes)
-    timeList.Add(new NFmiMetTime(allTime));
+  for (set<NFmiMetTime>::iterator it1 = allTimes.begin(); it1 != allTimes.end(); ++it1)
+    timeList.Add(new NFmiMetTime(*it1));
   NFmiTimeDescriptor timeDesc(originTime, timeList);
 
   // Otetaan 1. datasta paramdesc, koska se on sama kaikille
@@ -147,8 +146,8 @@ static NFmiQueryInfo MakeCombinedInnerInfo(vector<NFmiQueryData *> &theDataList,
   paramDesc.SetProducer(theWantedProducer);
 
   NFmiLocationBag locationBag;
-  for (const auto &allStation : allStations)
-    locationBag.AddLocation(allStation, false);
+  for (set<NFmiStation>::iterator it2 = allStations.begin(); it2 != allStations.end(); ++it2)
+    locationBag.AddLocation(*it2, false);
   NFmiHPlaceDescriptor hplaceDesc(locationBag);
 
   NFmiQueryInfo info(paramDesc, timeDesc, hplaceDesc, *maxLevelVPlaceDesc);
@@ -210,35 +209,35 @@ void Domain(int argc, const char *argv[])
       throw runtime_error(
           "Error: with p-option 2 comma separated parameters expected (e.g. 1005,UAIR)");
 
-    auto prodId = NFmiStringTools::Convert<unsigned long>(strVector[0]);
+    unsigned long prodId = NFmiStringTools::Convert<unsigned long>(strVector[0]);
     wantedProducer = NFmiProducer(prodId, strVector[1]);
   }
 
   bool roundTimesToNearestSynopticTimes = false;
-  if (cmdline.isOption('t'))
-    roundTimesToNearestSynopticTimes = true;
+  if (cmdline.isOption('t')) roundTimesToNearestSynopticTimes = true;
 
   //	1. Lue n kpl filefiltereit‰ listaan
   vector<string> fileFilterList;
   for (int i = 1; i <= numOfParams; i++)
   {
-    fileFilterList.emplace_back(cmdline.Parameter(i));
+    fileFilterList.push_back(cmdline.Parameter(i));
   }
 
   NFmiPoint startingLatlonForUnknownStation = NFmiPoint::gMissingLatlon;
   bool foundAnyFiles = false;
   bool couldDecodeSoundings = false;
   vector<NFmiQueryData *> qDataList;
-  for (const auto &filePatternStr : fileFilterList)
+  for (unsigned int j = 0; j < fileFilterList.size(); j++)
   {
     //	2. Hae jokaista filefilteri‰ vastaavat tiedostonimet omaan listaan
+    std::string filePatternStr = fileFilterList[j];
     std::string usedPath = NFmiFileSystem::PathFromPattern(filePatternStr);
     list<string> fileList = NFmiFileSystem::PatternFiles(filePatternStr);
-    for (auto &it : fileList)
+    for (list<string>::iterator it = fileList.begin(); it != fileList.end(); ++it)
     {
       //	3. Lue listan tiedostot vuorollaan sis‰‰n ja tulkitse siit‰ mahdolliset TEMPit
       // querydataksi
-      std::string finalFileName = usedPath + it;
+      std::string finalFileName = usedPath + *it;
       foundAnyFiles = true;
       string tempFileContent;
       //			if(NFmiFileSystem::ReadFile2String(wantedPath + fileListVec[k],
@@ -262,9 +261,8 @@ void Domain(int argc, const char *argv[])
       }
     }
   }
-  if (!foundAnyFiles)
-    throw runtime_error("Error: Didn't find any files to read.");
-  if (!couldDecodeSoundings)
+  if (foundAnyFiles == false) throw runtime_error("Error: Didn't find any files to read.");
+  if (couldDecodeSoundings == false)
     throw runtime_error("Error: Couldn't decode any soundings from any files.");
   //	6. yhdist‰ lopuksi querydata yhdeksi kokonaisuudeksi
   NFmiQueryData *bigQData = ::CombineQueryDatas(qDataList, wantedProducer);

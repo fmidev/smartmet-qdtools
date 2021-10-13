@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 21.10.7
+Version: 21.9.20
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -28,12 +28,12 @@ BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
-BuildRequires: smartmet-library-calculator-devel >= 21.10.6
-BuildRequires: smartmet-library-gis-devel >= 21.9.24
+BuildRequires: smartmet-library-calculator-devel >= 21.5.6
+BuildRequires: smartmet-library-gis-devel >= 21.9.13
 BuildRequires: smartmet-library-imagine-devel >= 21.9.7
-BuildRequires: smartmet-library-macgyver-devel >= 21.10.4
-BuildRequires: smartmet-library-newbase-devel >= 21.9.22
-BuildRequires: smartmet-library-smarttools-devel >= 21.9.20
+BuildRequires: smartmet-library-macgyver-devel >= 21.9.13
+BuildRequires: smartmet-library-newbase-devel >= 21.9.14
+BuildRequires: smartmet-library-smarttools-devel >= 21.5.6
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
 Requires: boost169-date-time
@@ -57,15 +57,15 @@ Requires: libjpeg
 Requires: libpng
 Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
-Requires: smartmet-library-calculator >= 21.10.6
-Requires: smartmet-library-gis >= 21.9.24
+Requires: smartmet-library-calculator >= 21.5.6
+Requires: smartmet-library-gis >= 21.9.13
 Requires: smartmet-library-imagine >= 21.9.7
-Requires: smartmet-library-macgyver >= 21.10.4
-Requires: smartmet-library-newbase >= 21.9.22
-Requires: smartmet-library-smarttools >= 21.9.20
+Requires: smartmet-library-macgyver >= 21.9.13
+Requires: smartmet-library-newbase >= 21.9.14
+Requires: smartmet-library-smarttools >= 21.5.6
 Requires: smartmet-timezones >= 21.2.2
 Requires: zlib
-#TestRequires: smartmet-library-macgyver-devel >= 21.10.4
+#TestRequires: smartmet-library-macgyver-devel >= 21.9.13
 #TestRequires: gcc-c++
 
 Provides: ashtoqd = %{version}
@@ -193,9 +193,6 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
-* Thu Oct  7 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.10.7-1.fmi
-- Run clang-tidy to modernize code
-
 * Mon Sep 20 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.9.20-1.fmi
 - Added new parameters to cnf/parameters.csv used by csv2qd
 

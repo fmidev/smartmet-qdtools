@@ -6,6 +6,8 @@ system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals
 $wgs84 = 1-($? >> 8);
 
 $results = "results/hdf";
+$resultsexpected = "results";
+system("mkdir -p $results");
 
 %usednames = ();
 
@@ -52,7 +54,7 @@ sub DoTest
     }
     $usednames{$name} = 1;
 
-    my($resultfile) = "$name";
+    my($resultfile) = "h5toqd_" . "$name";
 
     if($wgs84)
     {
@@ -74,14 +76,14 @@ sub DoTest
     {
 	print " FAILED TO PRODUCE OUTPUT FILE\n";
     }
-    elsif(! -e "$results/$resultfile")
+    elsif(! -e "$resultsexpected/$resultfile")
     {
-	print " FAILED: TRUE RESULT MISSING ($results/$resultfile)\n";
+	print " FAILED: TRUE RESULT MISSING ($resultsexpected/$resultfile)\n";
 	unlink("$results/$tmpfile");
     }
     else
     {
-	my($difference) = `../qddifference $results/$resultfile $results/$tmpfile`;
+	my($difference) = `../qddifference $resultsexpected/$resultfile $results/$tmpfile`;
 
 	$difference =~ s/^\s+//;
 	$difference =~ s/\s+$//;

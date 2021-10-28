@@ -67,8 +67,7 @@ Requires: smartmet-timezones >= 21.10.21
 Requires: zlib
 #TestRequires: smartmet-library-macgyver-devel >= 21.10.4
 #TestRequires: gcc-c++
-
-TestRequires: smartmet-library-newbase-devel >= 21.10.13
+#TestRequires: smartmet-library-newbase-devel >= 21.10.13
 
 Provides: ashtoqd = %{version}
 Provides: bufrtoqd = %{version}

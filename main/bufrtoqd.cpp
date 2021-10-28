@@ -3679,8 +3679,9 @@ void organize_messages_sounding(const Messages &origmessages, const NameMap &par
         bool altitudechange = (fabs(altitude - lastaltitude) > 1);
 
         soundingrestart = (altitudechange && (altitude < lastaltitude));
-        lastaltitude = altitude;
       }
+
+      lastaltitude = altitude;
 
       if (options.debug)
         t = get_validtime(msg);

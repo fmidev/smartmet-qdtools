@@ -68,6 +68,8 @@ Requires: zlib
 #TestRequires: smartmet-library-macgyver-devel >= 21.10.4
 #TestRequires: gcc-c++
 
+TestRequires: smartmet-library-newbase-devel >= 21.10.13
+
 Provides: ashtoqd = %{version}
 Provides: bufrtoqd = %{version}
 Provides: combinepgms2qd = %{version}
@@ -196,6 +198,7 @@ make %{_smp_mflags}
 * Thu Oct 28 2021 Pertti Kinnia <pertti.kinnia@fmi.fi> - 21.10.28-1.fmi
 - Fixed bufrtoqd bug in handling sounding altitudes, first message was lost when started processing next sounding (QDTOOLS-115)
 - Fixed bogus date in changelog
+- Fixed path and names to expected results for h5toqd tests. Create directory for test output
 
 * Mon Sep 20 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.9.20-1.fmi
 - Added new parameters to cnf/parameters.csv used by csv2qd

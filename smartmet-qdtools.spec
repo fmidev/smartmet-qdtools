@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 21.10.28
+Version: 21.11.5
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -63,7 +63,7 @@ Requires: smartmet-library-imagine >= 21.9.7
 Requires: smartmet-library-macgyver >= 21.10.4
 Requires: smartmet-library-newbase >= 21.10.13
 Requires: smartmet-library-smarttools >= 21.9.20
-Requires: smartmet-timezones >= 21.10.21
+Requires: smartmet-timezones >= 21.10.29
 Requires: zlib
 #TestRequires: smartmet-library-macgyver-devel >= 21.10.4
 #TestRequires: gcc-c++
@@ -194,6 +194,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Nov  5 2021 Pertti Kinnia <pertti.kinnia@fmi.fi> - 21.11.5-1.fmi
+- Fixed bufrtoqd bug in handling missing message timestamp seconds
+
 * Thu Oct 28 2021 Pertti Kinnia <pertti.kinnia@fmi.fi> - 21.10.28-1.fmi
 - Fixed bufrtoqd bug in handling sounding altitudes, first message was lost when started processing next sounding (QDTOOLS-115)
 - Fixed bogus date in changelog

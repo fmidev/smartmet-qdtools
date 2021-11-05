@@ -1697,7 +1697,7 @@ NFmiMetTime get_validtime(const Message &msg)
   auto dd = dd_i->second.value;
   auto hh = hh_i->second.value;
   auto mi = mi_i->second.value;
-  auto ss = ((ss_i != msg.end()) ? ss_i->second.value : 0);
+  auto ss = (((ss_i != msg.end()) && (ss_i->second.value != 32700)) ? ss_i->second.value : 0);
 
   const int timeresolution = (options.roundtohours > 0 ? 60 * options.roundtohours : 1);
 

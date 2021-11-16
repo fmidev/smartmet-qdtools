@@ -1390,11 +1390,13 @@ int run(int argc, const char* argv[])
   NFmiFastQueryInfo dstinfo(data.get());
 
   // finally fill the new data with values
+  //
+  // currently FillGridDataFullMT does not handle multifiles
 
   bool same_stations = (opt_stations.empty() && opt_nostations.empty());
 
-  if (!dstinfo.Grid())
-    CopyNonGridData(*srcinfo, dstinfo, same_stations);
+  if ((!dstinfo.Grid()) || opt_multifile)
+    CopyNonGridData(*srcinfo, dstinfo, same_stations || opt_multifile);
   else
   {
     int max_threads = 1;

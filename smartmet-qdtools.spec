@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 21.11.5
+Version: 21.11.16
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -32,7 +32,7 @@ BuildRequires: smartmet-library-calculator-devel >= 21.10.6
 BuildRequires: smartmet-library-gis-devel >= 21.9.24
 BuildRequires: smartmet-library-imagine-devel >= 21.9.7
 BuildRequires: smartmet-library-macgyver-devel >= 21.10.4
-BuildRequires: smartmet-library-newbase-devel >= 21.10.13
+BuildRequires: smartmet-library-newbase-devel >= 21.11.15
 BuildRequires: smartmet-library-smarttools-devel >= 21.9.20
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
@@ -61,13 +61,13 @@ Requires: smartmet-library-calculator >= 21.10.6
 Requires: smartmet-library-gis >= 21.9.24
 Requires: smartmet-library-imagine >= 21.9.7
 Requires: smartmet-library-macgyver >= 21.10.4
-Requires: smartmet-library-newbase >= 21.10.13
+Requires: smartmet-library-newbase >= 21.11.15
 Requires: smartmet-library-smarttools >= 21.9.20
 Requires: smartmet-timezones >= 21.10.29
 Requires: zlib
 #TestRequires: smartmet-library-macgyver-devel >= 21.10.4
 #TestRequires: gcc-c++
-#TestRequires: smartmet-library-newbase-devel >= 21.10.13
+#TestRequires: smartmet-library-newbase-devel >= 21.11.15
 
 Provides: ashtoqd = %{version}
 Provides: bufrtoqd = %{version}
@@ -194,6 +194,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Nov 16 2021 Pertti Kinnia <pertti.kinnia@fmi.fi> - 21.11.16-1.fmi
+- qdcrop: use CopyNonGridData for copying data for multifiles, FillGridDataFullMT does not handle multifiles yet (QDTOOLS-117)
+
 * Thu Nov  5 2021 Pertti Kinnia <pertti.kinnia@fmi.fi> - 21.11.5-1.fmi
 - Fixed bufrtoqd bug in handling missing message timestamp seconds
 

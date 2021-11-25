@@ -15,7 +15,7 @@ BuildRequires: eccodes
 BuildRequires: eccodes-devel
 BuildRequires: fmt-devel >= 7.1.3
 BuildRequires: gcc-c++
-BuildRequires: gdal32-devel
+BuildRequires: gdal33-devel
 BuildRequires: hdf5-devel >= 1.8.12
 BuildRequires: jasper-devel
 BuildRequires: libbufr >= 3.2
@@ -46,7 +46,7 @@ Requires: boost169-thread
 Requires: bzip2-libs
 Requires: eccodes
 Requires: fmt >= 7.1.3
-Requires: gdal32-libs
+Requires: gdal33-libs
 Requires: glibc
 Requires: hdf5 >= 1.8.12
 Requires: jasper-libs >= 1.900.1

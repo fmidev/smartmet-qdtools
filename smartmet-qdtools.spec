@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 21.11.16
+Version: 21.12.2
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -29,10 +29,10 @@ BuildRequires: netcdf-cxx-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
 BuildRequires: smartmet-library-calculator-devel >= 21.10.6
-BuildRequires: smartmet-library-gis-devel >= 21.9.24
-BuildRequires: smartmet-library-imagine-devel >= 21.9.7
-BuildRequires: smartmet-library-macgyver-devel >= 21.10.4
-BuildRequires: smartmet-library-newbase-devel >= 21.11.15
+BuildRequires: smartmet-library-gis-devel >= 21.12.1
+BuildRequires: smartmet-library-imagine-devel >= 21.12.2
+BuildRequires: smartmet-library-macgyver-devel >= 21.12.1
+BuildRequires: smartmet-library-newbase-devel >= 21.12.1
 BuildRequires: smartmet-library-smarttools-devel >= 21.9.20
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
@@ -58,16 +58,16 @@ Requires: libpng
 Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
 Requires: smartmet-library-calculator >= 21.10.6
-Requires: smartmet-library-gis >= 21.9.24
-Requires: smartmet-library-imagine >= 21.9.7
-Requires: smartmet-library-macgyver >= 21.10.4
-Requires: smartmet-library-newbase >= 21.11.15
+Requires: smartmet-library-gis >= 21.12.1
+Requires: smartmet-library-imagine >= 21.12.2
+Requires: smartmet-library-macgyver >= 21.12.1
+Requires: smartmet-library-newbase >= 21.12.1
 Requires: smartmet-library-smarttools >= 21.9.20
 Requires: smartmet-timezones >= 21.10.29
 Requires: zlib
-#TestRequires: smartmet-library-macgyver-devel >= 21.10.4
+#TestRequires: smartmet-library-macgyver-devel >= 21.12.1
 #TestRequires: gcc-c++
-#TestRequires: smartmet-library-newbase-devel >= 21.11.15
+#TestRequires: smartmet-library-newbase-devel >= 21.12.1
 
 Provides: ashtoqd = %{version}
 Provides: bufrtoqd = %{version}

@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 21.12.2
+Version: 21.12.7
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -194,6 +194,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Dec  7 2021 Andris Pavēnis <andris.pavenis@fmi.fi> 21.12.7-1.fmi
+- Update to postgresql 13 and gdal 3.3
+
 * Tue Nov 16 2021 Pertti Kinnia <pertti.kinnia@fmi.fi> - 21.11.16-1.fmi
 - qdcrop: use CopyNonGridData for copying data for multifiles, FillGridDataFullMT does not handle multifiles yet (QDTOOLS-117)
 

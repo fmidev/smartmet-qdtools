@@ -15,7 +15,7 @@ BuildRequires: eccodes
 BuildRequires: eccodes-devel
 BuildRequires: fmt-devel >= 7.1.3
 BuildRequires: gcc-c++
-BuildRequires: gdal33-devel
+BuildRequires: gdal34-devel
 BuildRequires: hdf5-devel >= 1.8.12
 BuildRequires: jasper-devel
 BuildRequires: libbufr >= 3.2
@@ -29,10 +29,10 @@ BuildRequires: netcdf-cxx-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
 BuildRequires: smartmet-library-calculator-devel >= 21.10.6
-BuildRequires: smartmet-library-gis-devel >= 21.12.1
-BuildRequires: smartmet-library-imagine-devel >= 21.12.2
-BuildRequires: smartmet-library-macgyver-devel >= 21.12.1
-BuildRequires: smartmet-library-newbase-devel >= 21.12.1
+BuildRequires: smartmet-library-gis-devel >= 21.1.21
+BuildRequires: smartmet-library-imagine-devel >= 21.1.21
+BuildRequires: smartmet-library-macgyver-devel >= 21.1.21
+BuildRequires: smartmet-library-newbase-devel >= 21.1.21
 BuildRequires: smartmet-library-smarttools-devel >= 21.9.20
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
@@ -46,7 +46,7 @@ Requires: boost169-thread
 Requires: bzip2-libs
 Requires: eccodes
 Requires: fmt >= 7.1.3
-Requires: gdal33-libs
+Requires: gdal34-libs
 Requires: glibc
 Requires: hdf5 >= 1.8.12
 Requires: jasper-libs >= 1.900.1
@@ -58,16 +58,16 @@ Requires: libpng
 Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
 Requires: smartmet-library-calculator >= 21.10.6
-Requires: smartmet-library-gis >= 21.12.1
-Requires: smartmet-library-imagine >= 21.12.2
-Requires: smartmet-library-macgyver >= 21.12.1
-Requires: smartmet-library-newbase >= 21.12.1
+Requires: smartmet-library-gis >= 21.1.21
+Requires: smartmet-library-imagine >= 21.1.21
+Requires: smartmet-library-macgyver >= 21.1.21
+Requires: smartmet-library-newbase >= 21.1.21
 Requires: smartmet-library-smarttools >= 21.9.20
 Requires: smartmet-timezones >= 21.10.29
 Requires: zlib
-#TestRequires: smartmet-library-macgyver-devel >= 21.12.1
+#TestRequires: smartmet-library-macgyver-devel >= 21.1.21
 #TestRequires: gcc-c++
-#TestRequires: smartmet-library-newbase-devel >= 21.12.1
+#TestRequires: smartmet-library-newbase-devel >= 21.1.21
 
 Provides: ashtoqd = %{version}
 Provides: bufrtoqd = %{version}

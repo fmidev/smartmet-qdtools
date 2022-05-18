@@ -54,6 +54,7 @@
 // ======================================================================
 
 #include <boost/algorithm/string.hpp>
+#include <newbase/NFmiAreaTools.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiFastQueryInfo.h>
@@ -71,12 +72,6 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-
-#ifdef WGS84
-#include <newbase/NFmiAreaTools.h>
-#else
-#include <newbase/NFmiYKJArea.h>
-#endif
 
 using namespace std;
 
@@ -166,7 +161,8 @@ void usage()
 
 const NFmiTime parse_stamp(const string& theStamp)
 {
-  if (theStamp.size() != 12) throw runtime_error("The length of the stamp is not 12");
+  if (theStamp.size() != 12)
+    throw runtime_error("The length of the stamp is not 12");
 
   int year, month, day, hour, minute;
   try
@@ -182,11 +178,16 @@ const NFmiTime parse_stamp(const string& theStamp)
     throw runtime_error("The stamp is not numeric");
   }
 
-  if (year < 1900 || year > 2200) throw runtime_error("The year is out of range 1900-2200");
-  if (month < 1 || month > 12) throw runtime_error("The month is out of range 1-12");
-  if (day < 1 || day > 31) throw runtime_error("The day is out of range 1-31");
-  if (hour < 0 || hour > 23) throw runtime_error("The hour is out of range 0-23");
-  if (minute < 0 || minute > 59) throw runtime_error("The minute is out of range 0-59");
+  if (year < 1900 || year > 2200)
+    throw runtime_error("The year is out of range 1900-2200");
+  if (month < 1 || month > 12)
+    throw runtime_error("The month is out of range 1-12");
+  if (day < 1 || day > 31)
+    throw runtime_error("The day is out of range 1-31");
+  if (hour < 0 || hour > 23)
+    throw runtime_error("The hour is out of range 0-23");
+  if (minute < 0 || minute > 59)
+    throw runtime_error("The minute is out of range 0-59");
 
   return NFmiTime(year, month, day, hour, minute);
 }
@@ -203,7 +204,8 @@ bool parse_command_line(int argc, const char* argv[])
 {
   NFmiCmdLine cmdline(argc, argv, "hvp!t!T!m!");
 
-  if (cmdline.Status().IsError()) throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
+  if (cmdline.Status().IsError())
+    throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
 
   // help-option must be checked first
 
@@ -303,7 +305,8 @@ void complete_inputname()
   if (NFmiFileSystem::DirectoryExists(options.inputfile))
   {
     string file = NFmiFileSystem::NewestFile(options.inputfile);
-    if (file.empty()) throw runtime_error("Input directory is empty");
+    if (file.empty())
+      throw runtime_error("Input directory is empty");
     options.inputfile += '/';
     options.inputfile += file;
   }
@@ -317,12 +320,14 @@ void complete_inputname()
 
 const KrigingData read_kriging_data()
 {
-  if (options.verbose) cout << "Reading '" << options.inputfile << "'" << endl;
+  if (options.verbose)
+    cout << "Reading '" << options.inputfile << "'" << endl;
 
   KrigingData kdata;
 
   ifstream input(options.inputfile.c_str());
-  if (!input) throw runtime_error("Failed to open '" + options.inputfile + "' for reading");
+  if (!input)
+    throw runtime_error("Failed to open '" + options.inputfile + "' for reading");
 
   // Process all the lines
 
@@ -331,7 +336,8 @@ const KrigingData read_kriging_data()
   {
     // Ignore empty lines and comment lines
 
-    if (line.empty() || line[0] == '#') continue;
+    if (line.empty() || line[0] == '#')
+      continue;
 
     // Split to doubles
 
@@ -387,7 +393,8 @@ typename T::value_type smallest_step(const T& theValues)
     {
       typename T::value_type value2 = *it;
       typename T::value_type diff = value2 - value1;
-      if (mindiff < 0 || diff < mindiff) mindiff = diff;
+      if (mindiff < 0 || diff < mindiff)
+        mindiff = diff;
     }
   }
 
@@ -404,7 +411,8 @@ const NFmiHPlaceDescriptor make_hdesc(const KrigingData& theData)
 {
   // Find the unique set of x/y coordinates
 
-  if (theData.empty()) throw runtime_error("The Kriging data is empty!");
+  if (theData.empty())
+    throw runtime_error("The Kriging data is empty!");
 
   set<double> xset;
   set<double> yset;
@@ -417,8 +425,10 @@ const NFmiHPlaceDescriptor make_hdesc(const KrigingData& theData)
 
   // We require atleast a 2x2 grid
 
-  if (xset.size() < 2) throw runtime_error("Not enough x-coordinates in to deduce grid size");
-  if (yset.size() < 2) throw runtime_error("Not enough y-coordinates to deduce grid size");
+  if (xset.size() < 2)
+    throw runtime_error("Not enough x-coordinates in to deduce grid size");
+  if (yset.size() < 2)
+    throw runtime_error("Not enough y-coordinates to deduce grid size");
 
   // Minimum x/y is now easy, since the sets are sorted
 
@@ -439,13 +449,10 @@ const NFmiHPlaceDescriptor make_hdesc(const KrigingData& theData)
 
   // Now we can create the projection
 
-#ifdef WGS84  
   NFmiArea* area = NFmiAreaTools::CreateLegacyYKJArea(NFmiPoint(xmin, ymin), NFmiPoint(xmax, ymax));
-#else
-  NFmiArea* area = new NFmiYKJArea(NFmiPoint(xmin, ymin), NFmiPoint(xmax, ymax), true);
-#endif  
 
-  if (area == 0) throw runtime_error("Failed to construct the YKJ projection");
+  if (area == 0)
+    throw runtime_error("Failed to construct the YKJ projection");
 
   // Then the grid
 
@@ -520,7 +527,8 @@ const NFmiTimeDescriptor make_tdesc()
 
 boost::shared_ptr<NFmiQueryData> create_querydata(const KrigingData& theData)
 {
-  if (options.verbose) cout << "Filling the querydata" << endl;
+  if (options.verbose)
+    cout << "Filling the querydata" << endl;
 
   NFmiHPlaceDescriptor hdesc(make_hdesc(theData));
   NFmiVPlaceDescriptor vdesc(make_vdesc());
@@ -532,7 +540,8 @@ boost::shared_ptr<NFmiQueryData> create_querydata(const KrigingData& theData)
   NFmiFastQueryInfo info(pdesc, tdesc, hdesc, vdesc);
   boost::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
 
-  if (data.get() == 0) throw runtime_error("Failed to allocate querydata");
+  if (data.get() == 0)
+    throw runtime_error("Failed to allocate querydata");
 
   // And begin filling the data
 
@@ -573,7 +582,8 @@ boost::shared_ptr<NFmiQueryData> create_querydata(const KrigingData& theData)
 
 int domain(int argc, const char* argv[])
 {
-  if (!parse_command_line(argc, argv)) return 0;
+  if (!parse_command_line(argc, argv))
+    return 0;
 
   // Make sure we know the full filename if directory was given
 
@@ -587,14 +597,17 @@ int domain(int argc, const char* argv[])
 
   boost::shared_ptr<NFmiQueryData> qd = create_querydata(kdata);
 
-  if (qd.get() == 0) throw runtime_error("Failed to create the querydata");
+  if (qd.get() == 0)
+    throw runtime_error("Failed to create the querydata");
 
   // Write the querydata
 
   ofstream out(options.outputfile.c_str(), ios::out | ios::binary);
-  if (!out) throw runtime_error("Failed to open '" + options.outputfile + "' for writing");
+  if (!out)
+    throw runtime_error("Failed to open '" + options.outputfile + "' for writing");
 
-  if (options.verbose) cout << "Writing '" << options.outputfile << "'" << endl;
+  if (options.verbose)
+    cout << "Writing '" << options.outputfile << "'" << endl;
 
   out << *qd;
 
@@ -606,7 +619,8 @@ int domain(int argc, const char* argv[])
 
   out.close();
 
-  if (options.verbose) cout << "Done" << endl;
+  if (options.verbose)
+    cout << "Done" << endl;
 
   return 0;
 }

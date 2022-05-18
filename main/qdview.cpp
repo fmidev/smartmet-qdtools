@@ -10,18 +10,13 @@
 #include <imagine/NFmiImage.h>
 #include <imagine/NFmiPath.h>
 #include <newbase/NFmiArea.h>
+#include <newbase/NFmiAreaTools.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileSystem.h>
 #include <newbase/NFmiQueryData.h>
 #include <string>
-
-#ifdef WGS84
-#include <newbase/NFmiAreaTools.h>
-#else
-#include <newbase/NFmiLatLonArea.h>
-#endif
 
 using namespace std;
 using namespace boost;
@@ -200,7 +195,8 @@ const T& max(const T& arg1, const T& arg2, const T& arg3, const T& arg4)
 NFmiArea* create_bbox(NFmiFastQueryInfo& q)
 {
   q.NextLocation();
-  if (!q.NextLocation()) throw runtime_error("Querydata contains no points!");
+  if (!q.NextLocation())
+    throw runtime_error("Querydata contains no points!");
   double minlon = q.LatLon().X();
   double maxlon = q.LatLon().X();
   double minlat = q.LatLon().Y();
@@ -216,12 +212,8 @@ NFmiArea* create_bbox(NFmiFastQueryInfo& q)
     }
   }
 
-#ifdef WGS84  
   return NFmiAreaTools::CreateLegacyLatLonArea(NFmiPoint(minlon, minlat),
                                                NFmiPoint(maxlon, maxlat));
-#else
-  return new NFmiLatLonArea(NFmiPoint(minlon, minlat), NFmiPoint(maxlon, maxlat));
-#endif  
 }
 
 // ----------------------------------------------------------------------
@@ -241,7 +233,8 @@ void check_size(const NFmiArea* theArea, int& theWidth, int& theHeight)
   const NFmiPoint bl = theArea->LatLonToWorldXY(theArea->BottomLeftLatLon());
   const NFmiPoint tr = theArea->LatLonToWorldXY(theArea->TopRightLatLon());
 
-  if (theWidth < 0 && theHeight < 0) theWidth = default_width;
+  if (theWidth < 0 && theHeight < 0)
+    theWidth = default_width;
 
   if (theWidth <= 0 && theHeight > 0)
     theWidth = static_cast<int>((tr.X() - bl.X()) / (tr.Y() - bl.Y()) * theHeight);
@@ -301,13 +294,15 @@ void draw_grid(Imagine::NFmiImage& theImage,
                const NFmiArea* theProj,
                NFmiFastQueryInfo& theQ)
 {
-  if (dotsize <= 0) return;
+  if (dotsize <= 0)
+    return;
 
   Imagine::NFmiImage red(dotsize, dotsize);
   red.Erase(Imagine::NFmiColorTools::MakeColor(255, 0, 0));
 
   if (param != kFmiBadParameter)
-    if (!theQ.Param(param)) throw runtime_error("The data does not have the requested parameter");
+    if (!theQ.Param(param))
+      throw runtime_error("The data does not have the requested parameter");
 
   theQ.ResetLocation();
   while (theQ.NextLocation())
@@ -382,7 +377,8 @@ int domain(int argc, const char* argv[])
 
   NFmiCmdLine cmdline(argc, argv, "hr!x!y!m!s!S!p!");
 
-  if (cmdline.Status().IsError()) throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
+  if (cmdline.Status().IsError())
+    throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
 
   if (cmdline.NumberofParameters() != 2)
     throw runtime_error("Exactly two parameter is expected on the command line");
@@ -390,27 +386,32 @@ int domain(int argc, const char* argv[])
   const string filename = cmdline.Parameter(1);
   const string imagefile = cmdline.Parameter(2);
 
-  if (filename.empty()) throw runtime_error("Empty filename argument");
+  if (filename.empty())
+    throw runtime_error("Empty filename argument");
 
-  if (imagefile.empty()) throw runtime_error("Empty image filename argument");
+  if (imagefile.empty())
+    throw runtime_error("Empty image filename argument");
 
   if (cmdline.isOption('m'))
   {
     margin = lexical_cast<int>(cmdline.OptionValue('m'));
-    if (margin < 0) throw runtime_error("Argument for option -m must be nonnegative");
+    if (margin < 0)
+      throw runtime_error("Argument for option -m must be nonnegative");
   }
 
   if (cmdline.isOption('s'))
   {
     validpoints = false;
     dotsize = lexical_cast<int>(cmdline.OptionValue('s'));
-    if (dotsize < 0) throw runtime_error("Argument for option -s must be nonnegative");
+    if (dotsize < 0)
+      throw runtime_error("Argument for option -s must be nonnegative");
   }
   if (cmdline.isOption('S'))
   {
     validpoints = true;
     dotsize = lexical_cast<int>(cmdline.OptionValue('S'));
-    if (dotsize < 0) throw runtime_error("Argument for option -S must be nonnegative");
+    if (dotsize < 0)
+      throw runtime_error("Argument for option -S must be nonnegative");
   }
   if (cmdline.isOption('s') && cmdline.isOption('S'))
     throw runtime_error("Options -s and -S are mutually exclusive");
@@ -418,20 +419,23 @@ int domain(int argc, const char* argv[])
   if (cmdline.isOption('r'))
   {
     const string tmp = cmdline.OptionValue('r');
-    if (tmp.empty()) throw runtime_error("Invalid resolution " + tmp + " for option -r");
+    if (tmp.empty())
+      throw runtime_error("Invalid resolution " + tmp + " for option -r");
     resolution = tmp[0];
   }
 
   if (cmdline.isOption('x'))
   {
     width = lexical_cast<int>(cmdline.OptionValue('x'));
-    if (width <= 0) throw runtime_error("Argument for option -x must be positive");
+    if (width <= 0)
+      throw runtime_error("Argument for option -x must be positive");
   }
 
   if (cmdline.isOption('y'))
   {
     height = lexical_cast<int>(cmdline.OptionValue('y'));
-    if (height <= 0) throw runtime_error("Argument for option -y must be positive");
+    if (height <= 0)
+      throw runtime_error("Argument for option -y must be positive");
   }
 
   if (cmdline.isOption('p'))

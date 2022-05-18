@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 22.1.21
+Version: 22.5.18
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -29,10 +29,10 @@ BuildRequires: netcdf-cxx-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
 BuildRequires: smartmet-library-calculator-devel >= 21.10.6
-BuildRequires: smartmet-library-gis-devel >= 21.1.21
-BuildRequires: smartmet-library-imagine-devel >= 21.1.21
-BuildRequires: smartmet-library-macgyver-devel >= 21.1.21
-BuildRequires: smartmet-library-newbase-devel >= 21.1.21
+BuildRequires: smartmet-library-gis-devel >= 22.5.4
+BuildRequires: smartmet-library-imagine-devel >= 22.1.21
+BuildRequires: smartmet-library-macgyver-devel >= 22.3.28
+BuildRequires: smartmet-library-newbase-devel >= 22.5.18
 BuildRequires: smartmet-library-smarttools-devel >= 21.9.20
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
@@ -58,16 +58,16 @@ Requires: libpng
 Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
 Requires: smartmet-library-calculator >= 21.10.6
-Requires: smartmet-library-gis >= 21.1.21
-Requires: smartmet-library-imagine >= 21.1.21
-Requires: smartmet-library-macgyver >= 21.1.21
-Requires: smartmet-library-newbase >= 21.1.21
+Requires: smartmet-library-gis >= 22.5.4
+Requires: smartmet-library-imagine >= 22.1.21
+Requires: smartmet-library-macgyver >= 22.3.28
+Requires: smartmet-library-newbase >= 22.5.18
 Requires: smartmet-library-smarttools >= 21.9.20
-Requires: smartmet-timezones >= 21.10.29
+Requires: smartmet-timezones >= 22.3.24
 Requires: zlib
-#TestRequires: smartmet-library-macgyver-devel >= 21.1.21
+#TestRequires: smartmet-library-macgyver-devel >= 22.3.28
 #TestRequires: gcc-c++
-#TestRequires: smartmet-library-newbase-devel >= 21.1.21
+#TestRequires: smartmet-library-newbase-devel >= 22.5.18
 
 Provides: ashtoqd = %{version}
 Provides: bufrtoqd = %{version}
@@ -194,6 +194,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed May 18 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.5.18-1.fmi
+- Use newbase NFmiAreaTools to create legacy projections when possible
+
 * Fri Jan 21 2022 Andris Pavēnis <andris.pavenis@fmi.fi> 22.1.21-1.fmi
 - Repackage due to upgrade of packages from PGDG repo: gdal-3.4, geos-3.10, proj-8.2
 

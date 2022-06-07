@@ -9,6 +9,8 @@ $results = "results";
 $data = "data/griddata.sqd";
 $pointdata = "data/pointdata.sqd";
 
+$errors = 0;
+
 %usednames = ();
 
 # option -w
@@ -143,7 +145,8 @@ DoTest("option -m Temperature,60 succeeds",
        "m_temperature_60_succeeds",
        "-m Temperature,60 $pointdata");
 
-print "Done\n";
+print "$errors errors\n";
+exit($errors);
 
 # ----------------------------------------------------------------------
 # Run a single test
@@ -181,6 +184,7 @@ sub DoTest
     }
     else
     {
+	++$errors;
 	print " FAILED!\n";
 	print "( $resultfile <> $tmpfile in $results/ )\n";
     }

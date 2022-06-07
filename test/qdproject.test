@@ -8,6 +8,8 @@ $wgs84 = 1-($? >> 8);
 $results = "results";
 $griddata = "data/griddata.sqd";
 
+$errors = 0;
+
 %usednames = ();
 
 DoTest("option -d -L ", "option_d_big_l", "-d stereographic,20:6,51.3,49,70.2:600,-1 -L 25,60");
@@ -15,8 +17,8 @@ DoTest("option -q -L ", "option_q_big_l", "-q $griddata -L 25,60");
 DoTest("option -l", "option_l", "-d stereographic,20:6,51.3,49,70.2:600,-1 -L 25,60");
 DoTest("option -I", "option_big_i", "-d stereographic,20:6,51.3,49,70.2:600,-1 -I 277644.2057,-3173487.792");
 
-
-print "Done\n";
+print "$errors errors\n";
+exit($errors);
 
 # ----------------------------------------------------------------------
 # Run a single test
@@ -54,6 +56,7 @@ sub DoTest
     }
     else
     {
+	++$errors;
 	print " FAILED!\n";
 	print "( $resultfile <> $tmpfile in $results/ )\n";
 	system("diff $results/$resultfile $results/$tmpfile");

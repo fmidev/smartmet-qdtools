@@ -8,6 +8,8 @@ $program = (-x "../qdset" ? "../qdset" : "qdset");
 system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h');
 $wgs84 = 1-($? >> 8);
 
+$errors = 0;
+
 DoSqdTest("qdset name and id",
 	  "cp data/pal_xh.sqd results/qdset_pal_xh.sqd.tmp ; $program -n foobar -d 5 results/qdset_pal_xh.sqd.tmp Temperature",
 	  "qdset_pal_xh.sqd");
@@ -15,6 +17,9 @@ DoSqdTest("qdset name and id",
 DoSqdTest("qdset station name and id",
 	  "cp data/synop.sqd results/qdset_synop.sqd.tmp ; $program -w 2701 -W \"testi asema\" results/qdset_synop.sqd.tmp 5115",
 	  "qdset_synop.sqd");
+
+print "$errors errors\n";
+exit($errors);
 
 # ----------------------------------------------------------------------
 # Run a single test, allowing for a small difference in sqd results
@@ -56,6 +61,7 @@ sub DoSqdTest
     }
     else
     {
+	++$errors;
 	print " FAILED! (maxdiff = $difference)\n";
 	print "( $resultfile <> $tmpfile)\n";
     }

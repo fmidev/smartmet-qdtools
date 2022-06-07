@@ -8,6 +8,7 @@ $wgs84 = 1-($? >> 8);
 use IO::Handle;
 autoflush STDOUT 1;
 
+$errors = 0;
 
 # qdinterpolatearea
 # This is the old scandinavia -> kepa transformation
@@ -28,6 +29,8 @@ DoSqdTest("qdinterpolatearea resolution option",
 	  "$program -t 1 -p stereographic,20,90,60:6,51.3,49,70.2 -s 50x50km -i data/pal_xh.sqd -o results/qdinterpolatearea_resolution.sqd.tmp",
 	  "qdinterpolatearea_resolution.sqd");
 
+print "$errors errors\n";
+exit($errors);
 
 # ----------------------------------------------------------------------
 # Run a single test, allowing for a small difference in sqd results
@@ -69,6 +72,7 @@ sub DoSqdTest
     }
     else
     {
+	++$errors;
 	print " FAILED! (maxdiff = $difference)\n";
 	print "( $resultfile <> $tmpfile)\n";
     }

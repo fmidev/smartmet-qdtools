@@ -4,11 +4,14 @@ $program = (-x "../flash2qd" ? "../flash2qd" : "flash2qd");
 
 $results = "results";
 
+$errors = 0;
+
 %usednames = ();
 
 DoTest("flash","flash","data/flash.txt","flash.sqd");
 
-print "Done\n";
+print "$errors errors\n";
+exit($errors);
 
 # ----------------------------------------------------------------------
 # Run a single test
@@ -35,10 +38,12 @@ sub DoTest
 
     if(! -e "results/$resultfile")
     {
+	++$errors;
 	print " FAILED TO PRODUCE OUTPUT FILE results/$resultfile\n";
     }
     elsif(! -e "results/${resultfile}.ok")
     {
+	++$errors;
 	print " FAILED: TRUE RESULT results/${resultfile}.ok MISSING\n";
 	# unlink("$results/$resultfile");
     }
@@ -59,6 +64,7 @@ sub DoTest
 	}
 	else
 	{
+	    ++$errors;
 	    print " FAILED! (maxdiff = $difference)\n";
 	    print "( $resultfile <> ${resultfile}.ok in $results/ )\n";
 	}

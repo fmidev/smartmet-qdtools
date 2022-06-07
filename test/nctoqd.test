@@ -9,6 +9,8 @@ $wgs84 = 1-($? >> 8);
 
 $results = "results";
 
+$erors = 0;
+
 %usednames = ();
 
 my $dir = $0;
@@ -58,7 +60,9 @@ DoTest( "merge", "merge.sqd", "-c ../cnf/netcdf.conf " . join( ' ', sort glob "d
 DoTest( "fixid", "fixid.sqd", "-m sm_uncertainty,15000 -c ../cnf/netcdf.conf data/netcdf/C3S-SOILMOISTURE-L3S-SSMV-PASSIVE-DAILY-20160831000000-TCDR-v201706.0.0.nc" );
 DoTest( "unknownids", "unknownids.sqd", "-U -c ../cnf/netcdf.conf data/netcdf/C3S-SOILMOISTURE-L3S-SSMV-PASSIVE-DAILY-20160831000000-TCDR-v201706.0.0.nc" );
 
-print "Done\n";
+print "$errors errors\n";
+exit($errors);
+
 
 # ----------------------------------------------------------------------
 # Run a single test
@@ -95,15 +99,18 @@ sub DoTest {
 	if ( $retcode != 0 ) {
 		print $output ;
 		print "Failed to run $cmd: $!";
+		++$errors;
 		return;
 	}
 
 	print padname($text);
 
 	if ( !-e "results/$tmpfile" ) {
+	        ++$errors;
 		print " FAILED TO PRODUCE OUTPUT FILE\n";
 	}
 	elsif ( !-e "results/$resultfile" ) {
+	        ++$errors;
 		print " FAILED: TRUE RESULT MISSING\n";
 		if ( !$keeptmp ) { unlink("$results/$tmpfile"); }
 	}
@@ -112,6 +119,7 @@ sub DoTest {
 			my $cmp     = `cmp results/$resultfile results/$tmpfile`;
 			my $retcode = $?;
 			if ( $retcode != 0 ) {
+			        ++$errors;
 				print $cmp ;
 				print " FAILED!";
 			}
@@ -124,6 +132,7 @@ sub DoTest {
 			my ($difference) = `$qddifference results/$resultfile results/$tmpfile`;
 			my $ret = $?;
 			if ( $ret != 0 ) {
+			        ++$errors;
 				print " FAILED!\nqddifference says:\n$difference";
 				print "( $resultfile <> $tmpfile in $results/ )\n";
 			}
@@ -140,18 +149,21 @@ sub DoTest {
 					my $qdinfo1 = `$qdinfo -a -q $results/$resultfile > results/$resultfile.qdinfo`;
 					my $ret1    = $?;
 					if ( $ret1 != 0 ) {
+					        ++$errors;
 						print " FAILED!\nqdinfo failed on original result file\n";
 					}
 					else {
 						my $qdinfo2 = `$qdinfo -a -q results/$tmpfile > results/$tmpfile.qdinfo`;
 						my $ret2    = $?;
 						if ( $ret2 != 0 ) {
+						        ++$errors;
 							print " FAILED!\nqdinfo failed on generated test file\n";
 						}
 						else {
 							my $qddiff = `diff --unified results/$resultfile.qdinfo results/$tmpfile.qdinfo`;
 							my $ret3   = $?;
 							if ( $ret3 != 0 ) {
+							        ++$errors;
 								print " FAILED!\nquerydata header mismatch\n$qddiff";
 							}
 							else {
@@ -166,6 +178,7 @@ sub DoTest {
 					}
 				}
 				else {
+				        ++$errors;
 					print " FAILED! (maxdiff = $difference)\n";
 					print "( $resultfile <> $tmpfile in $results/ )\n";
 				}

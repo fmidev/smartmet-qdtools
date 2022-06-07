@@ -7,6 +7,8 @@ $wgs84 = 1-($? >> 8);
 
 $results = "results";
 
+$errors = 0;
+
 %usednames = ();
 
 DoTest("SYCJ dBZ linear","sycj.sqd","data/PAHM44_SYCJ_260630.bufr");
@@ -14,7 +16,8 @@ DoTest("TBPB dBZ linear","tbpb.sqd","data/PAHM44_TBPB_260500.bufr");
 DoTest("MCWR dBZ scale","mcwr.sqd","data/PAHM44_MWCR_261000.bufr");
 DoTest("SOCA dBZ scale overflow","soca.sqd","--allow-overflow --quiet data/PAHM44_SOCA_271827.bufr");
 
-print "Done\n";
+print "$errors errors\n";
+exit($errors);
 
 # ----------------------------------------------------------------------
 # Run a single test
@@ -51,10 +54,12 @@ sub DoTest
 
     if(! -e "results/$tmpfile")
     {
+	++$errors;
 	print " FAILED TO PRODUCE OUTPUT FILE\n";
     }
     elsif(! -e "results/$resultfile")
     {
+	++$errors;
 	print " FAILED: TRUE RESULT results/$resultfile MISSING\n";
 	unlink("$results/$tmpfile");
     }
@@ -75,6 +80,7 @@ sub DoTest
 	}
 	else
 	{
+	    ++$errors;
 	    print " FAILED! (maxdiff = $difference)\n";
 	    print "( $resultfile <> $tmpfile in $results/ )\n";
 	}

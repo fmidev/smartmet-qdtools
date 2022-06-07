@@ -5,6 +5,8 @@ $program = (-x "../csv2qd" ? "../csv2qd" : "csv2qd");
 system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h');
 $wgs84 = 1-($? >> 8);
 
+$errors = 0;
+
 $results = "results";
 $common = "-S conf/stations.csv -P ../cnf/parameters.csv";
 
@@ -63,7 +65,9 @@ DoTest("sounding data with -O leveltimeid",
        "$common -m NULL -O leveltimeid -p GeopHeight,Temperature,Pressure data/soundings_leveltimeid.csv");
 
 
-print "Done\n";
+print "$errors errors\n";
+exit($errors);
+
 
 # ----------------------------------------------------------------------
 # Run a single test
@@ -111,6 +115,7 @@ sub DoTest
     }
     else
     {
+	++$errors;
 	print " FAILED! (maxdiff = $difference)\n";
 	print "( $resultfile <> $tmpfile in $results/ )\n";
     }

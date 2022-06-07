@@ -5,6 +5,8 @@ $program = (-x "../ashtoqd" ? "../ashtoqd" : "ashtoqd");
 system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h');
 $wgs84 = 1-($? >> 8);
 
+$errors = 0;
+
 $results = "results";
 
 %usednames = ();
@@ -17,7 +19,8 @@ DoTest("boundaries",
        "boundaries",
        "-b data/volcano");
 
-print "Done\n";
+print "$errors errors\n";
+exit($errors);
 
 # ----------------------------------------------------------------------
 # Run a single test
@@ -65,6 +68,7 @@ sub DoTest
     }
     else
     {
+	++$errors;
 	print " FAILED! (maxdiff = $difference)\n";
 	print "( $resultfile <> $tmpfile in $results/ )\n";
     }

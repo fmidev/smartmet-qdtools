@@ -8,11 +8,15 @@ $wgs84 = 1-($? >> 8);
 $results = "results";
 $pointdata = "data/pointdata.sqd";
 
+$errors = 0;
+
 %usednames = ();
 
 DoTest("defaults", "defaults", "$pointdata");
 
-print "Done\n";
+print "$errors errors\n";
+exit($errors);
+
 
 # ----------------------------------------------------------------------
 # Run a single test
@@ -50,6 +54,7 @@ sub DoTest
     }
     else
     {
+	++$errors;
 	print " FAILED!\n";
 	print "( $resultfile <> $tmpfile in $results/ )\n";
 

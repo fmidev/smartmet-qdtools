@@ -9,6 +9,8 @@ $coordinatefile = "conf/coordinates.txt";
 $results = "results";
 $data = "data/qdarea.sqd";
 
+$errors = 0;
+
 %usednames = ();
 
 DoTest("-P mean(mean(t2m)) -p Helsinki",
@@ -75,7 +77,9 @@ DoTest("-T data -p 25,60:50 -P percentage[0.1:100](mean(rr1h))",
        "percentage_rain",
        "-T data -p 25,60:50 -P 'percentage[0.1:100](mean(rr1h))'");
 
-print "Done\n";
+print "$errors errors\n";
+exit($errors);
+
 
 # ----------------------------------------------------------------------
 # Run a single test
@@ -114,6 +118,7 @@ sub DoTest
     }
     else
     {
+	++$errors;
 	print " FAILED!\n";
 	print "( $resultfile <> $tmpfile in $results/ )\n";
 

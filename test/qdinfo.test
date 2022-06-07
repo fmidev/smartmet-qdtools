@@ -9,6 +9,8 @@ $results = "results";
 $griddata = "data/griddata.sqd";
 $pointdata = "data/pointdata.sqd";
 
+$errors = 0;
+
 %usednames = ();
 
 # option -q
@@ -115,8 +117,8 @@ DoTest("option -X for grid data",
        "option_capital_x_grid",
        "-X -q $griddata");
 
-print "Done\n";
-
+print "$errors errors\n";
+exit($errors);
 # ----------------------------------------------------------------------
 # Run a single test
 # ----------------------------------------------------------------------
@@ -153,6 +155,7 @@ sub DoTest
     }
     else
     {
+	++$errors;
 	print " FAILED!\n";
 	print "( $resultfile <> $tmpfile in $results/ )\n";
 

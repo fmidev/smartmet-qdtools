@@ -10,6 +10,8 @@ $griddata = "data/griddata.sqd";
 $pointdata = "data/pointdata.sqd";
 $synopdata = "data/synop.sqd";
 
+$errors = 0;
+
 %usednames = ();
 
 # Without options
@@ -131,7 +133,8 @@ DoTest("synopdata several_options",
        "-P Temperature,WindSpeedMS -T Europe/Stockholm -N -t $synopdata");
 
 
-print "Done\n";
+print "$errors errors\n";
+exit($errors);
 
 # ----------------------------------------------------------------------
 # Run a single test
@@ -169,6 +172,7 @@ sub DoTest
     }
     else
     {
+	++$errors;
 	print " FAILED!\n";
 	print "( $resultfile <> $tmpfile in $results/ )\n";
 

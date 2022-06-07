@@ -10,6 +10,7 @@ fi
 
 grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h
 wgs84=$(expr $? == 0)
+errors=0
 
 for f in data/grib/*; do
     name=$(basename $f)
@@ -31,9 +32,13 @@ for f in data/grib/*; do
 	echo OK
 	rm -f $tmpfile
     else
+	errors=$(($errors+1))
 	echo FAILED
 	$QDINFO -a -q $resultfile > ${tmpfile}.info_ok
 	$QDINFO -a -q $tmpfile > ${tmpfile}.info_fail
 #	diff ${tmpfile}.info_ok ${tmpfile}.info_fail
     fi
 done
+
+echo $errors errors
+exit $errors

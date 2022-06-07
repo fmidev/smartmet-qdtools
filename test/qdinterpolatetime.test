@@ -8,6 +8,8 @@ $wgs84 = 1-($? >> 8);
 use IO::Handle;
 autoflush STDOUT 1;
 
+$errors = 0;
+
 # qdinterpolatetime
 
 DoSqdTest("qdinterpolatetime linear",
@@ -17,6 +19,9 @@ DoSqdTest("qdinterpolatetime linear",
 DoSqdTest("qdinterpolatetime lagrange",
 	  "$program 60 32700 360 5 < data/pal_xh.sqd > /tmp/qdinterpolatetime_lagrange.sqd",
 	  "qdinterpolatetime_lagrange.sqd");
+
+print "$errors errors\n";
+exit($errors);
 
 # ----------------------------------------------------------------------
 # Run a single test
@@ -47,6 +52,7 @@ sub DoTest
     }
     else
     {
+	++$errors;
 	print " FAILED!\n";
 	print "( $resultfile <> $tmpfile)\n";
     }

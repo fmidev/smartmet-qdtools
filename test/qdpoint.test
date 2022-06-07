@@ -12,6 +12,8 @@ $pointdata = "data/pointdata.sqd";
 $synopdata = "data/synop.sqd";
 $harmoniedata = "data/harmonie_hybrid.sqd";
 
+$errors = 0;
+
 %usednames = ();
 
 
@@ -199,7 +201,8 @@ DoTest("-p Sipoo for rotated latlon data",
        "Sipoo_rotated_latlon",
        "-p Sipoo -P Temperature,GeomHeight -q $harmoniedata");
 
-print "Done\n";
+print "$errors errors\n";
+exit($errors);
 
 # ----------------------------------------------------------------------
 # Run a single test
@@ -237,6 +240,7 @@ sub DoTest
     }
     else
     {
+	++$errors;
 	print " FAILED!\n";
 	print "( $resultfile <> $tmpfile in $results/ )\n";
 

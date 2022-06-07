@@ -9,6 +9,8 @@ $results = "results/hdf";
 $resultsexpected = "results";
 system("mkdir -p $results");
 
+$errors = 0;
+
 %usednames = ();
 
 DoTest("daily precipitation","daily.sqd","daily.h5");
@@ -37,7 +39,8 @@ DoTest("comp","comp.sqd","comp.h5");
 # DoTest("shear","shear.sqd","shear.h5");
 # DoTest("shear2","shear2.sqd","shear2.h5");
 
-print "Done\n";
+print "$errors errors\n";
+exit($errors);
 
 # ----------------------------------------------------------------------
 # Run a single test
@@ -74,10 +77,12 @@ sub DoTest
 
     if(! -e "$results/$tmpfile")
     {
+	++$errors;
 	print " FAILED TO PRODUCE OUTPUT FILE\n";
     }
     elsif(! -e "$resultsexpected/$resultfile")
     {
+	++$errors;
 	print " FAILED: TRUE RESULT MISSING ($resultsexpected/$resultfile)\n";
 	unlink("$results/$tmpfile");
     }
@@ -85,21 +90,30 @@ sub DoTest
     {
 	my($difference) = `../qddifference $resultsexpected/$resultfile $results/$tmpfile`;
 
-	$difference =~ s/^\s+//;
-	$difference =~ s/\s+$//;
-	
-	if($difference < 0.0001)
+	if(rindex($difference, "Error", 0) == 0)
 	{
-	    if($difference <= 0)
-	    { print " OK\n"; }
-	    else
-	    { print " OK (diff <= $difference)\n"; }
-	    unlink("$results/$tmpfile");
+	    ++$errors;
+	    print " FAILED! (grids not comparable with qddifference)\n";
 	}
 	else
 	{
-	    print " FAILED! (maxdiff = $difference)\n";
-	    print "( $resultfile <> $tmpfile in $results/ )\n";
+	    $difference =~ s/^\s+//;
+	    $difference =~ s/\s+$//;
+	    
+	    if($difference < 0.0001)
+	    {
+		if($difference <= 0)
+		{ print " OK\n"; }
+		else
+		{ print " OK (diff <= $difference)\n"; }
+		unlink("$results/$tmpfile");
+	    }
+	    else
+	    {
+		++$errors;
+		print " FAILED! (maxdiff = $difference)\n";
+		print "( $resultfile <> $tmpfile in $results/ )\n";
+	    }
 	}
     }
 }

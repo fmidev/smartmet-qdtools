@@ -6,6 +6,8 @@ $results = "results";
 $griddata = "data/griddata.sqd";
 $pointdata = "data/pointdata.sqd";
 
+$errors = 0;
+
 %usednames = ();
 
 DoTest("default options", "default_options", "$griddata");
@@ -20,7 +22,8 @@ DoTest("option -d -B 80", "option_d_big_b_80", "-d -B 80 $griddata");
 DoTest("option -p Temperature,WindSpeedMS", "option_p", "-p Temperature,WindSpeedMS $griddata");
 DoTest("option -w 2974,2978", "option_w", "-w 2974,2978 $pointdata");
 
-print "Done\n";
+print "$errors errors\n";
+exit($errors);
 
 # ----------------------------------------------------------------------
 # Run a single test
@@ -50,6 +53,7 @@ sub DoTest
     }
     else
     {
+	++$errors;
 	print " FAILED!\n";
 	print "( $resultfile <> $tmpfile in $results/ )\n";
 

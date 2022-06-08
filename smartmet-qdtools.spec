@@ -29,10 +29,10 @@ BuildRequires: netcdf-cxx-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
 BuildRequires: smartmet-library-calculator-devel >= 22.5.24
-BuildRequires: smartmet-library-gis-devel >= 22.5.4
+BuildRequires: smartmet-library-gis-devel >= 22.6.7
 BuildRequires: smartmet-library-imagine-devel >= 22.5.24
-BuildRequires: smartmet-library-macgyver-devel >= 22.3.28
-BuildRequires: smartmet-library-newbase-devel >= 22.5.24
+BuildRequires: smartmet-library-macgyver-devel >= 22.5.24
+BuildRequires: smartmet-library-newbase-devel >= 22.6.6
 BuildRequires: smartmet-library-smarttools-devel >= 22.5.24
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
@@ -58,16 +58,16 @@ Requires: libpng
 Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
 Requires: smartmet-library-calculator >= 22.5.24
-Requires: smartmet-library-gis >= 22.5.4
+Requires: smartmet-library-gis >= 22.6.7
 Requires: smartmet-library-imagine >= 22.5.24
-Requires: smartmet-library-macgyver >= 22.3.28
-Requires: smartmet-library-newbase >= 22.5.24
+Requires: smartmet-library-macgyver >= 22.5.24
+Requires: smartmet-library-newbase >= 22.6.6
 Requires: smartmet-library-smarttools >= 22.5.24
 Requires: smartmet-timezones >= 22.3.24
 Requires: zlib
-#TestRequires: smartmet-library-macgyver-devel >= 22.3.28
+#TestRequires: smartmet-library-macgyver-devel >= 22.5.24
 #TestRequires: gcc-c++
-#TestRequires: smartmet-library-newbase-devel >= 22.5.24
+#TestRequires: smartmet-library-newbase-devel >= 22.6.6
 
 Provides: ashtoqd = %{version}
 Provides: bufrtoqd = %{version}
@@ -196,6 +196,7 @@ make %{_smp_mflags}
 %changelog
 * Wed Jun  8 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.6.8-1.fmi
 - qdinfo prints more information with option -x
+- several commands no longer depend explicitly on the branch of the installed newbase
 
 * Tue May 24 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.5.24-1.fmi
 - Repackaged due to NFmiArea ABI changes

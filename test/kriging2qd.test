@@ -1,0 +1,102 @@
+#!/usr/bin/perl
+
+$program = (-x "../kriging2qd" ? "../kriging2qd" : "kriging2qd");
+
+system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h');
+$wgs84 = 1-($? >> 8);
+
+$results = "results";
+
+$errors = 0;
+
+%usednames = ();
+
+$resultfile = "kriging.sqd";
+
+DoTest("kriging","kriging","data/kriging.dat",$resultfile);
+
+print "$errors errors\n";
+exit($errors);
+
+
+# ----------------------------------------------------------------------
+# Run a single test
+# ----------------------------------------------------------------------
+
+sub DoTest
+{
+    my($text,$name,$arguments,$resultfile) = @_;
+
+    if(exists($usednames{$name}))
+    {
+	print "Error: $name used more than once\n";
+	exit(1);
+    }
+    $usednames{$name} = 1;
+
+    $cmd = "$program $arguments $results/$resultfile";
+    
+    $expectedresult = "${resultfile}.ok";
+    if($wgs84)
+    {
+	my($wgs84expectedresult) = "${expectedresult}.wgs84";
+	if(-e "$results/$wgs84expectedresult")
+	{  $expectedresult = $wgs84expectedresult; }
+    }
+
+
+    print "$cmd\n";
+    # $output = `$cmd 2>/dev/null`;
+    $output = `$cmd`;
+
+    print padname($text);
+
+    if(! -e "results/$resultfile")
+    {
+	++$errors;
+	print " FAILED TO PRODUCE OUTPUT FILE results/$resultfile\n";
+    }
+    elsif(! -e "results/$expectedresult")
+    {
+	++$errors;
+	print " FAILED: TRUE RESULT results/$expectedresult MISSING\n";
+	# unlink("$results/$resultfile");
+    }
+    else
+    {
+	my($difference) = `../qddifference results/$resultfile results/$expectedresult`;
+
+	$difference =~ s/^\s+//;
+	$difference =~ s/\s+$//;
+	
+	if($difference < 0.0001)
+	{
+	    if($difference <= 0)
+	    { print " OK\n"; }
+	    else
+	    { print " OK (diff <= $difference)\n"; }
+	    unlink("$results/$resultfile");
+	}
+	else
+	{
+	    ++$errors;
+	    print " FAILED! (maxdiff = $difference)\n";
+	    print "( $resultfile <> ${resultfile}.ok in $results/ )\n";
+	}
+    }
+}
+
+# ----------------------------------------------------------------------
+# Pad the given string to 70 characters with dots
+# ----------------------------------------------------------------------
+
+sub padname
+{
+    my($str) = @_[0];
+
+    while(length($str) < 70)
+    {
+	$str .= ".";
+    }
+    return $str;
+}

@@ -9,7 +9,7 @@ $wgs84 = 1-($? >> 8);
 
 $results = "results";
 
-$erors = 0;
+$errors = 0;
 
 %usednames = ();
 

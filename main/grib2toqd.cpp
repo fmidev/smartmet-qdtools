@@ -45,6 +45,7 @@
 #include <boost/thread.hpp>
 #include <fmt/format.h>
 #include <newbase/NFmiAreaFactory.h>
+#include <newbase/NFmiAreaTools.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiCommentStripper.h>
 #include <newbase/NFmiDataMatrixUtils.h>
@@ -67,15 +68,6 @@
 #include <set>
 #include <sstream>
 #include <stdexcept>
-
-#ifdef WGS84
-#include <newbase/NFmiAreaTools.h>
-#else
-#include <newbase/NFmiLatLonArea.h>
-#include <newbase/NFmiMercatorArea.h>
-#include <newbase/NFmiRotatedLatLonArea.h>
-#include <newbase/NFmiStereographicArea.h>
-#endif
 
 using namespace std;
 
@@ -1332,17 +1324,6 @@ static void FreeDatas(vector<GridRecordData *> &theGribRecordDatas)
     delete *it;
 }
 
-#ifndef WGS84
-void FixPacificLongitude(NFmiPoint &lonLat)
-{
-  if (lonLat.X() < 0)
-  {
-    NFmiLongitude lon(lonLat.X(), true);
-    lonLat.X(lon.Value());
-  }
-}
-#endif
-
 static NFmiArea *CreateLatlonArea(grib_handle *theGribHandle, bool doAtlanticFix)
 {
   double La1 = 0;
@@ -1387,15 +1368,7 @@ static NFmiArea *CreateLatlonArea(grib_handle *theGribHandle, bool doAtlanticFix
 
     NFmiPoint bl(Lo1, La1);
     NFmiPoint tr(Lo2, La2);
-#ifdef WGS84
     return NFmiAreaTools::CreateLegacyLatLonArea(bl, tr);
-#else
-    bool usePacificView = NFmiArea::IsPacificView(bl, tr);
-    if (usePacificView)
-      ::FixPacificLongitude(tr);
-
-    return new NFmiLatLonArea(bl, tr, NFmiPoint(0, 0), NFmiPoint(1, 1), usePacificView);
-#endif
   }
   else
     throw runtime_error("Error: Unable to retrieve latlon-projection information from grib.");
@@ -1413,11 +1386,7 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
   int status4 = grib_get_double(theGribHandle, "longitudeOfLastGridPointInDegrees", &Lo2);
 
   if (status1 == 0 && status2 == 0 && status3 == 0 && status4 == 0)
-#ifdef WGS84
     return NFmiAreaTools::CreateLegacyMercatorArea(NFmiPoint(Lo1, La1), NFmiPoint(Lo2, La2));
-#else
-    return new NFmiMercatorArea(NFmiPoint(Lo1, FmiMin(La1, La2)), NFmiPoint(Lo2, FmiMax(La1, La2)));
-#endif
 
   if (status1 == 0 && status2 == 0)
   {
@@ -1442,22 +1411,10 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
     {
       NFmiPoint bottomLeft(Lo1, La1);
 
-#ifdef WGS84
       auto proj =
           fmt::format("+proj=merc +R={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs", kRearth);
       return NFmiArea::CreateFromCornerAndSize(
           proj, "FMI", bottomLeft, (nx - 1) * dx / 1000, (ny - 1) * dy / 1000);
-#else
-      NFmiPoint dummyTopRight(Lo1 + 5, La1 + 5);
-      NFmiMercatorArea dummyArea(bottomLeft, dummyTopRight);
-      NFmiPoint xyBottomLeft = dummyArea.LatLonToWorldXY(dummyArea.BottomLeftLatLon());
-      NFmiPoint xyTopRight(xyBottomLeft);
-      xyTopRight.X(xyTopRight.X() + (nx - 1) * dx / 1000.);
-      xyTopRight.Y(xyTopRight.Y() + (ny - 1) * dy / 1000.);
-
-      NFmiPoint topRight(dummyArea.WorldXYToLatLon(xyTopRight));
-      return new NFmiMercatorArea(bottomLeft, topRight);
-#endif
     }
   }
   throw runtime_error("Error: Unable to retrieve mercator-projection information from grib.");
@@ -1507,7 +1464,6 @@ static NFmiArea *CreatePolarStereographicArea(grib_handle *theGribHandle)
     double width_in_meters = (nx - 1) * dx / 1000.0;
     double height_in_meters = (ny - 1) * dy / 1000.0;
 
-#ifdef WGS84
     auto proj = fmt::format(
         "+proj=stere +lat_0={} +lon_0={} +R={:.0f}  +units=m +wktext "
         "+towgs84=0,0,0 +no_defs",
@@ -1517,19 +1473,6 @@ static NFmiArea *CreatePolarStereographicArea(grib_handle *theGribHandle)
 
     return NFmiArea::CreateFromCornerAndSize(
         proj, "FMI", bottom_left, width_in_meters, height_in_meters);
-#else
-    NFmiPoint top_left_xy(0, 0);
-    NFmiPoint top_right_xy(1, 1);
-
-    return new NFmiStereographicArea(bottom_left,
-                                     width_in_meters,
-                                     height_in_meters,
-                                     Lov,
-                                     top_left_xy,
-                                     top_right_xy,
-                                     90,
-                                     usedLad);
-#endif
   }
 
   throw runtime_error("Error: Unable to retrieve polster-projection information from grib.");
@@ -1564,11 +1507,7 @@ static void CalcCroppedGrid(GridRecordData *theGridRecordData)
   NFmiPoint latlon2 = grid.GridToLatLon(xy2);
   NFmiArea *newArea = 0;
   if (theGridRecordData->itsOrigGrid.itsArea->ClassId() == kNFmiLatLonArea)
-#ifdef WGS84
     newArea = NFmiAreaTools::CreateLegacyLatLonArea(latlon1, latlon2);
-#else
-    newArea = new NFmiLatLonArea(latlon1, latlon2);
-#endif
   else
     throw runtime_error("Error: CalcCroppedGrid doesn't support this projection yet.");
 

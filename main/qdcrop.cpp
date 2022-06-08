@@ -416,13 +416,18 @@ NFmiHPlaceDescriptor MakeHPlaceDescriptor(NFmiFastQueryInfo& theQ,
   if (!theProj.empty())
   {
     boost::shared_ptr<NFmiArea> area = NFmiAreaFactory::Create(theProj);
-#ifdef WGS84
-    auto width = static_cast<int>(round(area->Width()));
-    auto height = static_cast<int>(round(area->Height()));
-#else
-    auto width = static_cast<int>(round(area->XYArea(area.get()).Width()));
-    auto height = static_cast<int>(round(area->XYArea(area.get()).Height()));
-#endif
+    int width = 0;
+    int height = 00;
+    if (!Fmi::LegacyMode())
+    {
+      width = static_cast<int>(round(area->Width()));
+      height = static_cast<int>(round(area->Height()));
+    }
+    else
+    {
+      width = static_cast<int>(round(area->XYArea(area.get()).Width()));
+      height = static_cast<int>(round(area->XYArea(area.get()).Height()));
+    }
     NFmiGrid grid(area.get(), width, height);
     NFmiHPlaceDescriptor hdesc(grid);
     return hdesc;
@@ -470,10 +475,6 @@ NFmiHPlaceDescriptor MakeHPlaceDescriptor(NFmiFastQueryInfo& theQ,
     const NFmiPoint bottomleft(lon1, lat1);
     const NFmiPoint topright(lon2, lat2);
 
-    // If we wanted input to be legacy sphere geodetic coordinates:
-    // bottomleft = NFmiArea::SphereToWGS84(bottomleft);
-    // topright = NFmiArea::SphereToWGS84(topright);
-
     const NFmiPoint xy1 = theQ.Grid()->LatLonToGrid(bottomleft);
     const NFmiPoint xy2 = theQ.Grid()->LatLonToGrid(topright);
 
@@ -509,20 +510,25 @@ NFmiHPlaceDescriptor MakeHPlaceDescriptor(NFmiFastQueryInfo& theQ,
 
   // Note that the grid is flipped for NFmiRect
 
-#ifdef WGS84
-  int y2 = (yoff >= 0 ? yoff : ny + yoff - 1);
-  int x2 = x1 + (width - 1) * dx;
+  int x2 = 0;
+  int y2 = 0;
 
-  x1 = (xoff >= 0 ? xoff : nx + xoff - 1);
-  y1 = y2 + (height - 1) * dy;
+  if (!Fmi::LegacyMode())
+  {
+    y2 = (yoff >= 0 ? yoff : ny + yoff - 1);
+    x2 = x1 + (width - 1) * dx;
 
-#else
-  x1 = (xoff >= 0 ? xoff : nx + xoff - 1);
-  y1 = (yoff >= 0 ? yoff : ny + yoff - 1);
+    x1 = (xoff >= 0 ? xoff : nx + xoff - 1);
+    y1 = y2 + (height - 1) * dy;
+  }
+  else
+  {
+    x1 = (xoff >= 0 ? xoff : nx + xoff - 1);
+    y1 = (yoff >= 0 ? yoff : ny + yoff - 1);
 
-  int x2 = x1 + (width - 1) * dx;
-  int y2 = y1 + (height - 1) * dy;
-#endif
+    x2 = x1 + (width - 1) * dx;
+    y2 = y1 + (height - 1) * dy;
+  }
 
   if (width <= 0 || height <= 0)
     throw runtime_error("Geometry width and height must be greater than zero");
@@ -536,20 +542,10 @@ NFmiHPlaceDescriptor MakeHPlaceDescriptor(NFmiFastQueryInfo& theQ,
   if (x2 >= nx || y2 >= ny) throw runtime_error("Geometry exceeds grid bounds");
 #endif
 
-#ifdef WGS84
   NFmiPoint bl(theQ.Grid()->GridToWorldXY(NFmiPoint(x1, y1)));
   NFmiPoint tr(theQ.Grid()->GridToWorldXY(NFmiPoint(x2, y2)));
-#else
-  NFmiPoint bl(theQ.Grid()->GridToLatLon(NFmiPoint(x1, y1)));
-  NFmiPoint tr(theQ.Grid()->GridToLatLon(NFmiPoint(x2, y2)));
-#endif
-
-#ifdef WGS84
   boost::shared_ptr<NFmiArea> area(
       NFmiArea::CreateFromBBox(theQ.Grid()->Area()->SpatialReference(), bl, tr));
-#else
-  boost::shared_ptr<NFmiArea> area(theQ.Grid()->Area()->CreateNewArea(bl, tr));
-#endif
 
   if (area.get() == 0)
     throw runtime_error("Failed to create the new projection");

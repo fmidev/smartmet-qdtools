@@ -9,10 +9,6 @@
 #include <cstdio>
 #include <string>
 
-#ifndef WGS84
-class NFmiRotatedLatLonArea;
-#endif
-
 using namespace std;
 
 #define BOTTOMLEFT 0
@@ -46,9 +42,6 @@ class GeoTiffQD
   void SetTestMode(bool testMode);
 
  private:
-#ifndef WGS84
-  void getregllbbox(const NFmiRotatedLatLonArea *a);
-#endif
   NFmiFastQueryInfo *generateLatLonInfo(NFmiFastQueryInfo *orginData);
   int *fillIntRasterByQD(NFmiFastQueryInfo *theData,
                          NFmiFastQueryInfo *theSecondData,

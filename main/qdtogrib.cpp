@@ -20,11 +20,6 @@
 #include <map>
 #include <string>
 
-#ifndef WGS84
-#include <newbase/NFmiRotatedLatLonArea.h>
-#include <newbase/NFmiStereographicArea.h>
-#endif
-
 #ifdef UNIX
 #include <sys/ioctl.h>
 #endif
@@ -339,28 +334,34 @@ bool parse_options(int argc, char *argv[])
     return false;
   }
 
-  if (opt.count("infile") == 0) throw std::runtime_error("Expecting input file as parameter 1");
+  if (opt.count("infile") == 0)
+    throw std::runtime_error("Expecting input file as parameter 1");
 
-  if (opt.count("outfile") == 0) throw std::runtime_error("Expecting output file as parameter 2");
+  if (opt.count("outfile") == 0)
+    throw std::runtime_error("Expecting output file as parameter 2");
 
   if (!fs::exists(options.infile))
     throw std::runtime_error("Input file '" + options.infile + "' does not exist");
 
   // Handle the level argument
 
-  if (!level.empty()) options.level = parse_level(level);
+  if (!level.empty())
+    options.level = parse_level(level);
 
   // Validate GRIB selection
 
-  if (options.grib1 && options.grib2) throw std::runtime_error("Must select either GRIB1 or GRIB2");
+  if (options.grib1 && options.grib2)
+    throw std::runtime_error("Must select either GRIB1 or GRIB2");
 
   // Make default selection if none was chosen
 
-  if (!options.grib1) options.grib2 = true;
+  if (!options.grib1)
+    options.grib2 = true;
 
   // Read the configuration file
 
-  if (!config.empty()) options.ptable = ReadGribConf(config);
+  if (!config.empty())
+    options.ptable = ReadGribConf(config);
 
   return true;
 }
@@ -376,7 +377,8 @@ bool ignore_param(long id)
   for (size_t i = 0; i < options.ptable.size(); ++i)
   {
     // Note: conversion in reverse direction!
-    if (id == options.ptable[i].itsWantedParam.GetIdent()) return false;
+    if (id == options.ptable[i].itsWantedParam.GetIdent())
+      return false;
   }
   return true;
 }
@@ -389,8 +391,10 @@ bool ignore_param(long id)
 
 double fix_longitude(double lon)
 {
-  if (options.grib1) return lon;
-  if (lon < 0) return 360 + lon;
+  if (options.grib1)
+    return lon;
+  if (lon < 0)
+    return 360 + lon;
   return lon;
 }
 
@@ -410,7 +414,8 @@ long get_smallest_timestep(NFmiFastQueryInfo &theInfo)
     if (last_time)
     {
       long diff = theInfo.ValidTime().DifferenceInMinutes(*last_time);
-      if (timestep == 0 || diff < timestep) timestep = diff;
+      if (timestep == 0 || diff < timestep)
+        timestep = diff;
     }
     last_time = theInfo.ValidTime();
   }
@@ -473,11 +478,8 @@ void set_rotated_latlon_geometry(NFmiFastQueryInfo &theInfo,
 {
   gset(gribHandle, "gridType", "rotated_ll");
 
-#ifdef WGS84  
   const auto &a = *theInfo.Area();
-#else
-  const NFmiRotatedLatLonArea &a = *dynamic_cast<const NFmiRotatedLatLonArea *>(theInfo.Area());
-#endif  
+
   NFmiPoint bl(a.LatLonToWorldXY(a.BottomLeftLatLon()));
   NFmiPoint tr(a.LatLonToWorldXY(a.TopRightLatLon()));
 
@@ -504,26 +506,15 @@ void set_rotated_latlon_geometry(NFmiFastQueryInfo &theInfo,
 
   // Get north pole location
 
-#ifdef WGS84
-
-  auto plat = a.ProjInfo().getDouble("o_lat_p");
-  auto plon = a.ProjInfo().getDouble("o_lon_p");
-  if (!plat || !plon) throw std::runtime_error("Rotated latlon north pole location not set");
+  const auto &pinfo = a.SpatialReference().projInfo();
+  auto plat = pinfo.getDouble("o_lat_p");
+  auto plon = pinfo.getDouble("o_lon_p");
+  if (!plat || !plon)
+    throw std::runtime_error("Rotated latlon north pole location not set");
   // Calculate respective south pole location
 
   gset(gribHandle, "longitudeOfSouthernPoleInDegrees", *plon);
   gset(gribHandle, "latitudeOfSouthernPoleInDegrees", -(*plat));
-
-#else
-
-  if (a.SouthernPole().X() != 0)
-    throw std::runtime_error(
-        "GRIB does not support rotated latlon areas where longitude is also rotated");
-
-  gset(gribHandle, "longitudeOfSouthernPoleInDegrees", a.SouthernPole().X());
-  gset(gribHandle, "latitudeOfSouthernPoleInDegrees", a.SouthernPole().Y());
-
-#endif  
 
   // DUMP(gribHandle, "geography");
 
@@ -579,20 +570,22 @@ void set_stereographic_geometry(NFmiFastQueryInfo &theInfo,
   gset(gribHandle, "DxInMetres", dx);
   gset(gribHandle, "DyInMetres", dy);
 
-    gset(gribHandle, "jScansPositively", 1);
+  gset(gribHandle, "jScansPositively", 1);
   gset(gribHandle, "iScansNegatively", 0);
 
-#ifdef WGS84  
-
   auto *a = theInfo.Area();
+  const auto &pinfo = a->SpatialReference().projInfo();
 
-  auto clon = a->ProjInfo().getDouble("lon_0");
-  auto clat = a->ProjInfo().getDouble("lat_0");
-  auto tlat = a->ProjInfo().getDouble("lat_ts");
+  auto clon = pinfo.getDouble("lon_0");
+  auto clat = pinfo.getDouble("lat_0");
+  auto tlat = pinfo.getDouble("lat_ts");
 
-  if (!clon) clon = 0;
-  if (!clat) clat = 90;
-  if (!tlat) tlat = 90;
+  if (!clon)
+    clon = 0;
+  if (!clat)
+    clat = 90;
+  if (!tlat)
+    tlat = 90;
 
   if (*clat == 90)
     gset(gribHandle, "projecionCenterFlag", 0);
@@ -617,34 +610,7 @@ void set_stereographic_geometry(NFmiFastQueryInfo &theInfo,
     // "scaleFactorOfMinorAxisOfOblateSpheroidEarth"
     // "scaledValueOfMinorAxisOfOblateSpheroidEarth"
   }
-  
-#else
 
-  const NFmiStereographicArea *a = dynamic_cast<const NFmiStereographicArea *>(theInfo.Area());
-
-  double lon_0 = a->CentralLongitude();
-  double lat_0 = a->CentralLatitude();
-  double lat_ts = a->TrueLatitude();
-
-  gset(gribHandle, "orientationOfTheGridInDegrees", lon_0);
-
-  if (options.grib2)
-    gset(gribHandle, "LaDInDegrees", lat_ts);
-  else if (lat_ts != 60)
-    throw std::runtime_error(
-        "GRIB1 true latitude can only be 60 for polar stereographic projections with grib_api "
-                "library");
-
-  if (lat_0 != 90 && lat_0 != -90)
-    throw std::runtime_error("GRIB format supports only polar stereographic projections");
-
-  if (lat_0 != 90)
-    throw std::runtime_error("Only N-pole polar stereographic projections are supported");
-  
-  
-#endif
-
- 
   // DUMP(gribHandle,"geography");
 
   theValueArray.resize(nx * ny);  // tehd‰‰ datan siirto taulusta oikean kokoinen
@@ -698,7 +664,8 @@ void set_mercator_geometry(NFmiFastQueryInfo &theInfo,
 
 static void set_producer(grib_handle *gribHandle)
 {
-  if (options.centre.empty()) return;
+  if (options.centre.empty())
+    return;
 
   auto it = centres.find(options.centre);
   int centre = 0;
@@ -729,7 +696,8 @@ static void set_producer(grib_handle *gribHandle)
 
 static void set_packing(grib_handle *gribHandle)
 {
-  if (options.packing.empty()) return;
+  if (options.packing.empty())
+    return;
 
   gset(gribHandle, "packingType", options.packing);
 }
@@ -744,8 +712,7 @@ static void set_geometry(NFmiFastQueryInfo &theInfo,
                          grib_handle *gribHandle,
                          std::vector<double> &theValueArray)
 {
-#ifdef WGS84
-  auto id = theInfo.Area()->DetectClassId();
+  auto id = theInfo.Area()->ClassId();
 
   if (id == kNFmiLatLonArea)
     set_latlon_geometry(theInfo, gribHandle, theValueArray);
@@ -757,43 +724,14 @@ static void set_geometry(NFmiFastQueryInfo &theInfo,
     set_mercator_geometry(theInfo, gribHandle, theValueArray);
   else
     throw std::runtime_error("Projection '" + theInfo.Area()->ProjStr() + "' is not supported");
-#else
-  switch (theInfo.Area()->ClassId())
-  {
-    case kNFmiLatLonArea:
-      set_latlon_geometry(theInfo, gribHandle, theValueArray);
-      break;
-    case kNFmiRotatedLatLonArea:
-      set_rotated_latlon_geometry(theInfo, gribHandle, theValueArray);
-      break;
-    case kNFmiStereographicArea:
-      set_stereographic_geometry(theInfo, gribHandle, theValueArray);
-      break;
-    case kNFmiMercatorArea:
-      set_mercator_geometry(theInfo, gribHandle, theValueArray);
-      break;
-    case kNFmiEquiDistArea:
-      throw std::runtime_error("Equidistant projection is not supported by GRIB");
-    case kNFmiGnomonicArea:
-      throw std::runtime_error("Gnomonic projection is not supported by GRIB");
-    case kNFmiPKJArea:
-      throw std::runtime_error("PKJ projection is not supported by GRIB");
-    case kNFmiYKJArea:
-      throw std::runtime_error("YKJ projection is not supported by GRIB");
-    case kNFmiKKJArea:
-      throw std::runtime_error("KKJ projection is not supported by GRIB");
-    default:
-      throw std::runtime_error("Unsupported projection in input data");
-  }
-
-#endif
 }
 
 // ----------------------------------------------------------------------
 
 static NFmiMetTime get_origintime(NFmiFastQueryInfo &theInfo)
 {
-  if (!options.ignore_origintime) return theInfo.OriginTime();
+  if (!options.ignore_origintime)
+    return theInfo.OriginTime();
 
   // Get first time without altering the time index
   auto idx = theInfo.TimeIndex();
@@ -812,13 +750,15 @@ static void set_times(NFmiFastQueryInfo &theInfo, grib_handle *gribHandle, bool 
   long dateLong = orig_time.GetYear() * 10000 + orig_time.GetMonth() * 100 + orig_time.GetDay();
 
   long timeLong = orig_time.GetHour() * 100;
-  if (use_minutes) timeLong += orig_time.GetMin();
+  if (use_minutes)
+    timeLong += orig_time.GetMin();
 
   gset(gribHandle, "dataDate", dateLong);
   gset(gribHandle, "dataTime", timeLong);
 
   // P1 max 255 minutes is not enough, we need to enable P2
-  if (use_minutes && options.grib1) gset(gribHandle, "timeRangeIndicator", 10);
+  if (use_minutes && options.grib1)
+    gset(gribHandle, "timeRangeIndicator", 10);
 
   // step units in stepUnits.table: m h D M Y 10Y 30Y C 3h 6h 12h s 15m 30m
 
@@ -1023,7 +963,8 @@ void write_grib(NFmiFastQueryInfo &theInfo, grib_handle *gribHandle, const std::
   std::string fullSplitFileName(theFileName);
   fullSplitFileName += ::make_file_suffix(theInfo);
   FILE *out = fopen(fullSplitFileName.c_str(), "wb");
-  if (!out) throw std::runtime_error("ERROR: cannot open file for writing: " + fullSplitFileName);
+  if (!out)
+    throw std::runtime_error("ERROR: cannot open file for writing: " + fullSplitFileName);
 
   const void *mesg;
   size_t mesg_len;
@@ -1036,9 +977,11 @@ void write_grib(NFmiFastQueryInfo &theInfo, grib_handle *gribHandle, const std::
 
 int run(const int argc, char *argv[])
 {
-  if (!parse_options(argc, argv)) return 0;
+  if (!parse_options(argc, argv))
+    return 0;
 
-  if (options.verbose) std::cout << "Opening file '" << options.infile << "'" << std::endl;
+  if (options.verbose)
+    std::cout << "Opening file '" << options.infile << "'" << std::endl;
 
   NFmiQueryData qd(options.infile);
   NFmiFastQueryInfo qi(&qd);
@@ -1062,7 +1005,8 @@ int run(const int argc, char *argv[])
   int option_flags = GRIB_DUMP_FLAG_VALUES | GRIB_DUMP_FLAG_READ_ONLY;
 #endif
 
-  if (gribHandle == 0) throw std::runtime_error("ERROR: Unable to create grib handle\n");
+  if (gribHandle == 0)
+    throw std::runtime_error("ERROR: Unable to create grib handle\n");
 
   if (qi.IsGrid() == false)
     throw std::runtime_error("ERROR: data wasn't grid data, but station data.\n");
@@ -1071,7 +1015,8 @@ int run(const int argc, char *argv[])
   if (!options.split)
   {
     out = fopen(options.outfile.c_str(), "wb");
-    if (!out) throw std::runtime_error("ERROR: cannot open file for writing: " + options.outfile);
+    if (!out)
+      throw std::runtime_error("ERROR: cannot open file for writing: " + options.outfile);
   }
 
   try
@@ -1086,7 +1031,8 @@ int run(const int argc, char *argv[])
     const bool use_minutes = (timestep < 60);
     set_times(qi, gribHandle, use_minutes);
 
-    if (options.verbose) std::cout << "Smallest timestep = " << timestep << std::endl;
+    if (options.verbose)
+      std::cout << "Smallest timestep = " << timestep << std::endl;
 
     for (qi.ResetLevel(); qi.NextLevel();)
     {
@@ -1118,17 +1064,20 @@ int run(const int argc, char *argv[])
   }
   catch (...)
   {
-    if (out) fclose(out);  // suljetaan outputfile myˆs virhe tilanteessa
-    throw;                 // paiskataan kiinniotettu poikkeus edelleen matkaan
+    if (out)
+      fclose(out);  // suljetaan outputfile myˆs virhe tilanteessa
+    throw;          // paiskataan kiinniotettu poikkeus edelleen matkaan
   }
-  if (out) fclose(out);  // lopuksi suljetaan outputfile
+  if (out)
+    fclose(out);  // lopuksi suljetaan outputfile
 
   return 0;
 }
 
 // ----------------------------------------------------------------------
 
-int main(const int argc, char *argv[]) try
+int main(const int argc, char *argv[])
+try
 {
   return run(argc, argv);
 }

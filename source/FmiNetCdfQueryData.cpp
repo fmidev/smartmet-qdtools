@@ -2,15 +2,10 @@
 #include <boost/algorithm/string/case_conv.hpp>
 #include <fmt/format.h>
 #include <newbase/NFmiAreaFactory.h>
+#include <newbase/NFmiAreaTools.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiQueryDataUtil.h>
 #include <netcdfcpp.h>
-
-#ifdef WGS84
-#else
-#include <newbase/NFmiLatLonArea.h>
-#include <newbase/NFmiStereographicArea.h>
-#endif
 
 void FmiTDimVarInfo::CalcTimeList(void)
 {
@@ -256,11 +251,7 @@ void FmiNetCdfQueryData::MakeWantedGrid(void)
     // aluksi tämä hanskaa vain latlon-areat, ja hilat pakotetaan tasavälisiksi
     NFmiPoint bottomLeft(itsXInfo.itsValues[0], itsYInfo.itsValues[0]);
     NFmiPoint topRight(itsXInfo.itsValues[xSize - 1], itsYInfo.itsValues[ySize - 1]);
-#ifdef WGS84
-    auto *area = NFmiArea::CreateFromCorners("FMI", "FMI", bottomLeft, topRight);
-#else
-    NFmiArea *area = new NFmiLatLonArea(bottomLeft, topRight);
-#endif
+    NFmiArea *area = NFmiAreaTools::CreateLegacyLatLonArea(bottomLeft, topRight);
     itsGrid = NFmiGrid(area, static_cast<unsigned long>(xSize), static_cast<unsigned long>(ySize));
   }
   else
@@ -762,7 +753,6 @@ void FmiNetCdfQueryData::InitializeStreographicGrid(void)
     double gridWidth = (itsProjectionInfo.Nx - 1) * itsProjectionInfo.Dx;
     double gridHeight = (itsProjectionInfo.Ny - 1) * itsProjectionInfo.Dy;
 
-#ifdef WGS84
     auto proj = fmt::format(
         "+proj=stere +lat_0={} +lat_ts={} +lon_0={} +k=1 +x_0=0 +y_0=0 +R={:.0f} "
         "+units=m +wktext +towgs84=0,0,0 +no_defs",
@@ -775,24 +765,6 @@ void FmiNetCdfQueryData::InitializeStreographicGrid(void)
         NFmiArea::CreateFromCornerAndSize(proj, "FMI", bottomLeftLatlon, gridWidth, gridHeight);
 
     itsGrid = NFmiGrid(area, itsProjectionInfo.Nx, itsProjectionInfo.Ny);
-
-#else
-
-    NFmiPoint topRightLatlon(itsProjectionInfo.Lo1 + 1,
-                             itsProjectionInfo.La1 + 1);  // temporary fake corner
-
-    NFmiStereographicArea tmpArea1(
-        bottomLeftLatlon, topRightLatlon, clon, NFmiPoint(0, 0), NFmiPoint(1, 1), clon, tlat);
-    NFmiPoint worldXyBottomLeft = tmpArea1.WorldXYPlace();
-    NFmiPoint worldXyTopRight(worldXyBottomLeft);
-    worldXyTopRight.X(worldXyTopRight.X() + gridWidth);
-    worldXyTopRight.Y(worldXyTopRight.Y() + gridHeight);
-    NFmiPoint realTopRightLatlon = tmpArea1.WorldXYToLatLon(worldXyTopRight);
-    NFmiStereographicArea realArea(
-        bottomLeftLatlon, realTopRightLatlon, clon, NFmiPoint(0, 0), NFmiPoint(1, 1), clat, tlat);
-
-    itsGrid = NFmiGrid(&realArea, itsProjectionInfo.Nx, itsProjectionInfo.Ny);
-#endif
   }
   else
     throw std::runtime_error(

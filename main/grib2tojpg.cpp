@@ -29,13 +29,6 @@
 #include <sstream>
 #include <stdexcept>
 
-#ifndef WGS84
-#include <newbase/NFmiLatLonArea.h>
-#include <newbase/NFmiMercatorArea.h>
-#include <newbase/NFmiRotatedLatLonArea.h>
-#include <newbase/NFmiStereographicArea.h>
-#endif
-
 extern "C"
 {
 #include <jpeglib.h>
@@ -672,24 +665,10 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
 
     if (status9 == 0 && status6 == 0 && status7 == 0 && status8 == 0)
     {
-#ifdef WGS84
       auto proj =
           fmt::format("+proj=merc +R={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs", kRearth);
       return NFmiArea::CreateFromCornerAndSize(
           proj, "FMI", NFmiPoint(Lo1, La1), (nx - 1) * dx / 1000, (ny - 1) * dy + 1000);
-#else
-      NFmiPoint bottomLeft(Lo1, La1);
-      NFmiPoint dummyTopRight(Lo1 + 5, La1 + 5);
-      NFmiMercatorArea dummyArea(bottomLeft, dummyTopRight);
-      NFmiPoint xyBottomLeft = dummyArea.LatLonToWorldXY(dummyArea.BottomLeftLatLon());
-      NFmiPoint xyTopRight(xyBottomLeft);
-      xyTopRight.X(xyTopRight.X() + (nx - 1) * dx / 1000.);
-      xyTopRight.Y(xyTopRight.Y() + (ny - 1) * dy / 1000.);
-
-      NFmiPoint topRight(dummyArea.WorldXYToLatLon(xyTopRight));
-
-      return new NFmiMercatorArea(bottomLeft, topRight);
-#endif
     }
   }
   throw runtime_error("Error: Unable to retrieve mercator-projection information from grib.");

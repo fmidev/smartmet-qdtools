@@ -11,6 +11,7 @@
 #include <boost/thread.hpp>
 #include <fmt/format.h>
 #include <newbase/NFmiAreaFactory.h>
+#include <newbase/NFmiAreaTools.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiDataMatrixUtils.h>
 #include <newbase/NFmiFileString.h>
@@ -32,9 +33,7 @@
 #include <sstream>
 #include <stdexcept>
 
-#ifdef WGS84
-#include <newbase/NFmiAreaTools.h>
-#else
+#ifndef WGS84
 #include <newbase/NFmiLambertConformalConicArea.h>
 #include <newbase/NFmiLatLonArea.h>
 #include <newbase/NFmiMercatorArea.h>
@@ -1468,11 +1467,7 @@ vector<pair<NFmiGrid, FmiLevelType> > CalcGrids2(
       ::CalcAreaConnection(connectionEdgeInfo, bottomLeft, topRight, xSize, ySize);
     }
 
-#ifdef WGS84
     auto *area = NFmiAreaTools::CreateLegacyLatLonArea(bottomLeft, topRight);
-#else
-    auto *area = new NFmiLatLonArea(bottomLeft, topRight);
-#endif
 
     NFmiGrid grid(area, xSize, ySize);
     gridVector.push_back(make_pair(grid, leveltype));
@@ -2258,12 +2253,7 @@ void CalcCroppedGrid(GridRecordData *theGridRecordData)
   NFmiArea *newArea = 0;
   if (theGridRecordData->itsOrigGrid.itsArea->ClassId() == kNFmiLatLonArea)
   {
-#ifdef WGS84
-    auto proj = fmt::format("+proj=eqc +R={:.0f} +wktext +over +no_defs +towgs84=0,0,0", kRearth);
-    newArea = NFmiArea::CreateFromBBox(proj, latlon1, latlon2);
-#else
-    newArea = new NFmiLatLonArea(latlon1, latlon2);
-#endif
+    newArea = NFmiAreaTools::CreateLegacyLatLonArea(latlon1, latlon2);
   }
   else
     throw runtime_error("CalcCroppedGrid doesn't support this projection yet.");
@@ -4508,15 +4498,7 @@ NFmiArea *CreateLatlonArea(unsigned char *gds,
   NFmiPoint bl(lo1, la1);
   NFmiPoint tr(lo2, la2);
 
-#ifdef WGS84
-  auto proj = fmt::format("+proj=eqc +R={:.0f} +wktext +over +no_defs +towgs84=0,0,0", kRearth);
-  return NFmiArea::CreateFromBBox(proj, bl, tr);
-#else
-  bool usePacificView = NFmiArea::IsPacificView(bl, tr);
-  if (usePacificView)
-    FixPacificLongitude(tr);
-  return new NFmiLatLonArea(bl, tr, NFmiPoint(0, 0), NFmiPoint(1, 1), usePacificView);
-#endif
+  return NFmiAreaTools::CreateLegacyLatLonArea(bl, tr);
 }
 
 NFmiArea *CreateStereographicArea(unsigned char *gds, unsigned char *bds)
@@ -4600,12 +4582,7 @@ NFmiArea *CreateMercatorArea(unsigned char *gds, unsigned char * /* bds */, bool
   NFmiPoint bl(lo1, la1);
   NFmiPoint tr(lo2, la2);
 
-#ifdef WGS84
-  auto proj = fmt::format("+proj=merc +R={:.0f} +units=m +wktext +towgs84=0,0,0 +no_defs", kRearth);
-  return NFmiArea::CreateFromCorners(proj, "FMI", bl, tr);
-#else
-  return new NFmiMercatorArea(bl, tr);
-#endif
+  return NFmiAreaTools::CreateLegacyMercatorArea(bl, tr);
 }
 
 NFmiArea *CreateArea(unsigned char *gds,

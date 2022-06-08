@@ -43,12 +43,6 @@
 #include <sys/ioctl.h>
 #endif
 
-#ifndef WGS84
-#include <newbase/NFmiEquidistArea.h>
-#include <newbase/NFmiMercatorArea.h>
-#include <newbase/NFmiStereographicArea.h>
-#endif
-
 // Global to get better error messages outside param descriptor builder
 
 NFmiEnumConverter converter;
@@ -173,9 +167,11 @@ bool parse_options(int argc, char *argv[])
     return false;
   }
 
-  if (opt.count("infile") == 0) throw std::runtime_error("Expecting input file as parameter 1");
+  if (opt.count("infile") == 0)
+    throw std::runtime_error("Expecting input file as parameter 1");
 
-  if (opt.count("outfile") == 0) throw std::runtime_error("Expecting output file as parameter 2");
+  if (opt.count("outfile") == 0)
+    throw std::runtime_error("Expecting output file as parameter 2");
 
   if (!fs::exists(options.infile))
     throw std::runtime_error("Input file '" + options.infile + "' does not exist");
@@ -223,12 +219,14 @@ NFmiMetTime tomettime(const boost::posix_time::ptime &t)
 
 std::string get_string(const std::string &name, IMXAArray &attr)
 {
-  if (attr.getDataType() != H5T_STRING) throw std::runtime_error(name + " is not a string");
+  if (attr.getDataType() != H5T_STRING)
+    throw std::runtime_error(name + " is not a string");
 
   char *s = static_cast<char *>(attr.getVoidPointer(0));
   hsize_t slen = attr.getNumberOfElements();
 
-  if (s[slen - 1] == 0) --slen;  // ignore \0 of null terminated strings
+  if (s[slen - 1] == 0)
+    --slen;  // ignore \0 of null terminated strings
 
   return std::string(s, slen);
 }
@@ -256,7 +254,8 @@ std::string get_string(const std::string &name, IMXAArray &attr)
     out << "[ ";
     for (std::size_t i = 0; i < n; i++)
     {
-      if (i > 0) out << ", ";
+      if (i > 0)
+        out << ", ";
       T *value = static_cast<T *>(attr.getVoidPointer(i));
       out << value[0];
     }
@@ -278,17 +277,28 @@ std::string get_attribute_string(const std::string &name, IMXAArray &attr)
 
   int32_t id = attr.getDataType();
 
-  if (id == H5T_STRING) return get_string(name, attr);
-  if (id == H5T_NATIVE_FLOAT) return get_string<float>(name, attr);
-  if (id == H5T_NATIVE_DOUBLE) return get_string<double>(name, attr);
-  if (id == H5T_NATIVE_INT8) return get_string<int8_t>(name, attr);
-  if (id == H5T_NATIVE_UINT8) return get_string<uint8_t>(name, attr);
-  if (id == H5T_NATIVE_INT16) return get_string<int16_t>(name, attr);
-  if (id == H5T_NATIVE_UINT16) return get_string<uint16_t>(name, attr);
-  if (id == H5T_NATIVE_INT32) return get_string<int32_t>(name, attr);
-  if (id == H5T_NATIVE_UINT32) return get_string<uint32_t>(name, attr);
-  if (id == H5T_NATIVE_INT64) return get_string<int64_t>(name, attr);
-  if (id == H5T_NATIVE_UINT64) return get_string<uint64_t>(name, attr);
+  if (id == H5T_STRING)
+    return get_string(name, attr);
+  if (id == H5T_NATIVE_FLOAT)
+    return get_string<float>(name, attr);
+  if (id == H5T_NATIVE_DOUBLE)
+    return get_string<double>(name, attr);
+  if (id == H5T_NATIVE_INT8)
+    return get_string<int8_t>(name, attr);
+  if (id == H5T_NATIVE_UINT8)
+    return get_string<uint8_t>(name, attr);
+  if (id == H5T_NATIVE_INT16)
+    return get_string<int16_t>(name, attr);
+  if (id == H5T_NATIVE_UINT16)
+    return get_string<uint16_t>(name, attr);
+  if (id == H5T_NATIVE_INT32)
+    return get_string<int32_t>(name, attr);
+  if (id == H5T_NATIVE_UINT32)
+    return get_string<uint32_t>(name, attr);
+  if (id == H5T_NATIVE_INT64)
+    return get_string<int64_t>(name, attr);
+  if (id == H5T_NATIVE_UINT64)
+    return get_string<uint64_t>(name, attr);
 
   throw std::runtime_error("Variable " + name + " is of unknown type");
 }
@@ -308,7 +318,8 @@ T get_attribute_value(const hid_t &hid, const std::string &path, const std::stri
   std::vector<hsize_t> dims;
   hid_t attr_type;
   auto err = H5Lite::getAttributeInfo(hid, path, name, dims, type_class, type_size, attr_type);
-  if (err) throw std::runtime_error("Failed to read attribute info for " + path + "/" + name);
+  if (err)
+    throw std::runtime_error("Failed to read attribute info for " + path + "/" + name);
   // H5Tclose(attr_type); needed??
 
   bool is_array = (!dims.empty());
@@ -326,7 +337,8 @@ T get_attribute_value(const hid_t &hid, const std::string &path, const std::stri
     if (values.empty())
       throw std::runtime_error("Vector attribute " + path + "/" + name + " is empty");
 
-    if (options.prodparfix || values.size() == 1) return values.back();
+    if (options.prodparfix || values.size() == 1)
+      return values.back();
 
     throw std::runtime_error("Expecting " + path + "/" + name +
                              " to be a scalar, not an array. Consider using --prodparfix");
@@ -564,7 +576,8 @@ int count_datasets(const hid_t &hid)
   while (true)
   {
     std::string name = options.datasetname + boost::lexical_cast<std::string>(n + 1);
-    if (find(names.begin(), names.end(), name) == names.end()) return n;
+    if (find(names.begin(), names.end(), name) == names.end())
+      return n;
     ++n;
   }
   // NOT REACHED
@@ -586,7 +599,8 @@ int count_datas(const hid_t &hid, int i)
   if (gid)
   {
     std::list<std::string> grpnames(get_top_names(gid));
-    if (grpnames.size() == 0) return 0;
+    if (grpnames.size() == 0)
+      return 0;
 
     std::set<std::string> grpset;
     for (std::list<std::string>::iterator it = grpnames.begin(); it != grpnames.end(); ++it)
@@ -613,7 +627,8 @@ int count_datas(const hid_t &hid, int i)
   for (int j = 1;; j++)
   {
     std::string dataprefix = prefix + "data" + boost::lexical_cast<std::string>(j);
-    if (!H5Utilities::isGroup(hid, dataprefix)) return j - 1;
+    if (!H5Utilities::isGroup(hid, dataprefix))
+      return j - 1;
   }
 #endif
 }
@@ -695,7 +710,8 @@ boost::posix_time::ptime extract_valid_time(const hid_t &hid, int i)
 
   boost::posix_time::ptime t = Fmi::TimeParser::parse(stamp);
 
-  if (!options.startepochs) return t;
+  if (!options.startepochs)
+    return t;
 
   // Check whether we must extract an interval
 
@@ -800,7 +816,8 @@ FmiParameterName opera_name_to_newbase(const std::string &product,
   }
   else if (product == "ETOP")
   {
-    if (quantity == "HGHT") return kFmiEchoTop;
+    if (quantity == "HGHT")
+      return kFmiEchoTop;
   }
   else if (product == "MAX")
   {
@@ -811,11 +828,13 @@ FmiParameterName opera_name_to_newbase(const std::string &product,
   }
   else if (product == "RR")
   {
-    if (quantity == "ACRR") return kFmiPrecipitationAmount;
+    if (quantity == "ACRR")
+      return kFmiPrecipitationAmount;
   }
   else if (product == "VIL")
   {
-    if (quantity == "ACRR") return kFmiPrecipitationAmount;
+    if (quantity == "ACRR")
+      return kFmiPrecipitationAmount;
   }
   else if (product == "SCAN")
   {
@@ -994,11 +1013,16 @@ NFmiParamDescriptor create_pdesc(const hid_t &hid)
 
 bool is_level_parameter(const std::string &product)
 {
-  if (product == "CAPPI") return true;
-  if (product == "PCAPPI") return true;
-  if (product == "PPI") return true;
-  if (product == "ETOP") return true;
-  if (product == "RHI") return true;
+  if (product == "CAPPI")
+    return true;
+  if (product == "PCAPPI")
+    return true;
+  if (product == "PPI")
+    return true;
+  if (product == "ETOP")
+    return true;
+  if (product == "RHI")
+    return true;
 
   // We cannot extract 2 level values, so we just ignore them
   // if(product == "VIL")   return true;
@@ -1014,11 +1038,16 @@ bool is_level_parameter(const std::string &product)
 
 FmiLevelType level_type(const std::string &product)
 {
-  if (product == "CAPPI") return kFmiHeight;
-  if (product == "PCAPPI") return kFmiHeight;
-  if (product == "PPI") return kFmiAnyLevelType;   // newbase has no angle level
-  if (product == "ETOP") return kFmiAnyLevelType;  // newbase has no dBZ level
-  if (product == "RHI") return kFmiAnyLevelType;   // newbase has no azimuth levels
+  if (product == "CAPPI")
+    return kFmiHeight;
+  if (product == "PCAPPI")
+    return kFmiHeight;
+  if (product == "PPI")
+    return kFmiAnyLevelType;  // newbase has no angle level
+  if (product == "ETOP")
+    return kFmiAnyLevelType;  // newbase has no dBZ level
+  if (product == "RHI")
+    return kFmiAnyLevelType;  // newbase has no azimuth levels
 
   // We cannot extract 2 level values, so we just ignore them
   // if(product == "VIL")   return kFmiHeight;
@@ -1065,18 +1094,21 @@ NFmiVPlaceDescriptor collect_levels(const hid_t &hid)
   if (hasnonlevels && haslevels)
     throw std::runtime_error("Cannot mix non-level type parameters with level type parameters");
 
-  if (hasnonlevels) return NFmiVPlaceDescriptor();
+  if (hasnonlevels)
+    return NFmiVPlaceDescriptor();
 
   // Now we need to collect the unique level values
 
   std::set<double> levels;
 
-  if (options.verbose) std::cout << "Level values:" << std::endl;
+  if (options.verbose)
+    std::cout << "Level values:" << std::endl;
 
   for (int i = 1; i <= n; i++)
   {
     double prodpar = get_attribute_value<double>(hid, dataset(i) + "/what", "prodpar");
-    if (options.verbose) std::cout << "  " << i << ": " << prodpar << std::endl;
+    if (options.verbose)
+      std::cout << "  " << i << ": " << prodpar << std::endl;
     levels.insert(prodpar);
   }
 
@@ -1089,7 +1121,8 @@ NFmiVPlaceDescriptor collect_levels(const hid_t &hid)
   BOOST_FOREACH (double lvalue, levels)
   {
     NFmiLevel l(ltype, commonproduct, lvalue);
-    if (options.verbose) std::cout << commonproduct << " level value: " << lvalue << std::endl;
+    if (options.verbose)
+      std::cout << commonproduct << " level value: " << lvalue << std::endl;
     lbag.AddLevel(l);
   }
   return NFmiVPlaceDescriptor(lbag);
@@ -1111,12 +1144,14 @@ NFmiVPlaceDescriptor collect_pvol_levels(const hid_t &hid)
 
   std::set<double> angles;
 
-  if (options.verbose) std::cout << "Elevation angles:" << std::endl;
+  if (options.verbose)
+    std::cout << "Elevation angles:" << std::endl;
 
   for (int i = 1; i <= n; i++)
   {
     double angle = get_attribute_value<double>(hid, dataset(i) + "/where", "elangle");
-    if (options.verbose) std::cout << "  " << i << ": " << angle << std::endl;
+    if (options.verbose)
+      std::cout << "  " << i << ": " << angle << std::endl;
     angles.insert(angle);
   }
 
@@ -1282,6 +1317,7 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
   {
     std::string projdef = get_attribute_value<std::string>(hid, "/where", "projdef");
     std::string sphere = Fmi::ProjInfo(projdef).inverseProjStr();
+    std::cout << "PROJ = " << projdef << "\nSPHERE = " << sphere << "\n";
     long xsize = get_attribute_value<long>(hid, "/where", "xsize");
     long ysize = get_attribute_value<long>(hid, "/where", "ysize");
 
@@ -1292,30 +1328,8 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
       double LR_lat = get_attribute_value<double>(hid, "/where", "LR_lat");
       double UL_lon = get_attribute_value<double>(hid, "/where", "UL_lon");
       double UL_lat = get_attribute_value<double>(hid, "/where", "UL_lat");
-#ifdef WGS84
       boost::shared_ptr<NFmiArea> area(NFmiArea::CreateFromReverseCorners(
           projdef, sphere, NFmiPoint(UL_lon, UL_lat), NFmiPoint(LR_lon, LR_lat)));
-#else
-      boost::shared_ptr<NFmiArea> tmparea = NFmiAreaFactory::CreateProj(
-          projdef, NFmiPoint(UL_lon, LR_lat), NFmiPoint(LR_lon, UL_lat));
-      // Convert real corners to world xy
-
-      NFmiPoint ul = tmparea->LatLonToWorldXY(NFmiPoint(UL_lon, UL_lat));
-      NFmiPoint lr = tmparea->LatLonToWorldXY(NFmiPoint(LR_lon, LR_lat));
-
-      // Switched corners
-
-      NFmiPoint ll = NFmiPoint(ul.X(), lr.Y());
-      NFmiPoint ur = NFmiPoint(lr.X(), ul.Y());
-
-      // Back to lat lon
-
-      NFmiPoint LL = tmparea->WorldXYToLatLon(ll);
-      NFmiPoint UR = tmparea->WorldXYToLatLon(ur);
-
-      boost::shared_ptr<NFmiArea> area = NFmiAreaFactory::CreateProj(projdef, LL, UR);
-      
-#endif      
       NFmiGrid grid(area->Clone(), xsize, ysize);
       return NFmiHPlaceDescriptor(grid);
     }
@@ -1328,13 +1342,8 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
       double UR_lon = get_attribute_value<double>(hid, "/where", "UR_lon");
       double UR_lat = get_attribute_value<double>(hid, "/where", "UR_lat");
 
-#ifdef WGS84      
       boost::shared_ptr<NFmiArea> area(NFmiArea::CreateFromCorners(
           projdef, sphere, NFmiPoint(LL_lon, LL_lat), NFmiPoint(UR_lon, UR_lat)));
-#else
-      boost::shared_ptr<NFmiArea> area = NFmiAreaFactory::CreateProj(
-          projdef, NFmiPoint(LL_lon, LL_lat), NFmiPoint(UR_lon, UR_lat));
-#endif      
 
       NFmiGrid grid(area->Clone(), xsize, ysize);
       return NFmiHPlaceDescriptor(grid);
@@ -1352,7 +1361,6 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
     const double range_m = calculate_pvol_range(hid);
     const double range_km = std::ceil(range_m / 1000);
 
-#ifdef WGS84    
     auto proj4 = fmt::format(
         "+proj=aeqd +lat_0={} +lon_0={} +x_0=0 +y_0=0 +R={:.0f} +units=m +wktext "
         "+towgs84=0,0,0 +no_defs",
@@ -1363,11 +1371,6 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
     // WGS84: Not sure if we should multiply by 2 for legacy reasons
     NFmiArea *area = NFmiArea::CreateFromCenter(
         proj4, "FMI", NFmiPoint(lon, lat), 1000 * range_km, 1000 * range_km);
-#else
-
-    NFmiArea *area = new NFmiEquidistArea(1000 * range_km, NFmiPoint(lon, lat), xy0, xy1);
-    
-#endif    
 
     // We set the grid resolution based on the number of bins in the data
 
@@ -1404,10 +1407,12 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
 
 void print_group_attributes(const hid_t &hid, const std::string &dpath)
 {
-  if (!H5Utilities::isGroup(hid, dpath)) return;
+  if (!H5Utilities::isGroup(hid, dpath))
+    return;
 
   hid_t gid = H5Utilities::openHDF5Object(hid, dpath);
-  if (!gid) throw std::runtime_error("Failed to open " + dpath);
+  if (!gid)
+    throw std::runtime_error("Failed to open " + dpath);
   std::cout << "Opened " << dpath << std::endl;
 
   MXAAbstractAttributes attrs;
@@ -1477,8 +1482,10 @@ double apply_gain_offset(double value,
                          const boost::optional<double> &gain,
                          const boost::optional<double> &offset)
 {
-  if (gain) value *= *gain;
-  if (offset) value += *offset;
+  if (gain)
+    value *= *gain;
+  if (offset)
+    value += *offset;
   return value;
 }
 
@@ -1540,7 +1547,8 @@ void copy_dataset(const hid_t &hid, NFmiFastQueryInfo &info, int datanum)
 
       std::vector<int> values;
 
-      if (options.verbose) std::cout << "Reading " << iprefix << "/data" << std::endl;
+      if (options.verbose)
+        std::cout << "Reading " << iprefix << "/data" << std::endl;
 
       if (H5Lite::readVectorDataset(hid, iprefix + "/data", values) != 0)
         throw std::runtime_error("Failed to read " + iprefix + "/data");
@@ -1615,7 +1623,8 @@ void copy_dataset(const hid_t &hid, NFmiFastQueryInfo &info, int datanum)
 
     std::vector<int> values;
 
-    if (options.verbose) std::cout << "Reading " << prefix + "/data" << std::endl;
+    if (options.verbose)
+      std::cout << "Reading " << prefix + "/data" << std::endl;
 
     if (H5Lite::readVectorDataset(hid, prefix + "/data", values) != 0)
       throw std::runtime_error("Failed to read " + prefix + "/data");
@@ -1731,7 +1740,8 @@ void copy_dataset_pvol(const hid_t &hid, NFmiFastQueryInfo &info, int datanum)
   if(options.verbose)
 	std::cout << "Reading " << prefix+"/data1/data of type " << H5Lite::StringForHDFType(htype) << std::endl;
 #else
-  if (options.verbose) std::cout << "Reading " << prefix + "/data1/data" << std::endl;
+  if (options.verbose)
+    std::cout << "Reading " << prefix + "/data1/data" << std::endl;
 #endif
 
   std::vector<int> values;
@@ -1852,7 +1862,8 @@ std::map<std::string, std::string> get_source_settings(const hid_t &hid)
     return {};
   }
 
-  if (source.empty()) return {};
+  if (source.empty())
+    return {};
 
   // Split for example "WMO:78073,PLC:Nassau,ORG:100" into parts
   std::vector<std::string> parts;
@@ -1897,16 +1908,20 @@ std::string get_interval(const hid_t &hid)
     }
 
     // The interval must be unique
-    if (intervals.empty() || intervals.size() > 1) return {};
+    if (intervals.empty() || intervals.size() > 1)
+      return {};
 
     // Interval must be nonzero. Negative is probably a data error, we handle it simultaenously.
     auto interval = *intervals.begin();
     auto seconds = interval.total_seconds();
-    if (seconds <= 0) return {};
+    if (seconds <= 0)
+      return {};
 
     // Format the interval
-    if (seconds % 3600 == 0) return std::to_string(seconds / 3600) + "h";
-    if (seconds % 60 == 0) return std::to_string(seconds / 60) + "m";
+    if (seconds % 3600 == 0)
+      return std::to_string(seconds / 3600) + "h";
+    if (seconds % 60 == 0)
+      return std::to_string(seconds / 60) + "m";
     return std::to_string(seconds) + "s";
   }
   catch (...)
@@ -1927,7 +1942,8 @@ std::string join(const std::set<std::string> &strings, const std::string &separa
   std::string ret;
   for (const auto &str : strings)
   {
-    if (!ret.empty()) ret += separator;
+    if (!ret.empty())
+      ret += separator;
     ret += str;
   }
   return ret;
@@ -2023,12 +2039,15 @@ std::string expand_name_and_case(const std::string &theName,
 
 int run(int argc, char *argv[])
 {
-  if (!parse_options(argc, argv)) return 0;
+  if (!parse_options(argc, argv))
+    return 0;
 
-  if (options.verbose) std::cout << "Opening file '" << options.infile << "'" << std::endl;
+  if (options.verbose)
+    std::cout << "Opening file '" << options.infile << "'" << std::endl;
 
   hid_t hid = H5Utilities::openFile(options.infile, true);  // true = read only
-  if (hid < 0) throw std::runtime_error("Failed to open '" + options.infile + "' for reading");
+  if (hid < 0)
+    throw std::runtime_error("Failed to open '" + options.infile + "' for reading");
 
   // Check that the data looks like Opera radar HDF data
 
@@ -2036,13 +2055,15 @@ int run(int argc, char *argv[])
 
   // Print information on the data in verbose mode
 
-  if (options.verbose) print_hdf_information(hid);
+  if (options.verbose)
+    print_hdf_information(hid);
 
   // Create the output projection if there is one. We do it before doing any
   // work so that the user gets a fast response to a possible syntax error
 
   boost::shared_ptr<NFmiArea> area;
-  if (!options.projection.empty()) area = NFmiAreaFactory::Create(options.projection);
+  if (!options.projection.empty())
+    area = NFmiAreaFactory::Create(options.projection);
 
   // Create query data descriptors
 
@@ -2055,7 +2076,8 @@ int run(int argc, char *argv[])
   boost::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(qi));
   NFmiFastQueryInfo info(data.get());
 
-  if (data.get() == 0) throw std::runtime_error("Could not allocate memory for result data");
+  if (data.get() == 0)
+    throw std::runtime_error("Could not allocate memory for result data");
 
   info.SetProducer(
       NFmiProducer(options.producernumber, expand_name(options.producername, hid, info)));
@@ -2080,7 +2102,8 @@ int run(int argc, char *argv[])
   else
   {
     auto filename = expand_name_and_case(options.outfile, hid, info);
-    if (options.verbose) std::cout << "Writing " << filename << std::endl;
+    if (options.verbose)
+      std::cout << "Writing " << filename << std::endl;
     std::ofstream out(filename.c_str());
     out << *data;
   }

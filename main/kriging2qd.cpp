@@ -54,6 +54,7 @@
 // ======================================================================
 
 #include <boost/algorithm/string.hpp>
+#include <fmt/format.h>
 #include <newbase/NFmiAreaTools.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiEnumConverter.h>
@@ -551,6 +552,7 @@ boost::shared_ptr<NFmiQueryData> create_querydata(const KrigingData& theData)
   for (KrigingData::const_iterator it = theData.begin(), end = theData.end(); it != end; ++it)
   {
     NFmiPoint latlon = q.Area()->WorldXYToLatLon(it->first);
+
     if (!q.NearestPoint(latlon))
     {
       ostringstream out;

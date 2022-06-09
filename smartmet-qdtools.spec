@@ -2,8 +2,8 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 22.6.8
-Release: 2%{?dist}.fmi
+Version: 22.6.9
+Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -194,6 +194,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Jun  9 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.6.9-1.fmi
+- Improved code to be fully indepent of the newbase branch
+
 * Wed Jun  8 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.6.8-2.fmi
 - Improved kriging2qd to work in both master and WGS84 branches
 

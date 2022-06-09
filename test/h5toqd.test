@@ -68,7 +68,7 @@ sub DoTest
     my($tmpfile) = "${resultfile}.tmp";
     $cmd = "$program data/hdf/$infile $results/$tmpfile";
     
-    print "$cmd\n";
+    # print "$cmd\n";
     # $output = `$cmd 2>/dev/null`;
     $output = `$cmd`;
 

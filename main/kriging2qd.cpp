@@ -450,8 +450,7 @@ const NFmiHPlaceDescriptor make_hdesc(const KrigingData& theData)
 
   // Now we can create the projection
 
-  NFmiArea* area =
-      NFmiArea::CreateFromBBox("epsg:2393", NFmiPoint(xmin, ymin), NFmiPoint(xmax, ymax));
+  NFmiArea* area = NFmiAreaTools::CreateLegacyYKJArea(NFmiPoint(xmin, ymin), NFmiPoint(xmax, ymax));
 
   if (area == 0)
     throw runtime_error("Failed to construct the YKJ projection");

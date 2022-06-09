@@ -13,7 +13,7 @@ $errors = 0;
 
 $resultfile = "kriging.sqd";
 
-DoTest("kriging","kriging","data/kriging.dat",$resultfile);
+DoTest("kriging","kriging","-t 202206081200 data/kriging.dat",$resultfile);
 
 print "$errors errors\n";
 exit($errors);
@@ -45,7 +45,7 @@ sub DoTest
     }
 
 
-    print "$cmd\n";
+    # print "$cmd\n";
     # $output = `$cmd 2>/dev/null`;
     $output = `$cmd`;
 

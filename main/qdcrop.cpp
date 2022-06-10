@@ -429,6 +429,7 @@ NFmiHPlaceDescriptor MakeHPlaceDescriptor(NFmiFastQueryInfo& theQ,
       height = static_cast<int>(round(area->XYArea(area.get()).Height()));
     }
     NFmiGrid grid(area.get(), width, height);
+    grid.Area()->SetGridSize(grid.XNumber(), grid.YNumber());
     NFmiHPlaceDescriptor hdesc(grid);
     return hdesc;
   }
@@ -551,7 +552,7 @@ NFmiHPlaceDescriptor MakeHPlaceDescriptor(NFmiFastQueryInfo& theQ,
     throw runtime_error("Failed to create the new projection");
 
   NFmiGrid grid(area.get(), width, height);
-
+  grid.Area()->SetGridSize(grid.XNumber(), grid.YNumber());
   NFmiHPlaceDescriptor hdesc(grid);
   return hdesc;
 }

@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 22.6.9
+Version: 22.6.10
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -32,7 +32,7 @@ BuildRequires: smartmet-library-calculator-devel >= 22.5.24
 BuildRequires: smartmet-library-gis-devel >= 22.6.7
 BuildRequires: smartmet-library-imagine-devel >= 22.5.24
 BuildRequires: smartmet-library-macgyver-devel >= 22.5.24
-BuildRequires: smartmet-library-newbase-devel >= 22.6.6
+BuildRequires: smartmet-library-newbase-devel >= 22.6.10
 BuildRequires: smartmet-library-smarttools-devel >= 22.5.24
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
@@ -61,13 +61,13 @@ Requires: smartmet-library-calculator >= 22.5.24
 Requires: smartmet-library-gis >= 22.6.7
 Requires: smartmet-library-imagine >= 22.5.24
 Requires: smartmet-library-macgyver >= 22.5.24
-Requires: smartmet-library-newbase >= 22.6.6
+Requires: smartmet-library-newbase >= 22.6.10
 Requires: smartmet-library-smarttools >= 22.5.24
 Requires: smartmet-timezones >= 22.3.24
 Requires: zlib
 #TestRequires: smartmet-library-macgyver-devel >= 22.5.24
 #TestRequires: gcc-c++
-#TestRequires: smartmet-library-newbase-devel >= 22.6.6
+#TestRequires: smartmet-library-newbase-devel >= 22.6.10
 
 Provides: ashtoqd = %{version}
 Provides: bufrtoqd = %{version}
@@ -194,6 +194,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Fri Jun 10 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.6.10-1.fmi
+- Fixed kriging2qd to use metric bbox for CreateLegacyYKJArea
+
 * Thu Jun  9 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.6.9-1.fmi
 - Improved code to be fully indepent of the newbase branch
 

@@ -9,11 +9,21 @@ Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
 Source0: %{name}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot-%(%{__id_u} -n)
-BuildRequires: boost169-devel
+
+%if 0%{?rhel} && 0%{rhel} < 9
+%define smartmet_boost boost169
+%else
+%define smartmet_boost boost
+%endif
+
+%define smartmet_fmt_min 8.1.1
+%define smartmet_fmt_max 8.2.0
+
+BuildRequires: %{smartmet_boost}-devel
 BuildRequires: bzip2-devel
 BuildRequires: eccodes
 BuildRequires: eccodes-devel
-BuildRequires: fmt-devel >= 7.1.3
+BuildRequires: fmt-devel >= %{smartmet_fmt_min}, fmt-devel < %{smartmet_fmt_max}
 BuildRequires: gcc-c++
 BuildRequires: gdal34-devel
 BuildRequires: hdf5-devel >= 1.8.12
@@ -28,24 +38,24 @@ BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
-BuildRequires: smartmet-library-calculator-devel >= 22.5.24
-BuildRequires: smartmet-library-gis-devel >= 22.6.7
-BuildRequires: smartmet-library-imagine-devel >= 22.5.24
-BuildRequires: smartmet-library-macgyver-devel >= 22.5.24
-BuildRequires: smartmet-library-newbase-devel >= 22.6.10
-BuildRequires: smartmet-library-smarttools-devel >= 22.5.24
+BuildRequires: smartmet-library-calculator-devel >= 22.6.16
+BuildRequires: smartmet-library-gis-devel >= 22.6.16
+BuildRequires: smartmet-library-imagine-devel >= 22.6.16
+BuildRequires: smartmet-library-macgyver-devel >= 22.6.16
+BuildRequires: smartmet-library-newbase-devel >= 22.6.16
+BuildRequires: smartmet-library-smarttools-devel >= 22.6.16
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
-Requires: boost169-date-time
-Requires: boost169-filesystem
-Requires: boost169-iostreams
-Requires: boost169-program-options
-Requires: boost169-regex
-Requires: boost169-system
-Requires: boost169-thread
+Requires: %{smartmet_boost}-date-time
+Requires: %{smartmet_boost}-filesystem
+Requires: %{smartmet_boost}-iostreams
+Requires: %{smartmet_boost}-program-options
+Requires: %{smartmet_boost}-regex
+Requires: %{smartmet_boost}-system
+Requires: %{smartmet_boost}-thread
 Requires: bzip2-libs
 Requires: eccodes
-Requires: fmt >= 7.1.3
+Requires: fmt >= %{smartmet_fmt_min}, fmt-devel < %{smartmet_fmt_max}
 Requires: gdal34-libs
 Requires: glibc
 Requires: hdf5 >= 1.8.12
@@ -57,17 +67,17 @@ Requires: libjpeg
 Requires: libpng
 Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
-Requires: smartmet-library-calculator >= 22.5.24
-Requires: smartmet-library-gis >= 22.6.7
-Requires: smartmet-library-imagine >= 22.5.24
-Requires: smartmet-library-macgyver >= 22.5.24
-Requires: smartmet-library-newbase >= 22.6.10
-Requires: smartmet-library-smarttools >= 22.5.24
+Requires: smartmet-library-calculator >= 22.6.16
+Requires: smartmet-library-gis >= 22.6.16
+Requires: smartmet-library-imagine >= 22.6.16
+Requires: smartmet-library-macgyver >= 22.6.16
+Requires: smartmet-library-newbase >= 22.6.16
+Requires: smartmet-library-smarttools >= 22.6.16
 Requires: smartmet-timezones >= 22.3.24
 Requires: zlib
-#TestRequires: smartmet-library-macgyver-devel >= 22.5.24
+#TestRequires: smartmet-library-macgyver-devel >= 22.6.16
 #TestRequires: gcc-c++
-#TestRequires: smartmet-library-newbase-devel >= 22.6.10
+#TestRequires: smartmet-library-newbase-devel >= 22.6.16
 
 Provides: ashtoqd = %{version}
 Provides: bufrtoqd = %{version}

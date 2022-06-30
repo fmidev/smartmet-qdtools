@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 22.6.21
+Version: 22.6.30
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -204,6 +204,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Jun 30 2022 Andris Pavēnis <andris.pavenis@fmi.fi> 22.6.30-1.fmi
+- Fix build problems for RHEL 9 and avoid some warnings
+
 * Tue Jun 21 2022 Andris Pavēnis <andris.pavenis@fmi.fi> 22.6.21-1.fmi
 - Add support for RHEL9, upgrade libpqxx to 7.7.0 (rhel8+) and fmt to 8.1.1
 

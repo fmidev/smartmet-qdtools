@@ -10,7 +10,6 @@
 #include "nctools.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/split.hpp>
-#include <boost/bind.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>

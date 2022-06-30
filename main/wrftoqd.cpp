@@ -743,6 +743,7 @@ static bool IsInTimeStampFormat(const std::string &timeStr)
 
 static NFmiTimeDescriptor CreateWRFTimeDescriptor(const NcFile &ncFile)
 {
+  using namespace boost::placeholders;
   NcVar *var = ::GetWRFVariable(ncFile, "Times");
   if (var == 0) var = ::GetWRFVariable(ncFile, "time");
   if (var)

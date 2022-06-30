@@ -6,6 +6,8 @@
  */
 // ======================================================================
 
+#define H5_USE_18_API_DEFAULT
+
 #include <MXA/HDF5/H5Lite.h>
 #include <MXA/HDF5/H5Utilities.h>
 #include <boost/algorithm/string.hpp>

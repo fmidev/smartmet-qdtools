@@ -80,6 +80,10 @@ Requires: zlib
 #TestRequires: smartmet-library-newbase-devel >= 22.6.16
 #TestRequires: smartmet-qdtools-test-data
 
+%if 0%{?rhel} && 0%{rhel} >= 9
+BuildRequires: libecbufr-devel
+%endif
+
 Provides: ashtoqd = %{version}
 Provides: bufrtoqd = %{version}
 Provides: combinepgms2qd = %{version}

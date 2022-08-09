@@ -78,6 +78,7 @@ Requires: zlib
 #TestRequires: smartmet-library-macgyver-devel >= 22.6.16
 #TestRequires: gcc-c++
 #TestRequires: smartmet-library-newbase-devel >= 22.6.16
+#TestRequires: smartmet-qdtools-test-data
 
 Provides: ashtoqd = %{version}
 Provides: bufrtoqd = %{version}

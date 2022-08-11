@@ -79,6 +79,7 @@ Requires: zlib
 #TestRequires: gcc-c++
 #TestRequires: smartmet-library-newbase-devel >= 22.6.16
 #TestRequires: smartmet-qdtools-test-data
+#TestRequires: libbufr
 
 %if 0%{?rhel} && 0%{rhel} >= 9
 BuildRequires: libecbufr-devel

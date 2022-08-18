@@ -92,16 +92,14 @@ sub DoTest {
 		$cmd = "$program -o results/$tmpfile $arguments";
 	}
 
-	# print "$cmd\n";
-	# $output = `$cmd 2>/dev/null`;
-	$output  = `$cmd`;
-	$retcode = $?;
+	$retcode = system("$cmd >results/$name.out 2>&1");
 	if ( $retcode != 0 ) {
-		print $output ;
+		system("tail -10 results/$name.out") ;
 		print "Failed to run $cmd: $!";
 		++$errors;
 		return;
 	}
+	unlink("results/$name.out");
 
 	print padname($text);
 

@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+$ENV{TZ} = "Europe/Helsinki";
+
 $program = (-x "../qdcrop" ? "../qdcrop" : "qdcrop");
 
 system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h');

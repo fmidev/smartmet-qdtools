@@ -1319,7 +1319,6 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
   {
     std::string projdef = get_attribute_value<std::string>(hid, "/where", "projdef");
     std::string sphere = Fmi::ProjInfo(projdef).inverseProjStr();
-    std::cout << "PROJ = " << projdef << "\nSPHERE = " << sphere << "\n";
     long xsize = get_attribute_value<long>(hid, "/where", "xsize");
     long ysize = get_attribute_value<long>(hid, "/where", "ysize");
 

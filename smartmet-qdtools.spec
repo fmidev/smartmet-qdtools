@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 22.6.30
+Version: 22.8.18
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -210,6 +210,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Aug 18 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.8.18-1.fmi
+- Fixed gtibtoqd to handle atmosphereSingleLayer data
+
 * Thu Jun 30 2022 Andris Pavēnis <andris.pavenis@fmi.fi> 22.6.30-1.fmi
 - Fix build problems for RHEL 9 and avoid some warnings
 

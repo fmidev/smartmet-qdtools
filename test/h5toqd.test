@@ -23,9 +23,6 @@ DoTest("rr3h","3h.sqd","3h.h5");
 DoTest("cappi","cappi.sqd","cappi.h5");
 DoTest("pvol","pvol.sqd","pvol.h5");
 
-# Uses an unsupported projection
-DoTest("comp","comp.sqd","comp.h5");
-
 # Not Opera parameters:
 # DoTest("zhail","zhail.sqd","zhail.h5");
 # DoTest("lmr","lmr.sqd","lmr.h5");

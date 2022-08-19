@@ -17,7 +17,7 @@
 // ======================================================================
 
 #include <boost/algorithm/string.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/foreach.hpp>
@@ -791,6 +791,8 @@ void write_querydata(const CsvTable& csv, const Params& params, const Stations& 
 
 int run(int argc, char* argv[])
 {
+  using namespace boost::placeholders;
+
   if (!parse_options(argc, argv, options)) return 0;
 
   Csv csv, csvparams, csvstations;

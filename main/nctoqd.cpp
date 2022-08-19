@@ -527,6 +527,9 @@ int run(int argc, char* argv[])
     if (!parse_options(argc, argv, options))
       return 0;
 
+    NcError netcdf_error_handling(
+        options.verbose ? NcError::verbose_nonfatal : NcError::silent_nonfatal);
+
     // Parameter conversions
     const nctools::ParamConversions paramconvs = nctools::read_netcdf_configs(options);
 

@@ -10,6 +10,17 @@
 
 namespace nctools
 {
+
+NcAtt* ncvar_get_attr(const NcVar* var, const char* name, bool silent)
+{
+    NcError netcdf_error_handling(NcError::silent_nonfatal);
+    NcAtt *att = var->get_att(name);
+    if (att == nullptr && !silent) {
+        std::cout << "NetCDF: attribute '" << name << "' not found" << std::endl;
+    }
+    return att;
+}
+
 // ----------------------------------------------------------------------
 /*!
  * \brief Extract NetCDF parameter name
@@ -18,7 +29,8 @@ namespace nctools
 
 std::string get_name(NcVar *var)
 {
-  NcAtt *att = var->get_att("standard_name");
+  NcError netcdf_error_handling(NcError::silent_nonfatal);
+  NcAtt *att = ncvar_get_attr(var, "standard_name", true);
   if (att == 0) return var->name();
 
   if (att->type() != ncChar)
@@ -66,10 +78,10 @@ NcVar *NcFileExtended::find_variable(const std::string &name)
 
 float get_missingvalue(NcVar *var)
 {
-  NcAtt *att = var->get_att("_FillValue");
+    NcAtt *att = ncvar_get_attr(var, "_FillValue", false);
   if (att != 0) return att->values()->as_float(0);
   // Fillvalue can be also fill_value
-  att = var->get_att("fill_value");
+  att = ncvar_get_attr(var, "fill_value", false);
   if (att != 0)
     return att->values()->as_float(0);
   else
@@ -84,7 +96,7 @@ float get_missingvalue(NcVar *var)
 
 float get_scale(NcVar *var)
 {
-  NcAtt *att = var->get_att("scale_factor");
+    NcAtt *att = ncvar_get_attr(var, "scale_factor", true);
   if (att != 0)
     return att->values()->as_float(0);
   else
@@ -99,7 +111,7 @@ float get_scale(NcVar *var)
 
 float get_offset(NcVar *var)
 {
-  NcAtt *att = var->get_att("add_offset");
+    NcAtt *att = ncvar_get_attr(var, "add_offset", true);
   if (att != 0)
     return att->values()->as_float(0);
   else
@@ -178,7 +190,7 @@ void NcFileExtended::copy_values(const Options &options, NcVar *var, NFmiFastQue
   std::string name = var->name();
 
   std::string units = "";
-  NcAtt *att = var->get_att("units");
+  NcAtt *att = ncvar_get_attr(var, "units", true);
   if (att != 0) units = att->values()->as_string(0);
 
   if (options.debug) std::cerr << "debug: starting copy for variable " << name << std::endl;
@@ -479,7 +491,7 @@ std::string NcFileExtended::grid_mapping()
     NcVar *var = get_var(i);
     if (var == nullptr) continue;
 
-    NcAtt *att = var->get_att("grid_mapping");
+    NcAtt *att = ncvar_get_attr(var, "grid_mapping", true);
     if (att == nullptr) continue;
 
     projection_var_name = att->values()->as_string(0);
@@ -495,13 +507,13 @@ std::string NcFileExtended::grid_mapping()
 
       if (var->name() == projection_var_name)
       {
-        NcAtt *name_att = var->get_att("grid_mapping_name");
+          NcAtt *name_att = ncvar_get_attr(var, "grid_mapping_name", false);
         if (name_att != 0)
           projectionName = std::make_shared<std::string>(name_att->values()->as_string(0));
 
-        NcAtt *lon_att = var->get_att("longitude_of_projection_origin");
+        NcAtt *lon_att = ncvar_get_attr(var, "longitude_of_projection_origin", false);
         if (lon_att != 0) longitudeOfProjectionOrigin = lon_att->values()->as_double(0);
-        NcAtt *lat_att = var->get_att("latitude_of_projection_origin");
+        NcAtt *lat_att = ncvar_get_attr(var, "latitude_of_projection_origin", false);
         if (lat_att != 0) latitudeOfProjectionOrigin = lat_att->values()->as_double(0);
         break;
       }
@@ -678,7 +690,7 @@ NFmiTimeList NcFileExtended::timeList(std::string varName, std::string unitAttrN
   if (isStereographic())
   {
     NcVar *ncvar = get_var(varName.c_str());
-    NcAtt *units_att = ncvar->get_att(unitAttrName.c_str());
+    NcAtt *units_att = ncvar_get_attr(ncvar, unitAttrName.c_str(), false);
 
     std::string unit_val_value(units_att->as_string(0));
     delete units_att;
@@ -778,7 +790,7 @@ void NcFileExtended::parse_time_units(boost::posix_time::ptime *origintime, long
 
   if (!tvar) throw Fmi::Exception(BCP, "Time axis unknown");
 
-  NcAtt *att = tvar->get_att("units");
+  NcAtt *att = ncvar_get_attr(tvar, "units", true);
   if (att == 0) throw Fmi::Exception(BCP, "Time axis has no defined units");
   if (att->type() != ncChar)
     throw Fmi::Exception(BCP, "Time axis units must be a string");
@@ -900,7 +912,7 @@ void NcFileExtended::find_lonlat_bounds(double &lon1, double &lat1, double &lon2
   {
     NcVar *ncvar = get_var(i);
 
-    NcAtt *att = ncvar->get_att("standard_name");
+    NcAtt *att = ncvar_get_attr(ncvar, "standard_name", true);
     if (att != 0)
     {
       std::string attributeStandardName(att->values()->as_string(0));

@@ -571,8 +571,8 @@ void ReportProjection(NFmiFastQueryInfo *q)
 
     if (sr.IsGeographic())
     {
-      cout << "dx\t\t= " << area->WorldXYWidth() / grid->XNumber() << " deg" << endl
-           << "dy\t\t= " << area->WorldXYHeight() / grid->YNumber() << " deg" << endl
+      cout << "dx\t\t= " << area->WorldXYWidth() / (grid->XNumber() - 1) << " deg" << endl
+           << "dy\t\t= " << area->WorldXYHeight() / (grid->YNumber() - 1) << " deg" << endl
            << endl
            << "xywidth\t\t= " << area->WorldXYWidth() << " deg" << endl
            << "xyheight\t= " << area->WorldXYHeight() << " deg" << endl
@@ -581,8 +581,8 @@ void ReportProjection(NFmiFastQueryInfo *q)
     else if (pinfo.getString("proj") == std::string("ob_tran") &&
              pinfo.getString("o_proj") == std::string("latlon"))
     {
-      cout << "dx\t\t= " << area->WorldXYWidth() / grid->XNumber() << " deg" << endl
-           << "dy\t\t= " << area->WorldXYHeight() / grid->YNumber() << " deg" << endl
+      cout << "dx\t\t= " << area->WorldXYWidth() / (grid->XNumber() - 1) << " deg" << endl
+           << "dy\t\t= " << area->WorldXYHeight() / (grid->YNumber() - 1) << " deg" << endl
            << endl
            << "xywidth\t\t= " << area->WorldXYWidth() << " deg" << endl
            << "xyheight\t= " << area->WorldXYHeight() << " deg" << endl
@@ -590,10 +590,10 @@ void ReportProjection(NFmiFastQueryInfo *q)
     }
     else
     {
-      cout << "dx\t\t= " << area->WorldXYWidth() / grid->XNumber() / 1000.0 * to_meter << " km"
-           << endl
-           << "dy\t\t= " << area->WorldXYHeight() / grid->YNumber() / 1000.0 * to_meter << " km"
-           << endl
+      cout << "dx\t\t= " << area->WorldXYWidth() / (grid->XNumber() - 1) / 1000.0 * to_meter
+           << " km" << endl
+           << "dy\t\t= " << area->WorldXYHeight() / (grid->YNumber() - 1) / 1000.0 * to_meter
+           << " km" << endl
            << endl
            << "xywidth\t\t= " << area->WorldXYWidth() / 1000.0 * to_meter << " km" << endl
            << "xyheight\t= " << area->WorldXYHeight() / 1000.0 * to_meter << " km" << endl

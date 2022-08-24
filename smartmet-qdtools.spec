@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 22.8.19
+Version: 22.8.24
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -39,11 +39,11 @@ BuildRequires: netcdf-cxx-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
 BuildRequires: smartmet-library-calculator-devel >= 22.6.16
-BuildRequires: smartmet-library-gis-devel >= 22.6.16
-BuildRequires: smartmet-library-imagine-devel >= 22.6.16
-BuildRequires: smartmet-library-macgyver-devel >= 22.6.16
-BuildRequires: smartmet-library-newbase-devel >= 22.6.16
-BuildRequires: smartmet-library-smarttools-devel >= 22.6.16
+BuildRequires: smartmet-library-gis-devel >= 22.7.27
+BuildRequires: smartmet-library-imagine-devel >= 22.6.17
+BuildRequires: smartmet-library-macgyver-devel >= 22.8.23
+BuildRequires: smartmet-library-newbase-devel >= 22.8.24
+BuildRequires: smartmet-library-smarttools-devel >= 22.8.24
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
 Requires: %{smartmet_boost}-date-time
@@ -68,16 +68,16 @@ Requires: libpng
 Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
 Requires: smartmet-library-calculator >= 22.6.16
-Requires: smartmet-library-gis >= 22.6.16
-Requires: smartmet-library-imagine >= 22.6.16
-Requires: smartmet-library-macgyver >= 22.6.16
-Requires: smartmet-library-newbase >= 22.6.16
-Requires: smartmet-library-smarttools >= 22.6.16
+Requires: smartmet-library-gis >= 22.7.27
+Requires: smartmet-library-imagine >= 22.6.17
+Requires: smartmet-library-macgyver >= 22.8.23
+Requires: smartmet-library-newbase >= 22.8.24
+Requires: smartmet-library-smarttools >= 22.8.24
 Requires: smartmet-timezones >= 22.3.24
 Requires: zlib
-#TestRequires: smartmet-library-macgyver-devel >= 22.6.16
+#TestRequires: smartmet-library-macgyver-devel >= 22.8.23
 #TestRequires: gcc-c++
-#TestRequires: smartmet-library-newbase-devel >= 22.6.16
+#TestRequires: smartmet-library-newbase-devel >= 22.8.24
 #TestRequires: smartmet-qdtools-test-data
 #TestRequires: libbufr
 
@@ -210,6 +210,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Aug 24 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.8.24-1.fmi
+- Fixed resolution calculations in qdinfo
+
 * Fri Aug 19 2022 Andris Pavēnis <andris.pavenis@fmi.fi> 22.8.19-1.fmi
 - nctoqd: update error handling
 

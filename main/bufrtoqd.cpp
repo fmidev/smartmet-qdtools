@@ -1378,8 +1378,8 @@ NFmiVPlaceDescriptor create_vdesc(const Messages &messages, BufrDataCategory cat
 
         for (size_t i = 0; i < levelcount; ++i)
         {
-          char name[16];
-          sprintf(name, "%lu", i);
+          char name[24];
+          snprintf(name, sizeof(name), "%lu", i);
           std::string levelName(name);
           lbag.AddLevel(NFmiLevel(kFmiAmdarLevel, levelName.c_str(), static_cast<float>(i)));
         }

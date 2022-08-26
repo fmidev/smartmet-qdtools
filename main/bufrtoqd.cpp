@@ -37,7 +37,7 @@ This file is part of libECBUFR.
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/split.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/foreach.hpp>
 #include <boost/program_options.hpp>
@@ -1257,7 +1257,8 @@ NameMap read_bufr_config()
   if (!options.conffile.empty())
   {
     if (options.verbose) std::cout << "Reading " << options.conffile << std::endl;
-    Fmi::CsvReader::read(options.conffile, boost::bind(&CsvConfig::add, &csv, _1));
+    Fmi::CsvReader::read(
+        options.conffile, boost::bind(&CsvConfig::add, &csv, boost::placeholders::_1));
   }
   return csv.pmap;
 }

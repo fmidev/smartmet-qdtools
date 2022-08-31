@@ -588,9 +588,9 @@ void set_stereographic_geometry(NFmiFastQueryInfo &theInfo,
     tlat = 90;
 
   if (*clat == 90)
-    gset(gribHandle, "projecionCenterFlag", 0);
+    gset(gribHandle, "projectionCentreFlag", 0);
   else if (*clat == -90)
-    gset(gribHandle, "projectionCenterFlag", 1);
+    gset(gribHandle, "projectionCentreFlag", 1);
   else
     throw std::runtime_error("GRIB format supports only polar stereographic projections");
 

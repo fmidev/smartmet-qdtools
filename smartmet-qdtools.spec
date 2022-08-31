@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 22.8.24
+Version: 22.8.31
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -210,6 +210,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Aug 31 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.8.31-1.fmi
+- Fixed qdtogrib to use projectionCentreFlag instead of projectionCenterFlag (changed in ecCodes 2.17)
+
 * Wed Aug 24 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.8.24-1.fmi
 - Fixed resolution calculations in qdinfo
 

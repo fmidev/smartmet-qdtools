@@ -1,0 +1,41 @@
+#!/bin/sh
+
+if [ -x ../qdtogrib ]; then
+  PROG=../qdtogrib
+  QDINFO=../qdinfo
+else
+  PROG=qdtogrib
+  QDINFO=qdinfo
+fi
+
+grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h
+wgs84=$(expr $? == 0)
+errors=0
+
+for f in data/qdtogrib/*; do
+    name=$(basename $f .fqd)
+    resultfile=results/qdtogrib/${name}.grib2
+
+    if [[ $wgs84 == 1 ]]; then
+	wgs84resultfile=${resultfile}.wgs84
+	if [ -e $wgs84resultfile ]; then
+	    resultfile=$wgs84resultfile
+	fi
+    fi
+
+    tmpfile=${resultfile}.tmp
+    $PROG -2 $f $tmpfile
+    cmp --quiet $resultfile $tmpfile
+    ERR=$?
+    printf '%-60s' "$name"
+    if [[ $ERR -eq 0 ]]; then
+	echo OK
+	rm -f $tmpfile
+    else
+	errors=$(($errors+1))
+	echo FAILED
+    fi
+done
+
+echo $errors errors
+exit $errors

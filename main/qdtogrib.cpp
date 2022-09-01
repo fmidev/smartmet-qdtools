@@ -601,7 +601,7 @@ void set_stereographic_geometry(NFmiFastQueryInfo &theInfo,
   }
   else
   {
-    gset(gribHandle, "LaDInDegrees", *clat);
+    gset(gribHandle, "LaDInDegrees", *tlat);
     // "shapeOfTheEarth"
     // "scaleFactorOfRadiusOfSphericalEarth"
     // "scaledValueOfRadiusOfSphericalEarth"

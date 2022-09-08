@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 22.9.1
+Version: 22.9.8
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -39,10 +39,10 @@ BuildRequires: netcdf-cxx-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
 BuildRequires: smartmet-library-calculator-devel >= 22.6.16
-BuildRequires: smartmet-library-gis-devel >= 22.7.27
+BuildRequires: smartmet-library-gis-devel >= 22.9.1
 BuildRequires: smartmet-library-imagine-devel >= 22.6.17
 BuildRequires: smartmet-library-macgyver-devel >= 22.8.23
-BuildRequires: smartmet-library-newbase-devel >= 22.8.24
+BuildRequires: smartmet-library-newbase-devel >= 22.8.29
 BuildRequires: smartmet-library-smarttools-devel >= 22.8.24
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
@@ -68,16 +68,16 @@ Requires: libpng
 Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
 Requires: smartmet-library-calculator >= 22.6.16
-Requires: smartmet-library-gis >= 22.7.27
+Requires: smartmet-library-gis >= 22.9.1
 Requires: smartmet-library-imagine >= 22.6.17
 Requires: smartmet-library-macgyver >= 22.8.23
-Requires: smartmet-library-newbase >= 22.8.24
+Requires: smartmet-library-newbase >= 22.8.29
 Requires: smartmet-library-smarttools >= 22.8.24
-Requires: smartmet-timezones >= 22.3.24
+Requires: smartmet-timezones >= 22.8.30
 Requires: zlib
 #TestRequires: smartmet-library-macgyver-devel >= 22.8.23
 #TestRequires: gcc-c++
-#TestRequires: smartmet-library-newbase-devel >= 22.8.24
+#TestRequires: smartmet-library-newbase-devel >= 22.8.29
 #TestRequires: smartmet-qdtools-test-data
 #TestRequires: libbufr
 
@@ -210,6 +210,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Sep  8 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.9.8-1.fmi
+- Fixed kriging2qd to preserve the origin time minutes
+
 * Thu Sep  1 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.9.1-1.fmi
 - Fixed qdtogrib lat_ts setting for stereographic projections
 

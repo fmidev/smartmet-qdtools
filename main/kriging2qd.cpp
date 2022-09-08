@@ -518,7 +518,7 @@ const NFmiTimeDescriptor make_tdesc()
 {
   NFmiTimeList times;
   times.Add(new NFmiMetTime(options.validtime, 1));
-  NFmiTimeDescriptor tdesc(options.validtime, times);
+  NFmiTimeDescriptor tdesc(NFmiMetTime(options.origintime, 1), times);
   return tdesc;
 }
 

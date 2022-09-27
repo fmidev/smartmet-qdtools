@@ -36,7 +36,7 @@ GeomDefinedType GeoTiffQD::ConverQD2GeoTiff(string aNameVersion,
 
   if (id == kNFmiLatLonArea)
     ConvertToGeoTiff(aNameVersion, theData, theExternal, geomDefinedType = kLatLonGeom);
-  else if (id == kNFmiRotatedLatLonArea)
+  else if (id == kNFmiYKJArea)
     ConvertToGeoTiff(aNameVersion, theData, theExternal, geomDefinedType = kYkjGeom);
   else if (id == kNFmiStereographicArea)
   {
@@ -791,25 +791,12 @@ static bool isSelectedLevel(std::vector<int> ids, int id)
 
 static void writeRotatedLatLonWKT(const std::string &name)
 {
-  std::ostringstream ret;
-  ret << std::setprecision(16) << "PROJCS[\"Fmi_Rotated_LatLon\","
-      << "GEOGCS[\"Fmi_Sphere\","
-      << "DATUM[\"Fmi_2007\",SPHEROID[\"Fmi_Sphere\",6371220,0]],"
-      << "PRIMEM[\"Greenwich\",0],"
-      << "UNIT[\"Degree\",0.0174532925199433]],"
-      << "PARAMETER[\"latitude_of_origin\","
-      << "0"
-      << "],"
-      << "PARAMETER[\"central_meridian\","
-      << "-30"
-      << "],"
-      << "EXTENSION[\"PROJ4\",\"+proj=ob_tran +o_proj=eqc +lon_0=0 +o_lat_p=30 +R=57.29578 "
-         "+wktext\"],"
-      << "UNIT[\"Meter\",1.0]]";
+  std::string ret =
+      R"xx(PROJCRS["unknown",BASEGEOGCRS["unknown",DATUM["unknown",ELLIPSOID["unknown",6371220,0,LENGTHUNIT["metre",1,ID["EPSG",9001]]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8901]]],CONVERSION["unknown",METHOD["PROJ ob_tran o_proj=longlat"],PARAMETER["o_lon_p",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["o_lat_p",30,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["lon_0",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],CS[Cartesian,2],AXIS["(E)",east,ORDER[1],LENGTHUNIT["metre",1,ID["EPSG",9001]]],AXIS["(N)",north,ORDER[2],LENGTHUNIT["metre",1,ID["EPSG",9001]]]])xx";
 
   FILE *f;
   f = fopen(name.c_str(), "w");
-  fprintf(f, "%s", ret.str().c_str());
+  fprintf(f, "%s", ret.c_str());
   fclose(f);
 
   printf("Created file %s for RotatedLatLon projection", name.c_str());

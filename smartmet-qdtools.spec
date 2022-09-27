@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 22.9.8
+Version: 22.9.27
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -210,6 +210,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Sep 27 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.9.27-1.fmi
+- Fixed qd2geotiff handling of rotated latlon areas
+
 * Thu Sep  8 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.9.8-1.fmi
 - Fixed kriging2qd to preserve the origin time minutes
 

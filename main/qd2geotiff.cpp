@@ -1,9 +1,11 @@
 #include "GeoTiffQD.h"
 #include <boost/shared_ptr.hpp>
+#include <gis/CoordinateTransformation.h>
 #include <gis/ProjInfo.h>
 #include <newbase/NFmiArea.h>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiRotatedLatLonArea.h>
 #include <gdal_priv.h>
 #include <iomanip>
 #include <iostream>
@@ -207,22 +209,27 @@ void GeoTiffQD::ConvertToGeoTiff(string aNameVersion,
   {
     if (geomDefinedType == kRotatedGeom)
     {
+      auto sphere = area->SpatialReference().projInfo().inverseProjStr();
+      auto trans = Fmi::CoordinateTransformation(area->SpatialReference(), sphere);
+
       double tlLon = area->WorldRect().Left();
-      double tlLat = area->WorldRect().Top();
-#if 0
-      double aLon = area->XScale() / width;
-      double aLat = area->YScale() / height;
-#else
-      auto xscale = (area->Right() - area->Left()) /
-                    (area->TopRightLatLon().X() - area->BottomLeftLatLon().X());
-      auto yscale = (area->Top() - area->Bottom()) /
-                    (area->TopRightLatLon().Y() - area->BottomLeftLatLon().Y());
+      double tlLat = area->WorldRect().Bottom();
+      trans.transform(tlLon, tlLat);
+
+      double trX = area->WorldRect().Right();
+      double trY = area->WorldRect().Bottom();
+      trans.transform(trX, trY);
+
+      double blX = area->WorldRect().Left();
+      double blY = area->WorldRect().Top();
+      trans.transform(blX, blY);
+
+      auto xscale = (trX - blX) / (area->Right() - area->Left());
+      auto yscale = (trY - blY) / (area->Top() - area->Bottom());
+
       double aLon = xscale / width;
       double aLat = yscale / height;
-#endif
 
-      // double adfGeoTransformTmp[6] = {tlLon, aLon, 0, tlLat, 0, aLat};  // decree
-      // adfGeoTransform = adfGeoTransformTmp;
       adfGeoTransform[0] = tlLon;
       adfGeoTransform[1] = aLon;
       adfGeoTransform[3] = tlLat;

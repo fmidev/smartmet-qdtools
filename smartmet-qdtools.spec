@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 22.9.27
+Version: 22.9.28
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -210,6 +210,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Sep 28 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.9.28-1.fmi
+- Fixed qd2geotiff rotated latlon scale calculations to use proper inverse transforms
+
 * Tue Sep 27 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.9.27-1.fmi
 - Fixed qd2geotiff handling of rotated latlon areas
 

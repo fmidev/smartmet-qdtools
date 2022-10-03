@@ -274,7 +274,7 @@ make %{_smp_mflags}
 * Tue Nov 16 2021 Pertti Kinnia <pertti.kinnia@fmi.fi> - 21.11.16-1.fmi
 - qdcrop: use CopyNonGridData for copying data for multifiles, FillGridDataFullMT does not handle multifiles yet (QDTOOLS-117)
 
-* Thu Nov  5 2021 Pertti Kinnia <pertti.kinnia@fmi.fi> - 21.11.5-1.fmi
+* Fri Nov  5 2021 Pertti Kinnia <pertti.kinnia@fmi.fi> - 21.11.5-1.fmi
 - Fixed bufrtoqd bug in handling missing message timestamp seconds
 
 * Thu Oct 28 2021 Pertti Kinnia <pertti.kinnia@fmi.fi> - 21.10.28-1.fmi

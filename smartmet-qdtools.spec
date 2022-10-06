@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 22.9.28
+Version: 22.10.6
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -39,7 +39,7 @@ BuildRequires: netcdf-cxx-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
 BuildRequires: smartmet-library-calculator-devel >= 22.6.16
-BuildRequires: smartmet-library-gis-devel >= 22.9.1
+BuildRequires: smartmet-library-gis-devel >= 22.9.28
 BuildRequires: smartmet-library-imagine-devel >= 22.6.17
 BuildRequires: smartmet-library-macgyver-devel >= 22.8.23
 BuildRequires: smartmet-library-newbase-devel >= 22.8.29
@@ -68,7 +68,7 @@ Requires: libpng
 Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
 Requires: smartmet-library-calculator >= 22.6.16
-Requires: smartmet-library-gis >= 22.9.1
+Requires: smartmet-library-gis >= 22.9.28
 Requires: smartmet-library-imagine >= 22.6.17
 Requires: smartmet-library-macgyver >= 22.8.23
 Requires: smartmet-library-newbase >= 22.8.29
@@ -171,7 +171,6 @@ make %{_smp_mflags}
 %{_bindir}/nctoqd
 %{_bindir}/pgm2qd
 %{_bindir}/qd2csv
-%{_bindir}/qd2geotiff
 %{_bindir}/qdarea
 %{_bindir}/qdcheck
 %{_bindir}/qdcombine
@@ -210,6 +209,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Oct  6 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.10.6-1.fmi
+- Removed qd2geotiff as obsolete
+
 * Wed Sep 28 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.9.28-1.fmi
 - Fixed qd2geotiff rotated latlon scale calculations to use proper inverse transforms
 

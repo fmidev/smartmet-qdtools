@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 22.10.6
+Version: 22.12.9
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -209,6 +209,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Fri Dec  9 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.12.9-1.fmi
+- Added qdcrop options for altering the producer (-N for name and -D for the ID)
+
 * Thu Oct  6 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.10.6-1.fmi
 - Removed qd2geotiff as obsolete
 

@@ -103,10 +103,20 @@
  * <dd>
  * Maximum allowed amount of missing values for a time step to be included
  * </dd>
+ * <dt>-N [name]</dt>
+ * <dd>
+ * New producer name
+ * </dd>
+ * <dt>-D [integer]</dt>
+ * <dd>
+ * New producer number
+ * </dd>
  * </dl>
  */
 // ======================================================================
 
+#include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiEnumConverter.h>
@@ -117,11 +127,6 @@
 #include <newbase/NFmiQueryDataUtil.h>
 #include <newbase/NFmiStringTools.h>
 #include <newbase/NFmiTimeList.h>
-
-#include <boost/algorithm/string.hpp>
-#include <boost/foreach.hpp>
-#include <boost/lexical_cast.hpp>
-
 #include <ctime>
 #include <deque>
 #include <fstream>
@@ -141,115 +146,120 @@ using namespace boost;
 
 void usage()
 {
-  cout << "Usage: qdcrop [options] [inputquerydata] [outputquerydata]" << endl
-       << endl
-       << "qdcrop extracts a subgrid from the original gridded querydata." << endl
-       << "Simultaneously one may extract only a subset of the available" << endl
-       << "parameters and levels." << endl
-       << endl
-       << "If the output filename is omitted or it is '-', the querydata" << endl
-       << "will be output to the standard output" << endl
-       << endl
-       << "Options:" << endl
-       << endl
-       << "-V" << endl
-       << "\tPreserve querydata version number." << endl
-       << endl
-       << "-R" << endl
-       << "\tRead all files in the input directory." << endl
-       << endl
-       << "-g <geometry>" << endl
-       << endl
-       << "\tThe area to be cropped in a form similar to ImageMagick." << endl
-       << "\tFor example, using 100x200+10+20 would extract a grid" << endl
-       << "\tof size 100x200 starting from grid coordinates 10,20." << endl
-       << endl
-       << "-G <x1,y1,x2,y2>" << endl
-       << "\tDefine the minimal subgrid to be cropped by the bottom left" << endl
-       << "\tand top right longitude and latitude." << endl
-       << endl
-       << "-d <XxY>" << endl
-       << "\tDefine the data stepsize used in cropping. Default value is 1x1" << endl
-       << endl
-       << "-P <projection>" << endl
-       << "\tDefine the projection to interpolate to as with qdinterpolatearea." << endl
-       << endl
-       << "-p <param1,param2,...,paramN>" << endl
-       << endl
-       << "\tThe parameters to be extracted as a comma separated list" << endl
-       << "\tof parameter names, for example Temperature,Precipitation1h or 4,353." << endl
-       << "\tBy default all parameters are extracted." << endl
-       << endl
-       << "-r <param1,param2,...,paramN>" << endl
-       << endl
-       << "\tThe parameters to be removed as a comma separated list" << endl
-       << endl
-       << "-a <param1,param2,...,paramN>" << endl
-       << endl
+  cout << "Usage: qdcrop [options] [inputquerydata] [outputquerydata]\n"
+       << "\n"
+       << "qdcrop extracts a subgrid from the original gridded querydata.\n"
+       << "Simultaneously one may extract only a subset of the available\n"
+       << "parameters and levels.\n"
+       << "\n"
+       << "If the output filename is omitted or it is '-', the querydata\n"
+       << "will be output to the standard output\n"
+       << "\n"
+       << "Options:\n"
+       << "\n"
+       << "-V\n"
+       << "\tPreserve querydata version number.\n"
+       << "\n"
+       << "-R\n"
+       << "\tRead all files in the input directory.\n"
+       << "\n"
+       << "-g <geometry>\n"
+       << "\n"
+       << "\tThe area to be cropped in a form similar to ImageMagick.\n"
+       << "\tFor example, using 100x200+10+20 would extract a grid\n"
+       << "\tof size 100x200 starting from grid coordinates 10,20.\n"
+       << "\n"
+       << "-G <x1,y1,x2,y2>\n"
+       << "\tDefine the minimal subgrid to be cropped by the bottom left\n"
+       << "\tand top right longitude and latitude.\n"
+       << "\n"
+       << "-d <XxY>\n"
+       << "\tDefine the data stepsize used in cropping. Default value is 1x1\n"
+       << "\n"
+       << "-P <projection>\n"
+       << "\tDefine the projection to interpolate to as with qdinterpolatearea.\n"
+       << "\n"
+       << "-p <param1,param2,...,paramN>\n"
+       << "\n"
+       << "\tThe parameters to be extracted as a comma separated list\n"
+       << "\tof parameter names, for example Temperature,Precipitation1h or 4,353.\n"
+       << "\tBy default all parameters are extracted.\n"
+       << "\n"
+       << "-r <param1,param2,...,paramN>\n"
+       << "\n"
+       << "\tThe parameters to be removed as a comma separated list\n"
+       << "\n"
+       << "-a <param1,param2,...,paramN>\n"
+       << "\n"
        << "\tThe parameters to be added to the data with missing values, unless the parameter is "
           "already defined."
-       << endl
-       << "-A <param1,param2,...,paramN>" << endl
-       << endl
-       << "\tThe parameters to be copied from the origin time to all timesteps." << endl
-       << endl
-       << "-n <oldparam1,newid1,newname1,oldparam2,newid2,newname2,...>" << endl
-       << endl
-       << "\tRename parameters using either numbers of names." << endl
-       << endl
-       << "-l <level1,level2,...,levelN>" << endl
-       << endl
-       << "\tThe levels to be extracted as a comma separated list of" << endl
-       << "\tlevel numbers. By default all levels are extracted." << endl
-       << endl
-       << "-S <YYYYMMDDHHMI>,..." << endl
-       << endl
-       << "\tThe time stamp(s) in UTC time to be extracted." << endl
-       << endl
-       << "-t <dt1,dt2,dt>" << endl
-       << endl
-       << "\tThe time interval to be extracted as offsets from the origin" << endl
-       << "\ttime. For example parameters 24,48 would extract times" << endl
-       << "\tbetween +24 and +48 hours from the origin time. dt1 may" << endl
-       << "\tbe omitted, in which case it is assumed to be zero." << endl
-       << "\tif the last dt parameter is given, it indicates the" << endl
-       << "\tdesired time step (in local times)" << endl
-       << endl
-       << "-T <dt1,dt2,dt>" << endl
-       << endl
-       << "\tSame as -t, but dt is used in UTC-time mode" << endl
-       << endl
-       << "-z <yyyymmddhhmi>" << endl
-       << endl
-       << "\tThe local reference time to be usead instead of origin time" << endl
-       << endl
-       << "-Z <yyyymmddhhmi>" << endl
-       << endl
-       << "\tThe UTC reference time to be usead instead of origin time" << endl
-       << endl
-       << "-i <hour>" << endl
-       << "\tThe hour to be extracted (local time)" << endl
-       << endl
-       << "-I <hour>" << endl
-       << "\tThe hour to be extracted (UTC time)" << endl
-       << endl
-       << "-M <minute>" << endl
-       << "\tThe minute to be extracted (UTC time)" << endl
-       << endl
-       << "-w <wmo1,wmo2-wmo3,...>" << endl
-       << endl
-       << "\tThe stations to extract from point data as identified by" << endl
-       << "\tthe WMO numbers of the stations or ranges of them" << endl
-       << "-w <wmo1,wmo2-wmo3,...>" << endl
-       << endl
-       << "-W <wmo1,wmo2-wmo3,...>" << endl
-       << endl
-       << "\tThe stations to remove from point data as identified by" << endl
-       << "\tthe WMO numbers of the stations or ranges of them" << endl
-       << endl
-       << "-m <limit> | <parameter,limit>" << endl
-       << "\tMaximum allowed amount of missing values for a time step to be included" << endl
-       << endl;
+       << "\n"
+       << "-A <param1,param2,...,paramN>\n"
+       << "\n"
+       << "\tThe parameters to be copied from the origin time to all timesteps.\n"
+       << "\n"
+       << "-n <oldparam1,newid1,newname1,oldparam2,newid2,newname2,...>\n"
+       << "\n"
+       << "\tRename parameters using either numbers of names.\n"
+       << "\n"
+       << "-l <level1,level2,...,levelN>\n"
+       << "\n"
+       << "\tThe levels to be extracted as a comma separated list of\n"
+       << "\tlevel numbers. By default all levels are extracted.\n"
+       << "\n"
+       << "-S <YYYYMMDDHHMI>,...\n"
+       << "\n"
+       << "\tThe time stamp(s) in UTC time to be extracted.\n"
+       << "\n"
+       << "-t <dt1,dt2,dt>\n"
+       << "\n"
+       << "\tThe time interval to be extracted as offsets from the origin\n"
+       << "\ttime. For example parameters 24,48 would extract times\n"
+       << "\tbetween +24 and +48 hours from the origin time. dt1 may\n"
+       << "\tbe omitted, in which case it is assumed to be zero.\n"
+       << "\tif the last dt parameter is given, it indicates the\n"
+       << "\tdesired time step (in local times)\n"
+       << "\n"
+       << "-T <dt1,dt2,dt>\n"
+       << "\n"
+       << "\tSame as -t, but dt is used in UTC-time mode\n"
+       << "\n"
+       << "-z <yyyymmddhhmi>\n"
+       << "\n"
+       << "\tThe local reference time to be usead instead of origin time\n"
+       << "\n"
+       << "-Z <yyyymmddhhmi>\n"
+       << "\n"
+       << "\tThe UTC reference time to be usead instead of origin time\n"
+       << "\n"
+       << "-i <hour>\n"
+       << "\tThe hour to be extracted (local time)\n"
+       << "\n"
+       << "-I <hour>\n"
+       << "\tThe hour to be extracted (UTC time)\n"
+       << "\n"
+       << "-M <minute>\n"
+       << "\tThe minute to be extracted (UTC time)\n"
+       << "\n"
+       << "-w <wmo1,wmo2-wmo3,...>\n"
+       << "\n"
+       << "\tThe stations to extract from point data as identified by\n"
+       << "\tthe WMO numbers of the stations or ranges of them\n"
+       << "-w <wmo1,wmo2-wmo3,...>\n"
+       << "\n"
+       << "-W <wmo1,wmo2-wmo3,...>\n"
+       << "\n"
+       << "\tThe stations to remove from point data as identified by\n"
+       << "\tthe WMO numbers of the stations or ranges of them\n"
+       << "\n"
+       << "-m <limit> | <parameter,limit>\n"
+       << "\tMaximum allowed amount of missing values for a time step to be included\n"
+       << "\n"
+       << "-N <name>\n"
+       << "\tNew producer name\n"
+       << "\n"
+       << "-D <number>\n"
+       << "\tNew producer number\n\n";
 }
 
 // ----------------------------------------------------------------------
@@ -289,7 +299,7 @@ set<int> parse_numberlist(const string& theList)
   // Then generate the full list
 
   set<int> numbers;
-  BOOST_FOREACH (const string& str, parts)
+  for (const string& str : parts)
   {
     string::size_type pos = str.find('-');
     if (pos == string::npos)
@@ -400,7 +410,7 @@ NFmiHPlaceDescriptor MakeHPlaceDescriptor(NFmiFastQueryInfo& theQ,
 
     else
     {
-      BOOST_FOREACH (int station, theStations)
+      for (int station : theStations)
       {
         if (theNoStations.find(station) == theNoStations.end())
           if (theQ.Location(station))
@@ -1103,6 +1113,8 @@ int run(int argc, const char* argv[])
   string opt_bounds;                      // the latlon bounding box to extract
   string opt_steps;                       // the stepsizes for the geometry
   string opt_proj;                        // the projection to interpolate to
+  string opt_new_producer_name;           // new optional producer name
+  int opt_new_producer_id = -1;           // new optional producer number
   vector<string> opt_parameters;          // the parameters to extract
   vector<string> opt_delparameters;       // the parameters to remove
   vector<string> opt_newparameters;       // the parameters to be added
@@ -1132,7 +1144,7 @@ int run(int argc, const char* argv[])
 
   // Read command line arguments
 
-  NFmiCmdLine cmdline(argc, argv, "hVg!G!P!p!r!a!A!l!t!T!d!w!W!i!I!z!Z!S!m!M!Rn!");
+  NFmiCmdLine cmdline(argc, argv, "hVg!G!P!p!r!a!A!l!t!T!d!w!W!i!I!z!Z!S!m!M!Rn!N!D!");
   if (cmdline.Status().IsError())
     throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
 
@@ -1296,6 +1308,12 @@ int run(int argc, const char* argv[])
   if (cmdline.isOption('R'))
     opt_multifile = !opt_multifile;
 
+  if (cmdline.isOption('N'))
+    opt_new_producer_name = cmdline.OptionValue('N');
+
+  if (cmdline.isOption('D'))
+    opt_new_producer_id = NFmiStringTools::Convert<int>(cmdline.OptionValue('D'));
+
   if (!opt_parameters.empty() && !opt_delparameters.empty())
     throw runtime_error("Options -p and -r are mutually exclusive");
 
@@ -1380,11 +1398,24 @@ int run(int argc, const char* argv[])
   // now create new data based on the new descriptors
 
   NFmiFastQueryInfo info(pdesc, tdesc, hdesc, vdesc, version);
+
   boost::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
   if (data.get() == 0)
     throw runtime_error("Could not allocate memory for result data");
 
   NFmiFastQueryInfo dstinfo(data.get());
+
+  // Modify the producer as if requested
+  if (!opt_new_producer_name.empty() || opt_new_producer_id > 0)
+  {
+    srcinfo->FirstParam();  // first parameter as base for new settings
+    NFmiProducer producer(*srcinfo->Producer());
+    if (!opt_new_producer_name.empty())
+      producer.SetName(opt_new_producer_name);
+    if (opt_new_producer_id > 0)
+      producer.SetIdent(opt_new_producer_id);
+    dstinfo.SetProducer(producer);
+  }
 
   // finally fill the new data with values
   //
@@ -1485,7 +1516,9 @@ int main(int argc, const char* argv[])
   }
   catch (const std::exception& e)
   {
-    cerr << "Error: Caught an exception:" << endl << "--> " << e.what() << endl;
+    cerr << "Error: Caught an exception:"
+         << "\n"
+         << "--> " << e.what() << "\n";
     return 1;
   }
 }

@@ -1428,8 +1428,6 @@ static NFmiArea *CreatePolarStereographicArea(grib_handle *theGribHandle)
   int badLov = grib_get_double(theGribHandle, "orientationOfTheGridInDegrees", &Lov);
   int badLad = grib_get_double(theGribHandle, "LaDInDegrees", &Lad);
   int badLad2 = grib_get_double(theGribHandle, "latitudeWhereDxAndDyAreSpecifiedInDegrees", &Lad2);
-  double usedLad = (badLad == 0) ? Lad : Lad2;
-  int usedBadLad = (badLad == 0) ? badLad : badLad2;
 
   long pcentre = 0;
   int badPcentre = grib_get_long(theGribHandle, "projectionCentreFlag", &pcentre);
@@ -1442,33 +1440,26 @@ static NFmiArea *CreatePolarStereographicArea(grib_handle *theGribHandle)
   int badNy = ::grib_get_long(theGribHandle, "numberOfPointsAlongYAxis", &ny);
 
   double dx = 0, dy = 0;
-  int badDx = grib_get_double(theGribHandle, "xDirectionGridLength", &dx);
-  int badDy = grib_get_double(theGribHandle, "yDirectionGridLength", &dy);
-  double dxInM = 0, dyInM = 0;
-  int badDxInM = grib_get_double(theGribHandle, "xDirectionGridLengthInMetres", &dxInM);
-  int badDyInM = grib_get_double(theGribHandle, "yDirectionGridLengthInMetres", &dyInM);
-  if ((badDx || badDy) && (badDxInM == 0 && badDyInM == 0))
-  {  // jos jompi kumpi oli error koodissa, yritet‰‰n laskea arvot metrisist‰ arvoista
-    dx = dxInM * 1000.;
-    dy = dyInM * 1000.;
-    badDx = 0;
-    badDy = 0;
-  }
+  int badDx = grib_get_double(theGribHandle, "DxInMetres", &dx);
+  int badDy = grib_get_double(theGribHandle, "DyInMetres", &dy);
 
-  if (!badLa1 && !badLo1 && !badLov && !usedBadLad && !badNx && !badNy && !badDx && !badDy)
+  if (!badLa1 && !badLo1 && !badLov && !badLad && !badNx && !badNy && !badDx && !badDy)
   {
     // Has to be done, or corners should be recalculated:
     // check_jscan_direction(theGribHandle);
 
     NFmiPoint bottom_left(Lo1, La1);
-    double width_in_meters = (nx - 1) * dx / 1000.0;
-    double height_in_meters = (ny - 1) * dy / 1000.0;
+    double width_in_meters = (nx - 1) * dx;
+    double height_in_meters = (ny - 1) * dy;
 
+    auto lat_0 = (pcentre == 0 ? 90 : -90);
+    auto lat_ts = (!badLad2 ? Lad2 : lat_0);
     auto proj = fmt::format(
-        "+proj=stere +lat_0={} +lon_0={} +R={:.0f}  +units=m +wktext "
+        "+type=crs +proj=stere +lat_0={} +lon_0={} +lat_ts={} +R={} +units=m +wktext "
         "+towgs84=0,0,0 +no_defs",
-        usedLad,
+        lat_0,
         Lov,
+        lat_ts,
         kRearth);
 
     return NFmiArea::CreateFromCornerAndSize(

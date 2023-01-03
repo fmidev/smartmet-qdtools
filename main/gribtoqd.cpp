@@ -2016,9 +2016,9 @@ std::string GetEarthProj(const EarthShape &theShape)
     return fmt::format("+datum={}", theShape.datum);
 
   if (theShape.a == theShape.b)
-    return fmt::format("+R={:.0f} +towgs84=0,0,0", theShape.a);
+    return fmt::format("+R={} +towgs84=0,0,0", theShape.a);
 
-  return fmt::format("+a={:.0f} +b={:.0f} +towgs84=0,0,0", theShape.a, theShape.b);
+  return fmt::format("+a={} +b={} +towgs84=0,0,0", theShape.a, theShape.b);
 }
 
 // ----------------------------------------------------------------------
@@ -2033,10 +2033,9 @@ std::string GetEarthProjFull(const EarthShape &theShape)
     return fmt::format("+type=crs +datum={}", theShape.datum);
 
   if (theShape.a == theShape.b)
-    return fmt::format("+type=crs +proj=longlat +R={:.0f} +towgs84=0,0,0", theShape.a);
+    return fmt::format("+type=crs +proj=longlat +R={} +towgs84=0,0,0", theShape.a);
 
-  return fmt::format(
-      "+type=crs +proj=longlat +a={:.0f} +b={:.0f} +towgs84=0,0,0", theShape.a, theShape.b);
+  return fmt::format("+type=crs +proj=longlat +a={} +b={} +towgs84=0,0,0", theShape.a, theShape.b);
 }
 
 // ----------------------------------------------------------------------
@@ -2087,7 +2086,7 @@ EarthShape GetEarthShape(grib_handle *theHandle)
     // Earth assumed spherical with radius specified (in m) by data producer
     if (GetGribLongValue(theHandle, "scaleFactorOfRadiusOfSphericalEarth", scalefactor))
       if (scalefactor != GRIB_MISSING_LONG)
-        scale = pow(10.0, scalefactor);
+        scale = scalefactor;
 
     if (!GetGribDoubleValue(theHandle, "scaledValueOfRadiusOfSphericalEarth", shape.a))
       throw std::runtime_error("Failed to read scaledValueOfRadiusOfSphericalEarth");
@@ -2145,8 +2144,8 @@ EarthShape GetEarthShape(grib_handle *theHandle)
   {
     // Earth model assumed spherical with radius 6371200 m, but the horizontal datum of the
     // resulting latitude/longitude field is the WGS84 reference frame
-    shape.a = 63712000.0;
-    shape.b = 63712000.0;
+    shape.a = 6371200.0;
+    shape.b = 6371200.0;
   }
   else if (shapeOfTheEarth == 9)
   {

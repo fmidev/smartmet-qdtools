@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 22.12.9
+Version: 23.1.3
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -209,6 +209,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Jan  3 2023 Mika Heiskanen <mika.heiskanen@fmi.fi> - 23.1.3-1.fmi
+- Fixed handling of stereographic projections in GRIB to querydata conversions
+
 * Fri Dec  9 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.12.9-1.fmi
 - Added qdcrop options for altering the producer (-N for name and -D for the ID)
 

@@ -1318,7 +1318,17 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
   if (object == "COMP" || object == "IMAGE" || object == "CVOL")
   {
     std::string projdef = get_attribute_value<std::string>(hid, "/where", "projdef");
-    std::string sphere = Fmi::ProjInfo(projdef).inverseProjStr();
+
+    // Remove unwanted origo settings
+    std::cout << "Before: " << projdef << "\n";
+    Fmi::ProjInfo proj(projdef);
+    proj.erase("x_0");
+    proj.erase("y_0");
+    projdef = proj.projStr();
+    std::cout << "After: " << projdef << "\n";
+
+    std::string sphere = proj.inverseProjStr();
+
     long xsize = get_attribute_value<long>(hid, "/where", "xsize");
     long ysize = get_attribute_value<long>(hid, "/where", "ysize");
 

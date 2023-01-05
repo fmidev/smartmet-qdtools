@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 23.1.3
+Version: 23.1.5
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -39,7 +39,7 @@ BuildRequires: netcdf-cxx-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
 BuildRequires: smartmet-library-calculator-devel >= 22.6.16
-BuildRequires: smartmet-library-gis-devel >= 22.9.28
+BuildRequires: smartmet-library-gis-devel >= 23.1.5
 BuildRequires: smartmet-library-imagine-devel >= 22.6.17
 BuildRequires: smartmet-library-macgyver-devel >= 22.8.23
 BuildRequires: smartmet-library-newbase-devel >= 22.8.29
@@ -68,7 +68,7 @@ Requires: libpng
 Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
 Requires: smartmet-library-calculator >= 22.6.16
-Requires: smartmet-library-gis >= 22.9.28
+Requires: smartmet-library-gis >= 23.1.5
 Requires: smartmet-library-imagine >= 22.6.17
 Requires: smartmet-library-macgyver >= 22.8.23
 Requires: smartmet-library-newbase >= 22.8.29
@@ -209,6 +209,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Jan  5 2023 Mika Heiskanen <mika.heiskanen@fmi.fi> - 23.1.5-1.fmi
+- Changed h5toqd to ignore +x_0 and +y_0 projection settings
+
 * Tue Jan  3 2023 Mika Heiskanen <mika.heiskanen@fmi.fi> - 23.1.3-1.fmi
 - Fixed handling of stereographic projections in GRIB to querydata conversions
 

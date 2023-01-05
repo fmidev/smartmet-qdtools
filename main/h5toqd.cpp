@@ -1320,12 +1320,10 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
     std::string projdef = get_attribute_value<std::string>(hid, "/where", "projdef");
 
     // Remove unwanted origo settings
-    std::cout << "Before: " << projdef << "\n";
     Fmi::ProjInfo proj(projdef);
     proj.erase("x_0");
     proj.erase("y_0");
     projdef = proj.projStr();
-    std::cout << "After: " << projdef << "\n";
 
     std::string sphere = proj.inverseProjStr();
 

@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 23.1.5
+Version: 23.1.26
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -41,8 +41,8 @@ BuildRequires: rpm-build
 BuildRequires: smartmet-library-calculator-devel >= 22.6.16
 BuildRequires: smartmet-library-gis-devel >= 23.1.5
 BuildRequires: smartmet-library-imagine-devel >= 22.6.17
-BuildRequires: smartmet-library-macgyver-devel >= 22.8.23
-BuildRequires: smartmet-library-newbase-devel >= 22.8.29
+BuildRequires: smartmet-library-macgyver-devel >= 22.12.16
+BuildRequires: smartmet-library-newbase-devel >= 22.11.14
 BuildRequires: smartmet-library-smarttools-devel >= 22.8.24
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
@@ -70,14 +70,14 @@ Requires: netcdf >= 4.3.3.1
 Requires: smartmet-library-calculator >= 22.6.16
 Requires: smartmet-library-gis >= 23.1.5
 Requires: smartmet-library-imagine >= 22.6.17
-Requires: smartmet-library-macgyver >= 22.8.23
-Requires: smartmet-library-newbase >= 22.8.29
+Requires: smartmet-library-macgyver >= 22.12.16
+Requires: smartmet-library-newbase >= 22.11.14
 Requires: smartmet-library-smarttools >= 22.8.24
-Requires: smartmet-timezones >= 22.8.30
+Requires: smartmet-timezones >= 23.1.26
 Requires: zlib
-#TestRequires: smartmet-library-macgyver-devel >= 22.8.23
+#TestRequires: smartmet-library-macgyver-devel >= 22.12.16
 #TestRequires: gcc-c++
-#TestRequires: smartmet-library-newbase-devel >= 22.8.29
+#TestRequires: smartmet-library-newbase-devel >= 22.11.14
 #TestRequires: smartmet-qdtools-test-data
 #TestRequires: libbufr
 
@@ -209,6 +209,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Jan 26 2023 Pertti Kinnia <pertti.kinnia@fmi.fi> - 23.1.26-1.fmi
+- Added qd2csv optional switch -latlon to output lat,lon too
+
 * Thu Jan  5 2023 Mika Heiskanen <mika.heiskanen@fmi.fi> - 23.1.5-1.fmi
 - Changed h5toqd to ignore +x_0 and +y_0 projection settings
 

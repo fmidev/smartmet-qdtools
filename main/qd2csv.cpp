@@ -91,15 +91,16 @@ int domain(int argc, const char* argv[])
 {
   if (argc == 1)
   {
-    cout << "Usage: qd2csv <querydata>" << endl;
+    cout << "Usage: qd2csv [-latlon] <querydata>" << endl;
     return 0;
   }
-  else if (argc != 2)
-    throw runtime_error("Expecting one querydata argument");
+  else if ((argc > 3) || ((argc == 3) && (strcmp(argv[1], "-latlon") != 0)))
+    throw runtime_error("Expecting optional -latlon and one querydata argument");
 
   // Read the querydata
 
-  const string filename = argv[1];
+  const string filename = argv[argc - 1];
+  bool coordOutput = (argc == 3);
 
   NFmiStreamQueryData qd;
   if (!qd.SafeReadLatestData(filename))
@@ -117,7 +118,10 @@ int domain(int argc, const char* argv[])
   // First the headers
 
   NFmiEnumConverter converter;
-  cout << "\"id\",\"date\"";
+  if (coordOutput)
+    cout << "\"id\",\"lat\",\"lon\",\"date\"";
+  else
+    cout << "\"id\",\"date\"";
   for (q->ResetLevel(); q->NextLevel();)
     for (q->ResetParam(); q->NextParam();)
     {
@@ -142,13 +146,23 @@ int domain(int argc, const char* argv[])
 
       int column = 0;
       int printedcolumns = 0;
+      auto prec = cout.precision();
       for (q->ResetLevel(); q->NextLevel();)
         for (q->ResetParam(); q->NextParam();)
         {
           if (okvariables[column])
           {
             if (++printedcolumns == 1)
-              cout << q->Location()->GetIdent() << ',' << timestr.CharPtr();
+            {
+              if (coordOutput)
+              {
+                auto const &p =  q->Location()->GetLocation();
+                cout << q->Location()->GetIdent() << ',' << setprecision(5)
+                     << p.Y() << "," << p.X() << setprecision(prec) << "," << timestr.CharPtr();
+              }
+              else
+                cout << q->Location()->GetIdent() << ',' << timestr.CharPtr();
+            }
             cout << ',';
             float value = q->FloatValue();
             if (value == kFloatMissing)

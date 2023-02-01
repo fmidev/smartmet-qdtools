@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 23.1.26
+Version: 23.2.1
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -209,6 +209,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Feb  1 2023 Pertti Kinnia <pertti.kinnia@fmi.fi> - 23.2.1-1.fmi
+* Added h5toqd COMP ACRR (kFmiPrecipitationAmount) and COMP QIND (kFmiSignalQualityIndex)
+
 * Thu Jan 26 2023 Pertti Kinnia <pertti.kinnia@fmi.fi> - 23.1.26-1.fmi
 - Added qd2csv optional switch -latlon to output lat,lon too
 

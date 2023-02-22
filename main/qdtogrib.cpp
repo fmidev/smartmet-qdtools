@@ -644,6 +644,12 @@ void set_mercator_geometry(NFmiFastQueryInfo &theInfo,
   gset(gribHandle, "Ni", nx);
   gset(gribHandle, "Nj", ny);
 
+  double dx = theInfo.Area()->WorldXYWidth() / (nx - 1);
+  double dy = theInfo.Area()->WorldXYHeight() / (ny - 1);
+
+  gset(gribHandle, "DxInMetres", dx);
+  gset(gribHandle, "DyInMetres", dy);
+
   double lon_0 = 0;
   double lat_ts = 0;
 

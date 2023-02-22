@@ -869,6 +869,10 @@ FmiParameterName opera_name_to_newbase(const std::string &product,
       return kFmiReflectivity;
     else if (quantity == "DBZH")
       return kFmiCorrectedReflectivity;
+    else if (quantity == "ACRR")
+      return kFmiPrecipitationAmount;
+    else if (quantity == "QIND")
+      return kFmiSignalQualityIndex;
     else if (quantity == "PROB")
     {
       // RaVaKe parameters

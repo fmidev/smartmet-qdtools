@@ -212,6 +212,9 @@ make %{_smp_mflags}
 * Wed Feb 22 2023 Mika Heiskanen <mika.heiskanen@fmi.fi> - 23.2.22-1.fmi
 - Fixed qdtogrib to set Di/Dj for Mercator data
 
+* Wed Feb  1 2023 Pertti Kinnia <pertti.kinnia@fmi.fi> - 23.2.1-1.fmi
+* Added h5toqd COMP ACRR (kFmiPrecipitationAmount) and COMP QIND (kFmiSignalQualityIndex)
+
 * Thu Jan 26 2023 Pertti Kinnia <pertti.kinnia@fmi.fi> - 23.1.26-1.fmi
 - Added qd2csv optional switch -latlon to output lat,lon too
 

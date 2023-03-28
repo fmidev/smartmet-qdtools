@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 23.2.22
+Version: 23.3.28
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -209,6 +209,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Mar 28 2023 Mika Heiskanen <mika.heiskanen@fmi.fi> - 23.3.28-1.fmi
+- Use standard edition station listing
+
 * Wed Feb 22 2023 Mika Heiskanen <mika.heiskanen@fmi.fi> - 23.2.22-1.fmi
 - Fixed qdtogrib to set Di/Dj for Mercator data
 

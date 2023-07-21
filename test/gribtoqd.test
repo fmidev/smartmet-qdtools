@@ -36,7 +36,7 @@ for f in data/grib/*.grib*; do
 	echo FAILED
 	$QDINFO -a -q $resultfile > ${tmpfile}.info_ok
 	$QDINFO -a -q $tmpfile > ${tmpfile}.info_fail
-#	diff ${tmpfile}.info_ok ${tmpfile}.info_fail
+	diff -u ${tmpfile}.info_ok ${tmpfile}.info_fail | head -100
     fi
 done
 

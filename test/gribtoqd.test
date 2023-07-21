@@ -12,7 +12,7 @@ grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h
 wgs84=$(expr $? == 0)
 errors=0
 
-for f in data/grib/*; do
+for f in data/grib/*.grib*; do
     name=$(basename $f)
     resultfile=results/gribtoqd/${name}.sqd
 

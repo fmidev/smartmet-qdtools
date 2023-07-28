@@ -41,8 +41,8 @@ BuildRequires: rpm-build
 BuildRequires: smartmet-library-calculator-devel >= 23.7.10
 BuildRequires: smartmet-library-gis-devel >= 23.7.10
 BuildRequires: smartmet-library-imagine-devel >= 23.7.10
-BuildRequires: smartmet-library-macgyver-devel >= 22.12.16
-BuildRequires: smartmet-library-newbase-devel >= 23.7.10
+BuildRequires: smartmet-library-macgyver-devel >= 23.7.28
+BuildRequires: smartmet-library-newbase-devel >= 23.7.28
 BuildRequires: smartmet-library-smarttools-devel >= 22.8.24
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
@@ -70,14 +70,14 @@ Requires: netcdf >= 4.3.3.1
 Requires: smartmet-library-calculator >= 23.7.10
 Requires: smartmet-library-gis >= 23.7.10
 Requires: smartmet-library-imagine >= 23.7.10
-Requires: smartmet-library-macgyver >= 22.12.16
-Requires: smartmet-library-newbase >= 23.7.10
+Requires: smartmet-library-macgyver >= 23.7.28
+Requires: smartmet-library-newbase >= 23.7.28
 Requires: smartmet-library-smarttools >= 22.8.24
 Requires: smartmet-timezones >= 23.1.26
 Requires: zlib
-#TestRequires: smartmet-library-macgyver-devel >= 22.12.16
+#TestRequires: smartmet-library-macgyver-devel >= 23.7.28
 #TestRequires: gcc-c++
-#TestRequires: smartmet-library-newbase-devel >= 23.7.10
+#TestRequires: smartmet-library-newbase-devel >= 23.7.28
 #TestRequires: smartmet-qdtools-test-data
 #TestRequires: libbufr
 

@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 23.7.28
+Version: 23.8.29
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -38,12 +38,12 @@ BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
-BuildRequires: smartmet-library-calculator-devel >= 23.7.10
-BuildRequires: smartmet-library-gis-devel >= 23.7.10
-BuildRequires: smartmet-library-imagine-devel >= 23.7.10
-BuildRequires: smartmet-library-macgyver-devel >= 23.7.28
-BuildRequires: smartmet-library-newbase-devel >= 23.7.28
-BuildRequires: smartmet-library-smarttools-devel >= 22.8.24
+BuildRequires: smartmet-library-calculator-devel >= 23.7.28
+BuildRequires: smartmet-library-gis-devel >= 23.8.28
+BuildRequires: smartmet-library-imagine-devel >= 23.7.28
+BuildRequires: smartmet-library-macgyver-devel >= 23.8.21
+BuildRequires: smartmet-library-newbase-devel >= 23.8.21
+BuildRequires: smartmet-library-smarttools-devel >= 23.7.28
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
 Requires: %{smartmet_boost}-date-time
@@ -67,17 +67,17 @@ Requires: libjpeg
 Requires: libpng
 Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
-Requires: smartmet-library-calculator >= 23.7.10
-Requires: smartmet-library-gis >= 23.7.10
-Requires: smartmet-library-imagine >= 23.7.10
-Requires: smartmet-library-macgyver >= 23.7.28
-Requires: smartmet-library-newbase >= 23.7.28
-Requires: smartmet-library-smarttools >= 22.8.24
-Requires: smartmet-timezones >= 23.1.26
+Requires: smartmet-library-calculator >= 23.7.28
+Requires: smartmet-library-gis >= 23.8.28
+Requires: smartmet-library-imagine >= 23.7.28
+Requires: smartmet-library-macgyver >= 23.8.21
+Requires: smartmet-library-newbase >= 23.8.21
+Requires: smartmet-library-smarttools >= 23.7.28
+Requires: smartmet-timezones >= 23.4.18
 Requires: zlib
-#TestRequires: smartmet-library-macgyver-devel >= 23.7.28
+#TestRequires: smartmet-library-macgyver-devel >= 23.8.21
 #TestRequires: gcc-c++
-#TestRequires: smartmet-library-newbase-devel >= 23.7.28
+#TestRequires: smartmet-library-newbase-devel >= 23.8.21
 #TestRequires: smartmet-qdtools-test-data
 #TestRequires: libbufr
 
@@ -209,6 +209,12 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Aug 29 2023 Pertti Kinnia <pertti.kinnia@fmi.fi> - 23.8.29-1.fmi
+- metar2qd bug fixes (STU-21605)
+- Fixed bug causing the first input METAR to be lost
+- Added detection of NCD and NSC
+- msdplib was also fixed not to lose T/Td and QNH with CAVOK
+
 * Fri Jul 28 2023 Andris Pavēnis <andris.pavenis@fmi.fi> 23.7.28-1.fmi
 - Repackage due to bulk ABI changes in macgyver/newbase/spine
 

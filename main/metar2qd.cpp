@@ -1122,6 +1122,11 @@ static void FillMetarDataWeatherSection(MetarData &data,
                                         const string &theMetarStr,
                                         const string &theMetarFileName)
 {
+  // STU-21605; No explicit weather with CAVOK
+
+  if (metarStruct.CAVOK)
+    return;
+
   static map<string, float> ww_symbols;
   static bool ww_symbols_initialized = false;
   if (ww_symbols_initialized == false)
@@ -1168,6 +1173,8 @@ static void InitCloudSymbols(map<string, float> &cloudCover_symbols,
   // N‰m‰ METAR cloudtype/cover konversiot on saatu Viljo Kangasniemen dokumentista:
   // "METAReiden purkamisen kuvaus lyhyt versio.doc"
   cloudCover_symbols.insert(make_pair(string("SKC"), 0.f));
+  cloudCover_symbols.insert(make_pair(string("NCD"), 0.f));
+  cloudCover_symbols.insert(make_pair(string("NSC"), 0.f));
   cloudCover_symbols.insert(make_pair(string("CLR"), 0.f));
   cloudCover_symbols.insert(make_pair(string("FEW"), 1.f));
   cloudCover_symbols.insert(make_pair(string("SCT"), 3.f));
@@ -1270,6 +1277,11 @@ static void FillMetarDataCloudSection(MetarData &data,
                                       const string &theMetarStr,
                                       const string &theMetarFileName)
 {
+  // STU-21605; No explicit clouds with CAVOK
+
+  if (metarStruct.CAVOK)
+    return;
+
   static map<string, float> cloudCover_symbols;
   static map<string, float> cloudType_symbols;
   static bool cloud_symbols_initialized = false;
@@ -1374,7 +1386,10 @@ static void DecodeMetar(NFmiAviationStationInfoSystem &theStationInfoSystem,
       intValue = metarStruct.hectoPasc_altstng;
       if (intValue != MDSP_missing_int)
         data.itsValues[data.itsPressureIndex] = static_cast<float>(intValue);
-      floatValue = metarStruct.prevail_vsbyM;
+
+      // https://jira.fmi.fi/browse/STU-21605; Set CAVOK visibility to 9999
+
+      floatValue = (metarStruct.CAVOK ? 9999.0 : metarStruct.prevail_vsbyM);
       if (floatValue != MDSP_missing_float) data.itsValues[data.itsVisibilityIndex] = floatValue;
 
       intValue = metarStruct.VertVsby;
@@ -1611,22 +1626,39 @@ static void MakeDataBlocks(NFmiAviationStationInfoSystem &theStationInfoSystem,
         boost::sregex_token_iterator it2(lineStr.begin(), lineStr.end(), reg2, -1);
         boost::sregex_token_iterator end2;
 
+        // https://jira.fmi.fi/browse/STU-21605
+        //
+        // Example input data contains lines like
+        //
+        //     ESNZ;SASN33 ESWI 290420;METAR ESNZ 290420Z 29016KT CAVOK 03/M09 Q1010=
+        //
+        // so ";METAR" is (can be) part of the matching word. When (if) so, the first
+        // METAR has also been lost since there's been no match for gMetarWord
+
         boost::regex expression("([0-9]{6})");  // etsit‰‰n 1. sana miss‰ t‰sm‰lleen kuusi numeroa
                                                 // eli metar-sanomien aikaleima
-        string tmpStr = *it2;
+        boost::regex expression2("([0-9]{6});METAR");
+        string tmpStr;
+
         int headerWordCounter = 0;
         do
         {
-          string tmpStr = *it2;
+          tmpStr = *it2;
           ++it2;
           boost::cmatch what;
-          if (boost::regex_match(tmpStr.c_str(), what, expression))
+          if (boost::regex_match(tmpStr.c_str(), what, expression) ||
+              boost::regex_match(tmpStr.c_str(), what, expression2))
           {  // otetaan headerissa oleva aikaleima talteen, koska jossain metareissa ei ole omaa
              // aikaleimaa
             try
             {
               headerTime =
-                  ::GetTime(tmpStr, lineStr, theMetarFileName, true, theTimeRoundingResolution);
+                  ::GetTime(what[1], lineStr, theMetarFileName, true, theTimeRoundingResolution);
+
+              // To match e.g. 290420;METAR to gMetarWord
+
+              if (what[0].length() > 6)
+                tmpStr = gMetarWord;
             }
             catch (...)
             {
@@ -1641,8 +1673,12 @@ static void MakeDataBlocks(NFmiAviationStationInfoSystem &theStationInfoSystem,
           if (tmpStr == gSpeciWord)
             return;  // Mutta ei viel‰ toistaiseksi oteta huomioon SPECI sanomia
           if (tmpStr == gNilWord)
+          {
+            tmpStr.clear();
+
             break;  // Jos NIL tulee ennen METAR/SPECI:‰, lopetetaan kanssa, kyseess‰ tyhj‰
                     // sanomatiedosto
+          }
         } while (it2 != end2);
 
         if (it2 == end2)
@@ -1652,7 +1688,7 @@ static void MakeDataBlocks(NFmiAviationStationInfoSystem &theStationInfoSystem,
         // jokaisen tiedoston 1. metar pit‰‰ rakentaa t‰ss‰ erikseen, koska alusta pit‰‰ skipata
         // header osio
         // loput metarit tulevat splittauksesta sellaisenaan.
-        string tmpMetarStr;
+        string tmpMetarStr(tmpStr + (tmpStr.empty() ? "" : " "));
         do
         {
           tmpMetarStr += *it2;

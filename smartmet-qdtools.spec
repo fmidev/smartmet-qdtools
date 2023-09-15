@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 23.8.29
+Version: 23.9.15
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -209,6 +209,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Fri Sep 15 2023 Pertti Kinnia <pertti.kinnia@fmi.fi> - 23.9.15-1.fmi
+- Repackaged due to updated mdsplib
+
 * Tue Aug 29 2023 Pertti Kinnia <pertti.kinnia@fmi.fi> - 23.8.29-1.fmi
 - metar2qd bug fixes (STU-21605)
 - Fixed bug causing the first input METAR to be lost

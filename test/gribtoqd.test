@@ -34,16 +34,30 @@ for f in data/grib/*.grib*; do
 	search="$(for fn $search; do echo $fn.wgs84; done) $search"
     fi
 
-    resultfile=$(for fn in $search ; do \
-                     test -e $fn.sqd || test -L $fn.sqd && echo $fn.sqd; \
-                 done | head -1)
-    if test -z "$resultfile" ; then
+    resultfiles=
+    for fn in $search ; do
+        for ext in '' .zstd .gz .bz2 .xz; do
+            if test -e $fn.sqd$ext || test -L $fn.sqd$ext; then
+                resultfiles="$resultfiles $fn.sqd$ext"
+            fi
+        done;
+    done
+
+    if test -z "$resultfiles" ; then
 	errors=$(($errors+1))
         echo "FAILED: no expected result file found for $f"
     else
-        tmpfile=${resultfile}.tmp
+        resultfile=$(for fn in $resultfiles; do echo $fn; done | head -1);
+        tmpfile=$(echo $resultfile | sed -r 's:(\.xz|\.bz2|\.zstd|\.xz)$::').tmp
+        case $resultfile in
+            *.xz) CMP="xzcat $resultfile | cmp --quiet - $tmpfile" ;;
+            *.bz2) CMP="bzcat $resultfile | cmp --quiet - $tmpfile" ;;
+            *.gz) CMP="zcat $resultfile | cmp --quiet - $tmpfile" ;;
+            *.zstd) CMP="zstdcat $resultfile | cmp --quiet - $tmpfile" ;;
+            *) CMP="cmp --quiet $resultfile $tmpfile" ;;
+        esac
         $PROG -c ../cnf/grib.conf -o $tmpfile $f
-        cmp --quiet $resultfile $tmpfile
+        eval $CMP
         ERR=$?
         printf '%-60s' "$name"
         if [[ $ERR -eq 0 ]]; then

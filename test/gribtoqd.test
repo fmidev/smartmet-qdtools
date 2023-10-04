@@ -25,7 +25,10 @@ errors=0
 
 for f in data/grib/*.grib*; do
     name=$(basename $f)
-    search=results/gribtoqd/${name}
+    name0=$(echo $name | sed -r 's:(\.xz|\.bz2|\.zstd|\.xz)$::')
+    input=$(dirname $f)/$name0
+    cleanup=
+    search=results/gribtoqd/${name0}
     if ! test -z "$version_suffix" ; then
         search="$search.$version_suffix $search"
     fi
@@ -50,13 +53,23 @@ for f in data/grib/*.grib*; do
         resultfile=$(for fn in $resultfiles; do echo $fn; done | head -1);
         tmpfile=$(echo $resultfile | sed -r 's:(\.xz|\.bz2|\.zstd|\.xz)$::').tmp
         case $resultfile in
-            *.xz) CMP="xzcat $resultfile | cmp --quiet - $tmpfile" ;;
+            *.xz) CMP="xzcmp $resultfile $tmpfile" ;;
             *.bz2) CMP="bzcat $resultfile | cmp --quiet - $tmpfile" ;;
             *.gz) CMP="zcat $resultfile | cmp --quiet - $tmpfile" ;;
             *.zstd) CMP="zstdcat $resultfile | cmp --quiet - $tmpfile" ;;
             *) CMP="cmp --quiet $resultfile $tmpfile" ;;
         esac
-        $PROG -c ../cnf/grib.conf -o $tmpfile $f
+        if test "$f" != "$input" ; then
+            cleanup=$input
+            case $f in
+                *.xz) xzcat $f >$input ;;
+                *.bz2) bzcat $f >$input ;;
+                *.gz) zcat $f >$input ;;
+                *.zstd) zstdcat $f >$input ;;
+            esac
+        fi
+        $PROG -c ../cnf/grib.conf -o $tmpfile $input
+        rm -f $cleanup
         eval $CMP
         ERR=$?
         printf '%-60s' "$name"
@@ -69,6 +82,7 @@ for f in data/grib/*.grib*; do
 	    $QDINFO -a -q $resultfile > ${tmpfile}.info_ok
 	    $QDINFO -a -q $tmpfile > ${tmpfile}.info_fail
 	    diff -u ${tmpfile}.info_ok ${tmpfile}.info_fail | head -100
+            rm -f ${tmpfile}.info_ok ${tmpfile}.info_fail
         fi
     fi
 done

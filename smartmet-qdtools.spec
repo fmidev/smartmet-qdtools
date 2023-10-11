@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 23.9.15
+Version: 23.10.11
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -39,10 +39,10 @@ BuildRequires: netcdf-cxx-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
 BuildRequires: smartmet-library-calculator-devel >= 23.7.28
-BuildRequires: smartmet-library-gis-devel >= 23.8.28
+BuildRequires: smartmet-library-gis-devel >= 23.9.12
 BuildRequires: smartmet-library-imagine-devel >= 23.7.28
-BuildRequires: smartmet-library-macgyver-devel >= 23.8.21
-BuildRequires: smartmet-library-newbase-devel >= 23.8.21
+BuildRequires: smartmet-library-macgyver-devel >= 23.10.10
+BuildRequires: smartmet-library-newbase-devel >= 23.10.11
 BuildRequires: smartmet-library-smarttools-devel >= 23.7.28
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
@@ -68,16 +68,16 @@ Requires: libpng
 Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
 Requires: smartmet-library-calculator >= 23.7.28
-Requires: smartmet-library-gis >= 23.8.28
+Requires: smartmet-library-gis >= 23.9.12
 Requires: smartmet-library-imagine >= 23.7.28
-Requires: smartmet-library-macgyver >= 23.8.21
-Requires: smartmet-library-newbase >= 23.8.21
+Requires: smartmet-library-macgyver >= 23.10.10
+Requires: smartmet-library-newbase >= 23.10.11
 Requires: smartmet-library-smarttools >= 23.7.28
 Requires: smartmet-timezones >= 23.4.18
 Requires: zlib
-#TestRequires: smartmet-library-macgyver-devel >= 23.8.21
+#TestRequires: smartmet-library-macgyver-devel >= 23.10.10
 #TestRequires: gcc-c++
-#TestRequires: smartmet-library-newbase-devel >= 23.8.21
+#TestRequires: smartmet-library-newbase-devel >= 23.10.11
 #TestRequires: smartmet-qdtools-test-data
 #TestRequires: libbufr
 
@@ -209,6 +209,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Oct 11 2023 Pertti Kinnia <pertti.kinnia@fmi.fi> - 23.10.11-1.fmi
+- Added AWSMETAR stations from avidb. Also added some missing foreign stations having METARs in avidb
+
 * Fri Sep 15 2023 Pertti Kinnia <pertti.kinnia@fmi.fi> - 23.9.15-1.fmi
 - Repackaged due to updated mdsplib
 

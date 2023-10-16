@@ -26,6 +26,13 @@ sub FindFile($$)
     return $result;
 }
 
+sub RemoveCompressionExt($)
+{
+    my $x = shift;
+    $x =~ s/.(gz|bz2|xz|zstd)$//;
+    return $x;
+}
+
 sub CatCmd($)
 {
     my $name = shift;
@@ -214,10 +221,8 @@ sub DoTest
         $resultfile = FindFile("results", "qdcrop_$name");
     }
 
-    my $tmpfile = ${resultfile};
-    $tmpfile =~ s/\.(xz|zstd|gz|bz2|)$/.tmp/;
+    my $tmpfile = RemoveCompressionExt($resultfile) . ".tmp";
     $cmd = "$program -V $arguments $results/$tmpfile";
-    #print "CMD='$cmd'\n";
 
     my $ret = system("$cmd 2>$results/$tmpfile.stderr");
     if ($ret != 0)
@@ -236,7 +241,7 @@ sub DoTest
     } elsif (equalcontent("$results/$resultfile","$results/$tmpfile"))
     {
 	print " OK\n";
-	unlink("$results/$tmpfile");
+	#unlink("$results/$tmpfile");
     }
     else
     {

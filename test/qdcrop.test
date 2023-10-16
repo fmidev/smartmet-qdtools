@@ -7,9 +7,46 @@ $program = (-x "../qdcrop" ? "../qdcrop" : "qdcrop");
 system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h');
 $wgs84 = 1-($? >> 8);
 
+sub FindFile($$)
+{
+    my $dir = shift;
+    my $name = shift;
+    my $result;
+    if (-e "$dir/$name.xz") {
+        $result="$name.xz";
+    } elsif (-e "$dir/$name.bz2") {
+        $result="$name.bz2"
+    } elsif (-e "$dir/$name.gz") {
+        $result="$name.gz"
+    } elsif (-e "$dir/$name.zstd") {
+        $result="$name.zstd"
+    } elsif (-e "$dir/$name") {
+        $result=$name;
+    }
+    return $result;
+}
+
+sub CatCmd($)
+{
+    my $name = shift;
+    my $result;
+    if ($name =~ m/\.xz$/) {
+        $result = "xzcat";
+    } elsif ($name =~ m/\.bz2$/) {
+        $result="bz2cat";
+    } elsif ($name =~ m/\.gz$/) {
+        $result="zcat.gz";
+    } elsif ($name =~ m/\.zstd/) {
+        $result="zstdcat";
+    } else {
+        $result="cat";
+    }
+    return $result;
+}
+
 $results = "results";
-$data = "data/griddata.sqd";
-$pointdata = "data/pointdata.sqd";
+$data = "data/" . FindFile("data", "griddata.sqd");
+$pointdata = "data/" . FindFile("data", "pointdata.sqd");
 
 $errors = 0;
 
@@ -165,21 +202,38 @@ sub DoTest
     }
     $usednames{$name} = 1;
 
-    my($resultfile) = "qdcrop_$name";
+    my($resultfile);
 
     if($wgs84)
     {
-	my($wgs84resultfile) = "${resultfile}.wgs84";
-	if(-e "$results/$wgs84resultfile")
-	{  $resultfile = $wgs84resultfile; }
+        $resultfile = FindFile("results", "qdcrop_$name.wgs84");
     }
 
-    my($tmpfile) = "${resultfile}.tmp";
+    if (! defined $resultfile)
+    {
+        $resultfile = FindFile("results", "qdcrop_$name");
+    }
+
+    my $tmpfile = ${resultfile};
+    $tmpfile =~ s/\.(xz|zstd|gz|bz2|)$/.tmp/;
     $cmd = "$program -V $arguments $results/$tmpfile";
-    $output = `$cmd`;
+    #print "CMD='$cmd'\n";
+
+    my $ret = system("$cmd 2>$results/$tmpfile.stderr");
+    if ($ret != 0)
+    {
+	++$errors;
+        print " FAILED: return code $ret from gq2csv\n";
+        system("cat $results/$tmpfile.stderr");
+    }
+
+    $output = `cat "$results/$tmpfile"`;
 
     print padname($text);
-    if(equalcontent("$results/$resultfile","$results/$tmpfile"))
+    if (not defined($resultfile)) {
+	++$errors;
+        print " NO RESULT FILE\n";
+    } elsif (equalcontent("$results/$resultfile","$results/$tmpfile"))
     {
 	print " OK\n";
 	unlink("$results/$tmpfile");
@@ -220,19 +274,9 @@ sub equalcontent
     if(!(-e $file1)) { return 0; }
     if(!(-e $file2)) { return 0; }
 
-    # Read binary file and compare results
-
-    open(FILE1,"$file1");
-    binmode(FILE1);
-    read(FILE1,$buffer1,(stat(FILE1))[7]);
-    close(FILE1);
-
-    open(FILE2,"$file2");
-    binmode(FILE2);
-    read(FILE2,$buffer2,(stat(FILE2))[7]);
-    close(FILE2);
-
-    return ($buffer1 eq $buffer2);
+    my $cat = CatCmd($file1);
+    my $cmd = "$cat $file1 | cmp --quiet - $file2";
+    return system("$cmd") == 0;
 }
 
 # ----------------------------------------------------------------------

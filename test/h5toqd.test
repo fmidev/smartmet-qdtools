@@ -58,6 +58,7 @@ sub FindFile($$)
     } elsif (-e "$dir/$name") {
         $result=$name;
     }
+    return $result;
 }
 
 sub Unpack($$)
@@ -104,11 +105,6 @@ sub DoTest
         Unpack("data/hdf/$input", "data/hdf/$infile");
     }
 
-    if ($expected ne $resultfile) {
-        push(@cleanup, "$results/$expected");
-        Unpack("$results/$resultfile", "$results/$expected");
-    }
-
     my($tmpfile) = "$expected.tmp";
 
     $cmd = "$program data/hdf/$infile $results/$tmpfile";
@@ -124,15 +120,16 @@ sub DoTest
 	++$errors;
 	print " FAILED TO PRODUCE OUTPUT FILE\n";
     }
-    elsif(! -e "$results/$expected")
+    elsif(! -e "$results/$resultfile")
     {
 	++$errors;
+        $resultfile=$expected;
 	print " FAILED: TRUE RESULT MISSING ($results/$resultfile)\n";
 	unlink("$results/$tmpfile");
     }
     else
     {
-        my $cmd = "../qddifference $results/$expected $results/$tmpfile";
+        my $cmd = "../qddifference $results/$resultfile $results/$tmpfile";
 	my($difference) = `$cmd`;
 
 	if(rindex($difference, "Error", 0) == 0)

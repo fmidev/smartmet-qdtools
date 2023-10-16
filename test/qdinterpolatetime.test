@@ -41,9 +41,17 @@ sub DoTest
     }
 
     my($tmpfile) = "/tmp/$dataname";
-    
+
+    print "CMD='$command'\n";
+
     print padname($title);
-    system("$command");
+    my $ret = system("$command");
+    if ($ret != 0)
+    {
+	++$errors;
+        print " FAILED: return code $ret from '$command'\n";
+        return;
+    }
 
     if(equalcontent($resultfile,$tmpfile))
     {
@@ -84,7 +92,13 @@ sub DoSqdTest
     # Aja käsky
     
     print padname($title);
-    system("$command");
+    my $ret = system("$command");
+    if ($ret != 0)
+    {
+	++$errors;
+        print " FAILED: return code $ret from '$cmmand'\n";
+        return;
+    }
 
     # Vertaa tuloksia
 

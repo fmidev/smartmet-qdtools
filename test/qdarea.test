@@ -9,7 +9,52 @@ $wgs84 = 1-($? >> 8);
 
 $coordinatefile = "conf/coordinates.txt";
 $results = "results";
-$data = "data/qdarea.sqd";
+
+sub FindFile($$)
+{
+    my $dir = shift;
+    my $name = shift;
+    my $result;
+    if (-e "$dir/$name.xz") {
+        $result="$name.xz";
+    } elsif (-e "$dir/$name.bz2") {
+        $result="$name.bz2"
+    } elsif (-e "$dir/$name.gz") {
+        $result="$name.gz"
+    } elsif (-e "$dir/$name.zstd") {
+        $result="$name.zstd"
+    } elsif (-e "$dir/$name") {
+        $result=$name;
+    }
+    return $result;
+}
+
+sub RemoveCompressionExt($)
+{
+    my $x = shift;
+    $x =~ s/.(gz|bz2|xz|zstd)$//;
+    return $x;
+}
+
+sub CatCmd($)
+{
+    my $name = shift;
+    my $result;
+    if ($name =~ m/\.xz$/) {
+        $result = "xzcat";
+    } elsif ($name =~ m/\.bz2$/) {
+        $result="bz2cat";
+    } elsif ($name =~ m/\.gz$/) {
+        $result="zcat.gz";
+    } elsif ($name =~ m/\.zstd/) {
+        $result="zstdcat";
+    } else {
+        $result="cat";
+    }
+    return $result;
+}
+
+$data = "data/".FindFile("data", "qdarea.sqd");
 
 $errors = 0;
 
@@ -98,22 +143,32 @@ sub DoTest
     }
     $usednames{$name} = 1;
 
-    my($resultfile) = "qdarea_$name";
+    my $resultfile;  #) = "qdarea_$name";
 
     if($wgs84)
     {
-	my($wgs84resultfile) = "${resultfile}.wgs84";
-	if(-e "$results/$wgs84resultfile")
-	{  $resultfile = $wgs84resultfile; }
+	$resultfile = FindFile("results", "qdarea_$name.wgs84");
     }
 
-    my($tmpfile) = "${resultfile}.tmp";
-    $cmd = "$program -c $coordinatefile $arguments -q $data 2>&1";
+    if (!defined($resultfile))
+    {
+	$resultfile = FindFile("results", "qdarea_$name");
+    }
 
-    $output = `$cmd`;
+    my($tmpfile) = RemoveCompressionExt($resultfile).".tmp";
+    $cmd = "$program -c $coordinatefile $arguments -q $data";
+
+    #$output = `$cmd`;
+    my $ret = system("$cmd >$results/$tmpfile.out 2>&1");
 
     print padname($text);
-    if(equalcontent("$results/$resultfile",$output))
+    if ($ret != 0)
+    {
+	++$errors;
+	print " FAILED: return code $ret from qdarea\n";
+        system("cat $results/$tmpfile.out");
+    }
+    elsif(system(CatCmd("$results/$resultfile")." $results/$resultfile | cmp --quiet - $output") == 0)
     {
 	print " OK\n";
 	unlink($tmpfile);
@@ -144,26 +199,4 @@ sub padname
 	$str .= ".";
     }
     return $str;
-}
-
-# ----------------------------------------------------------------------
-# Compare two files
-# ----------------------------------------------------------------------
-
-sub equalcontent
-{
-    my($file,$text) = @_;
-
-    # File must exits
-
-    if(!(-e $file))
-    { return 0; }
-
-    # Read binary file and compare results
-
-    open(FILE,"$file");
-    binmode(FILE);
-    read(FILE,$buffer,(stat(FILE))[7]);
-    close(FILE);
-    return ($buffer eq $text);
 }

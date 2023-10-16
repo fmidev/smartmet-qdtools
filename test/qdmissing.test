@@ -6,9 +6,54 @@ system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals
 $wgs84 = 1-($? >> 8);
 
 $results = "results";
-$griddata = "data/griddata.sqd";
-$pointdata = "data/pointdata.sqd";
-$synopdata = "data/synop.sqd";
+
+sub FindFile($$)
+{
+    my $dir = shift;
+    my $name = shift;
+    my $result;
+    if (-e "$dir/$name.xz") {
+        $result="$name.xz";
+    } elsif (-e "$dir/$name.bz2") {
+        $result="$name.bz2"
+    } elsif (-e "$dir/$name.gz") {
+        $result="$name.gz"
+    } elsif (-e "$dir/$name.zstd") {
+        $result="$name.zstd"
+    } elsif (-e "$dir/$name") {
+        $result=$name;
+    }
+    return $result;
+}
+
+sub RemoveCompressionExt($)
+{
+    my $x = shift;
+    $x =~ s/.(gz|bz2|xz|zstd)$//;
+    return $x;
+}
+
+sub CatCmd($)
+{
+    my $name = shift;
+    my $result;
+    if ($name =~ m/\.xz$/) {
+        $result = "xzcat";
+    } elsif ($name =~ m/\.bz2$/) {
+        $result="bz2cat";
+    } elsif ($name =~ m/\.gz$/) {
+        $result="zcat.gz";
+    } elsif ($name =~ m/\.zstd/) {
+        $result="zstdcat";
+    } else {
+        $result="cat";
+    }
+    return $result;
+}
+
+$griddata = "data/" . FindFile("data", "griddata.sqd");
+$pointdata = "data/" . FindFile("data", "pointdata.sqd");
+$synopdata = "data/" . FindFile("data", "synop.sqd");
 
 $errors = 0;
 
@@ -151,21 +196,35 @@ sub DoTest
     }
     $usednames{$name} = 1;
 
-    my($resultfile) = "qdmissing_$name";
+    my($tmpfile) = "${resultfile}.tmp";
+
+    my $resultfile;
 
     if($wgs84)
     {
-	my($wgs84resultfile) = "${resultfile}.wgs84";
-	if(-e "$results/$wgs84resultfile")
-	{  $resultfile = $wgs84resultfile; }
+	$resultfile = FindFile($results, "qdmissing_$name.wgs84");
     }
 
-    my($tmpfile) = "${resultfile}.tmp";
-    $cmd = "$program $arguments 2>&1";
-    $output = `$cmd`;
+    if (! defined $resultfile)
+    {
+        $resultfile = FindFile($results, "qdmissing_$name");
+    }
+
+    my $tmpfile = RemoveCompressionExt(${resultfile}) . ".tmp";
+
+    $cmd = "$program $arguments";
+    #$output = `$cmd`;
+
+    my $ret = system("$cmd >$results/$tmpfile 2>&1");
 
     print padname($text);
-    if(equalcontent("$results/$resultfile",$output))
+
+    if ($ret != 0)
+    {
+	++$errors;
+        print " FAILED: return code $ret from qdmissing\n";
+    }
+    elsif(system(CatCmd("$results/$resultfile") . " $results/$resultfile | cmp --quiet - $results/$tmpfile") == 0)
     {
 	print " OK\n";
 	unlink($tmpfile);
@@ -175,11 +234,6 @@ sub DoTest
 	++$errors;
 	print " FAILED!\n";
 	print "( $resultfile <> $tmpfile in $results/ )\n";
-
-	open(OUT,">$results/$tmpfile")
-	    or die "Could not open $results/$tmpfile for writing\n";
-	print OUT $output;
-	close(OUT);
     }
 }
 
@@ -196,26 +250,4 @@ sub padname
 	$str .= ".";
     }
     return $str;
-}
-
-# ----------------------------------------------------------------------
-# Compare two files
-# ----------------------------------------------------------------------
-
-sub equalcontent
-{
-    my($file,$text) = @_;
-
-    # File must exits
-
-    if(!(-e $file))
-    { return 0; }
-
-    # Read binary file and compare results
-
-    open(FILE,"$file");
-    binmode(FILE);
-    read(FILE,$buffer,(stat(FILE))[7]);
-    close(FILE);
-    return ($buffer eq $text);
 }

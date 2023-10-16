@@ -6,13 +6,38 @@ system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals
 $wgs84 = 1-($? >> 8);
 
 $results = "results";
-$pointdata = "data/pointdata.sqd";
 
 $errors = 0;
 
 %usednames = ();
 
-DoTest("defaults", "defaults", "$pointdata");
+sub FindFile($$)
+{
+    my $dir = shift;
+    my $name = shift;
+    my $result;
+    if (-e "$dir/$name.xz") {
+        $result="$name.xz";
+    } elsif (-e "$dir/$name.bz2") {
+        $result="$name.bz2"
+    } elsif (-e "$dir/$name.gz") {
+        $result="$name.gz"
+    } elsif (-e "$dir/$name.zstd") {
+        $result="$name.zstd"
+    } elsif (-e "$dir/$name") {
+        $result=$name;
+    }
+    return $result;
+}
+
+sub RemoveCompressionExt($)
+{
+    my $x = shift;
+    $x =~ s/.(gz|bz2|xz|zstd)$//;
+    return $x;
+}
+
+DoTest("defaults", "defaults", "data/".FindFile("data", "pointdata.sqd"));
 
 print "$errors errors\n";
 exit($errors);
@@ -33,21 +58,33 @@ sub DoTest
     }
     $usednames{$name} = 1;
 
-    my($resultfile) = "qd2csv_$name";
+    my $resultfile; # ) = "qd2csv_$name";
 
     if($wgs84)
     {
-	my($wgs84resultfile) = "${resultfile}.wgs84";
-	if(-e "$results/$wgs84resultfile")
-	{  $resultfile = $wgs84resultfile; }
+	$resultfile = FindFile("results", "qd2csv_$name.wgs84");
     }
 
-    my($tmpfile) = "${resultfile}.tmp";
-    $cmd = "$program $arguments 2>&1";
+    if (!defined($resultfile))
+    {
+	$resultfile = FindFile("results", "qd2csv_$name");
+    }
+
+    my $tmpfile = "results/".RemoveCompressionExt("$resultfile").".tmp";
+
+    $cmd = "$program $arguments 2>$tmpfile.out";
+    print "CMD: $cmd\n";
+    my $ret = system("$cmd >$tmpfile 2>$tmpfile.stderr");
     $output = `$cmd`;
 
     print padname($text);
-    if(equalcontent("$results/$resultfile",$output))
+    if ($ret != 0)
+    {
+	++$errors;
+        print " FAILED: return code $ret from gq2csv\n";
+        system("cat $tmpfile.stderr");
+    }
+    elsif(equalcontent("$results/$resultfile",$output))
     {
 	print " OK\n";
 	unlink($tmpfile);
@@ -63,6 +100,8 @@ sub DoTest
 	print OUT $output;
 	close(OUT);
     }
+
+    unlink("$tmpfile.stderr") unless $ret != 0;
 }
 
 # ----------------------------------------------------------------------

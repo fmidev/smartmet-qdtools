@@ -55,9 +55,15 @@ sub DoSqdTest
     }
 
     # Aja käsky
-    
+
     print padname($title);
-    system("$command");
+    my $ret = system("$command");
+    if ($ret != 0)
+    {
+	++$errors;
+        print " FAILED: return code $ret from qdinterpolate\n";
+        return;
+    }
 
     # Vertaa tuloksia
 

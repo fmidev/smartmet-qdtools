@@ -13,6 +13,55 @@ $errors = 0;
 
 %usednames = ();
 
+sub FindFile($$)
+{
+    my $dir = shift;
+    my $name = shift;
+    my $result;
+    if (-e "$dir/$name.xz") {
+        $result="$name.xz";
+    } elsif (-e "$dir/$name.bz2") {
+        $result="$name.bz2"
+    } elsif (-e "$dir/$name.gz") {
+        $result="$name.gz"
+    } elsif (-e "$dir/$name.zstd") {
+        $result="$name.zstd"
+    } elsif (-e "$dir/$name") {
+        $result=$name;
+    }
+    return $result;
+}
+
+sub RemoveCompressionExt($)
+{
+    my $x = shift;
+    $x =~ s/.(gz|bz2|xz|zstd)$//;
+    return $x;
+}
+
+sub Unpack($)
+{
+    my $fn0 = shift;
+    my $fn = RemoveCompressionExt $fn0;
+    my $ret = 0;
+    if ($fn0 =~ m/\.xz$/) {
+        print "$fn0 -> $fn\n";
+        $ret = system("xzcat $fn0 >$fn");
+    } elsif ($fn0 =~ m/\.gz$/) {
+        $ret = system("zcat $fn0 >$fn");
+    } elsif ($fn0 =~ m/\.bz2$/) {
+        $ret = system("bzcat $fn0 >$fn");
+    } elsif ($fn0 =~ m/\.zstd$/) {
+        $ret = system("zstdcat $fn0 >$fn");
+    }
+    $ret == 0 or die "Failed to unpack $fn0\n";
+}
+
+my $vietnam_nc = FindFile("data/netcdf", "vietnam.nc");
+if ($vietnam_nc ne RemoveCompressionExt $vietnam_nc) {
+    Unpack "data/netcdf/$vietnam_nc";
+}
+
 my $dir = $0;
 $dir =~ s%[^/]*$%%;
 if ($dir) { chdir "$dir" or die "Unable to change to $dir: $!" }
@@ -77,14 +126,19 @@ sub DoTest {
 	}
 	$usednames{$name} = 1;
 
-	my ($resultfile) = "nctoqd_$name";
+	my $resultfile;
+
+            #"nctoqd_$name";
 
 	if($wgs84)
 	{
-	    my($wgs84resultfile) = "${resultfile}.wgs84";
-	    if(-e "$results/$wgs84resultfile")
-	    {  $resultfile = $wgs84resultfile; }
+	    $resultfile = FindFile("results", "nctoqd_$name.wgs84");
 	}
+
+        if (! defined $resultfile)
+        {
+	    $resultfile = FindFile("results", "nctoqd_$name");
+        }
 
 	my ($tmpfile)    = "${resultfile}.tmp";
 	$cmd = "$program $arguments $results/$tmpfile";
@@ -107,7 +161,7 @@ sub DoTest {
 	        ++$errors;
 		print " FAILED TO PRODUCE OUTPUT FILE\n";
 	}
-	elsif ( !-e "results/$resultfile" ) {
+	elsif ( ! defined $resultfile ) {
 	        ++$errors;
 		print " FAILED: TRUE RESULT MISSING\n";
 		if ( !$keeptmp ) { unlink("$results/$tmpfile"); }

@@ -8,8 +8,53 @@ system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals
 $wgs84 = 1-($? >> 8);
 
 $results = "results";
-$griddata = "data/griddata.sqd";
-$pointdata = "data/pointdata.sqd";
+
+sub FindFile($$)
+{
+    my $dir = shift;
+    my $name = shift;
+    my $result;
+    if (-e "$dir/$name.xz") {
+        $result="$name.xz";
+    } elsif (-e "$dir/$name.bz2") {
+        $result="$name.bz2"
+    } elsif (-e "$dir/$name.gz") {
+        $result="$name.gz"
+    } elsif (-e "$dir/$name.zstd") {
+        $result="$name.zstd"
+    } elsif (-e "$dir/$name") {
+        $result=$name;
+    }
+    return $result;
+}
+
+sub RemoveCompressionExt($)
+{
+    my $x = shift;
+    $x =~ s/.(gz|bz2|xz|zstd)$//;
+    return $x;
+}
+
+sub CatCmd($)
+{
+    my $name = shift;
+    my $result;
+    if ($name =~ m/\.xz$/) {
+        $result = "xzcat";
+    } elsif ($name =~ m/\.bz2$/) {
+        $result="bz2cat";
+    } elsif ($name =~ m/\.gz$/) {
+        $result="zcat.gz";
+    } elsif ($name =~ m/\.zstd/) {
+        $result="zstdcat";
+    } else {
+        $result="cat";
+    }
+    return $result;
+}
+
+$griddata = "data/" . FindFile("data", "griddata.sqd");
+$pointdata = "data/" . FindFile("data", "pointdata.sqd");
 
 $errors = 0;
 
@@ -23,7 +68,8 @@ DoTest("option -q succeeds",
 
 DoTest("option -q fails",
        "option_q_fails",
-       "-q foobar");
+       "-q foobar",
+       "expected to fail");
 
 # option -v
 
@@ -127,7 +173,7 @@ exit($errors);
 
 sub DoTest
 {
-    my($text,$name,$arguments) = @_;
+    my($text,$name,$arguments,$expfail) = @_;
 
     if(exists($usednames{$name}))
     {
@@ -136,35 +182,57 @@ sub DoTest
     }
     $usednames{$name} = 1;
 
-    my($resultfile) = "qdinfo_$name";
+    my $resultfile;
 
     if($wgs84)
     {
-	my($wgs84resultfile) = "${resultfile}.wgs84";
-	if(-e "$results/$wgs84resultfile")
-	{  $resultfile = $wgs84resultfile; }
+	$resultfile = FindFile($results, "qdinfo_$name.wgs84");
     }
 
-    my($tmpfile) = "${resultfile}.tmp";
-    $cmd = "$program $arguments 2>&1";
-    $output = `$cmd`;
+    if (! defined $resultfile)
+    {
+        $resultfile = FindFile($results, "qdinfo_$name");
+    }
+
+    my $tmpfile = RemoveCompressionExt(${resultfile}) . ".tmp";
+    my $stderr_fn = RemoveCompressionExt(${resultfile}) . ".stderr";
+
+    $cmd = "$program $arguments >$results/$tmpfile 2>$results/$stderr_fn";
+    #print "CMD='$cmd'\n";
+
+    my $ret = system($cmd);
+
+    #system("ls -l $results/$tmpfile $results/$stderr_fn");
 
     print padname($text);
-    if(equalcontent("$results/$resultfile",$output))
+    if (defined $expfail)
+    {
+        if ($ret == 0)
+        {
+            ++$errors;
+            print " FAILED: command was expected to fail but it did not\n";
+        }
+        else
+        {
+            print " OK\n";
+        }
+    }
+    elsif ($ret != 0)
+    {
+	++$errors;
+        print " FAILED: return code $ret from qdinfo\n";
+        system("cat $results/stderr_fn");
+    }
+    elsif(system(CatCmd("$results/$resultfile") . " $results/$resultfile | cmp --quiet - $results/$tmpfile") == 0)
     {
 	print " OK\n";
-	unlink($tmpfile);
+	#unlink($tmpfile);
     }
     else
     {
 	++$errors;
 	print " FAILED!\n";
 	print "( $resultfile <> $tmpfile in $results/ )\n";
-
-	open(OUT,">$results/$tmpfile")
-	    or die "Could not open $results/$tmpfile for writing\n";
-	print OUT $output;
-	close(OUT);
     }
 }
 

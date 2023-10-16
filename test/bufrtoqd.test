@@ -58,28 +58,40 @@ sub DoTest
     my($tmpfile) = "${resultfile}.tmp";
     $cmd = "$program $arguments $results/$tmpfile";
 
-    # print "$cmd\n";
-    $output = `$cmd 2>/dev/null`;
+    #print "$cmd\n";
+    my $bufrtoqd_failed = 0;
+    my $ret = system("$cmd >$results/$name.out 2>&1");
+    if ($ret != 0) {
+        $bufrtoqd_failed = 1;
+    }
 
     print padname($text);
 
-    my($difference) = `../qddifference results/$resultfile results/$tmpfile`;
-    $difference =~ s/^\s+//;
-    $difference =~ s/\s+$//;
-
-    if($difference < 0.0001)
-    {
-	if($difference <= 0)
-	{ print " OK\n"; }
-	else
-	{ print " OK (diff <= $difference)\n"; }
-	unlink("$results/$tmpfile");
-    }
-    else
-    {
+    if ($bufrtoqd_failed) {
 	++$errors;
-	print " FAILED! (maxdiff = $difference)\n";
-	print "( $resultfile <> $tmpfile in $results/ )\n";
+        print " FAILED (return code $ret from bufrtoqd)\n";
+        print "\n";
+        system("head -15 $results/$name.out");
+    } else {
+        unlink("$results/$name.out");
+        my($difference) = `../qddifference results/$resultfile results/$tmpfile`;
+        $difference =~ s/^\s+//;
+        $difference =~ s/\s+$//;
+
+        if($difference < 0.0001)
+        {
+            if($difference <= 0)
+            { print " OK\n"; }
+            else
+            { print " OK (diff <= $difference)\n"; }
+            unlink("$results/$tmpfile");
+        }
+        else
+        {
+            ++$errors;
+            print " FAILED! (maxdiff = $difference)\n";
+            print "( $resultfile <> $tmpfile in $results/ )\n";
+        }
     }
 }
 

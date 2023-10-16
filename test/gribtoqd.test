@@ -27,7 +27,6 @@ for f in data/grib/*.grib*; do
     name=$(basename $f)
     name0=$(echo $name | sed -r 's:(\.xz|\.bz2|\.zstd|\.xz)$::')
     input=$(dirname $f)/$name0
-    cleanup=
     search=results/gribtoqd/${name0}
     if ! test -z "$version_suffix" ; then
         search="$search.$version_suffix $search"
@@ -59,17 +58,7 @@ for f in data/grib/*.grib*; do
             *.zstd) CMP="zstdcat $resultfile | cmp --quiet - $tmpfile" ;;
             *) CMP="cmp --quiet $resultfile $tmpfile" ;;
         esac
-        if test "$f" != "$input" ; then
-            cleanup=$input
-            case $f in
-                *.xz) xzcat $f >$input ;;
-                *.bz2) bzcat $f >$input ;;
-                *.gz) zcat $f >$input ;;
-                *.zstd) zstdcat $f >$input ;;
-            esac
-        fi
-        $PROG -c ../cnf/grib.conf -o $tmpfile $input
-        rm -f $cleanup
+        $PROG -c ../cnf/grib.conf -o $tmpfile $f
         eval $CMP
         ERR=$?
         printf '%-60s' "$name"

@@ -19,6 +19,32 @@ DoTest("SOCA dBZ scale overflow","soca.sqd","--allow-overflow --quiet data/PAHM4
 print "$errors errors\n";
 exit($errors);
 
+sub FindFile($$)
+{
+    my $dir = shift;
+    my $name = shift;
+    my $result;
+    if (-e "$dir/$name.xz") {
+        $result="$name.xz";
+    } elsif (-e "$dir/$name.bz2") {
+        $result="$name.bz2"
+    } elsif (-e "$dir/$name.gz") {
+        $result="$name.gz"
+    } elsif (-e "$dir/$name.zstd") {
+        $result="$name.zstd"
+    } elsif (-e "$dir/$name") {
+        $result=$name;
+    }
+    return $result;
+}
+
+sub RemoveCompressionExt($)
+{
+    my $x = shift;
+    $x =~ s/.(gz|bz2|xz|zstd)$//;
+    return $x;
+}
+
 # ----------------------------------------------------------------------
 # Run a single test
 # ----------------------------------------------------------------------
@@ -34,25 +60,33 @@ sub DoTest
     }
     $usednames{$name} = 1;
 
-    my($resultfile) = "radartoqd_$name";
+    my $resultfile; #) = "radartoqd_$name";
 
     if($wgs84)
     {
-	my($wgs84resultfile) = "${resultfile}.wgs84";
-	if(-e "$results/$wgs84resultfile")
-	{  $resultfile = $wgs84resultfile; }
+	$resultfile = FindFile("results", "radartoqd_$name.wgs84");
     }
 
-    my($tmpfile) = "${resultfile}.tmp";
+    if (!defined $resultfile)
+    {
+        $resultfile = FindFile("results", "radartoqd_$name");
+    }
+
+    my $tmpfile = RemoveCompressionExt(${resultfile}) . ".tmp";
     $cmd = "$program $arguments $results/$tmpfile";
-    
-    # print "$cmd\n";
-    # $output = `$cmd 2>/dev/null`;
-    $output = `$cmd`;
+
+    #print "$cmd\n";
+    my $ret = system("$cmd >$tmpfile.out 2>&1");
 
     print padname($text);
 
-    if(! -e "results/$tmpfile")
+    if ($ret != 0)
+    {
+	++$errors;
+        print " FAILED: return code $ret from radartoqd\n";
+        system("cat $tmpfile.out");
+    }
+    elsif (! -e "results/$tmpfile")
     {
 	++$errors;
 	print " FAILED TO PRODUCE OUTPUT FILE\n";
@@ -69,7 +103,7 @@ sub DoTest
 
 	$difference =~ s/^\s+//;
 	$difference =~ s/\s+$//;
-	
+
 	if($difference < 0.0001)
 	{
 	    if($difference <= 0)

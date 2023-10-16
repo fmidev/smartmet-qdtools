@@ -11,6 +11,50 @@ $errors = 0;
 
 %usednames = ();
 
+sub FindFile($$)
+{
+    my $dir = shift;
+    my $name = shift;
+    my $result;
+    if (-e "$dir/$name.xz") {
+        $result="$name.xz";
+    } elsif (-e "$dir/$name.bz2") {
+        $result="$name.bz2"
+    } elsif (-e "$dir/$name.gz") {
+        $result="$name.gz"
+    } elsif (-e "$dir/$name.zstd") {
+        $result="$name.zstd"
+    } elsif (-e "$dir/$name") {
+        $result=$name;
+    }
+    return $result;
+}
+
+sub RemoveCompressionExt($)
+{
+    my $x = shift;
+    $x =~ s/.(gz|bz2|xz|zstd)$//;
+    return $x;
+}
+
+sub Unpack($)
+{
+    my $fn0 = shift;
+    my $fn = RemoveCompressionExt $fn0;
+    my $ret = 0;
+    if ($fn0 =~ m/\.xz$/) {
+        print "$fn0 -> $fn\n";
+        $ret = system("xzcat $fn0 >$fn");
+    } elsif ($fn0 =~ m/\.gz$/) {
+        $ret = system("zcat $fn0 >$fn");
+    } elsif ($fn0 =~ m/\.bz2$/) {
+        $ret = system("bzcat $fn0 >$fn");
+    } elsif ($fn0 =~ m/\.zstd$/) {
+        $ret = system("zstdcat $fn0 >$fn");
+    }
+    $ret == 0 or die "Failed to unpack $fn0\n";
+}
+
 $resultfile = "201906071000_tutka_suomi_dbz.sqd";
 
 DoTest("dbz","dbz","data/pgm",$resultfile);
@@ -35,17 +79,18 @@ sub DoTest
     $usednames{$name} = 1;
 
     $cmd = "$program $arguments $results";
-    
-    $expectedresult = "${resultfile}.ok";
+
+    my $expectedresult;
     if($wgs84)
     {
-	my($wgs84expectedresult) = "${expectedresult}.wgs84";
-	if(-e "$results/$wgs84expectedresult")
-	{  $expectedresult = $wgs84expectedresult; }
+	$expectedresult = FindFile("results", "$resultfile.wgs84.ok");
     }
 
+    if (! defined($expectedresult)) {
+        $expectedresult = FindFile("results", "$resultfile.ok");
+    }
 
-    # print "$cmd\n";
+    #print "$cmd\n";
     # $output = `$cmd 2>/dev/null`;
     $output = `$cmd`;
 
@@ -59,7 +104,7 @@ sub DoTest
     elsif(! -e "results/$expectedresult")
     {
 	++$errors;
-	print " FAILED: TRUE RESULT results/expectedresult MISSING\n";
+	print " FAILED: TRUE RESULT results/$expectedresult MISSING\n";
 	# unlink("$results/$resultfile");
     }
     else

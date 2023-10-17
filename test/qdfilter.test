@@ -1,46 +1,25 @@
 #!/usr/bin/perl
 
-$program = (-x "../qdfilter" ? "../qdfilter" : "qdfilter");
+use strict;
+use warnings;
+use lib ".";
+use QDToolsTest;
+
+my $program = (-x "../qdfilter" ? "../qdfilter" : "qdfilter");
 
 system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h');
-$wgs84 = 1-($? >> 8);
+my $wgs84 = 1-($? >> 8);
 
-$results = "results";
+my $results = "results";
 
-sub FindFile($$)
-{
-    my $dir = shift;
-    my $name = shift;
-    my $result;
-    if (-e "$dir/$name.xz") {
-        $result="$name.xz";
-    } elsif (-e "$dir/$name.bz2") {
-        $result="$name.bz2"
-    } elsif (-e "$dir/$name.gz") {
-        $result="$name.gz"
-    } elsif (-e "$dir/$name.zstd") {
-        $result="$name.zstd"
-    } elsif (-e "$dir/$name") {
-        $result=$name;
-    }
-    return $result;
-}
+my $griddata = "data/" . FindFile("data", "griddata.sqd");
+my $pointdata = "data/" . FindFile("data", "pointdata.sqd");
 
-sub RemoveCompressionExt($)
-{
-    my $x = shift;
-    $x =~ s/.(gz|bz2|xz|zstd)$//;
-    return $x;
-}
+my $errors = 0;
 
-$griddata = "data/" . FindFile("data", "griddata.sqd");
-$pointdata = "data/" . FindFile("data", "pointdata.sqd");
+my %usednames = ();
 
-$errors = 0;
-
-%usednames = ();
-
-$PARAMS = "Temperature,WindSpeedMS,WindDirection";
+my $PARAMS = "Temperature,WindSpeedMS,WindDirection";
 
 # available functions
 
@@ -192,103 +171,28 @@ sub DoTest
     }
     $usednames{$name} = 1;
 
-    my $resultfile;
-
-    if($wgs84)
-    {
-	$resultfile = FindFile($results, "qdfilter_$name.wgs84");
-    }
-
-    if (! defined $resultfile)
-    {
-        $resultfile = FindFile($results, "qdfilter_$name");
-    }
-
+    my $resultfile = FindResult($results, "qdfilter_$name");
     my $tmpfile = RemoveCompressionExt(${resultfile}) . ".tmp";
     my $stderr_fn = RemoveCompressionExt(${resultfile}) . ".stderr";
 
-    $cmd = "$program $arguments > $results/$tmpfile";
-    #print("\n$cmd\n");
+    my $cmd = "$program $arguments >$tmpfile";
 
-    my $ret = system("$cmd 2>$results/stderr_fn");
+    my $ret = system("$cmd 2>$stderr_fn");
 
     print padname($text);
 
     if ($ret != 0)
     {
 	++$errors;
-        print " FAILED: return code $ret from gq2csv\n";
-        system("cat $results/stderr_fn");
+        print " FAILED: return code $ret from '$cmd'\n";
+        CatFile $stderr_fn;
     }
     else
     {
-        my($difference) = `../qddifference results/$resultfile results/$tmpfile`;
-        $difference =~ s/^\s+//;
-        $difference =~ s/\s+$//;
-
-        if(! -e "results/$resultfile")
-        {
+        my ($ok, $msg) = CheckQuerydataEqual($resultfile, $tmpfile, 0.0001);
+        print " $msg\n";
+        if (!$ok) {
             ++$errors;
-            print " FAILED! ($resultfile missing)\n";
-        }
-        elsif($difference < 0.0001)
-        {
-            if($difference == 0)
-            { print " OK\n"; }
-            else
-            { print " OK (diff <= $difference)\n"; }
-            unlink("results/$tmpfile");
-        }
-        else
-        {
-            ++$errors;
-            print " FAILED! (maxdiff = $difference)\n";
-            print "( $resultfile <> $tmpfile)\n";
         }
     }
 }
-
-# ----------------------------------------------------------------------
-# Pad the given string to 70 characters with dots
-# ----------------------------------------------------------------------
-
-sub padname
-{
-    my($str) = @_[0];
-
-    while(length($str) < 70)
-    {
-	$str .= ".";
-    }
-    return $str;
-}
-
-# ----------------------------------------------------------------------
-# Compare two files
-# ----------------------------------------------------------------------
-
-sub equalcontent
-{
-    my($file1,$file2) = @_;
-
-    # Files must exits
-
-    if(!(-e $file1)) { return 0; }
-    if(!(-e $file2)) { return 0; }
-
-    # Read binary file and compare results
-
-    open(FILE1,"$file1");
-    binmode(FILE1);
-    read(FILE1,$buffer1,(stat(FILE1))[7]);
-    close(FILE1);
-
-    open(FILE2,"$file2");
-    binmode(FILE2);
-    read(FILE2,$buffer2,(stat(FILE2))[7]);
-    close(FILE2);
-
-    return ($buffer1 eq $buffer2);
-}
-
-# ----------------------------------------------------------------------

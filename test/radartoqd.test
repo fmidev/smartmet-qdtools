@@ -76,7 +76,7 @@ sub DoTest
     $cmd = "$program $arguments $results/$tmpfile";
 
     #print "$cmd\n";
-    my $ret = system("$cmd >$tmpfile.out 2>&1");
+    my $ret = system("$cmd >results/$tmpfile.out 2>&1");
 
     print padname($text);
 
@@ -84,7 +84,7 @@ sub DoTest
     {
 	++$errors;
         print " FAILED: return code $ret from radartoqd\n";
-        system("cat $tmpfile.out");
+        system("cat results/$tmpfile.out");
     }
     elsif (! -e "results/$tmpfile")
     {

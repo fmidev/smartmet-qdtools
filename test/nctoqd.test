@@ -1,74 +1,29 @@
 #!/usr/bin/perl
 
-$program = (-x "../nctoqd" ? "../nctoqd" : "nctoqd");
-$qdinfo = (-x "../qdinfo" ? "../qdinfo" : "qdinfo");
-$qddifference = (-x "../qddifference" ? "../qddifference" : "qddifference");
+use strict;
+use warnings;
+use lib ".";
+use QDToolsTest;
 
-system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h');
-$wgs84 = 1-($? >> 8);
+my $program = (-x "../nctoqd" ? "../nctoqd" : "nctoqd");
+my $qdinfo = (-x "../qdinfo" ? "../qdinfo" : "qdinfo");
+my $qddifference = (-x "../qddifference" ? "../qddifference" : "qddifference");
 
-$results = "results";
+my $results = "results";
 
-$errors = 0;
+my $errors = 0;
 
-%usednames = ();
+my %usednames = ();
 
-sub FindFile($$)
-{
-    my $dir = shift;
-    my $name = shift;
-    my $result;
-    if (-e "$dir/$name.xz") {
-        $result="$name.xz";
-    } elsif (-e "$dir/$name.bz2") {
-        $result="$name.bz2"
-    } elsif (-e "$dir/$name.gz") {
-        $result="$name.gz"
-    } elsif (-e "$dir/$name.zstd") {
-        $result="$name.zstd"
-    } elsif (-e "$dir/$name") {
-        $result=$name;
-    }
-    return $result;
-}
-
-sub RemoveCompressionExt($)
-{
-    my $x = shift;
-    $x =~ s/.(gz|bz2|xz|zstd)$//;
-    return $x;
-}
-
-sub Unpack($)
-{
-    my $fn0 = shift;
-    my $fn = RemoveCompressionExt $fn0;
-    my $ret = 0;
-    if ($fn0 =~ m/\.xz$/) {
-        print "$fn0 -> $fn\n";
-        $ret = system("xzcat $fn0 >$fn");
-    } elsif ($fn0 =~ m/\.gz$/) {
-        $ret = system("zcat $fn0 >$fn");
-    } elsif ($fn0 =~ m/\.bz2$/) {
-        $ret = system("bzcat $fn0 >$fn");
-    } elsif ($fn0 =~ m/\.zstd$/) {
-        $ret = system("zstdcat $fn0 >$fn");
-    }
-    $ret == 0 or die "Failed to unpack $fn0\n";
-}
-
-my $vietnam_nc = FindFile("data/netcdf", "vietnam.nc");
-if ($vietnam_nc ne RemoveCompressionExt $vietnam_nc) {
-    Unpack "data/netcdf/$vietnam_nc";
-}
+MaybeUnpackFile("data/netcdf", "vietnam.nc");
 
 my $dir = $0;
 $dir =~ s%[^/]*$%%;
 if ($dir) { chdir "$dir" or die "Unable to change to $dir: $!" }
 
 # Keep temporaries: useful to produce new result files
-$keeptmp = "";
-$cmp     = "";
+my $keeptmp = "";
+my $cmp     = "";
 while ( scalar @ARGV > 0 ) {
 	if ( $ARGV[0] eq "keeptmp" ) {
 		$keeptmp = "yes";
@@ -81,7 +36,7 @@ while ( scalar @ARGV > 0 ) {
 	shift @ARGV;
 }
 
-@inputs = glob "data/netcdf/*.nc";
+my @inputs = glob "data/netcdf/*.nc";
 foreach my $input (@inputs) {
 	my $output = $input;
 	$output =~ s%^data/netcdf/%%;
@@ -118,139 +73,112 @@ exit($errors);
 # ----------------------------------------------------------------------
 
 sub DoTest {
-	my ( $text, $name, $arguments ) = @_;
+    my ( $text, $name, $arguments ) = @_;
 
-	if ( exists( $usednames{$name} ) ) {
-		print "Error: $name used more than once\n";
-		exit(1);
-	}
-	$usednames{$name} = 1;
+    if ( exists( $usednames{$name} ) ) {
+        print "Error: $name used more than once\n";
+        exit(1);
+    }
+    $usednames{$name} = 1;
 
-	my $resultfile;
+    my $resultfile = FindResult("results", "nctoqd_$name");
+    my $tmpfile = RemoveCompressionExt($resultfile) . ".tmp";
 
-            #"nctoqd_$name";
+    my $cmd = "$program $arguments $tmpfile";
 
-	if($wgs84)
-	{
-	    $resultfile = FindFile("results", "nctoqd_$name.wgs84");
-	}
+    if ( "$text" =~ m/^merge/ ) {
+        $cmd = "$program -o $tmpfile $arguments";
+    }
 
-        if (! defined $resultfile)
-        {
-	    $resultfile = FindFile("results", "nctoqd_$name");
+    my $retcode = system("$cmd >results/$name.out 2>&1");
+    if ( $retcode != 0 ) {
+        system("tail -10 results/$name.out") ;
+        print "Failed to run $cmd: $!";
+        ++$errors;
+        return;
+    }
+    unlink("results/$name.out");
+
+    print padname($text);
+
+    if ( !-e $tmpfile ) {
+        ++$errors;
+        print " FAILED TO PRODUCE OUTPUT FILE\n";
+    }
+    elsif ( ! defined $resultfile ) {
+        ++$errors;
+        print " FAILED: TRUE RESULT MISSING\n";
+        if ( !$keeptmp ) { unlink($tmpfile); }
+    }
+    else {
+        if ($cmp) {
+            my $cmp = EqualFiles($resultfile, $tmpfile);
+            if (!$cmp ) {
+                ++$errors;
+                print $cmp ;
+                print " FAILED!";
+            }
+            else {
+                print " ok\n";
+                if ( !$keeptmp ) { unlink("$$tmpfile"); }
+            }
         }
+        else {
+            my ($difference) = `$qddifference $resultfile $tmpfile`;
+            my $ret = $?;
+            if ( $ret != 0 ) {
+                ++$errors;
+                print " FAILED!\nqddifference says:\n$difference";
+                print "( $resultfile <> $tmpfile in $results/ )\n";
+            }
+            else {
+                $difference =~ s/^\s+//;
+                $difference =~ s/\s+$//;
 
-	my ($tmpfile)    = "${resultfile}.tmp";
-	$cmd = "$program $arguments $results/$tmpfile";
-	if ( "$text" =~ m/^merge/ ) {
-		$cmd = "$program -o results/$tmpfile $arguments";
-	}
+                if ( $difference < 0.0001 ) {
+                    if   ( $difference <= 0 ) { print " ok\n"; }
+                    else                      { print " ok (diff <= $difference)\n"; }
 
-	$retcode = system("$cmd >results/$name.out 2>&1");
-	if ( $retcode != 0 ) {
-		system("tail -10 results/$name.out") ;
-		print "Failed to run $cmd: $!";
-		++$errors;
-		return;
-	}
-	unlink("results/$name.out");
+                    # Test with qdinfo as well
+                    print padname($text);
+                    my $qdinfo1 = `$qdinfo -a -q $resultfile > $resultfile.qdinfo`;
+                    my $ret1    = $?;
+                    if ( $ret1 != 0 ) {
+                        ++$errors;
+                        print " FAILED!\nqdinfo failed on original result file\n";
+                    }
+                    else {
+                        my $qdinfo2 = `$qdinfo -a -q $tmpfile > $tmpfile.qdinfo`;
+                        my $ret2    = $?;
+                        if ( $ret2 != 0 ) {
+                            ++$errors;
+                            print " FAILED!\nqdinfo failed on generated test file\n";
+                        }
+                        else {
+                            my $qddiff = `diff --unified $resultfile.qdinfo $tmpfile.qdinfo`;
+                            my $ret3   = $?;
+                            if ( $ret3 != 0 ) {
+                                ++$errors;
+                                print " FAILED!\nquerydata header mismatch\n$qddiff";
+                            }
+                            else {
+                                print " metadata match ok\n";
+                                if ( !$keeptmp ) {
+                                    unlink("$results/$tmpfile");
+                                    unlink("$results/$resultfile.qdinfo");
+                                    unlink("$results/$tmpfile.qdinfo");
+                                }
+                            }
+                        }
+                    }
+                }
+                else {
+                    ++$errors;
+                    print " FAILED! (maxdiff = $difference)\n";
+                    print "( $resultfile <> $tmpfile in $results/ )\n";
+                }
+            }
 
-	print padname($text);
-
-	if ( !-e "results/$tmpfile" ) {
-	        ++$errors;
-		print " FAILED TO PRODUCE OUTPUT FILE\n";
-	}
-	elsif ( ! defined $resultfile ) {
-	        ++$errors;
-		print " FAILED: TRUE RESULT MISSING\n";
-		if ( !$keeptmp ) { unlink("$results/$tmpfile"); }
-	}
-	else {
-		if ($cmp) {
-			my $cmp     = `cmp results/$resultfile results/$tmpfile`;
-			my $retcode = $?;
-			if ( $retcode != 0 ) {
-			        ++$errors;
-				print $cmp ;
-				print " FAILED!";
-			}
-			else {
-				print " ok\n";
-				if ( !$keeptmp ) { unlink("$results/$tmpfile"); }
-			}
-		}
-		else {
-			my ($difference) = `$qddifference results/$resultfile results/$tmpfile`;
-			my $ret = $?;
-			if ( $ret != 0 ) {
-			        ++$errors;
-				print " FAILED!\nqddifference says:\n$difference";
-				print "( $resultfile <> $tmpfile in $results/ )\n";
-			}
-			else {
-				$difference =~ s/^\s+//;
-				$difference =~ s/\s+$//;
-
-				if ( $difference < 0.0001 ) {
-					if   ( $difference <= 0 ) { print " ok\n"; }
-					else                      { print " ok (diff <= $difference)\n"; }
-
-					# Test with qdinfo as well
-					print padname($text);
-					my $qdinfo1 = `$qdinfo -a -q $results/$resultfile > results/$resultfile.qdinfo`;
-					my $ret1    = $?;
-					if ( $ret1 != 0 ) {
-					        ++$errors;
-						print " FAILED!\nqdinfo failed on original result file\n";
-					}
-					else {
-						my $qdinfo2 = `$qdinfo -a -q results/$tmpfile > results/$tmpfile.qdinfo`;
-						my $ret2    = $?;
-						if ( $ret2 != 0 ) {
-						        ++$errors;
-							print " FAILED!\nqdinfo failed on generated test file\n";
-						}
-						else {
-							my $qddiff = `diff --unified results/$resultfile.qdinfo results/$tmpfile.qdinfo`;
-							my $ret3   = $?;
-							if ( $ret3 != 0 ) {
-							        ++$errors;
-								print " FAILED!\nquerydata header mismatch\n$qddiff";
-							}
-							else {
-								print " metadata match ok\n";
-								if ( !$keeptmp ) {
-									unlink("$results/$tmpfile");
-									unlink("$results/$resultfile.qdinfo");
-									unlink("$results/$tmpfile.qdinfo");
-								}
-							}
-						}
-					}
-				}
-				else {
-				        ++$errors;
-					print " FAILED! (maxdiff = $difference)\n";
-					print "( $resultfile <> $tmpfile in $results/ )\n";
-				}
-			}
-
-		}
-	}
+        }
+    }
 }
-
-# ----------------------------------------------------------------------
-# Pad the given string to 70 characters with dots
-# ----------------------------------------------------------------------
-
-sub padname {
-	my ($str) = $_[0];
-
-	while ( length($str) < 75 ) {
-		$str .= ".";
-	}
-	return $str;
-}
-
-# ----------------------------------------------------------------------

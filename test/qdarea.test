@@ -1,64 +1,25 @@
 #!/usr/bin/perl
 
+use strict;
+use warnings;
+use lib ".";
+use QDToolsTest;
+
 $ENV{TZ} = "Europe/Helsinki";
 
-$program = (-x "../qdarea" ? "../qdarea" : "qdarea");
+my $program = (-x "../qdarea" ? "../qdarea" : "qdarea");
 
 system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h');
-$wgs84 = 1-($? >> 8);
+my $wgs84 = 1-($? >> 8);
 
-$coordinatefile = "conf/coordinates.txt";
-$results = "results";
+my $coordinatefile = "conf/coordinates.txt";
+my $results = "results";
 
-sub FindFile($$)
-{
-    my $dir = shift;
-    my $name = shift;
-    my $result;
-    if (-e "$dir/$name.xz") {
-        $result="$name.xz";
-    } elsif (-e "$dir/$name.bz2") {
-        $result="$name.bz2"
-    } elsif (-e "$dir/$name.gz") {
-        $result="$name.gz"
-    } elsif (-e "$dir/$name.zstd") {
-        $result="$name.zstd"
-    } elsif (-e "$dir/$name") {
-        $result=$name;
-    }
-    return $result;
-}
+my $data = "data/".FindFile("data", "qdarea.sqd");
 
-sub RemoveCompressionExt($)
-{
-    my $x = shift;
-    $x =~ s/.(gz|bz2|xz|zstd)$//;
-    return $x;
-}
+my $errors = 0;
 
-sub CatCmd($)
-{
-    my $name = shift;
-    my $result;
-    if ($name =~ m/\.xz$/) {
-        $result = "xzcat";
-    } elsif ($name =~ m/\.bz2$/) {
-        $result="bz2cat";
-    } elsif ($name =~ m/\.gz$/) {
-        $result="zcat.gz";
-    } elsif ($name =~ m/\.zstd/) {
-        $result="zstdcat";
-    } else {
-        $result="cat";
-    }
-    return $result;
-}
-
-$data = "data/".FindFile("data", "qdarea.sqd");
-
-$errors = 0;
-
-%usednames = ();
+my %usednames = ();
 
 DoTest("-P mean(mean(t2m)) -p Helsinki",
        "mean_t2m_Helsinki",
@@ -143,32 +104,21 @@ sub DoTest
     }
     $usednames{$name} = 1;
 
-    my $resultfile;  #) = "qdarea_$name";
+    my $resultfile = FindResult("results", "qdarea_$name");
+    my $tmpfile = RemoveCompressionExt("$resultfile").".tmp";
 
-    if($wgs84)
-    {
-	$resultfile = FindFile("results", "qdarea_$name.wgs84");
-    }
+    my $cmd = "$program -c $coordinatefile $arguments -q $data";
 
-    if (!defined($resultfile))
-    {
-	$resultfile = FindFile("results", "qdarea_$name");
-    }
-
-    my($tmpfile) = RemoveCompressionExt($resultfile).".tmp";
-    $cmd = "$program -c $coordinatefile $arguments -q $data";
-
-    #$output = `$cmd`;
-    my $ret = system("$cmd >$results/$tmpfile.out 2>&1");
+    my $ret = system("$cmd >$tmpfile 2>$tmpfile.stderr");
 
     print padname($text);
     if ($ret != 0)
     {
 	++$errors;
-	print " FAILED: return code $ret from qdarea\n";
-        system("cat $results/$tmpfile.out");
+	print " FAILED: return code $ret from '$cmd'\n";
+        CatFile "$tmpfile.stderr";
     }
-    elsif(system(CatCmd("$results/$resultfile")." $results/$resultfile | cmp --quiet - $output") == 0)
+    elsif (EqualFiles($resultfile, $tmpfile))
     {
 	print " OK\n";
 	unlink($tmpfile);
@@ -177,26 +127,6 @@ sub DoTest
     {
 	++$errors;
 	print " FAILED!\n";
-	print "( $resultfile <> $tmpfile in $results/ )\n";
-
-	open(OUT,">$results/$tmpfile")
-	    or die "Could not open $results/$tmpfile for writing\n";
-	print OUT $output;
-	close(OUT);
+	print "( $resultfile <> $tmpfile )\n";
     }
-}
-
-# ----------------------------------------------------------------------
-# Pad the given string to 70 characters with dots
-# ----------------------------------------------------------------------
-
-sub padname
-{
-    my($str) = @_[0];
-
-    while(length($str) < 70)
-    {
-	$str .= ".";
-    }
-    return $str;
 }

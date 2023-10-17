@@ -1,20 +1,30 @@
 #!/usr/bin/perl
 
-$program = (-x "../qdpoint" ? "../qdpoint" : "qdpoint");
+use strict;
+use warnings;
+use lib ".";
+use QDToolsTest;
 
-system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h');
-$wgs84 = 1-($? >> 8);
+my $program = (-x "../qdpoint" ? "../qdpoint" : "qdpoint");
 
-$coordinatefile = "conf/coordinates.txt";
-$results = "results";
-$griddata = "data/griddata.sqd";
-$pointdata = "data/pointdata.sqd";
-$synopdata = "data/synop.sqd";
-$harmoniedata = "data/harmonie_hybrid.sqd";
+my $coordinatefile = "conf/coordinates.txt";
+my $results = "results";
+my $griddata = "data/griddata.sqd";
+my $pointdata = "data/pointdata.sqd";
+my $synopdata = "data/synop.sqd";
+my $harmoniedata = "data/harmonie_hybrid.sqd";
 
-$errors = 0;
+MaybeUnpackFile("data", "griddata.sqd");
+MaybeUnpackFile("data", "pointdata.sqd");
+MaybeUnpackFile("data", "synop.sqd");
+MaybeUnpackFile("data", "harmonie_hybrid.sqd");
 
-%usednames = ();
+# FIXME: was not defined but used !!!!!
+my $hiladat = "";
+
+my $errors = 0;
+
+my %usednames = ();
 
 
 DoTest("default querydata works",
@@ -219,71 +229,31 @@ sub DoTest
     }
     $usednames{$name} = 1;
 
-    my($resultfile) = "qdpoint_$name";
+    my $resultfile = FindResult($results, "qdpoint_$name");
 
-    if($wgs84)
-    {
-	my($wgs84resultfile) = "${resultfile}.wgs84";
-	if(-e "$results/$wgs84resultfile")
-	{  $resultfile = $wgs84resultfile; }
-    }
+    my $tmpfile = "${resultfile}.tmp";
 
-    my($tmpfile) = "${resultfile}.tmp";
-    $cmd = "$program -c $coordinatefile $arguments 2>&1";
-    $output = `$cmd`;
+    my $cmd = "$program -c $coordinatefile $arguments >$tmpfile 2>&1";
+
+    my $ret = system("$cmd");
 
     print padname($text);
-    if(equalcontent("$results/$resultfile",$output))
-    {
-	print " OK\n";
-	unlink($tmpfile);
-    }
-    else
-    {
+    if ($ret != 0) {
 	++$errors;
-	print " FAILED!\n";
-	print "( $resultfile <> $tmpfile in $results/ )\n";
-
-	open(OUT,">$results/$tmpfile")
-	    or die "Could not open $results/$tmpfile for writing\n";
-	print OUT $output;
-	close(OUT);
+        print " FAILED: return code $ret from '$cmd'\n";
+    } else {
+        if (EqualFiles("$resultfile", "$tmpfile"))
+        {
+            print " OK\n";
+            #unlink($tmpfile);
+        }
+        else
+        {
+            ++$errors;
+            print " FAILED!\n";
+            print "( $resultfile <> $tmpfile in $results/ )\n";
+        }
     }
 }
 
 # ----------------------------------------------------------------------
-# Pad the given string to 70 characters with dots
-# ----------------------------------------------------------------------
-
-sub padname
-{
-    my($str) = @_[0];
-
-    while(length($str) < 70)
-    {
-	$str .= ".";
-    }
-    return $str;
-}
-
-# ----------------------------------------------------------------------
-# Compare two files
-# ----------------------------------------------------------------------
-
-sub equalcontent
-{
-    my($file,$text) = @_;
-
-    # File must exits
-
-    if(!(-e $file))
-    { return 0; }
-
-    # Read binary file and compare results
-
-    open(FILE,"$file");
-    binmode(FILE);
-    read(FILE,$buffer,(stat(FILE))[7]);
-    close(FILE);
-    return ($buffer eq $text);
-}

@@ -1,23 +1,27 @@
 #!/usr/bin/perl
 
-$program = (-x "../qdinterpolatetime" ? "../qdinterpolatetime" : "qdinterpolatetime");
-
-system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h');
-$wgs84 = 1-($? >> 8);
+use strict;
+use warnings;
+use lib ".";
+use QDToolsTest;
 
 use IO::Handle;
 autoflush STDOUT 1;
 
-$errors = 0;
+my $errors = 0;
+my $program = (-x "../qdinterpolatetime" ? "../qdinterpolatetime" : "qdinterpolatetime");
+my $results = "results";
+
+my $input = "data/" . FindFile("data", "pal_xh.sqd");
 
 # qdinterpolatetime
 
 DoSqdTest("qdinterpolatetime linear",
-	  "$program 60 32700 360 1 < data/pal_xh.sqd > /tmp/qdinterpolatetime_linear.sqd",
+	  CatCmd($input) . " $input | $program 60 32700 360 1 > /tmp/qdinterpolatetime_linear.sqd",
 	  "qdinterpolatetime_linear.sqd");
 
 DoSqdTest("qdinterpolatetime lagrange",
-	  "$program 60 32700 360 5 < data/pal_xh.sqd > /tmp/qdinterpolatetime_lagrange.sqd",
+	  CatCmd($input) . " $input | $program 60 32700 360 5 > /tmp/qdinterpolatetime_lagrange.sqd",
 	  "qdinterpolatetime_lagrange.sqd");
 
 print "$errors errors\n";
@@ -30,36 +34,23 @@ exit($errors);
 sub DoTest
 {
     my($title,$command,$dataname) = @_;
-
-    my($resultfile) = "results/$dataname";
-
-    if($wgs84)
-    {
-	my($wgs84resultfile) = "${resultfile}.wgs84";
-	if(-e "$results/$wgs84resultfile")
-	{  $resultfile = $wgs84resultfile; }
-    }
-
-    my($tmpfile) = "/tmp/$dataname";
+    my $resultfile = FindResult($results, $dataname);
+    my $tmpfile = "/tmp/$dataname";
 
     print "CMD='$command'\n";
 
-    print padname($title);
     my $ret = system("$command");
+
+    print padname($title);
+
     if ($ret != 0)
     {
 	++$errors;
         print " FAILED: return code $ret from '$command'\n";
-        return;
-    }
-
-    if(equalcontent($resultfile,$tmpfile))
-    {
+    } elsif (EqualFiles($resultfile,$tmpfile)) {
 	print " OK\n";
-	unlink($tmpfile);
-    }
-    else
-    {
+	#unlink($tmpfile);
+    } else {
 	++$errors;
 	print " FAILED!\n";
 	print "( $resultfile <> $tmpfile)\n";
@@ -76,91 +67,34 @@ sub DoSqdTest
 
     # Halutut tulokset ovat t‰‰ll‰
 
-    my($resultfile) = "results/$dataname";
+    my $resultfile = FindResult("results", "$dataname");
 
     # Saadut tulokset
-    my($tmpfile) = "/tmp/$dataname";
-
-
-    if($wgs84)
-    {
-	my($wgs84resultfile) = "${resultfile}.wgs84";
-	if(-e $wgs84resultfile)
-	{  $resultfile = $wgs84resultfile; }
-    }
+    my $tmpfile = "/tmp/$dataname";
 
     # Aja k‰sky
-    
-    print padname($title);
     my $ret = system("$command");
-    if ($ret != 0)
-    {
+
+    print padname($title);
+    if ($ret != 0) {
 	++$errors;
-        print " FAILED: return code $ret from '$cmmand'\n";
-        return;
-    }
+        print " FAILED: return code $ret from '$command'\n";
+    } else {
+        # Vertaa tuloksia
 
-    # Vertaa tuloksia
+        my($difference) = `../qddifference $resultfile $tmpfile`;
+        $difference =~ s/^\s+//;
+        $difference =~ s/\s+$//;
 
-    my($difference) = `../qddifference $resultfile $tmpfile`;
-    $difference =~ s/^\s+//;
-    $difference =~ s/\s+$//;
-
-    if($difference < 0.00001)
-    {
-	print " OK (diff <= $difference)\n";
-	unlink($tmpfile);
-    }
-    else
-    {
-	print " FAILED! (maxdiff = $difference)\n";
-	print "( $resultfile <> $tmpfile)\n";
+        if($difference < 0.00001)
+        {
+            print " OK (diff <= $difference)\n";
+            #nlink($tmpfile);
+        }
+        else
+        {
+            print " FAILED! (maxdiff = $difference)\n";
+            print "( $resultfile <> $tmpfile)\n";
+        }
     }
 }
-
-# ----------------------------------------------------------------------
-# Pad the given string to 70 characters with dots
-# ----------------------------------------------------------------------
-
-sub padname
-{
-    my($str) = @_[0];
-
-    while(length($str) < 70)
-    {
-	$str .= ".";
-    }
-    return $str;
-}
-
-# ----------------------------------------------------------------------
-# Compare two files
-# ----------------------------------------------------------------------
-
-sub equalcontent
-{
-    my($file1,$file2) = @_;
-
-    # Files must exits
-
-    if(!(-e $file1))
-    { return 0; }
-    if(!(-e $file2))
-    { return 0; }
-
-    # Read binary files and compare results
-
-    open(FILE1,$file1);
-    binmode(FILE1);
-    read(FILE1,$buffer1,(stat(FILE1))[7]);
-    close(FILE1);
-
-    open(FILE2,$file2);
-    binmode(FILE2);
-    read(FILE2,$buffer2,(stat(FILE2))[7]);
-    close(FILE2);
-
-    return ($buffer1 eq $buffer2);
-}
-
-# ----------------------------------------------------------------------

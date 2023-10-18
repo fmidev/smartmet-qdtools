@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use lib ".";
 use QDToolsTest;
-use IO::Handle;
+
 autoflush STDOUT 1;
 
 my $program = (-x "../qdset" ? "../qdset" : "qdset");
@@ -48,21 +48,10 @@ sub DoSqdTest
         print " FAILED: return code $ret from '$command'\n";
     } else {
         # Vertaa tuloksia
-
-        my($difference) = `../qddifference $resultfile $tmpfile`;
-        $difference =~ s/^\s+//;
-        $difference =~ s/\s+$//;
-
-        if($difference < 0.00001)
-        {
-            print " OK (diff <= $difference)\n";
-            # unlink($tmpfile);
-        }
-        else
-        {
+        my ($ok, $msg) = CheckQuerydataEqual($resultfile, $tmpfile, 0.00001);
+        print " $msg\n";
+        if (!$ok) {
             ++$errors;
-            print " FAILED! (maxdiff = $difference)\n";
-            print "( $resultfile <> $tmpfile)\n";
         }
     }
 }

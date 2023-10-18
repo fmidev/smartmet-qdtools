@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 23.10.11
+Version: 23.10.18
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -29,7 +29,7 @@ BuildRequires: gdal35-devel
 BuildRequires: hdf5-devel >= 1.8.12
 BuildRequires: jasper-devel
 BuildRequires: libbufr >= 3.2
-BuildRequires: libecbufr
+BuildRequires: libecbufr-devel
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: make
@@ -209,6 +209,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Oct 18 2023 Andris Pavēnis <andris.pavenis@fmi.fi> 23.10.18-1.fmi
+- Repackage due to dependency changes
+
 * Wed Oct 11 2023 Pertti Kinnia <pertti.kinnia@fmi.fi> - 23.10.11-1.fmi
 - Added AWSMETAR stations from avidb. Also added some missing foreign stations having METARs in avidb
 

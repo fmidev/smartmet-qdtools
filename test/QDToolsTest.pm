@@ -193,7 +193,8 @@ sub CheckQuerydataEqual($$$)
         return (0, "FAILED, $fn2 not found");
     }
 
-    my $difference = `../qddifference $fn1 $fn2`;
+    my $program = -e "../qddifference" ? "../qddifference" : "qddifference";
+    my $difference = `$program $fn1 $fn2`;
     my $ret = $?;
 
     $difference =~ s/^\s+//;

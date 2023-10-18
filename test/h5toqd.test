@@ -65,9 +65,9 @@ sub DoTest
         Unpack("data/hdf/$input", "data/hdf/$infile");
     }
 
-    my $cmd = "$program data/hdf/$infile $tmpfile";
+    my $cmd = "$program data/hdf/$infile $tmpfile 2>$tmpfile.stderr";
 
-    print "$cmd\n";
+    #print "$cmd\n";
     # $output = `$cmd 2>/dev/null`;
     my $output = `$cmd`;
     my $ret = $?;
@@ -77,6 +77,8 @@ sub DoTest
     if ($ret != 0) {
         ++$errors;
         print " FAILED: return code $ret from '$cmd'\n";
+        print "\n";
+        CatFile "$tmpfile.stderr";
     } elsif(! -e "$tmpfile")
     {
 	++$errors;

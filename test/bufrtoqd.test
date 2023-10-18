@@ -5,6 +5,12 @@ use warnings;
 use lib ".";
 use QDToolsTest;
 
+# Ensure that environment versiable is set also when libecbufr is just installed
+# and is script from /etc/profile is not yet executed
+if (!defined($ENV{BUFR_TABLES}) && -d "/usr/share/libecbufr") {
+    $ENV{BUFR_TABLES} = "/usr/share/libecbufr";
+}
+
 my $program = (-x "../bufrtoqd" ? "../bufrtoqd" : "bufrtoqd");
 
 my $errors = 0;

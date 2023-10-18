@@ -81,20 +81,10 @@ sub DoSqdTest
         print " FAILED: return code $ret from '$command'\n";
     } else {
         # Vertaa tuloksia
-
-        my($difference) = `../qddifference $resultfile $tmpfile`;
-        $difference =~ s/^\s+//;
-        $difference =~ s/\s+$//;
-
-        if($difference < 0.00001)
-        {
-            print " OK (diff <= $difference)\n";
-            #nlink($tmpfile);
-        }
-        else
-        {
-            print " FAILED! (maxdiff = $difference)\n";
-            print "( $resultfile <> $tmpfile)\n";
+        my ($ok, $msg) = CheckQuerydataEqual($resultfile, $tmpfile, 0.0001);
+        print " $msg\n";
+        if (!$ok) {
+            ++$errors;
         }
     }
 }

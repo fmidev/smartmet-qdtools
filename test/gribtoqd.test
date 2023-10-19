@@ -61,21 +61,34 @@ for f in data/grib/*.grib*; do
             *.zstd) CMP="zstdcat $resultfile | cmp --quiet - $tmpfile" ;;
             *) CMP="cmp --quiet $resultfile $tmpfile" ;;
         esac
-        $PROG -c ../cnf/grib.conf -o $tmpfile $f
-        eval $CMP
-        ERR=$?
-        printf '%-60s' "$name"
-        if [[ $ERR -eq 0 ]]; then
-	    echo OK
+        case $f in
+            *.xz) xzcat $f >$input ;;
+            *.bz2) bzcat $f >$input ;;
+            *.gz) zcat $f >$input ;;
+            *.zstd) zstdcat $f >$input ;;
+        esac
+        if $PROG -c ../cnf/grib.conf -o $tmpfile $input ; then
+            eval $CMP
+            ERR=$?
+            printf '%-60s' "$name"
+            if [[ $ERR -eq 0 ]]; then
+		echo OK
 	    rm -f $tmpfile
-        else
+	    else
+		errors=$(($errors+1))
+		echo FAILED
+		$QDINFO -a -q $resultfile > ${tmpfile}.info_ok
+		$QDINFO -a -q $tmpfile > ${tmpfile}.info_fail
+		diff -u ${tmpfile}.info_ok ${tmpfile}.info_fail | head -100
+		rm -f ${tmpfile}.info_ok ${tmpfile}.info_fail
+	    fi
+	else
 	    errors=$(($errors+1))
-	    echo FAILED
-	    $QDINFO -a -q $resultfile > ${tmpfile}.info_ok
-	    $QDINFO -a -q $tmpfile > ${tmpfile}.info_fail
-	    diff -u ${tmpfile}.info_ok ${tmpfile}.info_fail | head -100
-            rm -f ${tmpfile}.info_ok ${tmpfile}.info_fail
-        fi
+	    echo "FAILED to run $PROG"
+	fi
+	if test $f != $input; then
+	    rm -f $input
+	fi
     fi
 done
 

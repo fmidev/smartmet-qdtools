@@ -92,7 +92,7 @@ sub DoTest
     my $cmd = "$program $arguments $tmpfile";
 
     # print "$cmd\n";
-    my $output = `$cmd`;
+    my $output = `$cmd 2>&1`;
     my $ret = $?;
 
     print padname($text);
@@ -105,7 +105,9 @@ sub DoTest
     } else {
         my ($ok, $msg) = CheckQuerydataEqual($resultfile, $tmpfile, 0.0001);
         print " $msg\n";
-        if (!$ok) {
+        if ($ok) {
+            unlink $tmpfile;
+        } else {
             ++$errors;
         }
     }

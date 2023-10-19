@@ -246,7 +246,7 @@ sub DoTest
         if (EqualFiles("$resultfile", "$tmpfile"))
         {
             print " OK\n";
-            #unlink($tmpfile);
+            unlink($tmpfile);
         }
         else
         {

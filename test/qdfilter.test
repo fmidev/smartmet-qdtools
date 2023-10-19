@@ -183,7 +183,7 @@ sub DoTest
 
     if ($ret != 0)
     {
-	++$errors;
+        ++$errors;
         print " FAILED: return code $ret from '$cmd'\n";
         CatFile $stderr_fn;
     }
@@ -191,8 +191,15 @@ sub DoTest
     {
         my ($ok, $msg) = CheckQuerydataEqual($resultfile, $tmpfile, 0.0001);
         print " $msg\n";
-        if (!$ok) {
+        if ($ok) {
+            unlink $tmpfile;
+            unlink $stderr_fn;
+        } else {
             ++$errors;
         }
+    }
+
+    if (-e $stderr_fn && -s $stderr_fn == 0) {
+        unlink $stderr_fn;
     }
 }

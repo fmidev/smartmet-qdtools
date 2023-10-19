@@ -14,6 +14,7 @@ my $pointdata = "data/pointdata.sqd";
 my $synopdata = "data/synop.sqd";
 my $harmoniedata = "data/harmonie_hybrid.sqd";
 
+MaybeUnpackFile("data", "pal.sqd");
 MaybeUnpackFile("data", "griddata.sqd");
 MaybeUnpackFile("data", "pointdata.sqd");
 MaybeUnpackFile("data", "synop.sqd");
@@ -233,7 +234,7 @@ sub DoTest
 
     my $tmpfile = "${resultfile}.tmp";
 
-    my $cmd = "$program -c $coordinatefile $arguments >$tmpfile 2>&1";
+    my $cmd = "( $program -c $coordinatefile $arguments ) >$tmpfile 2>&1";
 
     my $ret = system("$cmd");
 

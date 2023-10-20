@@ -1,4 +1,7 @@
 *info_ok
 *info_fail
+*.err
+*.xfail
+*.xpass
 /results
 /data

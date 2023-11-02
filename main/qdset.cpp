@@ -51,9 +51,9 @@ void Usage(void)
        << endl
        << "Options (default values are always current parameters current values):" << endl
        << endl
-       << "   -n paramName\t\tNew parameter name" << endl
-       << "   -d <paramId>\t\tNew parameter id (see FmiParameterName)" << endl
-       << "   -N producerName\tNew producer name (changes all parameters prod name," << endl
+       << "   -d <paramId>\t\tNew parameter id/name (seew qdinfo -l)" << endl
+       << "   -n <description>\t\tNew parameter desciption" << endl
+       << "   -N <producerName>\tNew producer name (changes all parameters prod name," << endl
        << "   \t\t\tno param id argument needed" << endl
        << "   -D <producerId>\tNew producer id (changes all parameters prod ID," << endl
        << "   \t\t\tno param id argument needed" << endl
@@ -63,12 +63,12 @@ void Usage(void)
        << "   -t <0-8>\t\tNew parameter type (see FmiParamType)" << endl
        << "   -s <paramScale>\tNew parameter scale value (e.g. 1)" << endl
        << "   -b <paramBase>\tNew parameter base value (e.g. 0)" << endl
-       << "   -p precisionString\tNew parameter precision string (e.g. %0.1f)" << endl
+       << "   -p <precisionString>\tNew parameter precision string (e.g. %0.1f)" << endl
        << "   -Z <value>\t\tNew level value" << endl
        << "   -L <value>\t\tNew level type" << endl
        << "   -T <time>\t\tNew UTC origin time in ISO, SQL or timestamp format" << endl
-       << "   -w stationId\t\tNew station id" << endl
-       << "   -W stationName\tNew station name" << endl
+       << "   -w <stationId>\t\tNew station id" << endl
+       << "   -W <stationName>\tNew station name" << endl
        << endl
        << "Example usage: qdset -n 'Temperature' dataFile Temperature" << endl
        << endl;
@@ -120,13 +120,15 @@ void run(int argc, const char* argv[])
   string paramIdOrName(cmdline.Parameter(2));
   NFmiEnumConverter eConv;
   FmiParameterName parNameId = static_cast<FmiParameterName>(eConv.ToEnum(paramIdOrName));
-  if (parNameId != kFmiBadParameter && info->Param(parNameId)) paramFound = true;
+  if (parNameId != kFmiBadParameter && info->Param(parNameId))
+    paramFound = true;
   if (!paramFound)
   {  // katsotaan onko id annettu ja löytyykö se
     try
     {
       parNameId = static_cast<FmiParameterName>(NFmiStringTools::Convert<int>(paramIdOrName));
-      if (info->Param(parNameId)) paramFound = true;
+      if (info->Param(parNameId))
+        paramFound = true;
     }
     catch (exception& /* e */)
     {
@@ -139,7 +141,8 @@ void run(int argc, const char* argv[])
 
   NFmiDataIdent newDataIdent(info->Param());  // defaultti arvot täältä
 
-  if (cmdline.isOption('n')) newDataIdent.GetParam()->SetName(cmdline.OptionValue('n'));
+  if (cmdline.isOption('n'))
+    newDataIdent.GetParam()->SetName(cmdline.OptionValue('n'));
 
   if (cmdline.isOption('d'))
   {
@@ -168,7 +171,8 @@ void run(int argc, const char* argv[])
   if (cmdline.isOption('b'))
     newDataIdent.GetParam()->Base(NFmiStringTools::Convert<float>(cmdline.OptionValue('b')));
 
-  if (cmdline.isOption('p')) newDataIdent.GetParam()->Precision(cmdline.OptionValue('p'));
+  if (cmdline.isOption('p'))
+    newDataIdent.GetParam()->Precision(cmdline.OptionValue('p'));
 
   info->Param() = newDataIdent;
 
@@ -193,7 +197,8 @@ void run(int argc, const char* argv[])
     producer.SetIdent(NFmiStringTools::Convert<unsigned long>(cmdline.OptionValue('D')));
   }
 
-  if (changeProducerForAllParams) info->SetProducer(producer);
+  if (changeProducerForAllParams)
+    info->SetProducer(producer);
 
   if (cmdline.isOption('Z'))
   {
@@ -217,7 +222,8 @@ void run(int argc, const char* argv[])
 
   if (cmdline.isOption('w') || cmdline.isOption('W'))
   {
-    if (info->IsGrid()) throw runtime_error("Querydata is in grid format");
+    if (info->IsGrid())
+      throw runtime_error("Querydata is in grid format");
 
     long oldId;
 
@@ -248,14 +254,16 @@ void run(int argc, const char* argv[])
   // Copied from NFmiStreamQueryData::WriteData for backward compatibility
 
   auto version = static_cast<unsigned short>(qd.InfoVersion());
-  if (version < 6) version = 6;
+  if (version < 6)
+    version = 6;
   qd.InfoVersion(version);
 
   boost::filesystem::path p = dataFile;
   boost::filesystem::path tmp = boost::filesystem::unique_path(p.string() + "_%%%%%%%%");
 
   ofstream out(tmp.c_str(), ios::binary | ios::out);
-  if (!out) throw runtime_error("Opening '" + tmp.string() + "' for writing failed");
+  if (!out)
+    throw runtime_error("Opening '" + tmp.string() + "' for writing failed");
   out << qd;
   out.close();
 

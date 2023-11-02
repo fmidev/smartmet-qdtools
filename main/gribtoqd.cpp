@@ -2220,7 +2220,8 @@ std::string GetProjString(grib_handle *theHandle)
     double lon1, lon2, lat_ts;
     if (!GetGribDoubleValue(theHandle, "longitudeOfFirstGridPoint", lon1) ||
         !GetGribDoubleValue(theHandle, "longitudeOfLastGridPoint", lon2) ||
-        (!GetGribDoubleValue(theHandle, "LaD", lat_ts) &&
+        (!GetGribDoubleValue(theHandle, "LaDInDegrees", lat_ts) &&
+         !GetGribDoubleValue(theHandle, "LaD", lat_ts) &&
          !GetGribDoubleValue(theHandle, "Latin", lat_ts)))
       throw std::runtime_error("Failed to extract mercator parameters");
 
@@ -2383,7 +2384,7 @@ NFmiArea *GetGribArea(grib_handle *theHandle, GribFilterOptions &theGribFilterOp
 
   // Grid sizes are Ni,Nj or Nx,Ny
   long ni, nj;
-  if (!(GetGribLongValue(theHandle, "Nx", ni) && GetGribLongValue(theHandle, "Ny", nj)) ||
+  if (!(GetGribLongValue(theHandle, "Nx", ni) && GetGribLongValue(theHandle, "Ny", nj)) &&
       !(GetGribLongValue(theHandle, "Ni", ni) && GetGribLongValue(theHandle, "Nj", nj)))
     throw std::runtime_error(fmt::format(err, "grid size", proj_name));
 

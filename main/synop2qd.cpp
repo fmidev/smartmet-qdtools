@@ -1425,7 +1425,7 @@ static void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
         // Adjust invalid timestamp (e.g. 3023iw (Sep) stepped to 3100 (Sep)) to 1'st day of next month
         //
         try {
-          boost::posix_time::ptime pt = aTime.PosixTime();
+          Fmi::DateTime pt = aTime.PosixTime();
           (void) pt;
         }
         catch (...)

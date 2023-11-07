@@ -26,7 +26,7 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
+#include <macgyver/DateTime.h>
 #include <boost/filesystem/operations.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
@@ -85,7 +85,7 @@ struct Options
 
   bool verbose;                         // -v --verbose
   bool boundaries;                      // -b --boundary
-  boost::posix_time::ptime origintime;  // -t --time
+  Fmi::DateTime origintime;  // -t --time
   std::string projection;               // -P --projection
   std::string indir;                    // -i --indir
   std::string outfile;                  // -o --outfile
@@ -245,7 +245,7 @@ std::list<fs::path> find_ash_files(const char* re)
  */
 // ----------------------------------------------------------------------
 
-std::list<boost::posix_time::ptime> find_model_run_times(const std::list<fs::path>& files,
+std::list<Fmi::DateTime> find_model_run_times(const std::list<fs::path>& files,
                                                          int origintime_position)
 {
   std::set<std::string> stamps;
@@ -255,10 +255,10 @@ std::list<boost::posix_time::ptime> find_model_run_times(const std::list<fs::pat
     stamps.insert(stamp);
   }
 
-  std::list<boost::posix_time::ptime> times;
+  std::list<Fmi::DateTime> times;
   BOOST_FOREACH (const std::string& stamp, stamps)
   {
-    boost::posix_time::ptime t = Fmi::TimeParser::parse(stamp);
+    Fmi::DateTime t = Fmi::TimeParser::parse(stamp);
     times.push_back(t);
   }
 
@@ -271,7 +271,7 @@ std::list<boost::posix_time::ptime> find_model_run_times(const std::list<fs::pat
  */
 // ----------------------------------------------------------------------
 
-boost::posix_time::ptime select_model_run_time(const std::list<boost::posix_time::ptime>& times)
+Fmi::DateTime select_model_run_time(const std::list<Fmi::DateTime>& times)
 {
   if (options.origintime.is_not_a_date_time())
   {
@@ -280,7 +280,7 @@ boost::posix_time::ptime select_model_run_time(const std::list<boost::posix_time
   }
   else
   {
-    std::list<boost::posix_time::ptime>::const_iterator pos =
+    std::list<Fmi::DateTime>::const_iterator pos =
         find(times.begin(), times.end(), options.origintime);
     if (pos == times.end())
       throw std::runtime_error("The selected origintime " + to_simple_string(options.origintime) +
@@ -297,7 +297,7 @@ boost::posix_time::ptime select_model_run_time(const std::list<boost::posix_time
 // ----------------------------------------------------------------------
 
 std::list<fs::path> select_ash_files(const std::list<fs::path>& files,
-                                     const boost::posix_time::ptime& tmodel,
+                                     const Fmi::DateTime& tmodel,
                                      int origintime_position)
 {
   std::list<fs::path> ret;
@@ -351,7 +351,7 @@ NFmiParamDescriptor create_pdesc()
  */
 // ----------------------------------------------------------------------
 
-NFmiMetTime tomettime(const boost::posix_time::ptime& t)
+NFmiMetTime tomettime(const Fmi::DateTime& t)
 {
   return NFmiMetTime(t.date().year(),
                      t.date().month(),
@@ -369,7 +369,7 @@ NFmiMetTime tomettime(const boost::posix_time::ptime& t)
 // ----------------------------------------------------------------------
 
 NFmiTimeDescriptor create_tdesc(const std::list<fs::path>& files,
-                                const boost::posix_time::ptime& origintime,
+                                const Fmi::DateTime& origintime,
                                 int validtime_position)
 {
   // Collect all unique times in sorted order
@@ -384,7 +384,7 @@ NFmiTimeDescriptor create_tdesc(const std::list<fs::path>& files,
   NFmiTimeList tlist;
   BOOST_FOREACH (const std::string& stamp, stamps)
   {
-    boost::posix_time::ptime t = Fmi::TimeParser::parse(stamp);
+    Fmi::DateTime t = Fmi::TimeParser::parse(stamp);
     tlist.Add(new NFmiMetTime(tomettime(t)));
   }
 
@@ -696,7 +696,7 @@ void copy_ash_concentration_file(NFmiFastQueryInfo& info, const fs::path& file)
   // The time
 
   std::string stamp = file.filename().string().substr(validtime_position_in_filename, 12);
-  boost::posix_time::ptime validtime = Fmi::TimeParser::parse(stamp);
+  Fmi::DateTime validtime = Fmi::TimeParser::parse(stamp);
 
   if (!info.Time(tomettime(validtime)))
     throw std::runtime_error("Internal error in setting validtime " + to_simple_string(validtime));
@@ -762,7 +762,7 @@ void copy_ash_boundary_file(NFmiFastQueryInfo& info, const fs::path& file)
   // The time
 
   std::string stamp = file.filename().string().substr(validtime_position_in_filename, 12);
-  boost::posix_time::ptime validtime = Fmi::TimeParser::parse(stamp);
+  Fmi::DateTime validtime = Fmi::TimeParser::parse(stamp);
 
   if (!info.Time(tomettime(validtime)))
     throw std::runtime_error("Internal error in setting validtime " + to_simple_string(validtime));
@@ -826,14 +826,14 @@ int run(int argc, char* argv[])
 
   // Extract model run times
 
-  std::list<boost::posix_time::ptime> times =
+  std::list<Fmi::DateTime> times =
       find_model_run_times(files, origintime_position_in_filename);
   if (times.empty())
     throw std::runtime_error("Did not find any model run times from the file names");
 
   // Pick one or the one given on the command line
 
-  boost::posix_time::ptime tmodel = select_model_run_time(times);
+  Fmi::DateTime tmodel = select_model_run_time(times);
   if (options.verbose) std::cout << "Selected model run time: " << tmodel << std::endl;
 
   // And filter out other files

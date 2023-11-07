@@ -707,20 +707,20 @@ NFmiTimeList NcFileExtended::timeList(std::string varName, std::string unitAttrN
       if (isdigit(date_str[8]) && !isdigit(date_str[9])) date_str.insert(8, "0");
     }
 
-    boost::posix_time::ptime torigin = Fmi::TimeParser::parse(date_str);
+    Fmi::DateTime torigin = Fmi::TimeParser::parse(date_str);
 
     NcValues *ncvals = ncvar->values();
     for (int k = 0; k < ncvar->num_vals(); k++)
     {
-      boost::posix_time::ptime timestep(torigin +
-                                        boost::posix_time::seconds(ncvals->as_long(k) * unit_secs));
+      Fmi::DateTime timestep(torigin +
+                                        Fmi::Seconds(ncvals->as_long(k) * unit_secs));
       tlist->Add(new NFmiMetTime(tomettime(timestep)));
     }
   }
   else
   {
-    using boost::posix_time::ptime;
-    ptime origintime;
+    using Fmi::DateTime;
+    Fmi::DateTime origintime;
     long timeunit;
     parse_time_units(&origintime, &timeunit);
 
@@ -735,18 +735,18 @@ NFmiTimeList NcFileExtended::timeList(std::string varName, std::string unitAttrN
       {
         long timeoffset = values->as_int(i);
 
-        ptime validtime = origintime + boost::posix_time::minutes(timeshift);
+        Fmi::DateTime validtime = origintime + Fmi::Minutes(timeshift);
 
         if (timeunit == 1)
-          validtime += boost::posix_time::seconds(timeoffset);
+          validtime += Fmi::Seconds(timeoffset);
         else if (timeunit == 60)
-          validtime += boost::posix_time::minutes(timeoffset);
+          validtime += Fmi::Minutes(timeoffset);
         else if (timeunit == 60 * 60)
-          validtime += boost::posix_time::hours(timeoffset);
+          validtime += Fmi::Hours(timeoffset);
         else if (timeunit == 24 * 60 * 60)
-          validtime += boost::posix_time::hours(24 * timeoffset);
+          validtime += Fmi::Hours(24 * timeoffset);
         else
-          validtime += boost::posix_time::seconds(timeoffset * timeunit);
+          validtime += Fmi::Seconds(timeoffset * timeunit);
 
         tlist->Add(new NFmiMetTime(nctools::tomettime(validtime)));
       }
@@ -781,7 +781,7 @@ unsigned long get_units_in_seconds(std::string unit_str)
  */
 // ----------------------------------------------------------------------
 
-void NcFileExtended::parse_time_units(boost::posix_time::ptime *origintime, long *timeunit) const
+void NcFileExtended::parse_time_units(Fmi::DateTime *origintime, long *timeunit) const
 {
   // If static data is extracted, --tdim '' has been used. We still need the origintime,
   // so we just assume "time" contains the required data as specified in COARDS etc
@@ -836,7 +836,7 @@ void NcFileExtended::parse_time_units(boost::posix_time::ptime *origintime, long
  */
 // ----------------------------------------------------------------------
 
-NFmiMetTime tomettime(const boost::posix_time::ptime &t)
+NFmiMetTime tomettime(const Fmi::DateTime &t)
 {
   return NFmiMetTime(static_cast<short>(t.date().year()),
                      static_cast<short>(t.date().month()),

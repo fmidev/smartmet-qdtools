@@ -13,7 +13,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/classification.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
+#include <macgyver/DateTime.h>
 #include <boost/filesystem/operations.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
@@ -203,7 +203,7 @@ bool parse_options(int argc, char *argv[])
  */
 // ----------------------------------------------------------------------
 
-NFmiMetTime tomettime(const boost::posix_time::ptime &t)
+NFmiMetTime tomettime(const Fmi::DateTime &t)
 {
   return NFmiMetTime(t.date().year(),
                      t.date().month(),
@@ -651,13 +651,13 @@ int count_datas(const hid_t &hid, int i)
  */
 // ----------------------------------------------------------------------
 
-boost::posix_time::ptime extract_origin_time(const hid_t &hid)
+Fmi::DateTime extract_origin_time(const hid_t &hid)
 {
   std::string strdate = get_attribute_value<std::string>(hid, "/what", "date");
   std::string strtime = get_attribute_value<std::string>(hid, "/what", "time");
   std::string stamp = (strdate + strtime).substr(0, 12);
 
-  boost::posix_time::ptime t = Fmi::TimeParser::parse(stamp);
+  Fmi::DateTime t = Fmi::TimeParser::parse(stamp);
 
   return t;
 }
@@ -668,7 +668,7 @@ boost::posix_time::ptime extract_origin_time(const hid_t &hid)
  */
 // ----------------------------------------------------------------------
 
-boost::posix_time::ptime extract_valid_time(const hid_t &hid, int i)
+Fmi::DateTime extract_valid_time(const hid_t &hid, int i)
 {
   if (options.startepochs)
   {
@@ -710,7 +710,7 @@ boost::posix_time::ptime extract_valid_time(const hid_t &hid, int i)
 
   std::string stamp = (strdate + strtime).substr(0, 12);
 
-  boost::posix_time::ptime t = Fmi::TimeParser::parse(stamp);
+  Fmi::DateTime t = Fmi::TimeParser::parse(stamp);
 
   if (!options.startepochs)
     return t;
@@ -726,7 +726,7 @@ boost::posix_time::ptime extract_valid_time(const hid_t &hid, int i)
  */
 // ----------------------------------------------------------------------
 
-boost::posix_time::ptime extract_start_time(const hid_t &hid, int i)
+Fmi::DateTime extract_start_time(const hid_t &hid, int i)
 {
   std::string name = dataset(i) + "/what";
   auto strdate = get_attribute_value<std::string>(hid, name, "startdate");
@@ -743,7 +743,7 @@ boost::posix_time::ptime extract_start_time(const hid_t &hid, int i)
 
 NFmiTimeDescriptor create_tdesc(const hid_t &hid)
 {
-  boost::posix_time::ptime t = extract_origin_time(hid);
+  Fmi::DateTime t = extract_origin_time(hid);
   const NFmiMetTime origintime = tomettime(t);
 
   const int n = count_datasets(hid);
@@ -1550,7 +1550,7 @@ void copy_dataset(const hid_t &hid, NFmiFastQueryInfo &info, int datanum)
         throw std::runtime_error("Failed to activate product " + product +
                                  " in output querydata with id " + converter.ToString(id));
 
-      boost::posix_time::ptime t = extract_valid_time(hid, datanum);
+      Fmi::DateTime t = extract_valid_time(hid, datanum);
       if (!info.Time(tomettime(t)))
         throw std::runtime_error("Failed to activate correct valid time in output querydata");
 
@@ -1704,7 +1704,7 @@ void copy_dataset_pvol(const hid_t &hid, NFmiFastQueryInfo &info, int datanum)
 
   // Set time
 
-  boost::posix_time::ptime t = extract_valid_time(hid, 1);
+  Fmi::DateTime t = extract_valid_time(hid, 1);
   if (!info.Time(tomettime(t)))
     throw std::runtime_error("Failed to activate correct valid time in output querydata");
 
@@ -1911,7 +1911,7 @@ std::string get_interval(const hid_t &hid)
 
     // Extract all intervals
 
-    std::set<boost::posix_time::time_duration> intervals;
+    std::set<Fmi::TimeDuration> intervals;
 
     for (int i = 1; i <= n; i++)
     {

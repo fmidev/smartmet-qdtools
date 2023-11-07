@@ -1,7 +1,7 @@
 #include "TimeTools.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
+#include <macgyver/DateTime.h>
 #include <boost/filesystem/operations.hpp>
 #include <boost/program_options.hpp>
 #include <fmt/format.h>
@@ -56,7 +56,7 @@ struct Options
   std::size_t barsize = 60;
   double ignored_value = std::numeric_limits<double>::quiet_NaN();  // never compares ==
 
-  std::set<boost::posix_time::ptime> these_times;
+  std::set<Fmi::DateTime> these_times;
   std::set<FmiParameterName> these_params;
   std::set<int> these_stations;
   std::set<float> these_levels;
@@ -70,9 +70,9 @@ Options options;
  */
 // ----------------------------------------------------------------------
 
-std::set<boost::posix_time::ptime> parse_times(const std::string& str)
+std::set<Fmi::DateTime> parse_times(const std::string& str)
 {
-  std::set<boost::posix_time::ptime> ret;
+  std::set<Fmi::DateTime> ret;
 
   if (str.empty()) return ret;
 

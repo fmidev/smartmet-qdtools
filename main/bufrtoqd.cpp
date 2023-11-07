@@ -1803,7 +1803,7 @@ NFmiMetTime get_validtime_amdar(std::set<NFmiMetTime> &used_times,
 
   if (requireident)
   {
-    // Use the time as is, just set the seconds (see API comment below)
+    // Use the time as is, just set the Fmi::Seconds (see API comment below)
 
     if (timestep == 1)
       t.SetSec(second);
@@ -2736,7 +2736,7 @@ void limit_duration_amdar(const NameMap &namemap, Phase phase, Messages &phaseme
 
   remove_duplicate_messages_amdar(namemap, phase, phasemessages);
 
-  time_duration maxduration(hours(options.maxdurationhours)), td;
+  Fmi::TimeDuration maxduration(hours(options.maxdurationhours)), td;
 
   Messages::iterator mit = phasemessages.begin(),mit0;
   std::set<NFmiMetTime> dummytimes;
@@ -3132,7 +3132,7 @@ void organize_messages_amdar(const Messages &origmessages, const NameMap &paramm
   Messages phasemessages;
   Message lasttakeoffmsg;
   std::string lastident, lastorigident;
-  boost::posix_time::ptime lasttime;
+  Fmi::DateTime lasttime;
   std::string msgident, state;
   double lastaltitude = 0.0;
   bool phasechange, phaserestart, phasereset;
@@ -3353,7 +3353,7 @@ void limit_duration_sounding(const NameMap &namemap, const std::string &ident,
   // Test data seems to have the same timestamp for all messages for given sounding,
   // but checking the duration anyway
 
-  time_duration maxduration(hours(options.maxdurationhours)), td;
+  Fmi::TimeDuration maxduration(hours(options.maxdurationhours)), td;
 
   Messages::iterator mit = soundingmessages.begin();
   NFmiMetTime t, t0;

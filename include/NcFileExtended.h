@@ -1,7 +1,7 @@
 #pragma once
 
 #include "nctools.h"
-#include <boost/date_time/posix_time/ptime.hpp>
+#include <macgyver/DateTime.h>
 #include <newbase/NFmiTimeList.h>
 #include <memory>
 #include <netcdfcpp.h>
@@ -97,7 +97,7 @@ class NcFileExtended : public NcFile
       NcVar *, int n, double &x1, double &x2, const char *name, bool &isdescending);
   void find_lonlat_bounds(double &lon1, double &lat1, double &lon2, double &lat2);
   void find_bounds();
-  void parse_time_units(boost::posix_time::ptime *origintime, long *timeunit) const;
+  void parse_time_units(Fmi::DateTime *origintime, long *timeunit) const;
   void copy_values(NFmiFastQueryInfo &info,
                    const ParamInfo &pinfo,
                    const nctools::Options *options);
@@ -117,6 +117,6 @@ void report_units(NcVar *var,
                   const Options &options,
                   bool ignoreUnitChange = false);
 unsigned long get_units_in_seconds(std::string unit_str);
-NFmiMetTime tomettime(const boost::posix_time::ptime &t);
-void parse_time_units(NcVar *t, boost::posix_time::ptime *origintime, long *timeunit);
+NFmiMetTime tomettime(const Fmi::DateTime &t);
+void parse_time_units(NcVar *t, Fmi::DateTime *origintime, long *timeunit);
 }  // namespace nctools

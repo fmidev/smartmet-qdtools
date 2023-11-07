@@ -18,7 +18,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/bind/bind.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
+#include <macgyver/DateTime.h>
 #include <boost/filesystem/operations.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
@@ -576,7 +576,7 @@ NFmiParamDescriptor create_pdesc(const Params& params)
  */
 // ----------------------------------------------------------------------
 
-NFmiMetTime tomettime(const boost::posix_time::ptime& t)
+NFmiMetTime tomettime(const Fmi::DateTime& t)
 {
   return NFmiMetTime(t.date().year(),
                      t.date().month(),
@@ -593,13 +593,13 @@ NFmiMetTime tomettime(const boost::posix_time::ptime& t)
  */
 // ----------------------------------------------------------------------
 
-NFmiTimeDescriptor create_tdesc(const CsvTable& csv, const boost::local_time::time_zone_ptr& tz)
+NFmiTimeDescriptor create_tdesc(const CsvTable& csv, const Fmi::TimeZonePtr& tz)
 {
-  using boost::posix_time::ptime;
+  using Fmi::DateTime;
 
   // List all times
 
-  set<ptime> used;
+  set<Fmi::DateTime> used;
   string last_t = "";
   BOOST_FOREACH (const CsvTable::value_type& row, csv)
   {
@@ -616,7 +616,7 @@ NFmiTimeDescriptor create_tdesc(const CsvTable& csv, const boost::local_time::ti
   // Build TimeList
 
   NFmiTimeList tlist;
-  BOOST_FOREACH (const ptime& t, used)
+  BOOST_FOREACH (const Fmi::DateTime& t, used)
   {
     tlist.Add(new NFmiMetTime(tomettime(t)));
   }
@@ -625,7 +625,7 @@ NFmiTimeDescriptor create_tdesc(const CsvTable& csv, const boost::local_time::ti
 
   if (!options.origintime.empty())
   {
-    boost::posix_time::ptime t = Fmi::TimeParser::parse(options.origintime, tz).utc_time();
+    Fmi::DateTime t = Fmi::TimeParser::parse(options.origintime, tz).utc_time();
     origintime = tomettime(t);
   }
 
@@ -674,9 +674,9 @@ LocationIndex make_location_index(NFmiFastQueryInfo& info,
 void copy_values(NFmiFastQueryInfo& info,
                  const CsvTable& csv,
                  const Stations& stations,
-                 const boost::local_time::time_zone_ptr& tz)
+                 const Fmi::TimeZonePtr& tz)
 {
-  using boost::posix_time::ptime;
+  using Fmi::DateTime;
 
   // first level activate by default
   info.First();
@@ -692,7 +692,7 @@ void copy_values(NFmiFastQueryInfo& info,
 
     if (row[options.timecolumn] != last_t)
     {
-      ptime t = Fmi::TimeParser::parse(row[options.timecolumn], tz).utc_time();
+      Fmi::DateTime t = Fmi::TimeParser::parse(row[options.timecolumn], tz).utc_time();
       info.Time(tomettime(t));
       last_t = row[options.timecolumn];
     }
@@ -761,7 +761,7 @@ void write_querydata(const CsvTable& csv, const Params& params, const Stations& 
 {
   validate_csv(csv);
 
-  boost::local_time::time_zone_ptr tz =
+  Fmi::TimeZonePtr tz =
       Fmi::TimeZoneFactory::instance().time_zone_from_string(options.timezone);
 
   NFmiHPlaceDescriptor hdesc = create_hdesc(csv, stations);

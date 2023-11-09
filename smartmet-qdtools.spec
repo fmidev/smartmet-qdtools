@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 23.10.18
+Version: 23.11.2
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -73,7 +73,7 @@ Requires: smartmet-library-imagine >= 23.7.28
 Requires: smartmet-library-macgyver >= 23.11.8
 Requires: smartmet-library-newbase >= 23.10.11
 Requires: smartmet-library-smarttools >= 23.7.28
-Requires: smartmet-timezones >= 23.4.18
+Requires: smartmet-timezones >= 23.10.30
 Requires: zlib
 #TestRequires: smartmet-library-macgyver-devel >= 23.11.8
 #TestRequires: gcc-c++
@@ -209,6 +209,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Nov  2 2023 Mika Heiskanen <mika.heiskanen@fmi.fi> - 23.11.2-1.fmi
+- Fixed gribtoqd errors in handling Mercator projections
+
 * Wed Oct 18 2023 Andris Pavēnis <andris.pavenis@fmi.fi> 23.10.18-1.fmi
 - Repackage due to dependency changes
 

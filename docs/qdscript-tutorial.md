@@ -19,7 +19,6 @@ Related manuals:
 
 See also:
 
-* [Server directory structure](server-directory-structure.md)
 * [Executing script](executing-script.md)
 
 Table of contents:

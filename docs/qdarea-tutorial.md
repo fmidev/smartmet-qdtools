@@ -8,10 +8,6 @@ Related manuals:
 * [shapefilter](shapefilter.md)
 * [shape2svg](shape2svg.md)
 
-See also:
-
-* [Server directory structure](server-directory-structure.md)
-
 Table of contents:
 
 * [Crop Area from Larger Shape File](#crop-area-from-larger-shape-file)

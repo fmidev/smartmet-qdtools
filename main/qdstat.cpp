@@ -1,10 +1,10 @@
 #include "TimeTools.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
-#include <macgyver/DateTime.h>
 #include <boost/filesystem/operations.hpp>
 #include <boost/program_options.hpp>
 #include <fmt/format.h>
+#include <macgyver/DateTime.h>
 #include <macgyver/StringConversion.h>
 #include <macgyver/TimeParser.h>
 #include <newbase/NFmiEnumConverter.h>
@@ -26,14 +26,17 @@
 #include <sys/ioctl.h>
 #endif
 
-// This is global so that we can not just parse but also print errors
+// This is global so that we can not just parse but also print errors quickly
 NFmiEnumConverter converter;
 
-const int column_width = 10;
+const int column_width = 12;
 
 const std::set<std::string> ignored_params{"WindVectorMS"};
 
-bool ignore_param(const std::string& p) { return (ignored_params.find(p) != ignored_params.end()); }
+bool ignore_param(const std::string& p)
+{
+  return (ignored_params.find(p) != ignored_params.end());
+}
 
 // ----------------------------------------------------------------------
 /*!
@@ -74,7 +77,8 @@ std::set<Fmi::DateTime> parse_times(const std::string& str)
 {
   std::set<Fmi::DateTime> ret;
 
-  if (str.empty()) return ret;
+  if (str.empty())
+    return ret;
 
   std::list<std::string> parts;
   boost::algorithm::split(parts, str, boost::is_any_of(","));
@@ -97,7 +101,8 @@ std::set<FmiParameterName> parse_params(const std::string& str)
 {
   std::set<FmiParameterName> ret;
 
-  if (str.empty()) return ret;
+  if (str.empty())
+    return ret;
 
   std::list<std::string> parts;
   boost::algorithm::split(parts, str, boost::is_any_of(","));
@@ -105,7 +110,8 @@ std::set<FmiParameterName> parse_params(const std::string& str)
   for (const auto& param : parts)
   {
     FmiParameterName p = FmiParameterName(converter.ToEnum(param));
-    if (p == kFmiBadParameter) throw std::runtime_error("Bad parameter name: '" + param + "'");
+    if (p == kFmiBadParameter)
+      throw std::runtime_error("Bad parameter name: '" + param + "'");
     ret.insert(p);
   }
 
@@ -122,7 +128,8 @@ std::set<int> parse_stations(const std::string& str)
 {
   std::set<int> ret;
 
-  if (str.empty()) return ret;
+  if (str.empty())
+    return ret;
 
   std::list<std::string> parts;
   boost::algorithm::split(parts, str, boost::is_any_of(","));
@@ -145,7 +152,8 @@ std::set<float> parse_levels(const std::string& str)
 {
   std::set<float> ret;
 
-  if (str.empty()) return ret;
+  if (str.empty())
+    return ret;
 
   std::list<std::string> parts;
   boost::algorithm::split(parts, str, boost::is_any_of(","));
@@ -242,9 +250,11 @@ bool parse_options(int argc, char* argv[])
 
   // Check invalid values
 
-  if (options.bins < 2) throw std::runtime_error("Must have at least 2 bins");
+  if (options.bins < 2)
+    throw std::runtime_error("Must have at least 2 bins");
 
-  if (options.barsize < 10) throw std::runtime_error("Bar graph width must be at leats 10");
+  if (options.barsize < 10)
+    throw std::runtime_error("Bar graph width must be at leats 10");
 
   // Check incompatible options
 
@@ -274,15 +284,17 @@ class Stats
   static std::string header();
   std::string report() const;
   void param(FmiParameterName theParam) { itsParam = theParam; }
+  void interpolation(FmiInterpolationMethod theMethod) { itsInterpolationMethod = theMethod; }
   const char* desc(double value) const;
 
  private:
-  FmiParameterName itsParam;    // parameter name
-  std::size_t itsCount;         // total count
-  std::size_t itsValidCount;    // finite and not kFloatMissing
-  std::size_t itsMissingCount;  // kFloatMissing
-  std::size_t itsInfCount;      // -Inf or +Inf
-  std::size_t itsNaNCount;      // NaN
+  FmiParameterName itsParam;                      // parameter name
+  FmiInterpolationMethod itsInterpolationMethod;  // interpolation method (NearestPoint/other)
+  std::size_t itsCount;                           // total count
+  std::size_t itsValidCount;                      // finite and not kFloatMissing
+  std::size_t itsMissingCount;                    // kFloatMissing
+  std::size_t itsInfCount;                        // -Inf or +Inf
+  std::size_t itsNaNCount;                        // NaN
   double itsSum;
   double itsMin;
   double itsMax;
@@ -291,6 +303,7 @@ class Stats
 
 Stats::Stats()
     : itsParam(kFmiBadParameter),
+      itsInterpolationMethod(kNearestPoint),
       itsCount(0),
       itsValidCount(0),
       itsMissingCount(0),
@@ -304,12 +317,16 @@ Stats::Stats()
 
 void Stats::operator()(double value)
 {
-  if (value == options.ignored_value) return;
+  if (value == options.ignored_value)
+    return;
 
   ++itsCount;
-  if (value == kFloatMissing) ++itsMissingCount;
-  if (std::isnan(value)) ++itsNaNCount;
-  if (std::isinf(value)) ++itsInfCount;
+  if (value == kFloatMissing)
+    ++itsMissingCount;
+  if (std::isnan(value))
+    ++itsNaNCount;
+  if (std::isinf(value))
+    ++itsInfCount;
   if (std::isfinite(value) && value != kFloatMissing)
   {
     if (itsValidCount == 0)
@@ -329,18 +346,20 @@ void Stats::operator()(double value)
   }
 
   // Count only normal values
-  if (options.distribution && std::isfinite(value) && value != kFloatMissing) ++itsCounts[value];
+  if (std::isfinite(value) && value != kFloatMissing)
+    ++itsCounts[value];
 }
 
 std::string Stats::header()
 {
   std::ostringstream out;
   out << std::setw(column_width + 1) << std::right << "Min" << std::setw(column_width + 1)
-      << std::right << "Mean" << std::setw(column_width + 1) << std::right << "Max"
-      << std::setw(column_width + 1) << std::right << "Count" << std::setw(column_width + 1)
-      << std::right << "Valid" << std::setw(column_width + 1) << std::right << "Miss"
-      << std::setw(column_width) << std::right << "NaN" << std::setw(column_width) << std::right
-      << "Inf";
+      << std::right << "Mean" << std::setw(column_width + 1) << std::right << "Mode"
+      << std::setw(column_width + 1) << std::right << "Median" << std::setw(column_width + 1)
+      << std::right << "Max" << std::setw(column_width + 1) << std::right << "Count"
+      << std::setw(column_width + 1) << std::right << "Valid" << std::setw(column_width + 1)
+      << std::right << "Miss" << std::setw(column_width) << std::right << "NaN"
+      << std::setw(column_width) << std::right << "Inf";
   return out.str();
 }
 
@@ -908,7 +927,8 @@ void autotick(double theRange, std::size_t maxbins, double& tick, int& precision
     double xx = theRange / maxbins;
     double xlog = log10(xx);
     int ilog = static_cast<int>(xlog);
-    if (xlog < 0) --ilog;
+    if (xlog < 0)
+      --ilog;
     precision = -ilog;
 
     double pwr = pow(10, ilog);
@@ -942,9 +962,11 @@ void autoscale(const double theMin,
   if (theMin == theMax)
   {
     newmin = std::floor(theMin);
-    if (newmin == theMin) newmin -= 1;
+    if (newmin == theMin)
+      newmin -= 1;
     newmax = std::ceil(theMax);
-    if (newmax == theMax) newmax += 1;
+    if (newmax == theMax)
+      newmax += 1;
     tick = 1;
     precision = 0;
   }
@@ -982,16 +1004,52 @@ std::string Stats::report() const
   std::ostringstream out;
 
   double mean = std::numeric_limits<double>::quiet_NaN();
-  if (itsValidCount > 0) mean = itsSum / itsValidCount;
+  double mode = std::numeric_limits<double>::quiet_NaN();
+  double median = std::numeric_limits<double>::quiet_NaN();
+
+  if (itsValidCount > 0)
+  {
+    // Mean
+    if (itsInterpolationMethod != kNearestPoint)
+      mean = itsSum / itsValidCount;
+
+    // Mode
+    std::size_t max_count = 0;
+    for (const auto& value_count : itsCounts)
+      if (value_count.second > max_count)
+      {
+        max_count = value_count.second;
+        mode = value_count.first;
+      }
+
+    // Median
+    std::size_t total_count = 0;
+    for (const auto& value_count : itsCounts)
+      total_count += value_count.second;
+
+    std::size_t median_count = total_count / 2;
+
+    std::size_t partial_count = 0;
+    for (const auto& value_count : itsCounts)
+    {
+      median = value_count.first;
+      partial_count += value_count.second;
+
+      if (partial_count >= median_count)
+        break;
+    }
+  }
 
   if (options.percentages)
   {
     out << std::fixed << std::setprecision(2) << ' ' << std::setw(column_width) << std::right
         << itsMin << std::setprecision(2) << ' ' << std::setw(column_width) << std::right << mean
-        << std::setprecision(2) << ' ' << std::setw(column_width) << std::right << itsMax
-        << std::setw(column_width + 1) << std::right << itsCount << std::setw(column_width + 1)
-        << std::right << 100.0 * itsValidCount / itsCount << std::setw(column_width + 1)
-        << std::right << 100.0 * itsMissingCount / itsCount << std::setw(column_width) << std::right
+        << ' ' << std::setw(column_width) << std::right << mode << std::setprecision(2) << ' '
+        << std::setw(column_width) << std::right << median << std::setprecision(2) << ' '
+        << std::setw(column_width) << std::right << itsMax << std::setw(column_width + 1)
+        << std::right << itsCount << std::setw(column_width + 1) << std::right
+        << 100.0 * itsValidCount / itsCount << std::setw(column_width + 1) << std::right
+        << 100.0 * itsMissingCount / itsCount << std::setw(column_width) << std::right
         << 100.0 * itsNaNCount / itsCount << std::setw(column_width) << std::right
         << 100.0 * itsInfCount / itsCount;
   }
@@ -999,14 +1057,15 @@ std::string Stats::report() const
   {
     out << std::fixed << std::setprecision(2) << ' ' << std::setw(column_width) << std::right
         << itsMin << std::setprecision(2) << ' ' << std::setw(column_width) << std::right << mean
-        << std::setprecision(2) << ' ' << std::setw(column_width) << std::right << itsMax
-        << std::setw(column_width + 1) << std::right << itsCount << std::setw(column_width + 1)
-        << std::right << itsValidCount << std::setw(column_width + 1) << std::right
-        << itsMissingCount << std::setw(column_width) << std::right << itsNaNCount
-        << std::setw(column_width) << std::right << itsInfCount;
+        << ' ' << std::setw(column_width) << std::right << mode << std::setprecision(2) << ' '
+        << std::setw(column_width) << std::right << median << std::setprecision(2) << ' '
+        << std::setw(column_width) << std::right << itsMax << std::setw(column_width + 1)
+        << std::right << itsCount << std::setw(column_width + 1) << std::right << itsValidCount
+        << std::setw(column_width + 1) << std::right << itsMissingCount << std::setw(column_width)
+        << std::right << itsNaNCount << std::setw(column_width) << std::right << itsInfCount;
   }
 
-  if (!itsCounts.empty())
+  if (options.distribution)
   {
     out << std::endl << std::endl;
 
@@ -1050,7 +1109,8 @@ std::string Stats::report() const
       for (std::size_t i = 0;; i++)
       {
         double minvalue = binmin + i * tick;
-        if (minvalue >= itsMax) break;
+        if (minvalue >= itsMax)
+          break;
         double maxvalue = minvalue + tick;
         std::size_t count = 0;
         for (const auto& value_count : itsCounts)
@@ -1109,7 +1169,8 @@ std::size_t max_param_width(NFmiFastQueryInfo& qi)
   {
     qi.Param(p);
     std::string name = converter.ToString(qi.Param().GetParam()->GetIdent());
-    if (name.empty()) name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
+    if (name.empty())
+      name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
     widest = std::max(widest, name.size());
   }
   return widest;
@@ -1142,7 +1203,8 @@ void set_level(NFmiFastQueryInfo& qi, float levelvalue)
 {
   for (qi.ResetLevel(); qi.NextLevel();)
   {
-    if (qi.Level()->LevelValue() == levelvalue) return;
+    if (qi.Level()->LevelValue() == levelvalue)
+      return;
   }
   throw std::runtime_error("Level value " + Fmi::to_string(levelvalue) +
                            " not available in the data");
@@ -1169,14 +1231,17 @@ void stat_locations_times(NFmiFastQueryInfo& qi)
   {
     qi.Param(p);
     std::string name = converter.ToString(qi.Param().GetParam()->GetIdent());
-    if (name.empty()) name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
+    if (name.empty())
+      name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
 
-    if (ignore_param(name)) continue;
+    if (ignore_param(name))
+      continue;
 
     if (options.these_levels.empty())
     {
       Stats stats;
       stats.param(p);
+      stats.interpolation(qi.Param().GetParam()->InterpolationMethod());
 
       for (qi.ResetLocation(); qi.NextLocation();)
         for (qi.ResetLevel(); qi.NextLevel();)
@@ -1192,6 +1257,7 @@ void stat_locations_times(NFmiFastQueryInfo& qi)
 
         Stats stats;
         stats.param(p);
+        stats.interpolation(qi.Param().GetParam()->InterpolationMethod());
 
         for (qi.ResetLocation(); qi.NextLocation();)
           for (qi.ResetTime(); qi.NextTime();)
@@ -1217,9 +1283,11 @@ void stat_locations_these_times(NFmiFastQueryInfo& qi)
   {
     qi.Param(p);
     std::string name = converter.ToString(qi.Param().GetParam()->GetIdent());
-    if (name.empty()) name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
+    if (name.empty())
+      name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
 
-    if (ignore_param(name)) continue;
+    if (ignore_param(name))
+      continue;
 
     if (options.these_levels.empty())
       std::cout << std::setw(param_width) << std::right << "Parameter" << std::setw(18)
@@ -1237,6 +1305,7 @@ void stat_locations_these_times(NFmiFastQueryInfo& qi)
       {
         Stats stats;
         stats.param(p);
+        stats.interpolation(qi.Param().GetParam()->InterpolationMethod());
 
         for (qi.ResetLocation(); qi.NextLocation();)
           for (qi.ResetLevel(); qi.NextLevel();)
@@ -1253,6 +1322,7 @@ void stat_locations_these_times(NFmiFastQueryInfo& qi)
 
           Stats stats;
           stats.param(p);
+          stats.interpolation(qi.Param().GetParam()->InterpolationMethod());
 
           for (qi.ResetLocation(); qi.NextLocation();)
             stats(qi.FloatValue());
@@ -1281,8 +1351,10 @@ void stat_these_stations_these_times(NFmiFastQueryInfo& qi)
 
     qi.Param(p);
     std::string name = converter.ToString(qi.Param().GetParam()->GetIdent());
-    if (name.empty()) name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
-    if (ignore_param(name)) continue;
+    if (name.empty())
+      name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
+    if (ignore_param(name))
+      continue;
 
     std::cout << name << std::endl;
 
@@ -1299,6 +1371,8 @@ void stat_these_stations_these_times(NFmiFastQueryInfo& qi)
 
         Stats stats;
         stats.param(p);
+        stats.interpolation(qi.Param().GetParam()->InterpolationMethod());
+
         for (qi.ResetLevel(); qi.NextLevel();)
           stats(qi.FloatValue());
         std::cout << "    " << to_iso_string(t.PosixTime()) << ' ' << stats.report() << std::endl;
@@ -1325,9 +1399,11 @@ void stat_these_stations_times(NFmiFastQueryInfo& qi)
   {
     qi.Param(p);
     std::string name = converter.ToString(qi.Param().GetParam()->GetIdent());
-    if (name.empty()) name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
+    if (name.empty())
+      name = Fmi::to_string(qi.Param().GetParam()->GetIdent());
 
-    if (ignore_param(name)) continue;
+    if (ignore_param(name))
+      continue;
 
     for (int wmo : options.these_stations)
     {
@@ -1335,6 +1411,7 @@ void stat_these_stations_times(NFmiFastQueryInfo& qi)
 
       Stats stats;
       stats.param(p);
+      stats.interpolation(qi.Param().GetParam()->InterpolationMethod());
 
       for (qi.ResetLevel(); qi.NextLevel();)
         for (qi.ResetTime(); qi.NextTime();)
@@ -1353,7 +1430,8 @@ void stat_these_stations_times(NFmiFastQueryInfo& qi)
 
 int run(int argc, char* argv[])
 {
-  if (!parse_options(argc, argv)) return 0;
+  if (!parse_options(argc, argv))
+    return 0;
 
   NFmiQueryData qd(options.infile);
   NFmiFastQueryInfo qi(&qd);
@@ -1434,7 +1512,8 @@ int run(int argc, char* argv[])
  */
 // ----------------------------------------------------------------------
 
-int main(int argc, char* argv[]) try
+int main(int argc, char* argv[])
+try
 {
   return run(argc, argv);
 }

@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 23.11.2
+Version: 24.1.4
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -38,11 +38,11 @@ BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
-BuildRequires: smartmet-library-calculator-devel >= 23.7.28
-BuildRequires: smartmet-library-gis-devel >= 23.9.12
+BuildRequires: smartmet-library-calculator-devel >= 23.11.16
+BuildRequires: smartmet-library-gis-devel >= 24.1.3
 BuildRequires: smartmet-library-imagine-devel >= 23.7.28
-BuildRequires: smartmet-library-macgyver-devel >= 23.11.8
-BuildRequires: smartmet-library-newbase-devel >= 23.10.11
+BuildRequires: smartmet-library-macgyver-devel >= 23.11.21
+BuildRequires: smartmet-library-newbase-devel >= 23.11.21
 BuildRequires: smartmet-library-smarttools-devel >= 23.7.28
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
@@ -67,17 +67,17 @@ Requires: libjpeg
 Requires: libpng
 Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
-Requires: smartmet-library-calculator >= 23.7.28
-Requires: smartmet-library-gis >= 23.9.12
+Requires: smartmet-library-calculator >= 23.11.16
+Requires: smartmet-library-gis >= 24.1.3
 Requires: smartmet-library-imagine >= 23.7.28
-Requires: smartmet-library-macgyver >= 23.11.8
-Requires: smartmet-library-newbase >= 23.10.11
+Requires: smartmet-library-macgyver >= 23.11.21
+Requires: smartmet-library-newbase >= 23.11.21
 Requires: smartmet-library-smarttools >= 23.7.28
 Requires: smartmet-timezones >= 23.10.30
 Requires: zlib
-#TestRequires: smartmet-library-macgyver-devel >= 23.11.8
+#TestRequires: smartmet-library-macgyver-devel >= 23.11.21
 #TestRequires: gcc-c++
-#TestRequires: smartmet-library-newbase-devel >= 23.10.11
+#TestRequires: smartmet-library-newbase-devel >= 23.11.21
 #TestRequires: smartmet-qdtools-test-data
 #TestRequires: libbufr
 
@@ -209,6 +209,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Jan  4 2024 Mika Heiskanen <mika.heiskanen@fmi.fi> - 24.1.4-1.fmi
+- Added mode and median to qdstat output
+
 * Thu Nov  2 2023 Mika Heiskanen <mika.heiskanen@fmi.fi> - 23.11.2-1.fmi
 - Fixed gribtoqd errors in handling Mercator projections
 

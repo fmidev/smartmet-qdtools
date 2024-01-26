@@ -2086,7 +2086,7 @@ EarthShape GetEarthShape(grib_handle *theHandle)
     // Earth assumed spherical with radius specified (in m) by data producer
     if (GetGribLongValue(theHandle, "scaleFactorOfRadiusOfSphericalEarth", scalefactor))
       if (scalefactor != GRIB_MISSING_LONG)
-        scale = scalefactor;
+        scale = pow(10.0, scalefactor);
 
     if (!GetGribDoubleValue(theHandle, "scaledValueOfRadiusOfSphericalEarth", shape.a))
       throw std::runtime_error("Failed to read scaledValueOfRadiusOfSphericalEarth");

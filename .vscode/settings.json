@@ -1,0 +1,22 @@
+{
+    "makefile.launchConfigurations": [
+        {
+            "cwd": "/home/pietarin/qdtools",
+            "binaryPath": "/home/pietarin/qdtools/metar2qd",
+            "binaryArgs": []
+        },
+        {
+            "cwd": "/home/pietarin/qdtools",
+            "binaryPath": "/home/pietarin/qdtools/qddiff",
+            "binaryArgs": [
+                "1",
+                "2"
+            ]
+        },
+        {
+            "cwd": "/home/pietarin/hub/qdtools",
+            "binaryPath": "/home/pietarin/hub/qdtools/qdscript",
+            "binaryArgs": []
+        }
+    ]
+}

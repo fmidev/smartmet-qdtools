@@ -11,9 +11,13 @@
 bool ReadScriptFile(const std::string &theFileName, std::string *theScript);
 void Usage(const std::string &theExecutableName);
 void Run(int argc, const char *argv[]);
-NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo &qi, const std::string &opts);
+NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo &qi,
+                                        const std::vector<NFmiDataIdent> &addedParameters);
+std::vector<NFmiDataIdent> GetAddedParameters(NFmiCmdLine &cmdline, NFmiQueryData *baseQueryData);
+std::unique_ptr<NFmiQueryData> CreateNewBaseData(NFmiQueryData &originalData,
+                                            const std::vector<NFmiDataIdent> &addedParameters);
 
-using namespace std;  // tätä ei saa sitten laittaa headeriin, eikä ennen includeja!!!!
+using namespace std;  // tï¿½tï¿½ ei saa sitten laittaa headeriin, eikï¿½ ennen includeja!!!!
 
 int main(int argc, const char *argv[])
 {
@@ -31,13 +35,13 @@ int main(int argc, const char *argv[])
 
 void Run(int argc, const char *argv[])
 {
-  NFmiCmdLine cmdline(argc, argv, "a!d!sli!");
+  NFmiCmdLine cmdline(argc, argv, "a!d!sli!o!A!");
 
   if (cmdline.Status().IsError())
   {
     cerr << "Error: Invalid command line:" << endl << cmdline.Status().ErrorLog().CharPtr() << endl;
     Usage(argv[0]);
-    throw runtime_error("");  // tässä piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
+    throw runtime_error("");  // tï¿½ssï¿½ piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
   }
 
@@ -45,7 +49,7 @@ void Run(int argc, const char *argv[])
   {
     cerr << "Error: atleast 1 parameter expected, 'scriptFile'\n\n";
     Usage(argv[0]);
-    throw runtime_error("");  // tässä piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
+    throw runtime_error("");  // tï¿½ssï¿½ piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
   }
 
@@ -82,63 +86,50 @@ void Run(int argc, const char *argv[])
 
   string infile = "-";
   if (cmdline.isOption('i')) infile = cmdline.OptionValue('i');
-
-  NFmiQueryData *qd = new NFmiQueryData(infile);
-  NFmiQueryData *newData = 0;
-  if (!cmdline.isOption('a'))
+  string outfile;
+  if (cmdline.isOption('o')) outfile = cmdline.OptionValue('o');
+  // querydata pitï¿½ï¿½ lukea kokonaisuudessaan muistiin (= ei memory-mapped),
+  // ettï¿½ dataa voi muokata smarttools skriptillï¿½, siksi 2. parametri false.
+  std::unique_ptr<NFmiQueryData> querydataPtr(new NFmiQueryData(infile, false));
+  if (!querydataPtr)
   {
-    // true = vapautetaan querydata, silla sen omistus siirtyy NF
-    newData = NFmiSmartToolUtil::ModifyData(smartToolScript,
-                                            qd,
-                                            &helperFileNameList,
-                                            false,
-                                            goThroughAllLevels,
-                                            makeStaticIfOneTimeStepData);
+    throw runtime_error(string("Error: working queryData file could not be open correctly: ") + infile);
+  }
+
+  auto possibleAddedParameters = GetAddedParameters(cmdline, querydataPtr.get());
+
+  std::unique_ptr<NFmiQueryData> newDataPtr;
+  if (possibleAddedParameters.empty())
+  {
+    // Tehdï¿½ï¿½n querydataPtr.release(), koska querydata olio menee NFmiSmartToolUtil::ModifyData
+    // funktiossa NFmiInfoOrganizer luokan olion hallintaan.
+    newDataPtr.reset(NFmiSmartToolUtil::ModifyData(smartToolScript,
+                                                   querydataPtr.release(),
+                                                   &helperFileNameList,
+                                                   false,
+                                                   goThroughAllLevels,
+                                                   makeStaticIfOneTimeStepData));
   }
   else
   {
-    // Create new data
-
-    NFmiFastQueryInfo qi(qd);
-
-    NFmiFastQueryInfo qitmp(MakeParamDescriptor(qi, cmdline.OptionValue('a')),
-                            qi.TimeDescriptor(),
-                            qi.HPlaceDescriptor(),
-                            qi.VPlaceDescriptor(),
-                            qi.InfoVersion());
-
-    NFmiQueryData *qd2(NFmiQueryDataUtil::CreateEmptyData(qitmp));
-    NFmiFastQueryInfo qi2(qd2);
-
-    // Copy original data
-
-    for (qi.ResetLevel(), qi2.ResetLevel(); qi.NextLevel() && qi2.NextLevel();)
-      for (qi.ResetParam(); qi.NextParam();)
-      {
-        if (qi2.Param(qi.Param()))
-        {
-          for (qi.ResetTime(), qi2.ResetTime(); qi.NextTime() && qi2.NextTime();)
-            for (qi.ResetLocation(), qi2.ResetLocation(); qi.NextLocation() && qi2.NextLocation();)
-            {
-              qi2.FloatValue(qi.FloatValue());
-            }
-        }
-        else
-          throw runtime_error("Internal error when copying querydata");
-      }
-
-    newData = NFmiSmartToolUtil::ModifyData(smartToolScript,
-                                            qd2,
-                                            &helperFileNameList,
-                                            false,
-                                            goThroughAllLevels,
-                                            makeStaticIfOneTimeStepData);  // true = vapautetaan
-                                                                           // querydata, silla sen
-                                                                           // omistus siirtyy NF
-                                                                           // }
+    // Create new base data
+    unique_ptr<NFmiQueryData> qd2Ptr(CreateNewBaseData(*querydataPtr, possibleAddedParameters));
+    // Tehdï¿½ï¿½n qd2Ptr.release(), koska querydata olio menee NFmiSmartToolUtil::ModifyData
+    // funktiossa NFmiInfoOrganizer luokan olion hallintaan.
+    newDataPtr.reset(NFmiSmartToolUtil::ModifyData(smartToolScript,
+                                                   qd2Ptr.release(),
+                                                   &helperFileNameList,
+                                                   false,
+                                                   goThroughAllLevels,
+                                                   makeStaticIfOneTimeStepData));
   }
-  if (newData)
-    newData->Write();
+  if (newDataPtr)
+  {
+    if (outfile.empty())
+      newDataPtr->Write();
+    else
+      newDataPtr->Write(outfile);
+  }
   else
     throw runtime_error("Unable to create new data, stopping...");
 }
@@ -152,7 +143,7 @@ bool ReadScriptFile(const std::string &theFileName, std::string *theScript)
     {
       string rowbuffer, bigstring;
 
-      // luetaan tiedostoa rivi kerrallaan ja testataan löytyykö yhden rivin kommentteja
+      // luetaan tiedostoa rivi kerrallaan ja testataan lï¿½ytyykï¿½ yhden rivin kommentteja
 
       while (std::getline(in, rowbuffer))
       {
@@ -178,7 +169,7 @@ void Usage(const std::string &theExecutableName)
 {
   NFmiFileString fileNameStr(theExecutableName);
   std::string usedFileName(
-      fileNameStr.FileName().CharPtr());  // ota pois mahd. polku executablen nimestä
+      fileNameStr.FileName().CharPtr());  // ota pois mahd. polku executablen nimestï¿½
   cerr << "Usage: " << endl
        << usedFileName.c_str()
        << " [options] macroFile [qdata1 qdata2 ...] < inputdata > outputData" << endl
@@ -186,7 +177,9 @@ void Usage(const std::string &theExecutableName)
        << "Options:" << endl
        << endl
        << "\t-i infile\tinput querydata filename, default is to read standard input" << endl
+       << "\t-o outfile\toutput querydata filename, default is to write standard output" << endl
        << "\t-a p1,p2,...\tlist of parameters to add to the data" << endl
+       << "\t-A id1,name1,id2,name2,...\tlist of parameter id and name pairs to add to the data" << endl
        << "\t-d dictionary-file\tTranslations for messages." << endl
        << "\t-s \tUse all one-time-step datas as stationary (default = false)." << endl
        << "\t-l \tDon't go through all levels separately, smarttool-skript is" << endl
@@ -225,29 +218,114 @@ FmiParameterName parse_param(const string &theName)
   }
 }
 
-NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo &qi, const std::string &opts)
+void AddNonExistingParamToVector(FmiParameterName paramId,
+                                 const string &name,
+                                 NFmiFastQueryInfo &fastInfo,
+                                 std::vector<NFmiDataIdent> &paramVectorInOut)
+{
+  // If the parameter is already in the data - do nothing
+  if (!fastInfo.Param(paramId))
+  {
+    NFmiParam param(paramId,
+                    name,
+                    kFloatMissing,
+                    kFloatMissing,
+                    kFloatMissing,
+                    kFloatMissing,
+                    "%.1f",
+                    kLinearly);
+    paramVectorInOut.push_back(NFmiDataIdent(param, fastInfo.FirstParamProducer()));
+  }
+}
+
+// Oletus: baseQueryData ei ole nullptr
+std::vector<NFmiDataIdent> GetAddedParameters(NFmiCmdLine &cmdline, NFmiQueryData *baseQueryData)
+{
+  NFmiFastQueryInfo fastInfo(baseQueryData);
+  std::vector<NFmiDataIdent> possibleAddedParameters;
+  if (cmdline.isOption('a'))
+  {
+    // Annettu lista parametrin newbase enum nimiï¿½ tai numeroita, joista samasta
+    // string-arvosta muodostetaan par-id ja nimi
+    vector<string> names = NFmiStringTools::Split<vector<string>>(cmdline.OptionValue('a'));
+    for (const string &name : names)
+    {
+      FmiParameterName paramId = parse_param(name);
+      AddNonExistingParamToVector(paramId, name, fastInfo, possibleAddedParameters);
+    }
+  }
+  else if (cmdline.isOption('A'))
+  {
+    // Annettu lista parametrin id,nimi pareja, id on aina numero, eikï¿½ saa olla newbase enum
+    // juttuun liittyvï¿½ stringi
+    vector<string> idNamePairs = NFmiStringTools::Split<vector<string>>(cmdline.OptionValue('A'));
+    if (idNamePairs.size() >= 2)
+    {
+      for (size_t index = 0; index < idNamePairs.size() - 1; index += 2)
+      {
+        try
+        {
+          FmiParameterName paramId = static_cast<FmiParameterName>(stoi(idNamePairs[index]));
+          auto name = idNamePairs[index + 1];
+          AddNonExistingParamToVector(paramId, name, fastInfo, possibleAddedParameters);
+        }
+        catch (exception &e)
+        {
+          throw runtime_error(
+              string("Error when trying to parse par-id,par-name pair with values: ") +
+              idNamePairs[index] + "," + idNamePairs[index + 1] + ", with error: " + e.what());
+        }
+      }
+    }
+  }
+  return possibleAddedParameters;
+}
+
+NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo &qi,
+                                        const std::vector<NFmiDataIdent> &addedParameters)
 {
   NFmiParamBag pbag = qi.ParamBag();
-
-  vector<string> names = NFmiStringTools::Split<vector<string> >(opts);
-
-  const NFmiProducer &producer = qi.FirstParamProducer();
-  for (vector<string>::const_iterator it = names.begin(); it != names.end(); ++it)
+  for (const NFmiDataIdent &dataIdent : addedParameters)
   {
-    FmiParameterName paramnum = parse_param(*it);
-    // If the parameter is already in the data - we simply keep it
-    if (!qi.Param(paramnum))
+    // Tehdï¿½ï¿½n vielï¿½ tarkistus ettï¿½ parametria ei ole jo datassa
+    if (!qi.Param(*dataIdent.GetParam()))
     {
-      NFmiParam param(paramnum,
-                      *it,
-                      kFloatMissing,
-                      kFloatMissing,
-                      kFloatMissing,
-                      kFloatMissing,
-                      "%.1f",
-                      kLinearly);
-      pbag.Add(NFmiDataIdent(param, producer));
+      pbag.Add(dataIdent);
     }
   }
   return NFmiParamDescriptor(pbag);
+}
+
+unique_ptr<NFmiQueryData> CreateNewBaseData(NFmiQueryData &originalData,
+                                            const std::vector<NFmiDataIdent> &addedParameters)
+{
+  NFmiFastQueryInfo qi(&originalData);
+
+  NFmiFastQueryInfo qitmp(MakeParamDescriptor(qi, addedParameters),
+                          qi.TimeDescriptor(),
+                          qi.HPlaceDescriptor(),
+                          qi.VPlaceDescriptor(),
+                          qi.InfoVersion());
+
+  std::unique_ptr<NFmiQueryData> qd2Ptr(NFmiQueryDataUtil::CreateEmptyData(qitmp));
+  NFmiFastQueryInfo qi2(qd2Ptr.get());
+
+  // Copy original data
+  for (qi.ResetLevel(), qi2.ResetLevel(); qi.NextLevel() && qi2.NextLevel();)
+  {
+    for (qi.ResetParam(); qi.NextParam();)
+    {
+      if (qi2.Param(qi.Param()))
+      {
+        for (qi.ResetTime(), qi2.ResetTime(); qi.NextTime() && qi2.NextTime();)
+          for (qi.ResetLocation(), qi2.ResetLocation(); qi.NextLocation() && qi2.NextLocation();)
+          {
+            qi2.FloatValue(qi.FloatValue());
+          }
+      }
+      else
+        throw runtime_error("Internal error when copying querydata");
+    }
+  }
+  return qd2Ptr;
 }

@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 24.2.23
+Version: 24.3.11
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -42,7 +42,7 @@ BuildRequires: smartmet-library-calculator-devel >= 24.2.23
 BuildRequires: smartmet-library-gis-devel >= 24.1.3
 BuildRequires: smartmet-library-imagine-devel >= 24.2.23
 BuildRequires: smartmet-library-macgyver-devel >= 24.1.17
-BuildRequires: smartmet-library-newbase-devel >= 24.2.23
+BuildRequires: smartmet-library-newbase-devel >= 24.3.11
 BuildRequires: smartmet-library-smarttools-devel >= 24.2.23
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
@@ -71,13 +71,13 @@ Requires: smartmet-library-calculator >= 24.2.23
 Requires: smartmet-library-gis >= 24.1.3
 Requires: smartmet-library-imagine >= 24.2.23
 Requires: smartmet-library-macgyver >= 24.1.17
-Requires: smartmet-library-newbase >= 24.2.23
+Requires: smartmet-library-newbase >= 24.3.11
 Requires: smartmet-library-smarttools >= 24.2.23
 Requires: smartmet-timezones >= 24.1.9
 Requires: zlib
 #TestRequires: smartmet-library-macgyver-devel >= 24.1.17
 #TestRequires: gcc-c++
-#TestRequires: smartmet-library-newbase-devel >= 24.2.23
+#TestRequires: smartmet-library-newbase-devel >= 24.3.11
 #TestRequires: smartmet-qdtools-test-data
 #TestRequires: libbufr
 
@@ -209,6 +209,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Mon Mar 11 2024 Mika Heiskanen <mika.heiskanen@fmi.fi> - 24.3.11-1.fmi
+- Bug fix to qdtogrib handling of Mercator GRIBs.
+
 * Fri Feb 23 2024 Mika Heiskanen <mika.heiskanen@fmi.fi> 24.2.23-1.fmi
 - Full repackaging
 

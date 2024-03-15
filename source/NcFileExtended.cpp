@@ -827,7 +827,7 @@ void NcFileExtended::parse_time_units(Fmi::DateTime *origintime, long *timeunit)
   *origintime = Fmi::TimeParser::parse(datestr + " " + timestr);
 
   if (parts.size() == 5 && boost::iequals(parts[4], "UTC") == false)
-    *origintime += boost::posix_time::duration_from_string(parts[4]);
+    *origintime += Fmi::date_time::duration_from_string(parts[4]);
 }
 
 // ----------------------------------------------------------------------

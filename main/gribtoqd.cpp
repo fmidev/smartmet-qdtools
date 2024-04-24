@@ -2375,8 +2375,6 @@ NFmiArea *GetGribArea(grib_handle *theHandle, GribFilterOptions &theGribFilterOp
   auto earth_shape = GetEarthShape(theHandle);
   auto earth_proj = GetEarthProjFull(earth_shape);
 
-  // std::cout << "proj=" << proj << "\nearth=" << earth_proj << "\n";
-
   // Used only for some projections
   double grib2divider = 1;
   long truncateDegrees = 0;

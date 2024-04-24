@@ -2217,26 +2217,25 @@ std::string GetProjString(grib_handle *theHandle)
 
   if (proj_name == "mercator")
   {
-    double lon1, lon2, lat_ts;
+    double lon1, lon2;
     bool ok = true;
     ok &= GetGribDoubleValue(theHandle, "longitudeOfFirstGridPointInDegrees", lon1);
     ok &= GetGribDoubleValue(theHandle, "longitudeOfLastGridPointInDegrees", lon2);
-    ok &= GetGribDoubleValue(theHandle, "LaDInDegrees", lat_ts);
+    // We ignore LaDInDegrees on purpose since the setting is meaningless when the corners
+    // coordinates are given in degrees.
 
     if (!ok)
       throw std::runtime_error("Failed to extract mercator parameters");
 
     lon1 /= grib2divider;
     lon2 /= grib2divider;
-    lat_ts /= grib2divider;
     if (truncateDegrees)
     {
       lon1 = static_cast<int>(lon1);
       lon2 = static_cast<int>(lon2);
     }
 
-    return fmt::format("+type=crs +proj=merc +lat_ts={} +lon_0={} {}",
-                       lat_ts,
+    return fmt::format("+type=crs +proj=merc +lon_0={} {}",
                        // (lon2 > lon1 ? 0.5 * (lon1 + lon2) : 0.5 * (lon1 + lon2 + 360)),
                        (lon2 > lon1 ? 0 : 180),
                        earth_proj);

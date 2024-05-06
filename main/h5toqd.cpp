@@ -677,7 +677,7 @@ Fmi::DateTime extract_valid_time(const hid_t &hid, int i)
     {
       double epochs = get_attribute_value<double>(hid, name, "startepochs");
       std::time_t t = static_cast<std::time_t>(epochs);
-      return boost::posix_time::from_time_t(t);
+      return Fmi::date_time::from_time_t(t);
     }
     catch (...)
     {

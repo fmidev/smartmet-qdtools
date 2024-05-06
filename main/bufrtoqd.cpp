@@ -2736,7 +2736,8 @@ void limit_duration_amdar(const NameMap &namemap, Phase phase, Messages &phaseme
 
   remove_duplicate_messages_amdar(namemap, phase, phasemessages);
 
-  Fmi::TimeDuration maxduration(hours(options.maxdurationhours)), td;
+  Fmi::TimeDuration maxduration(Fmi::Hours(options.maxdurationhours));
+  Fmi::TimeDuration td;
 
   Messages::iterator mit = phasemessages.begin(),mit0;
   std::set<NFmiMetTime> dummytimes;
@@ -3353,7 +3354,7 @@ void limit_duration_sounding(const NameMap &namemap, const std::string &ident,
   // Test data seems to have the same timestamp for all messages for given sounding,
   // but checking the duration anyway
 
-  Fmi::TimeDuration maxduration(hours(options.maxdurationhours)), td;
+  Fmi::TimeDuration maxduration(Fmi::Hours(options.maxdurationhours)), td;
 
   Messages::iterator mit = soundingmessages.begin();
   NFmiMetTime t, t0;

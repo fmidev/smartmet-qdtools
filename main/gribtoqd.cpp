@@ -32,6 +32,7 @@
 #include <set>
 #include <sstream>
 #include <stdexcept>
+#include <boost/algorithm/string/replace.hpp>
 
 using namespace std;
 

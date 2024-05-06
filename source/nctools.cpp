@@ -37,7 +37,10 @@ int unknownParIdCounter = nctools::unknownParIdCounterBegin;  // jos tuntematon 
 
 namespace nctools
 {
-NFmiEnumConverter &get_enumconverter(void) { return converter; }
+NFmiEnumConverter &get_enumconverter(void)
+{
+  return converter;
+}
 // ----------------------------------------------------------------------
 /*!
  * \brief Parse command line options
@@ -68,6 +71,11 @@ bool parse_options(int argc, char *argv[], Options &options)
   const int desc_width = 100;
 #endif
 
+  std::string default_tdim = (options.tdim ? *options.tdim : std::string());
+  std::string default_xdim = (options.xdim ? *options.xdim : std::string());
+  std::string default_ydim = (options.ydim ? *options.ydim : std::string());
+  std::string default_zdim = (options.zdim ? *options.zdim : std::string());
+
   po::options_description desc("Allowed options", desc_width);
   desc.add_options()("help,h", "print out help message")(
       "config,c", po::value(&options.configfile), msg1.c_str())(
@@ -79,10 +87,10 @@ bool parse_options(int argc, char *argv[], Options &options)
       ("Minimum NetCDF conventions to verify or empty string if no check wanted (default: " +
        options.conventions + ")")
           .c_str())("debug,d", po::bool_switch(&options.debug), "enable debugging output")(
-      "tdim", po::value(&options.tdim), "name of T-dimension parameter (default=time)")(
-      "xdim", po::value(&options.xdim), "name of X-dimension parameter (default=lon)")(
-      "ydim", po::value(&options.ydim), "name of Y-dimension parameter (default=lat)")(
-      "zdim", po::value(&options.zdim), "name of Z-dimension parameter (no default)")(
+      "tdim", po::value(&options.tdim), ("name of T-dimension parameter (default=" + default_tdim + ")").c_str())(
+      "xdim", po::value(&options.xdim), ("name of X-dimension parameter (default=" + default_xdim + ")").c_str())(
+      "ydim", po::value(&options.ydim), ("name of Y-dimension parameter (default=" + default_ydim + ")").c_str())(
+      "zdim", po::value(&options.zdim), ("name of Z-dimension parameter (default=" + default_zdim + ")").c_str())(
       "info", po::bool_switch(&options.info), "print information on data dimensions and exit")(
       "experimental", po::bool_switch(&options.experimental), "enable experimental features")(
       "infile,i", po::value(&options.infiles), "input netcdf file")(
@@ -167,7 +175,8 @@ bool parse_options(int argc, char *argv[], Options &options)
   if (strstr(argv[0], "wrftoqd") != nullptr)
   {
     // Running wrftoqd
-    if (opt.count("infile") == 0) throw std::runtime_error("Expecting input file as parameter 1");
+    if (opt.count("infile") == 0)
+      throw std::runtime_error("Expecting input file as parameter 1");
 
     if (opt.count("infile") > 2)
       throw std::runtime_error("Multiple input files for wrtoqd not supported");
@@ -178,7 +187,8 @@ bool parse_options(int argc, char *argv[], Options &options)
   else
   {
     // Running nctoqd
-    if (opt.count("infile") == 0) throw std::runtime_error("Expecting input file as parameter 1");
+    if (opt.count("infile") == 0)
+      throw std::runtime_error("Expecting input file as parameter 1");
 
     if (!options.info)
     {
@@ -273,14 +283,14 @@ ParamConversions read_netcdf_configs(const Options &options)
       try
       {
         if (line.length() < 1)
-          throw Fmi::Exception(BCP,
-                                           "A parameter given on command line is of zero length");
-        if (options.verbose) std::cout << "Adding parameter mapping " << line << std::endl;
+          throw Fmi::Exception(BCP, "A parameter given on command line is of zero length");
+        if (options.verbose)
+          std::cout << "Adding parameter mapping " << line << std::endl;
         std::vector<std::string> row;
         std::size_t delimpos = line.find(',');
         if (delimpos < 1 || delimpos >= line.length() - 1)
-          throw Fmi::Exception(
-              BCP, "Parameter from command line is not of correct format: " + line);
+          throw Fmi::Exception(BCP,
+                               "Parameter from command line is not of correct format: " + line);
         row.push_back(line.substr(0, delimpos));
         row.push_back(line.substr(delimpos + 1));
         csv.paramconvs.push_back(row);
@@ -296,7 +306,8 @@ ParamConversions read_netcdf_configs(const Options &options)
     for (auto file : options.configs)
       try
       {
-        if (options.verbose) std::cout << "Reading " << file << std::endl;
+        if (options.verbose)
+          std::cout << "Reading " << file << std::endl;
 
         Fmi::CsvReader::read(file, boost::bind(&CsvParams::add, &csv, _1));
       }
@@ -306,9 +317,11 @@ ParamConversions read_netcdf_configs(const Options &options)
       }
 
   // Base config file
-  if (!options.configfile.empty()) try
+  if (!options.configfile.empty())
+    try
     {
-      if (options.verbose) std::cout << "Reading " << options.configfile << std::endl;
+      if (options.verbose)
+        std::cout << "Reading " << options.configfile << std::endl;
 
       Fmi::CsvReader::read(options.configfile, boost::bind(&CsvParams::add, &csv, _1));
     }
@@ -324,8 +337,10 @@ ParamConversions read_netcdf_configs(const Options &options)
 CsvParams::CsvParams(const Options &optionsIn) : paramconvs(), options(optionsIn) {}
 void CsvParams::add(const Fmi::CsvReader::row_type &row)
 {
-  if (row.size() == 0) return;
-  if (row[0].substr(0, 1) == "#") return;
+  if (row.size() == 0)
+    return;
+  if (row[0].substr(0, 1) == "#")
+    return;
 
   if (row.size() != 2 && row.size() != 4)
     throw Fmi::Exception(
@@ -349,7 +364,8 @@ void CsvParams::add(const Fmi::CsvReader::row_type &row)
 static FmiParameterName getIdFromString(NFmiEnumConverter &converter, const std::string &name)
 {
   // Convert numbers directly to int, other through the converter
-  if (name.empty()) return kFmiBadParameter;
+  if (name.empty())
+    return kFmiBadParameter;
 
   // Is it a name?
   if (name.find_first_not_of("012345678") != std::string::npos)

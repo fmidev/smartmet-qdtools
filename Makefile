@@ -31,7 +31,6 @@ LIBS += -L$(libdir) \
 	-lsmartmet-gis \
 	-lsmartmet-imagine \
 	-lboost_regex \
-	-lboost_date_time \
 	-lboost_program_options \
 	-lboost_iostreams \
 	-lboost_thread \

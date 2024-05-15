@@ -2732,8 +2732,6 @@ void remove_duplicate_messages_amdar(const NameMap &namemap, Phase phase, Messag
 void limit_duration_amdar(const NameMap &namemap, Phase phase, Messages &phasemessages,
                           IdentTimeMap &identtimemap, size_t &levelcount)
 {
-  using namespace boost::posix_time;
-
   remove_duplicate_messages_amdar(namemap, phase, phasemessages);
 
   Fmi::TimeDuration maxduration(Fmi::Hours(options.maxdurationhours));
@@ -3347,8 +3345,6 @@ void limit_duration_sounding(const NameMap &namemap, const std::string &ident,
                              Messages &soundingmessages, IdentTimeMap &identtimemap,
                              size_t &levelcount)
 {
-  using namespace boost::posix_time;
-
   remove_duplicate_messages_sounding(namemap, ident, soundingmessages);
 
   // Test data seems to have the same timestamp for all messages for given sounding,

@@ -46,7 +46,6 @@ BuildRequires: smartmet-library-newbase-devel >= 24.5.6
 BuildRequires: smartmet-library-smarttools-devel >= 24.2.23
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
-Requires: %{smartmet_boost}-date-time
 Requires: %{smartmet_boost}-filesystem
 Requires: %{smartmet_boost}-iostreams
 Requires: %{smartmet_boost}-program-options

@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 24.5.6
+Version: 24.5.16
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -208,6 +208,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu May 16 2024 Andris Pavēnis <andris.pavenis@fmi.fi> 24.5.16-1.fmi
+- Clean up boost date-time uses
+
 * Mon May  6 2024 Andris Pavēnis <andris.pavenis@fmi.fi> 24.5.6-1.fmi
 - Use Date library (https://github.com/HowardHinnant/date) instead of boost date_time
 

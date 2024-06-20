@@ -400,7 +400,7 @@ const char* Stats::desc(double value) const
         case 1:
           return " large scale";
         case 2:
-          return " convetive";
+          return " convective";
         default:
           return "";
       }
@@ -414,7 +414,7 @@ const char* Stats::desc(double value) const
         case 1:
           return " large scale";
         case 2:
-          return " convetive";
+          return " convective";
         default:
           return "";
       }

@@ -5,6 +5,7 @@
 #endif
 
 #include "GribTools.h"
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
@@ -32,7 +33,6 @@
 #include <set>
 #include <sstream>
 #include <stdexcept>
-#include <boost/algorithm/string/replace.hpp>
 
 using namespace std;
 
@@ -2189,10 +2189,8 @@ std::string GetProjString(grib_handle *theHandle)
     return "+type=crs +proj=eqc " + earth_proj;
   }
 
-  // Used only for some projections
-  double grib2divider = 1;
+  // Used only for some projections (when coordinates are not extracted in Degrees)
   long truncateDegrees = 0;
-  GetGribDoubleValue(theHandle, "grib2divider", grib2divider);
   GetGribLongValue(theHandle, "truncateDegrees", truncateDegrees);
 
   if (proj_name == "rotated_ll" || proj_name == "rotated_gg")
@@ -2228,14 +2226,11 @@ std::string GetProjString(grib_handle *theHandle)
     if (!ok)
       throw std::runtime_error("Failed to extract mercator parameters");
 
-    lon1 /= grib2divider;
-    lon2 /= grib2divider;
     if (truncateDegrees)
     {
       lon1 = static_cast<int>(lon1);
       lon2 = static_cast<int>(lon2);
     }
-
     return fmt::format("+type=crs +proj=merc +lon_0={} {}",
                        // (lon2 > lon1 ? 0.5 * (lon1 + lon2) : 0.5 * (lon1 + lon2 + 360)),
                        (lon2 > lon1 ? 0 : 180),
@@ -2286,16 +2281,11 @@ std::string GetProjString(grib_handle *theHandle)
   if (proj_name == "albers")
   {
     double lon_0, lat_0, lat_1, lat_2;
-    if (!GetGribDoubleValue(theHandle, "LoV", lon_0) ||
-        !GetGribDoubleValue(theHandle, "LaD", lat_0) ||
-        !GetGribDoubleValue(theHandle, "Latin1", lat_1) ||
-        !GetGribDoubleValue(theHandle, "Latin2", lat_2))
+    if (!GetGribDoubleValue(theHandle, "LoVInDegrees", lon_0) ||
+        !GetGribDoubleValue(theHandle, "LaDInDegrees", lat_0) ||
+        !GetGribDoubleValue(theHandle, "Latin1InDegrees", lat_1) ||
+        !GetGribDoubleValue(theHandle, "Latin2InDegrees", lat_2))
       throw std::runtime_error("Failed to extract albers parameters");
-
-    lon_0 /= grib2divider;
-    lat_0 /= grib2divider;
-    lat_1 /= grib2divider;
-    lat_2 /= grib2divider;
 
     if (truncateDegrees)
     {
@@ -2320,6 +2310,9 @@ std::string GetProjString(grib_handle *theHandle)
         !GetGribDoubleValue(theHandle, "latitudeOfSubSatellitePointInDegrees", lat_0) ||
         !GetGribDoubleValue(theHandle, "Nr", Nr))
       throw std::runtime_error("Failed to extract space_view parameters");
+
+    double grib2divider = 1;
+    GetGribDoubleValue(theHandle, "grib2divider", grib2divider);
 
     return fmt::format("+type=crs +proj={} +lon_0={} +lat_0={} +h={} {}",
                        (lat_0 == 0 ? "geos" : "nsper"),
@@ -2376,10 +2369,7 @@ NFmiArea *GetGribArea(grib_handle *theHandle, GribFilterOptions &theGribFilterOp
   auto earth_shape = GetEarthShape(theHandle);
   auto earth_proj = GetEarthProjFull(earth_shape);
 
-  // Used only for some projections
-  double grib2divider = 1;
   long truncateDegrees = 0;
-  GetGribDoubleValue(theHandle, "grib2divider", grib2divider);
   GetGribLongValue(theHandle, "truncateDegrees", truncateDegrees);
 
   // Grid sizes are Ni,Nj or Nx,Ny
@@ -2425,10 +2415,6 @@ NFmiArea *GetGribArea(grib_handle *theHandle, GribFilterOptions &theGribFilterOp
         !GetGribDoubleValue(theHandle, "latitudeOfLastGridPointInDegrees", lat2))
       throw std::runtime_error(fmt::format(err, "latlon bounding box", proj_name));
 
-    lon1 /= grib2divider;
-    lat1 /= grib2divider;
-    lon2 /= grib2divider;
-    lat2 /= grib2divider;
     if (truncateDegrees)
     {
       lon1 = static_cast<int>(lon1);

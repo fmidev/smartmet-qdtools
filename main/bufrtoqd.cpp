@@ -4140,7 +4140,7 @@ int run(int argc, char *argv[])
   // Initialize the data to missing values
 
   NFmiFastQueryInfo qi(pdesc, tdesc, hdesc, vdesc);
-  boost::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(qi));
+  std::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(qi));
   if (data.get() == 0) throw std::runtime_error("Could not allocate memory for result data");
 
   NFmiFastQueryInfo info(data.get());

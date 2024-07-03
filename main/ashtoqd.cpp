@@ -302,7 +302,7 @@ std::list<fs::path> select_ash_files(const std::list<fs::path>& files,
 {
   std::list<fs::path> ret;
 
-  boost::shared_ptr<Fmi::TimeFormatter> formatter(Fmi::TimeFormatter::create("timestamp"));
+  std::shared_ptr<Fmi::TimeFormatter> formatter(Fmi::TimeFormatter::create("timestamp"));
 
   std::string selected_stamp = formatter->format(tmodel);
 
@@ -400,7 +400,7 @@ NFmiTimeDescriptor create_tdesc(const std::list<fs::path>& files,
 
 NFmiHPlaceDescriptor create_hdesc()
 {
-  boost::shared_ptr<NFmiArea> area = NFmiAreaFactory::Create(options.projection);
+  std::shared_ptr<NFmiArea> area = NFmiAreaFactory::Create(options.projection);
   int width = static_cast<int>(round(area->XYArea(area.get()).Width()));
   int height = static_cast<int>(round(area->XYArea(area.get()).Height()));
 
@@ -859,7 +859,7 @@ int run(int argc, char* argv[])
   // Initialize the data to missing values
 
   NFmiFastQueryInfo qi(pdesc, tdesc, hdesc, vdesc);
-  boost::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(qi));
+  std::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(qi));
   if (data.get() == 0) throw std::runtime_error("Could not allocate memory for result data");
 
   NFmiFastQueryInfo info(data.get());

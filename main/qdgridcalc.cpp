@@ -13,7 +13,7 @@
 #include <newbase/NFmiQueryInfo.h>
 #include <newbase/NFmiStringTools.h>
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <fstream>
 
 using namespace std;
@@ -170,7 +170,7 @@ void Domain(int argc, const char *argv[])
   std::string yKmStr = cmdline.Parameter(3);
   double yRes = NFmiStringTools::Convert<double>(yKmStr);
 
-  boost::shared_ptr<NFmiArea> areaPtr = NFmiAreaFactory::Create(projStr);
+  std::shared_ptr<NFmiArea> areaPtr = NFmiAreaFactory::Create(projStr);
   if (areaPtr.get())
   {
     if (useGridSizes)

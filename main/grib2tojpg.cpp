@@ -211,7 +211,7 @@ static NFmiGrid *CreateWantedGrid(const std::string &theWantedGridStr)
 {
   if (theWantedGridStr.empty() == false)
   {
-    boost::shared_ptr<NFmiArea> area = NFmiAreaFactory::Create(theWantedGridStr);
+    std::shared_ptr<NFmiArea> area = NFmiAreaFactory::Create(theWantedGridStr);
     NFmiPoint gridSize = area->XYArea().Size();
     if (gridSize.X() == 1 && gridSize.Y() == 1)
     {
@@ -407,7 +407,7 @@ int main(int argc, const char **argv)
         return 9;
       }
     }
-    boost::shared_ptr<NFmiGrid> wantedGridPtr(wantedGrid);  // tuhoaa lopuksi dynaamisen datan
+    std::shared_ptr<NFmiGrid> wantedGridPtr(wantedGrid);  // tuhoaa lopuksi dynaamisen datan
 
     bool verbose = false;
 
@@ -707,7 +707,7 @@ static void CalcCroppedGrid(GridRecordData *theGridRecordData)
   else
     throw runtime_error("Error: CalcCroppedGrid doesn't support this projection yet.");
 
-  boost::shared_ptr<NFmiArea> newAreaPtr(newArea);
+  std::shared_ptr<NFmiArea> newAreaPtr(newArea);
   theGridRecordData->itsGridPointCropOffset = NFmiPoint(xy1.X(), xy1.Y());
   MyGrid newGrid(
       newArea, static_cast<int>(xy2.X() - xy1.X() + 1), static_cast<int>(xy2.Y() - xy1.Y() + 1));

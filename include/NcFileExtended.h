@@ -23,10 +23,10 @@ class NcFileExtended : public NcFile
   void setOptions(const nctools::Options &opts) { options = opts; }
   void setWRF(bool mode) { wrf = mode; }
 
-  void initAxis(const boost::optional<std::string> &xname,
-                const boost::optional<std::string> &yname,
-                const boost::optional<std::string> &zname,
-                const boost::optional<std::string> &tname);
+  void initAxis(const std::optional<std::string> &xname,
+                const std::optional<std::string> &yname,
+                const std::optional<std::string> &zname,
+                const std::optional<std::string> &tname);
 
   void printInfo() const;
 

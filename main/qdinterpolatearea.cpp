@@ -145,7 +145,7 @@ void run(int argc, const char *argv[])
       projectionString += ':' + grid;
     }
 
-    boost::shared_ptr<NFmiArea> outputArea = NFmiAreaFactory::Create(projectionString);
+    std::shared_ptr<NFmiArea> outputArea = NFmiAreaFactory::Create(projectionString);
     wantedGrid = new NFmiGrid(outputArea.get(), outputArea->Width(), outputArea->Height());
   }
   else
@@ -171,7 +171,7 @@ void run(int argc, const char *argv[])
 
   NFmiQueryData qd(inputfile);
 
-  boost::shared_ptr<NFmiQueryData> newData(
+  std::shared_ptr<NFmiQueryData> newData(
       NFmiQueryDataUtil::Interpolate2OtherGrid(&qd, wantedGrid, nullptr, maxthreads));
 
   // Temporary fix until newbase interpolation has been corrected

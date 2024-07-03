@@ -14,7 +14,7 @@
 #include <newbase/NFmiStreamQueryData.h>
 #include <newbase/NFmiStringTools.h>
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include <fstream>
 #include <iostream>
@@ -114,16 +114,16 @@ int domain(int argc, const char *argv[])
   std::string dirName = NFmiQueryDataUtil::GetFileFilterDirectory(
       options.indata);  // fileFilterist‰ pit‰‰ ottaa hakemisto irti, koska PatternFiles-funktio
                         // palautta vain tiedostojen nimet, ei polkua mukana
-  std::vector<boost::shared_ptr<NFmiQueryData> > qDataList;
+  std::vector<std::shared_ptr<NFmiQueryData> > qDataList;
   std::list<std::string>::const_iterator it;
   for (it = infiles.begin(); it != infiles.end(); ++it)
   {
     NFmiQueryData *data = FMI::RadContour::Pgm2QueryData(dirName + *it, options, cout);
-    if (data) qDataList.push_back(boost::shared_ptr<NFmiQueryData>(data));
+    if (data) qDataList.push_back(std::shared_ptr<NFmiQueryData>(data));
   }
 
   // create combined qinfo
-  boost::shared_ptr<NFmiQueryData> dummyBaseData;  // t‰t‰ ei k‰ytet‰, eli luodaan '0'-pointteri,
+  std::shared_ptr<NFmiQueryData> dummyBaseData;  // t‰t‰ ei k‰ytet‰, eli luodaan '0'-pointteri,
                                                    // koska NFmiQueryDataUtil::CombineQueryDatas
                                                    // vaatii t‰ll‰ist‰ mahd. pohjadataa
   NFmiQueryData *data = NFmiQueryDataUtil::CombineQueryDatas(

@@ -118,7 +118,7 @@
 #include <newbase/NFmiStringTools.h>
 #include <newbase/NFmiTimeList.h>
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include <fstream>
 #include <stdexcept>
@@ -419,7 +419,7 @@ void smoothen_data(NFmiQueryData& theQD, NFmiFastQueryInfo& theQ)
  */
 // ----------------------------------------------------------------------
 
-boost::shared_ptr<NFmiQueryData> create_data(NFmiFastQueryInfo& theQ)
+std::shared_ptr<NFmiQueryData> create_data(NFmiFastQueryInfo& theQ)
 {
   // Create the new descriptors
 
@@ -431,7 +431,7 @@ boost::shared_ptr<NFmiQueryData> create_data(NFmiFastQueryInfo& theQ)
   // And new data
 
   NFmiFastQueryInfo info(pdesc, tdesc, hdesc, vdesc);
-  boost::shared_ptr<NFmiQueryData> qd(NFmiQueryDataUtil::CreateEmptyData(info));
+  std::shared_ptr<NFmiQueryData> qd(NFmiQueryDataUtil::CreateEmptyData(info));
 
   if (qd.get() == 0)
     throw runtime_error("Insufficient memory for result data");
@@ -480,7 +480,7 @@ int run(int argc, const char* argv[])
 
   if (options.verbose)
     cout << "Smoothening data" << endl;
-  boost::shared_ptr<NFmiQueryData> outqd = create_data(q);
+  std::shared_ptr<NFmiQueryData> outqd = create_data(q);
 
   if (outqd.get() == 0)
     throw runtime_error("Failed to create a smoothened querydata object");

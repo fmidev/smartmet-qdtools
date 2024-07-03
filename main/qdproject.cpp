@@ -47,7 +47,7 @@
  */
 // ======================================================================
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <newbase/NFmiArea.h>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiCmdLine.h>
@@ -129,7 +129,7 @@ unique_ptr<NFmiArea> create_projection_from_querydata(const string& theFile)
  */
 // ----------------------------------------------------------------------
 
-boost::shared_ptr<NFmiArea> create_projection_from_conf(const string& theFile)
+std::shared_ptr<NFmiArea> create_projection_from_conf(const string& theFile)
 {
   const bool strip_pound = false;
   NFmiPreProcessor processor(strip_pound);
@@ -141,7 +141,7 @@ boost::shared_ptr<NFmiArea> create_projection_from_conf(const string& theFile)
   string text = processor.GetString();
   istringstream script(text);
 
-  boost::shared_ptr<NFmiArea> area;
+  std::shared_ptr<NFmiArea> area;
 
   string token;
   while (script >> token)
@@ -251,7 +251,7 @@ int run(int argc, const char* argv[])
 
   // Expect an area specification
 
-  boost::shared_ptr<NFmiArea> area;
+  std::shared_ptr<NFmiArea> area;
 
   int projcount = (cmdline.isOption('d') + cmdline.isOption('c') + cmdline.isOption('q'));
 

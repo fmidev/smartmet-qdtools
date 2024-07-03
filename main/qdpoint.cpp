@@ -32,7 +32,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/optional.hpp>
+#include <optional>
 #include <boost/program_options.hpp>
 #include <ogr_geometry.h>
 #include <macgyver/StringConversion.h>

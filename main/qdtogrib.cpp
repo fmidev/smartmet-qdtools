@@ -3,7 +3,7 @@
 #include "GribTools.h"
 #include <boost/filesystem/operations.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/optional.hpp>
+#include <optional>
 #include <boost/program_options.hpp>
 #include <gis/ProjInfo.h>
 #include <macgyver/StringConversion.h>
@@ -406,7 +406,7 @@ double fix_longitude(double lon)
 
 long get_smallest_timestep(NFmiFastQueryInfo &theInfo)
 {
-  boost::optional<NFmiMetTime> last_time;
+  std::optional<NFmiMetTime> last_time;
   long timestep = 0;
 
   for (theInfo.ResetTime(); theInfo.NextTime();)

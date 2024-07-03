@@ -17,9 +17,9 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/optional.hpp>
+#include <optional>
 #include <boost/program_options.hpp>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <fmt/format.h>
 #include <gis/ProjInfo.h>
 #include <macgyver/StringConversion.h>
@@ -432,7 +432,7 @@ T get_attribute(const hid_t &hid,
  */
 // ----------------------------------------------------------------------
 
-boost::optional<double> get_optional_double(const hid_t &hid,
+std::optional<double> get_optional_double(const hid_t &hid,
                                             std::string path,
                                             const std::string &name)
 {
@@ -452,7 +452,7 @@ boost::optional<double> get_optional_double(const hid_t &hid,
  */
 // ----------------------------------------------------------------------
 
-boost::optional<double> get_optional_double(const hid_t &hid,
+std::optional<double> get_optional_double(const hid_t &hid,
                                             std::string parent_path,
                                             const std::string &group_name,
                                             const std::string &attribute_name)
@@ -1341,7 +1341,7 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
       double LR_lat = get_attribute_value<double>(hid, "/where", "LR_lat");
       double UL_lon = get_attribute_value<double>(hid, "/where", "UL_lon");
       double UL_lat = get_attribute_value<double>(hid, "/where", "UL_lat");
-      boost::shared_ptr<NFmiArea> area(NFmiArea::CreateFromReverseCorners(
+      std::shared_ptr<NFmiArea> area(NFmiArea::CreateFromReverseCorners(
           projdef, sphere, NFmiPoint(UL_lon, UL_lat), NFmiPoint(LR_lon, LR_lat)));
       NFmiGrid grid(area->Clone(), xsize, ysize);
       return NFmiHPlaceDescriptor(grid);
@@ -1355,7 +1355,7 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
       double UR_lon = get_attribute_value<double>(hid, "/where", "UR_lon");
       double UR_lat = get_attribute_value<double>(hid, "/where", "UR_lat");
 
-      boost::shared_ptr<NFmiArea> area(NFmiArea::CreateFromCorners(
+      std::shared_ptr<NFmiArea> area(NFmiArea::CreateFromCorners(
           projdef, sphere, NFmiPoint(LL_lon, LL_lat), NFmiPoint(UR_lon, UR_lat)));
 
       NFmiGrid grid(area->Clone(), xsize, ysize);
@@ -1492,8 +1492,8 @@ void print_hdf_information(const hid_t &hid)
 // ----------------------------------------------------------------------
 
 double apply_gain_offset(double value,
-                         const boost::optional<double> &gain,
-                         const boost::optional<double> &offset)
+                         const std::optional<double> &gain,
+                         const std::optional<double> &offset)
 {
   if (gain)
     value *= *gain;
@@ -2074,7 +2074,7 @@ int run(int argc, char *argv[])
   // Create the output projection if there is one. We do it before doing any
   // work so that the user gets a fast response to a possible syntax error
 
-  boost::shared_ptr<NFmiArea> area;
+  std::shared_ptr<NFmiArea> area;
   if (!options.projection.empty())
     area = NFmiAreaFactory::Create(options.projection);
 
@@ -2086,7 +2086,7 @@ int run(int argc, char *argv[])
   NFmiHPlaceDescriptor hdesc = create_hdesc(hid);
 
   NFmiFastQueryInfo qi(pdesc, tdesc, hdesc, vdesc);
-  boost::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(qi));
+  std::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(qi));
   NFmiFastQueryInfo info(data.get());
 
   if (data.get() == 0)
@@ -2105,7 +2105,7 @@ int run(int argc, char *argv[])
     int height = static_cast<int>(round(area->XYArea(area.get()).Height()));
 
     NFmiGrid grid(area.get(), width, height);
-    boost::shared_ptr<NFmiQueryData> tmp(
+    std::shared_ptr<NFmiQueryData> tmp(
         NFmiQueryDataUtil::Interpolate2OtherGrid(data.get(), &grid, nullptr));
     std::swap(data, tmp);
   }

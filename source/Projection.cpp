@@ -225,7 +225,7 @@ NFmiPath Projection::project(const NFmiPath& thePath, const NFmiImage& theImage)
 
   // Create the required projection
 
-  boost::shared_ptr<NFmiArea> proj = area(theImage.Width(), theImage.Height());
+  std::shared_ptr<NFmiArea> proj = area(theImage.Width(), theImage.Height());
 
   // Then perform the projection
 
@@ -244,11 +244,11 @@ NFmiPath Projection::project(const NFmiPath& thePath, const NFmiImage& theImage)
  */
 // ----------------------------------------------------------------------
 
-boost::shared_ptr<NFmiArea> Projection::area(unsigned int theWidth, unsigned int theHeight) const
+std::shared_ptr<NFmiArea> Projection::area(unsigned int theWidth, unsigned int theHeight) const
 {
   // Create the required projection
 
-  boost::shared_ptr<NFmiArea> proj;
+  std::shared_ptr<NFmiArea> proj;
 
   // Special handling for the center
 

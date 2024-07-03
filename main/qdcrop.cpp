@@ -425,7 +425,7 @@ NFmiHPlaceDescriptor MakeHPlaceDescriptor(NFmiFastQueryInfo& theQ,
 
   if (!theProj.empty())
   {
-    boost::shared_ptr<NFmiArea> area = NFmiAreaFactory::Create(theProj);
+    std::shared_ptr<NFmiArea> area = NFmiAreaFactory::Create(theProj);
     int width = 0;
     int height = 00;
     if (!Fmi::LegacyMode())
@@ -555,7 +555,7 @@ NFmiHPlaceDescriptor MakeHPlaceDescriptor(NFmiFastQueryInfo& theQ,
 
   NFmiPoint bl(theQ.Grid()->GridToWorldXY(NFmiPoint(x1, y1)));
   NFmiPoint tr(theQ.Grid()->GridToWorldXY(NFmiPoint(x2, y2)));
-  boost::shared_ptr<NFmiArea> area(
+  std::shared_ptr<NFmiArea> area(
       NFmiArea::CreateFromBBox(theQ.Grid()->Area()->SpatialReference(), bl, tr));
 
   if (area.get() == 0)
@@ -1399,7 +1399,7 @@ int run(int argc, const char* argv[])
 
   NFmiFastQueryInfo info(pdesc, tdesc, hdesc, vdesc, version);
 
-  boost::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
+  std::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
   if (data.get() == 0)
     throw runtime_error("Could not allocate memory for result data");
 

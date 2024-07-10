@@ -258,7 +258,7 @@ NFmiLevel parse_level(const std::string &theLevelInfoStr)
 bool parse_options(int argc, char *argv[])
 {
   namespace po = boost::program_options;
-  namespace fs = boost::filesystem;
+  namespace fs = std::filesystem;
 
   std::string params;
   std::string level;

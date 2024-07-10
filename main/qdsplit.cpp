@@ -37,7 +37,7 @@
 #include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiTimeList.h>
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <boost/lexical_cast.hpp>
 
 #include <fstream>
@@ -309,8 +309,8 @@ void extract_time(NFmiFastQueryInfo& theQ)
     // Use dotfile to prevent for example roadmodel crashes
 
     data->Write(tmpname);
-    if (boost::filesystem::exists(outname)) boost::filesystem::remove(outname);
-    boost::filesystem::rename(tmpname, outname);
+    if (std::filesystem::exists(outname)) std::filesystem::remove(outname);
+    std::filesystem::rename(tmpname, outname);
   }
 }
 
@@ -400,7 +400,7 @@ void extract_times(NFmiFastQueryInfo& theQ, unsigned long index1, unsigned long 
       if (options.verbose)
       {
         cout << "Skipping " << outname << " since missing percentage is " << misses << endl;
-        if (options.memorymapping) boost::filesystem::remove(tmpname);
+        if (options.memorymapping) std::filesystem::remove(tmpname);
       }
     }
     else
@@ -419,8 +419,8 @@ void extract_times(NFmiFastQueryInfo& theQ, unsigned long index1, unsigned long 
 
       if (!options.memorymapping) datas[i]->Write(tmpname);
 
-      if (boost::filesystem::exists(outname)) boost::filesystem::remove(outname);
-      boost::filesystem::rename(tmpname, outname);
+      if (std::filesystem::exists(outname)) std::filesystem::remove(outname);
+      std::filesystem::rename(tmpname, outname);
     }
 
     delete datas[i];

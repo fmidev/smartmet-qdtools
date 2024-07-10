@@ -59,7 +59,7 @@
 #include <sys/ioctl.h>
 #endif
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 // File name structure
 

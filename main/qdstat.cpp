@@ -175,7 +175,7 @@ std::set<float> parse_levels(const std::string& str)
 bool parse_options(int argc, char* argv[])
 {
   namespace po = boost::program_options;
-  namespace fs = boost::filesystem;
+  namespace fs = std::filesystem;
 
   std::string opt_stamps;
   std::string opt_params;

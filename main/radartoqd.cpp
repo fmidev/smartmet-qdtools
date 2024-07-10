@@ -416,7 +416,7 @@ Options::Options()
 bool parse_options(int argc, char *argv[], Options &options)
 {
   namespace po = boost::program_options;
-  namespace fs = boost::filesystem;
+  namespace fs = std::filesystem;
   namespace ba = boost::algorithm;
 
   std::string producerinfo;

@@ -189,7 +189,7 @@ vector<int> parse_stations(const std::string& str)
 bool parse_options(int argc, char* argv[])
 {
   namespace po = boost::program_options;
-  namespace fs = boost::filesystem;
+  namespace fs = std::filesystem;
 
   string opt_stations;
   string opt_places;

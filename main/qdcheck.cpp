@@ -63,7 +63,7 @@ Options::Options() : check_tdew(false), config(), infile(), outfile() {}
 bool ParseOptions(int argc, char *argv[], Options &options)
 {
   namespace po = boost::program_options;
-  namespace fs = boost::filesystem;
+  namespace fs = std::filesystem;
 
 #ifdef UNIX
   struct winsize wsz;

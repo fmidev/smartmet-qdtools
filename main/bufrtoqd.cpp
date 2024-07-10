@@ -75,7 +75,7 @@ extern "C"
 #include <bufr_value.h>
 }
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 struct ParNameInfo
 {
   ParNameInfo() : bufrId(), bufrName(), shortName(), parId(kFmiBadParameter) {}
@@ -592,7 +592,7 @@ std::list<std::string> expand_input_files()
 
   BOOST_FOREACH (const fs::path &path, paths)
   {
-    if (fs::is_regular(path)) files.push_back(path.string());
+    if (fs::is_regular_file(path)) files.push_back(path.string());
   }
 
   return files;

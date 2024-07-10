@@ -33,6 +33,7 @@ RJTT 242030Z 36010KT 6000 -RA FEW007 SCT010 BKN015 12/11 Q1008 RMK
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
 
+#include <macgyver/FileSystem.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileString.h>
@@ -1785,8 +1786,12 @@ list<string> SortMetarFiles(const list<string> &metarfiles)
 
   BOOST_FOREACH (const string &filename, metarfiles)
   {
-    std::time_t t = boost::filesystem::last_write_time(filename);
-    sortedfiles.insert(make_pair(t, filename));
+    const std::optional<std::time_t> opt_t = Fmi::last_write_time(filename);
+    if (opt_t)
+    {
+      std::time_t t = *opt_t;
+      sortedfiles.insert(make_pair(t, filename));
+    }
   }
 
   list<string> outfiles;

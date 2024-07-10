@@ -89,7 +89,7 @@ Options options;
 bool parse_options(int argc, char *argv[])
 {
   namespace po = boost::program_options;
-  namespace fs = boost::filesystem;
+  namespace fs = std::filesystem;
 
   std::string producerinfo;
 
@@ -388,7 +388,7 @@ T get_attribute(const hid_t &hid,
                 const std::string &group_name,
                 const std::string &attribute_name)
 {
-  namespace fs = boost::filesystem;
+  namespace fs = std::filesystem;
 
   if (!boost::starts_with(parent_path, "/"))
   {

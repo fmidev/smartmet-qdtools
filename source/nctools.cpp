@@ -2,13 +2,13 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/bind/bind.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <boost/foreach.hpp>
 #include <boost/program_options.hpp>
 #include <macgyver/CsvReader.h>
 #include <macgyver/Exception.h>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiStringTools.h>
+#include <filesystem>
 #include <iostream>
 #include <list>
 #include <string>
@@ -52,7 +52,7 @@ NFmiEnumConverter &get_enumconverter(void)
 bool parse_options(int argc, char *argv[], Options &options)
 {
   namespace po = boost::program_options;
-  namespace fs = boost::filesystem;
+  namespace fs = std::filesystem;
 
   std::string producerinfo;
 

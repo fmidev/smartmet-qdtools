@@ -398,8 +398,9 @@ T get_attribute(const hid_t &hid,
   // path must be the full path to the group parent in which the attribute is supposed to be.
   std::vector<fs::path> cumulativePaths;
   fs::path inPath(parent_path), cumulativePath, groupPath;
+  const fs::path root = inPath.root_directory();
 
-  while (!inPath.empty())
+  while (inPath != root)
   {
     cumulativePaths.push_back(inPath);
     inPath = inPath.parent_path();

@@ -585,7 +585,7 @@ static NFmiGrid GetGridFromProjectionStr(const std::string &theProjectionStr)
       // x-merkin erottimena ja se pitää
       // muuttaa ','-merkiksi
 
-      boost::shared_ptr<NFmiArea> area = NFmiAreaFactory::Create(areaStr);
+      std::shared_ptr<NFmiArea> area = NFmiAreaFactory::Create(areaStr);
       std::vector<double> values = NFmiStringTools::Split<std::vector<double> >(gridStr, ",");
       if (values.size() != 2)
         throw Fmi::Exception(BCP,
@@ -1108,7 +1108,7 @@ static NFmiQueryInfo *CreateNewInnerInfo(
   }
 }
 
-static std::string GetParamNamesListString(boost::shared_ptr<NFmiQueryData> &data)
+static std::string GetParamNamesListString(std::shared_ptr<NFmiQueryData> &data)
 {
   std::string namesStr;
   const NFmiParamDescriptor &parDesc = data->Info()->ParamDescriptor();
@@ -1172,8 +1172,8 @@ static bool FindClosestLevelIndexies(float searchedLevelValue,
   }
 }
 
-static boost::shared_ptr<NFmiQueryData> MakeLevelStaggeredDataFix(
-    const boost::shared_ptr<NFmiQueryData> &data,
+static std::shared_ptr<NFmiQueryData> MakeLevelStaggeredDataFix(
+    const std::shared_ptr<NFmiQueryData> &data,
     const WRFData::TotalDimensionDataSet::value_type &totalDimensionData,
     const BaseGridAreaData &areaData)
 {
@@ -1187,7 +1187,7 @@ static boost::shared_ptr<NFmiQueryData> MakeLevelStaggeredDataFix(
                                  data->Info()->HPlaceDescriptor(),
                                  areaData.baseHybridLevels,
                                  data->InfoVersion());
-      boost::shared_ptr<NFmiQueryData> newData(NFmiQueryDataUtil::CreateEmptyData(newInnerInfo));
+      std::shared_ptr<NFmiQueryData> newData(NFmiQueryDataUtil::CreateEmptyData(newInnerInfo));
       if (newData)
       {
         // 2. Tee fastInfot molemmille datoille (kaksi vanhalle interpolointeja varten)
@@ -1252,9 +1252,9 @@ static boost::shared_ptr<NFmiQueryData> MakeLevelStaggeredDataFix(
   }
 }
 
-static boost::shared_ptr<NFmiQueryData> MakeStaggeredDataFix(
+static std::shared_ptr<NFmiQueryData> MakeStaggeredDataFix(
     nctools::Options &options,
-    const boost::shared_ptr<NFmiQueryData> &data,
+    const std::shared_ptr<NFmiQueryData> &data,
     const WRFData::TotalDimensionDataSet::value_type &totalDimensionData,
     const BaseGridAreaData &areaData)
 {
@@ -1262,10 +1262,10 @@ static boost::shared_ptr<NFmiQueryData> MakeStaggeredDataFix(
   {
     if (options.fixstaggered)
     {
-      boost::shared_ptr<NFmiQueryData> newData = data;
+      std::shared_ptr<NFmiQueryData> newData = data;
       if (totalDimensionData.first.xDimStaggered || totalDimensionData.first.yDimStaggered)
       {
-        newData = boost::shared_ptr<NFmiQueryData>(
+        newData = std::shared_ptr<NFmiQueryData>(
             NFmiQueryDataUtil::Interpolate2OtherGrid(data.get(), &areaData.baseGrid));
         if (newData)
         {
@@ -1291,8 +1291,8 @@ static boost::shared_ptr<NFmiQueryData> MakeStaggeredDataFix(
   }
 }
 
-static bool AreDataCombinable(const boost::shared_ptr<NFmiQueryData> &data1,
-                              const boost::shared_ptr<NFmiQueryData> &data2)
+static bool AreDataCombinable(const std::shared_ptr<NFmiQueryData> &data1,
+                              const std::shared_ptr<NFmiQueryData> &data2)
 {
   // riittää kun hila ja level tiedot on samoja, tällöin fiksatut datat voidaan yhdistää base-dataan
   if (data1->Info()->HPlaceDescriptor() == data2->Info()->HPlaceDescriptor() &&
@@ -1311,29 +1311,29 @@ static bool DataIndexUsed(size_t index, const std::set<size_t> &usedDataIndexies
     return false;
 }
 
-static std::vector<boost::shared_ptr<NFmiQueryData> > CombineFixedStaggeredData(
-    nctools::Options &options, const std::vector<boost::shared_ptr<NFmiQueryData> > &dataVector)
+static std::vector<std::shared_ptr<NFmiQueryData> > CombineFixedStaggeredData(
+    nctools::Options &options, const std::vector<std::shared_ptr<NFmiQueryData> > &dataVector)
 {
   try
   {
     if (options.fixstaggered && dataVector.size() > 1)
     {
-      std::vector<boost::shared_ptr<NFmiQueryData> > newDataVector;
+      std::vector<std::shared_ptr<NFmiQueryData> > newDataVector;
       std::set<size_t> usedDataIndexies;  // tähän talletetaan ne j-data indeksit, jotka on jo
                                           // käytetty, ettäei tule turhia päällekkäisyyksiä
       for (size_t i = 0; i < dataVector.size() - 1; i++)
       {
         if (!DataIndexUsed(i, usedDataIndexies))
         {
-          boost::shared_ptr<NFmiQueryData> data1 = dataVector[i];
+          std::shared_ptr<NFmiQueryData> data1 = dataVector[i];
           for (size_t j = i + 1; j < dataVector.size(); j++)
           {
             if (!DataIndexUsed(j, usedDataIndexies))
             {
-              boost::shared_ptr<NFmiQueryData> data2 = dataVector[j];
+              std::shared_ptr<NFmiQueryData> data2 = dataVector[j];
               if (AreDataCombinable(data1, data2))
               {
-                boost::shared_ptr<NFmiQueryData> newData = boost::shared_ptr<NFmiQueryData>(
+                std::shared_ptr<NFmiQueryData> newData = std::shared_ptr<NFmiQueryData>(
                     NFmiQueryDataUtil::CombineParams(data1.get(), data2.get()));
                 if (newData)
                 {
@@ -1371,19 +1371,19 @@ static std::vector<boost::shared_ptr<NFmiQueryData> > CombineFixedStaggeredData(
   }
 }
 
-static std::vector<boost::shared_ptr<NFmiQueryData> > DoFinalProjisionToData(
+static std::vector<std::shared_ptr<NFmiQueryData> > DoFinalProjisionToData(
     nctools::Options &options,
     const BaseGridAreaData &areaData,
-    std::vector<boost::shared_ptr<NFmiQueryData> > &dataVector)
+    std::vector<std::shared_ptr<NFmiQueryData> > &dataVector)
 {
   try
   {
     if (areaData.doFinalDataProjection)
     {
-      std::vector<boost::shared_ptr<NFmiQueryData> > newDataVector;
+      std::vector<std::shared_ptr<NFmiQueryData> > newDataVector;
       for (size_t i = 0; i < dataVector.size(); i++)
       {
-        boost::shared_ptr<NFmiQueryData> oldData = dataVector[i];
+        std::shared_ptr<NFmiQueryData> oldData = dataVector[i];
         if (*(oldData->Info()->Grid()) == areaData.finalDataGrid)
         {  // konversiota ei tarvita, data oli jo halutussa hilassa
           newDataVector.push_back(oldData);
@@ -1392,7 +1392,7 @@ static std::vector<boost::shared_ptr<NFmiQueryData> > DoFinalProjisionToData(
         {
           if (options.verbose)
             std::cerr << "Doing projision to data " << i << std::endl;
-          boost::shared_ptr<NFmiQueryData> newData(
+          std::shared_ptr<NFmiQueryData> newData(
               NFmiQueryDataUtil::Interpolate2OtherGrid(oldData.get(), &areaData.finalDataGrid));
           if (newData)
             newDataVector.push_back(newData);
@@ -1452,7 +1452,7 @@ static std::string MakeFinalProducerName(
   }
 }
 
-static std::string GetProducerNamePostFix(boost::shared_ptr<NFmiQueryData> &data)
+static std::string GetProducerNamePostFix(std::shared_ptr<NFmiQueryData> &data)
 {
   std::string producerName = data->Info()->Producer()->GetName().CharPtr();
   std::string::size_type pos = producerName.find_last_of('_');
@@ -1476,15 +1476,15 @@ static int DoWrfData(nctools::Options &options,
     WRFData::TotalDimensionDataSet dimDataSet = GetNCTotalDimensionDataSet(options, ncFile);
     ::PrintWRFGlobalAttributes(options, ncFile);
     BaseGridAreaData areaData = GetBaseAreaData(options, ncFile);
-    std::vector<boost::shared_ptr<NFmiQueryData> > dataVector;
+    std::vector<std::shared_ptr<NFmiQueryData> > dataVector;
     for (WRFData::TotalDimensionDataSet::iterator it = dimDataSet.begin(); it != dimDataSet.end();
          ++it)
     {
-      boost::shared_ptr<NFmiQueryInfo> qInfo(
+      std::shared_ptr<NFmiQueryInfo> qInfo(
           ::CreateNewInnerInfo(options, *it, areaData, ncFile, paramconvs));
       if (qInfo)
       {
-        boost::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(*qInfo));
+        std::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(*qInfo));
         if (data)
         {
           NFmiFastQueryInfo info(data.get());

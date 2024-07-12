@@ -41,7 +41,7 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <boost/thread.hpp>
 #include <fmt/format.h>
 #include <newbase/NFmiAreaFactory.h>
@@ -107,9 +107,9 @@ struct GeneratedHybridParamInfo
 class GridSettingsPackage
 {
  public:
-  boost::shared_ptr<NFmiGrid> itsBaseGrid;
-  boost::shared_ptr<NFmiGrid> itsPressureGrid;
-  boost::shared_ptr<NFmiGrid> itsHybridGrid;
+  std::shared_ptr<NFmiGrid> itsBaseGrid;
+  std::shared_ptr<NFmiGrid> itsPressureGrid;
+  std::shared_ptr<NFmiGrid> itsHybridGrid;
 };
 
 static const size_t gMBsize = 1024 * 1024;
@@ -154,7 +154,7 @@ struct GribFilterOptions
   int itsReturnStatus;            // 0 = ok
   NFmiLevelBag itsIgnoredLevelList;  // lista miss‰ yksitt‰isi‰ leveleit‰, mitk‰ halutaan j‰tt‰‰
                                      // pois laskuista
-  vector<boost::shared_ptr<NFmiQueryData> > itsGeneratedDatas;
+  vector<std::shared_ptr<NFmiQueryData> > itsGeneratedDatas;
   vector<FmiLevelType> itsAcceptOnlyLevelTypes;  // lista jossa ainoat hyv‰ksytt‰v‰t level typet
   int itsGridInfoPrintCount;
   vector<ParamChangeItem> itsParamChangeTable;
@@ -185,10 +185,10 @@ class TotalQDataCollector
   typedef boost::unique_lock<MutexType> WriteLock;
 
  public:
-  typedef list<vector<boost::shared_ptr<NFmiQueryData> > > Container;
+  typedef list<vector<std::shared_ptr<NFmiQueryData> > > Container;
 
   TotalQDataCollector(void) : itsAddCount(0), itsTotalGeneratedQDatas() {}
-  void AddData(vector<boost::shared_ptr<NFmiQueryData> > &theDataList)
+  void AddData(vector<std::shared_ptr<NFmiQueryData> > &theDataList)
   {
     if (theDataList.size())
     {
@@ -217,7 +217,7 @@ void ConvertGrib2QData(GribFilterOptions &theGribFilterOptions);
 void CreateQueryDatas(vector<GridRecordData *> &theGribRecordDatas,
                       GribFilterOptions &theGribFilterOptions,
                       map<int, pair<double, double> > &theVerticalCoordinateMap);
-boost::shared_ptr<NFmiQueryData> CreateQueryData(vector<GridRecordData *> &theGribRecordDatas,
+std::shared_ptr<NFmiQueryData> CreateQueryData(vector<GridRecordData *> &theGribRecordDatas,
                                                  NFmiHPlaceDescriptor &theHplace,
                                                  NFmiVPlaceDescriptor &theVplace,
                                                  GribFilterOptions &theGribFilterOptions);
@@ -231,7 +231,7 @@ const NFmiLevel &FindFirstLevel(int theLevelValue, vector<GridRecordData *> &the
 NFmiTimeDescriptor GetTimeDesc(vector<GridRecordData *> &theGribRecordDatas,
                                NFmiHPlaceDescriptor &theHplace,
                                NFmiVPlaceDescriptor &theVplace);
-bool FillQDataWithGribRecords(boost::shared_ptr<NFmiQueryData> &theQData,
+bool FillQDataWithGribRecords(std::shared_ptr<NFmiQueryData> &theQData,
                               vector<GridRecordData *> &theGribRecordDatas,
                               bool verbose);
 int GetIntegerOptionValue(const NFmiCmdLine &theCmdline, char theOption);
@@ -331,7 +331,7 @@ static void InitParamChangeTable(const string &theParamChangeTableFileName,
 
 const NFmiPoint gMissingGridSize(kFloatMissing, kFloatMissing);
 
-static boost::shared_ptr<NFmiGrid> GetGridFromProjectionStr(string &theProjectionStr,
+static std::shared_ptr<NFmiGrid> GetGridFromProjectionStr(string &theProjectionStr,
                                                             int gridSizeX = -1,
                                                             int gridSizeY = -1)
 {
@@ -361,24 +361,24 @@ static boost::shared_ptr<NFmiGrid> GetGridFromProjectionStr(string &theProjectio
       cerr << "Warning, using default grid-size for wanted projection (50 x 50)" << endl;
     }
 
-    boost::shared_ptr<NFmiArea> area = NFmiAreaFactory::Create(areaStr);
+    std::shared_ptr<NFmiArea> area = NFmiAreaFactory::Create(areaStr);
     std::vector<double> values = NFmiStringTools::Split<std::vector<double> >(gridStr, ",");
     if (values.size() != 2)
       throw runtime_error("Given GridSize was invlid, has to be two numbers (e.g. x,y).");
     NFmiPoint gridSize(values[0], values[1]);
-    boost::shared_ptr<NFmiGrid> grid(new NFmiGrid(area->Clone(),
+    std::shared_ptr<NFmiGrid> grid(new NFmiGrid(area->Clone(),
                                                   static_cast<unsigned int>(gridSize.X()),
                                                   static_cast<unsigned int>(gridSize.Y())));
     return grid;
   }
 }
 
-static boost::shared_ptr<NFmiGrid> CreateDeepGribCopy(boost::shared_ptr<NFmiGrid> &theGrid)
+static std::shared_ptr<NFmiGrid> CreateDeepGribCopy(std::shared_ptr<NFmiGrid> &theGrid)
 {
   if (theGrid)
-    return boost::shared_ptr<NFmiGrid>(new NFmiGrid(*theGrid));
+    return std::shared_ptr<NFmiGrid>(new NFmiGrid(*theGrid));
   else
-    return boost::shared_ptr<NFmiGrid>();
+    return std::shared_ptr<NFmiGrid>();
 }
 
 static void HandleSeparateProjections(vector<string> &theSeparateProjectionsStr,
@@ -450,7 +450,7 @@ static void HandleProjectionString(const string &theProjStr, GridSettingsPackage
   }
 }
 
-static bool IsDifferentGridFileNamesUsed(vector<boost::shared_ptr<NFmiQueryData> > &theDatas)
+static bool IsDifferentGridFileNamesUsed(vector<std::shared_ptr<NFmiQueryData> > &theDatas)
 {
   size_t ssize = theDatas.size();
   if (ssize > 1)
@@ -606,7 +606,7 @@ static GeneratedHybridParamInfo GetGeneratedHybridParamInfo(NFmiCmdLine &theCmdL
   return hybridParamInfo;
 }
 
-static long GetLevelType(boost::shared_ptr<NFmiQueryData> &theQData)
+static long GetLevelType(std::shared_ptr<NFmiQueryData> &theQData)
 {
   if (theQData)
   {
@@ -926,7 +926,7 @@ static set<long> FindAllLevelTypes(TotalQDataCollector &theTotalQDataCollector)
   TotalQDataCollector::Container &qDatas = theTotalQDataCollector.TotalGeneratedQDatas();
   for (TotalQDataCollector::Container::iterator it = qDatas.begin(); it != qDatas.end(); ++it)
   {
-    vector<boost::shared_ptr<NFmiQueryData> > &qDataVector = *it;
+    vector<std::shared_ptr<NFmiQueryData> > &qDataVector = *it;
     for (size_t i = 0; i < qDataVector.size(); i++)
     {
       levelTypes.insert(::GetLevelType(qDataVector[i]));
@@ -936,7 +936,7 @@ static set<long> FindAllLevelTypes(TotalQDataCollector &theTotalQDataCollector)
 }
 
 static void FillStructureData(CombineDataStructureSearcher &theStructureSearcher,
-                              boost::shared_ptr<NFmiQueryData> &theQData)
+                              std::shared_ptr<NFmiQueryData> &theQData)
 {
   theStructureSearcher.AddGrid(theQData->Info()->HPlaceDescriptor());
   theStructureSearcher.AddTimes(theQData->Info()->TimeDescriptor());
@@ -950,7 +950,7 @@ static void SearchForDataStructures(TotalQDataCollector &theTotalQDataCollector,
   TotalQDataCollector::Container &qDatas = theTotalQDataCollector.TotalGeneratedQDatas();
   for (TotalQDataCollector::Container::iterator it = qDatas.begin(); it != qDatas.end(); ++it)
   {
-    vector<boost::shared_ptr<NFmiQueryData> > &qDataVector = *it;
+    vector<std::shared_ptr<NFmiQueryData> > &qDataVector = *it;
     for (size_t i = 0; i < qDataVector.size(); i++)
     {
       long levelType = ::GetLevelType(qDataVector[i]);
@@ -964,10 +964,10 @@ static void SearchForDataStructures(TotalQDataCollector &theTotalQDataCollector,
   }
 }
 
-static vector<boost::shared_ptr<NFmiQueryData> > CreateEmptyQDataVector(
+static vector<std::shared_ptr<NFmiQueryData> > CreateEmptyQDataVector(
     map<long, CombineDataStructureSearcher> &theLevelTypeStructures)
 {
-  vector<boost::shared_ptr<NFmiQueryData> > generatedQDatas;
+  vector<std::shared_ptr<NFmiQueryData> > generatedQDatas;
   for (map<long, CombineDataStructureSearcher>::iterator it = theLevelTypeStructures.begin();
        it != theLevelTypeStructures.end();
        ++it)
@@ -977,7 +977,7 @@ static vector<boost::shared_ptr<NFmiQueryData> > CreateEmptyQDataVector(
                        (*it).second.GetGrid(),
                        (*it).second.GetLevels());
     generatedQDatas.push_back(
-        boost::shared_ptr<NFmiQueryData>(NFmiQueryDataUtil::CreateEmptyData(info)));
+        std::shared_ptr<NFmiQueryData>(NFmiQueryDataUtil::CreateEmptyData(info)));
   }
   return generatedQDatas;
 }
@@ -991,7 +991,7 @@ static bool HasValidData(const NFmiDataMatrix<float> &theValues)
   return false;
 }
 
-static void FillQData(boost::shared_ptr<NFmiQueryData> &theQData,
+static void FillQData(std::shared_ptr<NFmiQueryData> &theQData,
                       TotalQDataCollector &theTotalQDataCollector)
 {
   if (theQData)
@@ -1002,7 +1002,7 @@ static void FillQData(boost::shared_ptr<NFmiQueryData> &theQData,
     TotalQDataCollector::Container &qDatas = theTotalQDataCollector.TotalGeneratedQDatas();
     for (TotalQDataCollector::Container::iterator it = qDatas.begin(); it != qDatas.end(); ++it)
     {
-      vector<boost::shared_ptr<NFmiQueryData> > &qDataVector = *it;
+      vector<std::shared_ptr<NFmiQueryData> > &qDataVector = *it;
       for (size_t i = 0; i < qDataVector.size(); i++)
       {
         if (levelType == GetLevelType(qDataVector[i]))
@@ -1075,7 +1075,7 @@ static void MakeTotalCombineQDatas(TotalQDataCollector &theTotalQDataCollector,
     // level-tyypeille (esim. pinta, painepinta ja mallipinta).
     ::SearchForDataStructures(theTotalQDataCollector, levelTypeStructures);
     // 2. Luo eri level-tyypeille tarvittavat descriptorit -> innerInfo -> queryData-pohja
-    vector<boost::shared_ptr<NFmiQueryData> > generatedQDatas =
+    vector<std::shared_ptr<NFmiQueryData> > generatedQDatas =
         ::CreateEmptyQDataVector(levelTypeStructures);
     // 3. Tee fastInfot datoille ja t‰yt‰ eri datat
     for (size_t i = 0; i < generatedQDatas.size(); i++)
@@ -1502,7 +1502,7 @@ static void CalcCroppedGrid(GridRecordData *theGridRecordData)
   else
     throw runtime_error("Error: CalcCroppedGrid doesn't support this projection yet.");
 
-  boost::shared_ptr<NFmiArea> newAreaPtr(newArea);
+  std::shared_ptr<NFmiArea> newAreaPtr(newArea);
   theGridRecordData->itsGridPointCropOffset = NFmiPoint(xy1.X(), xy1.Y());
   MyGrid newGrid(
       newArea, static_cast<int>(xy2.X() - xy1.X() + 1), static_cast<int>(xy2.Y() - xy1.Y() + 1));
@@ -2566,11 +2566,11 @@ vector<NFmiHPlaceDescriptor> GetAllHPlaceDescriptors(vector<GridRecordData *> &t
   return hPlaces;
 }
 
-static boost::shared_ptr<NFmiQueryData> GetSurfaceData(
-    vector<boost::shared_ptr<NFmiQueryData> > &theQdatas,
+static std::shared_ptr<NFmiQueryData> GetSurfaceData(
+    vector<std::shared_ptr<NFmiQueryData> > &theQdatas,
     FmiParameterName thePressureAtStationParId)
 {
-  boost::shared_ptr<NFmiQueryData> surfaceData;
+  std::shared_ptr<NFmiQueryData> surfaceData;
   for (size_t i = 0; i < theQdatas.size(); i++)
   {
     if (theQdatas[i]->Info()->SizeLevels() == 1)
@@ -2585,10 +2585,10 @@ static boost::shared_ptr<NFmiQueryData> GetSurfaceData(
   return surfaceData;
 }
 
-static boost::shared_ptr<NFmiQueryData> GethybridData(
-    vector<boost::shared_ptr<NFmiQueryData> > &theQdatas, FmiParameterName pressureId)
+static std::shared_ptr<NFmiQueryData> GethybridData(
+    vector<std::shared_ptr<NFmiQueryData> > &theQdatas, FmiParameterName pressureId)
 {
-  boost::shared_ptr<NFmiQueryData> hybridData;
+  std::shared_ptr<NFmiQueryData> hybridData;
   for (size_t i = 0; i < theQdatas.size(); i++)
   {
     if (theQdatas[i]->Info()->SizeLevels() > 1)  // pit‰‰ olla useita leveleit‰
@@ -2625,7 +2625,7 @@ static float CalcHybridPressure(double a, double b, float surfacePressure)
   }
 }
 
-static void CalcHybridPressureData(vector<boost::shared_ptr<NFmiQueryData> > &theQdatas,
+static void CalcHybridPressureData(vector<std::shared_ptr<NFmiQueryData> > &theQdatas,
                                    map<int, pair<double, double> > &theVerticalCoordinateMap,
                                    const GeneratedHybridParamInfo &theHybridPressureInfo)
 {
@@ -2635,9 +2635,9 @@ static void CalcHybridPressureData(vector<boost::shared_ptr<NFmiQueryData> > &th
     FmiParameterName pressureAtStationParId = theHybridPressureInfo.itsHelpParamId;
     FmiParameterName hybridPressureId =
         static_cast<FmiParameterName>(theHybridPressureInfo.itsGeneratedHybridParam.GetIdent());
-    boost::shared_ptr<NFmiQueryData> surfaceData =
+    std::shared_ptr<NFmiQueryData> surfaceData =
         ::GetSurfaceData(theQdatas, pressureAtStationParId);
-    boost::shared_ptr<NFmiQueryData> hybridData = ::GethybridData(theQdatas, hybridPressureId);
+    std::shared_ptr<NFmiQueryData> hybridData = ::GethybridData(theQdatas, hybridPressureId);
     if (surfaceData && hybridData)
     {
       NFmiFastQueryInfo surfaceInfo(surfaceData.get());
@@ -2726,7 +2726,7 @@ static float CalcRH(float P, float T, float Q)
 
 // HUOM! T‰m‰ pit‰‰ ajaa vasta jos ensin on laskettu paine parametri hybridi dataan!!!
 static void CalcHybridRelativeHumidityData(
-    vector<boost::shared_ptr<NFmiQueryData> > &theQdatas,
+    vector<std::shared_ptr<NFmiQueryData> > &theQdatas,
     const GeneratedHybridParamInfo &theHybridRelativeHumidityInfo,
     const GeneratedHybridParamInfo &theHybridPressureInfo)
 {
@@ -2739,7 +2739,7 @@ static void CalcHybridRelativeHumidityData(
     FmiParameterName SH_id = theHybridRelativeHumidityInfo.itsHelpParamId;
     FmiParameterName RH_id = static_cast<FmiParameterName>(
         theHybridRelativeHumidityInfo.itsGeneratedHybridParam.GetIdent());
-    boost::shared_ptr<NFmiQueryData> hybridData = ::GethybridData(theQdatas, RH_id);
+    std::shared_ptr<NFmiQueryData> hybridData = ::GethybridData(theQdatas, RH_id);
     if (hybridData)
     {
       NFmiFastQueryInfo RH_info(
@@ -2848,7 +2848,7 @@ void CreateQueryDatas(vector<GridRecordData *> &theGribRecordDatas,
       {
         if (theGribFilterOptions.fVerbose)
           cerr << "L" << NFmiStringTools::Convert(j) << "H" << NFmiStringTools::Convert(i) << " ";
-        boost::shared_ptr<NFmiQueryData> qdata = CreateQueryData(
+        std::shared_ptr<NFmiQueryData> qdata = CreateQueryData(
             theGribRecordDatas, hPlaceDescriptors[i], vPlaceDescriptors[j], theGribFilterOptions);
         if (qdata)
           theGribFilterOptions.itsGeneratedDatas.push_back(qdata);
@@ -2864,12 +2864,12 @@ void CreateQueryDatas(vector<GridRecordData *> &theGribRecordDatas,
   }
 }
 
-boost::shared_ptr<NFmiQueryData> CreateQueryData(vector<GridRecordData *> &theGribRecordDatas,
+std::shared_ptr<NFmiQueryData> CreateQueryData(vector<GridRecordData *> &theGribRecordDatas,
                                                  NFmiHPlaceDescriptor &theHplace,
                                                  NFmiVPlaceDescriptor &theVplace,
                                                  GribFilterOptions &theGribFilterOptions)
 {
-  boost::shared_ptr<NFmiQueryData> qdata;
+  std::shared_ptr<NFmiQueryData> qdata;
   int gribCount = static_cast<int>(theGribRecordDatas.size());
   if (gribCount > 0)
   {
@@ -2880,12 +2880,12 @@ boost::shared_ptr<NFmiQueryData> CreateQueryData(vector<GridRecordData *> &theGr
       return qdata;  // turha jatkaa jos toinen n‰ist‰ on tyhj‰
     NFmiQueryInfo innerInfo(params, times, theHplace, theVplace);
     CheckInfoSize(innerInfo, theGribFilterOptions.itsMaxQDataSizeInBytes);
-    qdata = boost::shared_ptr<NFmiQueryData>(NFmiQueryDataUtil::CreateEmptyData(innerInfo));
+    qdata = std::shared_ptr<NFmiQueryData>(NFmiQueryDataUtil::CreateEmptyData(innerInfo));
     bool anyDataFilled =
         FillQDataWithGribRecords(qdata, theGribRecordDatas, theGribFilterOptions.fVerbose);
     if (anyDataFilled == false)
     {
-      qdata = boost::shared_ptr<NFmiQueryData>();
+      qdata = std::shared_ptr<NFmiQueryData>();
     }
   }
   return qdata;
@@ -2914,7 +2914,7 @@ void CheckInfoSize(const NFmiQueryInfo &theInfo, size_t theMaxQDataSizeInBytes)
   }
 }
 
-bool FillQDataWithGribRecords(boost::shared_ptr<NFmiQueryData> &theQData,
+bool FillQDataWithGribRecords(std::shared_ptr<NFmiQueryData> &theQData,
                               vector<GridRecordData *> &theGribRecordDatas,
                               bool verbose)
 {

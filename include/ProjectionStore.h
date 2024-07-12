@@ -15,7 +15,7 @@
 #ifndef FMI_RADCONTOUR_PROJECTIONSTORE_H
 #define FMI_RADCONTOUR_PROJECTIONSTORE_H
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <set>
 #include <string>
 
@@ -43,7 +43,7 @@ class ProjectionStore
   ProjectionStore(const ProjectionStore& theStore);
   ProjectionStore& operator=(const ProjectionStore& theStore);
 
-  boost::shared_ptr<ProjectionStorePimple> itsPimple;
+  std::shared_ptr<ProjectionStorePimple> itsPimple;
 
 };  // class ProjectionStore
 }  // namespace RadContour

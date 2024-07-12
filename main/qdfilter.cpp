@@ -93,7 +93,7 @@
 #include <newbase/NFmiTimeList.h>
 
 #include <boost/lexical_cast.hpp>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <deque>
 #include <sstream>
 #include <stdexcept>
@@ -355,19 +355,19 @@ NFmiTimeDescriptor MakeTimeDescriptor(NFmiFastQueryInfo& theQ,
  */
 // ----------------------------------------------------------------------
 
-boost::shared_ptr<NFmiDataModifier> create_modifier(const string& theName)
+std::shared_ptr<NFmiDataModifier> create_modifier(const string& theName)
 {
-  if (theName == "mean") return boost::shared_ptr<NFmiDataModifier>(new NFmiDataModifierAvg);
-  if (theName == "meanabs") return boost::shared_ptr<NFmiDataModifier>(new NFmiDataModifierAvgAbs);
-  if (theName == "max") return boost::shared_ptr<NFmiDataModifier>(new NFmiDataModifierMax);
-  if (theName == "min") return boost::shared_ptr<NFmiDataModifier>(new NFmiDataModifierMin);
-  if (theName == "sum") return boost::shared_ptr<NFmiDataModifier>(new NFmiDataModifierSum);
-  if (theName == "change") return boost::shared_ptr<NFmiDataModifier>(new NFmiDataModifierChange);
-  if (theName == "median") return boost::shared_ptr<NFmiDataModifier>(new NFmiDataModifierMedian);
+  if (theName == "mean") return std::shared_ptr<NFmiDataModifier>(new NFmiDataModifierAvg);
+  if (theName == "meanabs") return std::shared_ptr<NFmiDataModifier>(new NFmiDataModifierAvgAbs);
+  if (theName == "max") return std::shared_ptr<NFmiDataModifier>(new NFmiDataModifierMax);
+  if (theName == "min") return std::shared_ptr<NFmiDataModifier>(new NFmiDataModifierMin);
+  if (theName == "sum") return std::shared_ptr<NFmiDataModifier>(new NFmiDataModifierSum);
+  if (theName == "change") return std::shared_ptr<NFmiDataModifier>(new NFmiDataModifierChange);
+  if (theName == "median") return std::shared_ptr<NFmiDataModifier>(new NFmiDataModifierMedian);
   if (theName == "maxmean")
-    return boost::shared_ptr<NFmiDataModifier>(new NFmiDataModifierMaxMean(0.5));
+    return std::shared_ptr<NFmiDataModifier>(new NFmiDataModifierMaxMean(0.5));
   if (theName == "sdev")
-    return boost::shared_ptr<NFmiDataModifier>(new NFmiDataModifierStandardDeviation);
+    return std::shared_ptr<NFmiDataModifier>(new NFmiDataModifierStandardDeviation);
 
   throw runtime_error("Unknown function: '" + theName + "'");
 }
@@ -500,7 +500,7 @@ int run(int argc, const char* argv[])
   // now create new data based on the new descriptors
 
   NFmiFastQueryInfo info(pdesc, tdesc, hdesc, vdesc);
-  boost::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
+  std::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
   NFmiFastQueryInfo dstinfo(data.get());
 
   if (data.get() == 0) throw runtime_error("Could not allocate memory for result data");
@@ -527,7 +527,7 @@ int run(int argc, const char* argv[])
   }
 
   // set the data modifier
-  boost::shared_ptr<NFmiDataModifier> modifier = create_modifier(opt_function);
+  std::shared_ptr<NFmiDataModifier> modifier = create_modifier(opt_function);
 
   for (dstinfo.ResetTime(); dstinfo.NextTime();)
   {

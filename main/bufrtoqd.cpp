@@ -75,7 +75,7 @@ extern "C"
 #include <bufr_value.h>
 }
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 struct ParNameInfo
 {
   ParNameInfo() : bufrId(), bufrName(), shortName(), parId(kFmiBadParameter) {}
@@ -592,7 +592,7 @@ std::list<std::string> expand_input_files()
 
   BOOST_FOREACH (const fs::path &path, paths)
   {
-    if (fs::is_regular(path)) files.push_back(path.string());
+    if (fs::is_regular_file(path)) files.push_back(path.string());
   }
 
   return files;
@@ -4140,7 +4140,7 @@ int run(int argc, char *argv[])
   // Initialize the data to missing values
 
   NFmiFastQueryInfo qi(pdesc, tdesc, hdesc, vdesc);
-  boost::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(qi));
+  std::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(qi));
   if (data.get() == 0) throw std::runtime_error("Could not allocate memory for result data");
 
   NFmiFastQueryInfo info(data.get());

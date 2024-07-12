@@ -2,13 +2,13 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/bind/bind.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <boost/foreach.hpp>
 #include <boost/program_options.hpp>
 #include <macgyver/CsvReader.h>
 #include <macgyver/Exception.h>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiStringTools.h>
+#include <filesystem>
 #include <iostream>
 #include <list>
 #include <string>
@@ -52,7 +52,7 @@ NFmiEnumConverter &get_enumconverter(void)
 bool parse_options(int argc, char *argv[], Options &options)
 {
   namespace po = boost::program_options;
-  namespace fs = boost::filesystem;
+  namespace fs = std::filesystem;
 
   std::string producerinfo;
 
@@ -87,10 +87,10 @@ bool parse_options(int argc, char *argv[], Options &options)
       ("Minimum NetCDF conventions to verify or empty string if no check wanted (default: " +
        options.conventions + ")")
           .c_str())("debug,d", po::bool_switch(&options.debug), "enable debugging output")(
-      "tdim", po::value(&options.tdim), ("name of T-dimension parameter (default=" + default_tdim + ")").c_str())(
-      "xdim", po::value(&options.xdim), ("name of X-dimension parameter (default=" + default_xdim + ")").c_str())(
-      "ydim", po::value(&options.ydim), ("name of Y-dimension parameter (default=" + default_ydim + ")").c_str())(
-      "zdim", po::value(&options.zdim), ("name of Z-dimension parameter (default=" + default_zdim + ")").c_str())(
+      "tdim", po::value<std::string>() /* (&options.tdim) */, ("name of T-dimension parameter (default=" + default_tdim + ")").c_str())(
+      "xdim", po::value<std::string>() /* (&options.xdim) */, ("name of X-dimension parameter (default=" + default_xdim + ")").c_str())(
+      "ydim", po::value<std::string>() /* (&options.ydim) */, ("name of Y-dimension parameter (default=" + default_ydim + ")").c_str())(
+      "zdim", po::value<std::string>() /* (&options.zdim) */, ("name of Z-dimension parameter (default=" + default_zdim + ")").c_str())(
       "info", po::bool_switch(&options.info), "print information on data dimensions and exit")(
       "experimental", po::bool_switch(&options.experimental), "enable experimental features")(
       "infile,i", po::value(&options.infiles), "input netcdf file")(
@@ -171,6 +171,11 @@ bool parse_options(int argc, char *argv[], Options &options)
 
     return false;
   }
+
+  if (opt.count("tdim")) options.tdim = opt["tdim"].as<std::string>();
+  if (opt.count("xdim")) options.xdim = opt["xdim"].as<std::string>();
+  if (opt.count("ydim")) options.ydim = opt["ydim"].as<std::string>();
+  if (opt.count("zdim")) options.zdim = opt["zdim"].as<std::string>();
 
   if (strstr(argv[0], "wrftoqd") != nullptr)
   {

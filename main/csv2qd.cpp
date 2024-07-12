@@ -102,7 +102,7 @@ Options options;
 bool parse_options(int argc, char* argv[], Options& options)
 {
   namespace po = boost::program_options;
-  namespace fs = boost::filesystem;
+  namespace fs = std::filesystem;
 
   string params;
 

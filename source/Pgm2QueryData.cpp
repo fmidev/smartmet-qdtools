@@ -12,7 +12,7 @@
 #include "ProjectionParser.h"
 #include "ProjectionStore.h"
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileSystem.h>
@@ -158,7 +158,7 @@ static NFmiQueryInfo MakeQdInfo(const PgmHeaderInfo &thePgmHeaderInfo,
 {
   std::string projname = *thePgmHeaderInfo.projections.names().begin();
   const Projection &proj = thePgmHeaderInfo.projections.projection(projname);
-  boost::shared_ptr<NFmiArea> area = proj.area(width, height);
+  std::shared_ptr<NFmiArea> area = proj.area(width, height);
 
   NFmiMetTime origtime = str2time(thePgmHeaderInfo.obstime);
 

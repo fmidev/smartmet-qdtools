@@ -1,11 +1,11 @@
 
 #pragma once
 
-#include <boost/optional.hpp>
 #include <macgyver/CsvReader.h>
 #include <newbase/NFmiEnumConverter.h>
 #include <list>
 #include <map>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -53,10 +53,10 @@ struct Options
   // coordinate parameter. Note that by default we do not extract level data, the Z dimension
   // must be given.
 
-  boost::optional<std::string> xdim;  // --xdim name. Usually 'lon', sometimes 'longitude' or 'xc'
-  boost::optional<std::string> ydim;  // --ydim name. Usually 'lat', sometimes 'latitude' or 'yc'
-  boost::optional<std::string> zdim{""};  // --zdim name. Usually 'lev' or 'zc'
-  boost::optional<std::string> tdim;      // --tdim name. Usually 'time', sometimes 't'
+  std::optional<std::string> xdim;  // --xdim name. Usually 'lon', sometimes 'longitude' or 'xc'
+  std::optional<std::string> ydim;  // --ydim name. Usually 'lat', sometimes 'latitude' or 'yc'
+  std::optional<std::string> zdim{""};  // --zdim name. Usually 'lev' or 'zc'
+  std::optional<std::string> tdim;      // --tdim name. Usually 'time', sometimes 't'
 
   AttributesMap cmdLineGlobalAttributes;  // -a Add global attrubutes, f.ex. -a DX=1356.3;DY=1265.3
   double tolerance = 1e-3;                // Axis stepping tolerance

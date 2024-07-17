@@ -34,7 +34,6 @@ LIBS += -L$(libdir) \
 	-lboost_program_options \
 	-lboost_iostreams \
 	-lboost_thread \
-	-lboost_filesystem \
         -lboost_system \
 	$(REQUIRED_LIBS) \
 	-lmetar \

@@ -30,7 +30,6 @@
 #include "TimeTools.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem/operations.hpp>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <optional>
 #include <boost/program_options.hpp>
@@ -172,7 +171,7 @@ vector<int> parse_stations(const std::string& str)
   list<string> parts;
   boost::algorithm::split(parts, str, boost::is_any_of(","));
 
-  BOOST_FOREACH (const auto& str, parts)
+  for (const auto& str : parts)
   {
     ret.push_back(Fmi::stoi(str));
   }

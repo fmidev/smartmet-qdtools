@@ -2,7 +2,6 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/bind/bind.hpp>
-#include <boost/foreach.hpp>
 #include <boost/program_options.hpp>
 #include <macgyver/CsvReader.h>
 #include <macgyver/Exception.h>

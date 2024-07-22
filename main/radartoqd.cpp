@@ -9,7 +9,6 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/filesystem/operations.hpp>
-#include <boost/foreach.hpp>
 #include <optional>
 #include <boost/program_options.hpp>
 #include <memory>
@@ -218,7 +217,7 @@ std::ostream &operator<<(std::ostream &out, const std::vector<T> &ob)
   {
     bool first = true;
     out << '[';
-    BOOST_FOREACH (const T &o, ob)
+    for (const T &o : ob)
     {
       if (!first)
         out << ",";

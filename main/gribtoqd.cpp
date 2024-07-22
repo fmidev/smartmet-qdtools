@@ -6,7 +6,6 @@
 
 #include "GribTools.h"
 #include <boost/algorithm/string/replace.hpp>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <memory>
 #include <boost/thread.hpp>

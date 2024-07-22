@@ -15,7 +15,6 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <macgyver/DateTime.h>
 #include <boost/filesystem/operations.hpp>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <optional>
 #include <boost/program_options.hpp>
@@ -1001,7 +1000,7 @@ NFmiParamDescriptor create_pdesc(const hid_t &hid)
 
   NFmiParamBag pbag;
 
-  BOOST_FOREACH (FmiParameterName id, params)
+  for (FmiParameterName id : params)
   {
     std::string name = converter.ToString(id);
     NFmiParam p(id, name);
@@ -1125,7 +1124,7 @@ NFmiVPlaceDescriptor collect_levels(const hid_t &hid)
 
   NFmiLevelBag lbag;
 
-  BOOST_FOREACH (double lvalue, levels)
+  for (double lvalue : levels)
   {
     NFmiLevel l(ltype, commonproduct, lvalue);
     if (options.verbose)
@@ -1168,7 +1167,7 @@ NFmiVPlaceDescriptor collect_pvol_levels(const hid_t &hid)
 
   NFmiLevelBag lbag;
 
-  BOOST_FOREACH (double angle, angles)
+  for (double angle : angles)
   {
     std::string levelname = "Elevation angle " + boost::lexical_cast<std::string>(angle);
     NFmiLevel l(ltype, levelname, angle);
@@ -1433,7 +1432,7 @@ void print_group_attributes(const hid_t &hid, const std::string &dpath)
   if (!H5Utilities::readAllAttributes(hid, dpath, attrs))
     throw std::runtime_error("Failed to read " + dpath + " attributes");
 
-  BOOST_FOREACH (const MXAAbstractAttributes::value_type &name_ptr, attrs)
+  for (const MXAAbstractAttributes::value_type &name_ptr : attrs)
   {
     std::cout << "Attribute: " << dpath << "/" << name_ptr.first << " ( "
               << H5Lite::StringForHDFType(name_ptr.second->getDataType())
@@ -1679,7 +1678,7 @@ void copy_dataset(const hid_t &hid, NFmiFastQueryInfo &info, int datanum)
     // Does not work
     info.ResetLocation();
 
-    BOOST_FOREACH (int value, values)
+    for (int value : values)
     {
       info.NextLocation();
       if (nodata && value == *nodata)

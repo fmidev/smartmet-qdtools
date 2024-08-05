@@ -23,7 +23,7 @@ INCLUDES +=  \
 	-isystem $(includedir)/ecbufr \
 	-I$(includedir)/smartmet
 
-LIBS += -L$(libdir) \
+LIBS += $(PREFIX_LDFLAGS) \
 	-lsmartmet-calculator \
 	-lsmartmet-smarttools \
 	-lsmartmet-newbase \
@@ -34,7 +34,6 @@ LIBS += -L$(libdir) \
 	-lboost_program_options \
 	-lboost_iostreams \
 	-lboost_thread \
-	-lboost_filesystem \
         -lboost_system \
 	$(REQUIRED_LIBS) \
 	-lmetar \
@@ -89,6 +88,7 @@ $(MAINPROGS): % : obj/%.o $(OBJFILES)
 clean:
 	rm -f $(MAINPROGS) source/*~ include/*~
 	rm -rf obj
+	$(MAKE) -C test $@
 
 format:
 	clang-format -i -style=file include/*.h source/*.cpp main/*.cpp

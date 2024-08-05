@@ -39,7 +39,6 @@ This file is part of libECBUFR.
 #include <boost/algorithm/string/split.hpp>
 #include <boost/bind/bind.hpp>
 #include <boost/filesystem/operations.hpp>
-#include <boost/foreach.hpp>
 #include <boost/program_options.hpp>
 #include <fmt/format.h>
 #include <macgyver/CsvReader.h>
@@ -75,7 +74,7 @@ extern "C"
 #include <bufr_value.h>
 }
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 struct ParNameInfo
 {
   ParNameInfo() : bufrId(), bufrName(), shortName(), parId(kFmiBadParameter) {}
@@ -590,9 +589,9 @@ std::list<std::string> expand_input_files()
   std::list<fs::path> paths;
   copy(fs::directory_iterator(p), fs::directory_iterator(), back_inserter(paths));
 
-  BOOST_FOREACH (const fs::path &path, paths)
+  for (const fs::path &path : paths)
   {
-    if (fs::is_regular(path)) files.push_back(path.string());
+    if (fs::is_regular_file(path)) files.push_back(path.string());
   }
 
   return files;
@@ -1111,7 +1110,7 @@ std::pair<BufrDataCategory, Messages> read_messages(const std::list<std::string>
   int succesful_parse_events = 0;
   int errorneous_parse_events = 0;
 
-  BOOST_FOREACH (const std::string &file, files)
+  for (const std::string &file : files)
   {
     // Reset for each file
     replicating = false;
@@ -1141,7 +1140,7 @@ std::pair<BufrDataCategory, Messages> read_messages(const std::list<std::string>
   if (datacategories.size() > 1)
   {
     std::list<std::string> names;
-    BOOST_FOREACH (int tmp, datacategories)
+    for (int tmp : datacategories)
       names.push_back(data_category_name(BufrDataCategory(tmp)));
     throw std::runtime_error("BURF messages contain multiple data categories (" +
                              boost::algorithm::join(names, ",") +
@@ -1167,9 +1166,9 @@ std::pair<BufrDataCategory, Messages> read_messages(const std::list<std::string>
 std::set<std::string> collect_names(const Messages &messages)
 {
   std::set<std::string> names;
-  BOOST_FOREACH (const Message &msg, messages)
+  for (const Message &msg : messages)
   {
-    BOOST_FOREACH (const Message::value_type &value, msg)
+    for (const Message::value_type &value : msg)
     {
       if (options.usebufrname)
         names.insert(value.second.name);
@@ -1189,7 +1188,7 @@ std::set<std::string> collect_names(const Messages &messages)
 NameMap map_names(const std::set<std::string> &names, const NameMap &pmap)
 {
   NameMap namemap;
-  BOOST_FOREACH (const ::std::string &name, names)
+  for (const ::std::string &name : names)
   {
     NameMap::const_iterator it = pmap.find(name);
     if (it != pmap.end())
@@ -1293,7 +1292,7 @@ NFmiParamDescriptor create_pdesc(const NameMap &namemap, BufrDataCategory catego
 {
   NFmiParamBag pbag;
 
-  BOOST_FOREACH (const NameMap::value_type &values, namemap)
+  for (const NameMap::value_type &values : namemap)
   {
     NFmiParam p(values.second.parId, values.second.shortName);
     p.InterpolationMethod(kLinearly);
@@ -1327,11 +1326,11 @@ int count_sounding_levels(const Messages &messages)
   int wmo_station = 0;
   int max_levels = 0;
   int levels = 0;
-  BOOST_FOREACH (const Message &msg, messages)
+  for (const Message &msg : messages)
   {
     ++levels;
 
-    BOOST_FOREACH (const Message::value_type &values, msg)
+    for (const Message::value_type &values : msg)
     {
       if (values.first == 1002)  // does wmo station change?
       {
@@ -1479,7 +1478,7 @@ NFmiHPlaceDescriptor create_hdesc_buoy_ship(const Messages &messages)
   typedef std::map<std::string, NFmiPoint> Stations;
   Stations stations;
 
-  BOOST_FOREACH (const Message &msg, messages)
+  for (const Message &msg : messages)
   {
     Message::const_iterator p_id = msg.find(1005);
     if (p_id == msg.end()) p_id = msg.find(1011);
@@ -1521,7 +1520,7 @@ NFmiHPlaceDescriptor create_hdesc_buoy_ship(const Messages &messages)
 
   NFmiLocationBag lbag;
   int number = 0;
-  BOOST_FOREACH (const Stations::value_type &name_coord, stations)
+  for (const Stations::value_type &name_coord : stations)
   {
     ++number;
 
@@ -1764,7 +1763,7 @@ NFmiMetTime get_validtime_amdar(std::set<NFmiMetTime> &used_times,
   // to be the case in actual messages
   short year = -1, month = -1, day = -1, hour = -1, minute = -1, second = 0;
 
-  BOOST_FOREACH (const Message::value_type &values, message)
+  for (const Message::value_type &values : message)
   {
     // shorthand variables
     const int descriptor = values.first;
@@ -1849,14 +1848,14 @@ NFmiTimeDescriptor create_tdesc_ident(const Messages &messages, const TimeIdentL
 
   if (options.debug)
   {
-    BOOST_FOREACH (auto const &identtime, identtimemap)
+    for (auto const &identtime : identtimemap)
     {
       fprintf(stderr, "IdentTime %s %s\n", identtime.first.c_str(),
               to_iso_string(identtime.second.PosixTime()).c_str());
     }
   }
 
-  BOOST_FOREACH (auto const &timeident, timeidentlist)
+  for (auto const &timeident : timeidentlist)
   {
     auto it = identtimemap.find(timeident);
     tlist.Add(new NFmiMetTime(it->second, true));
@@ -1886,7 +1885,7 @@ NFmiTimeDescriptor create_tdesc_amdar(const Messages &messages)
   std::set<NFmiMetTime> validtimes;
   std::string ident;
 
-  BOOST_FOREACH (const Message &msg, messages)
+  for (const Message &msg : messages)
   {
     // Return value can be ignored here
     get_validtime_amdar(validtimes, msg, ident);
@@ -1894,7 +1893,7 @@ NFmiTimeDescriptor create_tdesc_amdar(const Messages &messages)
 
   // Then the final timelist
 
-  BOOST_FOREACH (const NFmiMetTime &t, validtimes)
+  for (const NFmiMetTime &t : validtimes)
   {
     tlist.Add(new NFmiMetTime(t));
   }
@@ -1922,7 +1921,7 @@ NFmiTimeDescriptor create_tdesc(const Messages &messages, BufrDataCategory categ
   // Normal cases
 
   std::set<NFmiMetTime> validtimes;
-  BOOST_FOREACH (const Message &msg, messages)
+  for (const Message &msg : messages)
   {
     try
     {
@@ -1935,7 +1934,7 @@ NFmiTimeDescriptor create_tdesc(const Messages &messages, BufrDataCategory categ
   }
 
   NFmiTimeList tlist;
-  BOOST_FOREACH (const NFmiMetTime &t, validtimes)
+  for (const NFmiMetTime &t : validtimes)
   {
     tlist.Add(new NFmiMetTime(t));
   }
@@ -1984,7 +1983,7 @@ float normal_value(const record &rec)
 
 void copy_params(NFmiFastQueryInfo &info, const Message &msg, const NameMap &namemap)
 {
-  BOOST_FOREACH (const Message::value_type &value, msg)
+  for (const Message::value_type &value : msg)
   {
     auto key = options.usebufrname ? value.second.name : fmt::format("{:0>6}", value.first);
     NameMap::const_iterator it = namemap.find(key);
@@ -2018,7 +2017,7 @@ void copy_records_sounding(NFmiFastQueryInfo &info,
   NFmiMetTime t;
   std::string ident, lastident;
 
-  BOOST_FOREACH (const Message &msg, messages)
+  for (const Message &msg : messages)
   {
     try
     {
@@ -2103,7 +2102,7 @@ void copy_records_amdar(NFmiFastQueryInfo &info, const Messages &messages, const
   std::set<NFmiMetTime> validtimes;
   std::string ident, lastident;
 
-  BOOST_FOREACH (const Message &msg, messages)
+  for (const Message &msg : messages)
   {
     // Without -I option:
     // There is only one station and only one level, so the initial
@@ -2206,7 +2205,7 @@ void copy_records_buoy_ship(NFmiFastQueryInfo &info,
 
   std::string laststation = "";
 
-  BOOST_FOREACH (const Message &msg, messages)
+  for (const Message &msg : messages)
   {
     if (!info.Time(get_validtime(msg)))
       throw std::runtime_error("Internal error in handling valid times of the messages");
@@ -2295,7 +2294,7 @@ void copy_records(NFmiFastQueryInfo &info,
 
   info.First();
 
-  BOOST_FOREACH (const Message &msg, messages)
+  for (const Message &msg : messages)
   {
     try
     {
@@ -2637,7 +2636,7 @@ int get_obscount(const NameMap &namemap, const Message &msg)
 {
   int obscount = 0;
 
-  BOOST_FOREACH (const Message::value_type &value, msg)
+  for (const Message::value_type &value : msg)
   {
     auto key = fmt::format("{:0>6}", value.first);
 
@@ -3059,7 +3058,7 @@ void organize_messages_amdar(const Messages &origmessages, const NameMap &paramm
   // Store messages into a map using aircraft/amdar ident as the (main) key.
   // Filter off messages with missing/unknown ident, phase of flight or altitude
 
-  BOOST_FOREACH (const Message &msg, origmessages)
+  for (const Message &msg : origmessages)
   {
     try
     {
@@ -3245,13 +3244,13 @@ void organize_messages_amdar(const Messages &origmessages, const NameMap &paramm
 
   // Store the amdar idents in time and messages in time and ident order into lists
 
-  BOOST_FOREACH (auto const &timeidents, timeidentmessages)
+  for (auto const &timeidents : timeidentmessages)
   {
     if (options.debug)
       fprintf(stderr, "TimeIdent %s %lu idents\n", timeidents.first.c_str(),
               timeidents.second.size());
 
-    BOOST_FOREACH (auto const &identmessages, timeidents.second)
+    for (auto const &identmessages : timeidents.second)
     {
       if (options.debug)
         fprintf(stderr, "  %s %lu messages\n", identmessages.first.c_str(),
@@ -3579,7 +3578,7 @@ void organize_messages_sounding(const Messages &origmessages, const NameMap &par
   // Store messages into a map using station and time as the keys
   // Filter off messages with missing/unknown station or altitude
 
-  BOOST_FOREACH (const Message &msg, origmessages)
+  for (const Message &msg : origmessages)
   {
     try
     {
@@ -3728,13 +3727,13 @@ void organize_messages_sounding(const Messages &origmessages, const NameMap &par
 
   // Store the sounding idents in time and messages in time and ident order into lists
 
-  BOOST_FOREACH (auto const &timeidents, timeidentmessages)
+  for (auto const &timeidents : timeidentmessages)
   {
     if (options.debug)
       fprintf(stderr, "TimeIdent %s %lu idents\n", timeidents.first.c_str(),
               timeidents.second.size());
 
-    BOOST_FOREACH (auto const &identmessages, timeidents.second)
+    for (auto const &identmessages : timeidents.second)
     {
       if (options.debug)
         fprintf(stderr, "  %s %lu messages\n", identmessages.first.c_str(),
@@ -4120,11 +4119,11 @@ int run(int argc, char *argv[])
   if (options.debug)
   {
     int i = 0;
-    BOOST_FOREACH (const Message &msg, messages)
+    for (const Message &msg : messages)
     {
       std::cout << std::endl << "Message " << ++i << std::endl << std::endl;
 
-      BOOST_FOREACH (const Message::value_type &value, msg)
+      for (const Message::value_type &value : msg)
         std::cout << value.first << "," << value.second.name << "," << value.second.units << ","
                   << value.second.value << "," << value.second.svalue << std::endl;
     }
@@ -4140,7 +4139,7 @@ int run(int argc, char *argv[])
   // Initialize the data to missing values
 
   NFmiFastQueryInfo qi(pdesc, tdesc, hdesc, vdesc);
-  boost::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(qi));
+  std::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(qi));
   if (data.get() == 0) throw std::runtime_error("Could not allocate memory for result data");
 
   NFmiFastQueryInfo info(data.get());

@@ -30,7 +30,7 @@
 #include <newbase/NFmiFileSystem.h>
 #include <newbase/NFmiSettings.h>
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include <cstdlib>  // putenv
 #include <ctime>    // tzset
@@ -56,13 +56,13 @@ struct ParameterRequest
   WeatherParameter parameter;
   WeatherFunction areafunction;
   WeatherFunction timefunction;
-  boost::shared_ptr<Acceptor> tester;
+  std::shared_ptr<Acceptor> tester;
 
  private:
   ParameterRequest();
   WeatherParameter parse_parameter(const string& theParameter) const;
   WeatherFunction parse_function(const string& theString) const;
-  boost::shared_ptr<Acceptor> parse_acceptor(const string& theString) const;
+  std::shared_ptr<Acceptor> parse_acceptor(const string& theString) const;
 
   string extract_function(const string& theString) const;
   string extract_acceptor(const string& theString) const;
@@ -130,7 +130,7 @@ string ParameterRequest::extract_acceptor(const string& theString) const
  */
 // ----------------------------------------------------------------------
 
-boost::shared_ptr<Acceptor> ParameterRequest::parse_acceptor(const string& theString) const
+std::shared_ptr<Acceptor> ParameterRequest::parse_acceptor(const string& theString) const
 {
   const string::size_type pos = theString.find(':');
 
@@ -142,7 +142,7 @@ boost::shared_ptr<Acceptor> ParameterRequest::parse_acceptor(const string& theSt
   if (lo.empty() && hi.empty())
     throw runtime_error("Both lower and upper limit are missing from a modifier");
 
-  boost::shared_ptr<RangeAcceptor> acceptor(new RangeAcceptor);
+  std::shared_ptr<RangeAcceptor> acceptor(new RangeAcceptor);
 
   if (!lo.empty()) acceptor->lowerLimit(NFmiStringTools::Convert<float>(lo));
   if (!hi.empty()) acceptor->upperLimit(NFmiStringTools::Convert<float>(hi));
@@ -339,7 +339,7 @@ ParameterRequest::ParameterRequest(const string& theRequest)
   const string acceptor1 = extract_acceptor(functionname1);
   const string acceptor2 = extract_acceptor(functionname2);
 
-  tester = boost::shared_ptr<Acceptor>(new NullAcceptor);
+  tester = std::shared_ptr<Acceptor>(new NullAcceptor);
 
   if (areafunction == Percentage || areafunction == Count)
   {
@@ -403,7 +403,7 @@ void usage()
 struct options_list
 {
   map<string, WeatherArea> areas;
-  boost::shared_ptr<WeatherPeriodGenerator> generator;
+  std::shared_ptr<WeatherPeriodGenerator> generator;
   list<ParameterRequest> parameters;
   string timezone;
   vector<string> querydata;
@@ -415,7 +415,7 @@ struct options_list
   vector<string> php_names;
 
   vector<AnalysisSources> sources;
-  boost::shared_ptr<WeatherPeriod> period;
+  std::shared_ptr<WeatherPeriod> period;
 };
 
 static options_list options;
@@ -508,7 +508,7 @@ void parse_area_option(const string& theRequest)
 
 void establish_time_period()
 {
-  boost::shared_ptr<NFmiQueryData> qdata =
+  std::shared_ptr<NFmiQueryData> qdata =
       options.sources.front().getWeatherSource()->data(options.querydata.front());
   NFmiFastQueryInfo qinfo = NFmiFastQueryInfo(qdata.get());
 
@@ -517,7 +517,7 @@ void establish_time_period()
   qinfo.LastTime();
   const TextGenPosixTime lasttime = qinfo.ValidTime();
 
-  options.period = boost::shared_ptr<WeatherPeriod>(new WeatherPeriod(
+  options.period = std::shared_ptr<WeatherPeriod>(new WeatherPeriod(
       TextGenPosixTime::LocalTime(firsttime), TextGenPosixTime::LocalTime(lasttime)));
 
   if (options.verbose)
@@ -538,9 +538,9 @@ void establish_time_period()
 
 void make_data_timestep_generator()
 {
-  boost::shared_ptr<ListedPeriodGenerator> lgen(new ListedPeriodGenerator(*options.period));
+  std::shared_ptr<ListedPeriodGenerator> lgen(new ListedPeriodGenerator(*options.period));
 
-  boost::shared_ptr<NFmiQueryData> qdata =
+  std::shared_ptr<NFmiQueryData> qdata =
       options.sources.front().getWeatherSource()->data(options.querydata.front());
   NFmiFastQueryInfo qinfo = NFmiFastQueryInfo(qdata.get());
 
@@ -586,7 +586,7 @@ void parse_interval_option(const string& theRequest)
       if (words.front() == "all")
       {
         options.generator =
-            boost::shared_ptr<WeatherPeriodGenerator>(new NullPeriodGenerator(*options.period));
+            std::shared_ptr<WeatherPeriodGenerator>(new NullPeriodGenerator(*options.period));
         break;
       }
 
@@ -609,7 +609,7 @@ void parse_interval_option(const string& theRequest)
       }
       if (words2.size() >= 1) interval = NFmiStringTools::Convert<int>(words2.front());
 
-      options.generator = boost::shared_ptr<WeatherPeriodGenerator>(
+      options.generator = std::shared_ptr<WeatherPeriodGenerator>(
           new IntervalPeriodGenerator(*options.period, starthour, interval, mininterval));
       break;
     }
@@ -618,7 +618,7 @@ void parse_interval_option(const string& theRequest)
     {
       const int starthour = NFmiStringTools::Convert<int>(words.front());
       const int endhour = NFmiStringTools::Convert<int>(words.back());
-      options.generator = boost::shared_ptr<WeatherPeriodGenerator>(
+      options.generator = std::shared_ptr<WeatherPeriodGenerator>(
           new HourPeriodGenerator(*options.period, starthour, endhour, starthour, endhour));
       break;
     }
@@ -631,7 +631,7 @@ void parse_interval_option(const string& theRequest)
       const int endhour = NFmiStringTools::Convert<int>(words2.front());
       const int maxstarthour = NFmiStringTools::Convert<int>(words2.back());
       const int minendhour = NFmiStringTools::Convert<int>(words.back());
-      options.generator = boost::shared_ptr<WeatherPeriodGenerator>(
+      options.generator = std::shared_ptr<WeatherPeriodGenerator>(
           new HourPeriodGenerator(*options.period, starthour, endhour, maxstarthour, minendhour));
       break;
     }
@@ -703,8 +703,8 @@ void parse_command_line(int argc, const char* argv[])
   for (vector<AnalysisSources>::iterator it = options.sources.begin(); it != options.sources.end();
        ++it)
   {
-    boost::shared_ptr<WeatherSource> weathersource(new LatestWeatherSource());
-    boost::shared_ptr<MaskSource> masksource(new RegularMaskSource());
+    std::shared_ptr<WeatherSource> weathersource(new LatestWeatherSource());
+    std::shared_ptr<MaskSource> masksource(new RegularMaskSource());
 
     it->setWeatherSource(weathersource);
     it->setMaskSource(masksource);
@@ -796,7 +796,7 @@ AnalysisSources find_source(const WeatherArea& theArea)
   {
     const string& filename = options.querydata[idx];
     AnalysisSources& sources = options.sources[idx];
-    boost::shared_ptr<NFmiQueryData> data = sources.getWeatherSource()->data(filename);
+    std::shared_ptr<NFmiQueryData> data = sources.getWeatherSource()->data(filename);
 
     NFmiFastQueryInfo q = NFmiFastQueryInfo(data.get());
 

@@ -3,7 +3,7 @@
 #ifndef GeoTiffQD_H
 #define GeoTiffQD_H
 
-#include <boost/optional.hpp>
+#include <optional>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiQueryData.h>
 #include <cstdio>

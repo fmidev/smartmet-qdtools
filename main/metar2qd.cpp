@@ -29,10 +29,10 @@ RJTT 242030Z 36010KT 6000 -RA FEW007 SCT010 BKN015 12/11 Q1008 RMK
 
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem/operations.hpp>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
 
+#include <macgyver/FileSystem.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileString.h>
@@ -1755,7 +1755,7 @@ list<string> CollectMetarFiles(const vector<string> &fileFilterList)
 
     // Add found files with path into output list
 
-    BOOST_FOREACH (const string &f, fileList)
+    for (const string &f : fileList)
     {
       string metarFileName = wantedPath + f;
       files.push_back(metarFileName);
@@ -1783,14 +1783,18 @@ list<string> SortMetarFiles(const list<string> &metarfiles)
   typedef multimap<time_t, string> SortedFiles;
   SortedFiles sortedfiles;
 
-  BOOST_FOREACH (const string &filename, metarfiles)
+  for (const string &filename : metarfiles)
   {
-    std::time_t t = boost::filesystem::last_write_time(filename);
-    sortedfiles.insert(make_pair(t, filename));
+    const std::optional<std::time_t> opt_t = Fmi::last_write_time(filename);
+    if (opt_t)
+    {
+      std::time_t t = *opt_t;
+      sortedfiles.insert(make_pair(t, filename));
+    }
   }
 
   list<string> outfiles;
-  BOOST_FOREACH (const SortedFiles::value_type &vt, sortedfiles)
+  for (const SortedFiles::value_type &vt : sortedfiles)
     outfiles.push_back(vt.second);
 
   return outfiles;
@@ -1900,7 +1904,7 @@ void run(int argc, const char *argv[])
   vector<MetarData> dataBlocks;
 
   int debugCounter = 0;
-  BOOST_FOREACH (const string &filename, metarfiles)
+  for (const string &filename : metarfiles)
   {
     if (fVerboseMode)
       std::cerr << "Processing file no: " << ++debugCounter << " (" << filename << ")" << std::endl;

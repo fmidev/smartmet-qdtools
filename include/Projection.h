@@ -34,7 +34,7 @@
 #ifndef FMI_RADCONTOUR_PROJECTION_H
 #define FMI_RADCONTOUR_PROJECTION_H
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <newbase/NFmiArea.h>
 
 #include <string>
@@ -73,12 +73,12 @@ class Projection
 
   void ellipsoid(const std::string& theEllipsoid);
 
-  boost::shared_ptr<NFmiArea> area(unsigned int theWidth, unsigned int theHeight) const;
+  std::shared_ptr<NFmiArea> area(unsigned int theWidth, unsigned int theHeight) const;
   Imagine::NFmiPath project(const Imagine::NFmiPath& thePath,
                             const Imagine::NFmiImage& theImage) const;
 
  private:
-  boost::shared_ptr<ProjectionPimple> itsPimple;
+  std::shared_ptr<ProjectionPimple> itsPimple;
 
 };  // class Projection
 }  // namespace RadContour

@@ -9,10 +9,9 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/filesystem/operations.hpp>
-#include <boost/foreach.hpp>
-#include <boost/optional.hpp>
+#include <optional>
 #include <boost/program_options.hpp>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <fmt/format.h>
 #include <macgyver/StringConversion.h>
 #include <newbase/NFmiAreaFactory.h>
@@ -80,22 +79,22 @@ NFmiEnumConverter converter;
 
 struct point_t
 {
-  boost::optional<varfl> lat{}; /* latitude */
-  boost::optional<varfl> lon{}; /* longitude */
+  std::optional<varfl> lat{}; /* latitude */
+  std::optional<varfl> lon{}; /* longitude */
 };
 
 /* Meta information about image */
 
 struct meta_t
 {
-  boost::optional<int> year{};
-  boost::optional<int> month{};
-  boost::optional<int> day{};
-  boost::optional<int> hour{};
-  boost::optional<int> min{};
+  std::optional<int> year{};
+  std::optional<int> month{};
+  std::optional<int> day{};
+  std::optional<int> hour{};
+  std::optional<int> min{};
   point_t radar{};  // Radar position
-  boost::optional<varfl> radar_height{};
-  boost::optional<varfl> height_above_station{};
+  std::optional<varfl> radar_height{};
+  std::optional<varfl> height_above_station{};
 };
 
 /* Level slicing table */
@@ -107,34 +106,34 @@ struct scale_t
 
   // rainfall intensities
   std::vector<varfl> intensity_values{};
-  boost::optional<varfl> z_to_r_conversion{};
-  boost::optional<varfl> z_to_r_conversion_factor{};
-  boost::optional<varfl> z_to_r_conversion_exponent{};
+  std::optional<varfl> z_to_r_conversion{};
+  std::optional<varfl> z_to_r_conversion_factor{};
+  std::optional<varfl> z_to_r_conversion_exponent{};
 
   /* another method: */
-  boost::optional<varfl> offset{};    /* offset */
-  boost::optional<varfl> increment{}; /* increment */
+  std::optional<varfl> offset{};    /* offset */
+  std::optional<varfl> increment{}; /* increment */
 };
 
 /* Radar image */
 
 struct img_t
 {
-  boost::optional<int> type{};            /* Image type */
-  boost::optional<varfl> qual{};          /* quality indicator */
-  boost::optional<int> grid{};            /* Co-ordinate grid type */
+  std::optional<int> type{};            /* Image type */
+  std::optional<varfl> qual{};          /* quality indicator */
+  std::optional<int> grid{};            /* Co-ordinate grid type */
   point_t nw{};                           /* Northwest corner of the image */
   point_t ne{};                           /* NE corner */
   point_t se{};                           /* SE corner */
   point_t sw{};                           /* SW corner */
-  boost::optional<int> nrows{};           /* Number of pixels per row */
-  boost::optional<int> ncols{};           /* Number of pixels per column */
-  boost::optional<varfl> psizex{};        /* Pixel size along x coordinate */
-  boost::optional<varfl> psizey{};        /* Pixel size along y coordinate */
+  std::optional<int> nrows{};           /* Number of pixels per row */
+  std::optional<int> ncols{};           /* Number of pixels per column */
+  std::optional<varfl> psizex{};        /* Pixel size along x coordinate */
+  std::optional<varfl> psizey{};        /* Pixel size along y coordinate */
   scale_t scale{};                        /* Level slicing table */
-  boost::optional<varfl> elevation{};     /* Antenna elevation angle */
-  boost::optional<int> ns_organisation{}; /* North south view organisation */
-  boost::optional<int> ew_organisation{}; /* East west view organisation */
+  std::optional<varfl> elevation{};     /* Antenna elevation angle */
+  std::optional<int> ns_organisation{}; /* North south view organisation */
+  std::optional<int> ew_organisation{}; /* East west view organisation */
   std::vector<varfl> heights{};           /* Heights */
   std::vector<varfl> cappi_heights{};     /* CAPPI heights */
 
@@ -142,14 +141,14 @@ struct img_t
   // but we parse the respective messages in order to prevent warnings
   // and in order to provide useful debugging output.
 
-  boost::optional<int> calibration_method{};
-  boost::optional<int> clutter_treatment{};
-  boost::optional<varfl> ground_occultation_correction{};
-  boost::optional<varfl> range_attenuation_correction{};
-  boost::optional<varfl> bright_band_correction{};
-  boost::optional<varfl> radome_attenuation_correction{};
-  boost::optional<varfl> clear_air_attenuation_correction{};
-  boost::optional<varfl> precipitation_attenuation_correction{};
+  std::optional<int> calibration_method{};
+  std::optional<int> clutter_treatment{};
+  std::optional<varfl> ground_occultation_correction{};
+  std::optional<varfl> range_attenuation_correction{};
+  std::optional<varfl> bright_band_correction{};
+  std::optional<varfl> radome_attenuation_correction{};
+  std::optional<varfl> clear_air_attenuation_correction{};
+  std::optional<varfl> precipitation_attenuation_correction{};
 
   // Parsed image data
   unsigned short *data{nullptr};
@@ -159,22 +158,22 @@ struct img_t
 
 struct proj_t
 {
-  boost::optional<int> type{};      /* Projection type */
-  boost::optional<varfl> majax{};   /* Semi-major axis or rotation ellipsoid */
-  boost::optional<varfl> minax{};   /* Semi-minor axis or rotation ellipsoid */
+  std::optional<int> type{};      /* Projection type */
+  std::optional<varfl> majax{};   /* Semi-major axis or rotation ellipsoid */
+  std::optional<varfl> minax{};   /* Semi-minor axis or rotation ellipsoid */
   point_t origin{};                 /* Projection origin */
-  boost::optional<int> xoff{};      /* False easting */
-  boost::optional<int> yoff{};      /* False northing */
-  boost::optional<varfl> stdpar1{}; /* 1st standard parallel */
-  boost::optional<varfl> stdpar2{}; /* 2nd standard parallel */
+  std::optional<int> xoff{};      /* False easting */
+  std::optional<int> yoff{};      /* False northing */
+  std::optional<varfl> stdpar1{}; /* 1st standard parallel */
+  std::optional<varfl> stdpar2{}; /* 2nd standard parallel */
 };
 
 /* This is our internal data structure */
 
 struct radar_data_t
 {
-  boost::optional<int> wmoblock{}; /* WMO block number */
-  boost::optional<int> wmostat{};  /* WMO station number */
+  std::optional<int> wmoblock{}; /* WMO block number */
+  std::optional<int> wmostat{};  /* WMO station number */
   meta_t meta{};                   /* Meta information about the product */
   img_t img{};                     /* Radar reflectivity image */
   proj_t proj{};                   /* Projection information */
@@ -198,7 +197,7 @@ radar_data_t radar_data;
 // ----------------------------------------------------------------------
 
 template <typename T>
-std::ostream &operator<<(std::ostream &out, const boost::optional<T> &ob)
+std::ostream &operator<<(std::ostream &out, const std::optional<T> &ob)
 {
   if (!ob)
     out << '-';
@@ -218,7 +217,7 @@ std::ostream &operator<<(std::ostream &out, const std::vector<T> &ob)
   {
     bool first = true;
     out << '[';
-    BOOST_FOREACH (const T &o, ob)
+    for (const T &o : ob)
     {
       if (!first)
         out << ",";
@@ -273,7 +272,7 @@ std::string projection_type(int type)
   }
 }
 
-std::string projection_type(const boost::optional<int> type)
+std::string projection_type(const std::optional<int> type)
 {
   if (!type)
     return "-";
@@ -416,7 +415,7 @@ Options::Options()
 bool parse_options(int argc, char *argv[], Options &options)
 {
   namespace po = boost::program_options;
-  namespace fs = boost::filesystem;
+  namespace fs = std::filesystem;
   namespace ba = boost::algorithm;
 
   std::string producerinfo;
@@ -1262,12 +1261,12 @@ void check_corners()
  */
 // ----------------------------------------------------------------------
 
-boost::shared_ptr<NFmiQueryData> make_querydata()
+std::shared_ptr<NFmiQueryData> make_querydata()
 {
   // Create the output projection if there is one. We do it before doing any
   // work so that the user gets a fast response to a possible syntax error
 
-  boost::shared_ptr<NFmiArea> area;
+  std::shared_ptr<NFmiArea> area;
   if (!options.projection.empty())
     area = NFmiAreaFactory::Create(options.projection);
 
@@ -1294,7 +1293,7 @@ boost::shared_ptr<NFmiQueryData> make_querydata()
   // Initialize output data
 
   NFmiFastQueryInfo qi(pdesc, tdesc, hdesc, vdesc);
-  boost::shared_ptr<NFmiQueryData> qd(NFmiQueryDataUtil::CreateEmptyData(qi));
+  std::shared_ptr<NFmiQueryData> qd(NFmiQueryDataUtil::CreateEmptyData(qi));
   if (qd.get() == 0)
     throw std::runtime_error("Failed to allocate memory for resulting querydata");
 
@@ -1311,7 +1310,7 @@ boost::shared_ptr<NFmiQueryData> make_querydata()
     int height = static_cast<int>(round(area->XYArea(area.get()).Height()));
 
     NFmiGrid grid(area.get(), width, height);
-    boost::shared_ptr<NFmiQueryData> tmp(
+    std::shared_ptr<NFmiQueryData> tmp(
         NFmiQueryDataUtil::Interpolate2OtherGrid(qd.get(), &grid, nullptr));
     std::swap(qd, tmp);
   }

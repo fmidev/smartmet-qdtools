@@ -20,7 +20,6 @@
 #include <boost/bind/bind.hpp>
 #include <macgyver/DateTime.h>
 #include <boost/filesystem/operations.hpp>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 #include <macgyver/CsvReader.h>
@@ -102,7 +101,7 @@ Options options;
 bool parse_options(int argc, char* argv[], Options& options)
 {
   namespace po = boost::program_options;
-  namespace fs = boost::filesystem;
+  namespace fs = std::filesystem;
 
   string params;
 
@@ -206,7 +205,7 @@ bool parse_options(int argc, char* argv[], Options& options)
   NFmiEnumConverter converter;
   vector<string> parts;
   boost::algorithm::split(parts, params, boost::algorithm::is_any_of(","));
-  BOOST_FOREACH (const string& str, parts)
+  for (const string& str : parts)
   {
     int id = converter.ToEnum(str);
     if (id != kFmiBadParameter)
@@ -339,7 +338,7 @@ Params parse_params(const CsvTable& csv)
   Params params;
 
   int rownum = 0;
-  BOOST_FOREACH (const CsvTable::value_type& row, csv)
+  for (const CsvTable::value_type& row : csv)
   {
     ++rownum;
     try
@@ -396,7 +395,7 @@ Stations parse_stations(const CsvTable& csv)
   Stations stations;
 
   int rownum = 0;
-  BOOST_FOREACH (const CsvTable::value_type& row, csv)
+  for (const CsvTable::value_type& row : csv)
   {
     ++rownum;
     try
@@ -439,7 +438,7 @@ NFmiHPlaceDescriptor create_hdesc(const CsvTable& csv, const Stations& stations)
 
   set<string> used;
   string last_id = "";
-  BOOST_FOREACH (const CsvTable::value_type& row, csv)
+  for (const CsvTable::value_type& row : csv)
   {
     const string& id = row[options.stationcolumn];
     if (id != last_id)
@@ -456,7 +455,7 @@ NFmiHPlaceDescriptor create_hdesc(const CsvTable& csv, const Stations& stations)
   NFmiLocationBag lbag;
   if (!options.allstations)
   {
-    BOOST_FOREACH (const string& id, used)
+    for (const string& id : used)
     {
       Stations::const_iterator it = stations.find(id);
       if (it == stations.end())
@@ -500,7 +499,7 @@ NFmiVPlaceDescriptor create_vdesc(const CsvTable& csv)
 
   set<int> used;
   int last_level = 0;
-  BOOST_FOREACH (const CsvTable::value_type& row, csv)
+  for (const CsvTable::value_type& row : csv)
   {
     const string& tmp = row[options.levelcolumn];
     int level = boost::lexical_cast<int>(tmp);
@@ -518,7 +517,7 @@ NFmiVPlaceDescriptor create_vdesc(const CsvTable& csv)
 
   FmiLevelType ltype = static_cast<FmiLevelType>(options.leveltype);
   NFmiLevelBag lbag;
-  BOOST_FOREACH (int value, used)
+  for (int value : used)
   {
     NFmiLevel tmp(ltype, value);
     lbag.AddLevel(tmp);
@@ -537,7 +536,7 @@ NFmiParamDescriptor create_pdesc(const Params& params)
 {
   NFmiParamBag pbag;
 
-  BOOST_FOREACH (int id, options.params)
+  for (int id : options.params)
   {
     Params::const_iterator it = params.find(id);
     if (it == params.end())
@@ -601,7 +600,7 @@ NFmiTimeDescriptor create_tdesc(const CsvTable& csv, const Fmi::TimeZonePtr& tz)
 
   set<Fmi::DateTime> used;
   string last_t = "";
-  BOOST_FOREACH (const CsvTable::value_type& row, csv)
+  for (const CsvTable::value_type& row : csv)
   {
     const string& t = row[options.timecolumn];
     if (t != last_t)
@@ -616,7 +615,7 @@ NFmiTimeDescriptor create_tdesc(const CsvTable& csv, const Fmi::TimeZonePtr& tz)
   // Build TimeList
 
   NFmiTimeList tlist;
-  BOOST_FOREACH (const Fmi::DateTime& t, used)
+  for (const Fmi::DateTime& t : used)
   {
     tlist.Add(new NFmiMetTime(tomettime(t)));
   }
@@ -648,7 +647,7 @@ LocationIndex make_location_index(NFmiFastQueryInfo& info,
 
   Stations::const_iterator station = stations.end();
 
-  BOOST_FOREACH (const CsvTable::value_type& row, csv)
+  for (const CsvTable::value_type& row : csv)
   {
     const string& id = row[options.stationcolumn];
     if (station == stations.end() || station->second.id != id)
@@ -686,7 +685,7 @@ void copy_values(NFmiFastQueryInfo& info,
   string last_t;
 
   int rownum = 0;
-  BOOST_FOREACH (const CsvTable::value_type& row, csv)
+  for (const CsvTable::value_type& row : csv)
   {
     ++rownum;
 
@@ -741,7 +740,7 @@ void validate_csv(const CsvTable& csv)
   if (options.stationcolumn >= 0) ++columns;
 
   int rownum = 0;
-  BOOST_FOREACH (const CsvTable::value_type& row, csv)
+  for (const CsvTable::value_type& row : csv)
   {
     ++rownum;
     if (row.size() != columns)
@@ -798,7 +797,7 @@ int run(int argc, char* argv[])
   Csv csv, csvparams, csvstations;
   Fmi::CsvReader::read(options.paramsfile, boost::bind(&Csv::addrow, &csvparams, _1));
   Fmi::CsvReader::read(options.stationsfile, boost::bind(&Csv::addrow, &csvstations, _1));
-  BOOST_FOREACH (const string& infile, options.files)
+  for (const string& infile : options.files)
   {
     Fmi::CsvReader::read(infile, boost::bind(&Csv::addrow, &csv, _1));
   }

@@ -15,11 +15,10 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <macgyver/DateTime.h>
 #include <boost/filesystem/operations.hpp>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/optional.hpp>
+#include <optional>
 #include <boost/program_options.hpp>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <fmt/format.h>
 #include <gis/ProjInfo.h>
 #include <macgyver/StringConversion.h>
@@ -89,7 +88,7 @@ Options options;
 bool parse_options(int argc, char *argv[])
 {
   namespace po = boost::program_options;
-  namespace fs = boost::filesystem;
+  namespace fs = std::filesystem;
 
   std::string producerinfo;
 
@@ -388,7 +387,7 @@ T get_attribute(const hid_t &hid,
                 const std::string &group_name,
                 const std::string &attribute_name)
 {
-  namespace fs = boost::filesystem;
+  namespace fs = std::filesystem;
 
   if (!boost::starts_with(parent_path, "/"))
   {
@@ -398,8 +397,9 @@ T get_attribute(const hid_t &hid,
   // path must be the full path to the group parent in which the attribute is supposed to be.
   std::vector<fs::path> cumulativePaths;
   fs::path inPath(parent_path), cumulativePath, groupPath;
+  const fs::path root = inPath.root_directory();
 
-  while (!inPath.empty())
+  while (inPath != root)
   {
     cumulativePaths.push_back(inPath);
     inPath = inPath.parent_path();
@@ -432,7 +432,7 @@ T get_attribute(const hid_t &hid,
  */
 // ----------------------------------------------------------------------
 
-boost::optional<double> get_optional_double(const hid_t &hid,
+std::optional<double> get_optional_double(const hid_t &hid,
                                             std::string path,
                                             const std::string &name)
 {
@@ -452,7 +452,7 @@ boost::optional<double> get_optional_double(const hid_t &hid,
  */
 // ----------------------------------------------------------------------
 
-boost::optional<double> get_optional_double(const hid_t &hid,
+std::optional<double> get_optional_double(const hid_t &hid,
                                             std::string parent_path,
                                             const std::string &group_name,
                                             const std::string &attribute_name)
@@ -1000,7 +1000,7 @@ NFmiParamDescriptor create_pdesc(const hid_t &hid)
 
   NFmiParamBag pbag;
 
-  BOOST_FOREACH (FmiParameterName id, params)
+  for (FmiParameterName id : params)
   {
     std::string name = converter.ToString(id);
     NFmiParam p(id, name);
@@ -1124,7 +1124,7 @@ NFmiVPlaceDescriptor collect_levels(const hid_t &hid)
 
   NFmiLevelBag lbag;
 
-  BOOST_FOREACH (double lvalue, levels)
+  for (double lvalue : levels)
   {
     NFmiLevel l(ltype, commonproduct, lvalue);
     if (options.verbose)
@@ -1167,7 +1167,7 @@ NFmiVPlaceDescriptor collect_pvol_levels(const hid_t &hid)
 
   NFmiLevelBag lbag;
 
-  BOOST_FOREACH (double angle, angles)
+  for (double angle : angles)
   {
     std::string levelname = "Elevation angle " + boost::lexical_cast<std::string>(angle);
     NFmiLevel l(ltype, levelname, angle);
@@ -1341,7 +1341,7 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
       double LR_lat = get_attribute_value<double>(hid, "/where", "LR_lat");
       double UL_lon = get_attribute_value<double>(hid, "/where", "UL_lon");
       double UL_lat = get_attribute_value<double>(hid, "/where", "UL_lat");
-      boost::shared_ptr<NFmiArea> area(NFmiArea::CreateFromReverseCorners(
+      std::shared_ptr<NFmiArea> area(NFmiArea::CreateFromReverseCorners(
           projdef, sphere, NFmiPoint(UL_lon, UL_lat), NFmiPoint(LR_lon, LR_lat)));
       NFmiGrid grid(area->Clone(), xsize, ysize);
       return NFmiHPlaceDescriptor(grid);
@@ -1355,7 +1355,7 @@ NFmiHPlaceDescriptor create_hdesc(const hid_t &hid)
       double UR_lon = get_attribute_value<double>(hid, "/where", "UR_lon");
       double UR_lat = get_attribute_value<double>(hid, "/where", "UR_lat");
 
-      boost::shared_ptr<NFmiArea> area(NFmiArea::CreateFromCorners(
+      std::shared_ptr<NFmiArea> area(NFmiArea::CreateFromCorners(
           projdef, sphere, NFmiPoint(LL_lon, LL_lat), NFmiPoint(UR_lon, UR_lat)));
 
       NFmiGrid grid(area->Clone(), xsize, ysize);
@@ -1432,7 +1432,7 @@ void print_group_attributes(const hid_t &hid, const std::string &dpath)
   if (!H5Utilities::readAllAttributes(hid, dpath, attrs))
     throw std::runtime_error("Failed to read " + dpath + " attributes");
 
-  BOOST_FOREACH (const MXAAbstractAttributes::value_type &name_ptr, attrs)
+  for (const MXAAbstractAttributes::value_type &name_ptr : attrs)
   {
     std::cout << "Attribute: " << dpath << "/" << name_ptr.first << " ( "
               << H5Lite::StringForHDFType(name_ptr.second->getDataType())
@@ -1492,8 +1492,8 @@ void print_hdf_information(const hid_t &hid)
 // ----------------------------------------------------------------------
 
 double apply_gain_offset(double value,
-                         const boost::optional<double> &gain,
-                         const boost::optional<double> &offset)
+                         const std::optional<double> &gain,
+                         const std::optional<double> &offset)
 {
   if (gain)
     value *= *gain;
@@ -1678,7 +1678,7 @@ void copy_dataset(const hid_t &hid, NFmiFastQueryInfo &info, int datanum)
     // Does not work
     info.ResetLocation();
 
-    BOOST_FOREACH (int value, values)
+    for (int value : values)
     {
       info.NextLocation();
       if (nodata && value == *nodata)
@@ -2074,7 +2074,7 @@ int run(int argc, char *argv[])
   // Create the output projection if there is one. We do it before doing any
   // work so that the user gets a fast response to a possible syntax error
 
-  boost::shared_ptr<NFmiArea> area;
+  std::shared_ptr<NFmiArea> area;
   if (!options.projection.empty())
     area = NFmiAreaFactory::Create(options.projection);
 
@@ -2086,7 +2086,7 @@ int run(int argc, char *argv[])
   NFmiHPlaceDescriptor hdesc = create_hdesc(hid);
 
   NFmiFastQueryInfo qi(pdesc, tdesc, hdesc, vdesc);
-  boost::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(qi));
+  std::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(qi));
   NFmiFastQueryInfo info(data.get());
 
   if (data.get() == 0)
@@ -2105,7 +2105,7 @@ int run(int argc, char *argv[])
     int height = static_cast<int>(round(area->XYArea(area.get()).Height()));
 
     NFmiGrid grid(area.get(), width, height);
-    boost::shared_ptr<NFmiQueryData> tmp(
+    std::shared_ptr<NFmiQueryData> tmp(
         NFmiQueryDataUtil::Interpolate2OtherGrid(data.get(), &grid, nullptr));
     std::swap(data, tmp);
   }

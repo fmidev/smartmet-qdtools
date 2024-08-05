@@ -30,9 +30,8 @@
 #include "TimeTools.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem/operations.hpp>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/optional.hpp>
+#include <optional>
 #include <boost/program_options.hpp>
 #include <ogr_geometry.h>
 #include <macgyver/StringConversion.h>
@@ -172,7 +171,7 @@ vector<int> parse_stations(const std::string& str)
   list<string> parts;
   boost::algorithm::split(parts, str, boost::is_any_of(","));
 
-  BOOST_FOREACH (const auto& str, parts)
+  for (const auto& str : parts)
   {
     ret.push_back(Fmi::stoi(str));
   }
@@ -189,7 +188,7 @@ vector<int> parse_stations(const std::string& str)
 bool parse_options(int argc, char* argv[])
 {
   namespace po = boost::program_options;
-  namespace fs = boost::filesystem;
+  namespace fs = std::filesystem;
 
   string opt_stations;
   string opt_places;

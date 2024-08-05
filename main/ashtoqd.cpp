@@ -28,7 +28,6 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <macgyver/DateTime.h>
 #include <boost/filesystem/operations.hpp>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
@@ -59,7 +58,7 @@
 #include <sys/ioctl.h>
 #endif
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 // File name structure
 
@@ -231,7 +230,7 @@ std::list<fs::path> find_ash_files(const char* re)
 
   boost::regex expression(re, boost::regex::perl | boost::regex::icase);
   std::list<fs::path> ashfiles;
-  BOOST_FOREACH (const fs::path& file, files)
+  for (const fs::path& file : files)
   {
     if (boost::regex_match(file.filename().string(), expression)) ashfiles.push_back(file);
   }
@@ -249,14 +248,14 @@ std::list<Fmi::DateTime> find_model_run_times(const std::list<fs::path>& files,
                                                          int origintime_position)
 {
   std::set<std::string> stamps;
-  BOOST_FOREACH (const fs::path& file, files)
+  for (const fs::path& file : files)
   {
     std::string stamp = file.filename().string().substr(origintime_position, 12);
     stamps.insert(stamp);
   }
 
   std::list<Fmi::DateTime> times;
-  BOOST_FOREACH (const std::string& stamp, stamps)
+  for (const std::string& stamp : stamps)
   {
     Fmi::DateTime t = Fmi::TimeParser::parse(stamp);
     times.push_back(t);
@@ -302,11 +301,11 @@ std::list<fs::path> select_ash_files(const std::list<fs::path>& files,
 {
   std::list<fs::path> ret;
 
-  boost::shared_ptr<Fmi::TimeFormatter> formatter(Fmi::TimeFormatter::create("timestamp"));
+  std::shared_ptr<Fmi::TimeFormatter> formatter(Fmi::TimeFormatter::create("timestamp"));
 
   std::string selected_stamp = formatter->format(tmodel);
 
-  BOOST_FOREACH (const fs::path& file, files)
+  for (const fs::path& file : files)
   {
     if (selected_stamp == file.filename().string().substr(origintime_position, 12))
       ret.push_back(file);
@@ -374,7 +373,7 @@ NFmiTimeDescriptor create_tdesc(const std::list<fs::path>& files,
 {
   // Collect all unique times in sorted order
   std::set<std::string> stamps;
-  BOOST_FOREACH (const fs::path& file, files)
+  for (const fs::path& file : files)
   {
     std::string stamp = file.filename().string().substr(validtime_position, 12);
     stamps.insert(stamp);
@@ -382,7 +381,7 @@ NFmiTimeDescriptor create_tdesc(const std::list<fs::path>& files,
 
   // Build a time list
   NFmiTimeList tlist;
-  BOOST_FOREACH (const std::string& stamp, stamps)
+  for (const std::string& stamp : stamps)
   {
     Fmi::DateTime t = Fmi::TimeParser::parse(stamp);
     tlist.Add(new NFmiMetTime(tomettime(t)));
@@ -400,7 +399,7 @@ NFmiTimeDescriptor create_tdesc(const std::list<fs::path>& files,
 
 NFmiHPlaceDescriptor create_hdesc()
 {
-  boost::shared_ptr<NFmiArea> area = NFmiAreaFactory::Create(options.projection);
+  std::shared_ptr<NFmiArea> area = NFmiAreaFactory::Create(options.projection);
   int width = static_cast<int>(round(area->XYArea(area.get()).Width()));
   int height = static_cast<int>(round(area->XYArea(area.get()).Height()));
 
@@ -421,7 +420,7 @@ NFmiVPlaceDescriptor create_vdesc(const std::list<fs::path>& files)
     // Collect unique flight level descriptions. Format: FLaaa-bbb
 
     std::set<std::string> levels;
-    BOOST_FOREACH (const fs::path& file, files)
+    for (const fs::path& file : files)
     {
       std::string level = file.filename().string().substr(level_position_in_filename, 9);
       levels.insert(level);
@@ -431,7 +430,7 @@ NFmiVPlaceDescriptor create_vdesc(const std::list<fs::path>& files)
 
     FmiLevelType leveltype = kFmiFlightLevel;
     NFmiLevelBag lbag;
-    BOOST_FOREACH (const std::string& levelname, levels)
+    for (const std::string& levelname : levels)
     {
       double levelvalue = boost::lexical_cast<double>(levelname.substr(6, 3));
       NFmiLevel l(leveltype, levelname, levelvalue);
@@ -773,10 +772,10 @@ void copy_ash_boundary_file(NFmiFastQueryInfo& info, const fs::path& file)
 
   // Poke the on/off values into the querydata.
 
-  // Needed since BOOST_FOREACH does not like templates in it, atleast not with g++
+  // Needed since for does not like templates in it : atleast not with g++
   typedef std::map<std::string, NFmiSvgPath>::value_type value_type;
 
-  BOOST_FOREACH (const value_type& vt, paths)
+  for (const value_type& vt : paths)
   {
     const std::string& flightlevel = vt.first;
     const NFmiSvgPath& path = vt.second;
@@ -845,7 +844,7 @@ int run(int argc, char* argv[])
   if (options.verbose)
   {
     std::cout << "Ash files to be processed:" << std::endl;
-    BOOST_FOREACH (const fs::path& file, files)
+    for (const fs::path& file : files)
       std::cout << "  " << file.filename() << std::endl;
   }
 
@@ -859,7 +858,7 @@ int run(int argc, char* argv[])
   // Initialize the data to missing values
 
   NFmiFastQueryInfo qi(pdesc, tdesc, hdesc, vdesc);
-  boost::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(qi));
+  std::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(qi));
   if (data.get() == 0) throw std::runtime_error("Could not allocate memory for result data");
 
   NFmiFastQueryInfo info(data.get());
@@ -868,7 +867,7 @@ int run(int argc, char* argv[])
 
   // Add each file to the data
 
-  BOOST_FOREACH (const fs::path& file, files)
+  for (const fs::path& file : files)
   {
     if (!options.boundaries)
       copy_ash_concentration_file(info, file);

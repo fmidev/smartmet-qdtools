@@ -751,10 +751,10 @@ NcVar *NcFileExtended::axis(const std::set<std::string> &axisnames)
  */
 // ----------------------------------------------------------------------
 
-void NcFileExtended::initAxis(const boost::optional<std::string> &xname,
-                              const boost::optional<std::string> &yname,
-                              const boost::optional<std::string> &zname,
-                              const boost::optional<std::string> &tname)
+void NcFileExtended::initAxis(const std::optional<std::string> &xname,
+                              const std::optional<std::string> &yname,
+                              const std::optional<std::string> &zname,
+                              const std::optional<std::string> &tname)
 {
   try
   {

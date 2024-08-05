@@ -15,6 +15,7 @@
 #include <newbase/NFmiStringTools.h>
 #include <newbase/NFmiVersion.h>
 
+#include <macgyver/FileSystem.h>
 #include <macgyver/TimeParser.h>
 
 #include <boost/filesystem/operations.hpp>
@@ -258,8 +259,8 @@ void run(int argc, const char* argv[])
     version = 6;
   qd.InfoVersion(version);
 
-  boost::filesystem::path p = dataFile;
-  boost::filesystem::path tmp = boost::filesystem::unique_path(p.string() + "_%%%%%%%%");
+  std::filesystem::path p = dataFile;
+  std::filesystem::path tmp = Fmi::unique_path(p.string() + "_%%%%%%%%");
 
   ofstream out(tmp.c_str(), ios::binary | ios::out);
   if (!out)
@@ -267,6 +268,6 @@ void run(int argc, const char* argv[])
   out << qd;
   out.close();
 
-  boost::filesystem::remove(dataFile);
-  boost::filesystem::rename(tmp, dataFile);
+  std::filesystem::remove(dataFile);
+  std::filesystem::rename(tmp, dataFile);
 }

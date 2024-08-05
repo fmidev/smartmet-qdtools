@@ -528,7 +528,7 @@ const NFmiTimeDescriptor make_tdesc()
  */
 // ----------------------------------------------------------------------
 
-boost::shared_ptr<NFmiQueryData> create_querydata(const KrigingData& theData)
+std::shared_ptr<NFmiQueryData> create_querydata(const KrigingData& theData)
 {
   if (options.verbose)
     cout << "Filling the querydata" << endl;
@@ -541,7 +541,7 @@ boost::shared_ptr<NFmiQueryData> create_querydata(const KrigingData& theData)
   // create the new querydata
 
   NFmiFastQueryInfo info(pdesc, tdesc, hdesc, vdesc);
-  boost::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
+  std::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
 
   if (data.get() == 0)
     throw runtime_error("Failed to allocate querydata");
@@ -599,7 +599,7 @@ int domain(int argc, const char* argv[])
 
   // Create the querydata
 
-  boost::shared_ptr<NFmiQueryData> qd = create_querydata(kdata);
+  std::shared_ptr<NFmiQueryData> qd = create_querydata(kdata);
 
   if (qd.get() == 0)
     throw runtime_error("Failed to create the querydata");

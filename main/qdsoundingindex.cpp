@@ -49,7 +49,7 @@ static void run(int argc, const char* argv[])
 
   NFmiMilliSecondTimer debugTimer;
   debugTimer.StartTimer();
-  boost::shared_ptr<NFmiQueryData> data = NFmiSoundingIndexCalculator::CreateNewSoundingIndexData(
+  std::shared_ptr<NFmiQueryData> data = NFmiSoundingIndexCalculator::CreateNewSoundingIndexData(
       fileIn, producerName, true, 0, false, workerThreadCount);
   debugTimer.StopTimer();
 

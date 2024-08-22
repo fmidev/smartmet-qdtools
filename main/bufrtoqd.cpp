@@ -536,7 +536,7 @@ void validate_category(BufrDataCategory category)
   std::string name = data_category_name(category);
 
   if (name.empty())
-    throw std::runtime_error("Data category " + boost::lexical_cast<std::string>(category) +
+    throw std::runtime_error("Data category " + Fmi::to_string(category) +
                              " unknown");
 
   switch (category)
@@ -1024,13 +1024,13 @@ void read_message(const std::string &filename,
         bufr_free_message(msg);
         // continuing at this point may cause a segmentation fault
         throw std::runtime_error("Could not decode message " +
-                                 boost::lexical_cast<std::string>(count));
+                                 Fmi::to_string(count));
       }
       if (dts->data_flag & BUFR_FLAG_INVALID)
       {
         bufr_free_message(msg);
         // continuing at this point may cause a segmentation fault
-        throw std::runtime_error("Message number " + boost::lexical_cast<std::string>(count) +
+        throw std::runtime_error("Message number " + Fmi::to_string(count) +
                                  " is invalid");
       }
 
@@ -1579,7 +1579,7 @@ NFmiStation get_station(const Message &msg)
     lat = kFloatMissing;
   }
 
-  return NFmiStation(wmo, boost::lexical_cast<std::string>(wmo), lon, lat);
+  return NFmiStation(wmo, Fmi::to_string(wmo), lon, lat);
 }
 
 // ----------------------------------------------------------------------

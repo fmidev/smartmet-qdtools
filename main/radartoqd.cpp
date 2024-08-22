@@ -1089,7 +1089,7 @@ NFmiHPlaceDescriptor create_hdesc()
     }
     default:
       throw std::runtime_error("Unknown projection type " +
-                               boost::lexical_cast<std::string>(*radar_data.proj.type));
+                               Fmi::to_string(*radar_data.proj.type));
   }
 }
 
@@ -1150,8 +1150,8 @@ float decode_value(unsigned short value)
     else if (static_cast<size_t>(value - 1) < n)
       ret = radar_data.img.scale.dbz_values[value - 1];
     else if (!options.allow_overflow)
-      throw std::runtime_error("Overflow index " + boost::lexical_cast<std::string>(value) +
-                               ", size of legend is " + boost::lexical_cast<std::string>(n));
+      throw std::runtime_error("Overflow index " + Fmi::to_string(value) +
+                               ", size of legend is " + Fmi::to_string(n));
     else
     {
       ret = radar_data.img.scale.dbz_values[n - 1];
@@ -1169,8 +1169,8 @@ float decode_value(unsigned short value)
     else if (static_cast<size_t>(value - 1) < n)
       ret = radar_data.img.scale.intensity_values[value - 1];
     else if (!options.allow_overflow)
-      throw std::runtime_error("Overflow index " + boost::lexical_cast<std::string>(value) +
-                               ", size of legend is " + boost::lexical_cast<std::string>(n));
+      throw std::runtime_error("Overflow index " + Fmi::to_string(value) +
+                               ", size of legend is " + Fmi::to_string(n));
     else
     {
       ret = radar_data.img.scale.intensity_values[n - 1];

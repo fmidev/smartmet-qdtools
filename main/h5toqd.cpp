@@ -529,7 +529,7 @@ std::list<std::string> get_top_names(const hid_t &hid)
 
 std::string dataset(int index)
 {
-  return "/" + options.datasetname + boost::lexical_cast<std::string>(index);
+  return "/" + options.datasetname + Fmi::to_string(index);
 }
 
 // ----------------------------------------------------------------------
@@ -577,7 +577,7 @@ int count_datasets(const hid_t &hid)
   int n = 0;
   while (true)
   {
-    std::string name = options.datasetname + boost::lexical_cast<std::string>(n + 1);
+    std::string name = options.datasetname + Fmi::to_string(n + 1);
     if (find(names.begin(), names.end(), name) == names.end())
       return n;
     ++n;
@@ -610,7 +610,7 @@ int count_datas(const hid_t &hid, int i)
 
     for (int j = 1;; j++)
     {
-      std::string dataname = std::string("data") + boost::lexical_cast<std::string>(j);
+      std::string dataname = std::string("data") + Fmi::to_string(j);
       if (grpset.find(dataname) != grpset.end())
       {
         counter++;
@@ -628,7 +628,7 @@ int count_datas(const hid_t &hid, int i)
 
   for (int j = 1;; j++)
   {
-    std::string dataprefix = prefix + "data" + boost::lexical_cast<std::string>(j);
+    std::string dataprefix = prefix + "data" + Fmi::to_string(j);
     if (!H5Utilities::isGroup(hid, dataprefix))
       return j - 1;
   }
@@ -961,7 +961,7 @@ NFmiParamDescriptor create_pdesc(const hid_t &hid)
       // Valid opera data
       for (int j = 1; j <= nj; j++)
       {
-        std::string prefix = dataset(i) + "/data" + boost::lexical_cast<std::string>(j);
+        std::string prefix = dataset(i) + "/data" + Fmi::to_string(j);
 
         product = get_attribute<std::string>(hid, prefix, "what", "product");
 
@@ -1169,7 +1169,7 @@ NFmiVPlaceDescriptor collect_pvol_levels(const hid_t &hid)
 
   for (double angle : angles)
   {
-    std::string levelname = "Elevation angle " + boost::lexical_cast<std::string>(angle);
+    std::string levelname = "Elevation angle " + Fmi::to_string(angle);
     NFmiLevel l(ltype, levelname, angle);
     lbag.AddLevel(l);
   }
@@ -1476,7 +1476,7 @@ void print_hdf_information(const hid_t &hid)
     int nj = count_datas(hid, i);
     for (int j = 1; j <= nj; j++)
     {
-      std::string dataprefix = prefix + "data" + boost::lexical_cast<std::string>(j) + "/";
+      std::string dataprefix = prefix + "data" + Fmi::to_string(j) + "/";
 
       print_group_attributes(hid, dataprefix + "what");
       print_group_attributes(hid, dataprefix + "where");
@@ -1510,7 +1510,7 @@ double apply_gain_offset(double value,
 
 void copy_dataset(const hid_t &hid, NFmiFastQueryInfo &info, int datanum)
 {
-  std::string prefix = options.datasetname + boost::lexical_cast<std::string>(datanum);
+  std::string prefix = options.datasetname + Fmi::to_string(datanum);
 
   // Set level
 
@@ -1523,7 +1523,7 @@ void copy_dataset(const hid_t &hid, NFmiFastQueryInfo &info, int datanum)
     // Valid Opera data
     for (int i = 1; i <= n; i++)
     {
-      std::string iprefix = ("/" + prefix + "/data" + boost::lexical_cast<std::string>(i));
+      std::string iprefix = ("/" + prefix + "/data" + Fmi::to_string(i));
 
       // Establish product details
       std::string product = get_attribute<std::string>(hid, iprefix, "what", "product");
@@ -1700,7 +1700,7 @@ void copy_dataset(const hid_t &hid, NFmiFastQueryInfo &info, int datanum)
 
 void copy_dataset_pvol(const hid_t &hid, NFmiFastQueryInfo &info, int datanum)
 {
-  std::string prefix = options.datasetname + boost::lexical_cast<std::string>(datanum);
+  std::string prefix = options.datasetname + Fmi::to_string(datanum);
 
   // Set time
 

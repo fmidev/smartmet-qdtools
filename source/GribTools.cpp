@@ -5,6 +5,7 @@
 // ======================================================================
 
 #include "GribTools.h"
+#include <macgyver/StringConversion.h>
 #include <newbase/NFmiCommentStripper.h>
 
 #include <boost/lexical_cast.hpp>
@@ -115,28 +116,28 @@ void gset(grib_handle *g, const char *name, double value)
 {
   if (grib_set_double(g, name, value))
     throw std::runtime_error(std::string("Failed to set ") + name + " to value " +
-                             boost::lexical_cast<std::string>(value));
+                             Fmi::to_string(value));
 }
 
 void gset(grib_handle *g, const char *name, long value)
 {
   if (grib_set_long(g, name, value))
     throw std::runtime_error(std::string("Failed to set ") + name + " to value " +
-                             boost::lexical_cast<std::string>(value));
+                             Fmi::to_string(value));
 }
 
 void gset(grib_handle *g, const char *name, unsigned long value)
 {
   if (grib_set_long(g, name, value))
     throw std::runtime_error(std::string("Failed to set ") + name + " to value " +
-                             boost::lexical_cast<std::string>(value));
+                             Fmi::to_string(value));
 }
 
 void gset(grib_handle *g, const char *name, int value)
 {
   if (grib_set_long(g, name, value))
     throw std::runtime_error(std::string("Failed to set ") + name + " to value " +
-                             boost::lexical_cast<std::string>(value));
+                             Fmi::to_string(value));
 }
 
 void gset(grib_handle *g, const char *name, const char *value)

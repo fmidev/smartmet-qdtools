@@ -23,6 +23,9 @@ case $eccodes_version in
     2.33.*)
         version_suffix=33
         ;;
+    2.35.*)
+        version_suffix=35
+        ;;
 esac
 
 grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h

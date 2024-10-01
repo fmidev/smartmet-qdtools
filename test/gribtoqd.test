@@ -12,19 +12,16 @@ version_suffix=
 eccodes_version=$(codes_info -v)
 case $eccodes_version in
     2.2*.*)
-        version_suffix=2X
+        version_suffixes="2X"
         ;;
     2.30.*)
-        version_suffix=30
+        version_suffixes="30"
         ;;
-    2.32.*)
-        version_suffix=32
+    2.3[2-6].*)
+        version_suffixes="32"
         ;;
-    2.33.*)
-        version_suffix=33
-        ;;
-    2.35.*)
-        version_suffix=35
+    2.3[7-9].*|2.[4-9].*)
+        version_suffixes="37 32"
         ;;
 esac
 
@@ -37,12 +34,14 @@ for f in data/grib/*.grib*; do
     name0=$(echo $name | sed -r 's:(\.xz|\.bz2|\.zstd|\.xz)$::')
     input=$(dirname $f)/$name0
     search=results/gribtoqd/${name0}
-    if ! test -z "$version_suffix" ; then
-        search="$search.$version_suffix $search"
+    if ! test -z "$version_suffixes" ; then
+        for suffix in $version_suffixes; do
+            search="$search.$suffix $search"
+        done
     fi
 
     if [[ $wgs84 == 1 ]]; then
-	search="$(for fn $search; do echo $fn.wgs84; done) $search"
+        search="$(for fn $search; do echo $fn.wgs84; done) $search"
     fi
 
     resultfiles=
@@ -55,7 +54,7 @@ for f in data/grib/*.grib*; do
     done
 
     if test -z "$resultfiles" ; then
-	errors=$(($errors+1))
+        errors=$(($errors+1))
         echo "FAILED: no expected result file found for $f"
     else
         resultfile=$(for fn in $resultfiles; do echo $fn; done | head -1);

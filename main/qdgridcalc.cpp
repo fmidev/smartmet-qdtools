@@ -80,13 +80,13 @@ static void PrintGridSizeInfo(const NFmiArea *area,
       idealGrid.GridToLatLon(NFmiPoint(closestXGridSize / 2, closestYGridSize / 2 + 1)));
   double keskiMidY = loc1.Distance(loc2) / 1000.;
 
-  // 5. yl‰ keski x-dist
+  // 5. yl√§ keski x-dist
   loc1 =
       NFmiLocation(idealGrid.GridToLatLon(NFmiPoint(closestXGridSize / 2, closestYGridSize - 1)));
   loc2 = NFmiLocation(
       idealGrid.GridToLatLon(NFmiPoint(closestXGridSize / 2 + 1, closestYGridSize - 1)));
   double ylaMidX = loc1.Distance(loc2) / 1000.;
-  // 6. yl‰ keski y-dist
+  // 6. yl√§ keski y-dist
   loc1 =
       NFmiLocation(idealGrid.GridToLatLon(NFmiPoint(closestXGridSize / 2, closestYGridSize - 2)));
   loc2 =
@@ -134,7 +134,7 @@ void Domain(int argc, const char *argv[])
   {
     cout << "Error: Invalid command line:" << endl << cmdline.Status().ErrorLog().CharPtr() << endl;
     ::Usage();
-    throw runtime_error("");  // t‰ss‰ piti ensin tulostaa cout:iin tavaraa ja sitten vasta Usage,
+    throw runtime_error("");  // t√§ss√§ piti ensin tulostaa cout:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
   }
 
@@ -151,7 +151,7 @@ void Domain(int argc, const char *argv[])
   {
     cout << "Error: Atleast 3 parameter expected, 'projectionstring x_km y_km'\n\n";
     ::Usage();
-    throw runtime_error("");  // t‰ss‰ piti ensin tulostaa cout:iin tavaraa ja sitten vasta Usage,
+    throw runtime_error("");  // t√§ss√§ piti ensin tulostaa cout:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
   }
 
@@ -185,7 +185,7 @@ void Domain(int argc, const char *argv[])
       double minDist = 999999999;
       double lastDist = minDist;
       unsigned long closestXGridSize = 2;
-      // etsit‰‰n ensin sopiva x-ulottuvuus
+      // etsit√§√§n ensin sopiva x-ulottuvuus
       for (i = 2; i < 5000; i++)
       {
         NFmiGrid grid(areaPtr.get(), i, testGridSize);
@@ -201,7 +201,7 @@ void Domain(int argc, const char *argv[])
         lastDist = currDist;
       }
 
-      // etsit‰‰n sitten sopiva y-ulottuvuus
+      // etsit√§√§n sitten sopiva y-ulottuvuus
       minDist = 999999999;
       lastDist = minDist;
       unsigned long closestYGridSize = 2;

@@ -25,8 +25,8 @@
 #endif
 
 #ifdef _MSC_VER
-#pragma warning(disable : 4996)  // winkkari puolella fopen -funktio koetaan turvattomaksi ja siit‰
-                                 // tulee varoituksia (MSVC++ k‰‰nt‰j‰n 4996)
+#pragma warning(disable : 4996)  // winkkari puolella fopen -funktio koetaan turvattomaksi ja siit√§
+                                 // tulee varoituksia (MSVC++ k√§√§nt√§j√§n 4996)
 #endif
 
 typedef std::vector<ParamChangeItem> ParamChangeTable;
@@ -461,7 +461,7 @@ void set_latlon_geometry(NFmiFastQueryInfo &theInfo,
 
   // DUMP(gribHandle, "geography");
 
-  theValueArray.resize(nx * ny);  // tehd‰‰ datan siirto taulusta oikean kokoinen
+  theValueArray.resize(nx * ny);  // tehd√§√§ datan siirto taulusta oikean kokoinen
 }
 
 // ----------------------------------------------------------------------
@@ -518,7 +518,7 @@ void set_rotated_latlon_geometry(NFmiFastQueryInfo &theInfo,
 
   // DUMP(gribHandle, "geography");
 
-  theValueArray.resize(nx * ny);  // tehd‰‰ datan siirto taulusta oikean kokoinen
+  theValueArray.resize(nx * ny);  // tehd√§√§ datan siirto taulusta oikean kokoinen
 }
 
 // ----------------------------------------------------------------------
@@ -613,7 +613,7 @@ void set_stereographic_geometry(NFmiFastQueryInfo &theInfo,
 
   // DUMP(gribHandle,"geography");
 
-  theValueArray.resize(nx * ny);  // tehd‰‰ datan siirto taulusta oikean kokoinen
+  theValueArray.resize(nx * ny);  // tehd√§√§ datan siirto taulusta oikean kokoinen
 }
 
 // ----------------------------------------------------------------------
@@ -659,7 +659,7 @@ void set_mercator_geometry(NFmiFastQueryInfo &theInfo,
   gset(gribHandle, "jScansPositively", 1);
   gset(gribHandle, "iScansNegatively", 0);
 
-  theValueArray.resize(nx * ny);  // tehd‰‰ datan siirto taulusta oikean kokoinen
+  theValueArray.resize(nx * ny);  // tehd√§√§ datan siirto taulusta oikean kokoinen
 }
 
 // ----------------------------------------------------------------------
@@ -778,7 +778,7 @@ static void set_times(NFmiFastQueryInfo &theInfo, grib_handle *gribHandle, bool 
 
 void set_parameters(grib_handle *gribHandle, const NFmiParam &theParam)
 {
-  // Parametrin nime‰ on kai turha asetella, ei mene mihink‰‰n oikeasti?!?!?
+  // Parametrin nime√§ on kai turha asetella, ei mene mihink√§√§n oikeasti?!?!?
   //	size_t paramNameLen = param->GetName().GetLen();
   //	grib_set_string(gribHandle, "param" , param->GetName(), &paramNameLen);
 
@@ -850,10 +850,10 @@ const char *level_name(FmiLevelType theType)
 
 // ----------------------------------------------------------------------
 
-// asettaa gribiin level-tiedot. Jos on annettu komento rivilt‰ over-ride level tieto, otetaan arvot
-// theWantedLevel-oliosta, muuten dataan liittyv‰st‰ level-oliosta theLevelFromData.
-// Jos theWantedLevel-olion levelType on 0 (=missing arvo), silloin k‰ytet‰‰n datasta saatua
-// leveli‰.
+// asettaa gribiin level-tiedot. Jos on annettu komento rivilt√§ over-ride level tieto, otetaan arvot
+// theWantedLevel-oliosta, muuten dataan liittyv√§st√§ level-oliosta theLevelFromData.
+// Jos theWantedLevel-olion levelType on 0 (=missing arvo), silloin k√§ytet√§√§n datasta saatua
+// leveli√§.
 
 void set_level(grib_handle *gribHandle, const NFmiLevel &theLevelFromData)
 {
@@ -1028,7 +1028,7 @@ int run(const int argc, char *argv[])
   try
   {
     qi.First();
-    std::vector<double> valueArray;  // t‰t‰ vektoria k‰ytet‰‰n siirt‰m‰‰n dataa querydatasta
+    std::vector<double> valueArray;  // t√§t√§ vektoria k√§ytet√§√§n siirt√§m√§√§n dataa querydatasta
                                      // gribiin (aina saman kokoinen)
     set_producer(gribHandle);
     set_packing(gribHandle);
@@ -1071,7 +1071,7 @@ int run(const int argc, char *argv[])
   catch (...)
   {
     if (out)
-      fclose(out);  // suljetaan outputfile myˆs virhe tilanteessa
+      fclose(out);  // suljetaan outputfile my√∂s virhe tilanteessa
     throw;          // paiskataan kiinniotettu poikkeus edelleen matkaan
   }
   if (out)

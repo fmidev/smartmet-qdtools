@@ -1,8 +1,8 @@
 /*!
- *  Ohjelma lukee salama-dataa tiedostosta ja muodostaa siit‰ queryDatan
+ *  Ohjelma lukee salama-dataa tiedostosta ja muodostaa siit√§ queryDatan
  *  ja tulostaa sen stdout:iin.
  *
- *  Annettu salama data pit‰‰ olla muodossa:
+ *  Annettu salama data pit√§√§ olla muodossa:
  *  YYYYMMDDHHmmss lon lat power multiplicity accuracy
  *
  *  eli esim.
@@ -13,7 +13,7 @@
  *  20040505151128	29.938	63.529	-3	1	10.4
  *  jne.
  *
- *  Kyseist‰ dataa voi hakea vaikka tietokannasta seuraavalla SQL-kyselyll‰:
+ *  Kyseist√§ dataa voi hakea vaikka tietokannasta seuraavalla SQL-kyselyll√§:
  *
  *  SELECT
  *  DATE_FORMAT(date,'%Y%m%d%H%i%S'),lon,lat,power,multiplicity,accuracy
@@ -43,7 +43,7 @@ void Usage(void);
 void Domain(int argc, const char *argv[]);
 int GetIntegerOptionValue(const NFmiCmdLine &theCmdline, char theOption);
 
-using namespace std;  // t‰t‰ ei saa sitten laittaa headeriin, eik‰ ennen includeja!!!!
+using namespace std;  // t√§t√§ ei saa sitten laittaa headeriin, eik√§ ennen includeja!!!!
 
 int main(int argc, const char *argv[])
 {
@@ -73,7 +73,7 @@ void Domain(int argc, const char *argv[])
     cerr << "Error: Invalid command line:" << endl << cmdline.Status().ErrorLog().CharPtr() << endl;
 
     Usage();
-    throw runtime_error("");  // t‰ss‰ piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
+    throw runtime_error("");  // t√§ss√§ piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
   }
 
@@ -81,7 +81,7 @@ void Domain(int argc, const char *argv[])
   {
     cerr << "Error: 1 parameter expected, 'flashdata'\n\n";
     Usage();
-    throw runtime_error("");  // t‰ss‰ piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
+    throw runtime_error("");  // t√§ss√§ piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
   }
   else
@@ -96,7 +96,7 @@ void Domain(int argc, const char *argv[])
                         std::string(" ei saatu avattua"));
 
   NFmiQueryData *newData = CreateFlashQueryData(flashStrings, makeLocal2UtcTimeConversion);
-  unique_ptr<NFmiQueryData> dataPtr(newData);  // t‰m‰ tuhoaa dynaamisesti luodun datan
+  unique_ptr<NFmiQueryData> dataPtr(newData);  // t√§m√§ tuhoaa dynaamisesti luodun datan
                                              // automaattisesti (vaikka return paikkoja olisi kuinka
                                              // monta)
   if (newData)
@@ -138,7 +138,7 @@ bool ParseFlashDataLine(const std::string &theLineStr, FlashData &theData)
       return true;
     }
     else
-      throw runtime_error(std::string("Data rivill‰ oli v‰‰r‰ m‰‰r‰ arvoja: \n") + theLineStr);
+      throw runtime_error(std::string("Data rivill√§ oli v√§√§r√§ m√§√§r√§ arvoja: \n") + theLineStr);
   }
   return false;
 }
@@ -209,7 +209,7 @@ NFmiQueryData *CreateFlashQueryData(std::vector<std::string> &theFlashStrings,
     {
       NFmiFastQueryInfo info(data);
       info.First();
-      // T‰ytet‰‰n lopuksi eri parametrit infoon/dataan
+      // T√§ytet√§√§n lopuksi eri parametrit infoon/dataan
       if (info.Param(kFmiLongitude))
         for (info.ResetTime(); info.NextTime();)
           info.FloatValue(lons[info.TimeIndex()]);

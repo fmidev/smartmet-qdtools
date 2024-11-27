@@ -1,12 +1,12 @@
 /*!
  *  \file qdcheck.cpp
- *  Tekij‰: Marko (19.1.2001) \par
- *  Ohjelmaa k‰ytet‰‰n tarkistamaan, ettei editoitu data ole korruptoitunutta tai
- *  ett‰ sen data on suht. j‰rkev‰‰.
- *  T‰m‰ ohjelma lukee stdin:in annetun qdatan, ja tarkistaa, ett‰ siit‰ ei puutu
- *  liikaa dataa, eik‰ data ole liian 'suoraa' (l‰hinn‰ parametrit kuten l‰mpˆtila).\par
- *  Lis‰ksi tarkistetaan, ett‰ data on tarpeeksi l‰hell‰ nykyhetke‰ (ettei) vahingossa
- *  p‰‰se l‰pi vaikka eilist‰ dataa. Dataa on tarpeeksi ajallisesti ja siin‰ on
+ *  Tekij√§: Marko (19.1.2001) \par
+ *  Ohjelmaa k√§ytet√§√§n tarkistamaan, ettei editoitu data ole korruptoitunutta tai
+ *  ett√§ sen data on suht. j√§rkev√§√§.
+ *  T√§m√§ ohjelma lukee stdin:in annetun qdatan, ja tarkistaa, ett√§ siit√§ ei puutu
+ *  liikaa dataa, eik√§ data ole liian 'suoraa' (l√§hinn√§ parametrit kuten l√§mp√∂tila).\par
+ *  Lis√§ksi tarkistetaan, ett√§ data on tarpeeksi l√§hell√§ nykyhetke√§ (ettei) vahingossa
+ *  p√§√§se l√§pi vaikka eilist√§ dataa. Dataa on tarpeeksi ajallisesti ja siin√§ on
  *  oikea aikaresoluutio.
  */
 
@@ -160,12 +160,12 @@ void SetErrorStatus(int &theCurrentErrorLevel, int theOccuredErrorCode)
 /*!
  * \brief
  *
- * Saa parametrina fatal, error ja warning limitit (t‰ss‰
- * j‰rjestyksess‰), vertaa nitt‰ annettuun theCalculatedValue arvoon. Jos
- * jokin raja ylittyy, on kyseess‰ jonkinlainen virhetilanne. T‰llˆin
- * t‰ytt‰‰ sopivan virheilmoituksen theText-parametriin. Lis‰ksi
- * p‰ivitt‰‰ errorStatus-parametria seuraavissa tapauksissa:
- * errorStatus= 0 tai jos errorStatus > nyt lˆytynyt virhe
+ * Saa parametrina fatal, error ja warning limitit (t√§ss√§
+ * j√§rjestyksess√§), vertaa nitt√§ annettuun theCalculatedValue arvoon. Jos
+ * jokin raja ylittyy, on kyseess√§ jonkinlainen virhetilanne. T√§ll√∂in
+ * t√§ytt√§√§ sopivan virheilmoituksen theText-parametriin. Lis√§ksi
+ * p√§ivitt√§√§ errorStatus-parametria seuraavissa tapauksissa:
+ * errorStatus= 0 tai jos errorStatus > nyt l√∂ytynyt virhe
  * (0=ok, 1=fatal, 2=error, 3=warning)
  */
 // ----------------------------------------------------------------------
@@ -182,7 +182,7 @@ bool CheckErrorLevelAndProduceStatusTextAndUpdateErrorCode(const std::vector<flo
     if (theErrorLimits[i] < theCalculatedValue)
     {
       SetErrorStatus(errorStatus, i + 1);  // i+1 ==> vektorin indeksi alkaa 0:sta, mutta errorit
-                                           // menev‰t (1=fatal, 2=error, 3=warning)
+                                           // menev√§t (1=fatal, 2=error, 3=warning)
       switch (i + 1)
       {
         case 1:  // FATAL
@@ -343,7 +343,7 @@ int run(int argc, char *argv[])
   dataChecker.CheckList(1 + 2 + 4);  // 1=missing data check ja 2=suoraa dataa
   if (ohjausData.itsLocationCheckingType == 2)
     dataChecker.RandomlyCheckedLocationCount(ohjausData.itsRandomPointCount);
-  else                                 // tarkistetaan t‰ss‰ vaiheessa muuten vain kaikki pisteet
+  else                                 // tarkistetaan t√§ss√§ vaiheessa muuten vain kaikki pisteet
     dataChecker.LocationCheckType(0);  // 0= tarkista kaikki pisteet
 
   int stat = dataChecker.DoTotalCheck() ? 0 : 2;
@@ -580,5 +580,5 @@ int main(int argc, char *argv[])
   {
     cerr << "Unknown ERROR when executing " << argv[0] << " \nStopping the program." << endl;
   }
-  return 1;  // palautetaan 1 errorin merkiksi. T‰h‰n tullaan catch-blokkien kautta
+  return 1;  // palautetaan 1 errorin merkiksi. T√§h√§n tullaan catch-blokkien kautta
 }

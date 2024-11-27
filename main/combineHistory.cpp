@@ -88,12 +88,12 @@ void Usage(void)
 }
 
 // tutkitaan onko mahdollista tehda listasta bagi
-// eli ajat ovat per‰kk‰isi‰ ja tasav‰lisi‰
+// eli ajat ovat per√§kk√§isi√§ ja tasav√§lisi√§
 
 static bool ConvertTimeList2TimeBag(NFmiTimeList &theTimeList, NFmiTimeBag &theTimeBag)
 {
   if (theTimeList.NumberOfItems() >
-      2)  // ei  tehd‰ yhdest‰ tai kahdesta ajasta bagi‰ vaikka se on mahdollista
+      2)  // ei  tehd√§ yhdest√§ tai kahdesta ajasta bagi√§ vaikka se on mahdollista
   {
     theTimeList.First();
     theTimeList.Next();
@@ -101,7 +101,7 @@ static bool ConvertTimeList2TimeBag(NFmiTimeList &theTimeList, NFmiTimeBag &theT
     for (; theTimeList.Next();)
     {
       if (resolution != theTimeList.CurrentResolution())
-        return false;  // jos yhdenkin aikav‰lin resoluutio poikkeaa, ei voida tehd‰ bagia
+        return false;  // jos yhdenkin aikav√§lin resoluutio poikkeaa, ei voida tehd√§ bagia
     }
     theTimeBag = NFmiTimeBag(theTimeList.FirstTime(), theTimeList.LastTime(), resolution);
     return true;
@@ -364,7 +364,7 @@ int main(int argc, const char *argv[])
       NFmiTimeBag timeBag;
       bool fUseTimeBag = false;
       if (cmdline.isOption(
-              't'))  // jos t-optio p‰‰ll‰, yritet‰‰n konvertoida timebagiksi jos mahdollista
+              't'))  // jos t-optio p√§√§ll√§, yritet√§√§n konvertoida timebagiksi jos mahdollista
         fUseTimeBag = ConvertTimeList2TimeBag(timelist, timeBag);  // muutetaan jos mahd.
       NFmiTimeDescriptor tmpTimeDesc = fUseTimeBag ? NFmiTimeDescriptor(origintime, timeBag)
                                                    : NFmiTimeDescriptor(origintime, timelist);

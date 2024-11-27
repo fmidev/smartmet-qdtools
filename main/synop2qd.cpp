@@ -1,7 +1,7 @@
-// synop2qd.cpp Tekij‰ Marko 28.11.2006
+// synop2qd.cpp Tekij√§ Marko 28.11.2006
 // Lukee halutut tiedostot/tiedostonimi-filtterit, joista
-// lˆytyv‰t SYNOP-koodit tulkitaan ja niist‰ muodostetaan
-// querydata, miss‰ on yhdistettyn‰ kaikki tulkitut synop-havainnot.
+// l√∂ytyv√§t SYNOP-koodit tulkitaan ja niist√§ muodostetaan
+// querydata, miss√§ on yhdistettyn√§ kaikki tulkitut synop-havainnot.
 
 #include <fstream>
 
@@ -31,7 +31,7 @@ class ExceptionSynopEndOk
 {
  public:
   ExceptionSynopEndOk(int /* dummy*/)
-  {  // g++ k‰‰nt‰j‰n takia pit‰‰ tehd‰ dummy konstruktori, jolle annetaan parametri
+  {  // g++ k√§√§nt√§j√§n takia pit√§√§ tehd√§ dummy konstruktori, jolle annetaan parametri
   }
 };
 
@@ -47,7 +47,7 @@ static T GetValue(const std::string &theValueStr,
 {
   string nilStr("nil");
 
-  // Tarkistuksia ett‰ haettu ali stringi pysyy annetun stringin sis‰ll‰
+  // Tarkistuksia ett√§ haettu ali stringi pysyy annetun stringin sis√§ll√§
   if (startPos >= theValueStr.size()) return static_cast<T>(kFloatMissing);
   if (endPos >= theValueStr.size()) return static_cast<T>(kFloatMissing);
 
@@ -103,7 +103,7 @@ static float SynopVisCode2Metres(float theVisibility)
   if (theVisibility == kFloatMissing)
     return kFloatMissing;
   else if (theVisibility == 0)
-    return 75;  // 75 metri‰ on arvaus, 00-koodi on alle 100 m
+    return 75;  // 75 metri√§ on arvaus, 00-koodi on alle 100 m
   else if (theVisibility > 0 && theVisibility <= 50)
     return theVisibility * 100;
   else if (theVisibility >= 56 && theVisibility <= 80)
@@ -111,10 +111,10 @@ static float SynopVisCode2Metres(float theVisibility)
   else if (theVisibility >= 81 && theVisibility <= 88)
     return ((theVisibility - 80) * 5000) + 30000;
   else if (theVisibility == 89)
-    return 75000;  // 75000 metri‰ on arvaus, 89-koodi on yli 70000 m
+    return 75000;  // 75000 metri√§ on arvaus, 89-koodi on yli 70000 m
   else if (theVisibility >= 51 && theVisibility <= 55)
-    return 5000;  // sellaisia synoppeja on pilvin pimein, miss‰ on VV -koodi 51-55, tein niin ett‰
-                  // niist‰ ei valiteta ja arvoksi laitetaan pyˆre‰t 5000 m
+    return 5000;  // sellaisia synoppeja on pilvin pimein, miss√§ on VV -koodi 51-55, tein niin ett√§
+                  // niist√§ ei valiteta ja arvoksi laitetaan py√∂re√§t 5000 m
                   //		throw runtime_error(string("Invalid synop visibility code: ") +
   // NFmiStringTools::Convert<int>(static_cast<int>(theVisibility)));
   else if (theVisibility < 0 || theVisibility > 99)
@@ -353,8 +353,8 @@ class NFmiSynopCode
                           theSynopStr);
   }
 
-  // puretaan 4PPPP-kentt‰ // t‰m‰ on meren pintaan redukoitu paine
-  // paitsi jos ryhm‰ 3 oli annettu, ja t‰ss‰ onkin 4a3hhh
+  // puretaan 4PPPP-kentt√§ // t√§m√§ on meren pintaan redukoitu paine
+  // paitsi jos ryhm√§ 3 oli annettu, ja t√§ss√§ onkin 4a3hhh
   // eli geopotentiaalin korkeus. a3 arvot ovat:
   // 1 -- 1000 mb
   // 2 -- 925 mb
@@ -412,7 +412,7 @@ class NFmiSynopCode
       string currentSynopField;
       ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
       if (currentSynopField.size() == 5 && currentSynopField[0] == '6')
-      {  // t‰m‰ kentt‰ skipataan ainakin toistaiseksi
+      {  // t√§m√§ kentt√§ skipataan ainakin toistaiseksi
 
         commentString = "searching 111QdQx-field or 222QdQx or some following field";
         ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
@@ -446,34 +446,34 @@ class NFmiSynopCode
               itsWS = ff;
           }
 
-          // luetaan lopuksi seuraava kentt‰
+          // luetaan lopuksi seuraava kentt√§
           commentString = "next trying to read 1sTTT-field";
           ReadNextField(ssin, currentSynopField, commentString, theSynopStr, true);
         }
 
         if (currentSynopField.size() == 5 && currentSynopField[0] == '1')
-        {  // puretaan 1sTTT-kentt‰
+        {  // puretaan 1sTTT-kentt√§
           itsTemperature = GetTemperatureFromField(currentSynopField, theSynopStr);
 
-          // luetaan lopuksi seuraava kentt‰
+          // luetaan lopuksi seuraava kentt√§
           commentString = "next trying to read 2sTdTdTd-field";
           ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
         }
 
         if (currentSynopField.size() == 5 && currentSynopField[0] == '2')
-        {  // puretaan 2sTdTdTd-kentt‰ / 29UUU
+        {  // puretaan 2sTdTdTd-kentt√§ / 29UUU
           if (currentSynopField[1] == '9')
             itsRH = ::GetValue<float>(currentSynopField, 2, 4, theSynopStr);
           else
             itsDewPoint = GetTemperatureFromField(currentSynopField, theSynopStr);
 
-          // luetaan lopuksi seuraava kentt‰
+          // luetaan lopuksi seuraava kentt√§
           commentString = "next trying to read 3P0P0P0P0-field";
           ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
         }
 
         if (currentSynopField.size() == 5 && currentSynopField[0] == '3')
-        {  // puretaan 3P0P0P0P0-kentt‰ // t‰m‰ on asemalla mitattu paine // t‰t‰ ei toistaiseksi
+        {  // puretaan 3P0P0P0P0-kentt√§ // t√§m√§ on asemalla mitattu paine // t√§t√§ ei toistaiseksi
            // oteta talteen
 #if 0
 					double PPP31 = ::GetValue<double>(currentSynopField, 1, 3, theSynopStr);
@@ -485,7 +485,7 @@ class NFmiSynopCode
 						tmpPressure = (PPP31 < 500.) ? (1000 + PPP31) : (PPP31);
 #endif
 
-          // luetaan lopuksi seuraava kentt‰
+          // luetaan lopuksi seuraava kentt√§
           commentString = "next trying to read 4PPPP-field";
           ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
         }
@@ -494,19 +494,19 @@ class NFmiSynopCode
         {
           itsPressure = GetPressureFromField(currentSynopField, theSynopStr);
 
-          // luetaan lopuksi seuraava kentt‰
+          // luetaan lopuksi seuraava kentt√§
           commentString = "next trying to read 5appp-field";
           ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
         }
 
         if (currentSynopField.size() == 5 && currentSynopField[0] == '5')
-        {  // puretaan 5appp-kentt‰
+        {  // puretaan 5appp-kentt√§
           float a = ::GetValue<float>(currentSynopField, 1, 1, theSynopStr);
           if (a != kFloatMissing) itsPressureTendency = a;
           float ppp = ::GetValue<float>(currentSynopField, 2, 4, theSynopStr);
           if (ppp != kFloatMissing) itsPressureChange = ppp / 10.f;
 
-          // luetaan lopuksi seuraava kentt‰
+          // luetaan lopuksi seuraava kentt√§
           commentString = "next trying to read 6RRRt-field";
           ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
         }
@@ -520,10 +520,10 @@ class NFmiSynopCode
         ReadNextField(ssin, currentSynopField, "0snTwTwTw", theSynopStr, true);
 
         if (currentSynopField.size() == 5 && currentSynopField[0] == '0')
-        {  // puretaan 0snTwTwTw-kentt‰
+        {  // puretaan 0snTwTwTw-kentt√§
           itsTwater = GetTemperatureFromField(currentSynopField, theSynopStr);
 
-          // luetaan lopuksi seuraava kentt‰
+          // luetaan lopuksi seuraava kentt√§
           commentString = "next trying to read 1PwaPwaHwaHwa-field";
           ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
         }
@@ -531,11 +531,11 @@ class NFmiSynopCode
     }
     catch (ExceptionSynopEndOk & /* e */)
     {
-      // t‰m‰ poikkeus lopetus ok, poistutaan vain t‰st‰ metodista, ja laitetaan synop talteen
+      // t√§m√§ poikkeus lopetus ok, poistutaan vain t√§st√§ metodista, ja laitetaan synop talteen
     }
   }
 
-  // t‰m‰ on puuttuvien asemien listaukseen k‰ytetty debuggaus luokka
+  // t√§m√§ on puuttuvien asemien listaukseen k√§ytetty debuggaus luokka
   class StationErrorStrings : public set<string>
   {
    public:
@@ -590,7 +590,7 @@ class NFmiSynopCode
         // asetetaan feikki arvoja asemalle
         itsStation.SetLatitude(itsDriftingStationLocation.Y());
         itsStation.SetLongitude(itsDriftingStationLocation.X());
-        // itsStation.SetName(IIiii_Str); // laivojen tapauksessa aseman nimi annetaan t‰m‰n
+        // itsStation.SetName(IIiii_Str); // laivojen tapauksessa aseman nimi annetaan t√§m√§n
         // funktion ulkopuolella
         itsStation.SetIdent(0);
       }
@@ -684,16 +684,16 @@ class NFmiSynopCode
       ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
 
       if (currentSynopField.size() == 5 && currentSynopField[0] == '1')
-      {  // puretaan 1sTTT-kentt‰
+      {  // puretaan 1sTTT-kentt√§
         itsTemperature = GetTemperatureFromField(currentSynopField, theSynopStr);
 
-        // luetaan lopuksi seuraava kentt‰
+        // luetaan lopuksi seuraava kentt√§
         commentString = "next trying to read 2sTdTdTd-field";
         ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
       }
 
       if (currentSynopField.size() == 5 && currentSynopField[0] == '2')
-      {  // puretaan 2sTdTdTd-kentt‰ / 29UUU
+      {  // puretaan 2sTdTdTd-kentt√§ / 29UUU
         if (currentSynopField[1] == '9')
           itsRH = ::GetValue<float>(currentSynopField, 2, 4, theSynopStr);
         else
@@ -703,17 +703,17 @@ class NFmiSynopCode
             itsDewPoint = GetTemperatureFromField(currentSynopField, theSynopStr);
           }
           catch (...)
-          {  // joskus tulee invaliideja 20/05 tms kentti‰, jotka pit‰‰ vain ohittaa
+          {  // joskus tulee invaliideja 20/05 tms kentti√§, jotka pit√§√§ vain ohittaa
           }
         }
 
-        // luetaan lopuksi seuraava kentt‰
+        // luetaan lopuksi seuraava kentt√§
         commentString = "next trying to read 3P0P0P0P0-field";
         ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
       }
 
       if (currentSynopField.size() == 5 && currentSynopField[0] == '3')
-      {  // puretaan 3P0P0P0P0-kentt‰ // t‰m‰ on asemalla mitattu paine // t‰t‰ ei toistaiseksi
+      {  // puretaan 3P0P0P0P0-kentt√§ // t√§m√§ on asemalla mitattu paine // t√§t√§ ei toistaiseksi
          // oteta talteen
 #if 0
 				double PPP31 = kFloatMissing;
@@ -722,7 +722,7 @@ class NFmiSynopCode
 					PPP31 = ::GetValue<double>(currentSynopField, 1, 3, theSynopStr);
 				}
 				catch(...)
-				{ // joskus tulee invaliideja 30/// kentti‰, jotka pit‰‰ vain ohittaa
+				{ // joskus tulee invaliideja 30/// kentti√§, jotka pit√§√§ vain ohittaa
 				}
 				double PPP32 = ::GetValue<double>(currentSynopField, 4, 4, theSynopStr);
 				double tmpPressure = kFloatMissing;
@@ -732,7 +732,7 @@ class NFmiSynopCode
 					tmpPressure = (PPP31 < 500.) ? (1000 + PPP31) : (PPP31);
 #endif
 
-        // luetaan lopuksi seuraava kentt‰
+        // luetaan lopuksi seuraava kentt√§
         commentString = "next trying to read 4PPPP-field";
         ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
       }
@@ -741,25 +741,25 @@ class NFmiSynopCode
       {
         itsPressure = GetPressureFromField(currentSynopField, theSynopStr);
 
-        // luetaan lopuksi seuraava kentt‰
+        // luetaan lopuksi seuraava kentt√§
         commentString = "next trying to read 5appp-field";
         ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
       }
 
       if (currentSynopField.size() == 5 && currentSynopField[0] == '5')
-      {  // puretaan 5appp-kentt‰
+      {  // puretaan 5appp-kentt√§
         float a = ::GetValue<float>(currentSynopField, 1, 1, theSynopStr);
         if (a != kFloatMissing) itsPressureTendency = a;
         float ppp = ::GetValue<float>(currentSynopField, 2, 4, theSynopStr);
         if (ppp != kFloatMissing) itsPressureChange = ppp / 10.f;
 
-        // luetaan lopuksi seuraava kentt‰
+        // luetaan lopuksi seuraava kentt√§
         commentString = "next trying to read 6RRRt-field";
         ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
       }
 
       if (currentSynopField.size() == 5 && currentSynopField[0] == '6')
-      {  // puretaan 6RRRt-kentt‰
+      {  // puretaan 6RRRt-kentt√§
         float RRR = ::GetValue<float>(currentSynopField, 1, 3, theSynopStr);
         if (RRR != kFloatMissing)
         {
@@ -772,40 +772,40 @@ class NFmiSynopCode
             itsPrecipitation = (static_cast<int>(itsPrecipitation) % 10) / 10.f;
         }
         //			double t = ::GetValue<double>(currentSynopField, 4, 4); // t(r) on
-        // Duration of period of precip, ei k‰ytet‰
+        // Duration of period of precip, ei k√§ytet√§
 
-        // luetaan lopuksi seuraava kentt‰
+        // luetaan lopuksi seuraava kentt√§
         commentString = "next trying to read 7wwWW-field";
         ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
       }
 
       if (currentSynopField.size() == 5 && currentSynopField[0] == '7')
-      {  // puretaan 7wwWW-kentt‰
+      {  // puretaan 7wwWW-kentt√§
         itsPresentWeatherCode = ::GetValue<float>(currentSynopField, 1, 2, theSynopStr);
         itsW1 = ::GetValue<float>(currentSynopField, 3, 3, theSynopStr);
         itsW2 = ::GetValue<float>(currentSynopField, 4, 4, theSynopStr);
 
-        // luetaan lopuksi seuraava kentt‰
+        // luetaan lopuksi seuraava kentt√§
         commentString = "next trying to read 8NhClCmCh-field";
         ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
       }
 
       if (currentSynopField.size() == 5 && currentSynopField[0] == '8')
-      {  // puretaan 8NhClCmCh-kentt‰
+      {  // puretaan 8NhClCmCh-kentt√§
         itsNh = ::GetValue<float>(currentSynopField, 1, 1, theSynopStr);
         itsCl = ::GetValue<float>(currentSynopField, 2, 2, theSynopStr);
         itsCm = ::GetValue<float>(currentSynopField, 3, 3, theSynopStr);
         itsCh = ::GetValue<float>(currentSynopField, 4, 4, theSynopStr);
 
-        // luetaan lopuksi seuraava kentt‰
+        // luetaan lopuksi seuraava kentt√§
         commentString = "next trying to read 9GGgg-field";
         ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
       }
 
       if (currentSynopField.size() == 5 && currentSynopField[0] == '9')
-      {  // 9GGgg kentt‰ skipataan
+      {  // 9GGgg kentt√§ skipataan
 
-        // luetaan lopuksi seuraava kentt‰
+        // luetaan lopuksi seuraava kentt√§
         commentString = "next trying to read 333-field";
         ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
       }
@@ -819,10 +819,10 @@ class NFmiSynopCode
         ReadNextField(ssin, currentSynopField, "0snTwTwTw", theSynopStr, true);
 
         if (currentSynopField.size() == 5 && currentSynopField[0] == '0')
-        {  // puretaan 0snTwTwTw-kentt‰
+        {  // puretaan 0snTwTwTw-kentt√§
           itsTwater = GetTemperatureFromField(currentSynopField, theSynopStr);
 
-          // luetaan lopuksi seuraava kentt‰
+          // luetaan lopuksi seuraava kentt√§
           commentString = "next trying to read 1PwaPwaHwaHwa-field";
           ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
         }
@@ -838,18 +838,18 @@ class NFmiSynopCode
         } while (currentSynopField != string("333"));
       }
 
-      // k‰yd‰‰n tarvittaessa l‰pi 333-sectionin kohtia
+      // k√§yd√§√§n tarvittaessa l√§pi 333-sectionin kohtia
       if (currentSynopField == string("333"))
       {
-        // luetaan 333:sta seuraava kentt‰
+        // luetaan 333:sta seuraava kentt√§
         commentString = "next trying to read 1SnTxTxTx-field from 333-section";
         ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
 
         if (currentSynopField.size() == 5 && currentSynopField[0] == '1')
-        {  // puretaan 1SnTxTxTx-kentt‰
+        {  // puretaan 1SnTxTxTx-kentt√§
           itsTmax = GetTemperatureFromField(currentSynopField, theSynopStr);
 
-          // luetaan lopuksi seuraava kentt‰
+          // luetaan lopuksi seuraava kentt√§
           commentString = "next trying to read 2SnTnTnTn-field";
           ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
         }
@@ -858,10 +858,10 @@ class NFmiSynopCode
 
         if (currentSynopField.size() == 5 && currentSynopField[0] == '2')
         {
-          // puretaan 1SnTnTnTn-kentt‰
+          // puretaan 1SnTnTnTn-kentt√§
           itsTmin = GetTemperatureFromField(currentSynopField, theSynopStr);
 
-          // luetaan lopuksi seuraava kentt‰
+          // luetaan lopuksi seuraava kentt√§
           ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
         }
 
@@ -886,7 +886,7 @@ class NFmiSynopCode
     }
     catch (ExceptionSynopEndOk & /* e */)
     {
-      // t‰m‰ poikkeus lopetus ok, poistutaan vain t‰st‰ metodista, ja laitetaan synop talteen
+      // t√§m√§ poikkeus lopetus ok, poistutaan vain t√§st√§ metodista, ja laitetaan synop talteen
     }
   }
 
@@ -929,7 +929,7 @@ class NFmiSynopCode
   float itsLon;                    // SHIP sanomien purussa tarvitaan sijaintia
   float itsLat;                    // SHIP sanomien purussa tarvitaan sijaintia
   float itsGust;                   // European region wind gust extension, code 910xx or 911xx
-  std::string itsCorrectionField;  // Jos sanoma kuuluu johonkin korjaus blokkiin, t‰h‰n tulee
+  std::string itsCorrectionField;  // Jos sanoma kuuluu johonkin korjaus blokkiin, t√§h√§n tulee
                                    // korjauksen koodi esim. RRP
 };
 
@@ -1019,7 +1019,7 @@ static NFmiTimeList MakeTimeListForSynop(const std::vector<NFmiSynopCode> &theSy
 static NFmiLocationBag MakeLocationBag(std::set<NFmiStation> &theStations, bool fDoShipMessages)
 {
   unsigned long shipMessageStationId =
-      122000;  // t‰m‰ on vain jokin alkuid arvo jota kasvatetaan jokaiselle eri laivalle
+      122000;  // t√§m√§ on vain jokin alkuid arvo jota kasvatetaan jokaiselle eri laivalle
   NFmiLocationBag locations;
   //	std::set<T>::iterator it = theStations.begin();
   std::set<NFmiStation>::iterator it = theStations.begin();
@@ -1029,21 +1029,21 @@ static NFmiLocationBag MakeLocationBag(std::set<NFmiStation> &theStations, bool 
   for (int index = 0; it != theStations.end(); ++it, index++)
   {
     NFmiStation &station = const_cast<NFmiStation &>(
-        *it);  // g++ k‰‰nt‰j‰n takia pit‰‰ tehd‰ t‰ll‰isi‰ const_cast kikkkailuja
+        *it);  // g++ k√§√§nt√§j√§n takia pit√§√§ tehd√§ t√§ll√§isi√§ const_cast kikkkailuja
     unsigned long s1 = static_cast<unsigned long>(points.size());
     points.insert(station.GetLocation());
     unsigned long s2 = static_cast<unsigned long>(points.size());
     if (s1 == s2)
     {
-      // t‰m‰ on pikaviritys. Jos arvottu luotaus-asemat, niill‰ on samat
-      // sijainnit, t‰ss‰ pit‰‰ tehd‰ sijainteihin pienet erot
+      // t√§m√§ on pikaviritys. Jos arvottu luotaus-asemat, niill√§ on samat
+      // sijainnit, t√§ss√§ pit√§√§ tehd√§ sijainteihin pienet erot
       ind++;
       station.SetLongitude(station.GetLongitude() + ind);
       if (fDoShipMessages) station.SetIdent(shipMessageStationId++);
     }
     else if (fDoShipMessages && index == 0)
       station.SetIdent(
-          shipMessageStationId++);  // ekalle ship asemalle pit‰‰ tehd‰ id muunnos v‰kisin
+          shipMessageStationId++);  // ekalle ship asemalle pit√§√§ tehd√§ id muunnos v√§kisin
 
     locations.AddLocation(*it);
   }
@@ -1163,11 +1163,11 @@ static NFmiMetTime GetTimeFromSynopHeader(const string &theTimeStr,
   if (theTimeStr.size() != 5)
   {
     if (!(theTimeStr.size() == 6 && ::isdigit(static_cast<unsigned char>(theTimeStr[4])) &&
-          ::isdigit(static_cast<unsigned char>(theTimeStr[5]))))  // antaa tietyiss‰ tapauksissa
-      // menn‰ v‰h‰n virheellinen aika
-      // ruhm‰ l‰pi, eli jos on 5 merkin
+          ::isdigit(static_cast<unsigned char>(theTimeStr[5]))))  // antaa tietyiss√§ tapauksissa
+      // menn√§ v√§h√§n virheellinen aika
+      // ruhm√§ l√§pi, eli jos on 5 merkin
       // sijasta 6, mutta lopun jutut on
-      // numeroita, niin menkˆˆn
+      // numeroita, niin menk√∂√∂n
       throw runtime_error(
           string("Error in GetTimeFromSynopHeader: TimeString was not 5 characters long: '") +
           theTimeStr + "'");
@@ -1186,7 +1186,7 @@ static NFmiMetTime GetTimeFromSynopHeader(const string &theTimeStr,
   aTime.SetTimeStep(timeStep);
   if (aTime > currentTime)
     aTime.PreviousMetTime(NFmiTimePerioid(
-        0, 1, 0, 0, 0, 0));  // siirret‰‰n kuukausi taaksep‰in, jos saatu aika oli tulevaisuudessa
+        0, 1, 0, 0, 0, 0));  // siirret√§√§n kuukausi taaksep√§in, jos saatu aika oli tulevaisuudessa
   return aTime;
 }
 //                                                     HHmmw                       DDMMY
@@ -1214,10 +1214,10 @@ static NFmiMetTime GetTimeFromBuoyHeader(const string &theTimeStr, const string 
   ::CheckDayValue(day, theDateStr, __FUNCTION__);
   ::CheckHourValue(hour, theTimeStr, __FUNCTION__);
 
-  NFmiMetTime aTime2(year, month, day, hour);  // tehd‰‰n nyt kokonais tunteja vain toistaiseksi
+  NFmiMetTime aTime2(year, month, day, hour);  // tehd√§√§n nyt kokonais tunteja vain toistaiseksi
   if (aTime2 > currentTime)
     aTime2.PreviousMetTime(NFmiTimePerioid(
-        10, 0, 0, 0, 0, 0));  // siirret‰‰n 10 vuotta taaksep‰in, jos saatu aika oli tulevaisuudessa
+        10, 0, 0, 0, 0, 0));  // siirret√§√§n 10 vuotta taaksep√§in, jos saatu aika oli tulevaisuudessa
   return aTime2;
 }
 
@@ -1272,7 +1272,7 @@ static std::string TrimFromExtraSpaces(const std::string &theStr)
 
 static std::string TakeAwayKnownErrorWordFromStart(const std::string &theStr)
 {
-  // tiedet‰‰n ett‰ sanomiin voi p‰‰st‰ mm. 3D sana alkuun, joka pit‰‰ vain ottaa pois synop
+  // tiedet√§√§n ett√§ sanomiin voi p√§√§st√§ mm. 3D sana alkuun, joka pit√§√§ vain ottaa pois synop
   // sanomasta
   string badWord("3D");
   size_t pos = theStr.find(badWord);
@@ -1301,7 +1301,7 @@ static void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
   if (fDoShipMessages || fDoBuoyMessages) ssin >> shipName;  // laivan/poijun nimi/koodi
   string dateStr;
   if (fDoBuoyMessages)
-    ssin >> dateStr;  // YYMMJ  (YY p‰iv‰, MM on kuukausi ja J on vuosi (2007 = 7))
+    ssin >> dateStr;  // YYMMJ  (YY p√§iv√§, MM on kuukausi ja J on vuosi (2007 = 7))
   string timeStr;
   if (doNormalTime)
     ssin >> timeStr;  // DDHHiw   (iw on tuulen nopeus indikaattori 0,1 = m/s 3,4= knots)
@@ -1342,7 +1342,7 @@ static void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
   bool windSpeedInKnots = true;
   if (iw == 0 || iw == 1) windSpeedInKnots = false;
 
-  // timeStrin sana pit‰‰ viel‰ skipata alusta
+  // timeStrin sana pit√§√§ viel√§ skipata alusta
   size_t timeStrPos = theUsedSynopBlock.find(timeStr);
   if (timeStrPos == string::npos)
     throw runtime_error(
@@ -1351,7 +1351,7 @@ static void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
   string reallyUsedSynopBlock;
   if (startPosXX < theUsedSynopBlock.size())
     reallyUsedSynopBlock = string(theUsedSynopBlock.begin() + startPosXX, theUsedSynopBlock.end());
-  // synopit on eroteltu =-merkeill‰, joten irroitetaan ne toisistaan
+  // synopit on eroteltu =-merkeill√§, joten irroitetaan ne toisistaan
   std::vector<std::string> codeParcels = NFmiStringTools::Split(reallyUsedSynopBlock, "=");
 
   NFmiSynopCode synopCode(&theAviStations, verbose);
@@ -1374,7 +1374,7 @@ static void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
         ssin2 >> shipName2;
         string dateStr2;
         if (fDoBuoyMessages)
-          ssin >> dateStr2;  // YYMMJ  (YY p‰iv‰, MM on kuukausi ja J on vuosi (2007 = 7))
+          ssin >> dateStr2;  // YYMMJ  (YY p√§iv√§, MM on kuukausi ja J on vuosi (2007 = 7))
         string timeStr2;
         ssin2 >> timeStr2;  // DDHHiw   (iw on tuulen nopeus indikaattori 0,1 = m/s 3,4= knots)
         NFmiMetTime aTime2;
@@ -1399,21 +1399,21 @@ static void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
           continue;
         }
         if (shipName == shipName2 && timeStr == timeStr2)
-          continue;  // n‰m‰ on jotain ihme monesti roportissa olevia samoilta laivoilta tulevia
+          continue;  // n√§m√§ on jotain ihme monesti roportissa olevia samoilta laivoilta tulevia
                      // sanomia
         shipName = shipName2;
         aTime = aTime2;
         wordSkipCount =
             fDoBuoyMessages
                 ? 3
-                : 2;  // t‰ss‰ tapauksessa Decode-metodiasa pit‰‰ skipata kaksi ensimm‰ist‰ sanaa
+                : 2;  // t√§ss√§ tapauksessa Decode-metodiasa pit√§√§ skipata kaksi ensimm√§ist√§ sanaa
       }
       if (fDoBuoyMessages)
         synopCode.DecodeBouy(tmpStr, windSpeedInKnots, wordSkipCount);
       else
         synopCode.Decode(
             tmpStr, fDoShipMessages, windSpeedInKnots, wordSkipCount, theUnknownWmoIdsInOut);
-      synopCode.itsTime = aTime;  // t‰ss‰ blokissa on synopit aina samassa ajassa
+      synopCode.itsTime = aTime;  // t√§ss√§ blokissa on synopit aina samassa ajassa
       if (fDoShipMessages || fDoBuoyMessages) synopCode.itsStation.SetName(shipName);
       if (fDoBuoyMessages)
         synopCode.itsStation.SetIdent(NFmiStringTools::Convert<unsigned long>(shipName));
@@ -1452,7 +1452,7 @@ static void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
     }
     catch (ExceptionSynopEndIgnoreMessage & /* e */)
     {
-      // t‰m‰ oli normaali synop koodin lopetus, eli ei raporttia, mutta ei laiteta talteen
+      // t√§m√§ oli normaali synop koodin lopetus, eli ei raporttia, mutta ei laiteta talteen
       // sanoamaa, koska se oli NIL tms.
     }
     catch (std::exception &e)
@@ -1476,9 +1476,9 @@ static bool StringContainsOnlyDigits(const std::string &str)
   return true;
 }
 
-// Oletus: stringist‰ on poistettu turhat whitespacet alusta, lopusta ja mahdollisten sanojen
-// v‰lill‰ on aina vain yksi space.
-// pair:in first:issa on toiseksi viimeinen sana ja second:issa on viimeinen sana (myˆs
+// Oletus: stringist√§ on poistettu turhat whitespacet alusta, lopusta ja mahdollisten sanojen
+// v√§lill√§ on aina vain yksi space.
+// pair:in first:issa on toiseksi viimeinen sana ja second:issa on viimeinen sana (my√∂s
 // mahdollisesti ainoa sana)
 static std::pair<std::string, std::string> GetLastTwoWords(const std::string &str)
 {
@@ -1528,8 +1528,8 @@ static bool GetPossibleSynopTime(const std::string &timeStr, NFmiMetTime &theSyn
         theSynopTime.SetHour(hour);
         theSynopTime.SetMin(minute);
         if (theSynopTime > currentTime)
-          theSynopTime.PreviousMetTime(NFmiTimePerioid(0, 1, 0, 0, 0, 0));  // siirret‰‰n kuukausi
-        // taaksep‰in, jos saatu
+          theSynopTime.PreviousMetTime(NFmiTimePerioid(0, 1, 0, 0, 0, 0));  // siirret√§√§n kuukausi
+        // taaksep√§in, jos saatu
         // aika oli
         // tulevaisuudessa
         theSynopTime.NearestMetTime();
@@ -1544,11 +1544,11 @@ static bool GetPossibleSynopCorrectionField(const std::string &str, std::string 
 {
   if (str.size() == 3)
   {
-    if (str[0] == str[1])  // Kahden ensimm‰isen merkin pit‰‰ olla samoja esim. RRA (tai mit‰ muita
+    if (str[0] == str[1])  // Kahden ensimm√§isen merkin pit√§√§ olla samoja esim. RRA (tai mit√§ muita
                            // korjaus kentti tunnisteita voi olla)
     {
-      if (std::isalpha(str[0]) && std::isalpha(str[2]))  // Ensimm‰isen ja viimeisen merkin pit‰‰
-                                                         // olla joku kirjain (t‰llˆin myˆs 2. on
+      if (std::isalpha(str[0]) && std::isalpha(str[2]))  // Ensimm√§isen ja viimeisen merkin pit√§√§
+                                                         // olla joku kirjain (t√§ll√∂in my√∂s 2. on
                                                          // kirjain)
       {
         theCorrectionField = str;
@@ -1560,10 +1560,10 @@ static bool GetPossibleSynopCorrectionField(const std::string &str, std::string 
 }
 
 // Koska synop ja muut blokit on jaettu lohkoihin AAXX, BBXX ja ZZXX sanojen mukaan ja sanoma
-// tiedoston teksti jaetaan osiin niiden mukaan, k‰y seuraavaa:
-// Edellisen lohkon lopussa voi olla tietoa seuraavalle lohkolle. Kaksi viimeist‰ sanaa voi olla
+// tiedoston teksti jaetaan osiin niiden mukaan, k√§y seuraavaa:
+// Edellisen lohkon lopussa voi olla tietoa seuraavalle lohkolle. Kaksi viimeist√§ sanaa voi olla
 // seuraavan lohkon aika ja mahdollinen RRA (tai muu vastaava?) tieto.
-// Siksi kun yksi lohko on k‰yty l‰pi, pit‰‰ lopusta ottaa tiedot talteen seuraavalle lohkolle.
+// Siksi kun yksi lohko on k√§yty l√§pi, pit√§√§ lopusta ottaa tiedot talteen seuraavalle lohkolle.
 static bool GetPossibleNextSynopBlockInfo(const std::string &synopFileBlockStr,
                                           NFmiMetTime &theSynopTime,
                                           std::string &theCorrectionField)
@@ -1591,7 +1591,7 @@ void FillSynopCodeDataVectorFromSYNOPStr(const NFmiMetTime &referenceTime,
                                          std::set<unsigned long> &theUnknownWmoIdsInOut,
                                          const std::string &theFileName)
 {
-  // AAXX = maa havainto ja BBXX = poiju/laiva, jotka skipataan t‰ss‰ vaiheessa
+  // AAXX = maa havainto ja BBXX = poiju/laiva, jotka skipataan t√§ss√§ vaiheessa
   string codeStr = fDoShipMessages ? "BBXX" : "AAXX";
   if (fDoBuoyMessages) codeStr = "ZZYY";
 
@@ -1611,7 +1611,7 @@ void FillSynopCodeDataVectorFromSYNOPStr(const NFmiMetTime &referenceTime,
   NFmiMetTime possibleSynoptime = NFmiMetTime::gMissingTime;
   std::string possibleCorrectionField;
   for (int j = 0; j < static_cast<int>(aaCodeBlocks.size());
-       j++)  // Huom! 1. stringi‰ ei oteta, koska se on turha headeri osa
+       j++)  // Huom! 1. stringi√§ ei oteta, koska se on turha headeri osa
   {
     string usedSynopBlock = aaCodeBlocks[j];
     usedSynopBlock = NFmiStringTools::TrimL(usedSynopBlock);
@@ -1619,11 +1619,11 @@ void FillSynopCodeDataVectorFromSYNOPStr(const NFmiMetTime &referenceTime,
     if (usedSynopBlock.size() > 1 && (usedSynopBlock[0] == '\r' || usedSynopBlock[0] == '\n'))
       usePossibleSynopTime = true;
     usedSynopBlock =
-        ::TrimFromExtraSpaces(usedSynopBlock);  // pit‰‰ trimmata alku ja loppu spaceista, muuten
-                                                // aika stringin sijainti laskut voivat menn‰
-                                                // pieleen, kun reallyUsedSynopBlock-stringi‰
+        ::TrimFromExtraSpaces(usedSynopBlock);  // pit√§√§ trimmata alku ja loppu spaceista, muuten
+                                                // aika stringin sijainti laskut voivat menn√§
+                                                // pieleen, kun reallyUsedSynopBlock-stringi√§
                                                 // lasketaan
-    const size_t kMaxErrorStrSize = 100;  // t‰m‰n verran laitetaan synop-blockin alusta cerr:iin
+    const size_t kMaxErrorStrSize = 100;  // t√§m√§n verran laitetaan synop-blockin alusta cerr:iin
     try
     {
       size_t oldSynopCodeVecSize = theSynopCodeVector.size();
@@ -1762,7 +1762,7 @@ static void FillData(const std::vector<NFmiSynopCode> &theSynopCodeVector,
                      NFmiQueryData *theData)
 {
   if (theData)
-  {  // sitten t‰ytet‰‰n uusi data
+  {  // sitten t√§ytet√§√§n uusi data
     NFmiFastQueryInfo infoIter(theData);
     infoIter.FirstLevel();
     bool fillSeaParams = fDoShipMessages || fDoBuoyMessages;
@@ -1789,7 +1789,7 @@ static void FillData(const std::vector<NFmiSynopCode> &theSynopCodeVector,
         }
       }
     }
-    // kun synop data on t‰ytetty, lasketaan mahd. puuttuva kosteus arvo dataan T ja Td avulla
+    // kun synop data on t√§ytetty, lasketaan mahd. puuttuva kosteus arvo dataan T ja Td avulla
     ::FillMissingHumidityValues(infoIter);
   }
 }
@@ -1826,7 +1826,7 @@ void Domain(int argc, const char *argv[])
   {
     cerr << "Error: Invalid command line:" << endl << cmdline.Status().ErrorLog().CharPtr() << endl;
     ::Usage();
-    throw runtime_error("");  // t‰ss‰ piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
+    throw runtime_error("");  // t√§ss√§ piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
   }
 
@@ -1835,7 +1835,7 @@ void Domain(int argc, const char *argv[])
   {
     cerr << "Error: Atleast 1 parameter expected, 'fileFilter1 [fileFilter2 ...]'\n\n";
     ::Usage();
-    throw runtime_error("");  // t‰ss‰ piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
+    throw runtime_error("");  // t√§ss√§ piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
   }
 
@@ -1890,7 +1890,7 @@ void Domain(int argc, const char *argv[])
   bool roundTimesToNearestSynopticTimes = false;
   if (cmdline.isOption('t')) roundTimesToNearestSynopticTimes = true;
 
-  //	1. Lue n kpl filefiltereit‰ listaan
+  //	1. Lue n kpl filefiltereit√§ listaan
   vector<string> fileFilterList;
   for (int i = 1; i <= numOfParams; i++)
   {
@@ -1902,13 +1902,13 @@ void Domain(int argc, const char *argv[])
   std::vector<NFmiSynopCode> synopCodeVector;
   for (unsigned int j = 0; j < fileFilterList.size(); j++)
   {
-    //	2. Hae jokaista filefilteri‰ vastaavat tiedostonimet omaan listaan
+    //	2. Hae jokaista filefilteri√§ vastaavat tiedostonimet omaan listaan
     std::string filePatternStr = fileFilterList[j];
     std::string usedPath = NFmiFileSystem::PathFromPattern(filePatternStr);
     list<string> fileList = NFmiFileSystem::PatternFiles(filePatternStr);
     for (list<string>::iterator it = fileList.begin(); it != fileList.end(); ++it)
     {
-      //	3. Lue listan tiedostot vuorollaan sis‰‰n ja tulkitse siit‰ sanomat
+      //	3. Lue listan tiedostot vuorollaan sis√§√§n ja tulkitse siit√§ sanomat
       // synopCode-vektoriin
       std::string finalFileName = usedPath + *it;
       foundAnyFiles = true;

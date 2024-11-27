@@ -15,7 +15,7 @@ static void Usage(const std::string& theExecutableName)
 {
   NFmiFileString fileNameStr(theExecutableName);
   std::string usedFileName(
-      fileNameStr.FileName().CharPtr());  // ota pois mahd. polku executablen nimest‰
+      fileNameStr.FileName().CharPtr());  // ota pois mahd. polku executablen nimest√§
   std::cerr << "Usage: " << std::endl
             << usedFileName.c_str() << " [options] qdin dqout" << std::endl
             << std::endl

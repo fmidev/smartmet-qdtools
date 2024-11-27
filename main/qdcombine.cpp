@@ -1,6 +1,6 @@
-// qdcombine Tekij‰ Marko 30.8.2005
-// Yritt‰‰ yhdist‰‰ halutusta hakemistosta lˆytyneet tiedostot
-// aikojen/parametrien/leveleiden mukaan ja tuottaa niist‰ yksi
+// qdcombine Tekij√§ Marko 30.8.2005
+// Yritt√§√§ yhdist√§√§ halutusta hakemistosta l√∂ytyneet tiedostot
+// aikojen/parametrien/leveleiden mukaan ja tuottaa niist√§ yksi
 // yhteinen data tiedosto.
 
 #include <newbase/NFmiArea.h>
@@ -72,7 +72,7 @@ static void ReadGridData(vector<string> &theDataFileNames, MyGrid &theUsedGrid)
 
     if (grid)
     {
-      // otetaan 1. lˆytynyt gridi k‰yttˆˆn lopulliseen dataan
+      // otetaan 1. l√∂ytynyt gridi k√§ytt√∂√∂n lopulliseen dataan
       theUsedGrid = MyGrid(*grid);
       return;
     }
@@ -233,9 +233,9 @@ static NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
   if (dataFileNames.empty()) throw std::runtime_error("Attempting to combine zero querydatas");
 
   set<NFmiMetTime> allTimes;
-  set<NFmiParam> allParams;  // huom! parametrin identti on ainoa mik‰ ratkaisee NFmiParm:in
-                             // ==-operaattorissa, joten t‰m‰ toimii vaikka muut arvot esim. nimi
-                             // olisivat mit‰
+  set<NFmiParam> allParams;  // huom! parametrin identti on ainoa mik√§ ratkaisee NFmiParm:in
+                             // ==-operaattorissa, joten t√§m√§ toimii vaikka muut arvot esim. nimi
+                             // olisivat mit√§
   set<NFmiLevel, LevelLessThan> allLevels;
   if (theForcedLevel) allLevels.insert(*theForcedLevel);
   // otetaan 1. datasta tuottaja ellei ole annettu pakotettua tuottajaa
@@ -246,13 +246,13 @@ static NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
   NFmiMetTime originTime = qi.OriginTime();
 
   NFmiProducer usedProducer =
-      theWantedProducer ? *theWantedProducer : *(qi.Producer());  // oletus pit‰‰ olla v‰h. 1 data
-                                                                  // listassa ett‰ tullaan t‰h‰n
+      theWantedProducer ? *theWantedProducer : *(qi.Producer());  // oletus pit√§√§ olla v√§h. 1 data
+                                                                  // listassa ett√§ tullaan t√§h√§n
                                                                   // funktioon.
 
   NFmiParamBag firstParaBag = qi.ParamBag();
-  bool isAllParamBagsIdentical = true;  // jos kaikki parambagit olivat identtisi‰, kopioidaan se
-  // suoraan k‰yttˆˆn, koska muuten parametrien j‰rjestys voi
+  bool isAllParamBagsIdentical = true;  // jos kaikki parambagit olivat identtisi√§, kopioidaan se
+  // suoraan k√§ytt√∂√∂n, koska muuten parametrien j√§rjestys voi
   // muuttua
 
   std::set<NFmiStation> stations;  // for point data only
@@ -296,13 +296,13 @@ static NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
     }
   }
 
-  // Tehd‰‰n kaikkia datoja yhdist‰v‰ tdescriptor
+  // Tehd√§√§n kaikkia datoja yhdist√§v√§ tdescriptor
   NFmiTimeList timeList;
   for (set<NFmiMetTime>::iterator it1 = allTimes.begin(); it1 != allTimes.end(); ++it1)
     timeList.Add(new NFmiMetTime(*it1));
   NFmiTimeDescriptor tdesc(originTime, timeList);
 
-  // Tehd‰‰n kaikkia datoja yhdist‰v‰ paramDescriptor
+  // Tehd√§√§n kaikkia datoja yhdist√§v√§ paramDescriptor
   NFmiParamBag paramBag;
   if (isAllParamBagsIdentical)
     paramBag = firstParaBag;
@@ -312,10 +312,10 @@ static NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
     {
       FmiParameterName parId = static_cast<FmiParameterName>((*it2).GetIdent());
       if (parId == kFmiTotalWindMS ||
-          parId == kFmiWeatherAndCloudiness)  // HUOM! yhdistelm‰ parametrit totalWind ja
+          parId == kFmiWeatherAndCloudiness)  // HUOM! yhdistelm√§ parametrit totalWind ja
                                               // weatherAndCloudiness ovat erikois tapauksia!!!
       {
-        NFmiTotalWind totWind;  // pit‰isi muuttaa kyseisten luokkien CreateParam
+        NFmiTotalWind totWind;  // pit√§isi muuttaa kyseisten luokkien CreateParam
                                 // static-metodiksi, niin koodista tulisi fiksumpaa
         NFmiWeatherAndCloudiness weatAndC;
         NFmiDataIdent *dataIdent = (parId == kFmiTotalWindMS) ? totWind.CreateParam(usedProducer)
@@ -329,7 +329,7 @@ static NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
   }
   NFmiParamDescriptor pdesc(paramBag);
 
-  // Tehd‰‰n kaikkia datoja yhdist‰v‰ vPlaceDescriptor
+  // Tehd√§√§n kaikkia datoja yhdist√§v√§ vPlaceDescriptor
   NFmiLevelBag levelBag;
   for (set<NFmiLevel, LevelLessThan>::iterator it3 = allLevels.begin(); it3 != allLevels.end();
        ++it3)
@@ -370,7 +370,7 @@ int Run(int argc, const char *argv[])
   {
     cerr << "Error: Invalid command line:" << endl << cmdline.Status().ErrorLog().CharPtr() << endl;
     Usage();
-    throw runtime_error("");  // t‰ss‰ piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
+    throw runtime_error("");  // t√§ss√§ piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
   }
 
@@ -378,7 +378,7 @@ int Run(int argc, const char *argv[])
   {
     cerr << "Error: Atleast 1 parameter expected, 'directory'\n\n";
     Usage();
-    throw runtime_error("");  // t‰ss‰ piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
+    throw runtime_error("");  // t√§ss√§ piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
   }
 
@@ -409,7 +409,7 @@ int Run(int argc, const char *argv[])
     wantedProducer = new NFmiProducer(prodId, strVector[1]);
   }
   unique_ptr<NFmiProducer> wantedProducerPtr(
-      wantedProducer);  // t‰m‰ tuhoaa dynaamisen datan automaattisesti
+      wantedProducer);  // t√§m√§ tuhoaa dynaamisen datan automaattisesti
 
   std::string outfile = "-";
   bool mmapped = false;

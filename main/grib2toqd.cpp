@@ -1,18 +1,18 @@
 /*!
  *  \file
- *  Tekij‰: Marko (19.8.2003)
+ *  Tekij√§: Marko (19.8.2003)
  *
- *  T‰m‰ ohjelma lukee grib-tiedoston (hallitsee myˆs grib2-formaatin) ja konvertoi sen
+ *  T√§m√§ ohjelma lukee grib-tiedoston (hallitsee my√∂s grib2-formaatin) ja konvertoi sen
  *fqd-tiedostoksi.
  *
  * \code
  * Optiot:
  *
  *  -o output-tiedosto      Oletusarvoisesti tulostetaan sdtout:iin.
- *	-m max-data-size-MB [200] Kuinka suuri data paketti tehd‰‰n
+ *	-m max-data-size-MB [200] Kuinka suuri data paketti tehd√§√§n
  *                              maksimissaan megatavuissa (vahinkojen varalle)
- *  -l t105v3,t109v255,...   J‰t‰ pois laskuista seuraavat yksitt‰iset levelit (1. type 105,
- *value 3, jne.) -g printed-grid-info-count Eli kuinka monesta ensimm‰isest‰ hilasta haluat
+ *  -l t105v3,t109v255,...   J√§t√§ pois laskuista seuraavat yksitt√§iset levelit (1. type 105,
+ *value 3, jne.) -g printed-grid-info-count Eli kuinka monesta ensimm√§isest√§ hilasta haluat
  *tulostaa cerr:iin. Jos count -1, tulostaa kaikista.
  *
  * Esimerkkeja:
@@ -23,18 +23,18 @@
  * \endcode
  */
 
-// TODO Pit‰isi irroittaa hilojen grib-handle k‰sittelyt ja apuluokat omaan sourceen (mm.
+// TODO Pit√§isi irroittaa hilojen grib-handle k√§sittelyt ja apuluokat omaan sourceen (mm.
 // GribFilterOptions-luokka ja
 // CreatePolarStereographicArea -funktio ja vastaavat) tai namespaceen. Nyt tein korjauksia
 // grib2toqd.cpp:hen, jotka
-// pit‰isi saada k‰yttˆˆn myˆs gribtoqd.cpp:ss‰. gribtoqd.cpp on kopio alkuper‰isest‰
+// pit√§isi saada k√§ytt√∂√∂n my√∂s gribtoqd.cpp:ss√§. gribtoqd.cpp on kopio alkuper√§isest√§
 // grib2toqd.cpp-tiedostosta ja
-// siihen on tehty mm. asetuksien s‰‰dˆt NFmiSettings-luokan avulla linux-maailman mukaisiksi.
+// siihen on tehty mm. asetuksien s√§√§d√∂t NFmiSettings-luokan avulla linux-maailman mukaisiksi.
 
 #ifdef _MSC_VER
-#pragma warning(disable : 4786 4996)  // poistaa n kpl VC++ k‰‰nt‰j‰n varoitusta (liian pitk‰ nimi
-                                      // >255 merkki‰
-                                      // joka johtuu 'puretuista' STL-template nimist‰)
+#pragma warning(disable : 4786 4996)  // poistaa n kpl VC++ k√§√§nt√§j√§n varoitusta (liian pitk√§ nimi
+                                      // >255 merkki√§
+                                      // joka johtuu 'puretuista' STL-template nimist√§)
 #endif
 
 #include "GribTools.h"
@@ -151,15 +151,15 @@ struct GribFilterOptions
   bool fUseOutputFile;
   size_t itsMaxQDataSizeInBytes;  // default max koko 1 GB
   int itsReturnStatus;            // 0 = ok
-  NFmiLevelBag itsIgnoredLevelList;  // lista miss‰ yksitt‰isi‰ leveleit‰, mitk‰ halutaan j‰tt‰‰
+  NFmiLevelBag itsIgnoredLevelList;  // lista miss√§ yksitt√§isi√§ leveleit√§, mitk√§ halutaan j√§tt√§√§
                                      // pois laskuista
   vector<std::shared_ptr<NFmiQueryData> > itsGeneratedDatas;
-  vector<FmiLevelType> itsAcceptOnlyLevelTypes;  // lista jossa ainoat hyv‰ksytt‰v‰t level typet
+  vector<FmiLevelType> itsAcceptOnlyLevelTypes;  // lista jossa ainoat hyv√§ksytt√§v√§t level typet
   int itsGridInfoPrintCount;
   vector<ParamChangeItem> itsParamChangeTable;
   bool fCropParamsNotMensionedInTable;
   bool fDoGlobeFix;
-  bool fUseLevelTypeFileNaming;  // n optiolla voidaan laittaa output tiedostojen nimen per‰‰n esim.
+  bool fUseLevelTypeFileNaming;  // n optiolla voidaan laittaa output tiedostojen nimen per√§√§n esim.
                                  // _levelType_100
   NFmiProducer itsWantedSurfaceProducer;
   NFmiProducer itsWantedPressureProducer;
@@ -169,7 +169,7 @@ struct GribFilterOptions
   NFmiRect itsLatlonCropRect;
   GridSettingsPackage itsGridSettings;
   bool fVerbose;
-  bool fTreatSingleLevelsAsSurfaceData;  // jos t‰m‰ on true, laitetaan kaikki eri tyyppiset
+  bool fTreatSingleLevelsAsSurfaceData;  // jos t√§m√§ on true, laitetaan kaikki eri tyyppiset
                                          // level-datat, joissa on vain yksi erillinen leveli,
                                          // yhteen ja samaan surface-dataan
   string itsInputFileNameStr;
@@ -180,7 +180,7 @@ class TotalQDataCollector
 {
   typedef boost::shared_mutex MutexType;
   typedef boost::shared_lock<MutexType>
-      ReadLock;  // Read-lockia ei oikeasti tarvita, mutta laitan sen t‰h‰n, jos joskus tarvitaankin
+      ReadLock;  // Read-lockia ei oikeasti tarvita, mutta laitan sen t√§h√§n, jos joskus tarvitaankin
   typedef boost::unique_lock<MutexType> WriteLock;
 
  public:
@@ -202,8 +202,8 @@ class TotalQDataCollector
 
  private:
   MutexType itsMutex;
-  int itsAddCount;                    // kuinka monta 'onnistunutta' data lis‰yst‰ on tehty
-  Container itsTotalGeneratedQDatas;  // t‰h‰n listaan lis‰t‰‰n kustakin gribist‰ luodut queryDatat
+  int itsAddCount;                    // kuinka monta 'onnistunutta' data lis√§yst√§ on tehty
+  Container itsTotalGeneratedQDatas;  // t√§h√§n listaan lis√§t√§√§n kustakin gribist√§ luodut queryDatat
 };
 
 namespace
@@ -239,7 +239,7 @@ vector<NFmiHPlaceDescriptor> GetAllHPlaceDescriptors(vector<GridRecordData *> &t
                                                      bool useOutputFile);
 
 static const unsigned long gMissLevelValue =
-    9999999;  // t‰ll‰ ignoorataan kaikki tietyn level tyypin hilat
+    9999999;  // t√§ll√§ ignoorataan kaikki tietyn level tyypin hilat
 
 static string GetFileNameAreaStr(const NFmiArea *theArea)
 {
@@ -281,7 +281,7 @@ static NFmiRect GetLatlonCropRect(const string &theBoundsStr)
 
 // Lukee initialisointi tiedostosta parametreja koskevat muunnos tiedot.
 // param tiedoston formaatti on seuraava (kommentit sallittuja, mutta itse param rivit
-// ilman kommentti merkkej‰) ja kenttien erottimina on ;-merkki.
+// ilman kommentti merkkej√§) ja kenttien erottimina on ;-merkki.
 //
 // // origParId;wantedParId;wantedParName[;base][;scale][;levelType;level]
 // 129;4;Temperature;-273.15;1;103;2  // (here e.g. T change from kelvins to celsius and changing
@@ -303,7 +303,7 @@ static void InitParamChangeTable(const string &theParamChangeTableFileName,
     std::stringstream in(stripComments.GetString());
 #endif
 
-    const int maxBufferSize = 1024 + 1;  // kuinka pitk‰ yhden rivin maksimissaan oletetaan olevan
+    const int maxBufferSize = 1024 + 1;  // kuinka pitk√§ yhden rivin maksimissaan oletetaan olevan
     std::string buffer;
     ParamChangeItem paramChangeItem;
     int i = 0;
@@ -404,15 +404,15 @@ static void HandleSeparateProjections(vector<string> &theSeparateProjectionsStr,
   }
 }
 
-// Funktio tekee annetusta projektio stringist‰ halutun projektio gridin. Lis‰ksi siin‰ tarkistetaan
+// Funktio tekee annetusta projektio stringist√§ halutun projektio gridin. Lis√§ksi siin√§ tarkistetaan
 // onko annettu
 // erilaisille datoille hilakokoja. Jos ei ole, kaikille datoille tulee koko 50x50.
-// Jos lˆytyy yksi koko, laitetaan kaikille datoille halutuksi hila kooksi se. Jos annettu toinenkin
+// Jos l√∂ytyy yksi koko, laitetaan kaikille datoille halutuksi hila kooksi se. Jos annettu toinenkin
 // hila koko, annetaan
 // se koko painepinta ja mallipinta datoilla ja kaikille muillekin datoille.
 // Projektio stringi on muotoa:
 // stereographic,20,90,60:6,51.3,49,70.2:82,91
-// Jossa toisen kaksoispisteen j‰lkeen tulee hilakoot. Niit‰ voi siis olla pilkuilla eroteltuina 3
+// Jossa toisen kaksoispisteen j√§lkeen tulee hilakoot. Niit√§ voi siis olla pilkuilla eroteltuina 3
 // paria.
 static void HandleProjectionString(const string &theProjStr, GridSettingsPackage &theGridSettings)
 {
@@ -427,7 +427,7 @@ static void HandleProjectionString(const string &theProjStr, GridSettingsPackage
     if (projParts.size() < 2)
       throw std::runtime_error("Error with -P option, the projection string was incomplete.");
     string areaStr = projParts[0] + ":" + projParts[1];
-    string gridSizeStr = "50,50";  // t‰m‰ on defaultti hila koko jos sit‰ ei ole annettu
+    string gridSizeStr = "50,50";  // t√§m√§ on defaultti hila koko jos sit√§ ei ole annettu
     if (projParts.size() >= 3)
       gridSizeStr = projParts[2];
     vector<int> gridSizes = NFmiStringTools::Split<vector<int> >(gridSizeStr, ",");
@@ -494,7 +494,7 @@ static bool GetIgnoreLevelList(NFmiCmdLine &theCmdLine, NFmiLevelBag &theIgnored
     string ignoredLevelsStr = theCmdLine.OptionValue('l');
     vector<string> ignoredLevelsStrVector = NFmiStringTools::Split(ignoredLevelsStr);
     for (unsigned int i = 0; i < ignoredLevelsStrVector.size(); i++)
-    {  // yksitt‰iset stringit siis muotoa t105v3 jne. eli leveltyyppi 105 ja sen arvo 3
+    {  // yksitt√§iset stringit siis muotoa t105v3 jne. eli leveltyyppi 105 ja sen arvo 3
       vector<string> levelStrVec =
           NFmiStringTools::Split(NFmiStringTools::LowerCase(ignoredLevelsStrVector[i]), "v");
       if (levelStrVec.size() == 2 && levelStrVec[0].at(0) == 't')
@@ -566,7 +566,7 @@ static vector<FmiLevelType> GetAcceptedLevelTypes(NFmiCmdLine &theCmdLine)
       unsigned long levelType =
           Fmi::stoul(acceptOnlyLevelTypesStrVector[i]);
       acceptOnlyLevelTypes.push_back(static_cast<FmiLevelType>(
-          levelType));  // stringtools-convert ei osaa heti tehd‰ FmiLevelType-tyyppi‰
+          levelType));  // stringtools-convert ei osaa heti tehd√§ FmiLevelType-tyyppi√§
     }
   }
   return acceptOnlyLevelTypes;
@@ -635,8 +635,8 @@ static void StoreQueryDatas(GribFilterOptions &theGribFilterOptions)
           usedFileName += "_levelType_";
           usedFileName +=
               NFmiStringTools::Convert(::GetLevelType(theGribFilterOptions.itsGeneratedDatas[i]));
-          // TƒMƒ PITƒƒ viel‰ korjata, jos saman level tyypill‰ on erilaisia hila/area m‰‰rityksi‰,
-          // pit‰‰ ne nimet‰!!!
+          // T√ÑM√Ñ PIT√Ñ√Ñ viel√§ korjata, jos saman level tyypill√§ on erilaisia hila/area m√§√§rityksi√§,
+          // pit√§√§ ne nimet√§!!!
           if (useDifferentFileNamesOnDifferentGrids)
           {
             string areaStr =
@@ -659,8 +659,8 @@ static void StoreQueryDatas(GribFilterOptions &theGribFilterOptions)
           returnStatus |= 0;
         }
       }
-      else if (ssize > 1)  // jos qdatoja syntyy enemm‰n kuin 1, pit‰‰ antaa output-tiedoston nimi,
-                           // ett‰ muut tiedostonimet voidaan generoida
+      else if (ssize > 1)  // jos qdatoja syntyy enemm√§n kuin 1, pit√§√§ antaa output-tiedoston nimi,
+                           // ett√§ muut tiedostonimet voidaan generoida
       {
         cerr << "GRIB will generate several sqd-files." << endl;
         cerr << "Use the -o option to give one name" << endl;
@@ -796,8 +796,8 @@ static vector<string> GetDataFiles(const string &theFileOrPatternOrDirectory)
     return ::MakeFullPathFileList(dirList, directory);
   }
 
-  string filePattern = theFileOrPatternOrDirectory;  // Huom! Myˆs yhden tiedoston tarkkaa nime‰
-                                                     // voidaan pit‰‰ patternina.
+  string filePattern = theFileOrPatternOrDirectory;  // Huom! My√∂s yhden tiedoston tarkkaa nime√§
+                                                     // voidaan pit√§√§ patternina.
   list<string> patternList = NFmiFileSystem::PatternFiles(filePattern);
   directory = ::GetDirectory(filePattern);
   return ::MakeFullPathFileList(patternList, directory);
@@ -825,14 +825,14 @@ class CombineDataStructureSearcher
           itsGridCounts.insert(make_pair(tmpGrid, 1));  // laitetaan hila ja counter arvo 1  mappiin
       if (it.second == false)
         (*it.first)
-            .second++;  // jos kyseinen hila oli jo mapissa, kasvatetaan counterin arvo yhdell‰
+            .second++;  // jos kyseinen hila oli jo mapissa, kasvatetaan counterin arvo yhdell√§
     }
   }
 
   void AddTimes(const NFmiTimeDescriptor &theTimeDesc)
   {
     NFmiTimeDescriptor &timeDesc = const_cast<NFmiTimeDescriptor &>(
-        theTimeDesc);  // rumaa mutta pit‰‰ kikkailla const:ien kanssa
+        theTimeDesc);  // rumaa mutta pit√§√§ kikkailla const:ien kanssa
     for (timeDesc.Reset(); timeDesc.Next();)
       itsValidTimes.insert(timeDesc.Time());
     itsOrigTimes.insert(timeDesc.OriginTime());
@@ -841,7 +841,7 @@ class CombineDataStructureSearcher
   void AddLevels(const NFmiVPlaceDescriptor &theVPlaceDesc)
   {
     NFmiVPlaceDescriptor &vplaceDesc = const_cast<NFmiVPlaceDescriptor &>(
-        theVPlaceDesc);  // rumaa mutta pit‰‰ kikkailla const:ien kanssa
+        theVPlaceDesc);  // rumaa mutta pit√§√§ kikkailla const:ien kanssa
     for (vplaceDesc.Reset(); vplaceDesc.Next();)
       itsLevels.insert(*(vplaceDesc.Level()));
   }
@@ -849,7 +849,7 @@ class CombineDataStructureSearcher
   void AddParams(const NFmiParamDescriptor &theParamDesc)
   {
     NFmiParamDescriptor &paramDesc = const_cast<NFmiParamDescriptor &>(
-        theParamDesc);  // rumaa mutta pit‰‰ kikkailla const:ien kanssa
+        theParamDesc);  // rumaa mutta pit√§√§ kikkailla const:ien kanssa
     for (paramDesc.Reset(); paramDesc.Next();)
     {
       itsParams.insert(*(paramDesc.Param().GetParam()));
@@ -860,7 +860,7 @@ class CombineDataStructureSearcher
   NFmiHPlaceDescriptor GetGrid(void)
   {
     int maxCount = -1;
-    MyGrid mostPopularGrid;  // t‰h‰ etsit‰‰n 'suosituin' hila, ja sit‰ k‰ytet‰‰n datan pohjana
+    MyGrid mostPopularGrid;  // t√§h√§ etsit√§√§n 'suosituin' hila, ja sit√§ k√§ytet√§√§n datan pohjana
     for (map<MyGrid, int>::iterator it = itsGridCounts.begin(); it != itsGridCounts.end(); ++it)
     {
       if ((*it).second > maxCount)
@@ -881,7 +881,7 @@ class CombineDataStructureSearcher
       times.Add(new NFmiMetTime(*it));
     }
     set<NFmiMetTime>::iterator origTimeIt =
-        itsOrigTimes.begin();  // otetaan vain 1. origtime, en jaksa nyt mietti‰ mik‰ voisi olla
+        itsOrigTimes.begin();  // otetaan vain 1. origtime, en jaksa nyt mietti√§ mik√§ voisi olla
                                // sopivin, jos on useita vaihtoehtoja
     return NFmiTimeDescriptor(*origTimeIt, times);
   }
@@ -899,7 +899,7 @@ class CombineDataStructureSearcher
   NFmiParamDescriptor GetParams(void)
   {
     set<NFmiProducer>::iterator prodIt =
-        itsWantedProducers.begin();  // otetaan vain 1. producer, en jaksa nyt mietti‰ mik‰ voisi
+        itsWantedProducers.begin();  // otetaan vain 1. producer, en jaksa nyt mietti√§ mik√§ voisi
                                      // olla sopivin, jos on useita vaihtoehtoja
     NFmiParamBag params;
     for (set<NFmiParam>::iterator it = itsParams.begin(); it != itsParams.end(); ++it)
@@ -910,7 +910,7 @@ class CombineDataStructureSearcher
   }
 
  private:
-  map<MyGrid, int> itsGridCounts;  // t‰h‰n lasketaan t‰m‰n level tyypin eri hilat ja kuinka monta
+  map<MyGrid, int> itsGridCounts;  // t√§h√§n lasketaan t√§m√§n level tyypin eri hilat ja kuinka monta
                                    // kertaa kukin hila on esiintynyt datoissa
   set<NFmiMetTime> itsValidTimes;
   set<NFmiMetTime> itsOrigTimes;
@@ -1058,11 +1058,11 @@ static void MakeTotalCombineQDatas(TotalQDataCollector &theTotalQDataCollector,
     TotalQDataCollector::Container::iterator it =
         theTotalQDataCollector.TotalGeneratedQDatas().begin();
     theGribFilterOptionsOut.itsGeneratedDatas =
-        *it;  // Jos vain yhdest‰ grib-tiedostosta dataa, laitetaan ne sellaisenaan output-datoiksi
+        *it;  // Jos vain yhdest√§ grib-tiedostosta dataa, laitetaan ne sellaisenaan output-datoiksi
   }
   else
-  {  // Jos useita grib-l‰hteit‰, yritet‰‰n muodostaan t‰ss‰ niist‰ kokooma-qdatoja.
-    // T‰ss‰ luodaan luultavasti aikayhdistelmi‰, jos l‰hde gribit ovat olleet per aika-askel
+  {  // Jos useita grib-l√§hteit√§, yritet√§√§n muodostaan t√§ss√§ niist√§ kokooma-qdatoja.
+    // T√§ss√§ luodaan luultavasti aikayhdistelmi√§, jos l√§hde gribit ovat olleet per aika-askel
     // tyyliin.
     // 0. Etsi kaikki mahdolliset levelTypet
     set<long> levelTypes = ::FindAllLevelTypes(theTotalQDataCollector);
@@ -1070,13 +1070,13 @@ static void MakeTotalCombineQDatas(TotalQDataCollector &theTotalQDataCollector,
     map<long, CombineDataStructureSearcher> levelTypeStructures;
     for (set<long>::iterator it = levelTypes.begin(); it != levelTypes.end(); ++it)
       levelTypeStructures.insert(make_pair(*it, CombineDataStructureSearcher()));
-    // 1. K‰y l‰pi datat ja etsi pohjat (hila+alue, parametrit, levelit, ajat) kaikille eri
+    // 1. K√§y l√§pi datat ja etsi pohjat (hila+alue, parametrit, levelit, ajat) kaikille eri
     // level-tyypeille (esim. pinta, painepinta ja mallipinta).
     ::SearchForDataStructures(theTotalQDataCollector, levelTypeStructures);
     // 2. Luo eri level-tyypeille tarvittavat descriptorit -> innerInfo -> queryData-pohja
     vector<std::shared_ptr<NFmiQueryData> > generatedQDatas =
         ::CreateEmptyQDataVector(levelTypeStructures);
-    // 3. Tee fastInfot datoille ja t‰yt‰ eri datat
+    // 3. Tee fastInfot datoille ja t√§yt√§ eri datat
     for (size_t i = 0; i < generatedQDatas.size(); i++)
       ::FillQData(generatedQDatas[i], theTotalQDataCollector);
     theGribFilterOptionsOut.itsGeneratedDatas = generatedQDatas;
@@ -1136,7 +1136,7 @@ static int BuildAndStoreAllDatas(vector<string> &theFileList,
   for (size_t i = 0; i < fileCount; i++)
     ::ConvertSingleGribFile(theGribFilterOptions, theFileList[i]);
 
-  /* // Multi-threaddaava versio ei toimi, koska grib_api ei ilmeisesti toimi, jos k‰yd‰‰n l‰pi
+  /* // Multi-threaddaava versio ei toimi, koska grib_api ei ilmeisesti toimi, jos k√§yd√§√§n l√§pi
      samaan aikaan useita grib-tiedostoja
           for(size_t i=0; i < fileCount; )
           {
@@ -1152,7 +1152,7 @@ static int BuildAndStoreAllDatas(vector<string> &theFileList,
                   if(i < fileCount)
                           calcFiles.add_thread(new boost::thread(::ConvertSingleGribFile,
      theGribFilterOptions, theFileList[i++]));
-                  calcFiles.join_all(); // odotetaan ett‰ threadit lopettavat
+                  calcFiles.join_all(); // odotetaan ett√§ threadit lopettavat
           }
   */
   ::MakeTotalCombineQDatas(gTotalQDataCollector, theGribFilterOptions);
@@ -1169,9 +1169,9 @@ int Run(int argc, const char **argv, bool &fReportExecutionTime)
   NFmiCmdLine cmdline(argc, argv, "o!m!l!g!p!fnL!G!c!dvP!D!tH!r!1");
 
   // Tarkistetaan optioiden oikeus:
-  std::string filePatternOrDirectory;  // ohjelman 1. argumentti sis‰lt‰‰ joko tiedoston nimen,
+  std::string filePatternOrDirectory;  // ohjelman 1. argumentti sis√§lt√§√§ joko tiedoston nimen,
                                        // patternin tai hakemiston.
-  // Jonkin n‰ist‰ avulla muodostetaan lista, jossa voi olla 0-n kpl tiedoston nimi‰.
+  // Jonkin n√§ist√§ avulla muodostetaan lista, jossa voi olla 0-n kpl tiedoston nimi√§.
   if (::DoCommandLineCheck(cmdline, filePatternOrDirectory) == false)
     return 1;
 
@@ -1292,9 +1292,9 @@ static bool AcceptThisLevelType(GridRecordData *data, vector<FmiLevelType> &theA
     for (unsigned int i = 0; i < theAcceptOnlyLevelTypes.size(); i++)
     {
       if (theAcceptOnlyLevelTypes[i] == data->itsLevel.LevelType())
-        return true;  // skipataan jokerin valuen yhteydess‰ kaikki kyseisen level tyypin kent‰t
+        return true;  // skipataan jokerin valuen yhteydess√§ kaikki kyseisen level tyypin kent√§t
     }
-    return false;  // jos oli accept lista mutta ei lˆytynyt leveltype‰ siit‰, hylk‰‰
+    return false;  // jos oli accept lista mutta ei l√∂ytynyt leveltype√§ siit√§, hylk√§√§
   }
   return true;
 }
@@ -1307,7 +1307,7 @@ static bool IgnoreThisLevel(GridRecordData *data, NFmiLevelBag &theIgnoredLevelL
     {
       if (theIgnoredLevelList.Level()->LevelValue() == gMissLevelValue &&
           theIgnoredLevelList.Level()->LevelType() == data->itsLevel.LevelType())
-        return true;  // skipataan jokerin valuen yhteydess‰ kaikki kyseisen level tyypin kent‰t
+        return true;  // skipataan jokerin valuen yhteydess√§ kaikki kyseisen level tyypin kent√§t
       if (*(theIgnoredLevelList.Level()) == data->itsLevel)
         return true;
     }
@@ -1354,7 +1354,7 @@ static NFmiArea *CreateLatlonArea(grib_handle *theGribHandle, bool doAtlanticFix
     }
     else if (iScansNegativelyStatus == 0 && !iScansNegatively)
     {
-      // ei swapata longitude arvoja, mutta voidaan fiksailla niit‰, jos annettu Lo1 on suurempi
+      // ei swapata longitude arvoja, mutta voidaan fiksailla niit√§, jos annettu Lo1 on suurempi
       // kuin annettu Lo2
       if (Lo1 > Lo2 && Lo1 >= 180)
         Lo1 -= 360;  // fiksataan vasenmman reunan pacific arvo atlantiseksi
@@ -1468,11 +1468,11 @@ static NFmiArea *CreatePolarStereographicArea(grib_handle *theGribHandle)
   throw runtime_error("Error: Unable to retrieve polster-projection information from grib.");
 }
 
-// laske sellainen gridi, joka menee originaali hilan hilapisteikˆn mukaan, mutta peitt‰‰ sen
+// laske sellainen gridi, joka menee originaali hilan hilapisteik√∂n mukaan, mutta peitt√§√§ sen
 // alueen,
-// joka on annettu itsLatlonCropRect:iss‰ siten ett‰ uusi hila menee juuri seuraaviin hilapisteisiin
-// originaali hilassa ett‰ se on juuri isompi kuin croppi alue, paitsi jos croppi alue menee
-// originaali alueen ulkopuolelle, t‰llˆin croppihila lasketaan todella niin ett‰ originaali hila
+// joka on annettu itsLatlonCropRect:iss√§ siten ett√§ uusi hila menee juuri seuraaviin hilapisteisiin
+// originaali hilassa ett√§ se on juuri isompi kuin croppi alue, paitsi jos croppi alue menee
+// originaali alueen ulkopuolelle, t√§ll√∂in croppihila lasketaan todella niin ett√§ originaali hila
 // jatkuisi
 // alueen ulkopuolelle. Seurauksena tulosdata, jossa on sitten orig alueen ulkopuolella puuttuvaa
 // dataa.
@@ -1484,12 +1484,12 @@ static void CalcCroppedGrid(GridRecordData *theGridRecordData)
 
   NFmiPoint xy1 = grid.LatLonToGrid(
       theGridRecordData->itsLatlonCropRect
-          .TopLeft());  // HUOM! rect maailmassa pit‰‰ olla TopLeft, eik‰ BottomLeft!
+          .TopLeft());  // HUOM! rect maailmassa pit√§√§ olla TopLeft, eik√§ BottomLeft!
   xy1.X(::floor(xy1.X()));
   xy1.Y(::floor(xy1.Y()));
   NFmiPoint xy2 = grid.LatLonToGrid(
       theGridRecordData->itsLatlonCropRect
-          .BottomRight());  // HUOM! rect maailmassa pit‰‰ olla BottomRight, eik‰ TopRight!
+          .BottomRight());  // HUOM! rect maailmassa pit√§√§ olla BottomRight, eik√§ TopRight!
   xy2.X(::ceil(xy2.X()));
   xy2.Y(::ceil(xy2.Y()));
 
@@ -1515,7 +1515,7 @@ static void FillGridInfoFromGribHandle(grib_handle *theGribHandle,
                                        GridSettingsPackage &theGridSettings)
 {
   long gridDefinitionTemplateNumber =
-      0;  // t‰h‰n tulee projektio tyyppi, ks. qooglesta (grib2 Table 3.1)
+      0;  // t√§h√§n tulee projektio tyyppi, ks. qooglesta (grib2 Table 3.1)
   int status =
       ::grib_get_long(theGribHandle, "gridDefinitionTemplateNumber", &gridDefinitionTemplateNumber);
   if (status == 0)
@@ -1535,14 +1535,14 @@ static void FillGridInfoFromGribHandle(grib_handle *theGribHandle,
         area = ::CreateLatlonArea(theGribHandle, doGlobeFix);
         break;
       case 10:
-        doGlobeFix = false;  // T‰m‰ doGlobeFix -systeemi on rakennettu v‰‰rin. Pit‰isi olla
-                             // allowGlobeFix-optio ja t‰m‰ doGlobeFix olisi muuten false, paitsi
+        doGlobeFix = false;  // T√§m√§ doGlobeFix -systeemi on rakennettu v√§√§rin. Pit√§isi olla
+                             // allowGlobeFix-optio ja t√§m√§ doGlobeFix olisi muuten false, paitsi
                              // jos allowGlobeFix=true ja latlon area, jossa 0-360-maailma.
         area = ::CreateMercatorArea(theGribHandle);
         break;
       case 20:
-        doGlobeFix = false;  // T‰m‰ doGlobeFix -systeemi on rakennettu v‰‰rin. Pit‰isi olla
-                             // allowGlobeFix-optio ja t‰m‰ doGlobeFix olisi muuten false, paitsi
+        doGlobeFix = false;  // T√§m√§ doGlobeFix -systeemi on rakennettu v√§√§rin. Pit√§isi olla
+                             // allowGlobeFix-optio ja t√§m√§ doGlobeFix olisi muuten false, paitsi
                              // jos allowGlobeFix=true ja latlon area, jossa 0-360-maailma.
         area = ::CreatePolarStereographicArea(theGribHandle);
         break;
@@ -1605,12 +1605,12 @@ static void GetLevelVerticalCoordinates(grib_handle *theGribHandle,
   // 1. Onko data hybrid-dataa?
   if (theGridRecordData.itsLevel.LevelType() == kFmiHybridLevel)
   {
-    // 2. Onko t‰lle levelille jo olemassa kertoimia?
+    // 2. Onko t√§lle levelille jo olemassa kertoimia?
     int level = static_cast<int>(::round(theGridRecordData.itsLevel.LevelValue()));
     map<int, pair<double, double> >::iterator it = theVerticalCoordinateMap.find(level);
     if (it == theVerticalCoordinateMap.end())
     {
-      // 3. Jos ei, hae koordinaatti taulu (jos lˆytyy siis)
+      // 3. Jos ei, hae koordinaatti taulu (jos l√∂ytyy siis)
       long numberOfVerticalCoordinateValues = 0;
       int numberOfVerticalCoordinateValuesOk = ::grib_get_long(
           theGribHandle, "numberOfVerticalCoordinateValues", &numberOfVerticalCoordinateValues);
@@ -1623,7 +1623,7 @@ static void GetLevelVerticalCoordinates(grib_handle *theGribHandle,
         if (pvValuesOk == 0)
         {
           // 4. Tapuksesta riippuen laske a- ja b-kertoimet ja talleta ne level-tauluun (ks. mallia
-          // K. Niemel‰n alla olevasta koodista)
+          // K. Niemel√§n alla olevasta koodista)
           if (num_coord == 2)
           {  // Hirlam: A, B (Hirlamissa ilmoitetaan jokaiselle hybridi-levelille omat A ja B
              // kertoimensa, helppoa)
@@ -1635,12 +1635,12 @@ static void GetLevelVerticalCoordinates(grib_handle *theGribHandle,
                                                  //   decoded_header->producer.generating_process_id
                                                  //   == 3)
           {  // itse en tutki centre_id tai generating_process_id arvoja, mutta ne ilmeisesti
-             // kertovat EC:st‰ ja Arome:sta
+             // kertovat EC:st√§ ja Arome:sta
             // ELI EC ja Arome antavat kaikkien hybrid levelien kertoimet jokaisen erillisen
             // hybrid-levelin kanssa,
-            // joten taulukosta pit‰‰ osata valita oikeat kohdat laskuihin.
-            // TODO: Pit‰‰ kysy‰ Karilta selvennyst‰, miksi lasketaan kertoimista keskiarvo kahden
-            // levelin v‰lille?!?!?
+            // joten taulukosta pit√§√§ osata valita oikeat kohdat laskuihin.
+            // TODO: Pit√§√§ kysy√§ Karilta selvennyst√§, miksi lasketaan kertoimista keskiarvo kahden
+            // levelin v√§lille?!?!?
             double a = (pv[level - 1] + pv[level]) / 2.;
             double b = (pv[num_coord / 2 + level - 1] + pv[num_coord / 2 + level]) / 2.;
             theVerticalCoordinateMap.insert(make_pair(level, make_pair(a, b)));
@@ -1652,7 +1652,7 @@ static void GetLevelVerticalCoordinates(grib_handle *theGribHandle,
 }
 
 /*
-Kari Niemel‰n antamaa koodia vertikaalikoordinaattien laskemista varten
+Kari Niemel√§n antamaa koodia vertikaalikoordinaattien laskemista varten
 void get_vertcoord(grib_handle *h, grib2_header_t *decoded_header )
 {
 // ******* Vertical Coordinate Parameters *****
@@ -1670,7 +1670,7 @@ void get_vertcoord(grib_handle *h, grib2_header_t *decoded_header )
      decoded_header->geompsnt.vert_coord_par_a = pv[0];
      decoded_header->geompsnt.vert_coord_par_b = pv[1];
    }
-// enemm‰n parametreja, poimitaan t‰m‰n pinnan parametrit
+// enemm√§n parametreja, poimitaan t√§m√§n pinnan parametrit
 //       AROME, ECMWF: A, A, A,... B, B, B,...
    else if (decoded_header->producer.centre_id == 98 ||
 decoded_header->producer.generating_process_id == 3)
@@ -1683,8 +1683,8 @@ decoded_header->producer.generating_process_id == 3)
 level]) / 2.;
      }
    }
-// enemm‰n parametreja, poimitaan t‰m‰n pinnan parametrit
-//       Seuraavat ehdot on keksittyj‰: A, B, A, B, A, B,...
+// enemm√§n parametreja, poimitaan t√§m√§n pinnan parametrit
+//       Seuraavat ehdot on keksittyj√§: A, B, A, B, A, B,...
    else if (decoded_header->producer.centre_id == 7 ||
 decoded_header->producer.generating_process_id == 13)
    {
@@ -1756,18 +1756,18 @@ static NFmiMetTime GetValidTime(grib_handle *theGribHandle)
   int status = grib_get_long(
       theGribHandle,
       "forecastTime",
-      &forecastTime);  // t‰m‰ on loogisin nimi ennusteen validTime siirtym‰‰n originTimesta
+      &forecastTime);  // t√§m√§ on loogisin nimi ennusteen validTime siirtym√§√§n originTimesta
   if (status != 0)
   {
     status = grib_get_long(
         theGribHandle,
         "stepRange",
-        &forecastTime);  // t‰m‰ n‰ytt‰‰ olevan aina, yritet‰‰n k‰ytt‰‰ jos forecastTime:a ei lˆydy
+        &forecastTime);  // t√§m√§ n√§ytt√§√§ olevan aina, yritet√§√§n k√§ytt√§√§ jos forecastTime:a ei l√∂ydy
     if (status != 0)
     {
-      status = grib_get_long(theGribHandle, "P1", &forecastTime);  // P1:ss‰ n‰ytt‰‰ joskus myˆs
+      status = grib_get_long(theGribHandle, "P1", &forecastTime);  // P1:ss√§ n√§ytt√§√§ joskus my√∂s
                                                                    // olevan ennustetunti, jos
-                                                                   // edellisist‰ ei lˆydy....
+                                                                   // edellisist√§ ei l√∂ydy....
     }
   }
 
@@ -1785,7 +1785,7 @@ static bool GetGribStringValue(grib_handle *theGribHandle,
                                std::string &theStringValueOut)
 {
   static const std::string unacceptableStringValue =
-      "unknown";  // t‰m‰ arvo tulee jos kyseist‰ definitiota ei ole m‰‰r‰tty gribiss‰ kun tekee
+      "unknown";  // t√§m√§ arvo tulee jos kyseist√§ definitiota ei ole m√§√§r√§tty gribiss√§ kun tekee
                   // grib_get_string -kutsun
   char stringValue[128] = "";
   size_t stringValueBufferSize = sizeof(stringValue);
@@ -1836,10 +1836,10 @@ static std::string GetParamName(grib_handle *theGribHandle)
   if (cfNameOk)
     usedParameterName += cfName;
 
-  // haetaan viel‰ mahdollinen yksikkˆ stringi ja liitet‰‰n se parametrin nimeen
+  // haetaan viel√§ mahdollinen yksikk√∂ stringi ja liitet√§√§n se parametrin nimeen
   std::string unitsStr;
   if (::GetGribStringValue(theGribHandle, "units", unitsStr))
-  {  // jos onnistui, liitet‰‰n yksikkˆ hakasuluissa parametrin nimen per‰‰n
+  {  // jos onnistui, liitet√§√§n yksikk√∂ hakasuluissa parametrin nimen per√§√§n
     if (usedParameterName.empty() == false)
       usedParameterName += " ";
     usedParameterName += "[";
@@ -1852,14 +1852,14 @@ static std::string GetParamName(grib_handle *theGribHandle)
 
 static long GetUsedParamId(grib_handle *theGribHandle)
 {
-  // 1. Katsotaan onko indicatorOfParameter -id k‰ytˆss‰, jos on, k‰ytet‰‰n sit‰.
+  // 1. Katsotaan onko indicatorOfParameter -id k√§yt√∂ss√§, jos on, k√§ytet√§√§n sit√§.
   long indicatorOfParameter = 0;
   bool indicatorOfParameterOk =
       ::GetGribLongValue(theGribHandle, "indicatorOfParameter", indicatorOfParameter);
   if (indicatorOfParameterOk)
     return indicatorOfParameter;
 
-  // 2. kokeillaan parameterCategory + parameterNumber yhdistelm‰‰, jossa lopullinen arvo saadaan
+  // 2. kokeillaan parameterCategory + parameterNumber yhdistelm√§√§, jossa lopullinen arvo saadaan
   // ((paramCategory * 1000) + paramNumber)
   long parameterCategory = 0;
   bool parameterCategoryOk =
@@ -1869,13 +1869,13 @@ static long GetUsedParamId(grib_handle *theGribHandle)
   if (parameterCategoryOk && parameterNumberOk)
     return (parameterCategory * 1000) + parameterNumber;
 
-  // 3. Kokeillaan lˆytyykˆ parameter -hakusanalla
+  // 3. Kokeillaan l√∂ytyyk√∂ parameter -hakusanalla
   long parameter = 0;
   bool parameterOk = ::GetGribLongValue(theGribHandle, "parameter", parameter);
   if (parameterOk)
     return parameter;
 
-  // 4. Kokeillaan lˆytyykˆ paramId -hakusanalla
+  // 4. Kokeillaan l√∂ytyyk√∂ paramId -hakusanalla
   long paramId = 0;
   bool paramIdOk = ::GetGribLongValue(theGribHandle, "paramId", paramId);
   if (paramIdOk)
@@ -1886,7 +1886,7 @@ static long GetUsedParamId(grib_handle *theGribHandle)
 
 static NFmiDataIdent GetParam(grib_handle *theGribHandle, const NFmiProducer &theWantedProducer)
 {
-  // TODO producerin voisi p‰‰tell‰ originating center numeroista
+  // TODO producerin voisi p√§√§tell√§ originating center numeroista
 
   std::string usedParameterName = ::GetParamName(theGribHandle);
   long usedParId = GetUsedParamId(theGribHandle);
@@ -1924,7 +1924,7 @@ static long GetUsedLevelType(grib_handle *theGribHandle)
     usedLevelType = typeOfFirstFixedSurface;
 
   if (levelValueStrOk && typeOfLevelValueStr == "hybrid" && usedLevelType != kFmiHybridLevel)
-    usedLevelType = kFmiHybridLevel;  // t‰m‰ on ik‰v‰‰ koodia, mutta en keksi muuta keinoa Latvian
+    usedLevelType = kFmiHybridLevel;  // t√§m√§ on ik√§v√§√§ koodia, mutta en keksi muuta keinoa Latvian
                                       // EC-datan kanssa. Muuten hybrid-datan leveltyypiksi tulee
                                       // 105 eli heightType
 
@@ -1959,7 +1959,7 @@ static void MakeParameterConversions(GridRecordData *theGridRecordData,
                                      vector<ParamChangeItem> &theParamChangeTable)
 {
   if (theParamChangeTable.size() > 0)
-  {  // tehd‰‰n tarvittaessa parametrille base+scale muunnos
+  {  // tehd√§√§n tarvittaessa parametrille base+scale muunnos
     for (unsigned int p = 0; p < theParamChangeTable.size(); p++)
     {
       ParamChangeItem &paramChangeItem = theParamChangeTable[p];
@@ -1994,12 +1994,12 @@ static void DoGlobalFix(NFmiDataMatrix<float> &theOrigValues, bool fDoGlobeFix, 
 {
   if (fDoGlobeFix)
   {
-    // Nyt on siis tilanne ett‰ halutaan 'korjata' globaali data editoria varten.
-    // Latlon-area peitt‰‰ maapallon longitudeissa 0-360, se pit‰‰ muuttaa editoria varten
+    // Nyt on siis tilanne ett√§ halutaan 'korjata' globaali data editoria varten.
+    // Latlon-area peitt√§√§ maapallon longitudeissa 0-360, se pit√§√§ muuttaa editoria varten
     // longitudeihin -180 - 180.
-    // Eli matriisissa olevia arvoja pit‰‰ siirt‰‰ niin ett‰ vasemmalla puoliskolla olevat laitetaan
+    // Eli matriisissa olevia arvoja pit√§√§ siirt√§√§ niin ett√§ vasemmalla puoliskolla olevat laitetaan
     // oikealle
-    // puolelle ja toisin p‰in.
+    // puolelle ja toisin p√§in.
     if (verbose)
       cerr << " f";
     int nx = static_cast<int>(theOrigValues.NX());
@@ -2014,7 +2014,7 @@ static void CropData(GridRecordData *theGridRecordData,
                      NFmiDataMatrix<float> &theOrigValues,
                      bool verbose)
 {
-  // t‰ss‰ raaka hila croppaus
+  // t√§ss√§ raaka hila croppaus
   if (verbose)
     cerr << " c";
   int x1 = static_cast<int>(theGridRecordData->itsGridPointCropOffset.X());
@@ -2099,8 +2099,8 @@ static void DoAreaManipulations(GridRecordData *theGridRecordData,
                                 NFmiDataMatrix<float> &theOrigValues,
                                 bool verbose)
 {
-  // 2. Kun orig matriisi on saatu t‰ytetty‰, katsotaan pit‰‰kˆ viel‰ t‰ytt‰‰ cropattu alue, vai
-  // k‰ytet‰‰nkˆ originaali dataa suoraan.
+  // 2. Kun orig matriisi on saatu t√§ytetty√§, katsotaan pit√§√§k√∂ viel√§ t√§ytt√§√§ cropattu alue, vai
+  // k√§ytet√§√§nk√∂ originaali dataa suoraan.
   if (theGridRecordData->fDoProjectionConversion == false)
     theGridRecordData->itsGridData = theOrigValues;
   else if (theGridRecordData->fDoProjectionConversion == true &&
@@ -2116,7 +2116,7 @@ static void FillGridData(grib_handle *theGribHandle,
                          vector<ParamChangeItem> &theParamChangeTable,
                          bool verbose)
 {
-  // 1. T‰ytet‰‰n ensin origGridin kokoinen matriisi, koska pit‰‰ pysty‰ tekem‰‰n mm. global fix
+  // 1. T√§ytet√§√§n ensin origGridin kokoinen matriisi, koska pit√§√§ pysty√§ tekem√§√§n mm. global fix
   size_t values_length = 0;
   int status1 = grib_get_size(theGribHandle, "values", &values_length);
   vector<double> doubleValues(values_length);
@@ -2162,7 +2162,7 @@ static void FillGridData(grib_handle *theGribHandle,
             origValues[i % gridXSize][i / gridXSize] = static_cast<float>(doubleValues[i]);
         }
       }
-      else  // sitten kun tulee lis‰‰ ceissej‰, lis‰t‰‰n eri t‰yttˆ variaatioita
+      else  // sitten kun tulee lis√§√§ ceissej√§, lis√§t√§√§n eri t√§ytt√∂ variaatioita
       {
         throw runtime_error("Error: Scanning mode " + boost::lexical_cast<string>(scanningMode) +
                             " not yet implemented.");
@@ -2175,7 +2175,7 @@ static void FillGridData(grib_handle *theGribHandle,
   else
     throw runtime_error("Error: Couldn't get values-data from given grib_handle.");
 
-  // 3. Tarkista viel‰, jos lˆytyy paramChangeTablesta parametrille muunnos kaavat jotka pit‰‰ tehd‰
+  // 3. Tarkista viel√§, jos l√∂ytyy paramChangeTablesta parametrille muunnos kaavat jotka pit√§√§ tehd√§
   ::MakeParameterConversions(theGridRecordData, theParamChangeTable);
 }
 
@@ -2184,7 +2184,7 @@ static void ChangeParamSettingsIfNeeded(vector<ParamChangeItem> &theParamChangeT
                                         bool verbose)
 {
   if (theParamChangeTable.size() > 0)
-  {  // muutetaan tarvittaessa parametrin nime‰ ja id:t‰
+  {  // muutetaan tarvittaessa parametrin nime√§ ja id:t√§
     for (unsigned int i = 0; i < theParamChangeTable.size(); i++)
     {
       ParamChangeItem &paramChangeItem = theParamChangeTable[i];
@@ -2202,7 +2202,7 @@ static void ChangeParamSettingsIfNeeded(vector<ParamChangeItem> &theParamChangeT
 
         theGribData->ChangeParam(paramChangeItem.itsWantedParam);
         theGribData->itsLevel =
-            NFmiLevel(1, "sfc", 0);  // tarkista ett‰ t‰st‰ tulee pinta level dataa
+            NFmiLevel(1, "sfc", 0);  // tarkista ett√§ t√§st√§ tulee pinta level dataa
         if (verbose)
           cerr << " level -> sfc";
         break;
@@ -2342,7 +2342,7 @@ void ConvertGrib2QData(GribFilterOptions &theGribFilterOptions)
       tmpData->itsLatlonCropRect = theGribFilterOptions.itsLatlonCropRect;
       try
       {
-        // param ja level tiedot pit‰‰ hanskata ennen hilan koon m‰‰rityst‰
+        // param ja level tiedot pit√§√§ hanskata ennen hilan koon m√§√§rityst√§
         tmpData->itsParam = ::GetParam(gribHandle, theGribFilterOptions.itsWantedSurfaceProducer);
         tmpData->itsLevel = ::GetLevel(gribHandle);
         ::FillGridInfoFromGribHandle(gribHandle,
@@ -2366,7 +2366,7 @@ void ConvertGrib2QData(GribFilterOptions &theGribFilterOptions)
 
         ::DoParamChecking(*tmpData, changedParams, unchangedParams, executionStoppingError);
 
-        // filtteri j‰tt‰‰ huomiotta ns. kontrolli hilan, joka on ainakin hirlam datassa 1.. se on
+        // filtteri j√§tt√§√§ huomiotta ns. kontrolli hilan, joka on ainakin hirlam datassa 1.. se on
         // muista poikkeava 2x2 hila latlon-area.
         // Aiheuttaisi turhia ongelmia jatkossa monessakin paikassa.
         bool gribFieldUsed = false;
@@ -2488,11 +2488,11 @@ NFmiVPlaceDescriptor MakeVPlaceDescriptor(vector<GridRecordData *> &theGribRecor
   return NFmiVPlaceDescriptor(levelBag);
 }
 
-// tehd‰‰n levelbagi kaikista eri tyyppisist‰ leveleist‰.
+// tehd√§√§n levelbagi kaikista eri tyyppisist√§ leveleist√§.
 vector<NFmiVPlaceDescriptor> GetAllVPlaceDescriptors(vector<GridRecordData *> &theGribRecordDatas,
                                                      GribFilterOptions &theGribFilterOptions)
 {
-  // 1. etsit‰‰n kaikki erilaiset levelit set:in avulla
+  // 1. etsit√§√§n kaikki erilaiset levelit set:in avulla
   set<NFmiLevel, LevelLessThan> levelSet;
   map<int, int> levelTypeCounter;
 
@@ -2502,7 +2502,7 @@ vector<NFmiVPlaceDescriptor> GetAllVPlaceDescriptors(vector<GridRecordData *> &t
   {
     GridRecordData *bs = *it;
     levelSet.insert(bs->itsLevel);
-    levelTypeCounter[bs->itsLevel.LevelType()]++;  // kikka vitonen: t‰m‰ laskee erityyppiset
+    levelTypeCounter[bs->itsLevel.LevelType()]++;  // kikka vitonen: t√§m√§ laskee erityyppiset
                                                    // levelit
   }
 
@@ -2519,8 +2519,8 @@ vector<NFmiVPlaceDescriptor> GetAllVPlaceDescriptors(vector<GridRecordData *> &t
     }
   }
   else
-  {  // tulostus tehd‰‰n cout:iin, ja tehd‰‰n vain yksi data, toivottavasti se on se merkitsevin,
-     // eli otetaan se mink‰ tyyppisi‰ esiintyi eniten
+  {  // tulostus tehd√§√§n cout:iin, ja tehd√§√§n vain yksi data, toivottavasti se on se merkitsevin,
+     // eli otetaan se mink√§ tyyppisi√§ esiintyi eniten
     map<int, int>::iterator lt = FindHighesLevelType(levelTypeCounter);
     if (lt != levelTypeCounter.end())
     {
@@ -2555,9 +2555,9 @@ vector<NFmiHPlaceDescriptor> GetAllHPlaceDescriptors(vector<GridRecordData *> &t
     }
   }
   else
-  {  // tulostus tehd‰‰n cout:iin, ja tehd‰‰n vain yksi data, toivottavasti se on se merkitsevin,
-     // t‰ss‰ yritet‰‰n j‰tt‰‰ huomiotta ainakin
-    // hirlam gribeiss‰ esiintyv‰ 2x2 kokoinen yksi hila
+  {  // tulostus tehd√§√§n cout:iin, ja tehd√§√§n vain yksi data, toivottavasti se on se merkitsevin,
+     // t√§ss√§ yritet√§√§n j√§tt√§√§ huomiotta ainakin
+    // hirlam gribeiss√§ esiintyv√§ 2x2 kokoinen yksi hila
     MyGrid &tmpGrid = theGribRecordDatas[theGribRecordDatas.size() > 1 ? 1 : 0]->itsGrid;
     NFmiGrid grid(tmpGrid.itsArea, tmpGrid.itsNX, tmpGrid.itsNY);
     hPlaces.push_back(NFmiHPlaceDescriptor(grid));
@@ -2590,13 +2590,13 @@ static std::shared_ptr<NFmiQueryData> GethybridData(
   std::shared_ptr<NFmiQueryData> hybridData;
   for (size_t i = 0; i < theQdatas.size(); i++)
   {
-    if (theQdatas[i]->Info()->SizeLevels() > 1)  // pit‰‰ olla useita leveleit‰
+    if (theQdatas[i]->Info()->SizeLevels() > 1)  // pit√§√§ olla useita leveleit√§
     {
       theQdatas[i]->Info()->FirstLevel();
       if (theQdatas[i]->Info()->Level()->LevelType() ==
-          kFmiHybridLevel)  // pit‰‰ olla hybrid tyyppi‰
+          kFmiHybridLevel)  // pit√§√§ olla hybrid tyyppi√§
       {
-        if (theQdatas[i]->Info()->Param(pressureId))  // pit‰‰ lˆyty‰ paine parametri
+        if (theQdatas[i]->Info()->Param(pressureId))  // pit√§√§ l√∂yty√§ paine parametri
         {
           hybridData = theQdatas[i];
           break;
@@ -2607,8 +2607,8 @@ static std::shared_ptr<NFmiQueryData> GethybridData(
   return hybridData;
 }
 
-// Jos surfacePressure tulee hPa:na, pit‰‰ se laskuissa se pit‰‰ muuttaa Pa:ksi.
-// Palautetaan kuitenkin aina laskettu paine hPa-yksikˆss‰.
+// Jos surfacePressure tulee hPa:na, pit√§√§ se laskuissa se pit√§√§ muuttaa Pa:ksi.
+// Palautetaan kuitenkin aina laskettu paine hPa-yksik√∂ss√§.
 static float CalcHybridPressure(double a, double b, float surfacePressure)
 {
   if (surfacePressure == kFloatMissing)
@@ -2616,8 +2616,8 @@ static float CalcHybridPressure(double a, double b, float surfacePressure)
   else
   {
     double pressureScale = 1.;
-    if (surfacePressure < 1500)  // T‰m‰ on karkea arvio, onko pintapaine hPa vai Pa yksikˆss‰, jos
-                                 // pintapaine oli hPa-yksikˆss‰, pit‰‰ tehd‰ muunnoksia
+    if (surfacePressure < 1500)  // T√§m√§ on karkea arvio, onko pintapaine hPa vai Pa yksik√∂ss√§, jos
+                                 // pintapaine oli hPa-yksik√∂ss√§, pit√§√§ tehd√§ muunnoksia
       pressureScale = 100.;
     double value = a + b * surfacePressure * pressureScale;
     return static_cast<float>(value / 100.);  // paluu aina hPa:na
@@ -2630,7 +2630,7 @@ static void CalcHybridPressureData(vector<std::shared_ptr<NFmiQueryData> > &theQ
 {
   if (theHybridPressureInfo.fCalcHybridParam)
   {
-    // 1. lasketaan hybridi-dataan paine parametri jos lˆytyy pinta hybridi data listasta
+    // 1. lasketaan hybridi-dataan paine parametri jos l√∂ytyy pinta hybridi data listasta
     FmiParameterName pressureAtStationParId = theHybridPressureInfo.itsHelpParamId;
     FmiParameterName hybridPressureId =
         static_cast<FmiParameterName>(theHybridPressureInfo.itsGeneratedHybridParam.GetIdent());
@@ -2672,25 +2672,25 @@ static void CalcHybridPressureData(vector<std::shared_ptr<NFmiQueryData> > &theQ
 }
 
 /*
-Kari niemel‰n s‰hkˆpostista suhteellisen kosteuden laskusta ominaiskosteuden avulla:
+Kari niemel√§n s√§hk√∂postista suhteellisen kosteuden laskusta ominaiskosteuden avulla:
 
-Suhteellisen kosteuden laskemiseen tarvitaan paine ja l‰mpˆtila
-ominaiskosteuden lis‰ksi.
+Suhteellisen kosteuden laskemiseen tarvitaan paine ja l√§mp√∂tila
+ominaiskosteuden lis√§ksi.
 
-Hilakkeessa asia tehd‰‰n seuraavasti:
--- lasketaan vesihˆyryn kyll‰stysosapaine kaavalla (T on celsiuksia, ^
+Hilakkeessa asia tehd√§√§n seuraavasti:
+-- lasketaan vesih√∂yryn kyll√§stysosapaine kaavalla (T on celsiuksia, ^
 on potenssi)
-es = 6.107 * 10 ^ (7.5 * T / (237.0 + T)) , jos l‰mpim‰mp‰‰ kuin -5 C
+es = 6.107 * 10 ^ (7.5 * T / (237.0 + T)) , jos l√§mpim√§mp√§√§ kuin -5 C
 eli veden suhteen
-es = 6.107 * 10 ^ (9.5 * T / (265.5 + T)) , jos kylmemp‰‰ kuin -5 C eli
-j‰‰n suhteen
+es = 6.107 * 10 ^ (9.5 * T / (265.5 + T)) , jos kylmemp√§√§ kuin -5 C eli
+j√§√§n suhteen
 -- lasketaan RH kaavalla
 RH = (P * Q / 0.622 / ES) * (P - ES) / (P - Q * P / 0.622)
-RH saadaan 0...1, mutta on viel‰ tarkistettava ettei mene alle nollan
+RH saadaan 0...1, mutta on viel√§ tarkistettava ettei mene alle nollan
 tai yli yhden
 */
 
-// Lasketaan vesihˆyryn osapaine ES veden suhteen.
+// Lasketaan vesih√∂yryn osapaine ES veden suhteen.
 // Oletus T ei ole puuttuvaa ja on celsiuksina.
 static float CalcESWater(float T)
 {
@@ -2698,7 +2698,7 @@ static float CalcESWater(float T)
   return es;
 }
 
-// Lasketaan vesihˆyryn osapaine ES j‰‰n suhteen.
+// Lasketaan vesih√∂yryn osapaine ES j√§√§n suhteen.
 // Oletus T ei ole puuttuvaa ja on celsiuksina.
 static float CalcESIce(float T)
 {
@@ -2723,7 +2723,7 @@ static float CalcRH(float P, float T, float Q)
   }
 }
 
-// HUOM! T‰m‰ pit‰‰ ajaa vasta jos ensin on laskettu paine parametri hybridi dataan!!!
+// HUOM! T√§m√§ pit√§√§ ajaa vasta jos ensin on laskettu paine parametri hybridi dataan!!!
 static void CalcHybridRelativeHumidityData(
     vector<std::shared_ptr<NFmiQueryData> > &theQdatas,
     const GeneratedHybridParamInfo &theHybridRelativeHumidityInfo,
@@ -2731,7 +2731,7 @@ static void CalcHybridRelativeHumidityData(
 {
   if (theHybridRelativeHumidityInfo.fCalcHybridParam)
   {
-    // 1. lasketaan hybridi-dataan RH parametri jos lˆytyy ominaiskosteus parametri datasta
+    // 1. lasketaan hybridi-dataan RH parametri jos l√∂ytyy ominaiskosteus parametri datasta
     FmiParameterName T_id = kFmiTemperature;
     FmiParameterName P_id =
         static_cast<FmiParameterName>(theHybridPressureInfo.itsGeneratedHybridParam.GetIdent());
@@ -2744,18 +2744,18 @@ static void CalcHybridRelativeHumidityData(
       NFmiFastQueryInfo RH_info(
           hybridData.get());  // RH info, suhteellinen kosteus, johon tulokset talletetaan
       RH_info.First();
-      NFmiFastQueryInfo T_info(RH_info);  // T info, mist‰ l‰mpˆtila
+      NFmiFastQueryInfo T_info(RH_info);  // T info, mist√§ l√§mp√∂tila
       T_info.First();
-      NFmiFastQueryInfo P_info(RH_info);  // P info, mist‰ paine
+      NFmiFastQueryInfo P_info(RH_info);  // P info, mist√§ paine
       P_info.First();
-      NFmiFastQueryInfo SH_info(RH_info);  // SH info, mist‰ specific humidity
+      NFmiFastQueryInfo SH_info(RH_info);  // SH info, mist√§ specific humidity
       SH_info.First();
 
       if (RH_info.Param(RH_id) && T_info.Param(T_id) && SH_info.Param(SH_id) && P_info.Param(P_id))
       {
         for (RH_info.ResetTime(); RH_info.NextTime();)
         {
-          // kaikki infot ovat samasta datasta, joten niiss‰ on sama rakenne ja aika/level/location
+          // kaikki infot ovat samasta datasta, joten niiss√§ on sama rakenne ja aika/level/location
           // asetukset ovat helppoja indeksien avulla
           P_info.TimeIndex(RH_info.TimeIndex());
           SH_info.TimeIndex(RH_info.TimeIndex());
@@ -2876,7 +2876,7 @@ std::shared_ptr<NFmiQueryData> CreateQueryData(vector<GridRecordData *> &theGrib
         GetParamDesc(theGribRecordDatas, theHplace, theVplace, theGribFilterOptions));
     NFmiTimeDescriptor times(GetTimeDesc(theGribRecordDatas, theHplace, theVplace));
     if (params.Size() == 0 || times.Size() == 0)
-      return qdata;  // turha jatkaa jos toinen n‰ist‰ on tyhj‰
+      return qdata;  // turha jatkaa jos toinen n√§ist√§ on tyhj√§
     NFmiQueryInfo innerInfo(params, times, theHplace, theVplace);
     CheckInfoSize(innerInfo, theGribFilterOptions.itsMaxQDataSizeInBytes);
     qdata = std::shared_ptr<NFmiQueryData>(NFmiQueryDataUtil::CreateEmptyData(innerInfo));
@@ -2931,7 +2931,7 @@ bool FillQDataWithGribRecords(std::shared_ptr<NFmiQueryData> &theQData,
       if (info.Time(tmp->itsValidTime) && info.Level(tmp->itsLevel) && info.Param(tmp->itsParam))
       {
         if (!info.SetValues(tmp->itsGridData))
-          throw runtime_error("qdatan t‰yttˆ gribi datalla ep‰onnistui, lopetetaan...");
+          throw runtime_error("qdatan t√§ytt√∂ gribi datalla ep√§onnistui, lopetetaan...");
         filledGridCount++;
         if (verbose)
           cerr << NFmiStringTools::Convert(filledGridCount) << " ";
@@ -2945,9 +2945,9 @@ bool FillQDataWithGribRecords(std::shared_ptr<NFmiQueryData> &theQData,
 
 bool ConvertTimeList2TimeBag(NFmiTimeList &theTimeList, NFmiTimeBag &theTimeBag)
 {  // tutkitaan onko mahdollista tehda listasta bagi
-   // eli ajat ovat per‰kk‰isi‰ ja tasav‰lisi‰
+   // eli ajat ovat per√§kk√§isi√§ ja tasav√§lisi√§
   if (theTimeList.NumberOfItems() >
-      2)  // ei  tehd‰ yhdest‰ tai kahdesta ajasta bagi‰ vaikka se on mahdollista
+      2)  // ei  tehd√§ yhdest√§ tai kahdesta ajasta bagi√§ vaikka se on mahdollista
   {
     theTimeList.First();
     theTimeList.Next();
@@ -2955,7 +2955,7 @@ bool ConvertTimeList2TimeBag(NFmiTimeList &theTimeList, NFmiTimeBag &theTimeBag)
     for (; theTimeList.Next();)
     {
       if (resolution != theTimeList.CurrentResolution())
-        return false;  // jos yhdenkin aikav‰lin resoluutio poikkeaa, ei voida tehd‰ bagia
+        return false;  // jos yhdenkin aikav√§lin resoluutio poikkeaa, ei voida tehd√§ bagia
     }
     theTimeBag = NFmiTimeBag(theTimeList.FirstTime(), theTimeList.LastTime(), resolution);
     return true;
@@ -2963,10 +2963,10 @@ bool ConvertTimeList2TimeBag(NFmiTimeList &theTimeList, NFmiTimeBag &theTimeBag)
   return false;
 }
 
-// HUOM! jos datassa on 'outoja' valid-aikoja esim. 1919 jne., joita n‰ytt‰‰ tulevan esim.
+// HUOM! jos datassa on 'outoja' valid-aikoja esim. 1919 jne., joita n√§ytt√§√§ tulevan esim.
 // hirlamista liittyen johonkin
-// kontrolli grideihin (2x2 hila ja muuta outoa). T‰ll‰iset hilat j‰tet‰‰n huomiotta.
-// Timebagin rakentelussa tarkastellaan myˆs ett‰ hila ja level-type ovat halutunlaiset.
+// kontrolli grideihin (2x2 hila ja muuta outoa). T√§ll√§iset hilat j√§tet√§√§n huomiotta.
+// Timebagin rakentelussa tarkastellaan my√∂s ett√§ hila ja level-type ovat halutunlaiset.
 NFmiTimeDescriptor GetTimeDesc(vector<GridRecordData *> &theGribRecordDatas,
                                NFmiHPlaceDescriptor &theHplace,
                                NFmiVPlaceDescriptor &theVplace)
@@ -2987,7 +2987,7 @@ NFmiTimeDescriptor GetTimeDesc(vector<GridRecordData *> &theGribRecordDatas,
   // myohemmin voi miettia saisiko aikaan timebagin.
   NFmiTimeList timeList;
   set<NFmiMetTime>::iterator it = timesSet.begin();
-  NFmiMetTime dummyTime(1950, 1, 1);  // laitoin t‰ll‰isen dummytime rajoittimen, koska Pekon
+  NFmiMetTime dummyTime(1950, 1, 1);  // laitoin t√§ll√§isen dummytime rajoittimen, koska Pekon
                                       // antamassa datassa oli aika 1919 vuodelta ja se ja
                                       // nykyaikainen aika sekoitti mm. metkun editorin pahasti
   for (; it != timesSet.end(); ++it)
@@ -3019,15 +3019,15 @@ static void AddGeneratedHybridParam(NFmiParamBag &theGeneratedParamBag,
 {
   if (theGeneratedHybridParamInfo.fCalcHybridParam)
   {
-    // lis‰t‰‰n paine parametri hybridi dataan, jos sit‰ ei ole ja se lasketaan myˆhemmin
+    // lis√§t√§√§n paine parametri hybridi dataan, jos sit√§ ei ole ja se lasketaan my√∂hemmin
     if (theGeneratedParamBag.SetCurrent(static_cast<FmiParameterName>(
             theGeneratedHybridParamInfo.itsGeneratedHybridParam.GetIdent())) == false)
       theGeneratedParamBag.Add(theGeneratedHybridParamInfo.itsGeneratedHybridParam);
   }
 }
 
-// Etsit‰‰n ne parametrit mitk‰ lˆytyv‰t data-setist‰.
-// Lis‰ksi hilan ja arean pit‰‰ olla sama kuin annetussa hplaceDescriptorissa ja level-tyypin pit‰‰
+// Etsit√§√§n ne parametrit mitk√§ l√∂ytyv√§t data-setist√§.
+// Lis√§ksi hilan ja arean pit√§√§ olla sama kuin annetussa hplaceDescriptorissa ja level-tyypin pit√§√§
 // olla
 // sama kuin vplaceDescriptorissa.
 NFmiParamDescriptor GetParamDesc(vector<GridRecordData *> &theGribRecordDatas,
@@ -3035,8 +3035,8 @@ NFmiParamDescriptor GetParamDesc(vector<GridRecordData *> &theGribRecordDatas,
                                  NFmiVPlaceDescriptor &theVplace,
                                  const GribFilterOptions &theGribFilterOptions)
 {
-  // Ensin pit‰‰ saada 1. levelin level-type talteen vplaceDescriptorista, sill‰ otamme vain
-  // parametreja, mit‰ lˆytyy sellaisista hila kentist‰ miss‰ on t‰ll‰inen level id.
+  // Ensin pit√§√§ saada 1. levelin level-type talteen vplaceDescriptorista, sill√§ otamme vain
+  // parametreja, mit√§ l√∂ytyy sellaisista hila kentist√§ miss√§ on t√§ll√§inen level id.
   FmiLevelType wantedLevelType = theVplace.Levels()->Level(0)->LevelType();
   set<int> parIds;  // set:in avulla selvitetaan kuinka monta erilaista identtia loytyy
   int gribCount = static_cast<int>(theGribRecordDatas.size());
@@ -3110,7 +3110,7 @@ void InterpolateRowData(vector<float> &theSourceValues, vector<float> &theDestVa
   }
 }
 
-// TODO ei osaa viel‰ hanskata scanmodeja
+// TODO ei osaa viel√§ hanskata scanmodeja
 void FillGridDataWithVariableLengthData(float *theArray,
                                         GridRecordData *theGribData,
                                         int /* scanIModePos */,
@@ -3129,7 +3129,7 @@ void FillGridDataWithVariableLengthData(float *theArray,
   long totalArrayCounter = 0;
   for (unsigned int row = 0; row < theVariableLengthRows.size(); row++)
   {
-    // T‰ytet‰‰n ensin vaihtuva pituisen rivin data ja niiden suhteelliset sijainnit.
+    // T√§ytet√§√§n ensin vaihtuva pituisen rivin data ja niiden suhteelliset sijainnit.
     long rowLength = theVariableLengthRows[row];
     if (rowLength == 0)
       throw runtime_error("Zero division in FillGridDataWithVariableLengthData-function.");

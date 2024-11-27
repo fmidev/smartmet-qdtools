@@ -1,7 +1,7 @@
-// temp2qd.cpp Tekij‰ Marko 16.11.2005
+// temp2qd.cpp Tekij√§ Marko 16.11.2005
 // Lukee halutut tiedostot/tiedostonimi-filtterit, joista
-// lˆytyv‰t TEMP-luotaus koodit tulkitaan ja niist‰ muodostetaan
-// querydata, miss‰ on yhdistettyn‰ kaikki tulkitut luotaukset.
+// l√∂ytyv√§t TEMP-luotaus koodit tulkitaan ja niist√§ muodostetaan
+// querydata, miss√§ on yhdistettyn√§ kaikki tulkitut luotaukset.
 
 #include <iostream>
 
@@ -115,7 +115,7 @@ static NFmiQueryInfo MakeCombinedInnerInfo(vector<NFmiQueryData *> &theDataList,
   unsigned int maxLevelSize = 0;
 
   const NFmiVPlaceDescriptor *maxLevelVPlaceDesc =
-      0;  // otetaan talteen sen datan vplaceDesc, jossa eniten leveleit‰
+      0;  // otetaan talteen sen datan vplaceDesc, jossa eniten leveleit√§
 
   NFmiMetTime originTime;  // otetaan vain currentti aika origin timeksi
   for (unsigned int i = 0; i < theDataList.size(); i++)
@@ -134,7 +134,7 @@ static NFmiQueryInfo MakeCombinedInnerInfo(vector<NFmiQueryData *> &theDataList,
     }
   }
 
-  // Tehd‰‰n kaikkia datoja yhdist‰v‰ timeDescriptor
+  // Tehd√§√§n kaikkia datoja yhdist√§v√§ timeDescriptor
   NFmiTimeList timeList;
   for (set<NFmiMetTime>::iterator it1 = allTimes.begin(); it1 != allTimes.end(); ++it1)
     timeList.Add(new NFmiMetTime(*it1));
@@ -179,7 +179,7 @@ void Domain(int argc, const char *argv[])
   {
     cerr << "Error: Invalid command line:" << endl << cmdline.Status().ErrorLog().CharPtr() << endl;
     Usage();
-    throw runtime_error("");  // t‰ss‰ piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
+    throw runtime_error("");  // t√§ss√§ piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
   }
 
@@ -188,7 +188,7 @@ void Domain(int argc, const char *argv[])
   {
     cerr << "Error: Atleast 1 parameter expected, 'fileFilter1 [fileFilter2 ...]'\n\n";
     Usage();
-    throw runtime_error("");  // t‰ss‰ piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
+    throw runtime_error("");  // t√§ss√§ piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
   }
 
@@ -216,7 +216,7 @@ void Domain(int argc, const char *argv[])
   bool roundTimesToNearestSynopticTimes = false;
   if (cmdline.isOption('t')) roundTimesToNearestSynopticTimes = true;
 
-  //	1. Lue n kpl filefiltereit‰ listaan
+  //	1. Lue n kpl filefiltereit√§ listaan
   vector<string> fileFilterList;
   for (int i = 1; i <= numOfParams; i++)
   {
@@ -229,13 +229,13 @@ void Domain(int argc, const char *argv[])
   vector<NFmiQueryData *> qDataList;
   for (unsigned int j = 0; j < fileFilterList.size(); j++)
   {
-    //	2. Hae jokaista filefilteri‰ vastaavat tiedostonimet omaan listaan
+    //	2. Hae jokaista filefilteri√§ vastaavat tiedostonimet omaan listaan
     std::string filePatternStr = fileFilterList[j];
     std::string usedPath = NFmiFileSystem::PathFromPattern(filePatternStr);
     list<string> fileList = NFmiFileSystem::PatternFiles(filePatternStr);
     for (list<string>::iterator it = fileList.begin(); it != fileList.end(); ++it)
     {
-      //	3. Lue listan tiedostot vuorollaan sis‰‰n ja tulkitse siit‰ mahdolliset TEMPit
+      //	3. Lue listan tiedostot vuorollaan sis√§√§n ja tulkitse siit√§ mahdolliset TEMPit
       // querydataksi
       std::string finalFileName = usedPath + *it;
       foundAnyFiles = true;
@@ -244,7 +244,7 @@ void Domain(int argc, const char *argv[])
       // tempFileContent))
       if (NFmiFileSystem::ReadFile2String(finalFileName, tempFileContent))
       {
-        //	4. tulkitse siit‰ mahdolliset TEMPit querydataksi
+        //	4. tulkitse siit√§ mahdolliset TEMPit querydataksi
         string errorStr;
         NFmiQueryData *data = DecodeTEMP::MakeNewDataFromTEMPStr(tempFileContent,
                                                                  errorStr,
@@ -264,7 +264,7 @@ void Domain(int argc, const char *argv[])
   if (foundAnyFiles == false) throw runtime_error("Error: Didn't find any files to read.");
   if (couldDecodeSoundings == false)
     throw runtime_error("Error: Couldn't decode any soundings from any files.");
-  //	6. yhdist‰ lopuksi querydata yhdeksi kokonaisuudeksi
+  //	6. yhdist√§ lopuksi querydata yhdeksi kokonaisuudeksi
   NFmiQueryData *bigQData = ::CombineQueryDatas(qDataList, wantedProducer);
 
   //	7. talleta querydata output:iin

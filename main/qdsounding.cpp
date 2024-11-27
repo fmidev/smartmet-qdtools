@@ -51,7 +51,7 @@ using namespace std;
 
 #ifdef _MSC_VER
 #pragma warning(disable : 4996)  // winkkari puolella putenv ja tzset -funktiot on deprekoitu ja
-// suositellaan k‰ytt‰m‰‰n _-nimisi‰ versioita, poistin sitten n‰m‰
+// suositellaan k√§ytt√§m√§√§n _-nimisi√§ versioita, poistin sitten n√§m√§
 // varoitukset pragmalla
 #endif
 

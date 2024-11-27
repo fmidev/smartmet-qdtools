@@ -112,7 +112,7 @@ int domain(int argc, const char *argv[])
 
   // Now convert all files in the list to queryDatas and combine them
   std::string dirName = NFmiQueryDataUtil::GetFileFilterDirectory(
-      options.indata);  // fileFilterist‰ pit‰‰ ottaa hakemisto irti, koska PatternFiles-funktio
+      options.indata);  // fileFilterist√§ pit√§√§ ottaa hakemisto irti, koska PatternFiles-funktio
                         // palautta vain tiedostojen nimet, ei polkua mukana
   std::vector<std::shared_ptr<NFmiQueryData> > qDataList;
   std::list<std::string>::const_iterator it;
@@ -123,16 +123,16 @@ int domain(int argc, const char *argv[])
   }
 
   // create combined qinfo
-  std::shared_ptr<NFmiQueryData> dummyBaseData;  // t‰t‰ ei k‰ytet‰, eli luodaan '0'-pointteri,
+  std::shared_ptr<NFmiQueryData> dummyBaseData;  // t√§t√§ ei k√§ytet√§, eli luodaan '0'-pointteri,
                                                    // koska NFmiQueryDataUtil::CombineQueryDatas
-                                                   // vaatii t‰ll‰ist‰ mahd. pohjadataa
+                                                   // vaatii t√§ll√§ist√§ mahd. pohjadataa
   NFmiQueryData *data = NFmiQueryDataUtil::CombineQueryDatas(
       false,
       dummyBaseData,
       qDataList,
       false,
       options.maxtimesteps,
-      0);  // false = yhdistely sliceista, 0 = ei lopetus funktoria k‰ytˆss‰
+      0);  // false = yhdistely sliceista, 0 = ei lopetus funktoria k√§yt√∂ss√§
   if (data == 0)
     throw std::runtime_error(std::string("Error, unable to create combined queryData"));
 

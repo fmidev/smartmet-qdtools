@@ -8,13 +8,13 @@
  * \page qdproject qdproject
  *
  * qdproject ohjelmalla voi projisoida koordinaatteja lonlat muodosta
- * maailmankoordinaatteihin tai pikselikoordinaatteihin, sek‰ p‰in
+ * maailmankoordinaatteihin tai pikselikoordinaatteihin, sek√§ p√§in
  * vastaiseen suuntaan.
  *
- * Projisoitavat pisteet annetaan komentorivill‰. Vaihtoehtoisesti
+ * Projisoitavat pisteet annetaan komentorivill√§. Vaihtoehtoisesti
  * voidaan interpoloida annettu querydata uuteen projektioon.
  *
- * K‰yttˆ:
+ * K√§ytt√∂:
  * \code
  * qdproject [options] x1,y1 x2,y2 ...
  * \endcode
@@ -24,24 +24,24 @@
  * <dt>-d desc</dt>
  * <dd>Projektion kuvaus</dd>
  * <dt>-c conf</dt>
- * <dd>Tiedosto, josta projektion kuvaus etsit‰‰n (a'la qdcontour)</dd>
+ * <dd>Tiedosto, josta projektion kuvaus etsit√§√§n (a'la qdcontour)</dd>
  * <dt>-q querydata</dt>
  * <dd>Tiedosto, josta projektion otetaan</dd>
  * <dt>-l</dt>
- * <dd>Komentorivill‰ annetaan longitudi-latitude pareja projisoitavaksi
+ * <dd>Komentorivill√§ annetaan longitudi-latitude pareja projisoitavaksi
  *     xy-koordinaatistoon</dd>
  * <dt>-L</dt>
- * <dd>Komentorivill‰ annetaan longitudi-latitude pareja projisoitavaksi
+ * <dd>Komentorivill√§ annetaan longitudi-latitude pareja projisoitavaksi
  *     maailmankoordinaatistoon</dd>
  * <dt>-i</dt>
- * <dd>K‰‰nteisprojektio, komentorivill‰ annetaan xy-koordinaatteja
+ * <dd>K√§√§nteisprojektio, komentorivill√§ annetaan xy-koordinaatteja
  *     projisoitavaksi takaisin longitudi-latitudi pareiksi</dd>
  * <dt>-I</dt>
- * <dd>K‰‰nteisprojektio, komentorivill‰ annetaan xy-koordinaatteja
+ * <dd>K√§√§nteisprojektio, komentorivill√§ annetaan xy-koordinaatteja
  *     projisoitavaksi takaisin maailmankoordinaatistoon</dd>
  * <dt>-v</dt>
- * <dd>Verbose moodi - alkuper‰iset koordinaatit tulostetaan projisoitujen
- *     koordinaattien per‰ss‰.</dd>
+ * <dd>Verbose moodi - alkuper√§iset koordinaatit tulostetaan projisoitujen
+ *     koordinaattien per√§ss√§.</dd>
  * </dl>
  *
  */

@@ -1,10 +1,10 @@
 /*!
  *  \file changeParam.cpp
- *  Tekijä: Marko (10.10.2002) \par
- *  Tämä ohjelma lukee stdin:in annetun qdatan, muuttaa annetun parametriId:n
+ *  TekijÃ¤: Marko (10.10.2002) \par
+ *  TÃ¤mÃ¤ ohjelma lukee stdin:in annetun qdatan, muuttaa annetun parametriId:n
  *  parametri ID:n ja nimen halutuiksi (jos ei annettu arvoa, nimi pysyy samana).
- *  Jos tuottaja ID:tä ja nimeä ei anneta, pysyvät ne ennallaan. \par
- *  Käyttö, ks. Usage \par
+ *  Jos tuottaja ID:tÃ¤ ja nimeÃ¤ ei anneta, pysyvÃ¤t ne ennallaan. \par
+ *  KÃ¤yttÃ¶, ks. Usage \par
  *
  */
 
@@ -23,7 +23,7 @@
 #include <fstream>
 #include <stdexcept>
 
-using namespace std;  // tätä ei saa sitten laittaa headeriin, eikä ennen includeja!!!!
+using namespace std;  // tÃ¤tÃ¤ ei saa sitten laittaa headeriin, eikÃ¤ ennen includeja!!!!
 
 void Usage();
 void run(int argc, const char* argv[]);
@@ -84,7 +84,7 @@ void run(int argc, const char* argv[])
     cerr << "Error: Invalid command line:" << endl << cmdline.Status().ErrorLog().CharPtr() << endl;
 
     Usage();
-    throw runtime_error("");  // tässä piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
+    throw runtime_error("");  // tÃ¤ssÃ¤ piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
   }
 
@@ -104,7 +104,7 @@ void run(int argc, const char* argv[])
   {
     cerr << "Error: 2 parameters expected, dataFile 'parameter-id/name or station id'\n\n";
     Usage();
-    throw runtime_error("");  // tässä piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
+    throw runtime_error("");  // tÃ¤ssÃ¤ piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
   }
 
@@ -113,7 +113,7 @@ void run(int argc, const char* argv[])
   NFmiQueryData qd(dataFile, false);
 
   NFmiQueryInfo* info =
-      qd.Info();  // tässä pitää kopeloida ihan datan sisuksia, että muutokset saadaan voimaan!
+      qd.Info();  // tÃ¤ssÃ¤ pitÃ¤Ã¤ kopeloida ihan datan sisuksia, ettÃ¤ muutokset saadaan voimaan!
 
   // Katsotaan ensin onko 2. parametrina annettu parametri-tunniste nimi (esim. Temperature), vai
   // identti (esim. 4)
@@ -124,7 +124,7 @@ void run(int argc, const char* argv[])
   if (parNameId != kFmiBadParameter && info->Param(parNameId))
     paramFound = true;
   if (!paramFound)
-  {  // katsotaan onko id annettu ja löytyykö se
+  {  // katsotaan onko id annettu ja lÃ¶ytyykÃ¶ se
     try
     {
       parNameId = static_cast<FmiParameterName>(NFmiStringTools::Convert<int>(paramIdOrName));
@@ -138,9 +138,9 @@ void run(int argc, const char* argv[])
   if (!paramFound)
     if (!producerChange && !originChange && !levelChange)
       throw runtime_error(string("Annettua parametria: '") + paramIdOrName +
-                          "' ei löytynyt datasta.");
+                          "' ei lÃ¶ytynyt datasta.");
 
-  NFmiDataIdent newDataIdent(info->Param());  // defaultti arvot täältä
+  NFmiDataIdent newDataIdent(info->Param());  // defaultti arvot tÃ¤Ã¤ltÃ¤
 
   if (cmdline.isOption('n'))
     newDataIdent.GetParam()->SetName(cmdline.OptionValue('n'));

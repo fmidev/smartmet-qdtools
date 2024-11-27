@@ -17,7 +17,7 @@ std::vector<NFmiDataIdent> GetAddedParameters(NFmiCmdLine &cmdline, NFmiQueryDat
 std::unique_ptr<NFmiQueryData> CreateNewBaseData(NFmiQueryData &originalData,
                                             const std::vector<NFmiDataIdent> &addedParameters);
 
-using namespace std;  // t�t� ei saa sitten laittaa headeriin, eik� ennen includeja!!!!
+using namespace std;  // tätä ei saa sitten laittaa headeriin, eikä ennen includeja!!!!
 
 int main(int argc, const char *argv[])
 {
@@ -41,7 +41,7 @@ void Run(int argc, const char *argv[])
   {
     cerr << "Error: Invalid command line:" << endl << cmdline.Status().ErrorLog().CharPtr() << endl;
     Usage(argv[0]);
-    throw runtime_error("");  // t�ss� piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
+    throw runtime_error("");  // tässä piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
   }
 
@@ -49,7 +49,7 @@ void Run(int argc, const char *argv[])
   {
     cerr << "Error: atleast 1 parameter expected, 'scriptFile'\n\n";
     Usage(argv[0]);
-    throw runtime_error("");  // t�ss� piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
+    throw runtime_error("");  // tässä piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
   }
 
@@ -88,8 +88,8 @@ void Run(int argc, const char *argv[])
   if (cmdline.isOption('i')) infile = cmdline.OptionValue('i');
   string outfile;
   if (cmdline.isOption('o')) outfile = cmdline.OptionValue('o');
-  // querydata pit�� lukea kokonaisuudessaan muistiin (= ei memory-mapped),
-  // ett� dataa voi muokata smarttools skriptill�, siksi 2. parametri false.
+  // querydata pitää lukea kokonaisuudessaan muistiin (= ei memory-mapped),
+  // että dataa voi muokata smarttools skriptillä, siksi 2. parametri false.
   std::unique_ptr<NFmiQueryData> querydataPtr(new NFmiQueryData(infile, false));
   if (!querydataPtr)
   {
@@ -101,7 +101,7 @@ void Run(int argc, const char *argv[])
   std::unique_ptr<NFmiQueryData> newDataPtr;
   if (possibleAddedParameters.empty())
   {
-    // Tehd��n querydataPtr.release(), koska querydata olio menee NFmiSmartToolUtil::ModifyData
+    // Tehdään querydataPtr.release(), koska querydata olio menee NFmiSmartToolUtil::ModifyData
     // funktiossa NFmiInfoOrganizer luokan olion hallintaan.
     newDataPtr.reset(NFmiSmartToolUtil::ModifyData(smartToolScript,
                                                    querydataPtr.release(),
@@ -114,7 +114,7 @@ void Run(int argc, const char *argv[])
   {
     // Create new base data
     unique_ptr<NFmiQueryData> qd2Ptr(CreateNewBaseData(*querydataPtr, possibleAddedParameters));
-    // Tehd��n qd2Ptr.release(), koska querydata olio menee NFmiSmartToolUtil::ModifyData
+    // Tehdään qd2Ptr.release(), koska querydata olio menee NFmiSmartToolUtil::ModifyData
     // funktiossa NFmiInfoOrganizer luokan olion hallintaan.
     newDataPtr.reset(NFmiSmartToolUtil::ModifyData(smartToolScript,
                                                    qd2Ptr.release(),
@@ -143,7 +143,7 @@ bool ReadScriptFile(const std::string &theFileName, std::string *theScript)
     {
       string rowbuffer, bigstring;
 
-      // luetaan tiedostoa rivi kerrallaan ja testataan l�ytyyk� yhden rivin kommentteja
+      // luetaan tiedostoa rivi kerrallaan ja testataan läytyykä yhden rivin kommentteja
 
       while (std::getline(in, rowbuffer))
       {
@@ -169,7 +169,7 @@ void Usage(const std::string &theExecutableName)
 {
   NFmiFileString fileNameStr(theExecutableName);
   std::string usedFileName(
-      fileNameStr.FileName().CharPtr());  // ota pois mahd. polku executablen nimest�
+      fileNameStr.FileName().CharPtr());  // ota pois mahd. polku executablen nimestä
   cerr << "Usage: " << endl
        << usedFileName.c_str()
        << " [options] macroFile [qdata1 qdata2 ...] < inputdata > outputData" << endl
@@ -245,7 +245,7 @@ std::vector<NFmiDataIdent> GetAddedParameters(NFmiCmdLine &cmdline, NFmiQueryDat
   std::vector<NFmiDataIdent> possibleAddedParameters;
   if (cmdline.isOption('a'))
   {
-    // Annettu lista parametrin newbase enum nimi� tai numeroita, joista samasta
+    // Annettu lista parametrin newbase enum nimiä tai numeroita, joista samasta
     // string-arvosta muodostetaan par-id ja nimi
     vector<string> names = NFmiStringTools::Split<vector<string>>(cmdline.OptionValue('a'));
     for (const string &name : names)
@@ -256,8 +256,8 @@ std::vector<NFmiDataIdent> GetAddedParameters(NFmiCmdLine &cmdline, NFmiQueryDat
   }
   else if (cmdline.isOption('A'))
   {
-    // Annettu lista parametrin id,nimi pareja, id on aina numero, eik� saa olla newbase enum
-    // juttuun liittyv� stringi
+    // Annettu lista parametrin id,nimi pareja, id on aina numero, eikä saa olla newbase enum
+    // juttuun liittyvä stringi
     vector<string> idNamePairs = NFmiStringTools::Split<vector<string>>(cmdline.OptionValue('A'));
     if (idNamePairs.size() >= 2)
     {
@@ -287,7 +287,7 @@ NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo &qi,
   NFmiParamBag pbag = qi.ParamBag();
   for (const NFmiDataIdent &dataIdent : addedParameters)
   {
-    // Tehd��n viel� tarkistus ett� parametria ei ole jo datassa
+    // Tehdään vielä tarkistus että parametria ei ole jo datassa
     if (!qi.Param(*dataIdent.GetParam()))
     {
       pbag.Add(dataIdent);

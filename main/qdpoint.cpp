@@ -377,12 +377,12 @@ bool IsDst(NFmiFastQueryInfo& qd)
 }
 
 // ----------------------------------------------------------------------
-// Laskee, onko annetussa pisteess‰ annettuun aikaan pime‰‰
+// Laskee, onko annetussa pisteess√§ annettuun aikaan pime√§√§
 // ----------------------------------------------------------------------
 
 bool IsDark(const NFmiPoint& theLatLon, const NFmiTime& theTime)
 {
-  // Seuraava pˆllitty NFmiLocation.cpp tiedostosta
+  // Seuraava p√∂llitty NFmiLocation.cpp tiedostosta
 
   const double kRefractCorr = -0.0145386;
   NFmiLocation loc(theLatLon.X(), theLatLon.Y());
@@ -397,7 +397,7 @@ bool IsDark(const NFmiPoint& theLatLon, const NFmiTime& theTime)
 
 double ElevationAngle(const NFmiPoint& theLatLon, const NFmiTime& theTime)
 {
-  // Seuraava pˆllitty NFmiLocation.cpp tiedostosta
+  // Seuraava p√∂llitty NFmiLocation.cpp tiedostosta
 
   NFmiLocation loc(theLatLon.X(), theLatLon.Y());
   NFmiMetTime t(theTime, 1);
@@ -546,17 +546,17 @@ float ThetaE(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 }
 
 // ----------------------------------------------------------------------
-// Laskee sateen todenn‰kˆisyyden annetussa pisteess‰ asetettuun aikaan.
+// Laskee sateen todenn√§k√∂isyyden annetussa pisteess√§ asetettuun aikaan.
 //
-// Huom: Aluemaskin s‰de riippuu ennustuspituudesta T seuraavasti:
+// Huom: Aluemaskin s√§de riippuu ennustuspituudesta T seuraavasti:
 //
 //       T  < 4h : 30km
 //       T = 24h : 75km
 //       T = 48h : 100km
 //       T = 96h : 150km
 //
-// Kullakin v‰lill‰ maskin s‰dett‰ interpoloidaan lineaarisesti,
-// 96h tunnin j‰lkeen extrapoloidaan lineaarisesti, eli s‰de
+// Kullakin v√§lill√§ maskin s√§dett√§ interpoloidaan lineaarisesti,
+// 96h tunnin j√§lkeen extrapoloidaan lineaarisesti, eli s√§de
 // kasvaa 50km 48 tunnissa.
 //
 // ----------------------------------------------------------------------
@@ -641,7 +641,7 @@ float CloudinessNN(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 }
 
 // ----------------------------------------------------------------------
-// Lumisateen todenn‰kˆisyys
+// Lumisateen todenn√§k√∂isyys
 // ----------------------------------------------------------------------
 
 float SnowProb(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
@@ -690,7 +690,7 @@ float North(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 }
 
 // ----------------------------------------------------------------------
-// Keskim‰‰r‰inen s‰teily pinnalla
+// Keskim√§√§r√§inen s√§teily pinnalla
 // ----------------------------------------------------------------------
 
 float SurfaceRadiation(const NFmiTime& theTime, const NFmiPoint& theLatLon)
@@ -802,7 +802,7 @@ FmiParameterName ParamEnum(const string& theParam)
 }
 
 // ----------------------------------------------------------------------
-// Irrottaa parametrinimen speksist‰ param:level
+// Irrottaa parametrinimen speksist√§ param:level
 // ----------------------------------------------------------------------
 
 const string ParamName(const string& theParam)
@@ -814,7 +814,7 @@ const string ParamName(const string& theParam)
 }
 
 // ----------------------------------------------------------------------
-// Irrottaa parametrilevelin speksist‰ param:level
+// Irrottaa parametrilevelin speksist√§ param:level
 // ----------------------------------------------------------------------
 
 long ParamLevel(const string& theParam)
@@ -828,7 +828,7 @@ long ParamLevel(const string& theParam)
 
 // ----------------------------------------------------------------------
 // Testaa ovatko asetetun sijainnin ja ajan halutut parametrit valideja.
-// Yksi ainoa validi arvo riitt‰‰.
+// Yksi ainoa validi arvo riitt√§√§.
 // ----------------------------------------------------------------------
 
 bool ValidRow(NFmiFastQueryInfo& qd,
@@ -978,7 +978,7 @@ float InterpolatedValue(NFmiFastQueryInfo& qd, int maxmissminutes)
 
 // ----------------------------------------------------------------------
 // Tulosta asetetun sijainnin ja ajan halutut parametrit. Annettu boolean
-// m‰‰r‰‰, tulostetaanko wmo numero.
+// m√§√§r√§√§, tulostetaanko wmo numero.
 // ----------------------------------------------------------------------
 
 void PrintRow(NFmiFastQueryInfo& qd,
@@ -994,11 +994,11 @@ void PrintRow(NFmiFastQueryInfo& qd,
 
   NFmiMetTime utctime = qd.ValidTime();
 
-  // Ei n‰ytet‰, jos k‰ytt‰j‰ ei halua menneisyytt‰
+  // Ei n√§ytet√§, jos k√§ytt√§j√§ ei halua menneisyytt√§
 
   if (options.future && utctime.IsLessThan(now)) return;
 
-  // Rivi n‰ytet‰‰n
+  // Rivi n√§ytet√§√§n
 
   NFmiTime t;
 
@@ -1084,7 +1084,7 @@ void PrintRow(NFmiFastQueryInfo& qd,
       ++iter;
     }
 
-    // Pyˆristet‰‰n negatiivinen nolla nollaksi
+    // Py√∂ristet√§√§n negatiivinen nolla nollaksi
     if (value == -0) value = 0;
 
     NFmiString tmp;
@@ -1101,7 +1101,7 @@ void PrintRow(NFmiFastQueryInfo& qd,
 // ----------------------------------------------------------------------
 /*
  * Tulostaa tiedot asetetusta asemasta. Jos mukana annetaan koordinaatti,
- * tulostetaan myˆs et‰isyys koordinaattiin.
+ * tulostetaan my√∂s et√§isyys koordinaattiin.
  */
 // ----------------------------------------------------------------------
 
@@ -1124,7 +1124,7 @@ void PrintLocationInfo(QueryDataManager& theMgr,
 
 // ----------------------------------------------------------------------
 /*!
- * Tulostaa tiedot datan timebagist‰.
+ * Tulostaa tiedot datan timebagist√§.
  *
  * \todo Muuta NFmiFastQueryInfo luokan TimeResolution metodi constiksi
  */
@@ -1138,7 +1138,7 @@ void ReportTimes(QueryDataManager& theMgr)
 
   NFmiFastQueryInfo& qd = theMgr.info();
 
-  // Oma kopio, jotta voidaan siirty‰ ensimm‰iseen/viimeiseen aikaan
+  // Oma kopio, jotta voidaan siirty√§ ensimm√§iseen/viimeiseen aikaan
   qd.FirstTime();
   NFmiTime t1 = qd.Time().CorrectLocalTime();
 
@@ -1300,7 +1300,7 @@ int run(int argc, char* argv[])
     }
   }
 
-  // Referenssipiste l‰himpi‰ pisteit‰ haettaessa
+  // Referenssipiste l√§himpi√§ pisteit√§ haettaessa
 
   NFmiPoint referencelonlat(kFloatMissing, kFloatMissing);
   if (options.nearest_stations >= 1 && places.size() == 1) referencelonlat = places.begin()->second;
@@ -1312,7 +1312,7 @@ int run(int argc, char* argv[])
     std::set<int> stats = qmgr.stations();
     std::copy(stats.begin(), stats.end(), back_inserter(options.stations));
   }
-  // Listataan kaikki l‰himmat asemat tarvittaessa
+  // Listataan kaikki l√§himmat asemat tarvittaessa
 
   else if (options.nearest_stations > 1 || options.validate)
   {
@@ -1325,7 +1325,7 @@ int run(int argc, char* argv[])
     for (std::map<double, int>::const_iterator it = stats.begin(); it != stats.end(); ++it)
       options.stations.push_back(it->second);
 
-    // Ja putsataan places - sit‰ tarvittiin vain l‰himpien pisteiden hakuun
+    // Ja putsataan places - sit√§ tarvittiin vain l√§himpien pisteiden hakuun
     places.clear();
   }
 
@@ -1336,7 +1336,7 @@ int run(int argc, char* argv[])
       options.locations.empty())
     throw runtime_error("No valid coordinates given");
 
-  // N‰ytet‰‰n asemat, jos -v tai -s on annettu
+  // N√§ytet√§√§n asemat, jos -v tai -s on annettu
 
   if (options.list_stations || options.verbose)
   {
@@ -1344,15 +1344,15 @@ int run(int argc, char* argv[])
     ReportStations(qmgr, options.stations, referencelonlat);
   }
 
-  // N‰ytet‰‰n aika-askeleet, jos -v on annettu
+  // N√§ytet√§√§n aika-askeleet, jos -v on annettu
 
   if (options.verbose) ReportTimes(qmgr);
 
-  // N‰ytet‰‰n parametrinimet, jos -v on annettu
+  // N√§ytet√§√§n parametrinimet, jos -v on annettu
 
   if (options.verbose) ReportParams(qmgr, options.stations, options.params);
 
-  // Jos options.rows > 0, halutaan N viimeisint‰ aikaa, muutoin kaikki ajat
+  // Jos options.rows > 0, halutaan N viimeisint√§ aikaa, muutoin kaikki ajat
 
   bool ignoresubs = false;
 
@@ -1378,8 +1378,8 @@ int run(int argc, char* argv[])
         qi->ResetTime();
         while (qi->NextTime())
         {
-          // Taaksep‰in yhteensopivuus vaatii, ett‰
-          // tulostetaan WMO-numero vain kun niit‰ on useita
+          // Taaksep√§in yhteensopivuus vaatii, ett√§
+          // tulostetaan WMO-numero vain kun niit√§ on useita
           if (options.stations.size() > 1) cout << NFmiValueString(*iter, "%05d").CharPtr() << ' ';
           PrintRow(*qi, ignoresubs, zones, lonlat);
         }

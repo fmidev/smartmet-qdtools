@@ -22,7 +22,7 @@
  *  parametreille.
  */
 
-#include <boost/lexical_cast.hpp>
+#include <macgyver/StringConversion.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
@@ -77,13 +77,13 @@ int run(int argc, const char* argv[])
   int maxSearchRangeInMinutes = 360;
   FmiInterpolationMethod generalInterpolationMethod = kLinearly;
 
-  int timeResolutionInMinutes = boost::lexical_cast<int>(cmdline.Parameter(1));
+  int timeResolutionInMinutes = Fmi::stoi(cmdline.Parameter(1));
 
-  if (numpar >= 2) startTimeResolutionInMinutes = boost::lexical_cast<int>(cmdline.Parameter(2));
-  if (numpar >= 3) maxSearchRangeInMinutes = boost::lexical_cast<int>(cmdline.Parameter(3));
+  if (numpar >= 2) startTimeResolutionInMinutes = Fmi::stoi(cmdline.Parameter(2));
+  if (numpar >= 3) maxSearchRangeInMinutes = Fmi::stoi(cmdline.Parameter(3));
   if (numpar >= 4)
   {
-    int interp = boost::lexical_cast<int>(cmdline.Parameter(4));
+    int interp = Fmi::stoi(cmdline.Parameter(4));
     generalInterpolationMethod = FmiInterpolationMethod(interp);
   }
 

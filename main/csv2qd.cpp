@@ -20,9 +20,9 @@
 #include <boost/bind/bind.hpp>
 #include <macgyver/DateTime.h>
 #include <boost/filesystem/operations.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 #include <macgyver/CsvReader.h>
+#include <macgyver/StringConversion.h>
 #include <macgyver/TimeParser.h>
 #include <macgyver/TimeZoneFactory.h>
 #include <newbase/NFmiEnumConverter.h>
@@ -214,7 +214,7 @@ bool parse_options(int argc, char* argv[], Options& options)
     {
       try
       {
-        id = boost::lexical_cast<int>(str);
+        id = Fmi::stoi(str);
         options.params.push_back(id);
       }
       catch (...)
@@ -347,7 +347,7 @@ Params parse_params(const CsvTable& csv)
         throw runtime_error("Invalid row of size " + boost::lexical_cast<string>(row.size()));
 
       ParamInfo info;
-      info.id = boost::lexical_cast<int>(row[0]);
+      info.id = Fmi::stoi(row[0]);
       info.name = row[1];
       info.minvalue = boost::lexical_cast<double>(row[2]);
       info.maxvalue = boost::lexical_cast<double>(row[3]);
@@ -405,7 +405,7 @@ Stations parse_stations(const CsvTable& csv)
 
       StationInfo info;
       info.id = row[0];
-      info.number = boost::lexical_cast<int>(row[1]);
+      info.number = Fmi::stoi(row[1]);
       info.lon = boost::lexical_cast<double>(row[2]);
       info.lat = boost::lexical_cast<double>(row[3]);
       info.name = row[4];
@@ -502,7 +502,7 @@ NFmiVPlaceDescriptor create_vdesc(const CsvTable& csv)
   for (const CsvTable::value_type& row : csv)
   {
     const string& tmp = row[options.levelcolumn];
-    int level = boost::lexical_cast<int>(tmp);
+    int level = Fmi::stoi(tmp);
 
     if (used.empty() || level != last_level)
     {
@@ -701,7 +701,7 @@ void copy_values(NFmiFastQueryInfo& info,
 
     if (options.levelcolumn >= 0)
     {
-      int value = boost::lexical_cast<int>(row[options.levelcolumn]);
+      int value = Fmi::stoi(row[options.levelcolumn]);
       NFmiLevel level(static_cast<FmiLevelType>(options.leveltype), value);
       if (!info.Level(level))
         throw runtime_error("Failed to set level " + boost::lexical_cast<string>(level));
@@ -790,16 +790,16 @@ void write_querydata(const CsvTable& csv, const Params& params, const Stations& 
 
 int run(int argc, char* argv[])
 {
-  using namespace boost::placeholders;
+  namespace p = std::placeholders;
 
   if (!parse_options(argc, argv, options)) return 0;
 
   Csv csv, csvparams, csvstations;
-  Fmi::CsvReader::read(options.paramsfile, boost::bind(&Csv::addrow, &csvparams, _1));
-  Fmi::CsvReader::read(options.stationsfile, boost::bind(&Csv::addrow, &csvstations, _1));
+  Fmi::CsvReader::read(options.paramsfile, std::bind(&Csv::addrow, &csvparams, p::_1));
+  Fmi::CsvReader::read(options.stationsfile, std::bind(&Csv::addrow, &csvstations, p::_1));
   for (const string& infile : options.files)
   {
-    Fmi::CsvReader::read(infile, boost::bind(&Csv::addrow, &csv, _1));
+    Fmi::CsvReader::read(infile, std::bind(&Csv::addrow, &csv, p::_1));
   }
 
   Params params = parse_params(csvparams.table);

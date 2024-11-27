@@ -1,13 +1,13 @@
 #include "nctools.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/split.hpp>
-#include <boost/bind/bind.hpp>
 #include <boost/program_options.hpp>
 #include <macgyver/CsvReader.h>
 #include <macgyver/Exception.h>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiStringTools.h>
 #include <filesystem>
+#include <functional>
 #include <iostream>
 #include <list>
 #include <string>
@@ -277,7 +277,7 @@ bool parse_options(int argc, char *argv[], Options &options)
 
 ParamConversions read_netcdf_configs(const Options &options)
 {
-  using namespace boost::placeholders;
+  using namespace std::placeholders;
   CsvParams csv(options);
   //  Parameter list is read starting from beginning so put most important ones first
 
@@ -313,7 +313,7 @@ ParamConversions read_netcdf_configs(const Options &options)
         if (options.verbose)
           std::cout << "Reading " << file << std::endl;
 
-        Fmi::CsvReader::read(file, boost::bind(&CsvParams::add, &csv, _1));
+        Fmi::CsvReader::read(file, std::bind(&CsvParams::add, &csv, _1));
       }
       catch (...)
       {
@@ -327,7 +327,7 @@ ParamConversions read_netcdf_configs(const Options &options)
       if (options.verbose)
         std::cout << "Reading " << options.configfile << std::endl;
 
-      Fmi::CsvReader::read(options.configfile, boost::bind(&CsvParams::add, &csv, _1));
+      Fmi::CsvReader::read(options.configfile, std::bind(&CsvParams::add, &csv, _1));
     }
     catch (...)
     {

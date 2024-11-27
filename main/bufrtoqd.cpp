@@ -37,7 +37,6 @@ This file is part of libECBUFR.
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/split.hpp>
-#include <boost/bind/bind.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/program_options.hpp>
 #include <fmt/format.h>
@@ -59,6 +58,7 @@ This file is part of libECBUFR.
 #include <newbase/NFmiVPlaceDescriptor.h>
 #include <smarttools/NFmiAviationStationInfoSystem.h>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -1257,7 +1257,7 @@ NameMap read_bufr_config()
   {
     if (options.verbose) std::cout << "Reading " << options.conffile << std::endl;
     Fmi::CsvReader::read(
-        options.conffile, boost::bind(&CsvConfig::add, &csv, boost::placeholders::_1));
+        options.conffile, std::bind(&CsvConfig::add, &csv, std::placeholders::_1));
   }
   return csv.pmap;
 }

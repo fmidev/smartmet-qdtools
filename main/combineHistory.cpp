@@ -48,6 +48,7 @@
  */
 // ======================================================================
 
+#include <macgyver/StringConversion.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileSystem.h>
@@ -55,8 +56,6 @@
 #include <newbase/NFmiQueryDataUtil.h>
 #include <newbase/NFmiQueryInfo.h>
 #include <newbase/NFmiTimeList.h>
-
-#include <boost/lexical_cast.hpp>
 
 #include <fstream>
 
@@ -174,9 +173,9 @@ int main(int argc, const char *argv[])
 
   if (cmdline.isOption('r')) newestorigin = !newestorigin;
 
-  if (cmdline.isOption('p')) maxPastAge = boost::lexical_cast<long>(cmdline.OptionValue('p'));
+  if (cmdline.isOption('p')) maxPastAge = Fmi::stol(cmdline.OptionValue('p'));
 
-  if (cmdline.isOption('f')) maxFutureAge = boost::lexical_cast<long>(cmdline.OptionValue('f'));
+  if (cmdline.isOption('f')) maxFutureAge = Fmi::stol(cmdline.OptionValue('f'));
 
   if (cmdline.isOption('1')) latest = true;
 

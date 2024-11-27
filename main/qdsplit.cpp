@@ -29,6 +29,7 @@
  */
 // ======================================================================
 
+#include <macgyver/StringConversion.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileSystem.h>
@@ -38,7 +39,6 @@
 #include <newbase/NFmiTimeList.h>
 
 #include <filesystem>
-#include <boost/lexical_cast.hpp>
 
 #include <fstream>
 #include <stdexcept>
@@ -148,7 +148,7 @@ bool parse_command_line(int argc, const char* argv[])
 
   if (cmdline.isOption('m'))
   {
-    options.missinglimit = boost::lexical_cast<float>(cmdline.OptionValue('m'));
+    options.missinglimit = Fmi::stof(cmdline.OptionValue('m'));
     if (options.missinglimit < 0 || options.missinglimit > 100)
       throw runtime_error("Missing limit value should be 0-100");
   }
@@ -157,11 +157,11 @@ bool parse_command_line(int argc, const char* argv[])
     throw std::runtime_error("Cannot use options t and T simultaneously");
 
   if (cmdline.isOption('t'))
-    options.simultaneoustimes = boost::lexical_cast<int>(cmdline.OptionValue('t'));
+    options.simultaneoustimes = Fmi::stoi(cmdline.OptionValue('t'));
 
   if (cmdline.isOption('T'))
   {
-    options.simultaneoustimes = boost::lexical_cast<int>(cmdline.OptionValue('T'));
+    options.simultaneoustimes = Fmi::stoi(cmdline.OptionValue('T'));
     options.memorymapping = true;
   }
 

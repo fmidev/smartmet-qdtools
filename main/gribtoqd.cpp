@@ -6,10 +6,10 @@
 
 #include "GribTools.h"
 #include <boost/algorithm/string/replace.hpp>
-#include <boost/lexical_cast.hpp>
 #include <memory>
 #include <boost/thread.hpp>
 #include <fmt/format.h>
+#include <macgyver/StringConversion.h>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiAreaTools.h>
 #include <newbase/NFmiCmdLine.h>
@@ -697,10 +697,10 @@ bool GetIgnoreLevelList(NFmiCmdLine &theCmdLine, NFmiLevelBag &theIgnoredLevelLi
       if (levelStrVec.size() == 2 && levelStrVec[0].at(0) == 't')
       {
         string levelTypeStr(levelStrVec[0].begin() + 1, levelStrVec[0].end());
-        unsigned long levelType = boost::lexical_cast<unsigned long>(levelTypeStr);
+        unsigned long levelType = Fmi::stoul(levelTypeStr);
         float levelValue = gMissLevelValue;
         if (levelStrVec[1] != "*")
-          levelValue = boost::lexical_cast<float>(levelStrVec[1]);
+          levelValue = Fmi::stof(levelStrVec[1]);
         theIgnoredLevelListOut.AddLevel(NFmiLevel(levelType, levelStrVec[1], levelValue));
       }
       else
@@ -737,7 +737,7 @@ vector<FmiLevelType> GetAcceptedLevelTypes(NFmiCmdLine &theCmdLine)
     for (unsigned int i = 0; i < acceptOnlyLevelTypesStrVector.size(); i++)
     {
       unsigned long levelType =
-          boost::lexical_cast<unsigned long>(acceptOnlyLevelTypesStrVector[i]);
+          Fmi::stoul(acceptOnlyLevelTypesStrVector[i]);
       acceptOnlyLevelTypes.push_back(static_cast<FmiLevelType>(
           levelType));  // stringtools-convert ei osaa heti tehdä FmiLevelType-tyyppiä
     }
@@ -757,10 +757,10 @@ GeneratedHybridParamInfo GetGeneratedHybridParamInfo(NFmiCmdLine &theCmdLine,
         NFmiStringTools::Split(theCmdLine.OptionValue(theOptionLetter));
     if (hybridInfoStrings.size() >= 1)
       hybridParamInfo.itsHelpParamId =
-          static_cast<FmiParameterName>(boost::lexical_cast<int>(hybridInfoStrings[0]));
+          static_cast<FmiParameterName>(Fmi::stoi(hybridInfoStrings[0]));
     unsigned long hybridPressureId = theDefaultParamId;
     if (hybridInfoStrings.size() >= 2)
-      hybridPressureId = boost::lexical_cast<unsigned long>(hybridInfoStrings[1]);
+      hybridPressureId = Fmi::stoul(hybridInfoStrings[1]);
     string hybridPressureName = theDefaultParamName;
     if (hybridInfoStrings.size() >= 3)
       hybridPressureName = hybridInfoStrings[2];
@@ -5187,7 +5187,7 @@ bool GetProducer(NFmiCmdLine &theCmdLine, GribFilterOptions &theGribFilterOption
       Usage();
       return false;
     }
-    unsigned long prodId = boost::lexical_cast<unsigned long>(strVector[0]);
+    unsigned long prodId = Fmi::stoul(strVector[0]);
     theGribFilterOptions.itsWantedSurfaceProducer = NFmiProducer(prodId, strVector[1]);
     theGribFilterOptions.itsWantedPressureProducer = theGribFilterOptions.itsWantedSurfaceProducer;
     theGribFilterOptions.itsWantedHybridProducer = theGribFilterOptions.itsWantedSurfaceProducer;
@@ -5261,7 +5261,7 @@ int GetOptions(NFmiCmdLine &theCmdLine, GribFilterOptions &theGribFilterOptions)
 
   if (theCmdLine.isOption('g'))
     theGribFilterOptions.itsGridInfoPrintCount =
-        boost::lexical_cast<int>(theCmdLine.OptionValue('g'));
+        Fmi::stoi(theCmdLine.OptionValue('g'));
   if (theCmdLine.isOption('d'))
     theGribFilterOptions.fCropParamsNotMensionedInTable = true;
 

@@ -8,8 +8,6 @@
 #include <macgyver/StringConversion.h>
 #include <newbase/NFmiCommentStripper.h>
 
-#include <boost/lexical_cast.hpp>
-
 #include <iostream>
 #include <stdexcept>
 
@@ -245,20 +243,20 @@ bool GetParamChangeItemFromString(const std::string &buffer,
 
   theParamChangeItemOut.Reset();
 
-  theParamChangeItemOut.itsOriginalParamId = boost::lexical_cast<long>(strVector[0]);
-  long newParId = boost::lexical_cast<long>(strVector[1]);
+  theParamChangeItemOut.itsOriginalParamId = Fmi::stol(strVector[0]);
+  long newParId = Fmi::stol(strVector[1]);
   std::string newParName = strVector[2];
   theParamChangeItemOut.itsWantedParam.SetIdent(newParId);
   theParamChangeItemOut.itsWantedParam.SetName(newParName);
   if (strVector.size() >= 4)
   {
     if (!strVector[3].empty())
-      theParamChangeItemOut.itsConversionBase = boost::lexical_cast<float>(strVector[3]);
+      theParamChangeItemOut.itsConversionBase = Fmi::stof(strVector[3]);
   }
   if (strVector.size() >= 5)
   {
     if (!strVector[4].empty())
-      theParamChangeItemOut.itsConversionScale = boost::lexical_cast<float>(strVector[4]);
+      theParamChangeItemOut.itsConversionScale = Fmi::stof(strVector[4]);
   }
 
   if (strVector.size() > 5 && strVector.size() < 7)
@@ -276,8 +274,8 @@ bool GetParamChangeItemFromString(const std::string &buffer,
   {
     if (!strVector[5].empty() && !strVector[6].empty())
     {
-      unsigned long levelType = boost::lexical_cast<unsigned long>(strVector[5]);
-      float levelValue = boost::lexical_cast<float>(strVector[6]);
+      unsigned long levelType = Fmi::stoul(strVector[5]);
+      float levelValue = Fmi::stof(strVector[6]);
       theParamChangeItemOut.itsLevel =
           new NFmiLevel(levelType, NFmiStringTools::Convert(levelValue), levelValue);
     }
@@ -297,7 +295,7 @@ bool GetParamChangeItemFromString(const std::string &buffer,
     if (!strVector[7].empty())
     {
       FmiInterpolationMethod interpMethod =
-          static_cast<FmiInterpolationMethod>(boost::lexical_cast<int>(strVector[7]));
+          static_cast<FmiInterpolationMethod>(Fmi::stoi(strVector[7]));
       theParamChangeItemOut.itsWantedParam.InterpolationMethod(interpMethod);
     }
   }

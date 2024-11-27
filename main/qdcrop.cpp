@@ -116,7 +116,7 @@
 // ======================================================================
 
 #include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
+#include <macgyver/StringConversion.h>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiEnumConverter.h>
@@ -304,7 +304,7 @@ set<int> parse_numberlist(const string& theList)
     string::size_type pos = str.find('-');
     if (pos == string::npos)
     {
-      int num = boost::lexical_cast<int>(str);
+      int num = Fmi::stoi(str);
       numbers.insert(num);
     }
     else
@@ -313,8 +313,8 @@ set<int> parse_numberlist(const string& theList)
       boost::algorithm::split(rangeparts, str, boost::is_any_of("-"));
       if (rangeparts.size() != 2)
         throw runtime_error("Invalid number range in '" + theList + "'");
-      int num1 = boost::lexical_cast<int>(rangeparts[0]);
-      int num2 = boost::lexical_cast<int>(rangeparts[1]);
+      int num1 = Fmi::stoi(rangeparts[0]);
+      int num2 = Fmi::stoi(rangeparts[1]);
       for (int i = num1; i <= num2; i++)
         numbers.insert(i);
     }

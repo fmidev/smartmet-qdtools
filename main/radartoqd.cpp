@@ -184,7 +184,7 @@ struct radar_data_t
  * \brief Global instance of the structure
  *
  * The decoder uses a call back technique which is easiest to implement
- * using a global. Using boost::bind would be an alternative.
+ * using a global. Using std::bind would be an alternative.
  */
 // ----------------------------------------------------------------------
 

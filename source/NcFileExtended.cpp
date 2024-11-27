@@ -2,6 +2,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <macgyver/Exception.h>
+#include <macgyver/StringConversion.h>
 #include <macgyver/TimeParser.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <iostream>
@@ -1585,7 +1586,7 @@ static int compare_versions(const std::string &v1, const std::string &v2)
       int v2part = 0;
       try
       {
-        v1part = boost::lexical_cast<int>(v1.substr(v1pos, v1pe - v1pos));
+        v1part = Fmi::stoi(v1.substr(v1pos, v1pe - v1pos));
       }
       catch (boost::bad_lexical_cast const &)
       {
@@ -1593,7 +1594,7 @@ static int compare_versions(const std::string &v1, const std::string &v2)
       }
       try
       {
-        v2part = boost::lexical_cast<int>(v2.substr(v2pos, v2pe - v2pos));
+        v2part = Fmi::stoi(v2.substr(v2pos, v2pe - v2pos));
       }
       catch (boost::bad_lexical_cast const &)
       {

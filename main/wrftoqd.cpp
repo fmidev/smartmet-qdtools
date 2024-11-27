@@ -22,6 +22,8 @@
 #include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiVPlaceDescriptor.h>
 
+#include <functional>
+
 nctools::Options options;
 
 // case insensitive search of sub string from stackoverflow
@@ -909,7 +911,7 @@ static NFmiTimeDescriptor CreateWRFTimeDescriptor(const NcFile &ncFile)
 {
   try
   {
-    using namespace boost::placeholders;
+    namespace p = std::placeholders;
     NcVar *var = ::GetWRFVariable(ncFile, "Times");
     if (var == 0)
       var = ::GetWRFVariable(ncFile, "time");
@@ -933,7 +935,7 @@ static NFmiTimeDescriptor CreateWRFTimeDescriptor(const NcFile &ncFile)
             // pitäisi olla muotoa: 2013-09-24_00:00:00
             // Siitä on poistettava kaikki välisälä, jotta se saadaan muotoon: 20130924000000
             timeStr.erase(
-                std::remove_if(timeStr.begin(), timeStr.end(), !boost::bind(::vcfix_isdigit, _1)),
+                std::remove_if(timeStr.begin(), timeStr.end(), [](char c) { return !::vcfix_isdigit(c); }),
                 timeStr.end());
             NFmiMetTime *aTime = new NFmiMetTime(1);
             aTime->FromStr(timeStr);

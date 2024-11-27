@@ -232,7 +232,7 @@ bool IsMissingValue(float value, float ncMissingValue)
     const float extraMissingValueLimit =
         9.99e034f;  // joskus datassa on outoja isoja (ja
                     // vaihtelevia) lukuja esim. vuoriston kohdalla,
-    // jotka pit�� mielest�ni tulkita puuttuviksi (en tied� mit� muutakaan voi tehd�)
+    // jotka pitää mielestäni tulkita puuttuviksi (en tiedä mitä muutakaan voi tehdä)
     if (value != ncMissingValue && value < extraMissingValueLimit)
       return false;
     else

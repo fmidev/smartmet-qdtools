@@ -308,7 +308,7 @@ extern struct ParmTable parm_table_fmi_opn[256];
 
 extern enum Def_NCEP_Table def_ncep_table;
 
-// siirsin t‰m‰n pois headerista linkkaus ongelman takia
+// siirsin t√§m√§n pois headerista linkkaus ongelman takia
 enum Def_NCEP_Table def_ncep_table = DEF_T62_NCEP_TABLE;
 
 /*
@@ -5142,7 +5142,7 @@ int GDS_grid(unsigned char *gds,
   int i, d, ix, iy, pl;
   long int isum;
 
-  theVariableLengthRows.clear();  // tyhjennet‰‰n varmuuden vuoksi
+  theVariableLengthRows.clear();  // tyhjennet√§√§n varmuuden vuoksi
   *theUsedOutputGridRowLength = 0;
 
   *nx = ix = GDS_LatLon_nx(gds);

@@ -28,10 +28,10 @@ namespace
 
 NFmiEnumConverter converter;
 std::map<std::string, int>
-    unknownParIdMap;  // jos sallitaan tuntemattomien parametrien k�ytt�, ne talletetaan t�h�n
+    unknownParIdMap;  // jos sallitaan tuntemattomien parametrien käyttä, ne talletetaan tähän
 int unknownParIdCounter = nctools::unknownParIdCounterBegin;  // jos tuntematon paramtri, aloitetaan
-                                                              // niiden id:t t�st� ja kasvatetaan
-                                                              // aina yhdell� kun tulee uusia
+                                                              // niiden id:t tästä ja kasvatetaan
+                                                              // aina yhdellä kun tulee uusia
 }  // namespace
 
 namespace nctools
@@ -247,7 +247,7 @@ bool parse_options(int argc, char *argv[], Options &options)
   if (!tmpCmdLineGlobalAttributesStr.empty())
   {
     // globaalit attribuutit annetaan muodossa -a DX=1356.3;DY=1265.3, eli eri attribuutit on
-    // erotelty ;-merkeill� ja avain/arvot on eroteltu = -merkeill�
+    // erotelty ;-merkeillä ja avain/arvot on eroteltu = -merkeillä
     std::list<std::string> attributeListParts =
         NFmiStringTools::Split<std::list<std::string>>(tmpCmdLineGlobalAttributesStr, ";");
     for (std::list<std::string>::iterator it = attributeListParts.begin();

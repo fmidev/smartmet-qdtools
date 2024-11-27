@@ -5,8 +5,8 @@
  */
 // ======================================================================
 #ifdef _MSC_VER
-#pragma warning(disable : 4786)  // poistaa n kpl VC++ k‰‰nt‰j‰n varoitusta (liian pitk‰ nimi >255
-                                 // merkki‰ joka johtuu 'puretuista' STL-template nimist‰)
+#pragma warning(disable : 4786)  // poistaa n kpl VC++ k√§√§nt√§j√§n varoitusta (liian pitk√§ nimi >255
+                                 // merkki√§ joka johtuu 'puretuista' STL-template nimist√§)
 #endif
 
 #include "QueryDataManager.h"

@@ -54,7 +54,7 @@ const NFmiTime toLocalTime(const NFmiTime &theUtcTime)
 
 // ----------------------------------------------------------------------
 /*!
- * Palauttaa kellonajan halutulla aikavyöhykkeellä
+ * Palauttaa kellonajan halutulla aikavyÃ¶hykkeellÃ¤
  * Erikoistapaukset:
  *  fin = Europe/elsinki
  *  utc = UTC

@@ -9,7 +9,7 @@
 // ---------------------------------------------------
 //  - GD Symbol Type    : CLD_Class
 //  - GD Method         : UML ( 4.0 )
-//  - GD System Name    : editori virityksi‰ 2000 syksy
+//  - GD System Name    : editori virityksi√§ 2000 syksy
 //  - GD View Type      : Class Diagram
 //  - GD View Name      : datan tarkastaja otus
 // ---------------------------------------------------
@@ -87,7 +87,7 @@ bool NFmiQueryDataChecker::ParamBag(const NFmiString& theFileName)
   if (in)
   {
     fCheckOnlyWantedParams = true;
-    in >> itsParamBag;  // muista ett‰ haluttujen parametrien pit‰‰ olla aktiivisia jo tiedostossa
+    in >> itsParamBag;  // muista ett√§ haluttujen parametrien pit√§√§ olla aktiivisia jo tiedostossa
     in.close();
     return true;
   }
@@ -204,7 +204,7 @@ void NFmiQueryDataChecker::CheckOnlyWantedTimes(bool value)
   if (!fCheckOnlyWantedTimes && itsInfo)
   {
     itsCheckedTimeDescriptor =
-        itsInfo->TimeDescriptor();  // otetaan infon timedesc, joka k‰yd‰‰n l‰pi
+        itsInfo->TimeDescriptor();  // otetaan infon timedesc, joka k√§yd√§√§n l√§pi
   }
 }
 
@@ -237,14 +237,14 @@ bool NFmiQueryDataChecker::DoOutOfLimitsDataCheck(void)
   return GoThroughData(&modifier);
 }
 
-// ei k‰y l‰pi leveleit‰!!!!
+// ei k√§y l√§pi leveleit√§!!!!
 bool NFmiQueryDataChecker::GoThroughData(NFmiDataModifier* theModifier)
 {
   if (itsInfo)
   {
     itsInfo->First();
     for (itsParamBag.Reset();
-         itsParamBag.Next(false);)  // parametrien pit‰‰ olla ulommaisia loopissa!!!!
+         itsParamBag.Next(false);)  // parametrien pit√§√§ olla ulommaisia loopissa!!!!
     {
       if (itsParamBag.Current(false)->IsActive())
       {
@@ -252,7 +252,7 @@ bool NFmiQueryDataChecker::GoThroughData(NFmiDataModifier* theModifier)
         {
           int parId = itsInfo->Param().GetParamIdent();
           int itsParamIdIndex = itsOhjausData->ParamIdIndex(parId);
-          if (itsParamIdIndex >= 0)  // t‰m‰n pit‰‰ onnistua!!!
+          if (itsParamIdIndex >= 0)  // t√§m√§n pit√§√§ onnistua!!!
           {
             theModifier->Clear();
             switch (itsLocationCheckType)
@@ -287,7 +287,7 @@ bool NFmiQueryDataChecker::GoThroughData(NFmiDataModifier* theModifier)
           }
           else
           {
-            // mit‰ ihmett‰, ei sen t‰nne pit‰nyt menn‰ (VIRHETILANNE!!!)
+            // mit√§ ihmett√§, ei sen t√§nne pit√§nyt menn√§ (VIRHETILANNE!!!)
           }
         }
       }
@@ -297,7 +297,7 @@ bool NFmiQueryDataChecker::GoThroughData(NFmiDataModifier* theModifier)
   return false;
 }
 
-// asetetaan varoitus ja error flagit p‰‰lle, jos tapahtunut rajojen yli/alituksia
+// asetetaan varoitus ja error flagit p√§√§lle, jos tapahtunut rajojen yli/alituksia
 void NFmiQueryDataChecker::CheckOutOfLimitsTerms(NFmiParamCheckData& theParamCheckData,
                                                  NFmiDataModifier* theModifier)
 {
@@ -315,7 +315,7 @@ void NFmiQueryDataChecker::CheckOutOfLimitsTerms(NFmiParamCheckData& theParamChe
     if (theParamCheckData.itsParamLowerLimits[1] != kFloatMissing &&
         minValue < theParamCheckData.itsParamLowerLimits[1])
       theParamCheckData.itsCheckedParamOutOfLimitError = true;
-    // HUOM!! fataalirajan tarkastusta ei tehd‰!!!
+    // HUOM!! fataalirajan tarkastusta ei tehd√§!!!
   }
   if (maxValue != kFloatMissing)
   {
@@ -325,18 +325,18 @@ void NFmiQueryDataChecker::CheckOutOfLimitsTerms(NFmiParamCheckData& theParamChe
     if (theParamCheckData.itsParamUpperLimits[1] != kFloatMissing &&
         maxValue > theParamCheckData.itsParamUpperLimits[1])
       theParamCheckData.itsCheckedParamOutOfLimitError = true;
-    // HUOM!! fataalirajan tarkastusta ei tehd‰!!!
+    // HUOM!! fataalirajan tarkastusta ei tehd√§!!!
   }
 }
 
-// HUOM!! t‰t‰ funktiota pit‰‰ kutsua GoThroughData():sta
+// HUOM!! t√§t√§ funktiota pit√§√§ kutsua GoThroughData():sta
 bool NFmiQueryDataChecker::GoThroughLocationDataDataInTime(NFmiDataModifier* theModifier)
 {
   for (itsCheckedLocations.Reset(); itsCheckedLocations.Next();)
   {
     if (itsInfo->IsGrid())
     {
-      // ajan pit‰‰ juosta sisimm‰ss‰ loopissa, ett‰ voidaan tarkistaa 'suoraa' dataa!!!!
+      // ajan pit√§√§ juosta sisimm√§ss√§ loopissa, ett√§ voidaan tarkistaa 'suoraa' dataa!!!!
       for (itsCheckedTimeDescriptor.Reset(); itsCheckedTimeDescriptor.Next();)
       {
         if (itsInfo->Time(itsCheckedTimeDescriptor.Time()))
@@ -348,7 +348,7 @@ bool NFmiQueryDataChecker::GoThroughLocationDataDataInTime(NFmiDataModifier* the
     }
     else if (itsInfo->Location(*itsCheckedLocations.Location()))
     {
-      // ajan pit‰‰ juosta sisimm‰ss‰ loopissa, ett‰ voidaan tarkistaa 'suoraa' dataa!!!!
+      // ajan pit√§√§ juosta sisimm√§ss√§ loopissa, ett√§ voidaan tarkistaa 'suoraa' dataa!!!!
       for (itsCheckedTimeDescriptor.Reset(); itsCheckedTimeDescriptor.Next();)
       {
         if (itsInfo->Time(itsCheckedTimeDescriptor.Time()))
@@ -361,7 +361,7 @@ bool NFmiQueryDataChecker::GoThroughLocationDataDataInTime(NFmiDataModifier* the
   return true;
 }
 
-// HUOM!! t‰t‰ funktiota pit‰‰ kutsua GoThroughData():sta
+// HUOM!! t√§t√§ funktiota pit√§√§ kutsua GoThroughData():sta
 bool NFmiQueryDataChecker::GoThroughRandomLocationsDataInTime(NFmiDataModifier* theModifier)
 {
   int locationIndexSize = itsRandomLocationIndexies.size();
@@ -369,7 +369,7 @@ bool NFmiQueryDataChecker::GoThroughRandomLocationsDataInTime(NFmiDataModifier* 
   {
     if (itsInfo->LocationIndex(itsRandomLocationIndexies[i]))
     {
-      // ajan pit‰‰ juosta sisimm‰ss‰ loopissa, ett‰ voidaan tarkistaa 'suoraa' dataa!!!!
+      // ajan pit√§√§ juosta sisimm√§ss√§ loopissa, ett√§ voidaan tarkistaa 'suoraa' dataa!!!!
       for (itsCheckedTimeDescriptor.Reset(); itsCheckedTimeDescriptor.Next();)
       {
         if (itsInfo->Time(itsCheckedTimeDescriptor.Time()))
@@ -382,12 +382,12 @@ bool NFmiQueryDataChecker::GoThroughRandomLocationsDataInTime(NFmiDataModifier* 
   return true;
 }
 
-// HUOM!! t‰t‰ funktiota pit‰‰ kutsua GoThroughData():sta
+// HUOM!! t√§t√§ funktiota pit√§√§ kutsua GoThroughData():sta
 bool NFmiQueryDataChecker::GoThroughAllLocationsDataInTime(NFmiDataModifier* theModifier)
 {
   for (itsInfo->ResetLocation(); itsInfo->NextLocation();)
   {
-    // ajan pit‰‰ juosta sisimm‰ss‰ loopissa, ett‰ voidaan tarkistaa 'suoraa' dataa!!!!
+    // ajan pit√§√§ juosta sisimm√§ss√§ loopissa, ett√§ voidaan tarkistaa 'suoraa' dataa!!!!
     for (itsCheckedTimeDescriptor.Reset(); itsCheckedTimeDescriptor.Next();)
     {
       if (itsInfo->Time(itsCheckedTimeDescriptor.Time()))
@@ -399,16 +399,16 @@ bool NFmiQueryDataChecker::GoThroughAllLocationsDataInTime(NFmiDataModifier* the
   return true;
 }
 
-// HUOM!!! laita t‰m‰ viimeiseksi niin varoitukset tulevat loppuun.
-// tyhjent‰‰ ja taytt‰‰ paikkaindex listan
-// K‰ytet‰‰n apuna set luokkaa, ett‰ ei tule samoja indeksej‰ vahingossa.
+// HUOM!!! laita t√§m√§ viimeiseksi niin varoitukset tulevat loppuun.
+// tyhjent√§√§ ja taytt√§√§ paikkaindex listan
+// K√§ytet√§√§n apuna set luokkaa, ett√§ ei tule samoja indeksej√§ vahingossa.
 void NFmiQueryDataChecker::MakeRandomLocationIndexies(void)
 {
   if (itsInfo)
   {
     int locationCount = itsInfo->SizeLocations();
     if (itsRandomlyCheckedLocationCount >= locationCount)
-    {  // jos haluttu luku ylitt‰‰ location lukum‰‰r‰n, t‰llˆin k‰yd‰‰n kaikki indeksit vain l‰pi
+    {  // jos haluttu luku ylitt√§√§ location lukum√§√§r√§n, t√§ll√∂in k√§yd√§√§n kaikki indeksit vain l√§pi
       itsRandomLocationIndexies.resize(locationCount);
       for (int i = 0; i < locationCount; i++)
         itsRandomLocationIndexies[i] = i;

@@ -56,7 +56,7 @@ void FmiNcMetaData::MakeMetaInfo(FmiTDimVarInfo &theTimeInfo, NFmiGrid &theGrid)
       if (doSurfaceInfo == false)
       {
         if (itsMultiLevelInfo.itsLevels.GetSize() >
-            0)  // jos leveleit‰ on yksi tai useita, tehd‰‰n niist‰ sitten oikea levelDescriptor
+            0)  // jos leveleit√§ on yksi tai useita, tehd√§√§n niist√§ sitten oikea levelDescriptor
           vplaceDesc = NFmiVPlaceDescriptor(itsMultiLevelInfo.itsLevels);
         else
           return;  // ei ollut oikeasti level tietoa
@@ -112,14 +112,14 @@ static NFmiQueryData *MakeQueryData(NcFile &theNcFile,
                                                                               // kaikki parametrit
                                                                               // surface ja level
                                                                               // paramit, joten
-                                                                              // pit‰‰ tarkistaa,
-                                                                              // lˆytyykˆ t‰st‰
+                                                                              // pit√§√§ tarkistaa,
+                                                                              // l√∂ytyyk√∂ t√§st√§
                                                                               // datasta erikseen
     {
       NcVar *varPtr = theNcFile.get_var(theVarInfos[i].itsIndex);
-      if (varPtr)  // Pit‰isi lˆyty‰!!
+      if (varPtr)  // Pit√§isi l√∂yty√§!!
       {
-        // NetCDF conventioiden mukaan juoksu j‰rjestys on:
+        // NetCDF conventioiden mukaan juoksu j√§rjestys on:
         // aika, level, y-dim, x-dim
         int timeInd = 0;
         for (fInfo.ResetTime(); fInfo.NextTime(); timeInd++)  // juoksutetaan aika dimensiota
@@ -131,7 +131,7 @@ static NFmiQueryData *MakeQueryData(NcFile &theNcFile,
             for (fInfo.ResetLocation(); fInfo.NextLocation();)
             {
               float value = vals->as_float(counter);
-              // jos ei ole fill-value, laitetaan arvo queryDataan, jos oli, j‰tet‰‰n qDatan missing
+              // jos ei ole fill-value, laitetaan arvo queryDataan, jos oli, j√§tet√§√§n qDatan missing
               // arvo voimaan (data luodan alustettuna puuttuvilla arvoilla)
               if (value != theVarInfos[i].itsFillValue)
                 fInfo.FloatValue(value);
@@ -157,9 +157,9 @@ std::vector<NFmiQueryData *> FmiNetCdfQueryData::CreateQueryDatas(const std::str
   std::vector<NFmiQueryData *> qDatas;
   try
   {
-    NcError tmpErrorSetting(NcError::silent_nonfatal);  // pit‰‰ laittaa pois defaultti tilasta,
+    NcError tmpErrorSetting(NcError::silent_nonfatal);  // pit√§√§ laittaa pois defaultti tilasta,
                                                         // koska defaultti vain tekee exit:in ilman
-                                                        // sen kummempaa selittely‰ tietyiss‰ (ei
+                                                        // sen kummempaa selittely√§ tietyiss√§ (ei
                                                         // niin fataaleissa tilanteissa)
     NcFile ncFile(theNcFileName.c_str(), NcFile::ReadOnly);
     if (ncFile.is_valid())
@@ -205,7 +205,7 @@ void FmiNetCdfQueryData::MakeAllMetaInfos(void)
 void FmiNetCdfQueryData::InitKnownParamMap(void)
 {
   itsKnownParameterMap.clear();
-  // t‰ss‰ on listattu tunnettuja parametrien standardi nimi‰ ja niiden vastineet FMI
+  // t√§ss√§ on listattu tunnettuja parametrien standardi nimi√§ ja niiden vastineet FMI
   // parId-maailmassa
   itsKnownParameterMap.insert(std::make_pair("sea_water_temperature", kFmiTemperatureSea));
 }
@@ -248,7 +248,7 @@ void FmiNetCdfQueryData::MakeWantedGrid(void)
   size_t ySize = itsYInfo.itsValues.size();
   if (xSize >= 2 && ySize >= 2)
   {
-    // aluksi t‰m‰ hanskaa vain latlon-areat, ja hilat pakotetaan tasav‰lisiksi
+    // aluksi t√§m√§ hanskaa vain latlon-areat, ja hilat pakotetaan tasav√§lisiksi
     NFmiPoint bottomLeft(itsXInfo.itsValues[0], itsYInfo.itsValues[0]);
     NFmiPoint topRight(itsXInfo.itsValues[xSize - 1], itsYInfo.itsValues[ySize - 1]);
     NFmiArea *area = NFmiAreaTools::CreateLegacyLatLonArea(bottomLeft, topRight);
@@ -279,11 +279,11 @@ static FmiNcTimeOffsetType GetOffsetType(const std::string &theEpochTimeStr)
 
 // Annettu epokki aika stringi on muotoa:
 // "seconds since 1992-10-8 15:15:42.5 -6:00" tai "minutes since 1992-10-8 15:15:42.5 -6:00"
-// Huom! Viimeinen sana (esim. -6:00) eli siirtym‰ aika UTC aikaan voi puuttua, jolloin
+// Huom! Viimeinen sana (esim. -6:00) eli siirtym√§ aika UTC aikaan voi puuttua, jolloin
 // annettu aika on 0-timezonessa (esim. "seconds since 1992-10-8 15:15:42.5").
-// HUOM! timezoned ignoroidaan ja meit‰ kiinnostaa oikeasti vain utc-aika.
+// HUOM! timezoned ignoroidaan ja meit√§ kiinnostaa oikeasti vain utc-aika.
 // Huom! aika voi olla suluissa (esim. "seconds since (1992-10-8 15:15:42.5)")
-// Huom! viel‰ lˆytyi t‰ll‰inen aika muoto "2010-06-04T00:00:00Z", eli T erottimena ja Z lopussa.
+// Huom! viel√§ l√∂ytyi t√§ll√§inen aika muoto "2010-06-04T00:00:00Z", eli T erottimena ja Z lopussa.
 static NFmiMetTime GetEpochTime(const std::string &theEpochTimeStr)
 {
   NFmiMetTime aTime = NFmiMetTime::gMissingTime;
@@ -310,15 +310,15 @@ static NFmiMetTime GetEpochTime(const std::string &theEpochTimeStr)
       if ((word1 == "seconds" || word1 == "minutes") && word2 == "since")
       {
         std::string dateStr = NFmiStringTools::Trim(
-            wordVec[2], '(');  // pit‰‰ trimmata, koska aika voi olla sulkujen sis‰ll‰
+            wordVec[2], '(');  // pit√§√§ trimmata, koska aika voi olla sulkujen sis√§ll√§
         std::vector<short> dateVec = NFmiStringTools::Split<std::vector<short> >(dateStr, "-");
         if (dateVec.size() == 3)
         {
           std::string timeStr = NFmiStringTools::Trim(
-              wordVec[3], ')');  // pit‰‰ trimmata, koska aika voi olla sulkujen sis‰ll‰
-          timeStr = NFmiStringTools::Trim(timeStr, 'Z');  // pit‰‰ trimmata mahdollinen Z pois
-          // pakko ottaa t‰m‰ float:eina, koska sekunnit voidaan antaa desimaalin kera ja sit‰
-          // konversio suoraan short:iksi ei kest‰
+              wordVec[3], ')');  // pit√§√§ trimmata, koska aika voi olla sulkujen sis√§ll√§
+          timeStr = NFmiStringTools::Trim(timeStr, 'Z');  // pit√§√§ trimmata mahdollinen Z pois
+          // pakko ottaa t√§m√§ float:eina, koska sekunnit voidaan antaa desimaalin kera ja sit√§
+          // konversio suoraan short:iksi ei kest√§
           std::vector<float> timeVec = NFmiStringTools::Split<std::vector<float> >(timeStr, ":");
           if (dateVec.size() == 3)
           {
@@ -328,7 +328,7 @@ static NFmiMetTime GetEpochTime(const std::string &theEpochTimeStr)
                                  static_cast<short>(::round(timeVec[0])),
                                  static_cast<short>(::round(timeVec[1])),
                                  static_cast<short>(::round(timeVec[2])));
-            // HUOM! j‰t‰n mahdollisen timezonen huomiotta (wordVec[4] -sis‰ltˆ), koska meit‰
+            // HUOM! j√§t√§n mahdollisen timezonen huomiotta (wordVec[4] -sis√§lt√∂), koska meit√§
             // kiinnostaa vain utc-ajat
             aTime = thisTime;
             return aTime;
@@ -347,7 +347,7 @@ void FmiNetCdfQueryData::CalcTimeList(void)
 void FmiNetCdfQueryData::InitTimeDim(NcVar &theVar, const std::string &theVarName, int theIndex)
 {
   if (itsTInfo.itsTimeList.NumberOfItems() > 0)
-    return;  // joskus aika m‰‰reit‰ voi olla useita (samoja), otetaan vain ensimm‰inen niist‰,
+    return;  // joskus aika m√§√§reit√§ voi olla useita (samoja), otetaan vain ensimm√§inen niist√§,
              // muuten tulee samoja aikoja useita listaan
   if (theVar.num_dims() != 1)
     throw std::runtime_error(
@@ -430,8 +430,8 @@ FmiZDimVarInfo &FmiNetCdfQueryData::GetLevelInfo(FmiNcLevelType theLevelType)
   }
 }
 
-// Jos netCdf tiedosto ei m‰‰rittele erikseen surface -dimensiota,
-// on se p‰‰telt‰v‰ erikseen, ja tietyt alustukset on teht‰v‰ metadataan.
+// Jos netCdf tiedosto ei m√§√§rittele erikseen surface -dimensiota,
+// on se p√§√§telt√§v√§ erikseen, ja tietyt alustukset on teht√§v√§ metadataan.
 void FmiNetCdfQueryData::MakesureSurfaceMetaDataIsInitialized()
 {
   if (itsSurfaceMetaData.itsSurfaceLevelInfo.itsNcLevelType == kFmiNcNoLevelType)
@@ -501,7 +501,7 @@ FmiParameterName FmiNetCdfQueryData::GetParameterName(NcVar &theVar,
     if (it != itsKnownParameterMap.end())
       return (*it).second;
   }
-  // jos ei lˆytynyt mit‰‰n, palautetaan defaultti par-name
+  // jos ei l√∂ytynyt mit√§√§n, palautetaan defaultti par-name
   return theDefaultParName;
 }
 
@@ -518,7 +518,7 @@ static float GetMissingValue(NcVar &theVar)
   return missingValue;
 }
 
-// tarkistaa onko kyseisell‰ muuttujalla halutun niminen dimensio.
+// tarkistaa onko kyseisell√§ muuttujalla halutun niminen dimensio.
 static bool CheckDimName(NcVar &theVar, const std::string &theDimName)
 {
   for (int d = 0; d < theVar.num_dims(); d++)
@@ -530,7 +530,7 @@ static bool CheckDimName(NcVar &theVar, const std::string &theDimName)
   return false;
 }
 
-// Tarkistaa ett‰ muuttujalla on kolme dimensiota, ja ne ovat x, y ja time
+// Tarkistaa ett√§ muuttujalla on kolme dimensiota, ja ne ovat x, y ja time
 bool FmiNetCdfQueryData::IsSurfaceVariable(NcVar &theVar)
 {
   if (theVar.num_dims() == 3)
@@ -553,14 +553,14 @@ void FmiNetCdfQueryData::InitNormalVar(NcVar &theVar, const std::string &theVarN
 {
   static long defaultParamId = 2301;
   if (theVar.num_dims() >= 3)
-  {  // pit‰‰ olla tietty m‰‰r‰ dimensioita, ett‰ muuttuja otetaan ns. normaali muuttujaksi
+  {  // pit√§√§ olla tietty m√§√§r√§ dimensioita, ett√§ muuttuja otetaan ns. normaali muuttujaksi
     FmiVarInfo varInfo;
     varInfo.itsIndex = theIndex;
     varInfo.itsParId = GetParameterName(theVar, static_cast<FmiParameterName>(defaultParamId));
     varInfo.itsFillValue = ::GetMissingValue(theVar);
     if (varInfo.itsParId == defaultParamId)
-      defaultParamId++;  // jos defaultti parId otettiin k‰yttˆˆn, muutetaan sit‰ yhdell‰ isommaksi,
-                         // ettei tule samoja par-ideit‰ samaan paramBAgiin
+      defaultParamId++;  // jos defaultti parId otettiin k√§ytt√∂√∂n, muutetaan sit√§ yhdell√§ isommaksi,
+                         // ettei tule samoja par-ideit√§ samaan paramBAgiin
     varInfo.itsVarName = theVarName;
     if (::CheckDimName(theVar, itsSurfaceMetaData.GetLevelDimName()))
       varInfo.itsNcLevelType = itsSurfaceMetaData.GetLevelType();
@@ -590,7 +590,7 @@ static std::string GetAttributeStringValue(NcVar &theVar, const std::string &the
   return attrValue;
 }
 
-// tarkistaa onko kyseisell‰ muuttujalla halutun niminen attribuutti ja onko se arvo myˆs haluttu.
+// tarkistaa onko kyseisell√§ muuttujalla halutun niminen attribuutti ja onko se arvo my√∂s haluttu.
 static bool CheckAttribute(NcVar &theVar,
                            const std::string &theAttrName,
                            const std::string &theAttrValue,
@@ -624,9 +624,9 @@ static FmiNcLevelType GetLevelTypeByUnits(NcVar &theVar, const std::string &theU
     leveltype = kFmiNcHeight;
   else if (::CheckAttribute(theVar,
                             theUnitStr,
-                            "hybrid"))  // en tied‰ mit‰ k‰ytet‰‰n mallipinta-levelin yksikkˆn‰
+                            "hybrid"))  // en tied√§ mit√§ k√§ytet√§√§n mallipinta-levelin yksikk√∂n√§
     leveltype = kFmiNcHybrid;
-  else if (::CheckAttribute(theVar, theUnitStr, "hectopascals"))  // myˆs mbars, pascals ?!?!?
+  else if (::CheckAttribute(theVar, theUnitStr, "hectopascals"))  // my√∂s mbars, pascals ?!?!?
     leveltype = kFmiNcPressureLevel;
   else if (::CheckAttribute(theVar, theUnitStr, "level"))
     leveltype = kFmiNcSurface;
@@ -773,13 +773,13 @@ void FmiNetCdfQueryData::InitializeStreographicGrid(void)
         "for data.");
 }
 
-// Jos ei lˆytynyt lat-lon asetuksia, pit‰‰ etsi‰, lˆytyykˆ muita projektio m‰‰rityksi‰.
-// Jos ei lˆydy, heitet‰‰n poikkeus eli ei saa kutsua, jos latlon-projektiolle lˆytyi jo
-// m‰‰ritykset!!!
+// Jos ei l√∂ytynyt lat-lon asetuksia, pit√§√§ etsi√§, l√∂ytyyk√∂ muita projektio m√§√§rityksi√§.
+// Jos ei l√∂ydy, heitet√§√§n poikkeus eli ei saa kutsua, jos latlon-projektiolle l√∂ytyi jo
+// m√§√§ritykset!!!
 void FmiNetCdfQueryData::SeekProjectionInfo(NcFile &theNcFile)
 {
   NcVar *varPtr = 0;
-  // K‰yd‰‰n ensin l‰pi vain yksi-ulotteiset muuttujat ja etsit‰‰n tiettyj‰ muutujia ja niiden
+  // K√§yd√§√§n ensin l√§pi vain yksi-ulotteiset muuttujat ja etsit√§√§n tiettyj√§ muutujia ja niiden
   // arvoja.
   for (int n = 0; (varPtr = theNcFile.get_var(n)) != 0; n++)
   {
@@ -826,9 +826,9 @@ void FmiNetCdfQueryData::InitMetaInfo(NcFile &theNcFile)
   if (theNcFile.is_valid())
   {
     NcVar *varPtr = 0;
-    // K‰yd‰‰n ensin l‰pi vain yksi-ulotteisen muuttuja, ett‰ saamme kokoon kaaiken tarvittavan
+    // K√§yd√§√§n ensin l√§pi vain yksi-ulotteisen muuttuja, ett√§ saamme kokoon kaaiken tarvittavan
     // tiedon
-    // moni ulotteisten muuttujien m‰‰ritykseen.
+    // moni ulotteisten muuttujien m√§√§ritykseen.
     for (int n = 0; (varPtr = theNcFile.get_var(n)) != 0; n++)
     {
       if (varPtr->num_dims() == 1)
@@ -848,17 +848,17 @@ void FmiNetCdfQueryData::InitMetaInfo(NcFile &theNcFile)
     MakesureSurfaceMetaDataIsInitialized();
 
     if (itsXInfo.IsEmpty() || itsYInfo.IsEmpty())
-      SeekProjectionInfo(theNcFile);  // jos ei lˆytynyt x- ja y-dimensioille m‰‰rityksi‰, pit‰‰
-                                      // etsi‰ lˆytyyk‰ jotain muuta projektiota
-                                      // huom! jos ei lˆydy, poikkeus lent‰‰.
+      SeekProjectionInfo(theNcFile);  // jos ei l√∂ytynyt x- ja y-dimensioille m√§√§rityksi√§, pit√§√§
+                                      // etsi√§ l√∂ytyyk√§ jotain muuta projektiota
+                                      // huom! jos ei l√∂ydy, poikkeus lent√§√§.
 
-    // Sitten k‰yd‰‰n l‰pi ns. normaalit moniulotteisen parametrit
+    // Sitten k√§yd√§√§n l√§pi ns. normaalit moniulotteisen parametrit
     for (int n = 0; (varPtr = theNcFile.get_var(n)) != 0; n++)
     {
       if (varPtr->num_dims() >= 3)
       {
         if (varPtr->type() != NC_CHAR)
-        {  // ei oteta huomioon char tyyppisi‰ muuttujia (ainakaan viel‰)
+        {  // ei oteta huomioon char tyyppisi√§ muuttujia (ainakaan viel√§)
           std::string varName = varPtr->name();
           InitNormalVar(*varPtr, varName, n);
         }

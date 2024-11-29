@@ -4228,6 +4228,9 @@ void set_totalcloud_octas_from_percentage(Messages &messages)
   }
 }
 
+// Circumvent bufr_set_debug(0) bug with own error handler:
+void noop_debug_handler(const char *message) {}
+
 // ----------------------------------------------------------------------
 /*!
  * \brief Main program without exception handling
@@ -4243,6 +4246,9 @@ int run(int argc, char *argv[])
   if (options.debug)
     bufr_set_debug(1);
 #endif
+
+  // libecbufr bug, this does not work: bufr_set_debug(0);
+  bufr_set_debug_handler(noop_debug_handler);
 
   // Read the parameter conversion table
 

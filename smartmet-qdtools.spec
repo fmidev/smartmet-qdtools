@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 24.11.28
+Version: 24.11.29
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -39,11 +39,11 @@ BuildRequires: netcdf-cxx-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
 BuildRequires: smartmet-library-calculator-devel >= 24.8.7
-BuildRequires: smartmet-library-gis-devel >= 24.8.7
+BuildRequires: smartmet-library-gis-devel >= 24.11.12
 BuildRequires: smartmet-library-imagine-devel >= 24.8.7
-BuildRequires: smartmet-library-macgyver-devel >= 24.8.7
-BuildRequires: smartmet-library-newbase-devel >= 24.8.7
-BuildRequires: smartmet-library-smarttools-devel >= 24.7.12
+BuildRequires: smartmet-library-macgyver-devel >= 24.11.27
+BuildRequires: smartmet-library-newbase-devel >= 24.11.6
+BuildRequires: smartmet-library-smarttools-devel >= 24.11.1
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
 Requires: %{smartmet_boost}-filesystem
@@ -67,16 +67,16 @@ Requires: libpng
 Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
 Requires: smartmet-library-calculator >= 24.8.7
-Requires: smartmet-library-gis >= 24.8.7
+Requires: smartmet-library-gis >= 24.11.12
 Requires: smartmet-library-imagine >= 24.8.7
-Requires: smartmet-library-macgyver >= 24.8.7
-Requires: smartmet-library-newbase >= 24.8.7
-Requires: smartmet-library-smarttools >= 24.7.12
+Requires: smartmet-library-macgyver >= 24.11.27
+Requires: smartmet-library-newbase >= 24.11.6
+Requires: smartmet-library-smarttools >= 24.11.1
 Requires: smartmet-timezones >= 24.5.27
 Requires: zlib
-#TestRequires: smartmet-library-macgyver-devel >= 24.8.7
+#TestRequires: smartmet-library-macgyver-devel >= 24.11.27
 #TestRequires: gcc-c++
-#TestRequires: smartmet-library-newbase-devel >= 24.8.7
+#TestRequires: smartmet-library-newbase-devel >= 24.11.6
 #TestRequires: smartmet-qdtools-test-data
 #TestRequires: libbufr
 
@@ -208,6 +208,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Fri Nov 29 2024 Mika Heiskanen <mika.heiskanen@fmi.fi> - 24.11.29-1.fmi
+- Silence bufrtoqd debug prints
+
 * Thu Nov 28 2024 Andris Pavēnis <andris.pavenis@fmi.fi> 24.11.28-1.fmi
 - Repackage dues to smartmet-library-macgyver changes (and some small updates)
 

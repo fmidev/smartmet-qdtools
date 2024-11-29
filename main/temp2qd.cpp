@@ -108,7 +108,8 @@ static NFmiQueryInfo MakeCombinedInnerInfo(vector<NFmiQueryData *> &theDataList,
   if (theDataList.size() == 0)
     throw runtime_error("Error in MakeCombinedInnerInfo: no query datas in list.");
 
-  if (theDataList.size() == 1) return *(theDataList[0]->Info());
+  if (theDataList.size() == 1)
+    return *(theDataList[0]->Info());
 
   set<NFmiMetTime> allTimes;
   set<NFmiStation> allStations;
@@ -214,7 +215,8 @@ void Domain(int argc, const char *argv[])
   }
 
   bool roundTimesToNearestSynopticTimes = false;
-  if (cmdline.isOption('t')) roundTimesToNearestSynopticTimes = true;
+  if (cmdline.isOption('t'))
+    roundTimesToNearestSynopticTimes = true;
 
   //	1. Lue n kpl filefiltereitä listaan
   vector<string> fileFilterList;
@@ -261,7 +263,8 @@ void Domain(int argc, const char *argv[])
       }
     }
   }
-  if (foundAnyFiles == false) throw runtime_error("Error: Didn't find any files to read.");
+  if (foundAnyFiles == false)
+    throw runtime_error("Error: Didn't find any files to read.");
   if (couldDecodeSoundings == false)
     throw runtime_error("Error: Couldn't decode any soundings from any files.");
   //	6. yhdistä lopuksi querydata yhdeksi kokonaisuudeksi

@@ -122,7 +122,8 @@ bool parse_command_line(int argc, const char* argv[])
 {
   NFmiCmdLine cmdline(argc, argv, "hvst!T!m!O");
 
-  if (cmdline.Status().IsError()) throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
+  if (cmdline.Status().IsError())
+    throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
 
   // help-option must be checked first
 
@@ -165,7 +166,8 @@ bool parse_command_line(int argc, const char* argv[])
     options.memorymapping = true;
   }
 
-  if (options.simultaneoustimes < 1) throw runtime_error("Option t/T argument must be at least 1");
+  if (options.simultaneoustimes < 1)
+    throw runtime_error("Option t/T argument must be at least 1");
 
   return true;
 }
@@ -195,7 +197,8 @@ NFmiTimeDescriptor make_timedescriptor(const NFmiFastQueryInfo theQ)
 
 float calc_missing(NFmiFastQueryInfo& info)
 {
-  if (options.missinglimit >= 100) return -1;
+  if (options.missinglimit >= 100)
+    return -1;
 
   int total = 0;
   int missing = 0;
@@ -209,7 +212,8 @@ float calc_missing(NFmiFastQueryInfo& info)
         for (info.ResetTime(); info.NextTime();)
         {
           float value = info.FloatValue();
-          if (value == kFloatMissing) ++missing;
+          if (value == kFloatMissing)
+            ++missing;
           ++total;
         }
       }
@@ -270,7 +274,8 @@ void extract_time(NFmiFastQueryInfo& theQ)
   unique_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
   NFmiFastQueryInfo dstinfo(data.get());
 
-  if (data.get() == 0) throw runtime_error("Could not allocate memory for result data");
+  if (data.get() == 0)
+    throw runtime_error("Could not allocate memory for result data");
 
   // copy the data for time selected time
 
@@ -304,12 +309,14 @@ void extract_time(NFmiFastQueryInfo& theQ)
   {
     // write the data out
 
-    if (options.verbose) cout << "Writing '" << outname << " (missing " << misses << "%)" << endl;
+    if (options.verbose)
+      cout << "Writing '" << outname << " (missing " << misses << "%)" << endl;
 
     // Use dotfile to prevent for example roadmodel crashes
 
     data->Write(tmpname);
-    if (std::filesystem::exists(outname)) std::filesystem::remove(outname);
+    if (std::filesystem::exists(outname))
+      std::filesystem::remove(outname);
     std::filesystem::rename(tmpname, outname);
   }
 }
@@ -400,7 +407,8 @@ void extract_times(NFmiFastQueryInfo& theQ, unsigned long index1, unsigned long 
       if (options.verbose)
       {
         cout << "Skipping " << outname << " since missing percentage is " << misses << endl;
-        if (options.memorymapping) std::filesystem::remove(tmpname);
+        if (options.memorymapping)
+          std::filesystem::remove(tmpname);
       }
     }
     else
@@ -417,9 +425,11 @@ void extract_times(NFmiFastQueryInfo& theQ, unsigned long index1, unsigned long 
 
       // Use dotfile to prevent for example roadmodel crashes
 
-      if (!options.memorymapping) datas[i]->Write(tmpname);
+      if (!options.memorymapping)
+        datas[i]->Write(tmpname);
 
-      if (std::filesystem::exists(outname)) std::filesystem::remove(outname);
+      if (std::filesystem::exists(outname))
+        std::filesystem::remove(outname);
       std::filesystem::rename(tmpname, outname);
     }
 
@@ -436,7 +446,8 @@ void extract_times(NFmiFastQueryInfo& theQ, unsigned long index1, unsigned long 
 
 int run(int argc, const char* argv[])
 {
-  if (!parse_command_line(argc, argv)) return 0;
+  if (!parse_command_line(argc, argv))
+    return 0;
 
   // Read the data
 

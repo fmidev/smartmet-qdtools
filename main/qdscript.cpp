@@ -15,7 +15,7 @@ NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo &qi,
                                         const std::vector<NFmiDataIdent> &addedParameters);
 std::vector<NFmiDataIdent> GetAddedParameters(NFmiCmdLine &cmdline, NFmiQueryData *baseQueryData);
 std::unique_ptr<NFmiQueryData> CreateNewBaseData(NFmiQueryData &originalData,
-                                            const std::vector<NFmiDataIdent> &addedParameters);
+                                                 const std::vector<NFmiDataIdent> &addedParameters);
 
 using namespace std;  // tätä ei saa sitten laittaa headeriin, eikä ennen includeja!!!!
 
@@ -67,13 +67,16 @@ void Run(int argc, const char *argv[])
 #else
   string dictionaryFile("/usr/share/smartmet/dictionaries/en.conf");
 #endif
-  if (cmdline.isOption('d')) dictionaryFile = cmdline.OptionValue('d');
+  if (cmdline.isOption('d'))
+    dictionaryFile = cmdline.OptionValue('d');
 
   bool makeStaticIfOneTimeStepData = false;
-  if (cmdline.isOption('s')) makeStaticIfOneTimeStepData = true;
+  if (cmdline.isOption('s'))
+    makeStaticIfOneTimeStepData = true;
 
   bool goThroughAllLevels = true;
-  if (cmdline.isOption('l')) goThroughAllLevels = false;
+  if (cmdline.isOption('l'))
+    goThroughAllLevels = false;
 
   if (NFmiSettings::Read(dictionaryFile) == false)
     cerr << "Warning: dictionary string was not found, continuing..." << endl;
@@ -85,15 +88,18 @@ void Run(int argc, const char *argv[])
   }
 
   string infile = "-";
-  if (cmdline.isOption('i')) infile = cmdline.OptionValue('i');
+  if (cmdline.isOption('i'))
+    infile = cmdline.OptionValue('i');
   string outfile;
-  if (cmdline.isOption('o')) outfile = cmdline.OptionValue('o');
+  if (cmdline.isOption('o'))
+    outfile = cmdline.OptionValue('o');
   // querydata pitää lukea kokonaisuudessaan muistiin (= ei memory-mapped),
   // että dataa voi muokata smarttools skriptillä, siksi 2. parametri false.
   std::unique_ptr<NFmiQueryData> querydataPtr(new NFmiQueryData(infile, false));
   if (!querydataPtr)
   {
-    throw runtime_error(string("Error: working queryData file could not be open correctly: ") + infile);
+    throw runtime_error(string("Error: working queryData file could not be open correctly: ") +
+                        infile);
   }
 
   auto possibleAddedParameters = GetAddedParameters(cmdline, querydataPtr.get());
@@ -149,7 +155,8 @@ bool ReadScriptFile(const std::string &theFileName, std::string *theScript)
       {
         if (!rowbuffer.empty())
         {
-          if (rowbuffer[rowbuffer.size() - 1] == '\r') rowbuffer.resize(rowbuffer.size() - 1);
+          if (rowbuffer[rowbuffer.size() - 1] == '\r')
+            rowbuffer.resize(rowbuffer.size() - 1);
         }
         bigstring += rowbuffer + "\n";
       }
@@ -179,7 +186,8 @@ void Usage(const std::string &theExecutableName)
        << "\t-i infile\tinput querydata filename, default is to read standard input" << endl
        << "\t-o outfile\toutput querydata filename, default is to write standard output" << endl
        << "\t-a p1,p2,...\tlist of parameters to add to the data" << endl
-       << "\t-A id1,name1,id2,name2,...\tlist of parameter id and name pairs to add to the data" << endl
+       << "\t-A id1,name1,id2,name2,...\tlist of parameter id and name pairs to add to the data"
+       << endl
        << "\t-d dictionary-file\tTranslations for messages." << endl
        << "\t-s \tUse all one-time-step datas as stationary (default = false)." << endl
        << "\t-l \tDon't go through all levels separately, smarttool-skript is" << endl
@@ -203,7 +211,8 @@ FmiParameterName parse_param(const string &theName)
 
   static NFmiEnumConverter converter;
   FmiParameterName paramnum = FmiParameterName(converter.ToEnum(theName));
-  if (paramnum != kFmiBadParameter) return paramnum;
+  if (paramnum != kFmiBadParameter)
+    return paramnum;
 
   // Try numerical value
 

@@ -37,7 +37,8 @@ bool goodcolumn(NFmiFastQueryInfo& theQ)
 {
   for (theQ.ResetLocation(); theQ.NextLocation();)
     for (theQ.ResetTime(); theQ.NextTime();)
-      if (theQ.FloatValue() != kFloatMissing) return true;
+      if (theQ.FloatValue() != kFloatMissing)
+        return true;
   return false;
 }
 
@@ -156,9 +157,9 @@ int domain(int argc, const char* argv[])
             {
               if (coordOutput)
               {
-                auto const &p =  q->Location()->GetLocation();
-                cout << q->Location()->GetIdent() << ',' << setprecision(5)
-                     << p.Y() << "," << p.X() << setprecision(prec) << "," << timestr.CharPtr();
+                auto const& p = q->Location()->GetLocation();
+                cout << q->Location()->GetIdent() << ',' << setprecision(5) << p.Y() << "," << p.X()
+                     << setprecision(prec) << "," << timestr.CharPtr();
               }
               else
                 cout << q->Location()->GetIdent() << ',' << timestr.CharPtr();
@@ -172,7 +173,8 @@ int domain(int argc, const char* argv[])
           }
           ++column;
         }
-      if (printedcolumns > 0) cout << endl;
+      if (printedcolumns > 0)
+        cout << endl;
     }
   }
 

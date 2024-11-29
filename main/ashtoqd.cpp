@@ -26,11 +26,11 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
-#include <macgyver/DateTime.h>
 #include <boost/filesystem/operations.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
+#include <macgyver/DateTime.h>
 #include <macgyver/StringConversion.h>
 #include <macgyver/TimeFormatter.h>
 #include <macgyver/TimeParser.h>
@@ -82,14 +82,14 @@ struct Options
 {
   Options();
 
-  bool verbose;                         // -v --verbose
-  bool boundaries;                      // -b --boundary
+  bool verbose;              // -v --verbose
+  bool boundaries;           // -b --boundary
   Fmi::DateTime origintime;  // -t --time
-  std::string projection;               // -P --projection
-  std::string indir;                    // -i --indir
-  std::string outfile;                  // -o --outfile
-  std::string producername;             // --producername
-  long producernumber;                  // --producernumber
+  std::string projection;    // -P --projection
+  std::string indir;         // -i --indir
+  std::string outfile;       // -o --outfile
+  std::string producername;  // --producername
+  long producernumber;       // --producernumber
 };
 
 Options options;
@@ -176,9 +176,11 @@ bool parse_options(int argc, char* argv[], Options& options)
     return false;
   }
 
-  if (opt.count("indir") == 0) throw std::runtime_error("Expecting input directory as parameter 1");
+  if (opt.count("indir") == 0)
+    throw std::runtime_error("Expecting input directory as parameter 1");
 
-  if (opt.count("outfile") == 0) throw std::runtime_error("Expecting output file as parameter 2");
+  if (opt.count("outfile") == 0)
+    throw std::runtime_error("Expecting output file as parameter 2");
 
   if (!fs::exists(options.indir))
     throw std::runtime_error("Input directory '" + options.indir + "' does not exist");
@@ -221,7 +223,8 @@ std::list<fs::path> find_ash_files(const char* re)
 
   fs::path p(options.indir);
 
-  if (!fs::is_directory(p)) throw std::runtime_error("Not a directory: '" + options.indir + "'");
+  if (!fs::is_directory(p))
+    throw std::runtime_error("Not a directory: '" + options.indir + "'");
 
   std::list<fs::path> files;
   copy(fs::directory_iterator(p), fs::directory_iterator(), back_inserter(files));
@@ -232,7 +235,8 @@ std::list<fs::path> find_ash_files(const char* re)
   std::list<fs::path> ashfiles;
   for (const fs::path& file : files)
   {
-    if (boost::regex_match(file.filename().string(), expression)) ashfiles.push_back(file);
+    if (boost::regex_match(file.filename().string(), expression))
+      ashfiles.push_back(file);
   }
 
   return ashfiles;
@@ -245,7 +249,7 @@ std::list<fs::path> find_ash_files(const char* re)
 // ----------------------------------------------------------------------
 
 std::list<Fmi::DateTime> find_model_run_times(const std::list<fs::path>& files,
-                                                         int origintime_position)
+                                              int origintime_position)
 {
   std::set<std::string> stamps;
   for (const fs::path& file : files)
@@ -494,9 +498,11 @@ std::pair<double, double> extract_coordinate(const std::string& line)
   double lon = convert_coordinate(xstring);
   double lat = convert_coordinate(ystring);
 
-  if (line[0] == 'S') lat = -lat;
+  if (line[0] == 'S')
+    lat = -lat;
 
-  if (line[comma_position + 1] == 'W') lon = -lon;
+  if (line[comma_position + 1] == 'W')
+    lon = -lon;
 
   return std::make_pair(lon, lat);
 }
@@ -544,7 +550,8 @@ NFmiSvgPath read_ash_concentration_polygon(const fs::path& file)
       }
       else
       {
-        if (moveto) firstpoint = line;
+        if (moveto)
+          firstpoint = line;
 
         std::pair<double, double> p = extract_coordinate(line);
 
@@ -625,7 +632,8 @@ std::map<std::string, NFmiSvgPath> read_ash_boundary_polygons(const fs::path& fi
       }
       else
       {
-        if (moveto) firstpoint = line;
+        if (moveto)
+          firstpoint = line;
 
         std::pair<double, double> p = extract_coordinate(line);
 
@@ -657,7 +665,8 @@ std::map<std::string, NFmiSvgPath> read_ash_boundary_polygons(const fs::path& fi
   }
 
   // Flush out the last polygon too
-  if (!path.empty()) paths.insert(std::make_pair(flightlevel, path));
+  if (!path.empty())
+    paths.insert(std::make_pair(flightlevel, path));
 
   return paths;
 }
@@ -734,14 +743,16 @@ void copy_ash_concentration_file(NFmiFastQueryInfo& info, const fs::path& file)
 #else
   // Fast way
   for (info.ResetLocation(); info.NextLocation();)
-    if (info.FloatValue() == kFloatMissing) info.FloatValue(0);
+    if (info.FloatValue() == kFloatMissing)
+      info.FloatValue(0);
 
   NFmiIndexMask mask = NFmiIndexMaskTools::MaskInside(*info.Grid(), path);
 
   for (NFmiIndexMask::const_iterator it = mask.begin(); it != mask.end(); ++it)
   {
     info.LocationIndex(*it);
-    if (concentration > info.FloatValue()) info.FloatValue(concentration);
+    if (concentration > info.FloatValue())
+      info.FloatValue(concentration);
   }
 
 #endif
@@ -788,7 +799,8 @@ void copy_ash_boundary_file(NFmiFastQueryInfo& info, const fs::path& file)
 
     // Quick way to set values
     for (info.ResetLocation(); info.NextLocation();)
-      if (info.FloatValue() == kFloatMissing) info.FloatValue(0);
+      if (info.FloatValue() == kFloatMissing)
+        info.FloatValue(0);
 
     NFmiIndexMask mask = NFmiIndexMaskTools::MaskInside(*info.Grid(), path);
 
@@ -808,7 +820,8 @@ void copy_ash_boundary_file(NFmiFastQueryInfo& info, const fs::path& file)
 
 int run(int argc, char* argv[])
 {
-  if (!parse_options(argc, argv, options)) return 0;
+  if (!parse_options(argc, argv, options))
+    return 0;
 
   if (options.verbose)
     std::cout << "Scanning directory '" << options.indir << "' for ash advisories" << std::endl;
@@ -825,15 +838,15 @@ int run(int argc, char* argv[])
 
   // Extract model run times
 
-  std::list<Fmi::DateTime> times =
-      find_model_run_times(files, origintime_position_in_filename);
+  std::list<Fmi::DateTime> times = find_model_run_times(files, origintime_position_in_filename);
   if (times.empty())
     throw std::runtime_error("Did not find any model run times from the file names");
 
   // Pick one or the one given on the command line
 
   Fmi::DateTime tmodel = select_model_run_time(times);
-  if (options.verbose) std::cout << "Selected model run time: " << tmodel << std::endl;
+  if (options.verbose)
+    std::cout << "Selected model run time: " << tmodel << std::endl;
 
   // And filter out other files
 
@@ -859,7 +872,8 @@ int run(int argc, char* argv[])
 
   NFmiFastQueryInfo qi(pdesc, tdesc, hdesc, vdesc);
   std::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(qi));
-  if (data.get() == 0) throw std::runtime_error("Could not allocate memory for result data");
+  if (data.get() == 0)
+    throw std::runtime_error("Could not allocate memory for result data");
 
   NFmiFastQueryInfo info(data.get());
 

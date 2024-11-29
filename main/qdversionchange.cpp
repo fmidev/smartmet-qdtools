@@ -164,19 +164,26 @@ void run(int argc, const char *argv[])
     return;
   }
 
-  if (cmdline.isOption('t')) doTotalWind = GetIntegerOptionValue(cmdline, 't') != 0;
-  if (cmdline.isOption('w')) doWeatherAndCloudiness = GetIntegerOptionValue(cmdline, 'w') != 0;
+  if (cmdline.isOption('t'))
+    doTotalWind = GetIntegerOptionValue(cmdline, 't') != 0;
+  if (cmdline.isOption('w'))
+    doWeatherAndCloudiness = GetIntegerOptionValue(cmdline, 'w') != 0;
   if (cmdline.isOption('g'))
     windGustParId = static_cast<FmiParameterName>(GetIntegerOptionValue(cmdline, 'g'));
-  if (cmdline.isOption('a')) allowLessParamsWhenCreatingWeather = true;
-  if (cmdline.isOption('i')) inputfile = cmdline.OptionValue('i');
+  if (cmdline.isOption('a'))
+    allowLessParamsWhenCreatingWeather = true;
+  if (cmdline.isOption('i'))
+    inputfile = cmdline.OptionValue('i');
   if (cmdline.isOption('m'))
     maxUsedThreadCount = static_cast<FmiParameterName>(GetIntegerOptionValue(cmdline, 'm'));
-  if (cmdline.isOption('b')) buildTimeBag = true;
+  if (cmdline.isOption('b'))
+    buildTimeBag = true;
 
   bool doAccuratePrecip = false;
-  if (cmdline.isOption('p')) doAccuratePrecip = true;
-  if (cmdline.isOption('N')) convertNfromOctasToProcent = true;
+  if (cmdline.isOption('p'))
+    doAccuratePrecip = true;
+  if (cmdline.isOption('N'))
+    convertNfromOctasToProcent = true;
 
   // -f optiolla voidaan antaa lista parId:tä, joita käytetään Weather-parametrin
   // precipForm -aliparametrin täyttämisessä.
@@ -210,7 +217,8 @@ void run(int argc, const char *argv[])
                                            maxUsedThreadCount,
                                            doAccuratePrecip,
                                            buildTimeBag));
-  if (convertNfromOctasToProcent) ::ConvertNfromOctasToProcent(uusiData, sourceInfo);
+  if (convertNfromOctasToProcent)
+    ::ConvertNfromOctasToProcent(uusiData, sourceInfo);
   uusiData->Write();
 }
 
@@ -255,7 +263,8 @@ void Usage(void)
 int GetIntegerOptionValue(const NFmiCmdLine &theCmdline, char theOption)
 {
   NFmiValueString valStr(theCmdline.OptionValue(theOption));
-  if (valStr.IsInt()) return static_cast<int>(valStr);
+  if (valStr.IsInt())
+    return static_cast<int>(valStr);
   throw runtime_error(string("Error: '") + theOption +
                       "' option value must be integer, exiting...");
 }

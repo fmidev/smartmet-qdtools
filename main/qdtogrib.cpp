@@ -3,7 +3,6 @@
 #include "GribTools.h"
 #include <boost/filesystem/operations.hpp>
 #include <boost/lexical_cast.hpp>
-#include <optional>
 #include <boost/program_options.hpp>
 #include <gis/ProjInfo.h>
 #include <macgyver/StringConversion.h>
@@ -18,6 +17,7 @@
 #include <cstdlib>
 #include <grib_api.h>
 #include <map>
+#include <optional>
 #include <string>
 
 #ifdef UNIX

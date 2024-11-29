@@ -139,7 +139,7 @@ struct ParmTable
 #define GDS_fEgrid(gds) (gds[5] == 202)    /* filled E grid */
 #define GDS_ss2dEgrid(gds) (gds[5] == 203) /* semi-staggered E grid 2 d*/
 
-#define GDS_has_dy(mode) ((mode)&128)
+#define GDS_has_dy(mode) ((mode) & 128)
 #define GDS_LatLon_nx(gds) ((int)((gds[6] << 8) + gds[7]))
 #define GDS_LatLon_ny(gds) ((int)((gds[8] << 8) + gds[9]))
 #define GDS_LatLon_La1(gds) INT3(gds[10], gds[11], gds[12])

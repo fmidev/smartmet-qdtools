@@ -218,8 +218,10 @@ struct LevelLessThan
 {
   bool operator()(const NFmiLevel &l1, const NFmiLevel &l2) const
   {
-    if (l1.LevelType() < l2.LevelType()) return true;
-    if (l1.LevelValue() < l2.LevelValue()) return true;
+    if (l1.LevelType() < l2.LevelType())
+      return true;
+    if (l1.LevelValue() < l2.LevelValue())
+      return true;
     return false;
   }
 };
@@ -230,14 +232,16 @@ static NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
                                            NFmiLevel *theForcedLevel,
                                            NFmiProducer *theWantedProducer)
 {
-  if (dataFileNames.empty()) throw std::runtime_error("Attempting to combine zero querydatas");
+  if (dataFileNames.empty())
+    throw std::runtime_error("Attempting to combine zero querydatas");
 
   set<NFmiMetTime> allTimes;
   set<NFmiParam> allParams;  // huom! parametrin identti on ainoa mikä ratkaisee NFmiParm:in
                              // ==-operaattorissa, joten tämä toimii vaikka muut arvot esim. nimi
                              // olisivat mitä
   set<NFmiLevel, LevelLessThan> allLevels;
-  if (theForcedLevel) allLevels.insert(*theForcedLevel);
+  if (theForcedLevel)
+    allLevels.insert(*theForcedLevel);
   // otetaan 1. datasta tuottaja ellei ole annettu pakotettua tuottajaa
 
   NFmiQueryData qd(dataFileNames[0]);
@@ -414,7 +418,8 @@ int Run(int argc, const char *argv[])
   std::string outfile = "-";
   bool mmapped = false;
 
-  if (cmdline.isOption('o')) outfile = cmdline.OptionValue('o');
+  if (cmdline.isOption('o'))
+    outfile = cmdline.OptionValue('o');
 
   if (cmdline.isOption('O'))
   {
@@ -457,7 +462,8 @@ int Run(int argc, const char *argv[])
   }
 
   MyGrid usedGrid;
-  if (!use_point_data) ::ReadGridData(dataFileNames, usedGrid);
+  if (!use_point_data)
+    ::ReadGridData(dataFileNames, usedGrid);
 
   NFmiQueryInfo innerInfo =
       ::MakeCombinedInnerInfo(dataFileNames, use_point_data, usedGrid, forcedLevel, wantedProducer);
@@ -484,7 +490,8 @@ int Run(int argc, const char *argv[])
   return 0;
 }
 
-int main(int argc, const char *argv[]) try
+int main(int argc, const char *argv[])
+try
 {
   return Run(argc, argv);
 }

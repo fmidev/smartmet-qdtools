@@ -27,7 +27,7 @@
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
 #include <newbase/NFmiWindFix.h>
-//#include "NFmiMilliSecondTimer.h"
+// #include "NFmiMilliSecondTimer.h"
 
 using namespace std;  // tätä ei saa sitten laittaa headeriin, eikä ennen includeja!!!!
 
@@ -61,9 +61,11 @@ int run(int argc, const char* argv[])
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
   }
 
-  if (cmdline.isOption('i')) inputfile = cmdline.OptionValue('i');
+  if (cmdline.isOption('i'))
+    inputfile = cmdline.OptionValue('i');
 
-  if (cmdline.isOption('o')) outputfile = cmdline.OptionValue('o');
+  if (cmdline.isOption('o'))
+    outputfile = cmdline.OptionValue('o');
 
   int numpar = cmdline.NumberofParameters();
 
@@ -79,8 +81,10 @@ int run(int argc, const char* argv[])
 
   int timeResolutionInMinutes = Fmi::stoi(cmdline.Parameter(1));
 
-  if (numpar >= 2) startTimeResolutionInMinutes = Fmi::stoi(cmdline.Parameter(2));
-  if (numpar >= 3) maxSearchRangeInMinutes = Fmi::stoi(cmdline.Parameter(3));
+  if (numpar >= 2)
+    startTimeResolutionInMinutes = Fmi::stoi(cmdline.Parameter(2));
+  if (numpar >= 3)
+    maxSearchRangeInMinutes = Fmi::stoi(cmdline.Parameter(3));
   if (numpar >= 4)
   {
     int interp = Fmi::stoi(cmdline.Parameter(4));
@@ -99,8 +103,8 @@ int run(int argc, const char* argv[])
                                                                generalInterpolationMethod);
 
   // Temporary fix until newbase interpolation has been corrected
-  NFmiWindFix::FixWinds(*newData); 
-  
+  NFmiWindFix::FixWinds(*newData);
+
   if (outputfile == "-")
     newData->Write();
   else

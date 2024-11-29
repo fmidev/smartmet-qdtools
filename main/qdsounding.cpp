@@ -145,7 +145,8 @@ bool parse_command_line(int argc, const char *argv[])
 {
   NFmiCmdLine cmdline(argc, argv, "hw!p!P!t!c!zx!y!");
 
-  if (cmdline.Status().IsError()) throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
+  if (cmdline.Status().IsError())
+    throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
 
   // help-option must be checked first
 
@@ -181,7 +182,8 @@ bool parse_command_line(int argc, const char *argv[])
     options.timezone = cmdline.OptionValue('t');
   }
 
-  if (cmdline.isOption('p')) options.locations = NFmiStringTools::Split(cmdline.OptionValue('p'));
+  if (cmdline.isOption('p'))
+    options.locations = NFmiStringTools::Split(cmdline.OptionValue('p'));
 
   if (cmdline.isOption('x') && cmdline.isOption('y'))
   {
@@ -196,9 +198,11 @@ bool parse_command_line(int argc, const char *argv[])
     options.stations = NFmiStringTools::Split<vector<int> >(cmdline.OptionValue('w'));
   }
 
-  if (cmdline.isOption('c')) options.coordfile = cmdline.OptionValue('c');
+  if (cmdline.isOption('c'))
+    options.coordfile = cmdline.OptionValue('c');
 
-  if (cmdline.isOption('z')) options.printlevelvalue = true;
+  if (cmdline.isOption('z'))
+    options.printlevelvalue = true;
 
   if (!options.locations.empty() && !options.stations.empty())
     throw runtime_error("Options -p and -w are not allowed simultaneously");
@@ -281,7 +285,8 @@ const vector<NFmiPoint> find_places(const vector<string> & /* theNames */)
 
 void print_locations(NFmiFastQueryInfo &theQ)
 {
-  if (!theQ.IsGrid()) throw runtime_error("Cannot use option -p for point data");
+  if (!theQ.IsGrid())
+    throw runtime_error("Cannot use option -p for point data");
 
   const vector<NFmiPoint> coords = find_places(options.locations);
 
@@ -294,7 +299,8 @@ void print_locations(NFmiFastQueryInfo &theQ)
         out << options.locations[i] << ' ' << format_date(theQ.ValidTime()) << ' '
             << theQ.LevelIndex();
 
-        if (options.printlevelvalue) out << ' ' << theQ.Level()->LevelValue();
+        if (options.printlevelvalue)
+          out << ' ' << theQ.Level()->LevelValue();
 
         bool foundvalid = false;
 
@@ -315,7 +321,8 @@ void print_locations(NFmiFastQueryInfo &theQ)
             foundvalid = true;
           }
         }
-        if (foundvalid) cout << out.str() << endl;
+        if (foundvalid)
+          cout << out.str() << endl;
       }
   }
 }
@@ -328,7 +335,8 @@ void print_locations(NFmiFastQueryInfo &theQ)
 
 void print_stations(NFmiFastQueryInfo &theQ)
 {
-  if (theQ.IsGrid()) throw runtime_error("Cannot use option -w for grid data");
+  if (theQ.IsGrid())
+    throw runtime_error("Cannot use option -w for grid data");
 
   for (vector<int>::const_iterator wt = options.stations.begin(); wt != options.stations.end();
        ++wt)
@@ -344,7 +352,8 @@ void print_stations(NFmiFastQueryInfo &theQ)
         out << theQ.Location()->GetIdent() << ' ' << format_date(theQ.ValidTime()) << ' '
             << theQ.LevelIndex();
 
-        if (options.printlevelvalue) out << ' ' << theQ.Level()->LevelValue();
+        if (options.printlevelvalue)
+          out << ' ' << theQ.Level()->LevelValue();
 
         bool foundvalid = false;
 
@@ -365,7 +374,8 @@ void print_stations(NFmiFastQueryInfo &theQ)
             foundvalid = true;
           }
         }
-        if (foundvalid) cout << out.str() << endl;
+        if (foundvalid)
+          cout << out.str() << endl;
       }
   }
 }
@@ -378,7 +388,8 @@ void print_stations(NFmiFastQueryInfo &theQ)
 
 void print_all_stations(NFmiFastQueryInfo &theQ)
 {
-  if (theQ.IsGrid()) throw runtime_error("Must use option -p for grid data");
+  if (theQ.IsGrid())
+    throw runtime_error("Must use option -p for grid data");
 
   for (theQ.ResetLocation(); theQ.NextLocation();)
     for (theQ.ResetTime(); theQ.NextTime();)
@@ -388,7 +399,8 @@ void print_all_stations(NFmiFastQueryInfo &theQ)
         out << theQ.Location()->GetIdent() << ' ' << format_date(theQ.ValidTime()) << ' '
             << theQ.LevelIndex();
 
-        if (options.printlevelvalue) out << ' ' << theQ.Level()->LevelValue();
+        if (options.printlevelvalue)
+          out << ' ' << theQ.Level()->LevelValue();
 
         bool foundvalid = false;
 
@@ -409,7 +421,8 @@ void print_all_stations(NFmiFastQueryInfo &theQ)
             foundvalid = true;
           }
         }
-        if (foundvalid) cout << out.str() << endl;
+        if (foundvalid)
+          cout << out.str() << endl;
       }
 }
 
@@ -437,7 +450,8 @@ void set_timezone(const string &theZone)
 int domain(int argc, const char *argv[])
 {
   // Parse the command line
-  if (!parse_command_line(argc, argv)) return 0;
+  if (!parse_command_line(argc, argv))
+    return 0;
 
   // Read the querydata
 

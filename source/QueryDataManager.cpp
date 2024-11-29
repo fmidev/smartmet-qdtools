@@ -42,7 +42,8 @@ bool locationvalid(NFmiFastQueryInfo& theQD)
     theQD.ResetParam();
     while (theQD.NextParam(ignoresubparameters))
     {
-      if (theQD.FloatValue() != kFloatMissing) return true;
+      if (theQD.FloatValue() != kFloatMissing)
+        return true;
     }
   }
   return false;
@@ -140,7 +141,10 @@ void QueryDataManager::addfiles(const std::vector<std::string>& theFiles)
  */
 // ----------------------------------------------------------------------
 
-bool QueryDataManager::isset(void) const { return (itsCurrentData != itsData.end()); }
+bool QueryDataManager::isset(void) const
+{
+  return (itsCurrentData != itsData.end());
+}
 // ----------------------------------------------------------------------
 /*!
  * \brief Return the current query info
@@ -156,7 +160,8 @@ bool QueryDataManager::isset(void) const { return (itsCurrentData != itsData.end
 
 NFmiFastQueryInfo& QueryDataManager::info(void) const
 {
-  if (isset()) return *itsCurrentData->get<2>();
+  if (isset())
+    return *itsCurrentData->get<2>();
 
   throw std::runtime_error("Trying to access querydata before setting a location");
 }
@@ -320,7 +325,8 @@ std::map<double, int> QueryDataManager::nearest(const NFmiPoint& theLonLat,
     NFmiFastQueryInfo& qi = *(it->get<2>());
 
     // Won't find nearest points from grids
-    if (qi.IsGrid()) continue;
+    if (qi.IsGrid())
+      continue;
 
     qi.ResetLocation();
     while (qi.NextLocation())

@@ -9,9 +9,7 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/filesystem/operations.hpp>
-#include <optional>
 #include <boost/program_options.hpp>
-#include <memory>
 #include <fmt/format.h>
 #include <macgyver/StringConversion.h>
 #include <newbase/NFmiAreaFactory.h>
@@ -26,6 +24,8 @@
 #include <newbase/NFmiVPlaceDescriptor.h>
 #include <fstream>
 #include <limits>
+#include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -122,20 +122,20 @@ struct img_t
   std::optional<int> type{};            /* Image type */
   std::optional<varfl> qual{};          /* quality indicator */
   std::optional<int> grid{};            /* Co-ordinate grid type */
-  point_t nw{};                           /* Northwest corner of the image */
-  point_t ne{};                           /* NE corner */
-  point_t se{};                           /* SE corner */
-  point_t sw{};                           /* SW corner */
+  point_t nw{};                         /* Northwest corner of the image */
+  point_t ne{};                         /* NE corner */
+  point_t se{};                         /* SE corner */
+  point_t sw{};                         /* SW corner */
   std::optional<int> nrows{};           /* Number of pixels per row */
   std::optional<int> ncols{};           /* Number of pixels per column */
   std::optional<varfl> psizex{};        /* Pixel size along x coordinate */
   std::optional<varfl> psizey{};        /* Pixel size along y coordinate */
-  scale_t scale{};                        /* Level slicing table */
+  scale_t scale{};                      /* Level slicing table */
   std::optional<varfl> elevation{};     /* Antenna elevation angle */
   std::optional<int> ns_organisation{}; /* North south view organisation */
   std::optional<int> ew_organisation{}; /* East west view organisation */
-  std::vector<varfl> heights{};           /* Heights */
-  std::vector<varfl> cappi_heights{};     /* CAPPI heights */
+  std::vector<varfl> heights{};         /* Heights */
+  std::vector<varfl> cappi_heights{};   /* CAPPI heights */
 
   // These are present in some input BUFRs. These serve no useful purpose,
   // but we parse the respective messages in order to prevent warnings
@@ -161,7 +161,7 @@ struct proj_t
   std::optional<int> type{};      /* Projection type */
   std::optional<varfl> majax{};   /* Semi-major axis or rotation ellipsoid */
   std::optional<varfl> minax{};   /* Semi-minor axis or rotation ellipsoid */
-  point_t origin{};                 /* Projection origin */
+  point_t origin{};               /* Projection origin */
   std::optional<int> xoff{};      /* False easting */
   std::optional<int> yoff{};      /* False northing */
   std::optional<varfl> stdpar1{}; /* 1st standard parallel */
@@ -174,9 +174,9 @@ struct radar_data_t
 {
   std::optional<int> wmoblock{}; /* WMO block number */
   std::optional<int> wmostat{};  /* WMO station number */
-  meta_t meta{};                   /* Meta information about the product */
-  img_t img{};                     /* Radar reflectivity image */
-  proj_t proj{};                   /* Projection information */
+  meta_t meta{};                 /* Meta information about the product */
+  img_t img{};                   /* Radar reflectivity image */
+  proj_t proj{};                 /* Projection information */
 };
 
 // ----------------------------------------------------------------------
@@ -1088,8 +1088,7 @@ NFmiHPlaceDescriptor create_hdesc()
       return NFmiHPlaceDescriptor(NFmiGrid(area, nx, ny));
     }
     default:
-      throw std::runtime_error("Unknown projection type " +
-                               Fmi::to_string(*radar_data.proj.type));
+      throw std::runtime_error("Unknown projection type " + Fmi::to_string(*radar_data.proj.type));
   }
 }
 
@@ -1150,8 +1149,8 @@ float decode_value(unsigned short value)
     else if (static_cast<size_t>(value - 1) < n)
       ret = radar_data.img.scale.dbz_values[value - 1];
     else if (!options.allow_overflow)
-      throw std::runtime_error("Overflow index " + Fmi::to_string(value) +
-                               ", size of legend is " + Fmi::to_string(n));
+      throw std::runtime_error("Overflow index " + Fmi::to_string(value) + ", size of legend is " +
+                               Fmi::to_string(n));
     else
     {
       ret = radar_data.img.scale.dbz_values[n - 1];
@@ -1169,8 +1168,8 @@ float decode_value(unsigned short value)
     else if (static_cast<size_t>(value - 1) < n)
       ret = radar_data.img.scale.intensity_values[value - 1];
     else if (!options.allow_overflow)
-      throw std::runtime_error("Overflow index " + Fmi::to_string(value) +
-                               ", size of legend is " + Fmi::to_string(n));
+      throw std::runtime_error("Overflow index " + Fmi::to_string(value) + ", size of legend is " +
+                               Fmi::to_string(n));
     else
     {
       ret = radar_data.img.scale.intensity_values[n - 1];

@@ -3,10 +3,10 @@
 #ifndef GeoTiffQD_H
 #define GeoTiffQD_H
 
-#include <optional>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiQueryData.h>
 #include <cstdio>
+#include <optional>
 #include <string>
 
 using namespace std;

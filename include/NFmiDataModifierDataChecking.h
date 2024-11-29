@@ -41,7 +41,8 @@ class NFmiDataModifierDataMissing : public NFmiDataModifierDataChecking
   virtual void Calculate(float theValue)
   {
     itsCheckedDataCount++;
-    if (theValue == kFloatMissing) itsFoundDataCount++;
+    if (theValue == kFloatMissing)
+      itsFoundDataCount++;
   };
 };
 class NFmiDataModifierDataStraight : public NFmiDataModifierDataChecking
@@ -59,7 +60,8 @@ class NFmiDataModifierDataStraight : public NFmiDataModifierDataChecking
   virtual void Calculate(float theValue)
   {
     itsCheckedDataCount++;
-    if (theValue == itsLastValue) itsFoundDataCount++;
+    if (theValue == itsLastValue)
+      itsFoundDataCount++;
     itsLastValue = theValue;
   };
 

@@ -87,8 +87,10 @@ void Domain(int argc, const char *argv[])
   else
     flashFileName = cmdline.Parameter(1);
 
-  if (cmdline.isOption('s')) skipLines = GetIntegerOptionValue(cmdline, 's');
-  if (cmdline.isOption('t')) makeLocal2UtcTimeConversion = true;
+  if (cmdline.isOption('s'))
+    skipLines = GetIntegerOptionValue(cmdline, 's');
+  if (cmdline.isOption('t'))
+    makeLocal2UtcTimeConversion = true;
 
   std::vector<std::string> flashStrings;
   if (!ReadFlashFile(flashFileName, skipLines, flashStrings))
@@ -97,8 +99,8 @@ void Domain(int argc, const char *argv[])
 
   NFmiQueryData *newData = CreateFlashQueryData(flashStrings, makeLocal2UtcTimeConversion);
   unique_ptr<NFmiQueryData> dataPtr(newData);  // tämä tuhoaa dynaamisesti luodun datan
-                                             // automaattisesti (vaikka return paikkoja olisi kuinka
-                                             // monta)
+                                               // automaattisesti (vaikka return paikkoja olisi
+                                               // kuinka monta)
   if (newData)
   {
     NFmiStreamQueryData streamQDataTulos;
@@ -193,7 +195,8 @@ NFmiQueryData *CreateFlashQueryData(std::vector<std::string> &theFlashStrings,
     {
       if (ParseFlashDataLine(theFlashStrings[i], tmp))
       {
-        if (fMakeLocal2UtcTimeConversion) tmp.itsTime = NFmiMetTime(tmp.itsTime.UTCTime(), 1);
+        if (fMakeLocal2UtcTimeConversion)
+          tmp.itsTime = NFmiMetTime(tmp.itsTime.UTCTime(), 1);
 
         times.Add(new NFmiMetTime(tmp.itsTime), true, true);
         lons[counter] = tmp.lon;
@@ -246,7 +249,8 @@ bool ReadFlashFile(const std::string &theFileName,
       while (std::getline(in, rowbuffer))
       {
         counter++;
-        if (theSkipLines >= counter) continue;
+        if (theSkipLines >= counter)
+          continue;
         if (!rowbuffer.empty())
         {
           theFlashStrings.push_back(rowbuffer);
@@ -274,7 +278,8 @@ void Usage(void)
 int GetIntegerOptionValue(const NFmiCmdLine &theCmdline, char theOption)
 {
   NFmiValueString valStr(theCmdline.OptionValue(theOption));
-  if (valStr.IsInt()) return static_cast<int>(valStr);
+  if (valStr.IsInt())
+    return static_cast<int>(valStr);
   throw runtime_error(string("Error: '") + theOption +
                       "' option value must be integer, exiting...");
 }

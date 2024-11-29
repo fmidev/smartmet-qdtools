@@ -2,7 +2,7 @@
 // qdgridcalc.cpp  (oli ennen GetSuitableGrid.cpp)
 
 #ifndef UNIX
-//#pragma warning(disable : 4511 4512 4100 4127) // Remove boost warnings from VC++
+// #pragma warning(disable : 4511 4512 4100 4127) // Remove boost warnings from VC++
 #endif
 
 #include <newbase/NFmiArea.h>
@@ -13,8 +13,8 @@
 #include <newbase/NFmiQueryInfo.h>
 #include <newbase/NFmiStringTools.h>
 
-#include <memory>
 #include <fstream>
+#include <memory>
 
 using namespace std;
 
@@ -94,8 +94,10 @@ static void PrintGridSizeInfo(const NFmiArea *area,
   double ylaMidY = loc1.Distance(loc2) / 1000.;
 
   string verbiStr("would be");
-  if (fActualGridUsed) verbiStr = "is";
-  if (fActualGridUsed) cout << "Given querydata projection: " << area->ProjStr() << endl;
+  if (fActualGridUsed)
+    verbiStr = "is";
+  if (fActualGridUsed)
+    cout << "Given querydata projection: " << area->ProjStr() << endl;
   cout << "Grid size " << verbiStr << ": " << closestXGridSize << " x " << closestYGridSize << endl;
   cout << "Grid size " << verbiStr << " at center of bottom edge: " << alaMidX << " x " << alaMidY
        << " km" << endl;
@@ -162,7 +164,8 @@ void Domain(int argc, const char *argv[])
   }
 
   bool useGridSizes = false;
-  if (cmdline.isOption('s')) useGridSizes = true;
+  if (cmdline.isOption('s'))
+    useGridSizes = true;
 
   std::string projStr = cmdline.Parameter(1);
   std::string xKmStr = cmdline.Parameter(2);
@@ -197,7 +200,8 @@ void Domain(int argc, const char *argv[])
           minDist = currDist;
           closestXGridSize = i;
         }
-        if (lastDist < currDist) break;  // jos ero haluttuun alkaa taas kasvamaan, lopetetaan
+        if (lastDist < currDist)
+          break;  // jos ero haluttuun alkaa taas kasvamaan, lopetetaan
         lastDist = currDist;
       }
 
@@ -216,7 +220,8 @@ void Domain(int argc, const char *argv[])
           minDist = currDist;
           closestYGridSize = i;
         }
-        if (lastDist < currDist) break;  // jos ero haluttuun alkaa taas kasvamaan, lopetetaan
+        if (lastDist < currDist)
+          break;  // jos ero haluttuun alkaa taas kasvamaan, lopetetaan
         lastDist = currDist;
       }
       ::PrintGridSizeInfo(areaPtr.get(), closestXGridSize, closestYGridSize, doDataGridSizeCheck);

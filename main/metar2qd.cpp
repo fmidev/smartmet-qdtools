@@ -610,7 +610,8 @@ static bool IsMetarNilOrEmptyReport(const string &str)
     {
       string aWord = *it;
       NFmiStringTools::UpperCase(aWord);
-      if (aWord == "NIL") return true;
+      if (aWord == "NIL")
+        return true;
     }
   }
   if (it != end)
@@ -1390,7 +1391,8 @@ static void DecodeMetar(NFmiAviationStationInfoSystem &theStationInfoSystem,
       // https://jira.fmi.fi/browse/STU-21605; Set CAVOK visibility to 9999
 
       floatValue = (metarStruct.CAVOK ? 9999.0 : metarStruct.prevail_vsbyM);
-      if (floatValue != MDSP_missing_float) data.itsValues[data.itsVisibilityIndex] = floatValue;
+      if (floatValue != MDSP_missing_float)
+        data.itsValues[data.itsVisibilityIndex] = floatValue;
 
       intValue = metarStruct.VertVsby;
       if (intValue != MDSP_missing_int)
@@ -1484,7 +1486,8 @@ static std::string RemoveControlCharacters(const std::string &theOrigStr)
   for (size_t i = 0; i < theOrigStr.size(); i++)
   {
     unsigned char ch = (unsigned char)(theOrigStr[i]);
-    if (isspace(ch) || iscntrl(ch) == 0) strippedStr += theOrigStr[i];
+    if (isspace(ch) || iscntrl(ch) == 0)
+      strippedStr += theOrigStr[i];
   }
   return strippedStr;
 }
@@ -1509,7 +1512,8 @@ static bool IsMetarFileInNoaaFormat(std::ifstream &input)
   for (int i = 0; i < maxLineCheckCount; i++)
   {
     std::getline(input, line);
-    if (boost::regex_match(line, gNoaaTimeLineReg)) return true;
+    if (boost::regex_match(line, gNoaaTimeLineReg))
+      return true;
   }
   return false;
 }
@@ -1613,10 +1617,12 @@ static void MakeDataBlocks(NFmiAviationStationInfoSystem &theStationInfoSystem,
       lineStr = *it;
       lineStr = ::RemoveControlCharacters(lineStr);
       NFmiStringTools::TrimAll(lineStr, true);
-      if (lineStr.empty()) continue;
+      if (lineStr.empty())
+        continue;
 
       bool newHeaderStarts = (counter == 1);
-      if (newHeaderStarts == false && ::DoNewHeaderStartHere(lineStr)) newHeaderStarts = true;
+      if (newHeaderStarts == false && ::DoNewHeaderStartHere(lineStr))
+        newHeaderStarts = true;
 
       if (newHeaderStarts)  // siis 1. ja jos useita metar sanomia samassa paketissa,
       // headerin alussa sanoman kohdalla pitää lukea ohi header osio
@@ -1744,7 +1750,8 @@ list<string> CollectMetarFiles(const vector<string> &fileFilterList)
 
     list<string> fileList = NFmiFileSystem::PatternFiles(fileFilterList[j]);
 
-    if (fVerboseMode) cerr << " found " << fileList.size() << " files" << endl;
+    if (fVerboseMode)
+      cerr << " found " << fileList.size() << " files" << endl;
 
     // Extract path from the pattern
 
@@ -1839,9 +1846,11 @@ void run(int argc, const char *argv[])
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
   }
 
-  if (cmdline.isOption('v')) fVerboseMode = true;
+  if (cmdline.isOption('v'))
+    fVerboseMode = true;
 
-  if (cmdline.isOption('F')) fIgnoreBadStations = true;
+  if (cmdline.isOption('F'))
+    fIgnoreBadStations = true;
 
 #if 0
   bool icaoFirst = false;
@@ -1850,7 +1859,8 @@ void run(int argc, const char *argv[])
 #endif
 
   bool tryNoaaFileFormat = false;
-  if (cmdline.isOption('n')) tryNoaaFileFormat = true;
+  if (cmdline.isOption('n'))
+    tryNoaaFileFormat = true;
 
   NFmiAviationStationInfoSystem stationInfoSystem(false, fVerboseMode);
 
@@ -1860,7 +1870,8 @@ void run(int argc, const char *argv[])
   std::string stationFile = "";
 #endif
 
-  if (cmdline.isOption('s')) stationFile = cmdline.OptionValue('s');
+  if (cmdline.isOption('s'))
+    stationFile = cmdline.OptionValue('s');
 
   if (stationFile.empty())
     throw runtime_error(
@@ -1882,7 +1893,8 @@ void run(int argc, const char *argv[])
     timeRoundingResolution = NFmiStringTools::Convert<int>(cmdline.OptionValue('r'));
 
   bool makeTotalWindParameter = true;  // Oletuksena luodaan TotalWind parametri
-  if (cmdline.isOption('W')) makeTotalWindParameter = false;
+  if (cmdline.isOption('W'))
+    makeTotalWindParameter = false;
 
   //	1. Lue n kpl filefiltereitä listaan
   vector<string> fileFilterList;
@@ -1974,7 +1986,8 @@ void run(int argc, const char *argv[])
  */
 // ----------------------------------------------------------------------
 
-int main(int argc, const char *argv[]) try
+int main(int argc, const char *argv[])
+try
 {
   run(argc, argv);
   return 0;

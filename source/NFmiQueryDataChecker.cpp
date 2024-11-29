@@ -64,13 +64,18 @@ NFmiQueryDataChecker::~NFmiQueryDataChecker(void)
 bool NFmiQueryDataChecker::DoTotalCheck(void)
 {
   bool status = true;
-  if (!itsInfo) return false;
+  if (!itsInfo)
+    return false;
   itsInfo->First();
 
-  if (fDoIndexRandomizing) MakeRandomLocationIndexies();
-  if (itsCheckList & 1) status &= DoMissingDataCheck();
-  if (itsCheckList & 2) status &= DoStraightDataCheck();
-  if (itsCheckList & 4) status &= DoOutOfLimitsDataCheck();
+  if (fDoIndexRandomizing)
+    MakeRandomLocationIndexies();
+  if (itsCheckList & 1)
+    status &= DoMissingDataCheck();
+  if (itsCheckList & 2)
+    status &= DoStraightDataCheck();
+  if (itsCheckList & 4)
+    status &= DoOutOfLimitsDataCheck();
 
   return status;
 }

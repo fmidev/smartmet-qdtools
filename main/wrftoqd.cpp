@@ -683,22 +683,22 @@ static void SetFinalDataAreaInfo(nctools::Options &options, BaseGridAreaData &ar
 
 // Yritetään saada projektio ulos WRF-NetCdf:stä. Sen päättelyssä yritetöää käyttää oitain
 // seuraavista globaaleista attribuuteista (esimerkki J. Kauhaselta saadusta WRF data dumpista):
-//:WEST-EAST_GRID_DIMENSION = 76 ;
-//:SOUTH-NORTH_GRID_DIMENSION = 61 ;
-//:DX = 8695.241f ;
-//:DY = 8695.241f ;
-//:GRIDTYPE = "C" ;
-//:KM_OPT = 4 ;
-//:DT = 30.f ;
-//:CEN_LAT = 15.341f ;
-//:CEN_LON = 32.068f ;
-//:TRUELAT1 = 15.341f ;
-//:TRUELAT2 = 15.341f ;
-//:MOAD_CEN_LAT = 15.341f ;
-//:STAND_LON = 32.068f ;
-//:POLE_LAT = 90.f ;
-//:POLE_LON = 0.f ;
-//:MAP_PROJ = 6 ;
+//: WEST-EAST_GRID_DIMENSION = 76 ;
+//: SOUTH-NORTH_GRID_DIMENSION = 61 ;
+//: DX = 8695.241f ;
+//: DY = 8695.241f ;
+//: GRIDTYPE = "C" ;
+//: KM_OPT = 4 ;
+//: DT = 30.f ;
+//: CEN_LAT = 15.341f ;
+//: CEN_LON = 32.068f ;
+//: TRUELAT1 = 15.341f ;
+//: TRUELAT2 = 15.341f ;
+//: MOAD_CEN_LAT = 15.341f ;
+//: STAND_LON = 32.068f ;
+//: POLE_LAT = 90.f ;
+//: POLE_LON = 0.f ;
+//: MAP_PROJ = 6 ;
 
 // Ohessa dokumentti jonka löyin google:lla, jossa on selitetty jotain WRF-netcdf asetuksia, löyti
 // osoitteesta:
@@ -935,7 +935,8 @@ static NFmiTimeDescriptor CreateWRFTimeDescriptor(const NcFile &ncFile)
             // pitäisi olla muotoa: 2013-09-24_00:00:00
             // Siitä on poistettava kaikki välisälä, jotta se saadaan muotoon: 20130924000000
             timeStr.erase(
-                std::remove_if(timeStr.begin(), timeStr.end(), [](char c) { return !::vcfix_isdigit(c); }),
+                std::remove_if(
+                    timeStr.begin(), timeStr.end(), [](char c) { return !::vcfix_isdigit(c); }),
                 timeStr.end());
             NFmiMetTime *aTime = new NFmiMetTime(1);
             aTime->FromStr(timeStr);

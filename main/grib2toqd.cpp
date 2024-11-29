@@ -39,7 +39,6 @@
 
 #include "GribTools.h"
 #include <boost/algorithm/string/replace.hpp>
-#include <memory>
 #include <boost/thread.hpp>
 #include <fmt/format.h>
 #include <macgyver/StringConversion.h>
@@ -64,6 +63,7 @@
 #include <functional>
 #include <grib_api.h>
 #include <iomanip>
+#include <memory>
 #include <set>
 #include <sstream>
 #include <stdexcept>
@@ -217,9 +217,9 @@ void CreateQueryDatas(vector<GridRecordData *> &theGribRecordDatas,
                       GribFilterOptions &theGribFilterOptions,
                       map<int, pair<double, double> > &theVerticalCoordinateMap);
 std::shared_ptr<NFmiQueryData> CreateQueryData(vector<GridRecordData *> &theGribRecordDatas,
-                                                 NFmiHPlaceDescriptor &theHplace,
-                                                 NFmiVPlaceDescriptor &theVplace,
-                                                 GribFilterOptions &theGribFilterOptions);
+                                               NFmiHPlaceDescriptor &theHplace,
+                                               NFmiVPlaceDescriptor &theVplace,
+                                               GribFilterOptions &theGribFilterOptions);
 NFmiParamDescriptor GetParamDesc(vector<GridRecordData *> &theGribRecordDatas,
                                  NFmiHPlaceDescriptor &theHplace,
                                  NFmiVPlaceDescriptor &theVplace,
@@ -331,8 +331,8 @@ static void InitParamChangeTable(const string &theParamChangeTableFileName,
 const NFmiPoint gMissingGridSize(kFloatMissing, kFloatMissing);
 
 static std::shared_ptr<NFmiGrid> GetGridFromProjectionStr(string &theProjectionStr,
-                                                            int gridSizeX = -1,
-                                                            int gridSizeY = -1)
+                                                          int gridSizeX = -1,
+                                                          int gridSizeY = -1)
 {
   vector<string> projectionPartsStr = NFmiStringTools::Split(theProjectionStr, ":");
   if (projectionPartsStr.size() < 2)
@@ -366,8 +366,8 @@ static std::shared_ptr<NFmiGrid> GetGridFromProjectionStr(string &theProjectionS
       throw runtime_error("Given GridSize was invlid, has to be two numbers (e.g. x,y).");
     NFmiPoint gridSize(values[0], values[1]);
     std::shared_ptr<NFmiGrid> grid(new NFmiGrid(area->Clone(),
-                                                  static_cast<unsigned int>(gridSize.X()),
-                                                  static_cast<unsigned int>(gridSize.Y())));
+                                                static_cast<unsigned int>(gridSize.X()),
+                                                static_cast<unsigned int>(gridSize.Y())));
     return grid;
   }
 }
@@ -563,8 +563,7 @@ static vector<FmiLevelType> GetAcceptedLevelTypes(NFmiCmdLine &theCmdLine)
         NFmiStringTools::Split(theCmdLine.OptionValue('L'));
     for (unsigned int i = 0; i < acceptOnlyLevelTypesStrVector.size(); i++)
     {
-      unsigned long levelType =
-          Fmi::stoul(acceptOnlyLevelTypesStrVector[i]);
+      unsigned long levelType = Fmi::stoul(acceptOnlyLevelTypesStrVector[i]);
       acceptOnlyLevelTypes.push_back(static_cast<FmiLevelType>(
           levelType));  // stringtools-convert ei osaa heti tehdä FmiLevelType-tyyppiä
     }
@@ -717,8 +716,7 @@ static int GetOptions(NFmiCmdLine &theCmdLine, GribFilterOptions &theGribFilterO
     ::InitParamChangeTable(paramChangeTableFileName, theGribFilterOptions.itsParamChangeTable);
   }
   if (theCmdLine.isOption('g'))
-    theGribFilterOptions.itsGridInfoPrintCount =
-        Fmi::stoi(theCmdLine.OptionValue('g'));
+    theGribFilterOptions.itsGridInfoPrintCount = Fmi::stoi(theCmdLine.OptionValue('g'));
   if (theCmdLine.isOption('d'))
     theGribFilterOptions.fCropParamsNotMensionedInTable = true;
 
@@ -2566,8 +2564,7 @@ vector<NFmiHPlaceDescriptor> GetAllHPlaceDescriptors(vector<GridRecordData *> &t
 }
 
 static std::shared_ptr<NFmiQueryData> GetSurfaceData(
-    vector<std::shared_ptr<NFmiQueryData> > &theQdatas,
-    FmiParameterName thePressureAtStationParId)
+    vector<std::shared_ptr<NFmiQueryData> > &theQdatas, FmiParameterName thePressureAtStationParId)
 {
   std::shared_ptr<NFmiQueryData> surfaceData;
   for (size_t i = 0; i < theQdatas.size(); i++)
@@ -2864,9 +2861,9 @@ void CreateQueryDatas(vector<GridRecordData *> &theGribRecordDatas,
 }
 
 std::shared_ptr<NFmiQueryData> CreateQueryData(vector<GridRecordData *> &theGribRecordDatas,
-                                                 NFmiHPlaceDescriptor &theHplace,
-                                                 NFmiVPlaceDescriptor &theVplace,
-                                                 GribFilterOptions &theGribFilterOptions)
+                                               NFmiHPlaceDescriptor &theHplace,
+                                               NFmiVPlaceDescriptor &theVplace,
+                                               GribFilterOptions &theGribFilterOptions)
 {
   std::shared_ptr<NFmiQueryData> qdata;
   int gribCount = static_cast<int>(theGribRecordDatas.size());

@@ -129,7 +129,8 @@ bool parse_command_line(int argc, const char* argv[])
 {
   NFmiCmdLine cmdline(argc, argv, "htpvVd");
 
-  if (cmdline.Status().IsError()) throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
+  if (cmdline.Status().IsError())
+    throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
 
   // help-option must be checked first
 
@@ -237,7 +238,8 @@ void print_change_analysis(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
             // parameter and as a subparameter. We ignore the second test,
             // it is the first parameter only that matters
             FmiParameterName p = FmiParameterName(theQ2.Param().GetParam()->GetIdent());
-            if (param_checked[p] == true) continue;
+            if (param_checked[p] == true)
+              continue;
 
             param_checked[p] = true;
 
@@ -286,7 +288,8 @@ void print_change_analysis(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
   for (ParamStatus::const_iterator it = param_status.begin(); it != param_status.end(); ++it)
   {
     cout << (it->second ? "CHANGED " : "unchanged ") << converter.ToString(it->first);
-    if (it->second) cout << " in " << it->second << " timesteps";
+    if (it->second)
+      cout << " in " << it->second << " timesteps";
     cout << endl;
   }
 }
@@ -320,7 +323,8 @@ const NFmiTimeList extract_all(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ
           for (theQ2.ResetParam(); !different && theQ2.NextParam();)
           {
             FmiParameterName p = FmiParameterName(theQ2.Param().GetParam()->GetIdent());
-            if (param_checked[p] == true) continue;
+            if (param_checked[p] == true)
+              continue;
             param_checked[p] = true;
 
             if (!theQ1.Param(theQ2.Param()))
@@ -337,7 +341,8 @@ const NFmiTimeList extract_all(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ
     }
     if (different)
     {
-      if (options.verbose) cout << "Different time: " << theQ2.ValidTime() << endl;
+      if (options.verbose)
+        cout << "Different time: " << theQ2.ValidTime() << endl;
       times.Add(new NFmiMetTime(theQ2.ValidTime()));
     }
   }
@@ -360,7 +365,8 @@ const NFmiTimeList extract_times(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& th
     // If data 1 does not have the time, we must output it
     if (!theQ1.Time(theQ2.ValidTime()))
     {
-      if (options.verbose) cout << "Different time: " << theQ2.ValidTime() << endl;
+      if (options.verbose)
+        cout << "Different time: " << theQ2.ValidTime() << endl;
       times.Add(new NFmiMetTime(theQ2.ValidTime()));
     }
   }
@@ -392,7 +398,8 @@ const NFmiTimeList extract_params(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& t
           for (theQ2.ResetParam(); !different && theQ2.NextParam();)
           {
             FmiParameterName p = FmiParameterName(theQ2.Param().GetParam()->GetIdent());
-            if (param_checked[p] == true) continue;
+            if (param_checked[p] == true)
+              continue;
             param_checked[p] = true;
 
             if (!theQ1.Param(theQ2.Param()))
@@ -409,7 +416,8 @@ const NFmiTimeList extract_params(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& t
     }
     if (different)
     {
-      if (options.verbose) cout << "Different time: " << theQ2.ValidTime() << endl;
+      if (options.verbose)
+        cout << "Different time: " << theQ2.ValidTime() << endl;
       times.Add(new NFmiMetTime(theQ2.ValidTime()));
     }
   }
@@ -427,11 +435,13 @@ void process_difference()
 {
   // Read the data
 
-  if (options.verbose) cout << "Reading '" << options.inputfile1 << "'" << endl;
+  if (options.verbose)
+    cout << "Reading '" << options.inputfile1 << "'" << endl;
 
   NFmiQueryData qd1(options.inputfile1);
 
-  if (options.verbose) cout << "Reading '" << options.inputfile2 << "'" << endl;
+  if (options.verbose)
+    cout << "Reading '" << options.inputfile2 << "'" << endl;
 
   NFmiQueryData qd2(options.inputfile2);
 
@@ -442,7 +452,8 @@ void process_difference()
 
   // In highly verbose mode, print an analysis of changes
 
-  if (options.veryverbose) print_change_analysis(q1, q2);
+  if (options.veryverbose)
+    print_change_analysis(q1, q2);
 
   // Find the times from data 2 which have changed from data 1
 
@@ -459,7 +470,8 @@ void process_difference()
 
   if (times.NumberOfItems() == 0)
   {
-    if (options.verbose) cout << "The data is completely identical, nothing to do" << endl;
+    if (options.verbose)
+      cout << "The data is completely identical, nothing to do" << endl;
     return;
   }
 
@@ -481,7 +493,8 @@ void process_difference()
   unique_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
   NFmiFastQueryInfo q(data.get());
 
-  if (data.get() == 0) throw runtime_error("Could not allocate memory for result data");
+  if (data.get() == 0)
+    throw runtime_error("Could not allocate memory for result data");
 
   // Copy the values
 
@@ -489,21 +502,24 @@ void process_difference()
     for (q.ResetParam(), q2.ResetParam(); q.NextParam() && q2.NextParam();)
       for (q.ResetTime(); q.NextTime();)
       {
-        if (!q2.Time(q.ValidTime())) throw runtime_error("Failed to copy a required time");
+        if (!q2.Time(q.ValidTime()))
+          throw runtime_error("Failed to copy a required time");
         for (q.ResetLocation(), q2.ResetLocation(); q.NextLocation() && q2.NextLocation();)
           q.FloatValue(q2.FloatValue());
       }
 
   // And write the data
 
-  if (options.verbose) cout << "Writing " << options.outputfile << endl;
+  if (options.verbose)
+    cout << "Writing " << options.outputfile << endl;
 
   if (options.outputfile == "-")
     cout << *data;
   else
   {
     ofstream out(options.outputfile.c_str(), ios::binary | ios::out);
-    if (!out) throw runtime_error("Failed to open '" + options.outputfile + "' for writing");
+    if (!out)
+      throw runtime_error("Failed to open '" + options.outputfile + "' for writing");
     out << *data;
     out.close();
   }
@@ -526,7 +542,8 @@ void find_inputfiles()
 
   // Handle easy special cases
 
-  if (files.size() == 0) throw runtime_error("Directory '" + options.inputdir + "' is empty");
+  if (files.size() == 0)
+    throw runtime_error("Directory '" + options.inputdir + "' is empty");
 
   if (files.size() == 1)
   {
@@ -561,7 +578,8 @@ void find_inputfiles()
 
 int domain(int argc, const char* argv[])
 {
-  if (!parse_command_line(argc, argv)) return 0;
+  if (!parse_command_line(argc, argv))
+    return 0;
 
   // Establish the two latest files
 
@@ -577,7 +595,8 @@ int domain(int argc, const char* argv[])
 
   if (options.inputfile1 == options.inputfile2)
   {
-    if (options.verbose) cout << "Nothing to do, the input files are equivalent" << endl;
+    if (options.verbose)
+      cout << "Nothing to do, the input files are equivalent" << endl;
     return 0;
   }
 
@@ -585,8 +604,10 @@ int domain(int argc, const char* argv[])
 
   if (options.inputfile1.empty())
   {
-    if (options.verbose) cout << "Copying the newest file since 2nd newest is missing" << endl;
-    if (!options.debug) NFmiFileSystem::CopyFile(options.inputfile2, options.outputfile);
+    if (options.verbose)
+      cout << "Copying the newest file since 2nd newest is missing" << endl;
+    if (!options.debug)
+      NFmiFileSystem::CopyFile(options.inputfile2, options.outputfile);
     return 0;
   }
 

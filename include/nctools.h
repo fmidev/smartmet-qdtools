@@ -53,8 +53,8 @@ struct Options
   // coordinate parameter. Note that by default we do not extract level data, the Z dimension
   // must be given.
 
-  std::optional<std::string> xdim;  // --xdim name. Usually 'lon', sometimes 'longitude' or 'xc'
-  std::optional<std::string> ydim;  // --ydim name. Usually 'lat', sometimes 'latitude' or 'yc'
+  std::optional<std::string> xdim;      // --xdim name. Usually 'lon', sometimes 'longitude' or 'xc'
+  std::optional<std::string> ydim;      // --ydim name. Usually 'lat', sometimes 'latitude' or 'yc'
   std::optional<std::string> zdim{""};  // --zdim name. Usually 'lev' or 'zc'
   std::optional<std::string> tdim;      // --tdim name. Usually 'time', sometimes 't'
 

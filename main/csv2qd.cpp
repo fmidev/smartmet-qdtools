@@ -18,10 +18,10 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/bind/bind.hpp>
-#include <macgyver/DateTime.h>
 #include <boost/filesystem/operations.hpp>
 #include <boost/program_options.hpp>
 #include <macgyver/CsvReader.h>
+#include <macgyver/DateTime.h>
 #include <macgyver/StringConversion.h>
 #include <macgyver/TimeParser.h>
 #include <macgyver/TimeZoneFactory.h>
@@ -170,9 +170,11 @@ bool parse_options(int argc, char* argv[], Options& options)
 
   if (opt.count("files") == 0)
   {
-    if (opt.count("infile") == 0) throw runtime_error("Expecting input file as parameter 1");
+    if (opt.count("infile") == 0)
+      throw runtime_error("Expecting input file as parameter 1");
 
-    if (opt.count("outfile") == 0) throw runtime_error("Expecting output file as parameter 2");
+    if (opt.count("outfile") == 0)
+      throw runtime_error("Expecting output file as parameter 2");
 
     options.files.push_back(opt["infile"].as<string>());
   }
@@ -189,7 +191,8 @@ bool parse_options(int argc, char* argv[], Options& options)
       options.files.pop_back();
     }
 
-    if (options.files.empty()) throw runtime_error("Output file not specified");
+    if (options.files.empty())
+      throw runtime_error("Output file not specified");
   }
 
   if (!fs::exists(options.paramsfile))
@@ -200,7 +203,8 @@ bool parse_options(int argc, char* argv[], Options& options)
 
   // Parse parameter settings
 
-  if (params.empty()) throw runtime_error("Parameter list must be given");
+  if (params.empty())
+    throw runtime_error("Parameter list must be given");
 
   NFmiEnumConverter converter;
   vector<string> parts;
@@ -448,7 +452,8 @@ NFmiHPlaceDescriptor create_hdesc(const CsvTable& csv, const Stations& stations)
     }
   }
 
-  if (options.verbose) cout << "Found " << used.size() << " stations from input" << endl;
+  if (options.verbose)
+    cout << "Found " << used.size() << " stations from input" << endl;
 
   // Build LocationBag
 
@@ -460,7 +465,8 @@ NFmiHPlaceDescriptor create_hdesc(const CsvTable& csv, const Stations& stations)
       Stations::const_iterator it = stations.find(id);
       if (it == stations.end())
       {
-        if (!options.quiet) std::cerr << "Warning: Unknown station id '" << id << "'" << std::endl;
+        if (!options.quiet)
+          std::cerr << "Warning: Unknown station id '" << id << "'" << std::endl;
       }
       else
       {
@@ -493,7 +499,8 @@ NFmiVPlaceDescriptor create_vdesc(const CsvTable& csv)
 {
   // default is sufficient for point data
 
-  if (options.levelcolumn < 0) return NFmiVPlaceDescriptor();
+  if (options.levelcolumn < 0)
+    return NFmiVPlaceDescriptor();
 
   // List all unique levels
 
@@ -511,7 +518,8 @@ NFmiVPlaceDescriptor create_vdesc(const CsvTable& csv)
     }
   }
 
-  if (options.verbose) cout << "Found " << used.size() << " levels from input" << endl;
+  if (options.verbose)
+    cout << "Found " << used.size() << " levels from input" << endl;
 
   // Build LevelBag
 
@@ -610,7 +618,8 @@ NFmiTimeDescriptor create_tdesc(const CsvTable& csv, const Fmi::TimeZonePtr& tz)
     }
   }
 
-  if (options.verbose) cout << "Found " << used.size() << " unique times from input" << endl;
+  if (options.verbose)
+    cout << "Found " << used.size() << " unique times from input" << endl;
 
   // Build TimeList
 
@@ -713,7 +722,8 @@ void copy_values(NFmiFastQueryInfo& info,
       info.NextParam();
       try
       {
-        if (row[i] != options.missingvalue) info.FloatValue(boost::lexical_cast<double>(row[i]));
+        if (row[i] != options.missingvalue)
+          info.FloatValue(boost::lexical_cast<double>(row[i]));
       }
       catch (...)
       {
@@ -735,9 +745,12 @@ void validate_csv(const CsvTable& csv)
   // Each row must contain time,id and params
 
   unsigned int columns = options.params.size();
-  if (options.levelcolumn >= 0) ++columns;
-  if (options.timecolumn >= 0) ++columns;
-  if (options.stationcolumn >= 0) ++columns;
+  if (options.levelcolumn >= 0)
+    ++columns;
+  if (options.timecolumn >= 0)
+    ++columns;
+  if (options.stationcolumn >= 0)
+    ++columns;
 
   int rownum = 0;
   for (const CsvTable::value_type& row : csv)
@@ -760,8 +773,7 @@ void write_querydata(const CsvTable& csv, const Params& params, const Stations& 
 {
   validate_csv(csv);
 
-  Fmi::TimeZonePtr tz =
-      Fmi::TimeZoneFactory::instance().time_zone_from_string(options.timezone);
+  Fmi::TimeZonePtr tz = Fmi::TimeZoneFactory::instance().time_zone_from_string(options.timezone);
 
   NFmiHPlaceDescriptor hdesc = create_hdesc(csv, stations);
   NFmiVPlaceDescriptor vdesc = create_vdesc(csv);
@@ -772,7 +784,8 @@ void write_querydata(const CsvTable& csv, const Params& params, const Stations& 
   unique_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(qi));
   NFmiFastQueryInfo info(data.get());
 
-  if (data.get() == 0) throw runtime_error("Could not allocate memory for result data");
+  if (data.get() == 0)
+    throw runtime_error("Could not allocate memory for result data");
 
   info.SetProducer(NFmiProducer(options.producernumber, options.producername));
 
@@ -792,7 +805,8 @@ int run(int argc, char* argv[])
 {
   namespace p = std::placeholders;
 
-  if (!parse_options(argc, argv, options)) return 0;
+  if (!parse_options(argc, argv, options))
+    return 0;
 
   Csv csv, csvparams, csvstations;
   Fmi::CsvReader::read(options.paramsfile, std::bind(&Csv::addrow, &csvparams, p::_1));

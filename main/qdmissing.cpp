@@ -147,7 +147,8 @@ bool parse_command_line(int argc, const char* argv[])
 {
   NFmiCmdLine cmdline(argc, argv, "htwnZNP!T!e!");
 
-  if (cmdline.Status().IsError()) throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
+  if (cmdline.Status().IsError())
+    throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
 
   // help-option must be checked first
 
@@ -166,15 +167,20 @@ bool parse_command_line(int argc, const char* argv[])
 
   // options
 
-  if (cmdline.isOption('t')) options.alltimesteps = true;
+  if (cmdline.isOption('t'))
+    options.alltimesteps = true;
 
-  if (cmdline.isOption('w')) options.allstations = true;
+  if (cmdline.isOption('w'))
+    options.allstations = true;
 
-  if (cmdline.isOption('n')) options.checknan = true;
+  if (cmdline.isOption('n'))
+    options.checknan = true;
 
-  if (cmdline.isOption('N')) options.printcount = true;
+  if (cmdline.isOption('N'))
+    options.printcount = true;
 
-  if (cmdline.isOption('Z')) options.printzero = false;
+  if (cmdline.isOption('Z'))
+    options.printzero = false;
 
   if (cmdline.isOption('P'))
   {
@@ -188,7 +194,8 @@ bool parse_command_line(int argc, const char* argv[])
     }
   }
 
-  if (cmdline.isOption('T')) options.timezone = cmdline.OptionValue('T');
+  if (cmdline.isOption('T'))
+    options.timezone = cmdline.OptionValue('T');
 
   if (cmdline.isOption('e'))
   {
@@ -233,9 +240,11 @@ int analyze_all_parameters(NFmiFastQueryInfo& theQ)
             ++missing_count;
         }
 
-  if (options.checknan || options.printcount) return missing_count;
+  if (options.checknan || options.printcount)
+    return missing_count;
 
-  if (total_count == 0) return 100;
+  if (total_count == 0)
+    return 100;
 
   return static_cast<int>((100.0 * missing_count) / total_count);
 }
@@ -336,9 +345,11 @@ int analyze_all_station_parameters(NFmiFastQueryInfo& theQ)
           ++missing_count;
       }
 
-  if (options.checknan || options.printcount) return missing_count;
+  if (options.checknan || options.printcount)
+    return missing_count;
 
-  if (total_count == 0) return 100;
+  if (total_count == 0)
+    return 100;
 
   return static_cast<int>((100.0 * missing_count) / total_count);
 }
@@ -435,9 +446,11 @@ int analyze_all_parameters_now(NFmiFastQueryInfo& theQ)
           ++missing_count;
       }
 
-  if (options.checknan || options.printcount) return missing_count;
+  if (options.checknan || options.printcount)
+    return missing_count;
 
-  if (total_count == 0) return 100;
+  if (total_count == 0)
+    return 100;
 
   return static_cast<int>((100.0 * missing_count) / total_count);
 }
@@ -513,7 +526,8 @@ int analyze_given_parameters_now(NFmiFastQueryInfo& theQ)
 int run(int argc, const char* argv[])
 {
   // Parse the command line
-  if (!parse_command_line(argc, argv)) return 0;
+  if (!parse_command_line(argc, argv))
+    return 0;
 
   int percentage = (options.checknan || options.printcount ? 0 : 100);
 
@@ -542,7 +556,8 @@ int run(int argc, const char* argv[])
   }
   else if (options.allstations)
   {
-    if (q.IsGrid()) throw runtime_error("Option -w can be used only for point data");
+    if (q.IsGrid())
+      throw runtime_error("Option -w can be used only for point data");
     for (q.ResetLocation(); q.NextLocation();)
     {
       if (options.parameters.empty())
@@ -563,7 +578,8 @@ int run(int argc, const char* argv[])
       percentage = analyze_all_parameters(q);
     else
       percentage = analyze_given_parameters(q);
-    if (options.printzero || percentage != 0) cout << percentage << endl;
+    if (options.printzero || percentage != 0)
+      cout << percentage << endl;
     if (options.checkErrorLimit && percentage >= options.errorLimit)
       throw runtime_error("Given error limit has been exceeded, exiting.");
   }

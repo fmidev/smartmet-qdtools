@@ -45,11 +45,13 @@ void ProjectionParser::parse(std::istream& is,
 
   std::string proj_name;
   is >> proj_name;
-  if (!is.good() || proj_name == "{") throw std::runtime_error("Projection name is missing");
+  if (!is.good() || proj_name == "{")
+    throw std::runtime_error("Projection name is missing");
 
   std::string token;
   is >> token;
-  if (token != "{") throw std::runtime_error("The projection specification must start with a {");
+  if (token != "{")
+    throw std::runtime_error("The projection specification must start with a {");
 
   // The projection info
 
@@ -69,7 +71,8 @@ void ProjectionParser::parse(std::istream& is,
   while (is.good())
   {
     is >> token;
-    if (!is.good()) break;
+    if (!is.good())
+      break;
 
     if (token == "}")
       break;
@@ -157,7 +160,8 @@ void ProjectionParser::parse(std::istream& is,
 
   bool got_corners = (got_bottomleft && got_topright);
 
-  if (!got_type) throw std::runtime_error(error_prefix + " must specify projection type");
+  if (!got_type)
+    throw std::runtime_error(error_prefix + " must specify projection type");
 
   if ((got_bottomleft && !got_topright) || (!got_bottomleft && got_topright))
     throw std::runtime_error(error_prefix + " should have both bottomleft and topright");
@@ -186,11 +190,13 @@ void ProjectionParser::parse(std::istream& is,
   if (proj_type == "latlon" || proj_type == "ykj" || proj_type == "mercator" ||
       proj_type == "equidist")
   {
-    if (got_true_latitude) throw std::runtime_error(error_prefix + " does not need a truelatitude");
+    if (got_true_latitude)
+      throw std::runtime_error(error_prefix + " does not need a truelatitude");
   }
   else
   {
-    if (!got_true_latitude) throw std::runtime_error(error_prefix + " requires a truelatitude");
+    if (!got_true_latitude)
+      throw std::runtime_error(error_prefix + " requires a truelatitude");
   }
 
   theStore.add(proj_name, projection);

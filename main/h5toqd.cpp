@@ -13,14 +13,12 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/classification.hpp>
-#include <macgyver/DateTime.h>
 #include <boost/filesystem/operations.hpp>
 #include <boost/lexical_cast.hpp>
-#include <optional>
 #include <boost/program_options.hpp>
-#include <memory>
 #include <fmt/format.h>
 #include <gis/ProjInfo.h>
+#include <macgyver/DateTime.h>
 #include <macgyver/StringConversion.h>
 #include <macgyver/TimeParser.h>
 #include <newbase/NFmiAreaFactory.h>
@@ -36,7 +34,9 @@
 #include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiVPlaceDescriptor.h>
 #include <iostream>
+#include <memory>
 #include <numeric>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -433,8 +433,8 @@ T get_attribute(const hid_t &hid,
 // ----------------------------------------------------------------------
 
 std::optional<double> get_optional_double(const hid_t &hid,
-                                            std::string path,
-                                            const std::string &name)
+                                          std::string path,
+                                          const std::string &name)
 {
   try
   {
@@ -453,9 +453,9 @@ std::optional<double> get_optional_double(const hid_t &hid,
 // ----------------------------------------------------------------------
 
 std::optional<double> get_optional_double(const hid_t &hid,
-                                            std::string parent_path,
-                                            const std::string &group_name,
-                                            const std::string &attribute_name)
+                                          std::string parent_path,
+                                          const std::string &group_name,
+                                          const std::string &attribute_name)
 {
   try
   {

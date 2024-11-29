@@ -22,8 +22,8 @@
 #include <smarttools/NFmiAviationStationInfoSystem.h>
 #include <smarttools/NFmiSoundingFunctions.h>
 
-#include <fstream>
 #include <boost/algorithm/string.hpp>
+#include <fstream>
 
 using namespace std;
 
@@ -48,12 +48,15 @@ static T GetValue(const std::string &theValueStr,
   string nilStr("nil");
 
   // Tarkistuksia että haettu ali stringi pysyy annetun stringin sisällä
-  if (startPos >= theValueStr.size()) return static_cast<T>(kFloatMissing);
-  if (endPos >= theValueStr.size()) return static_cast<T>(kFloatMissing);
+  if (startPos >= theValueStr.size())
+    return static_cast<T>(kFloatMissing);
+  if (endPos >= theValueStr.size())
+    return static_cast<T>(kFloatMissing);
 
   std::string tmpStr(theValueStr.begin() + startPos, theValueStr.begin() + endPos + 1);
   NFmiStringTools::LowerCase(tmpStr);
-  if (tmpStr.find(nilStr) != string::npos) throw ExceptionSynopEndOk(1);
+  if (tmpStr.find(nilStr) != string::npos)
+    throw ExceptionSynopEndOk(1);
   string missingString1("/");
   string missingString2("x");
   if (endPos - startPos + 1 == 2)
@@ -427,7 +430,8 @@ class NFmiSynopCode
         if (currentSynopField.size() == 5 && currentSynopField[0] == '0')
         {
           float dd = ::GetValue<float>(currentSynopField, 1, 2, theSynopStr);
-          if (dd != kFloatMissing) itsWD = dd * 10.f;
+          if (dd != kFloatMissing)
+            itsWD = dd * 10.f;
           float ff = ::GetValue<float>(currentSynopField, 3, 4, theSynopStr);
 
           // if speed is 99, there is an extra 00fff group coming up
@@ -502,9 +506,11 @@ class NFmiSynopCode
         if (currentSynopField.size() == 5 && currentSynopField[0] == '5')
         {  // puretaan 5appp-kenttä
           float a = ::GetValue<float>(currentSynopField, 1, 1, theSynopStr);
-          if (a != kFloatMissing) itsPressureTendency = a;
+          if (a != kFloatMissing)
+            itsPressureTendency = a;
           float ppp = ::GetValue<float>(currentSynopField, 2, 4, theSynopStr);
-          if (ppp != kFloatMissing) itsPressureChange = ppp / 10.f;
+          if (ppp != kFloatMissing)
+            itsPressureChange = ppp / 10.f;
 
           // luetaan lopuksi seuraava kenttä
           commentString = "next trying to read 6RRRt-field";
@@ -631,7 +637,8 @@ class NFmiSynopCode
                                     " instead");
 
       NFmiStringTools::LowerCase(iihVV_Str);
-      if (iihVV_Str == string("nil")) throw ExceptionSynopEndIgnoreMessage();
+      if (iihVV_Str == string("nil"))
+        throw ExceptionSynopEndIgnoreMessage();
       //		double iR = ::GetValue<double>(iihVV_Str, 0, 0);
       //		double ix = ::GetValue<double>(iihVV_Str, 1, 1);
       itsCloudBaseHeight = ::GetValue<float>(iihVV_Str, 2, 2, theSynopStr);
@@ -659,7 +666,8 @@ class NFmiSynopCode
 
       itsN = ::GetValue<float>(Nddff_Str, 0, 0, theSynopStr);
       float dd = ::GetValue<float>(Nddff_Str, 1, 2, theSynopStr);
-      if (dd != kFloatMissing) itsWD = dd * 10.f;
+      if (dd != kFloatMissing)
+        itsWD = dd * 10.f;
       float ff = ::GetValue<float>(Nddff_Str, 3, 4, theSynopStr);
 
       // if speed is 99, there is an extra 00fff group coming up
@@ -749,9 +757,11 @@ class NFmiSynopCode
       if (currentSynopField.size() == 5 && currentSynopField[0] == '5')
       {  // puretaan 5appp-kenttä
         float a = ::GetValue<float>(currentSynopField, 1, 1, theSynopStr);
-        if (a != kFloatMissing) itsPressureTendency = a;
+        if (a != kFloatMissing)
+          itsPressureTendency = a;
         float ppp = ::GetValue<float>(currentSynopField, 2, 4, theSynopStr);
-        if (ppp != kFloatMissing) itsPressureChange = ppp / 10.f;
+        if (ppp != kFloatMissing)
+          itsPressureChange = ppp / 10.f;
 
         // luetaan lopuksi seuraava kenttä
         commentString = "next trying to read 6RRRt-field";
@@ -872,13 +882,15 @@ class NFmiSynopCode
           {
             // We'll use 910ff if it is available
             itsGust = ::GetValue<float>(currentSynopField, 3, 4, theSynopStr);
-            if (itsGust != kFloatMissing && fWindSpeedInKnots) itsGust = 1852 * itsGust / 3600.f;
+            if (itsGust != kFloatMissing && fWindSpeedInKnots)
+              itsGust = 1852 * itsGust / 3600.f;
           }
           else if (prefix == "911" && currentSynopField.size() == 5)
           {
             // We prefer 911ff over 910ff
             itsGust = ::GetValue<float>(currentSynopField, 3, 4, theSynopStr);
-            if (itsGust != kFloatMissing && fWindSpeedInKnots) itsGust = 1852 * itsGust / 3600.f;
+            if (itsGust != kFloatMissing && fWindSpeedInKnots)
+              itsGust = 1852 * itsGust / 3600.f;
           }
           ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
         }
@@ -1039,7 +1051,8 @@ static NFmiLocationBag MakeLocationBag(std::set<NFmiStation> &theStations, bool 
       // sijainnit, tässä pitää tehdä sijainteihin pienet erot
       ind++;
       station.SetLongitude(station.GetLongitude() + ind);
-      if (fDoShipMessages) station.SetIdent(shipMessageStationId++);
+      if (fDoShipMessages)
+        station.SetIdent(shipMessageStationId++);
     }
     else if (fDoShipMessages && index == 0)
       station.SetIdent(
@@ -1223,11 +1236,14 @@ static NFmiMetTime GetTimeFromBuoyHeader(const string &theTimeStr, const string 
 
 static void FillMissingHumidityValues(NFmiFastQueryInfo &theInfo)
 {
-  if (theInfo.Param(kFmiTemperature) == false) return;
+  if (theInfo.Param(kFmiTemperature) == false)
+    return;
   unsigned long T_ind = theInfo.ParamIndex();
-  if (theInfo.Param(kFmiDewPoint) == false) return;
+  if (theInfo.Param(kFmiDewPoint) == false)
+    return;
   unsigned long Td_ind = theInfo.ParamIndex();
-  if (theInfo.Param(kFmiHumidity) == false) return;
+  if (theInfo.Param(kFmiHumidity) == false)
+    return;
   unsigned long RH_ind = theInfo.ParamIndex();
   float T = kFloatMissing;
   float Td = kFloatMissing;
@@ -1298,7 +1314,8 @@ static void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
   bool doNormalTime = fDoBuoyMessages || !fUsePossibleSynopTime;
   stringstream ssin(theUsedSynopBlock);
   string shipName;
-  if (fDoShipMessages || fDoBuoyMessages) ssin >> shipName;  // laivan/poijun nimi/koodi
+  if (fDoShipMessages || fDoBuoyMessages)
+    ssin >> shipName;  // laivan/poijun nimi/koodi
   string dateStr;
   if (fDoBuoyMessages)
     ssin >> dateStr;  // YYMMJ  (YY päivä, MM on kuukausi ja J on vuosi (2007 = 7))
@@ -1340,7 +1357,8 @@ static void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
     }
   }
   bool windSpeedInKnots = true;
-  if (iw == 0 || iw == 1) windSpeedInKnots = false;
+  if (iw == 0 || iw == 1)
+    windSpeedInKnots = false;
 
   // timeStrin sana pitää vielä skipata alusta
   size_t timeStrPos = theUsedSynopBlock.find(timeStr);
@@ -1365,7 +1383,8 @@ static void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
       string tmpStr = codeParcels[i];
       tmpStr = ::TakeAwayKnownErrorWordFromStart(tmpStr);
       tmpStr = ::TrimFromExtraSpaces(tmpStr);
-      if (tmpStr.empty()) continue;
+      if (tmpStr.empty())
+        continue;
       int wordSkipCount = 0;
       if ((fDoShipMessages || fDoBuoyMessages) && i > 0)
       {
@@ -1414,7 +1433,8 @@ static void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
         synopCode.Decode(
             tmpStr, fDoShipMessages, windSpeedInKnots, wordSkipCount, theUnknownWmoIdsInOut);
       synopCode.itsTime = aTime;  // tässä blokissa on synopit aina samassa ajassa
-      if (fDoShipMessages || fDoBuoyMessages) synopCode.itsStation.SetName(shipName);
+      if (fDoShipMessages || fDoBuoyMessages)
+        synopCode.itsStation.SetName(shipName);
       if (fDoBuoyMessages)
         synopCode.itsStation.SetIdent(NFmiStringTools::Convert<unsigned long>(shipName));
       decodeCount++;
@@ -1423,17 +1443,20 @@ static void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
         NFmiMetTime aTime(synopCode.Time());
         aTime.SetTimeStep(180);
 
-        // Adjust invalid timestamp (e.g. 3023iw (Sep) stepped to 3100 (Sep)) to 1'st day of next month
+        // Adjust invalid timestamp (e.g. 3023iw (Sep) stepped to 3100 (Sep)) to 1'st day of next
+        // month
         //
-        try {
+        try
+        {
           Fmi::DateTime pt = aTime.PosixTime();
-          (void) pt;
+          (void)pt;
         }
         catch (...)
         {
           if (aTime.GetMonth() < 12)
             aTime.SetMonth(aTime.GetMonth() + 1);
-          else {
+          else
+          {
             aTime.SetYear(aTime.GetYear() + 1);
             aTime.SetMonth(1);
           }
@@ -1448,7 +1471,8 @@ static void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
       bool station_is_valid = (synopCode.Station().GetLongitude() != kFloatMissing &&
                                synopCode.Station().GetLatitude() != kFloatMissing);
 
-      if (station_is_valid) theSynopCodeVec.push_back(synopCode);
+      if (station_is_valid)
+        theSynopCodeVec.push_back(synopCode);
     }
     catch (ExceptionSynopEndIgnoreMessage & /* e */)
     {
@@ -1458,7 +1482,8 @@ static void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
     catch (std::exception &e)
     {
       errorCount++;
-      if (verbose) cerr << e.what() << endl;
+      if (verbose)
+        cerr << e.what() << endl;
     }
     catch (...)
     {
@@ -1471,7 +1496,8 @@ static bool StringContainsOnlyDigits(const std::string &str)
 {
   for (size_t i = 0; i < str.size(); i++)
   {
-    if (str[i] < '0' || str[i] > '9') return false;
+    if (str[i] < '0' || str[i] > '9')
+      return false;
   }
   return true;
 }
@@ -1593,7 +1619,8 @@ void FillSynopCodeDataVectorFromSYNOPStr(const NFmiMetTime &referenceTime,
 {
   // AAXX = maa havainto ja BBXX = poiju/laiva, jotka skipataan tässä vaiheessa
   string codeStr = fDoShipMessages ? "BBXX" : "AAXX";
-  if (fDoBuoyMessages) codeStr = "ZZYY";
+  if (fDoBuoyMessages)
+    codeStr = "ZZYY";
 
   std::vector<std::string> aaCodeBlocks = NFmiStringTools::Split(theSYNOPStr, codeStr);
 
@@ -1605,7 +1632,8 @@ void FillSynopCodeDataVectorFromSYNOPStr(const NFmiMetTime &referenceTime,
     aaCodeBlocks = NFmiStringTools::Split(theSYNOPStr, codeStr);
 
     // Still no result, give up
-    if (aaCodeBlocks.size() <= 1) return;
+    if (aaCodeBlocks.size() <= 1)
+      return;
   }
 
   NFmiMetTime possibleSynoptime = NFmiMetTime::gMissingTime;
@@ -1678,7 +1706,8 @@ static void FillParamValues(NFmiFastQueryInfo &theInfo, FmiParameterName parId, 
 {
   if (value != kFloatMissing)
   {
-    if (theInfo.Param(parId)) theInfo.FloatValue(value);
+    if (theInfo.Param(parId))
+      theInfo.FloatValue(value);
   }
 }
 
@@ -1840,10 +1869,12 @@ void Domain(int argc, const char *argv[])
   }
 
   bool verbose = false;
-  if (cmdline.isOption('v')) verbose = true;
+  if (cmdline.isOption('v'))
+    verbose = true;
 
   bool useWmoFlatTableFormat = false;
-  if (cmdline.isOption('f')) useWmoFlatTableFormat = true;
+  if (cmdline.isOption('f'))
+    useWmoFlatTableFormat = true;
 
 #ifdef UNIX
   std::string stationFile = "/usr/share/smartmet/stations.csv";
@@ -1853,7 +1884,8 @@ void Domain(int argc, const char *argv[])
 
   NFmiAviationStationInfoSystem aviStationInfoSystem(true, verbose);
 
-  if (cmdline.isOption('s')) stationFile = cmdline.OptionValue('s');
+  if (cmdline.isOption('s'))
+    stationFile = cmdline.OptionValue('s');
 
   if (useWmoFlatTableFormat)
     aviStationInfoSystem.InitFromWmoFlatTable(stationFile);
@@ -1862,20 +1894,24 @@ void Domain(int argc, const char *argv[])
 
   // Reference time = wall clock by default
   NFmiMetTime referenceTime;
-  if (cmdline.isOption('r')) referenceTime = Fmi::TimeParser::parse(cmdline.OptionValue('r'));
+  if (cmdline.isOption('r'))
+    referenceTime = Fmi::TimeParser::parse(cmdline.OptionValue('r'));
 
   bool doShipMessages = false;
-  if (cmdline.isOption('S')) doShipMessages = true;
+  if (cmdline.isOption('S'))
+    doShipMessages = true;
 
   bool doBuoyMessages = false;
-  if (cmdline.isOption('B')) doBuoyMessages = true;
+  if (cmdline.isOption('B'))
+    doBuoyMessages = true;
 
   if (doBuoyMessages && doShipMessages)
     throw runtime_error("Error with S- and B-options, don't use them at the same time.");
 
   NFmiProducer wantedProducer =
       doShipMessages ? NFmiProducer(kFmiSHIP, "SHIP") : NFmiProducer(kFmiSYNOP, "SYNOP");
-  if (doBuoyMessages) wantedProducer = NFmiProducer(kFmiBUOY, "BUOY");
+  if (doBuoyMessages)
+    wantedProducer = NFmiProducer(kFmiBUOY, "BUOY");
   if (cmdline.isOption('p'))
   {
     std::vector<std::string> strVector = NFmiStringTools::Split(cmdline.OptionValue('p'), ",");
@@ -1888,7 +1924,8 @@ void Domain(int argc, const char *argv[])
   }
 
   bool roundTimesToNearestSynopticTimes = false;
-  if (cmdline.isOption('t')) roundTimesToNearestSynopticTimes = true;
+  if (cmdline.isOption('t'))
+    roundTimesToNearestSynopticTimes = true;
 
   //	1. Lue n kpl filefiltereitä listaan
   vector<string> fileFilterList;
@@ -1932,7 +1969,8 @@ void Domain(int argc, const char *argv[])
              << "', continuing to next file..." << endl;
     }
   }
-  if (foundAnyFiles == false) throw runtime_error("Error: Didn't find any files to read.");
+  if (foundAnyFiles == false)
+    throw runtime_error("Error: Didn't find any files to read.");
   if (synopCodeVector.empty())
     throw runtime_error("Error: Couldn't decode any synops from any files.");
   if (verbose && unknownWmoIdsInOut.size() > 0)

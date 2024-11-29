@@ -34,8 +34,8 @@
 #ifndef FMI_RADCONTOUR_PROJECTION_H
 #define FMI_RADCONTOUR_PROJECTION_H
 
-#include <memory>
 #include <newbase/NFmiArea.h>
+#include <memory>
 
 #include <string>
 

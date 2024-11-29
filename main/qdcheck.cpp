@@ -111,9 +111,11 @@ bool ParseOptions(int argc, char *argv[], Options &options)
   if (opt.count("config") == 0)
     throw std::runtime_error("Expecting configuration file as parameter 1");
 
-  if (opt.count("infile") == 0) throw std::runtime_error("Expecting input file as parameter 2");
+  if (opt.count("infile") == 0)
+    throw std::runtime_error("Expecting input file as parameter 2");
 
-  if (opt.count("outfile") == 0) throw std::runtime_error("Expecting output file as parameter 3");
+  if (opt.count("outfile") == 0)
+    throw std::runtime_error("Expecting output file as parameter 3");
 
   if (!fs::exists(options.config))
     throw std::runtime_error("Config file '" + options.config + "' does not exist");
@@ -213,7 +215,8 @@ bool CheckErrorLevelAndProduceStatusTextAndUpdateErrorCode(const std::vector<flo
       break;
     }
   }
-  if (i >= size) theText = "Ok.";
+  if (i >= size)
+    theText = "Ok.";
 
   return true;
 }
@@ -271,8 +274,10 @@ bool IsDewPointOK(NFmiFastQueryInfo &info)
 {
   info.First();
 
-  if (!info.Param(kFmiTemperature)) return true;
-  if (!info.Param(kFmiDewPoint)) return true;
+  if (!info.Param(kFmiTemperature))
+    return true;
+  if (!info.Param(kFmiDewPoint))
+    return true;
 
   for (info.ResetLocation(); info.NextLocation();)
     for (info.ResetLevel(); info.NextLevel();)
@@ -282,7 +287,8 @@ bool IsDewPointOK(NFmiFastQueryInfo &info)
         float t2m = info.FloatValue();
         info.Param(kFmiDewPoint);
         float tdew = info.FloatValue();
-        if (t2m != kFloatMissing && tdew != kFloatMissing && tdew > t2m) return false;
+        if (t2m != kFloatMissing && tdew != kFloatMissing && tdew > t2m)
+          return false;
       }
   return true;
 }
@@ -295,7 +301,8 @@ bool IsDewPointOK(NFmiFastQueryInfo &info)
 
 int run(int argc, char *argv[])
 {
-  if (!ParseOptions(argc, argv, options)) return 0;
+  if (!ParseOptions(argc, argv, options))
+    return 0;
 
   NFmiOhjausData ohjausData;
   NFmiString ohjausfileName;

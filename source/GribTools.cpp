@@ -28,7 +28,8 @@ void DUMP(grib_handle *grib, const char *ns)
   else
     kiter = grib_keys_iterator_new(grib, GRIB_KEYS_ITERATOR_ALL_KEYS, const_cast<char *>(ns));
 
-  if (!kiter) throw std::runtime_error("Failed to get iterator for grib keys");
+  if (!kiter)
+    throw std::runtime_error("Failed to get iterator for grib keys");
 
   const int MAX_STRING_LEN = 1024;
   char buffer[MAX_STRING_LEN];
@@ -182,7 +183,10 @@ ParamChangeItem::ParamChangeItem(const ParamChangeItem &theOther)
 {
 }
 
-ParamChangeItem::~ParamChangeItem() { delete itsLevel; }
+ParamChangeItem::~ParamChangeItem()
+{
+  delete itsLevel;
+}
 ParamChangeItem &ParamChangeItem::operator=(const ParamChangeItem &theOther)
 {
   if (this != &theOther)
@@ -209,7 +213,8 @@ void ParamChangeItem::Reset()
                              kLinearly);  // laitetaan lineaarinen interpolointi päälle
   itsConversionBase = 0;
   itsConversionScale = 1.f;
-  if (itsLevel) delete itsLevel;
+  if (itsLevel)
+    delete itsLevel;
   itsLevel = 0;
 }
 
@@ -230,7 +235,8 @@ bool GetParamChangeItemFromString(const std::string &buffer,
                                   ParamChangeItem &theParamChangeItemOut)
 {
   std::vector<std::string> strVector = NFmiStringTools::Split(buffer, ";");
-  if (strVector.size() <= 1) return false;  // skipataan tyhjät rivit
+  if (strVector.size() <= 1)
+    return false;  // skipataan tyhjät rivit
   if (strVector.size() < 3)
   {
     std::string errStr(

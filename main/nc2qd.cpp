@@ -51,7 +51,8 @@ static void Domain(int argc, const char *argv[])
   std::string qdFileOut = cmdLine.Parameter(2);
 
   NFmiProducer producer(1201, "ncprod");
-  if (cmdLine.isOption('p')) producer = ::GetProducer(cmdLine.OptionValue('p'));
+  if (cmdLine.isOption('p'))
+    producer = ::GetProducer(cmdLine.OptionValue('p'));
 
   std::cerr << "starting the " << argv[0] << " execution" << std::endl;
 
@@ -60,7 +61,8 @@ static void Domain(int argc, const char *argv[])
   FmiNetCdfQueryData nc2QdFilter;
   nc2QdFilter.Producer(producer);
   std::vector<NFmiQueryData *> qDatas = nc2QdFilter.CreateQueryDatas(ncFileIn);
-  if (qDatas.size() == 0) throw std::runtime_error(nc2QdFilter.ErrorMessage());
+  if (qDatas.size() == 0)
+    throw std::runtime_error(nc2QdFilter.ErrorMessage());
   debugTimer.StopTimer();
 
   std::string debugStr("Making conversion from ");

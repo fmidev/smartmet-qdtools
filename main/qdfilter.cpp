@@ -93,8 +93,8 @@
 #include <newbase/NFmiTimeList.h>
 
 #include <boost/lexical_cast.hpp>
-#include <memory>
 #include <deque>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -197,7 +197,8 @@ void usage()
 
 NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo& theQ, const vector<string>& theParams)
 {
-  if (theParams.empty()) return theQ.ParamDescriptor();
+  if (theParams.empty())
+    return theQ.ParamDescriptor();
 
   NFmiParamBag pbag;
 
@@ -207,7 +208,8 @@ NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo& theQ, const vector<st
     FmiParameterName paramnum = FmiParameterName(converter.ToEnum(*it));
     if (paramnum == kFmiBadParameter)
       throw runtime_error("Parameter " + *it + " is not known to newbase");
-    if (!theQ.Param(paramnum)) throw runtime_error("Source data does not contain parameter " + *it);
+    if (!theQ.Param(paramnum))
+      throw runtime_error("Source data does not contain parameter " + *it);
     pbag.Add(theQ.Param());
   }
 
@@ -298,8 +300,10 @@ NFmiTimeDescriptor MakeTimeDescriptor(NFmiFastQueryInfo& theQ,
 
     if (has_timestep)
     {
-      if (t.IsLessThan(starttime)) continue;
-      if (endtime.IsLessThan(t)) continue;
+      if (t.IsLessThan(starttime))
+        continue;
+      if (endtime.IsLessThan(t))
+        continue;
     }
 
     if (!ok && has_timestep)
@@ -328,7 +332,8 @@ NFmiTimeDescriptor MakeTimeDescriptor(NFmiFastQueryInfo& theQ,
       ok = (pos != utc_hours.end());
     }
 
-    if (!ok) continue;
+    if (!ok)
+      continue;
 
     // Cannot accept a time for which the filter would go out of bounds
 
@@ -340,7 +345,8 @@ NFmiTimeDescriptor MakeTimeDescriptor(NFmiFastQueryInfo& theQ,
     ok = theQ.IsInside(t1);
     ok &= theQ.IsInside(t2);
 
-    if (!ok) continue;
+    if (!ok)
+      continue;
 
     datatimes.Add(new NFmiMetTime(t));
   }
@@ -357,13 +363,20 @@ NFmiTimeDescriptor MakeTimeDescriptor(NFmiFastQueryInfo& theQ,
 
 std::shared_ptr<NFmiDataModifier> create_modifier(const string& theName)
 {
-  if (theName == "mean") return std::shared_ptr<NFmiDataModifier>(new NFmiDataModifierAvg);
-  if (theName == "meanabs") return std::shared_ptr<NFmiDataModifier>(new NFmiDataModifierAvgAbs);
-  if (theName == "max") return std::shared_ptr<NFmiDataModifier>(new NFmiDataModifierMax);
-  if (theName == "min") return std::shared_ptr<NFmiDataModifier>(new NFmiDataModifierMin);
-  if (theName == "sum") return std::shared_ptr<NFmiDataModifier>(new NFmiDataModifierSum);
-  if (theName == "change") return std::shared_ptr<NFmiDataModifier>(new NFmiDataModifierChange);
-  if (theName == "median") return std::shared_ptr<NFmiDataModifier>(new NFmiDataModifierMedian);
+  if (theName == "mean")
+    return std::shared_ptr<NFmiDataModifier>(new NFmiDataModifierAvg);
+  if (theName == "meanabs")
+    return std::shared_ptr<NFmiDataModifier>(new NFmiDataModifierAvgAbs);
+  if (theName == "max")
+    return std::shared_ptr<NFmiDataModifier>(new NFmiDataModifierMax);
+  if (theName == "min")
+    return std::shared_ptr<NFmiDataModifier>(new NFmiDataModifierMin);
+  if (theName == "sum")
+    return std::shared_ptr<NFmiDataModifier>(new NFmiDataModifierSum);
+  if (theName == "change")
+    return std::shared_ptr<NFmiDataModifier>(new NFmiDataModifierChange);
+  if (theName == "median")
+    return std::shared_ptr<NFmiDataModifier>(new NFmiDataModifierMedian);
   if (theName == "maxmean")
     return std::shared_ptr<NFmiDataModifier>(new NFmiDataModifierMaxMean(0.5));
   if (theName == "sdev")
@@ -401,7 +414,8 @@ int run(int argc, const char* argv[])
   // Read command line arguments
 
   NFmiCmdLine cmdline(argc, argv, "hQap!t!T!i!I!o!");
-  if (cmdline.Status().IsError()) throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
+  if (cmdline.Status().IsError())
+    throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
 
   // help option must be checked before checking the number
   // of command line arguments
@@ -423,13 +437,16 @@ int run(int argc, const char* argv[])
   opt_function = cmdline.Parameter(3);
   opt_infile = cmdline.Parameter(4);
 
-  if (opt_infile.empty()) throw runtime_error("Input querydata filename cannot be empty");
+  if (opt_infile.empty())
+    throw runtime_error("Input querydata filename cannot be empty");
 
   // extract command line options
 
-  if (cmdline.isOption('Q')) opt_multifile = !opt_multifile;
+  if (cmdline.isOption('Q'))
+    opt_multifile = !opt_multifile;
 
-  if (cmdline.isOption('p')) opt_parameters = NFmiStringTools::Split(cmdline.OptionValue('p'));
+  if (cmdline.isOption('p'))
+    opt_parameters = NFmiStringTools::Split(cmdline.OptionValue('p'));
 
   if (cmdline.isOption('t') && cmdline.isOption('T'))
     throw runtime_error("Cannot use -t and -T simultaneously");
@@ -460,9 +477,11 @@ int run(int argc, const char* argv[])
     opt_utc_hours = NFmiStringTools::Split<vector<int> >(cmdline.OptionValue('I'));
   }
 
-  if (cmdline.isOption('o')) opt_outfile = cmdline.OptionValue('o');
+  if (cmdline.isOption('o'))
+    opt_outfile = cmdline.OptionValue('o');
 
-  if (cmdline.isOption('a')) opt_lasttime = true;
+  if (cmdline.isOption('a'))
+    opt_lasttime = true;
 
   if (opt_lasttime && (cmdline.isOption('t') || cmdline.isOption('T') || cmdline.isOption('i') ||
                        cmdline.isOption('I')))
@@ -503,15 +522,18 @@ int run(int argc, const char* argv[])
   std::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
   NFmiFastQueryInfo dstinfo(data.get());
 
-  if (data.get() == 0) throw runtime_error("Could not allocate memory for result data");
+  if (data.get() == 0)
+    throw runtime_error("Could not allocate memory for result data");
 
   // Check that the output does not contain composite parameters
 
   for (dstinfo.ResetParam(); dstinfo.NextParam();)
   {
     FmiParameterName p = FmiParameterName(dstinfo.Param().GetParam()->GetIdent());
-    if (p == kFmiWeatherAndCloudiness) throw runtime_error("Cannot filter WeatherAndCloudiness");
-    if (p == kFmiTotalWindMS) throw runtime_error("Cannot filter TotalWindMS");
+    if (p == kFmiWeatherAndCloudiness)
+      throw runtime_error("Cannot filter WeatherAndCloudiness");
+    if (p == kFmiTotalWindMS)
+      throw runtime_error("Cannot filter TotalWindMS");
   }
 
   // If -a is given, we make sure the start offset is within the data range
@@ -523,7 +545,8 @@ int run(int argc, const char* argv[])
     srcinfo->FirstTime();
     NFmiTime t1 = srcinfo->ValidTime();
     int minutes = t2.DifferenceInMinutes(t1);
-    if (opt_startoffset < -minutes) opt_startoffset = -minutes;
+    if (opt_startoffset < -minutes)
+      opt_startoffset = -minutes;
   }
 
   // set the data modifier
@@ -539,7 +562,8 @@ int run(int argc, const char* argv[])
 
     for (dstinfo.ResetParam(); dstinfo.NextParam();)
     {
-      if (!srcinfo->Param(dstinfo.Param())) throw runtime_error("Internal error in parameter loop");
+      if (!srcinfo->Param(dstinfo.Param()))
+        throw runtime_error("Internal error in parameter loop");
 
       // We assume levels and locations are identical
 

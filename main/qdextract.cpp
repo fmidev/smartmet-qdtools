@@ -227,7 +227,8 @@ NFmiLocationBag ReadLocationsFromFile(const std::string& locationfile, NFmiFastQ
 
 int run(int argc, char* argv[])
 {
-  if (!parse_options(argc, argv)) return 0;
+  if (!parse_options(argc, argv))
+    return 0;
 
   // Read input data
 
@@ -250,7 +251,8 @@ int run(int argc, char* argv[])
  */
 // ----------------------------------------------------------------------
 
-int main(int argc, char* argv[]) try
+int main(int argc, char* argv[])
+try
 {
   return run(argc, argv);
 }

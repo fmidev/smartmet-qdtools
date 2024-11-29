@@ -12,7 +12,6 @@
 #include "ProjectionParser.h"
 #include "ProjectionStore.h"
 
-#include <memory>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileSystem.h>
@@ -20,6 +19,7 @@
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
 #include <newbase/NFmiStringTools.h>
+#include <memory>
 
 #include <fstream>
 
@@ -89,7 +89,8 @@ static void ReadPgmHeader(std::istream &input,
         else
         {
           FmiLevelType levType = kFmiHeight;
-          if (splitStrs[0] == "hpa") levType = kFmiPressureLevel;
+          if (splitStrs[0] == "hpa")
+            levType = kFmiPressureLevel;
 
           std::string levelName = splitStrs[2];
           levelName = NFmiStringTools::Trim(levelName, '"');
@@ -127,7 +128,8 @@ static void ReadPgmHeader(std::istream &input,
         theReportStream << "Warning: Unrecognized header line: '" << token << line << "'" << endl;
     }
   }
-  if (input.bad()) throw std::runtime_error("Header stopped before complete");
+  if (input.bad())
+    throw std::runtime_error("Header stopped before complete");
 }
 
 // ----------------------------------------------------------------------
@@ -234,13 +236,15 @@ static bool FillQueryData(NFmiQueryData &theData,
                  thePgmHeaderInfo.scale,
                  thePgmHeaderInfo.base))
   {
-    if (theOptions.verbose) theReportStream << "Failed to read " << theFileName << endl;
+    if (theOptions.verbose)
+      theReportStream << "Failed to read " << theFileName << endl;
     return false;
   }
 
   if (!info.Grid2Info(grid))
   {
-    if (theOptions.verbose) theReportStream << "Failed to make grid from " << theFileName << endl;
+    if (theOptions.verbose)
+      theReportStream << "Failed to make grid from " << theFileName << endl;
     return false;
   }
 
@@ -257,7 +261,8 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
   // Skip the file if it has the wrong suffix
   if (NFmiStringTools::Suffix(theFileName) != "pgm")
   {
-    if (theOptions.verbose) theReportStream << "Skipping non .pgm file " << theFileName << endl;
+    if (theOptions.verbose)
+      theReportStream << "Skipping non .pgm file " << theFileName << endl;
     return 0;
   }
 
@@ -266,7 +271,8 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
   // we do not consider it an error.
   if (!NFmiFileSystem::FileReadable(theFileName))
   {
-    if (theOptions.verbose) theReportStream << "Skipping nonexistent " << theFileName << endl;
+    if (theOptions.verbose)
+      theReportStream << "Skipping nonexistent " << theFileName << endl;
     return 0;
   }
 
@@ -287,7 +293,8 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
   std::ifstream infile(theFileName.c_str(), ios::in | ios::binary);
   if (!infile)
   {
-    if (theOptions.verbose) theReportStream << "Could not open " << theFileName << endl;
+    if (theOptions.verbose)
+      theReportStream << "Could not open " << theFileName << endl;
     return 0;
   }
 
@@ -298,7 +305,8 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
   if (line != "P5")
   {
     infile.close();
-    if (theOptions.verbose) theReportStream << "Skipping non-pgm file " << theFileName << endl;
+    if (theOptions.verbose)
+      theReportStream << "Skipping non-pgm file " << theFileName << endl;
     return 0;
   }
 
@@ -347,7 +355,8 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
   if (width <= 0 || height <= 0)
   {
     infile.close();
-    if (theOptions.verbose) theReportStream << "Nonnegative size fields in " << theFileName << endl;
+    if (theOptions.verbose)
+      theReportStream << "Nonnegative size fields in " << theFileName << endl;
     return 0;
   }
 
@@ -378,7 +387,8 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
   // Must have parameter name
   if (pgmHeaderInfo.param.empty())
   {
-    if (theOptions.verbose) theReportStream << "Parameter missing from " << theFileName << endl;
+    if (theOptions.verbose)
+      theReportStream << "Parameter missing from " << theFileName << endl;
     return 0;
   }
 

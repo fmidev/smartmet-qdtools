@@ -25,7 +25,7 @@ BuildRequires: eccodes
 BuildRequires: eccodes-devel
 BuildRequires: fmt-devel >= %{smartmet_fmt_min}, fmt-devel < %{smartmet_fmt_max}
 BuildRequires: gcc-c++
-BuildRequires: gdal38-devel
+BuildRequires: gdal310-devel
 BuildRequires: hdf5-devel >= 1.8.12
 BuildRequires: jasper-devel
 BuildRequires: libbufr >= 3.2
@@ -55,7 +55,7 @@ Requires: %{smartmet_boost}-thread
 Requires: bzip2-libs
 Requires: eccodes
 Requires: fmt-libs >= %{smartmet_fmt_min}, fmt-libs < %{smartmet_fmt_max}
-Requires: gdal38-libs
+Requires: gdal310-libs
 Requires: glibc
 Requires: hdf5 >= 1.8.12
 Requires: jasper-libs >= 1.900.1

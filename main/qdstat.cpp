@@ -20,6 +20,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 
 #ifdef UNIX
 #include <sys/ioctl.h>
@@ -297,7 +298,7 @@ class Stats
   double itsSum;
   double itsMin;
   double itsMax;
-  std::map<double, std::size_t> itsCounts;
+  std::unordered_map<double, std::size_t> itsCounts;
 };
 
 Stats::Stats()
@@ -1006,6 +1007,12 @@ std::string Stats::report() const
   double mode = std::numeric_limits<double>::quiet_NaN();
   double median = std::numeric_limits<double>::quiet_NaN();
 
+  // Convert unordered to ordered for stats
+
+  std::map<double, std::size_t> counts;
+  for (const auto& value_count : itsCounts)
+    counts.insert(std::make_pair(value_count.first, value_count.second));
+
   if (itsValidCount > 0)
   {
     // Mean
@@ -1014,7 +1021,7 @@ std::string Stats::report() const
 
     // Mode
     std::size_t max_count = 0;
-    for (const auto& value_count : itsCounts)
+    for (const auto& value_count : counts)
       if (value_count.second > max_count)
       {
         max_count = value_count.second;
@@ -1023,13 +1030,13 @@ std::string Stats::report() const
 
     // Median
     std::size_t total_count = 0;
-    for (const auto& value_count : itsCounts)
+    for (const auto& value_count : counts)
       total_count += value_count.second;
 
     std::size_t median_count = total_count / 2;
 
     std::size_t partial_count = 0;
-    for (const auto& value_count : itsCounts)
+    for (const auto& value_count : counts)
     {
       median = value_count.first;
       partial_count += value_count.second;
@@ -1074,11 +1081,11 @@ std::string Stats::report() const
 
     const int max_parameter_values = 50;
 
-    if (itsCounts.size() < options.bins || itsCounts.size() < max_parameter_values)
+    if (counts.size() < options.bins || counts.size() < max_parameter_values)
     {
-      const int precision = estimate_precision(itsCounts);
+      const int precision = estimate_precision(counts);
 
-      for (const auto& value_count : itsCounts)
+      for (const auto& value_count : counts)
       {
         double value = value_count.first;
         std::size_t count = value_count.second;
@@ -1112,7 +1119,7 @@ std::string Stats::report() const
           break;
         double maxvalue = minvalue + tick;
         std::size_t count = 0;
-        for (const auto& value_count : itsCounts)
+        for (const auto& value_count : counts)
         {
           double value = value_count.first;
           // The max value must be counted into the last bin

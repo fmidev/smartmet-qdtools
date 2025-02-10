@@ -421,6 +421,8 @@ long GetUsedLevelType(grib_handle *theHandle)
     return 8;
   if (name == "seaBottom")
     return 9;
+  if (name == "mostUnstableParcel")
+    return 17;
   if (name == "isothermal")
     return 20;
   if (name == "isobaricInhPa")

@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 25.1.22
+Version: 25.2.18
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -208,6 +208,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Feb 18 2025 Andris Pavēnis <andris.pavenis@fmi.fi> 25.2.18-1.fmi
+- Update to gdal-3.10, geos-3.13 and proj-9.5
+
 * Wed Jan 22 2025 Mika Heiskanen <mika.heiskanen@fmi.fi> - 25.1.22-1.fmi
 - Added mostUnstableParcel level type to gribtoqd
 

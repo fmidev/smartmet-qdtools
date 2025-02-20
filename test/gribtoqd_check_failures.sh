@@ -21,7 +21,7 @@ for file in $(find results/gribtoqd -name '*.sqd.tmp'); do
     if ! test -d gribtoqd_results_update ; then
         mkdir gribtoqd_results_update;
     fi
-    out="gribtoqd_results_update/"$(basename $file | sed -e 's/\.sqd\.tmp$//')".$eccodes_version_minor.sqd.xz"
-    echo "*** processing $file"
+    out="gribtoqd_results_update/$(basename $file | perl -pe 's/(?:\.tmp)?(?:\.\d+)?\.sqd\..*$//').$eccodes_version_minor.sqd.xz"
+    echo "*** processing $file and writting $out"
     cat $file | xz -9vv >$out
 done

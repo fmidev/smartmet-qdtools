@@ -23,8 +23,11 @@ case $eccodes_version in
     2.37.*)
         version_suffixes="37 32"
         ;;
-    2.3[8-9].*|2.[4-9].*)
+    2.38.*)
         version_suffixes="38 37 32"
+        ;;
+    2.39.*|2.[4-9].*)
+        version_suffixes="39 38 37 32"
         ;;
 esac
 

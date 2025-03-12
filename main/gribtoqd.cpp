@@ -2375,7 +2375,7 @@ NFmiArea *GetGribArea(grib_handle *theHandle, GribFilterOptions &theGribFilterOp
   long ni, nj;
   if (!(GetGribLongValue(theHandle, "Nx", ni) && GetGribLongValue(theHandle, "Ny", nj)) &&
       !(GetGribLongValue(theHandle, "Ni", ni) && GetGribLongValue(theHandle, "Nj", nj)))
-    throw std::runtime_error(fmt::format(err, "grid size", proj_name));
+    throw std::runtime_error(fmt::format(fmt::runtime(err), "grid size", proj_name));
 
   if (proj_name == "rotated_ll" || proj_name == "rotated_gg")
   {
@@ -2384,13 +2384,13 @@ NFmiArea *GetGribArea(grib_handle *theHandle, GribFilterOptions &theGribFilterOp
         !GetGribDoubleValue(theHandle, "latitudeOfFirstGridPointInDegrees", lat1) ||
         !GetGribDoubleValue(theHandle, "longitudeOfLastGridPointInDegrees", lon2) ||
         !GetGribDoubleValue(theHandle, "latitudeOfLastGridPointInDegrees", lat2))
-      throw std::runtime_error(fmt::format(err, "latlon bounding box", proj_name));
+      throw std::runtime_error(fmt::format(fmt::runtime(err), "latlon bounding box", proj_name));
 
     double pole_lon, pole_lat, rotation;
     if (!GetGribDoubleValue(theHandle, "longitudeOfSouthernPoleInDegrees", pole_lon) ||
         !GetGribDoubleValue(theHandle, "latitudeOfSouthernPoleInDegrees", pole_lat) ||
         !GetGribDoubleValue(theHandle, "angleOfRotationInDegrees", rotation))
-      throw std::runtime_error(fmt::format(err, "rotation", proj_name));
+      throw std::runtime_error(fmt::format(fmt::runtime(err), "rotation", proj_name));
 
     // TODO
     if (rotation != 0)
@@ -2412,7 +2412,7 @@ NFmiArea *GetGribArea(grib_handle *theHandle, GribFilterOptions &theGribFilterOp
         !GetGribDoubleValue(theHandle, "latitudeOfFirstGridPointInDegrees", lat1) ||
         !GetGribDoubleValue(theHandle, "longitudeOfLastGridPointInDegrees", lon2) ||
         !GetGribDoubleValue(theHandle, "latitudeOfLastGridPointInDegrees", lat2))
-      throw std::runtime_error(fmt::format(err, "latlon bounding box", proj_name));
+      throw std::runtime_error(fmt::format(fmt::runtime(err), "latlon bounding box", proj_name));
 
     if (truncateDegrees)
     {
@@ -2437,18 +2437,18 @@ NFmiArea *GetGribArea(grib_handle *theHandle, GribFilterOptions &theGribFilterOp
 
     if (!GetGribDoubleValue(theHandle, "longitudeOfFirstGridPointInDegrees", lon1) ||
         !GetGribDoubleValue(theHandle, "latitudeOfFirstGridPointInDegrees", lat1))
-      throw std::runtime_error(fmt::format(err, "latlon corner", proj_name));
+      throw std::runtime_error(fmt::format(fmt::runtime(err), "latlon corner", proj_name));
 
     if (proj_name == "polar_stereographic" || proj_name == "lambert")
     {
       if (!GetGribDoubleValue(theHandle, "DxInMetres", dx) ||
           !GetGribDoubleValue(theHandle, "DyInMetres", dy))
-        throw std::runtime_error(fmt::format(err, "grid step size", proj_name));
+        throw std::runtime_error(fmt::format(fmt::runtime(err), "grid step size", proj_name));
     }
     else
     {
       if (!GetGribDoubleValue(theHandle, "Dx", dx) || !GetGribDoubleValue(theHandle, "Dy", dy))
-        throw std::runtime_error(fmt::format(err, "grid step size", proj_name));
+        throw std::runtime_error(fmt::format(fmt::runtime(err), "grid step size", proj_name));
       dx *= 1000;
       dy *= 1000;
     }

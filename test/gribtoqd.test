@@ -47,7 +47,7 @@ for f in data/grib/*.grib*; do
     fi
 
     if [[ $wgs84 == 1 ]]; then
-        search="$(for fn $search; do echo $fn.wgs84; done) $search"
+        search="$(for fn in $search; do echo $fn.wgs84; done) $search"
     fi
 
     resultfiles=

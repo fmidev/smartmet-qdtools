@@ -24,6 +24,7 @@ INCLUDES +=  \
 	-I$(includedir)/smartmet
 
 LIBS += $(PREFIX_LDFLAGS) \
+     $(EXTRA_LIBS) \
 	-lsmartmet-calculator \
 	-lsmartmet-smarttools \
 	-lsmartmet-newbase \
@@ -34,17 +35,20 @@ LIBS += $(PREFIX_LDFLAGS) \
 	-lboost_program_options \
 	-lboost_iostreams \
 	-lboost_thread \
-        -lboost_system \
+	-lboost_system \
 	$(REQUIRED_LIBS) \
-	-lmetar \
-	-ljasper \
-	-leccodes \
-	-lnetcdf_c++ -lnetcdf \
-	-lMXADataModel -lhdf5 \
-	-lbufr \
-	-lecbufr \
 	-lbz2 -ljpeg -lpng -lz -lrt \
 	-lpthread
+
+# Each part really needs only part of libraries used below.
+# Link them with only required
+EXTRA_LIBS :=
+bufrtoqd: EXTRA_LIBS += -lecbufr
+radartoqd: EXTRA_LIBS += -lecbufr -lbufr
+h5toqd: EXTRA_LIBS += -lMXADataModel -lhdf5
+metar2qd: EXTRA_LIBS += -lmetar
+grib2tojpg grib2toqd gribtoqd qdtogrib: EXTRA_LIBS += -leccodes
+laps2qd nc2qd nctoqd wrftoqd: EXTRA_LIBS += -lnetcdf_c++ -lnetcdf
 
 # Compilation directories
 
@@ -82,8 +86,13 @@ release: objdir $(MAINPROGS)
 profile: objdir $(MAINPROGS)
 
 .SECONDEXPANSION:
-$(MAINPROGS): % : obj/%.o $(OBJFILES)
-	$(CXX) $(LDFLAGS) -o $@ obj/$@.o $(OBJFILES) $(LIBS)
+$(MAINPROGS): % : obj/%.o obj/libqdtools.a
+	$(CXX) $(LDFLAGS) -o $@ obj/$@.o -Lobj -lqdtools $(LIBS)
+
+obj/libqdtools.a: $(OBJFILES)
+	rm -f $@
+	ar rcs $@ $(OBJFILES)
+	ranlib $@
 
 clean:
 	rm -f $(MAINPROGS) source/*~ include/*~

@@ -18,5 +18,11 @@
             "binaryPath": "/home/pietarin/hub/qdtools/qdscript",
             "binaryArgs": []
         }
-    ]
+    ],
+    "files.associations": {
+        "*.sqlbook": "sql",
+        "*.ndjson": "jsonl",
+        "*.dbclient-js": "javascript",
+        "type_traits": "cpp"
+    }
 }

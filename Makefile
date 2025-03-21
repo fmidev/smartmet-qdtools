@@ -37,6 +37,7 @@ LIBS += $(PREFIX_LDFLAGS) \
 	-lboost_thread \
 	-lboost_system \
 	$(REQUIRED_LIBS) \
+	-lhdf5 \
 	-lbz2 -ljpeg -lpng -lz -lrt \
 	-lpthread
 
@@ -45,7 +46,8 @@ LIBS += $(PREFIX_LDFLAGS) \
 EXTRA_LIBS :=
 bufrtoqd: EXTRA_LIBS += -lecbufr
 radartoqd: EXTRA_LIBS += -lecbufr -lbufr
-h5toqd: EXTRA_LIBS += -lMXADataModel -lhdf5
+# Unfortunatelly HdfTools.o presence in libqdtools.a requires use of libqdf5 in common libraries for all
+#h5toqd: EXTRA_LIBS += -lhdf5
 metar2qd: EXTRA_LIBS += -lmetar
 grib2tojpg grib2toqd gribtoqd qdtogrib: EXTRA_LIBS += -leccodes
 laps2qd nc2qd nctoqd wrftoqd: EXTRA_LIBS += -lnetcdf_c++ -lnetcdf
@@ -87,12 +89,11 @@ profile: objdir $(MAINPROGS)
 
 .SECONDEXPANSION:
 $(MAINPROGS): % : obj/%.o obj/libqdtools.a
-	$(CXX) $(LDFLAGS) -o $@ obj/$@.o -Lobj -lqdtools $(LIBS)
+	$(CXX) $(LDFLAGS) -o $@ obj/$@.o -Lobj -Wl,--no-whole-archive -lqdtools $(LIBS)
 
 obj/libqdtools.a: $(OBJFILES)
 	rm -f $@
 	ar rcs $@ $(OBJFILES)
-	ranlib $@
 
 clean:
 	rm -f $(MAINPROGS) source/*~ include/*~

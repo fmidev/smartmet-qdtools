@@ -26,6 +26,7 @@ BuildRequires: eccodes-devel
 BuildRequires: fmt-devel >= %{smartmet_fmt_min}, fmt-devel < %{smartmet_fmt_max}
 BuildRequires: gcc-c++
 BuildRequires: gdal310-devel
+BuildRequires: h5pp-devel
 BuildRequires: hdf5-devel >= 1.8.12
 BuildRequires: jasper-devel
 BuildRequires: libbufr >= 3.2
@@ -34,7 +35,6 @@ BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: make
 BuildRequires: mdsplib >= 21.3.1
-BuildRequires: mxadatamodel
 BuildRequires: netcdf-cxx-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build

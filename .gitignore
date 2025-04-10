@@ -85,4 +85,5 @@ test/*.tmp
 test/*.qdinfo
 *info_fail
 *info_ok
+/.vscode
 /smartmet-qdtools.tar.gz

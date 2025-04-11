@@ -15,7 +15,11 @@
 
 #include <algorithm>
 #include <ctime>
+#include <iomanip>
+#include <iostream>
 #include <list>
+#include <map>
+#include <sstream>
 #include <string>
 
 using namespace std;
@@ -125,6 +129,7 @@ void ReportParameters(NFmiFastQueryInfo *q, bool ignoresubs)
           "=============      =========  =======  =======\n";
 
   q->ResetParam();
+  std::map<int, std::string> result;
   while (q->NextParam(ignoresubs))
   {
     ++count;
@@ -135,6 +140,7 @@ void ReportParameters(NFmiFastQueryInfo *q, bool ignoresubs)
 
     string paramtype;
 
+    std::ostringstream line_str;
     if (q->Param().HasDataParams())
       paramtype = "+";
     else if (q->IsSubParamUsed())
@@ -142,12 +148,18 @@ void ReportParameters(NFmiFastQueryInfo *q, bool ignoresubs)
     else
       paramtype = "";
 
-    cout << setw(8) << left << id << setw(40) << paramtype + name << setw(40)
+    line_str << setw(8) << left << id << setw(40) << paramtype + name << setw(40)
          << description.CharPtr() << setw(16)
          << interpolation_name(q->Param().GetParam()->InterpolationMethod()) << setw(12) << right
          << q->Param().GetParam()->Precision().CharPtr() << setw(9)
          << ToString(q->Param().GetParam()->MinValue()) << setw(9)
-         << ToString(q->Param().GetParam()->MaxValue()) << endl;
+         << ToString(q->Param().GetParam()->MaxValue());
+    result[id] = line_str.str();
+  }
+
+  for (const auto &item : result)
+  {
+    cout << item.second << std::endl;
   }
   cout << endl << "There are " << count << " stored parameters in total" << endl;
   return;

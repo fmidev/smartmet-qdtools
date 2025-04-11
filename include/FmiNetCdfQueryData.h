@@ -38,11 +38,11 @@ class FmiVarInfo
   // private:
   std::string itsVarName;
   std::string itsDimName;
-  int itsParId;        // t‰h‰n haluttu FMI par id
+  int itsParId;        // t√§h√§n haluttu FMI par id
   int itsIndex;        // muuttujan (var) indeksi NC-tiedostossa
-  float itsFillValue;  // mik‰ arvo on nc:ss‰ puuttuva arvo (_FillValue -atribuutti), n‰m‰ pit‰‰
-                       // sitten korvata kFloatMissing:ill‰
-  FmiNcLevelType itsNcLevelType;  // tarkoittaa ett‰ t‰m‰ muuttuja kuuluu joko pinta dataan tai
+  float itsFillValue;  // mik√§ arvo on nc:ss√§ puuttuva arvo (_FillValue -atribuutti), n√§m√§ pit√§√§
+                       // sitten korvata kFloatMissing:ill√§
+  FmiNcLevelType itsNcLevelType;  // tarkoittaa ett√§ t√§m√§ muuttuja kuuluu joko pinta dataan tai
                                   // multi-level-dataan
 };
 
@@ -80,7 +80,7 @@ class FmiZDimVarInfo
   int itsLevelType;  // NC type vai FMI type?
   std::vector<float> itsValues;
   NFmiLevelBag itsLevels;
-  FmiNcLevelType itsNcLevelType;  // tarkoittaa ett‰ t‰m‰ muuttuja kuuluu joko pinta dataan tai
+  FmiNcLevelType itsNcLevelType;  // tarkoittaa ett√§ t√§m√§ muuttuja kuuluu joko pinta dataan tai
                                   // multi-level-dataan
 };
 
@@ -143,7 +143,7 @@ class FmiProjectionInfo
   FmiNcProjectionType itsProjectionType;
 
   // Seuraavia arvoja tarvitaan ainakin LAPS-datassa stereograafisessa projektiossa
-  // Muuttuja nimet t‰ss‰ ovat samoja kuin nc-datassa.
+  // Muuttuja nimet t√§ss√§ ovat samoja kuin nc-datassa.
   float La1;     // projektion 1. kulmapisteen lat-arvo (bottom-left?)
   float Lo1;     // projektion 1. kulmapisteen lon-arvo (bottom-left?)
   long Nx;       // hilan x-koko
@@ -205,22 +205,22 @@ class FmiNetCdfQueryData
   bool IsSurfaceVariable(NcVar &theVar);
   void MakesureSurfaceMetaDataIsInitialized();
 
-  bool fDataOk;                         // onko t‰m‰ initialisoitu ja onko annettu NcFile ollut ok.
-  FmiTDimVarInfo itsTInfo;              // aika muuttujan tiedot t‰h‰n
-  FmiXYDimVarInfo itsXInfo;             // X eli hilan longitude piste muuttujan tiedot t‰h‰n
-  FmiXYDimVarInfo itsYInfo;             // Y eli hilan latitude piste muuttujan tiedot t‰h‰n
-  FmiProjectionInfo itsProjectionInfo;  // jos datassa on lat-lon:ista poikkeava projektio, ker‰t‰‰n
-                                        // t‰h‰n tarvittavat tiedot
-  std::vector<FmiVarInfo> itsNormalParameters;  // t‰ss‰ on ns. normaalien muutuja parametrien
+  bool fDataOk;                         // onko t√§m√§ initialisoitu ja onko annettu NcFile ollut ok.
+  FmiTDimVarInfo itsTInfo;              // aika muuttujan tiedot t√§h√§n
+  FmiXYDimVarInfo itsXInfo;             // X eli hilan longitude piste muuttujan tiedot t√§h√§n
+  FmiXYDimVarInfo itsYInfo;             // Y eli hilan latitude piste muuttujan tiedot t√§h√§n
+  FmiProjectionInfo itsProjectionInfo;  // jos datassa on lat-lon:ista poikkeava projektio, ker√§t√§√§n
+                                        // t√§h√§n tarvittavat tiedot
+  std::vector<FmiVarInfo> itsNormalParameters;  // t√§ss√§ on ns. normaalien muutuja parametrien
                                                 // lista, joissa on ulottuvuuksina edelliset 4
                                                 // muuttuja infot
-  NFmiGrid itsGrid;                             // t‰m‰ hila m‰‰r‰t‰‰n, kun X, ja Y arvot on saatu
+  NFmiGrid itsGrid;                             // t√§m√§ hila m√§√§r√§t√§√§n, kun X, ja Y arvot on saatu
   NFmiProducer itsProducer;
   FmiNcMetaData itsSurfaceMetaData;
   FmiNcMetaData itsHeightLevelMetaData;
   FmiNcMetaData itsPressureLevelMetaData;
   FmiNcMetaData itsHybridLevelMetaData;
 
-  std::string itsErrorMessage;  // talletetaan t‰h‰n mahdollinen virheilmoitus
+  std::string itsErrorMessage;  // talletetaan t√§h√§n mahdollinen virheilmoitus
   std::map<std::string, FmiParameterName> itsKnownParameterMap;
 };

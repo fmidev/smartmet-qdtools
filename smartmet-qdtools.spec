@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 25.3.25
+Version: 25.4.14
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -38,11 +38,11 @@ BuildRequires: mdsplib >= 21.3.1
 BuildRequires: netcdf-cxx-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
-BuildRequires: smartmet-library-calculator-devel >= 25.2.18
+BuildRequires: smartmet-library-calculator-devel >= 25.3.19
 BuildRequires: smartmet-library-gis-devel >= 25.2.18
 BuildRequires: smartmet-library-imagine-devel >= 25.2.18
 BuildRequires: smartmet-library-macgyver-devel >= 25.2.18
-BuildRequires: smartmet-library-newbase-devel >= 25.2.18
+BuildRequires: smartmet-library-newbase-devel >= 25.3.20
 BuildRequires: smartmet-library-smarttools-devel >= 25.2.18
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
@@ -66,17 +66,17 @@ Requires: libjpeg
 Requires: libpng
 Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
-Requires: smartmet-library-calculator >= 25.2.18
+Requires: smartmet-library-calculator >= 25.3.19
 Requires: smartmet-library-gis >= 25.2.18
 Requires: smartmet-library-imagine >= 25.2.18
 Requires: smartmet-library-macgyver >= 25.2.18
-Requires: smartmet-library-newbase >= 25.2.18
+Requires: smartmet-library-newbase >= 25.3.20
 Requires: smartmet-library-smarttools >= 25.2.18
 Requires: smartmet-timezones >= 24.5.27
 Requires: zlib
 #TestRequires: smartmet-library-macgyver-devel >= 25.2.18
 #TestRequires: gcc-c++
-#TestRequires: smartmet-library-newbase-devel >= 25.2.18
+#TestRequires: smartmet-library-newbase-devel >= 25.3.20
 #TestRequires: smartmet-qdtools-test-data
 #TestRequires: libbufr
 
@@ -208,6 +208,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Mon Apr 14 2025 Mika Heiskanen <mika.heiskanen@fmi.fi> - 25.4.14-1.fmi
+- Added support for lowCloudLayer, middleCloudLayer and highCloudBottom level types
+
 * Tue Mar 25 2025 Andris Pavēnis <andris.pavenis@fmi.fi> 25.3.25-1.fmi
 - h5toqd: use h5pp instead of MXADataModel
 

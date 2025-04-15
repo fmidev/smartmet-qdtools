@@ -33,17 +33,15 @@ nctools::Options options;
 template <typename charT>
 struct my_equal
 {
-  my_equal(const std::locale &loc) : loc_(loc) {}
+  my_equal(const std::locale &loc) : loc_(&loc) {}
   bool operator()(charT ch1, charT ch2)
   {
-    return std::toupper(ch1, loc_) == std::toupper(ch2, loc_);
+    return std::toupper(ch1, *loc_) == std::toupper(ch2, *loc_);
   }
 
  private:
-  my_equal &operator=(const my_equal &);  // Disabloidaan sijoitus operaattori, jotta estetään VC++
-                                          // 2012 käännös varoitus
 
-  const std::locale &loc_;
+  const std::locale *loc_;
 };
 
 // find substring (case insensitive)
@@ -63,7 +61,7 @@ static const std::string bottomTopKeyWord = "bottom_top";
 
 namespace WRFData
 {
-typedef std::map<std::string, NcDim *> DimensionMap;
+typedef std::map<std::string, netCDF::NcDim> DimensionMap;
 struct TotalDimensionData
 {
   TotalDimensionData()
@@ -206,27 +204,29 @@ const int MissingInt = -999999;
 const double MissingDouble = -999999.;
 }  // namespace WRFData
 
-static void PrintNcDimension(NcDim *dim, int indexZeroBased)
+static void PrintNcDimension(const netCDF::NcDim& dim, int indexZeroBased)
 {
   std::cerr << "#" << indexZeroBased + 1 << " - ";
-  std::cerr << "name: " << dim->name() << " id: " << dim->id() << " size: " << dim->size();
+  std::cerr << "name: " << dim.getName() << " id: " << dim.getId() << " size: " << dim.getSize();
   std::cerr << std::endl;
 }
 
 // Haetaan kaikki dimensiot erilliseen map:iin.
-static WRFData::DimensionMap GetNCDimensionMap(nctools::Options &options, const NcFile &ncFile)
+static WRFData::DimensionMap GetNCDimensionMap(nctools::Options &options, const netCDF::NcFile &ncFile)
 {
   try
   {
     WRFData::DimensionMap dimMap;
     if (options.verbose)
       std::cerr << "dimensions:" << std::endl;
-    for (int i = 0; i < ncFile.num_dims(); i++)
+    std::size_t counter = 0;
+    const std::multimap<std::string, netCDF::NcDim> dims = ncFile.getDims();
+    for (const auto& item : dims) // int i = 0; i < ncFile.getDimCount(); i++)
     {
-      NcDim *dim = ncFile.get_dim(i);
-      dimMap.insert(std::make_pair(dim->name(), dim));
+      int index = counter++;
+      dimMap.insert(item);
       if (options.verbose)
-        ::PrintNcDimension(dim, i);
+        ::PrintNcDimension(item.second, index);
     }
     return dimMap;
   }
@@ -237,13 +237,13 @@ static WRFData::DimensionMap GetNCDimensionMap(nctools::Options &options, const 
 }
 
 static WRFData::TotalDimensionData GetTotalDimensionDataFromParam(nctools::Options &options,
-                                                                  NcVar *var)
+                                                                  const netCDF::NcVar& var)
 {
   try
   {
     WRFData::TotalDimensionData dimData;
     // Ohitetaan sellaiset dimensiot yhdistelmät, missä on alle 3 tai yli 4 dimensiota.
-    int numOfDims = var->num_dims();
+    int numOfDims = var.getDimCount();
     bool fillData = (numOfDims >= 3 && numOfDims <= 4);
     bool noLevels = (numOfDims == 3);
     if (options.verbose)
@@ -255,38 +255,38 @@ static WRFData::TotalDimensionData GetTotalDimensionDataFromParam(nctools::Optio
         std::cerr << "4D";
       else
         std::cerr << "NO";
-      std::cerr << ") " << var->name() << " (";
+      std::cerr << ") " << var.getName() << " (";
     }
     for (int i = 0; i < numOfDims; i++)
     {
-      NcDim *dim = var->get_dim(i);
+      const netCDF::NcDim dim = var.getDim(i);;
       if (options.verbose)
       {
         if (i > 0)
           std::cerr << ",";
-        std::cerr << dim->name();
+        std::cerr << dim.getName();
       }
       if (fillData)
       {
         if (i == 0)
         {
-          dimData.timeDimName = dim->name();
-          dimData.timeDimSize = dim->size();
+          dimData.timeDimName = dim.getName();
+          dimData.timeDimSize = dim.getSize();
         }
         else if ((!noLevels && i == 1))
         {
-          dimData.levDimName = dim->name();
-          dimData.levDimSize = dim->size();
+          dimData.levDimName = dim.getName();
+          dimData.levDimSize = dim.getSize();
         }
         else if ((noLevels && i == 1) || (!noLevels && i == 2))
         {
-          dimData.xDimName = dim->name();
-          dimData.xDimSize = dim->size();
+          dimData.xDimName = dim.getName();
+          dimData.xDimSize = dim.getSize();
         }
         else if ((noLevels && i == 2) || (!noLevels && i == 3))
         {
-          dimData.yDimName = dim->name();
-          dimData.yDimSize = dim->size();
+          dimData.yDimName = dim.getName();
+          dimData.yDimSize = dim.getSize();
         }
       }
     }
@@ -306,13 +306,13 @@ static WRFData::TotalDimensionData GetTotalDimensionDataFromParam(nctools::Optio
 
 static void AddDimensionData(WRFData::TotalDimensionDataSet &dimDataSet,
                              const WRFData::TotalDimensionData &dimData,
-                             NcVar *var)
+                             const netCDF::NcVar& var)
 {
   try
   {
     if (dimData.HasGoodDimensions())
     {
-      std::string paramName = var->name();
+      std::string paramName = var.getName();
       WRFData::TotalDimensionDataSet::iterator it = dimDataSet.find(dimData);
       if (it != dimDataSet.end())
       {  // lisätään olemassa olevaan listaan uusi parametri
@@ -338,16 +338,17 @@ static void AddDimensionData(WRFData::TotalDimensionDataSet &dimDataSet,
 // Näistä dimensiopaketeista ja niihin liittyvistä parametreista voidaan tehdä myöhemmin
 // erillisiä queryInfoja eri tulos datoille.
 static WRFData::TotalDimensionDataSet GetNCTotalDimensionDataSet(nctools::Options &options,
-                                                                 const NcFile &ncFile)
+                                                                 const netCDF::NcFile &ncFile)
 {
   try
   {
     if (options.verbose)
       std::cerr << "params:" << std::endl;
     WRFData::TotalDimensionDataSet dimDataSet;
-    for (int i = 0; i < ncFile.num_vars(); i++)
+    const std::multimap<std::string, netCDF::NcVar> vars = ncFile.getVars();
+    for (const auto& item : vars)
     {
-      NcVar *var = ncFile.get_var(i);
+      const netCDF::NcVar& var = item.second;
       WRFData::TotalDimensionData dimData = ::GetTotalDimensionDataFromParam(options, var);
       ::AddDimensionData(dimDataSet, dimData, var);
     }
@@ -390,7 +391,7 @@ static bool GetGlobalAttributeValue(const std::string &attributeName,
   }
 }
 
-static int GetWRFGlobalAttributeInteger(const NcFile &ncFile,
+static int GetWRFGlobalAttributeInteger(const netCDF::NcFile &ncFile,
                                         const std::string &attributeName,
                                         nctools::AttributesMap &globalAttributes)
 {
@@ -399,11 +400,12 @@ static int GetWRFGlobalAttributeInteger(const NcFile &ncFile,
     int returnValue = WRFData::MissingInt;
     if (!::GetGlobalAttributeValue(attributeName, globalAttributes, returnValue))
     {
-      for (int i = 0; i < ncFile.num_atts(); i++)
+      const std::multimap< std::string, netCDF::NcGroupAtt> attributes = ncFile.getAtts();
+      for (const auto& item : attributes)
       {
-        NcAtt *attr = ncFile.get_att(i);
-        if (attributeName == attr->name() && attr->num_vals() > 0)
-          return attr->as_int(0);
+        const netCDF::NcGroupAtt &attr = item.second;
+        if (attributeName == attr.getName() && attr.getAttLength() > 0)
+          return nctools::get_att_value<int>(attr, 0);
       }
     }
     return returnValue;
@@ -414,7 +416,7 @@ static int GetWRFGlobalAttributeInteger(const NcFile &ncFile,
   }
 }
 
-static double GetWRFGlobalAttributeDouble(const NcFile &ncFile,
+static double GetWRFGlobalAttributeDouble(const netCDF::NcFile &ncFile,
                                           const std::string &attributeName,
                                           nctools::AttributesMap &globalAttributes)
 {
@@ -423,11 +425,12 @@ static double GetWRFGlobalAttributeDouble(const NcFile &ncFile,
     double returnValue = WRFData::MissingDouble;
     if (!::GetGlobalAttributeValue(attributeName, globalAttributes, returnValue))
     {
-      for (int i = 0; i < ncFile.num_atts(); i++)
+      const std::multimap< std::string, netCDF::NcGroupAtt> attributes = ncFile.getAtts();
+      for (const auto& item : attributes)
       {
-        NcAtt *attr = ncFile.get_att(i);
-        if (attributeName == attr->name() && attr->num_vals() > 0)
-          return attr->as_double(0);
+        const netCDF::NcGroupAtt &attr = item.second;
+        if (attributeName == attr.getName() && attr.getAttLength() > 0)
+          return nctools::get_att_value<double>(attr, 0);
       }
     }
     return returnValue;
@@ -438,7 +441,7 @@ static double GetWRFGlobalAttributeDouble(const NcFile &ncFile,
   }
 }
 
-static std::string GetWRFGlobalAttributeString(const NcFile &ncFile,
+static std::string GetWRFGlobalAttributeString(const netCDF::NcFile &ncFile,
                                                const std::string &attributeName,
                                                nctools::AttributesMap &globalAttributes)
 {
@@ -447,11 +450,12 @@ static std::string GetWRFGlobalAttributeString(const NcFile &ncFile,
     std::string returnValue = "";
     if (!::GetGlobalAttributeValue(attributeName, globalAttributes, returnValue))
     {
-      for (int i = 0; i < ncFile.num_atts(); i++)
+      const std::multimap< std::string, netCDF::NcGroupAtt> attributes = ncFile.getAtts();
+      for (const auto& item : attributes)
       {
-        NcAtt *attr = ncFile.get_att(i);
-        if (attributeName == attr->name() && attr->num_vals() > 0)
-          return attr->as_string(0);
+        const netCDF::NcGroupAtt &attr = item.second;
+        if (attributeName == attr.getName() && attr.getAttLength() > 0)
+          return nctools::get_att_string_value(attr);
       }
     }
     return returnValue;
@@ -462,18 +466,20 @@ static std::string GetWRFGlobalAttributeString(const NcFile &ncFile,
   }
 }
 
-static void PrintWRFGlobalAttributes(nctools::Options &options, const NcFile &ncFile)
+static void PrintWRFGlobalAttributes(nctools::Options &options, const netCDF::NcFile &ncFile)
 {
   try
   {
     if (options.verbose)
     {
       std::cerr << "global attributes:" << std::endl;
-      for (int i = 0; i < ncFile.num_atts(); i++)
+      const std::multimap< std::string, netCDF::NcGroupAtt> attributes = ncFile.getAtts();
+      for (const auto& item : attributes)
       {
-        NcAtt *attr = ncFile.get_att(i);
-        if (attr->num_vals())
-          std::cerr << attr->name() << " = " << attr->as_string(0) << std::endl;
+        const netCDF::NcGroupAtt &attr = item.second;
+        if (attr.getAttLength() > 0)
+          std::cerr << attr.getName() << " = " << nctools::get_att_string_value(attr)
+                    << std::endl;
       }
     }
   }
@@ -720,7 +726,7 @@ static void SetFinalDataAreaInfo(nctools::Options &options, BaseGridAreaData &ar
 // Rakentaa metatietojen avulla pohja stringin, johon myöhemmin sitten voidaan
 // liittää hila koko -osio.
 // DXout ja DYout -parametreihin talletetaan hilapisteen koko metreissää
-static BaseGridAreaData GetBaseAreaData(nctools::Options &options, const NcFile &ncFile)
+static BaseGridAreaData GetBaseAreaData(nctools::Options &options, const netCDF::NcFile &ncFile)
 {
   try
   {
@@ -837,17 +843,20 @@ NFmiParamDescriptor CreateWRFParamDescriptor(
   }
 }
 
-static NcVar *GetWRFVariable(const NcFile &ncFile, const std::string &varName)
+static netCDF::NcVar GetWRFVariable(const netCDF::NcFile &ncFile, const std::string &varName)
 {
   try
   {
-    for (int i = 0; i < ncFile.num_vars(); i++)
+    // Käydään läpi kaikki muuttujat ja etsitään haluttu
+    // Jos löytyy useampi sama niminen muuttuja, niin palautetaan ensimmäinen
+    std::multimap<std::string, netCDF::NcVar> vars = ncFile.getVars();
+    for (const auto& item : vars)
     {
-      NcVar *var = ncFile.get_var(i);
-      if (boost::iequals(varName, var->name()))
+      const netCDF::NcVar &var = item.second;
+      if (boost::iequals(varName, var.getName()))
         return var;
     }
-    return 0;
+    return netCDF::NcVar();
   }
   catch (...)
   {
@@ -862,15 +871,32 @@ static int vcfix_isdigit(int ch)
 // Jos wrf-datassa on useita aika-askelia, ei netCdf-api jostain syystäosaa erotella niitä
 // erilleen, joten minun piti
 // tehdäomaa koodia, joka osaa irroittaa tarvittaessa eri ajat.
-static std::string GetTimeStr(int index, NcVar *timeVar)
+static std::string GetTimeStr(int index, const netCDF::NcVar& timeVar)
 {
   try
   {
-    std::string timeStr = timeVar->as_string(index);
-    NcDim *timeStringLengthDim = timeVar->get_dim(1);
-    if (timeStringLengthDim)
+    std::string timeStr;
+    const netCDF::NcType type = timeVar.getType();
+    if (type == netCDF::ncChar)
     {
-      int timeStringSize = timeStringLengthDim->size();
+      const std::vector<char> values =
+          nctools::get_values<char>(timeVar);  // char-tyyppinen muuttuja, joka sisältää aika-stringit
+      timeStr = std::string(values.begin(), values.end());
+    }
+    else if (type == netCDF::ncString)
+    {
+      const std::vector<std::string> values = nctools::get_values<std::string>(timeVar);
+      timeStr = values.at(index);
+    }
+    else
+    {
+      throw Fmi::Exception(BCP, "Not supported variable type and index combination");
+    }
+
+    const netCDF::NcDim timeStringLengthDim = timeVar.getDim(1);
+    if (!timeStringLengthDim.isNull())
+    {
+      int timeStringSize = timeStringLengthDim.getSize();
       if (timeStr.size() > static_cast<std::string::size_type>(timeStringSize))
       {  // timeStr:ssäon enemmän merkkejäkuin yhdessäaikaleimassa, siitäpitäänyt leikata haluttu
         // osio
@@ -907,25 +933,24 @@ static bool IsInTimeStampFormat(const std::string &timeStr)
   return true;  // oletetaan että kyse on time-stamp stringeistä  muotoa: 2013-09-24_00:00:00
 }
 
-static NFmiTimeDescriptor CreateWRFTimeDescriptor(const NcFile &ncFile)
+static NFmiTimeDescriptor CreateWRFTimeDescriptor(const netCDF::NcFile &ncFile)
 {
   try
   {
     namespace p = std::placeholders;
-    NcVar *var = ::GetWRFVariable(ncFile, "Times");
-    if (var == 0)
+    netCDF::NcVar var = ::GetWRFVariable(ncFile, "Times");
+    if (var.isNull())
       var = ::GetWRFVariable(ncFile, "time");
-    if (var)
+    if (not var.isNull())
     {
-      NcDim *dim = var->get_dim(
-          0);  // Käydään vain 1. dimensio läpi, toisessa dimensiossa on time-stringin pituus
+      const netCDF::NcDim dim = var.getDim(0);  // Käydään vain 1. dimensio läpi, toisessa dimensiossa on time-stringin pituus
       NFmiTimeList timeList;
       std::string probeTimeStr =
           ::GetTimeStr(0, var);  // tutkitaan 1. aika-stringiä ja tehdään siitä johtopäätöksiä
       NFmiMetTime startingTime(1);
       startingTime.NearestMetTime(60);
       bool isInTimeStampFormat = ::IsInTimeStampFormat(probeTimeStr);
-      for (int i = 0; i < dim->size(); i++)
+      for (std::size_t i = 0; i < dim.getSize(); i++)
       {
         std::string timeStr = ::GetTimeStr(i, var);
         if (!timeStr.empty())
@@ -978,7 +1003,7 @@ static NFmiHPlaceDescriptor CreateWRFHplaceDescriptor(
   return NFmiHPlaceDescriptor(grid);
 }
 
-static NcVar *GetWantedLevelVariable(const NcFile &ncFile,
+static netCDF::NcVar GetWantedLevelVariable(const netCDF::NcFile &ncFile,
                                      const std::string &levelDimName,
                                      FmiLevelType &usedLevelTypeOut)
 {
@@ -993,12 +1018,12 @@ static NcVar *GetWantedLevelVariable(const NcFile &ncFile,
 
     for (size_t i = 0; i < possibleLevelVarNames.size(); i++)
     {
-      NcVar *var = ::GetWRFVariable(ncFile, possibleLevelVarNames[i].first);
-      if (var)
+      const netCDF::NcVar var = ::GetWRFVariable(ncFile, possibleLevelVarNames[i].first);
+      if (not var.isNull())
       {
-        for (int j = 0; j < var->num_dims(); j++)
+        for (int j = 0; j < var.getDimCount(); j++)
         {
-          if (boost::iequals(var->get_dim(j)->name(), levelDimName))
+          if (boost::iequals(var.getDim(j).getName(), levelDimName))
           {
             usedLevelTypeOut = possibleLevelVarNames[i].second;
             return var;
@@ -1007,7 +1032,7 @@ static NcVar *GetWantedLevelVariable(const NcFile &ncFile,
       }
     }
 
-    return 0;
+    return netCDF::NcVar();
   }
   catch (...)
   {
@@ -1033,7 +1058,7 @@ static bool IsBaseHybridLevelType(WRFData::TotalDimensionDataSet::value_type &to
 static NFmiVPlaceDescriptor CreateWRFVplaceDescriptor(
     nctools::Options &options,
     WRFData::TotalDimensionDataSet::value_type &totalDiemnsionData,
-    const NcFile &ncFile,
+    const netCDF::NcFile &ncFile,
     BaseGridAreaData &areaData)
 {
   try
@@ -1041,21 +1066,23 @@ static NFmiVPlaceDescriptor CreateWRFVplaceDescriptor(
     if (totalDiemnsionData.first.Has4DData())
     {
       FmiLevelType usedLevelType = kFmiHybridLevel;
-      NcVar *levelVar =
+      const netCDF::NcVar levelVar =
           GetWantedLevelVariable(ncFile, totalDiemnsionData.first.levDimName, usedLevelType);
-      if (levelVar)
+      if (not levelVar.isNull())
       {
         if (options.verbose)
           std::cerr << "level values:" << std::endl;
         std::vector<float> pLevels;
-        for (int i = 0; i < levelVar->num_vals(); i++)
+        int i = 0;
+        const std::vector<float> values = nctools::get_values<float>(levelVar);
+        for (float value : values)
         {
-          if (i >= totalDiemnsionData.first.levDimSize)
+          if (i++ >= totalDiemnsionData.first.levDimSize)
             break;  // joskus level variableen on liitetty myäs aika dimensio, joten lopetamme
                     // loopin kun jokainen eri leveli on käyty kerran läpi
           if (options.verbose)
-            std::cerr << levelVar->as_string(i) << ", ";
-          pLevels.push_back(levelVar->as_float(i));
+            std::cerr << Fmi::to_string(value) << ", ";
+          pLevels.push_back(value);
         }
         if (options.verbose)
           std::cerr << std::endl;
@@ -1087,7 +1114,7 @@ static NFmiQueryInfo *CreateNewInnerInfo(
     nctools::Options &options,
     WRFData::TotalDimensionDataSet::value_type &totalDimensionData,
     BaseGridAreaData &areaData,
-    const NcFile &ncFile,
+    const netCDF::NcFile &ncFile,
     const nctools::ParamConversions &paramconvs)
 {
   try
@@ -1546,8 +1573,7 @@ int run(int argc, char *argv[])
       return 0;
 
     // Default is to exit in some non fatal situations
-    NcError errormode(NcError::silent_nonfatal);
-    nctools::NcFileExtended ncfile(options.infiles[0], NcFile::ReadOnly);
+    nctools::NcFileExtended ncfile(options.infiles[0], netCDF::NcFile::read);
 
     ncfile.setOptions(options);
     ncfile.setWRF(true);
@@ -1555,7 +1581,7 @@ int run(int argc, char *argv[])
     // Establish wanted axis parameters, this throws if unsuccesful
     ncfile.initAxis(options.xdim, options.ydim, options.zdim, options.tdim);
 
-    if (!ncfile.is_valid())
+    if (ncfile.isNull())
       throw Fmi::Exception(BCP, "File '" + options.infiles[0] + "' does not contain valid NetCDF");
 
     // Parameter conversions

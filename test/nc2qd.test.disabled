@@ -82,7 +82,7 @@ sub DoTest {
     }
     $usednames{$name} = 1;
 
-    my $resultfile = FindResult("results", "nctoqd_$name");
+    my $resultfile = FindResult("results", "nc2qd_$name");
     my $tmpfile = RemoveCompressionExt($resultfile) . ".tmp";
 
     my $cmd = "$program $arguments $tmpfile";

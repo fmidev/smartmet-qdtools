@@ -471,14 +471,8 @@ long GetUsedLevelType(grib_handle *theHandle)
     return 200;
   if (name == "entireOcean")
     return 201;
-  if (name == "lowCloudLayer")
-    return kFmiNoLevelType;
-  if (name == "middleCloudLayer")
-    return kFmiNoLevelType;
-  if (name == "highCloudBottom")
-    return kFmiNoLevelType;
 
-  throw runtime_error("Unknown level type: " + name);
+  return kFmiNoLevelType;
 }
 
 NFmiLevel GetLevel(grib_handle *theHandle)

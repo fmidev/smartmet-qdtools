@@ -451,6 +451,9 @@ void nctools::NcFileExtended::copy_values(const Options &options, const NcVar& v
       if (options.debug)
         std::cerr << "debug: sourcetime=" << sourcetime << std::endl;
 
+      const std::size_t x_size = xsize();
+      const std::size_t y_size = ysize();
+
       if (sourcetime == targettime)
       {
         for (info.ResetLevel(); info.NextLevel(); ++level)
@@ -460,7 +463,7 @@ void nctools::NcFileExtended::copy_values(const Options &options, const NcVar& v
           // Calculating every point by multiplication is slow so saving the starting point of
           // current row Further improvement when both axises are non-inverted does not improve
           // performance
-          unsigned long ystart = zstart + (this->yinverted() ? (ysize() - 1) * xsize() : 0);
+          unsigned long ystart = zstart + (this->yinverted() ? (y_size - 1) * x_size : 0);
 
           if (options.debug)
             std::cerr << "debug: starting copy loop, level=" << level << " xcounter=" << xcounter
@@ -477,11 +480,11 @@ void nctools::NcFileExtended::copy_values(const Options &options, const NcVar& v
             }
 
             // Next row?
-            if (xcounter == (xinverted() ? 0 : xsize() - 1))
+            if (xcounter == (xinverted() ? 0 : x_size - 1))
             {
               // Yes, increase the y counter and reset x
-              ystart += (yinverted() ? -xsize() : +xsize());
-              xcounter = (xinverted() ? xsize() - 1 : 0);
+              ystart += (yinverted() ? -x_size : +x_size);
+              xcounter = (xinverted() ? x_size - 1 : 0);
             }
             else
             {
@@ -491,7 +494,7 @@ void nctools::NcFileExtended::copy_values(const Options &options, const NcVar& v
           }
 
           // Next level start point
-          zstart += xsize() * ysize();
+          zstart += x_size * y_size;
 
           if (options.debug)
             std::cerr << "debug: after copy loop, level=" << level << " xcounter=" << xcounter

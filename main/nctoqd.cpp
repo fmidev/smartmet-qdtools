@@ -35,7 +35,6 @@
 #include <functional>
 #include <iostream>
 #include <limits>
-#include <netcdfcpp.h>
 #include <stdexcept>
 #include <string>
 #include <utility>

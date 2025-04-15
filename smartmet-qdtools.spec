@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 25.4.14
+Version: 25.4.15
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -208,6 +208,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Tue Apr 15 2025 Mika Heiskanen <mika.heiskanen@fmi.fi> - 25.4.15-1.fmi
+- gribtoqd is now tolerant for unknown level types
+
 * Mon Apr 14 2025 Mika Heiskanen <mika.heiskanen@fmi.fi> - 25.4.14-1.fmi
 - Added support for lowCloudLayer, middleCloudLayer and highCloudBottom level types
 

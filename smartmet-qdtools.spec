@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 25.4.15
+Version: 25.4.16
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -209,6 +209,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Apr 16 2025 Andris Pavēnis <andris.pavenis@fmi.fi> 25.4.16-1.fmi
+- nctoqd and others: use netCDF C++4 instead odf obsolete netcdfpp
+
 * Tue Apr 15 2025 Mika Heiskanen <mika.heiskanen@fmi.fi> - 25.4.15-1.fmi
 - gribtoqd is now tolerant for unknown level types
 

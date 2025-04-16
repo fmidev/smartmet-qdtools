@@ -35,7 +35,6 @@
 #include <functional>
 #include <iostream>
 #include <limits>
-#include <netcdfcpp.h>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -50,13 +49,13 @@ using Fmi::Exception;
  */
 // ----------------------------------------------------------------------
 
-void check_xaxis_units(NcVar* var)
+void check_xaxis_units(const netCDF::NcVar& var)
 {
-  NcAtt* att = var->get_att("units");
-  if (att == 0)
+  const netCDF::NcVarAtt att = var.getAtt("units");
+  if (att.isNull())
     throw Exception(BCP, "X-axis has no units attribute");
 
-  std::string units = att->values()->as_string(0);
+  std::string units = nctools::get_att_string_value(att);
 
   // Ref: CF conventions section 4.2 Longitude Coordinate
   if (units == "degrees_east")
@@ -90,13 +89,13 @@ void check_xaxis_units(NcVar* var)
  */
 // ----------------------------------------------------------------------
 
-void check_yaxis_units(NcVar* var)
+void check_yaxis_units(const netCDF::NcVar& var)
 {
-  NcAtt* att = var->get_att("units");
-  if (att == 0)
+  const netCDF::NcVarAtt att = var.getAtt("units");
+  if (att.isNull())
     throw Exception(BCP, "Y-axis has no units attribute");
 
-  std::string units = att->values()->as_string(0);
+  std::string units = nctools::get_att_string_value(att);
 
   // Ref: CF conventions section 4.1 Latitude Coordinate
   if (units == "degrees_north")
@@ -202,10 +201,10 @@ NFmiHPlaceDescriptor create_hdesc(nctools::NcFileExtended& ncfile)
 
 NFmiVPlaceDescriptor create_vdesc(const nctools::NcFileExtended& ncfile)
 {
-  NcVar* z = ncfile.z_axis();
+  const netCDF::NcVar& z = ncfile.z_axis();
 
   // Defaults if there are no levels
-  if (z == nullptr)
+  if (z.isNull())
   {
     if (options.verbose)
       std::cerr << "  Extracting default level only\n";
@@ -217,10 +216,10 @@ NFmiVPlaceDescriptor create_vdesc(const nctools::NcFileExtended& ncfile)
 
   auto leveltype = kFmiAnyLevelType;
 
-  NcAtt* units_att = z->get_att("units");
-  if (units_att != nullptr)
+  const netCDF::NcVarAtt units_att = z.getAtt("units");
+  if (!units_att.isNull())
   {
-    std::string units = units_att->values()->as_string(0);
+    std::string units = nctools::get_att_string_value(units_att);
     if (units == "Pa" || units == "hPa" || units == "mb")
       leveltype = kFmiPressureLevel;
     else if (units == "cm")
@@ -233,14 +232,14 @@ NFmiVPlaceDescriptor create_vdesc(const nctools::NcFileExtended& ncfile)
 
   NFmiLevelBag bag;
 
-  NcValues* zvalues = z->values();
+  const std::vector<long> zvalues = nctools::get_values<long>(z);
 
   if (options.verbose)
-    std::cerr << "  Extracting " << z->num_vals() << " levels:";
+    std::cerr << "  Extracting " << zvalues.size() << " levels:";
 
-  for (int i = 0; i < z->num_vals(); i++)
+  for (std::size_t i = 0; i < zvalues.size(); i++)
   {
-    auto value = zvalues->as_long(i);
+    auto value = zvalues.at(i);
     if (options.verbose)
       std::cerr << " " << value << std::flush;
     NFmiLevel level(leveltype, value);
@@ -445,25 +444,26 @@ int add_to_pbag(const nctools::NcFileExtended& ncfile,
 
   // Number of dimensions the parameter must have
   int wanted_dims = 0;
-  if (ncfile.x_axis() != nullptr)
+  if (!ncfile.x_axis().isNull())
     ++wanted_dims;
-  if (ncfile.y_axis() != nullptr)
+  if (!ncfile.y_axis().isNull())
     ++wanted_dims;
-  if (ncfile.z_axis() != nullptr)
+  if (!ncfile.z_axis().isNull())
     ++wanted_dims;
-  if (ncfile.t_axis() != nullptr)
+  if (!ncfile.t_axis().isNull())
     ++wanted_dims;
 
   // Note: We loop over variables the same way as in copy_values
 
-  for (int i = 0; i < ncfile.num_vars(); i++)
+  const std::multimap<std::string, netCDF::NcVar> vars = ncfile.getVars();
+  for (const auto& item : vars)
   {
-    NcVar* var = ncfile.get_var(i);
-    if (var == 0)
+    const netCDF::NcVar& var = item.second;
+    if (var.isNull())
       continue;
 
     // Skip dimension variables
-    if (ncfile.is_dim(var->name()))
+    if (ncfile.is_dim(var.getName()))
       continue;
 
     // Check dimensions
@@ -526,8 +526,8 @@ int run(int argc, char* argv[])
     if (!parse_options(argc, argv, options))
       return 0;
 
-    NcError netcdf_error_handling(options.verbose ? NcError::verbose_nonfatal
-                                                  : NcError::silent_nonfatal);
+    //NcError netcdf_error_handling(options.verbose ? NcError::verbose_nonfatal
+    //                                              : NcError::silent_nonfatal);
 
     // Parameter conversions
     const nctools::ParamConversions paramconvs = nctools::read_netcdf_configs(options);
@@ -557,12 +557,12 @@ int run(int argc, char* argv[])
 
       try
       {
-        NcError errormode(NcError::silent_nonfatal);
+        //NcError errormode(NcError::silent_nonfatal);
         auto ncfile = std::make_shared<nctools::NcFileExtended>(infile, options.timeshift);
         ncfile->setOptions(options);
         ncfile->setWRF(false);
 
-        if (!ncfile->is_valid())
+        if (ncfile->isNull())
           throw Exception(BCP, "File '" + infile + "' does not contain valid NetCDF", nullptr);
 
         // When --info is given we only print useful metadata instead of generating anything
@@ -583,13 +583,14 @@ int run(int argc, char* argv[])
 
         std::string grid_mapping(ncfile->grid_mapping());
 
-        if (ncfile->x_axis()->num_vals() < 1)
+        // FIXME: check number of value below
+        if (ncfile->x_axis().isNull())
           throw Exception(BCP, "X-axis has no values");
-        if (ncfile->y_axis()->num_vals() < 1)
+        if (ncfile->y_axis().isNull())
           throw Exception(BCP, "Y-axis has no values");
-        if (ncfile->z_axis() != nullptr && ncfile->zsize() < 1)
+        if (!ncfile->z_axis().isNull() && false)
           throw Exception(BCP, "Z-axis has no values");
-        if (ncfile->t_axis() != nullptr && ncfile->tsize() < 1)
+        if (!ncfile->t_axis().isNull() && false)
           throw Exception(BCP, "T-axis has no values");
 
         check_xaxis_units(ncfile->x_axis());

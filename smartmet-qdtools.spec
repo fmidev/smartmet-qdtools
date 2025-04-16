@@ -35,7 +35,7 @@ BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: make
 BuildRequires: mdsplib >= 21.3.1
-BuildRequires: netcdf-cxx-devel
+BuildRequires: netcdf-cxx4-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
 BuildRequires: smartmet-library-calculator-devel >= 25.3.19
@@ -66,6 +66,7 @@ Requires: libjpeg
 Requires: libpng
 Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
+Requires: netcdf-cxx4
 Requires: smartmet-library-calculator >= 25.3.19
 Requires: smartmet-library-gis >= 25.2.18
 Requires: smartmet-library-imagine >= 25.2.18

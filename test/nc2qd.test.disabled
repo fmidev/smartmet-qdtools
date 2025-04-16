@@ -5,7 +5,7 @@ use warnings;
 use lib ".";
 use QDToolsTest;
 
-my $program = (-x "../nctoqd" ? "../nctoqd" : "nctoqd");
+my $program = (-x "../nc2qd" ? "../nc2qd" : "nc2qd");
 my $qdinfo = (-x "../qdinfo" ? "../qdinfo" : "qdinfo");
 my $qddifference = (-x "../qddifference" ? "../qddifference" : "qddifference");
 
@@ -82,7 +82,7 @@ sub DoTest {
     }
     $usednames{$name} = 1;
 
-    my $resultfile = FindResult("results", "nctoqd_$name");
+    my $resultfile = FindResult("results", "nc2qd_$name");
     my $tmpfile = RemoveCompressionExt($resultfile) . ".tmp";
 
     my $cmd = "$program $arguments $tmpfile";
@@ -91,6 +91,7 @@ sub DoTest {
         $cmd = "$program -o $tmpfile $arguments";
     }
 
+    #print "cmd=$cmd\n";
     my $retcode = system("$cmd >results/$name.out 2>&1");
     if ( $retcode != 0 ) {
         system("tail -10 results/$name.out") ;

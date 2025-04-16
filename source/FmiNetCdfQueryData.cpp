@@ -1,11 +1,110 @@
 #include "FmiNetCdfQueryData.h"
 #include <boost/algorithm/string/case_conv.hpp>
 #include <fmt/format.h>
+#include <macgyver/StringConversion.h>
+#include <macgyver/TypeTraits.h>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiAreaTools.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiQueryDataUtil.h>
-#include <netcdfcpp.h>
+#include <ncDim.h>
+#include <ncFile.h>
+#include <ncVar.h>
+#include <algorithm>
+#include <numeric>
+
+namespace
+{
+
+netCDF::NcVarAtt ncvar_get_attr(const netCDF::NcVar& var, const char *name, bool silent)
+try
+{
+  return var.getAtt(name);
+}
+catch (const netCDF::exceptions::NcException&)
+{
+  if (!silent)
+    std::cout << "NetCDF: attribute '" << name << "' not found" << std::endl;
+  return netCDF::NcVarAtt();
+}
+catch (...)
+{
+  throw Fmi::Exception::Trace(BCP, "Operation failed!");
+}
+
+template <typename ReturnType>
+typename std::enable_if<Fmi::is_numeric<ReturnType>::value, ReturnType>::type
+get_att_value(const netCDF::NcAtt& att, std::size_t index)
+{
+  try
+  {
+    const auto length = att.getAttLength();
+    if (att.getAttLength() < index + 1)
+      throw std::runtime_error("The attribute doesn not have element " + Fmi::to_string(index));
+
+    std::vector<ReturnType> values(length);
+    att.getValues(values.data());
+    return values.at(index);
+  }
+  catch (...)
+  {
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
+  }
+}
+
+std::string get_att_string_value(const netCDF::NcAtt& att)
+{
+  try
+  {
+    using namespace netCDF;
+    const netCDF::NcType type = att.getType();
+    if (type != NcType::nc_BYTE && type != NcType::nc_CHAR && type != NcType::nc_STRING)
+      throw std::runtime_error("The attribute " +  att.getName() + " must be of string or byte type");
+
+    if (type == NcType::nc_BYTE || type == NcType::nc_CHAR)
+    {
+      std::vector<char> bytes(att.getAttLength());
+      att.getValues(bytes.data());
+      const std::string result = std::string(bytes.data(), bytes.size());
+      return result;
+    }
+    else
+    {
+      throw Fmi::Exception(BCP, "FIXME: implementation missing");
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
+  }
+}
+
+
+template <typename ReturnType>
+typename std::enable_if<
+    Fmi::is_numeric<ReturnType>::value || std::is_same<ReturnType, std::string>::value,
+    std::vector<ReturnType>>::type
+get_values(const netCDF::NcVar& var)
+{
+  try
+  {
+    const auto dims = var.getDims();
+    if (dims.empty())
+      return std::vector<ReturnType>();
+
+    const std::size_t length = std::accumulate(dims.begin(), dims.end(), 1,
+                                 [](std::size_t a, const netCDF::NcDim& b) { return a * b.getSize(); });
+    std::vector<ReturnType> values(length);
+    var.getVar(values.data());
+    return values;
+  }
+  catch (...)
+  {
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
+  }
+}
+
+} // anonymous namespace
 
 void FmiTDimVarInfo::CalcTimeList(void)
 {
@@ -99,7 +198,7 @@ FmiNetCdfQueryData::FmiNetCdfQueryData(void)
 }
 
 FmiNetCdfQueryData::~FmiNetCdfQueryData(void) {}
-static NFmiQueryData *MakeQueryData(NcFile &theNcFile,
+static NFmiQueryData *MakeQueryData(const netCDF::NcFile &theNcFile,
                                     NFmiQueryInfo &theMetaInfo,
                                     std::vector<FmiVarInfo> &theVarInfos)
 {
@@ -116,21 +215,20 @@ static NFmiQueryData *MakeQueryData(NcFile &theNcFile,
                                                                               // löytyykö tästä
                                                                               // datasta erikseen
     {
-      NcVar *varPtr = theNcFile.get_var(theVarInfos[i].itsIndex);
-      if (varPtr)  // Pitäisi löytyä!!
+      const netCDF::NcVar var = theNcFile.getVar(theVarInfos[i].itsVarName);
+      if (!var.isNull())  // Pitäisi löytyä!!
       {
         // NetCDF conventioiden mukaan juoksu järjestys on:
         // aika, level, y-dim, x-dim
-        int timeInd = 0;
-        for (fInfo.ResetTime(); fInfo.NextTime(); timeInd++)  // juoksutetaan aika dimensiota
+        for (fInfo.ResetTime(); fInfo.NextTime(); )  // juoksutetaan aika dimensiota
         {
-          NcValues *vals = varPtr->get_rec(timeInd);
+          std::vector<float> values = get_values<float>(var);
           long counter = 0;
           for (fInfo.ResetLevel(); fInfo.NextLevel();)  // juoksutetaan level dimensiota
           {
             for (fInfo.ResetLocation(); fInfo.NextLocation();)
             {
-              float value = vals->as_float(counter);
+              float value = values.at(counter);
               // jos ei ole fill-value, laitetaan arvo queryDataan, jos oli, jätetään qDatan missing
               // arvo voimaan (data luodan alustettuna puuttuvilla arvoilla)
               if (value != theVarInfos[i].itsFillValue)
@@ -138,7 +236,6 @@ static NFmiQueryData *MakeQueryData(NcFile &theNcFile,
               counter++;
             }
           }
-          delete vals;
         }
       }
     }
@@ -157,12 +254,8 @@ std::vector<NFmiQueryData *> FmiNetCdfQueryData::CreateQueryDatas(const std::str
   std::vector<NFmiQueryData *> qDatas;
   try
   {
-    NcError tmpErrorSetting(NcError::silent_nonfatal);  // pitää laittaa pois defaultti tilasta,
-                                                        // koska defaultti vain tekee exit:in ilman
-                                                        // sen kummempaa selittelyä tietyissä (ei
-                                                        // niin fataaleissa tilanteissa)
-    NcFile ncFile(theNcFileName.c_str(), NcFile::ReadOnly);
-    if (ncFile.is_valid())
+    netCDF::NcFile ncFile(theNcFileName, netCDF::NcFile::read);
+    if (!ncFile.isNull())
     {
       fDataOk = true;
       InitMetaInfo(ncFile);
@@ -344,29 +437,38 @@ void FmiNetCdfQueryData::CalcTimeList(void)
 {
   itsTInfo.CalcTimeList();
 }
-void FmiNetCdfQueryData::InitTimeDim(NcVar &theVar, const std::string &theVarName, int theIndex)
+void FmiNetCdfQueryData::InitTimeDim(
+    const netCDF::NcVar &theVar,
+    const std::string &theVarName,
+    int theIndex)
 {
   if (itsTInfo.itsTimeList.NumberOfItems() > 0)
     return;  // joskus aika määreitä voi olla useita (samoja), otetaan vain ensimmäinen niistä,
              // muuten tulee samoja aikoja useita listaan
-  if (theVar.num_dims() != 1)
+  if (theVar.getDimCount() != 1)
     throw std::runtime_error(
         "Error in FmiNetCdfQueryData::InitTimeDim - dimensions for variable was not 1.");
   itsTInfo.itsVarName = theVarName;
   itsTInfo.itsIndex = theIndex;
-  NcAtt *epochAttribute = theVar.get_att("units");
-  if (epochAttribute == 0)
+
+  const netCDF::NcVarAtt epochAttribute = ncvar_get_attr(theVar, "units", false);
+  if (epochAttribute.isNull())
     throw std::runtime_error("Error in FmiNetCdfQueryData::InitTimeDim - no epoch attribute");
-  NcValues *epochTimeValueStr = epochAttribute->values();
-  itsTInfo.itsEpochTimeStr = epochTimeValueStr->as_string(0);
-  delete epochTimeValueStr;
-  NcValues *vals = theVar.values();
-  if (vals == 0)
-    throw std::runtime_error("Error in FmiNetCdfQueryData::InitTimeDim - no offset values");
-  for (long i = 0; i < vals->num(); i++)
-    itsTInfo.itsOffsetValues.push_back(vals->as_long(i));
-  delete vals;
-  delete epochAttribute;
+
+  //NcValues *epochTimeValueStr = epochAttribute->values();
+  //itsTInfo.itsEpochTimeStr = epochTimeValueStr->as_string(0);
+  //delete epochTimeValueStr;
+  const std::string epochTimeValueStr = get_att_string_value(epochAttribute);
+
+  //NcValues *vals = theVar.values();
+  //if (vals == 0)
+  //  throw std::runtime_error("Error in FmiNetCdfQueryData::InitTimeDim - no offset values");
+  //for (long i = 0; i < vals->num(); i++)
+  //  itsTInfo.itsOffsetValues.push_back(vals->as_long(i));
+  //delete vals;
+  //delete epochAttribute;
+  const std::vector<long> vals = get_values<long>(theVar);
+
   itsTInfo.itsEpochTime = ::GetEpochTime(itsTInfo.itsEpochTimeStr);
   if (itsTInfo.itsEpochTime == NFmiMetTime::gMissingTime)
     throw std::runtime_error("Error in FmiNetCdfQueryData::InitTimeDim - no epoch time found.");
@@ -378,17 +480,23 @@ void FmiNetCdfQueryData::InitTimeDim(NcVar &theVar, const std::string &theVarNam
   CalcTimeList();
 }
 
-void InitXYDim(FmiXYDimVarInfo &theInfo, NcVar &theVar, const std::string &theVarName, int theIndex)
+void InitXYDim(FmiXYDimVarInfo &theInfo,
+    const netCDF::NcVar &theVar,
+    const std::string &theVarName,
+    int theIndex)
 {
   theInfo.itsValues.clear();
   theInfo.itsVarName = theVarName;
   theInfo.itsIndex = theIndex;
-  NcValues *vals = theVar.values();
-  if (vals == 0)
-    throw std::runtime_error("Error in InitXYDim - no lat/lon or X/Y values found.");
-  for (long i = 0; i < vals->num(); i++)
-    theInfo.itsValues.push_back(vals->as_float(i));
-  delete vals;
+  //NcValues *vals = theVar.values();
+  //if (vals == 0)
+  //  throw std::runtime_error("Error in InitXYDim - no lat/lon or X/Y values found.");
+  //for (long i = 0; i < vals->num(); i++)
+  //  theInfo.itsValues.push_back(vals->as_float(i));
+  //delete vals;
+  const std::vector<float> vals = get_values<float>(theVar);
+  theInfo.itsValues = vals;
+
   if (theInfo.itsValues.size() == 0)
     throw std::runtime_error("Error in InitXYDim - no lat/lon or X/Y values found.");
 }
@@ -438,7 +546,7 @@ void FmiNetCdfQueryData::MakesureSurfaceMetaDataIsInitialized()
     itsSurfaceMetaData.itsSurfaceLevelInfo.itsNcLevelType = kFmiNcSurface;
 }
 
-void FmiNetCdfQueryData::InitZDim(NcVar &theVar,
+void FmiNetCdfQueryData::InitZDim(const netCDF::NcVar &theVar,
                                   const std::string &theVarName,
                                   int theIndex,
                                   FmiNcLevelType theLevelType)
@@ -446,57 +554,65 @@ void FmiNetCdfQueryData::InitZDim(NcVar &theVar,
   if (theLevelType == kFmiNcSurface)
   {
     FmiVarInfo &usedLevelInfo = itsSurfaceMetaData.itsSurfaceLevelInfo;
-    if (theVar.num_dims() != 1)
+    if (theVar.getDimCount() != 1)
       throw std::runtime_error(
           "Error in FmiNetCdfQueryData::InitZDim - dimensions for variable was not 1.");
     usedLevelInfo.itsVarName = theVarName;
-    NcDim *dim = theVar.get_dim(0);
-    if (dim)
-      usedLevelInfo.itsDimName = dim->name();
+    const netCDF::NcDim dim = theVar.getDim(0);
+    if (!dim.isNull())
+      usedLevelInfo.itsDimName = dim.getName();
     usedLevelInfo.itsIndex = theIndex;
     usedLevelInfo.itsNcLevelType = theLevelType;
   }
   else  // if(theLevelType == kFmiNcHeight)
   {
     FmiZDimVarInfo &usedLevelInfo = GetLevelInfo(theLevelType);
-    if (theVar.num_dims() != 1)
+    if (theVar.getDimCount() != 1)
       throw std::runtime_error(
           "Error in FmiNetCdfQueryData::InitZDim - dimensions for variable was not 1.");
     usedLevelInfo.itsValues.clear();
     usedLevelInfo.itsVarName = theVarName;
-    NcDim *dim = theVar.get_dim(0);
-    if (dim)
-      usedLevelInfo.itsDimName = dim->name();
+    const netCDF::NcDim dim = theVar.getDim(0);
+    if (dim.isNull())
+      usedLevelInfo.itsDimName = dim.getName();
     usedLevelInfo.itsIndex = theIndex;
     usedLevelInfo.itsNcLevelType = theLevelType;
 
-    NcAtt *levelUnitAttribute = theVar.get_att("units");
-    if (levelUnitAttribute == 0)
+    const netCDF::NcVarAtt levelUnitAttribute = ncvar_get_attr(theVar, "units", true);
+    if (levelUnitAttribute.isNull())
       throw std::runtime_error(
           "Error in FmiNetCdfQueryData::InitZDim - no level type unit attribute");
-    NcValues *unitStr = levelUnitAttribute->values();
-    usedLevelInfo.itsLevelUnitName = unitStr->as_string(0);
-    NcValues *vals = theVar.values();
-    if (vals == 0)
+    //NcValues *unitStr = levelUnitAttribute->values();
+    //usedLevelInfo.itsLevelUnitName = unitStr->as_string(0);
+    //NcValues *vals = theVar.values();
+    //if (vals == 0)
+    //  throw std::runtime_error("Error in FmiNetCdfQueryData::InitZDim - no level values found.");
+    //for (long i = 0; i < vals->num(); i++)
+    //  usedLevelInfo.itsValues.push_back(vals->as_float(i));
+    //delete levelUnitAttribute;
+    //delete vals;
+    const std::string levelUnitStr = get_att_string_value(levelUnitAttribute);
+    usedLevelInfo.itsLevelUnitName = levelUnitStr;
+    const std::vector<float> vals = get_values<float>(theVar);
+    usedLevelInfo.itsValues = vals;
+    if (usedLevelInfo.itsValues.size() == 0)
       throw std::runtime_error("Error in FmiNetCdfQueryData::InitZDim - no level values found.");
-    for (long i = 0; i < vals->num(); i++)
-      usedLevelInfo.itsValues.push_back(vals->as_float(i));
-    delete levelUnitAttribute;
-    delete vals;
+
     ::MakeZDimLevels(usedLevelInfo);
   }
 }
 
-FmiParameterName FmiNetCdfQueryData::GetParameterName(NcVar &theVar,
+FmiParameterName FmiNetCdfQueryData::GetParameterName(const netCDF::NcVar &theVar,
                                                       FmiParameterName theDefaultParName)
 {
-  NcAtt *stdNameAttr = theVar.get_att("standard_name");
-  if (stdNameAttr)
+  const netCDF::NcVarAtt stdNameAttr = ncvar_get_attr(theVar, "standard_name", false);
+  if (not stdNameAttr.isNull())
   {
-    NcValues *vals = stdNameAttr->values();
-    std::string stdParName = vals->as_string(0);
-    delete vals;
-    delete stdNameAttr;
+    //NcValues *vals = stdNameAttr->values();
+    //std::string stdParName = vals->as_string(0);
+    //delete vals;
+    //delete stdNameAttr;
+    const std::string stdParName = get_att_string_value(stdNameAttr);
     std::map<std::string, FmiParameterName>::iterator it = itsKnownParameterMap.find(stdParName);
     if (it != itsKnownParameterMap.end())
       return (*it).second;
@@ -505,35 +621,36 @@ FmiParameterName FmiNetCdfQueryData::GetParameterName(NcVar &theVar,
   return theDefaultParName;
 }
 
-static float GetMissingValue(NcVar &theVar)
+static float GetMissingValue(const netCDF::NcVar &theVar)
 {
   float missingValue = kFloatMissing;
-  NcAtt *fillValueAttribute = theVar.get_att("_FillValue");
-  if (fillValueAttribute)
+  const netCDF::NcVarAtt fillValueAttribute = ncvar_get_attr(theVar, "_FillValue", false);
+  if (not fillValueAttribute.isNull())
   {
-    NcValues *vals = fillValueAttribute->values();
-    missingValue = vals->as_float(0);
-    delete fillValueAttribute;
+    //NcValues *vals = fillValueAttribute->values();
+    //missingValue = vals->as_float(0);
+    //delete fillValueAttribute;
+    missingValue = get_att_value<float>(fillValueAttribute, 0);
   }
   return missingValue;
 }
 
 // tarkistaa onko kyseisellä muuttujalla halutun niminen dimensio.
-static bool CheckDimName(NcVar &theVar, const std::string &theDimName)
+static bool CheckDimName(const netCDF::NcVar &theVar, const std::string &theDimName)
 {
-  for (int d = 0; d < theVar.num_dims(); d++)
+  for (int d = 0; d < theVar.getDimCount(); d++)
   {
-    NcDim *dim = theVar.get_dim(d);
-    if (dim->name() == theDimName)
+    const netCDF::NcDim dim = theVar.getDim(d);
+    if (dim.getName() == theDimName)
       return true;
   }
   return false;
 }
 
 // Tarkistaa että muuttujalla on kolme dimensiota, ja ne ovat x, y ja time
-bool FmiNetCdfQueryData::IsSurfaceVariable(NcVar &theVar)
+bool FmiNetCdfQueryData::IsSurfaceVariable(const netCDF::NcVar &theVar)
 {
-  if (theVar.num_dims() == 3)
+  if (theVar.getDimCount() == 3)
   {
     if (::CheckDimName(theVar, itsTInfo.itsVarName))
     {
@@ -549,10 +666,10 @@ bool FmiNetCdfQueryData::IsSurfaceVariable(NcVar &theVar)
   return false;
 }
 
-void FmiNetCdfQueryData::InitNormalVar(NcVar &theVar, const std::string &theVarName, int theIndex)
+void FmiNetCdfQueryData::InitNormalVar(const netCDF::NcVar &theVar, const std::string &theVarName, int theIndex)
 {
   static long defaultParamId = 2301;
-  if (theVar.num_dims() >= 3)
+  if (theVar.getDimCount() >= 3)
   {  // pitää olla tietty määrä dimensioita, että muuttuja otetaan ns. normaali muuttujaksi
     FmiVarInfo varInfo;
     varInfo.itsIndex = theIndex;
@@ -576,22 +693,23 @@ void FmiNetCdfQueryData::InitNormalVar(NcVar &theVar, const std::string &theVarN
   }
 }
 
-static std::string GetAttributeStringValue(NcVar &theVar, const std::string &theAttrName)
+static std::string GetAttributeStringValue(const netCDF::NcVar &theVar, const std::string &theAttrName)
 {
   std::string attrValue;
-  NcAtt *attr = theVar.get_att(theAttrName.c_str());
-  if (attr)
+  const netCDF::NcVarAtt attr = ncvar_get_attr(theVar, theAttrName.c_str(), false);
+  if (not attr.isNull())
   {
-    NcValues *vals = attr->values();
-    attrValue = vals->as_string(0);
-    delete vals;
-    delete attr;
+    //NcValues *vals = attr->values();
+    //attrValue = vals->as_string(0);
+    //delete vals;
+    //delete attr;
+    attrValue = get_att_string_value(attr);
   }
   return attrValue;
 }
 
 // tarkistaa onko kyseisellä muuttujalla halutun niminen attribuutti ja onko se arvo myös haluttu.
-static bool CheckAttribute(NcVar &theVar,
+static bool CheckAttribute(const netCDF::NcVar &theVar,
                            const std::string &theAttrName,
                            const std::string &theAttrValue,
                            bool fJustContains = false)
@@ -615,7 +733,7 @@ static bool CheckAttribute(NcVar &theVar,
   return false;
 }
 
-static FmiNcLevelType GetLevelTypeByUnits(NcVar &theVar, const std::string &theUnitStr)
+static FmiNcLevelType GetLevelTypeByUnits(const netCDF::NcVar &theVar, const std::string &theUnitStr)
 {
   FmiNcLevelType leveltype = kFmiNcNoLevelType;
   if (::CheckAttribute(theVar, theUnitStr, "m"))
@@ -633,17 +751,17 @@ static FmiNcLevelType GetLevelTypeByUnits(NcVar &theVar, const std::string &theU
   return leveltype;
 }
 
-static bool IsLevelVariable(NcVar &theVar, FmiNcLevelType &theLevelTypeOut)
+static bool IsLevelVariable(const netCDF::NcVar &theVar, FmiNcLevelType &theLevelTypeOut)
 {
   FmiNcLevelType suggestedLevelType = kFmiNcNoLevelType;
   bool status = false;
-  if (theVar.num_dims() == 1)
+  if (theVar.getDimCount() == 1)
   {
     if (::CheckAttribute(theVar, "axis", "Z"))
       status = true;
-    if (status == false && std::string(theVar.name()) == "level")
+    if (status == false && std::string(theVar.getName()) == "level")
       status = true;
-    if (status == false && std::string(theVar.name()) == "hybrid")
+    if (status == false && std::string(theVar.getName()) == "hybrid")
     {
       suggestedLevelType = kFmiNcHybrid;
       status = true;
@@ -652,11 +770,11 @@ static bool IsLevelVariable(NcVar &theVar, FmiNcLevelType &theLevelTypeOut)
 
   if (status)
   {
-    NcValues *vals = theVar.values();
-    if (vals)
+    // FIXME: is the type correct? (not used in earlier code)
+    const std::vector<float> vals = get_values<float>(theVar);
+    if (not vals.empty())
     {
-      long levelCount = vals->num();
-      delete vals;
+      long levelCount = vals.size();
       std::string unitStr("units");
       theLevelTypeOut = ::GetLevelTypeByUnits(theVar, unitStr);
       if (theLevelTypeOut == kFmiNcNoLevelType)
@@ -677,9 +795,9 @@ static bool IsLevelVariable(NcVar &theVar, FmiNcLevelType &theLevelTypeOut)
   return status;
 }
 
-static bool IsTimeVariable(NcVar &theVar)
+static bool IsTimeVariable(const netCDF::NcVar &theVar)
 {
-  if (theVar.num_dims() == 1)
+  if (theVar.getDimCount() == 1)
   {
     if (::CheckAttribute(theVar, "standard_name", "time"))
       return true;
@@ -691,38 +809,51 @@ static bool IsTimeVariable(NcVar &theVar)
   return false;
 }
 
-static bool IsXVariable(NcVar &theVar)
+static bool IsXVariable(const netCDF::NcVar &theVar)
 {
   if (::CheckAttribute(theVar, "axis", "X"))
   {
-    if (theVar.num_dims() == 1)
+    if (theVar.getDimCount() == 1)
       return true;
   }
   return false;
 }
 
-static bool IsYVariable(NcVar &theVar)
+static bool IsYVariable(const netCDF::NcVar &theVar)
 {
   if (::CheckAttribute(theVar, "axis", "Y"))
   {
-    if (theVar.num_dims() == 1)
+    if (theVar.getDimCount() == 1)
       return true;
   }
   return false;
 }
 
-static long GetVarLongValue(NcVar &theVar, long theIndex = 0)
+static long GetVarLongValue(const netCDF::NcVar &theVar, long theIndex = 0)
 {
-  return theVar.as_long(theIndex);
-}
-static float GetVarFloatValue(NcVar &theVar, long theIndex = 0)
-{
-  return theVar.as_float(theIndex);
+  // There is API for getting the value of a variable as specified type, but this form
+  // of call wuold only work is getDimCount() == 1. Is that correct?
+  // Try to get entire data to avoid this possible problem
+  const std::vector<long> vals = get_values<long>(theVar);
+  return vals.at(theIndex);
+  //return theVar.as_long(theIndex);
 }
 
-static FmiNcProjectionType GetProjectionType(NcVar &theVar)
+static float GetVarFloatValue(const netCDF::NcVar &theVar, long theIndex = 0)
 {
-  std::string projTypeStr = theVar.as_string(0);
+  //return theVar.as_float(theIndex);
+  // There is API for getting the value of a variable as specified type, but this form
+  // of call wuold only work is getDimCount() == 1. Is that correct?
+  // Try to get entire data to avoid this possible problem
+  const std::vector<float> vals = get_values<float>(theVar);
+  return vals.at(theIndex);
+}
+
+static FmiNcProjectionType GetProjectionType(const netCDF::NcVar &theVar)
+{
+  //std::string projTypeStr = theVar.as_string(0);
+  std::vector<std::string> projTypeStrVec = get_values<std::string>(theVar);
+  std::string projTypeStr = projTypeStrVec.at(0);
   size_t pos = projTypeStr.find("polar stereographic");
   if (pos != std::string::npos)
     return kFmiNcStreographic;
@@ -776,40 +907,42 @@ void FmiNetCdfQueryData::InitializeStreographicGrid(void)
 // Jos ei löytynyt lat-lon asetuksia, pitää etsiä, löytyykö muita projektio määrityksiä.
 // Jos ei löydy, heitetään poikkeus eli ei saa kutsua, jos latlon-projektiolle löytyi jo
 // määritykset!!!
-void FmiNetCdfQueryData::SeekProjectionInfo(NcFile &theNcFile)
+void FmiNetCdfQueryData::SeekProjectionInfo(const netCDF::NcFile &theNcFile)
 {
-  NcVar *varPtr = 0;
+  std::string name;
+  netCDF::NcVar var;
   // Käydään ensin läpi vain yksi-ulotteiset muuttujat ja etsitään tiettyjä muutujia ja niiden
   // arvoja.
-  for (int n = 0; (varPtr = theNcFile.get_var(n)) != 0; n++)
+  const std::multimap< std::string, netCDF::NcVar> vars = theNcFile.getVars();
+  for (const auto& item : vars)
   {
-    if (varPtr->num_dims() == 1)
+    const std::string varNameStr = item.first;
+    const netCDF::NcVar &var = item.second;
+    if (var.getDimCount() == 1)
     {
-      std::string varNameStr = varPtr->name();
       if (varNameStr == "Nx")
-        itsProjectionInfo.Nx = ::GetVarLongValue(*varPtr);
+        itsProjectionInfo.Nx = ::GetVarLongValue(var);
       else if (varNameStr == "Ny")
-        itsProjectionInfo.Ny = ::GetVarLongValue(*varPtr);
+        itsProjectionInfo.Ny = ::GetVarLongValue(var);
       else if (varNameStr == "Dx")
-        itsProjectionInfo.Dx = ::GetVarFloatValue(*varPtr);
+        itsProjectionInfo.Dx = ::GetVarFloatValue(var);
       else if (varNameStr == "Dy")
-        itsProjectionInfo.Dy = ::GetVarFloatValue(*varPtr);
+        itsProjectionInfo.Dy = ::GetVarFloatValue(var);
       else if (varNameStr == "La1")
-        itsProjectionInfo.La1 = ::GetVarFloatValue(*varPtr);
+        itsProjectionInfo.La1 = ::GetVarFloatValue(var);
       else if (varNameStr == "Lo1")
-        itsProjectionInfo.Lo1 = ::GetVarFloatValue(*varPtr);
+        itsProjectionInfo.Lo1 = ::GetVarFloatValue(var);
       else if (varNameStr == "LoV")
-        itsProjectionInfo.LoV = ::GetVarFloatValue(*varPtr);
+        itsProjectionInfo.LoV = ::GetVarFloatValue(var);
       else if (varNameStr == "Latin1")
-        itsProjectionInfo.Latin1 = ::GetVarFloatValue(*varPtr);
+        itsProjectionInfo.Latin1 = ::GetVarFloatValue(var);
       else if (varNameStr == "Latin2")
-        itsProjectionInfo.Latin2 = ::GetVarFloatValue(*varPtr);
+        itsProjectionInfo.Latin2 = ::GetVarFloatValue(var);
     }
-    else if (varPtr->type() == NC_CHAR)
+    else if (var.getType() == netCDF::NcType::nc_CHAR)
     {
-      std::string varNameStr = varPtr->name();
       if (varNameStr == "grid_type")
-        itsProjectionInfo.itsProjectionType = ::GetProjectionType(*varPtr);
+        itsProjectionInfo.itsProjectionType = ::GetProjectionType(var);
     }
   }
   if (itsProjectionInfo.itsProjectionType == kFmiNcStreographic)
@@ -819,30 +952,34 @@ void FmiNetCdfQueryData::SeekProjectionInfo(NcFile &theNcFile)
         "Error in FmiNetCdfQueryData::SeekProjectionInfo - No known type found from nc-data.");
 }
 
-void FmiNetCdfQueryData::InitMetaInfo(NcFile &theNcFile)
+void FmiNetCdfQueryData::InitMetaInfo(const netCDF::NcFile &theNcFile)
 {
   Clear();
   InitKnownParamMap();
-  if (theNcFile.is_valid())
+  if (not theNcFile.isNull())
   {
-    NcVar *varPtr = 0;
     // Käydään ensin läpi vain yksi-ulotteisen muuttuja, että saamme kokoon kaaiken tarvittavan
     // tiedon
     // moni ulotteisten muuttujien määritykseen.
-    for (int n = 0; (varPtr = theNcFile.get_var(n)) != 0; n++)
+    std::size_t counter = 0;
+    const std::multimap< std::string, netCDF::NcVar> vars = theNcFile.getVars();
+    for (const auto& item : vars)
     {
-      if (varPtr->num_dims() == 1)
+      const std::size_t index = counter++;
+      const std::string varName = item.first;
+      const netCDF::NcVar &var = item.second;
+      if (var.getDimCount() == 1)
       {
         FmiNcLevelType levelType = kFmiNcNoLevelType;
-        std::string varName = varPtr->name();
-        if (::IsTimeVariable(*varPtr))
-          InitTimeDim(*varPtr, varName, n);
-        else if (::IsXVariable(*varPtr))
-          ::InitXYDim(itsXInfo, *varPtr, varName, n);
-        else if (::IsYVariable(*varPtr))
-          ::InitXYDim(itsYInfo, *varPtr, varName, n);
-        else if (::IsLevelVariable(*varPtr, levelType))
-          InitZDim(*varPtr, varName, n, levelType);
+        std::string varName = var.getName();
+        if (::IsTimeVariable(var))
+          InitTimeDim(var, varName, index);
+        else if (::IsXVariable(var))
+          ::InitXYDim(itsXInfo, var, varName, index);
+        else if (::IsYVariable(var))
+          ::InitXYDim(itsYInfo, var, varName, index);
+        else if (::IsLevelVariable(var, levelType))
+          InitZDim(var, varName, index, levelType);
       }
     }
     MakesureSurfaceMetaDataIsInitialized();
@@ -853,14 +990,17 @@ void FmiNetCdfQueryData::InitMetaInfo(NcFile &theNcFile)
                                       // huom! jos ei löydy, poikkeus lentää.
 
     // Sitten käydään läpi ns. normaalit moniulotteisen parametrit
-    for (int n = 0; (varPtr = theNcFile.get_var(n)) != 0; n++)
+    counter = 0;
+    for (const auto& item : vars)
     {
-      if (varPtr->num_dims() >= 3)
+      const std::size_t n = counter++;
+      const std::string varName = item.first;
+      const netCDF::NcVar &var = item.second;
+      if (var.getDimCount() >= 3)
       {
-        if (varPtr->type() != NC_CHAR)
+        if (var.getType() != netCDF::NcType::nc_CHAR)
         {  // ei oteta huomioon char tyyppisiä muuttujia (ainakaan vielä)
-          std::string varName = varPtr->name();
-          InitNormalVar(*varPtr, varName, n);
+          InitNormalVar(var, varName, n);
         }
       }
     }

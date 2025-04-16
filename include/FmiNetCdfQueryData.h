@@ -10,8 +10,12 @@
 #include <vector>
 
 class NFmiQueryData;
-class NcFile;
-class NcVar;
+
+namespace netCDF
+{
+  class NcFile;
+  class NcVar;
+};
 
 enum FmiNcLevelType
 {
@@ -185,24 +189,24 @@ class FmiNetCdfQueryData
   const std::string &ErrorMessage(void) const { return itsErrorMessage; }
 
  private:
-  void InitMetaInfo(NcFile &theNcFile);  // throws exceptions!
+  void InitMetaInfo(const netCDF::NcFile &theNcFile);  // throws exceptions!
   void MakeAllMetaInfos(void);
   void InitKnownParamMap(void);
   void Clear(void);
-  void InitTimeDim(NcVar &theVar, const std::string &theVarName, int theIndex);
+  void InitTimeDim(const netCDF::NcVar &theVar, const std::string &theVarName, int theIndex);
   void CalcTimeList(void);
-  void InitZDim(NcVar &theVar,
+  void InitZDim(const netCDF::NcVar &theVar,
                 const std::string &theVarName,
                 int theIndex,
                 FmiNcLevelType theLevelType);
-  void InitNormalVar(NcVar &theVar, const std::string &theVarName, int theIndex);
+  void InitNormalVar(const netCDF::NcVar &theVar, const std::string &theVarName, int theIndex);
   void MakeWantedGrid(void);
   void MakeWantedParamBag(void);
-  FmiParameterName GetParameterName(NcVar &theVar, FmiParameterName theDefaultParName);
-  void SeekProjectionInfo(NcFile &theNcFile);
+  FmiParameterName GetParameterName(const netCDF::NcVar &theVar, FmiParameterName theDefaultParName);
+  void SeekProjectionInfo(const netCDF::NcFile &theNcFile);
   void InitializeStreographicGrid(void);
-  FmiZDimVarInfo &GetLevelInfo(FmiNcLevelType theLevelType);
-  bool IsSurfaceVariable(NcVar &theVar);
+  FmiZDimVarInfo &GetLevelInfo(const FmiNcLevelType theLevelType);
+  bool IsSurfaceVariable(const netCDF::NcVar &theVar);
   void MakesureSurfaceMetaDataIsInitialized();
 
   bool fDataOk;                         // onko tämä initialisoitu ja onko annettu NcFile ollut ok.

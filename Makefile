@@ -50,7 +50,7 @@ radartoqd: EXTRA_LIBS += -lecbufr -lbufr
 #h5toqd: EXTRA_LIBS += -lhdf5
 metar2qd: EXTRA_LIBS += -lmetar
 grib2tojpg grib2toqd gribtoqd qdtogrib: EXTRA_LIBS += -leccodes
-laps2qd nc2qd nctoqd wrftoqd: EXTRA_LIBS += -lnetcdf_c++ -lnetcdf
+laps2qd nc2qd nctoqd wrftoqd: EXTRA_LIBS += -lnetcdf_c++4 -lnetcdf
 
 # Compilation directories
 

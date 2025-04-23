@@ -4,6 +4,7 @@
 #include <boost/program_options.hpp>
 #include <macgyver/CsvReader.h>
 #include <macgyver/Exception.h>
+#include <macgyver/Join.h>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiStringTools.h>
 #include <filesystem>
@@ -14,6 +15,11 @@
 
 #ifdef UNIX
 #include <sys/ioctl.h>
+#endif
+
+#if DEBUG_PRINT
+#include <ncDim.h>
+#include <ncVar.h>
 #endif
 
 int nctools::unknownParIdCounterBegin = 30000;
@@ -463,80 +469,109 @@ ParamInfo parse_parameter(const std::string &name,
 }
 
 #if DEBUG_PRINT
-void print_att(const NcAtt &att)
+void print_att(const netCDF::NcAtt &att)
 {
-  std::cerr << "\tname = " << att.name() << std::endl
-            << "\ttype = " << int(att.type()) << std::endl
-            << "\tvalid = " << att.is_valid() << std::endl
-            << "\tnvals = " << att.num_vals() << std::endl;
-
-  NcValues *values = att.values();
-
-  switch (att.type())
+  if (att.isNull())
   {
-    case ncByte:
-      for (int i = 0; i < att.num_vals(); i++)
-        std::cerr << "\tBYTE " << i << ":" << values->as_char(i) << std::endl;
-      break;
-    case ncChar:
-      std::cerr << "\tCHAR: '" << values->as_string(0) << "'" << std::endl;
-      break;
-    case ncShort:
-      for (int i = 0; i < att.num_vals(); i++)
-        std::cerr << "\tSHORT " << i << ":" << values->as_short(i) << std::endl;
-      break;
-    case ncInt:
-      for (int i = 0; i < att.num_vals(); i++)
-        std::cerr << "\tINT " << i << ":" << values->as_int(i) << std::endl;
-      break;
-    case ncFloat:
-      for (int i = 0; i < att.num_vals(); i++)
-        std::cerr << "\tFLOAT " << i << ":" << values->as_float(i) << std::endl;
-      break;
-    case ncDouble:
-      for (int i = 0; i < att.num_vals(); i++)
-        std::cerr << "\tDOUBLE " << i << ":" << values->as_double(i) << std::endl;
-      break;
-    default:
-      break;
+    std::cerr << "Attribute is null" << std::endl;
+    return;
+  }
+
+  using namespace netCDF;
+  const NcType type = att.getType();
+  const std::size_t length = att.getAttLength();
+
+  std::cerr << "\tname = " << att.getName() << std::endl
+            << "\ttype = " << type.getName() << std::endl
+            << "\tnvals = " << length << std::endl;
+
+  if (type == NcType::nc_BYTE || type == NcType::nc_CHAR)
+  {
+    std::vector<char> bytes(att.getAttLength());
+    att.getValues(bytes.data());
+    const std::string result = std::string(bytes.data(), bytes.size());
+    std::cerr << "\tvalue = " << result << "\"" << std::endl;
+  }
+  else if (type == NcType::nc_FLOAT or type == NcType::nc_DOUBLE)
+  {
+    std::vector<double> values(att.getAttLength());
+    att.getValues(values.data());
+    std::cerr << "\tvalues = {" << Fmi::join(values) << '}' << std::endl;
+  }
+  else if (type == NcType::nc_SHORT or type == NcType::nc_INT or type == NcType::nc_INT64)
+  {
+    std::vector<int64_t> values(att.getAttLength());
+    att.getValues(values.data());
+    std::cerr << "\nvalues = {" << Fmi::join(values) <<  '}' << std::endl;
+  }
+  else if (type == NcType::nc_USHORT or type == NcType::nc_UINT or type == NcType::nc_UINT64)
+  {
+    std::vector<uint64_t> values(att.getAttLength());
+    att.getValues(values.data());
+    std::cerr << "\nvalues = {" << Fmi::join(values) << '}' << std::endl;
+  }
+  else if (type == NcType::nc_STRING)
+  {
+    std::vector<std::string> values(att.getAttLength());
+    att.getValues(values.data());
+    std::cerr << "\nvalues = {" << Fmi::join(values) << '}' << std::endl;
+  }
+  else
+  {
+    std::cerr << "\tvalue = ? (unsupported type)" << std::endl;
   }
 }
 
-void debug_output(const NcFile &ncfile)
+void debug_output(const netCDF::NcFile &ncfile)
 {
-  std::cerr << "num_dims: " << ncfile.num_dims() << std::endl
-            << "num_vars: " << ncfile.num_vars() << std::endl
-            << "num_atts: " << ncfile.num_atts() << std::endl;
+  using namespace netCDF;
 
-  for (int i = 0; i < ncfile.num_dims(); i++)
+  const std::multimap< std::string, NcDim> dims = ncfile.getDims();
+  const std::multimap< std::string, NcVar> vars = ncfile.getVars();
+  const std::multimap< std::string, NcGroupAtt> atts = ncfile.getAtts();
+
+  std::cerr << "num_dims: " << dims.size() << std::endl
+            << "num_vars: " << vars.size() << std::endl
+            << "num_atts: " << atts.size() << std::endl;
+
+  std::size_t i = 0;
+  for (const auto& item : dims)
   {
-    NcDim *dim = ncfile.get_dim(i);
-    std::cerr << "Dim " << i << "\tname = " << dim->name() << std::endl
-              << "\tsize = " << dim->size() << std::endl
-              << "\tvalid = " << dim->is_valid() << std::endl
-              << "\tunlimited = " << dim->is_unlimited() << std::endl
-              << "\tid = " << dim->id() << std::endl;
+    i++;
+    const NcDim& dim = item.second;
+    std::cerr << "Dim " << i << "\tname = " << item.first << std::endl
+              << "\tsize = " << dim.getSize() << std::endl
+              << "\tis_null = " << int(dim.isNull()) << std::endl
+              << "\tunlimited = " << int(dim.isUnlimited()) << std::endl
+              << "\tid = " << dim.getId() << std::endl;
   }
 
-  for (int i = 0; i < ncfile.num_atts(); i++)
+  i = 0;
+  for (const auto& item : atts)
   {
-    NcAtt *att = ncfile.get_att(i);
+    i++;
+    const NcAtt& att = item.second;
     std::cerr << "Att " << i << std::endl;
-    print_att(*att);
+    print_att(att);
   }
 
-  for (int i = 0; i < ncfile.num_vars(); i++)
+  i = 0;
+  for (const auto& item : vars)
   {
-    NcVar *var = ncfile.get_var(i);
+    i++;
+    const NcVar& var = item.second;
+    const std::multimap< std::string, NcDim> vdims = ncfile.getDims();
+    std::cerr << "Var " << item.first << std::endl;
 
-    for (int j = 0; j < var->num_dims(); j++)
+    std::size_t j = 0;
+    for (const auto& item2 : vdims)
     {
-      NcDim *dim = var->get_dim(j);
-      std::cerr << "    Dim " << j << "\tname = " << dim->name() << std::endl
-                << "\tsize = " << dim->size() << std::endl
-                << "\tvalid = " << dim->is_valid() << std::endl
-                << "\tunlimited = " << dim->is_unlimited() << std::endl
-                << "\tid = " << dim->id() << std::endl;
+      j++;
+      const NcDim& dim = item2.second;
+      std::cerr << "    Dim " << j << "\tname = " << item.first << std::endl
+                << "\tsize = " << dim.getSize() << std::endl
+                << "\tunlimited = " << dim.isUnlimited() << std::endl
+                << "\tid = " << dim.getId() << std::endl;
     }
   }
 }

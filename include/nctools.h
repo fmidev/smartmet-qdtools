@@ -16,7 +16,7 @@
 #define LAMBERT_AZIMUTHAL "lambert_azimuthal_equal_area"
 
 #if DEBUG_PRINT
-#include <netcdfcpp.h>
+#include <ncFile.h>
 #endif
 
 class NFmiFastQueryInfo;
@@ -123,8 +123,8 @@ ParamConversions read_netcdf_configs(const Options &options);
 bool is_name_in_list(const std::list<std::string> &nameList, const std::string name);
 
 #if DEBUG_PRINT
-void print_att(const NcAtt &att);
-void debug_output(const NcFile &ncfile);
+void print_att(const netCDF::NcAtt &att);
+void debug_output(const netCDF::NcFile &ncfile);
 #endif
 
 }  // namespace nctools

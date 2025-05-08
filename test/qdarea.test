@@ -9,9 +9,6 @@ $ENV{TZ} = "Europe/Helsinki";
 
 my $program = (-x "../qdarea" ? "../qdarea" : "qdarea");
 
-system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h');
-my $wgs84 = 1-($? >> 8);
-
 my $coordinatefile = "conf/coordinates.txt";
 my $results = "results";
 

@@ -2,9 +2,6 @@
 
 $program = (-x "../qdmissing" ? "../qdmissing" : "qdmissing");
 
-system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h');
-$wgs84 = 1-($? >> 8);
-
 $results = "results";
 
 sub FindFile($$)
@@ -196,19 +193,9 @@ sub DoTest
     }
     $usednames{$name} = 1;
 
-    my($tmpfile) = "${resultfile}.tmp";
-
     my $resultfile;
 
-    if($wgs84)
-    {
-	$resultfile = FindFile($results, "qdmissing_$name.wgs84");
-    }
-
-    if (! defined $resultfile)
-    {
-        $resultfile = FindFile($results, "qdmissing_$name");
-    }
+    $resultfile = FindFile($results, "qdmissing_$name");
 
     my $tmpfile = RemoveCompressionExt(${resultfile}) . ".tmp";
 
@@ -243,7 +230,7 @@ sub DoTest
 
 sub padname
 {
-    my($str) = @_[0];
+    my($str) = $_[0];
 
     while(length($str) < 70)
     {

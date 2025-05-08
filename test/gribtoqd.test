@@ -31,8 +31,6 @@ case $eccodes_version in
         ;;
 esac
 
-grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h
-wgs84=$(expr $? == 0)
 errors=0
 
 for f in data/grib/*.grib*; do
@@ -44,10 +42,6 @@ for f in data/grib/*.grib*; do
         for suffix in $version_suffixes; do
             search="$search.$suffix $search"
         done
-    fi
-
-    if [[ $wgs84 == 1 ]]; then
-        search="$(for fn in $search; do echo $fn.wgs84; done) $search"
     fi
 
     resultfiles=

@@ -7,9 +7,6 @@ use QDToolsTest;
 
 my $program = (-x "../qdfilter" ? "../qdfilter" : "qdfilter");
 
-system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h');
-my $wgs84 = 1-($? >> 8);
-
 my $results = "results";
 
 my $griddata = "data/" . FindFile("data", "griddata.sqd");

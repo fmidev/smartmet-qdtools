@@ -7,9 +7,6 @@ use QDToolsTest;
 
 my $program = (-x "../kriging2qd" ? "../kriging2qd" : "kriging2qd");
 
-system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h');
-my $wgs84 = 1-($? >> 8);
-
 my $results = "results";
 
 my $errors = 0;
@@ -42,12 +39,6 @@ sub DoTest
     my $cmd = "$program $arguments $results/$resultfile";
 
     my $expectedresult = "${resultfile}.ok";
-    if($wgs84)
-    {
-	my($wgs84expectedresult) = "${expectedresult}.wgs84";
-	if(-e "$results/$wgs84expectedresult")
-	{  $expectedresult = $wgs84expectedresult; }
-    }
 
     # print "$cmd\n";
     my $ret = system("$cmd >results/$resultfile 2>/dev/null");

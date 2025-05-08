@@ -6,8 +6,6 @@ use lib ".";
 use QDToolsTest;
 
 my $program = (-x "../pgm2qd" ? "../pgm2qd" : "pgm2qd");
-system('grep --quiet "#define WGS84 1" /usr/include/smartmet/newbase/NFmiGlobals.h');
-my $wgs84 = 1-($? >> 8);
 
 my $results = "results";
 
@@ -39,15 +37,7 @@ sub DoTest
 
     my $cmd = "$program $arguments $results";
 
-    my $expectedresult;
-    if($wgs84)
-    {
-	$expectedresult = FindFile("results", "$resultfile.wgs84.ok");
-    }
-
-    if (! defined($expectedresult)) {
-        $expectedresult = FindFile("results", "$resultfile.ok");
-    }
+    my $expectedresult = FindFile("results", "$resultfile.ok");
 
     #print "$cmd\n";
     # $output = `$cmd 2>/dev/null`;

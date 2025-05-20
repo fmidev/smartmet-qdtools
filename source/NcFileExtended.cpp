@@ -343,10 +343,10 @@ void nctools::NcFileExtended::copy_values(const Options &options,
       if (var.isNull())
         continue;
 
-      if (!wrf)
+      if (!wrf && !axis_match(var))
       {
-        if (!axis_match(var) && options.verbose)
-          std::cerr << "warning: no matching axis for " << var.getName() << "\n";
+        if (options.verbose)
+          std::cerr << "debug: no matching axis for " << var.getName() << "\n";
         continue;
       }
 

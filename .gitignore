@@ -32,6 +32,7 @@ obj/
 *~
 .kdbgrc*
 Dependencies*
+/.vscode
 /ashtoqd
 /bufrtoqd
 /combineHistory

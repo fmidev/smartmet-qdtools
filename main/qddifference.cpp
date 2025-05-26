@@ -60,6 +60,7 @@ struct Options
   bool allparams;
   bool alltimesteps;
   bool percentage;
+  bool debug;
   double epsilon;
 
   Options()
@@ -69,6 +70,7 @@ struct Options
         allparams(false),
         alltimesteps(false),
         percentage(false),
+        debug(false),
         epsilon(0)
   {
   }
@@ -109,6 +111,7 @@ void usage()
        << "\t-P [param1,param2...]\tthe desired parameters" << endl
        << "\t-p\t\tanalyze percentage of different points" << endl
        << "\t-e eps\t\tmaximum allowed difference for exit value 0" << endl
+       << "\t-d\t\t\tdisplay debug information" << endl
        << endl;
 }
 
@@ -148,6 +151,9 @@ bool parse_command_line(int argc, const char* argv[])
   if (cmdline.isOption('t'))
     options.alltimesteps = true;
 
+  if (cmdline.isOption('d'))
+    options.debug = true;
+
   if (cmdline.isOption('p'))
     options.percentage = true;
 
@@ -182,6 +188,9 @@ bool parse_command_line(int argc, const char* argv[])
 
 namespace
 {
+  // Parameters for which differences were found
+  std::map<std::string, double> param_diffs;
+
   std::set<std::string> getParameters(NFmiFastQueryInfo& theQ)
   {
     std::set<std::string> parameters;
@@ -216,6 +225,7 @@ namespace
 
 std::pair<double, std::size_t>
 analyze_all_parameters(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
+try
 {
   double maxdiff = 0.0;
   int points = 0;
@@ -254,7 +264,10 @@ analyze_all_parameters(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
             maxdiff = max(diff, maxdiff);
             ++points;
             if (diff != 0.0)
+            {
               ++differentpoints;
+              param_diffs[paramName] = std::max(param_diffs[paramName], diff);
+            }
           }
           else if ((value1 == kFloatMissing) ^ (value2 == kFloatMissing))
           {
@@ -268,6 +281,13 @@ analyze_all_parameters(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
   else
     return std::make_pair(maxdiff, num_one_missing);
 }
+catch (...)
+{
+  // Catch any exceptions and rethrow them with additional context
+  throw Fmi::Exception::Trace(BCP, "Operation failed")
+      .addParameter("File1", options.inputfile1)
+      .addParameter("File2", options.inputfile2);
+}
 
 // ----------------------------------------------------------------------
 /*!
@@ -277,6 +297,7 @@ analyze_all_parameters(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
 
 std::pair<double, std::size_t>
 analyze_given_parameters(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
+try
 {
   double maxdiff = 0.0;
   int points = 0;
@@ -322,6 +343,13 @@ analyze_given_parameters(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
   else
     return std::make_pair(maxdiff, num_one_missing);
 }
+catch (...)
+{
+  // Catch any exceptions and rethrow them with additional context
+  throw Fmi::Exception::Trace(BCP, "Operation failed")
+      .addParameter("File1", options.inputfile1)
+      .addParameter("File2", options.inputfile2);
+}
 
 // ----------------------------------------------------------------------
 /*!
@@ -331,6 +359,7 @@ analyze_given_parameters(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
 
 std::pair<double, std::size_t>
 analyze_this_parameter(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
+try
 {
   bool iswinddir = (theQ1.Param().GetParam()->GetIdent() == kFmiWindDirection);
 
@@ -369,6 +398,13 @@ analyze_this_parameter(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
   else
     return std::make_pair(maxdiff, num_one_missing);
 }
+catch (...)
+{
+  // Catch any exceptions and rethrow them with additional context
+  throw Fmi::Exception::Trace(BCP, "Operation failed")
+      .addParameter("File1", options.inputfile1)
+      .addParameter("File2", options.inputfile2);
+}
 
 // ----------------------------------------------------------------------
 /*!
@@ -378,6 +414,7 @@ analyze_this_parameter(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
 
 std::pair<double, std::size_t>
 analyze_all_parameters_now(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
+try
 {
   double maxdiff = 0.0;
   int points = 0;
@@ -431,6 +468,13 @@ analyze_all_parameters_now(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
   else
     return std::make_pair(maxdiff, num_one_missing);
 }
+catch (...)
+{
+  // Catch any exceptions and rethrow them with additional context
+  throw Fmi::Exception::Trace(BCP, "Operation failed")
+      .addParameter("File1", options.inputfile1)
+      .addParameter("File2", options.inputfile2);
+}
 
 // ----------------------------------------------------------------------
 /*!
@@ -440,6 +484,7 @@ analyze_all_parameters_now(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
 
 std::pair<double, std::size_t>
 analyze_given_parameters_now(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
+try
 {
   double maxdiff = 0.0;
   int points = 0;
@@ -484,6 +529,13 @@ analyze_given_parameters_now(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
   else
     return std::make_pair(maxdiff, num_one_missing);
 }
+catch (...)
+{
+  // Catch any exceptions and rethrow them with additional context
+  throw Fmi::Exception::Trace(BCP, "Operation failed")
+      .addParameter("File1", options.inputfile1)
+      .addParameter("File2", options.inputfile2);
+}
 
 // ----------------------------------------------------------------------
 /*!
@@ -492,6 +544,7 @@ analyze_given_parameters_now(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
 // ----------------------------------------------------------------------
 
 void validate_comparison(NFmiFastQueryInfo& q1, NFmiFastQueryInfo& q2)
+try
 {
   for (q1.ResetTime(), q2.ResetTime(); q1.NextTime() && q2.NextTime();)
   {
@@ -518,6 +571,13 @@ void validate_comparison(NFmiFastQueryInfo& q1, NFmiFastQueryInfo& q2)
 
   if (q1.GridHashValue() != q2.GridHashValue())
     throw runtime_error("Data not comparable, grids differ");
+}
+catch (...)
+{
+  // Catch any exceptions and rethrow them with additional context
+  throw Fmi::Exception::Trace(BCP, "Error analyzing all parameters")
+      .addParameter("File1", options.inputfile1)
+      .addParameter("File2", options.inputfile2);
 }
 
 // ----------------------------------------------------------------------
@@ -553,6 +613,7 @@ int domain(int argc, const char* argv[])
 
   double difference = 0.0;
   std::size_t num_one_missing = 0;
+
   if (options.alltimesteps)
   {
     for (q1->ResetTime(), q2->ResetTime(); q1->NextTime() && q2->NextTime();)
@@ -565,9 +626,9 @@ int domain(int argc, const char* argv[])
       cout << q1->ValidTime().ToStr(kYYYYMMDDHHMM).CharPtr() << ' ' << difference << endl;
 
       if (options.epsilon > 0 && difference > options.epsilon)
-        throw runtime_error("Error limit exceeded");
+        throw Fmi::Exception(BCP, "Error limit exceeded");
       if (num_one_missing > 0)
-        throw runtime_error("Warning: " + Fmi::to_string(num_one_missing) +
+        throw Fmi::Exception(BCP, Fmi::to_string(num_one_missing) +
              " points had one or several value missing in one of the files with value present in second one.");
     }
   }
@@ -583,9 +644,9 @@ int domain(int argc, const char* argv[])
         cout << converter.ToString(q1->Param().GetParamIdent()) << '\t' << difference << endl;
 
         if (options.epsilon > 0 && difference > options.epsilon)
-          throw runtime_error("Error limit exceeded");
+          throw Fmi::Exception(BCP, "Error limit exceeded");
         if (num_one_missing > 0)
-          throw runtime_error("Warning: " + Fmi::to_string(num_one_missing) +
+          throw Fmi::Exception(BCP, Fmi::to_string(num_one_missing) +
                " points had one or several value missing in one of the files with value present in second one.");
         }
     }
@@ -594,9 +655,9 @@ int domain(int argc, const char* argv[])
       const auto [difference, num_one_missing] = analyze_all_parameters(*q1, *q2);
       cout << difference << endl;
       if (options.epsilon > 0 && difference > options.epsilon)
-        throw runtime_error("Error limit exceeded");
+        throw Fmi::Exception(BCP, "Error limit exceeded");
       if (num_one_missing > 0)
-        throw runtime_error("Warning: " + Fmi::to_string(num_one_missing) +
+        throw Fmi::Exception(BCP, Fmi::to_string(num_one_missing) +
              " points had one or several value missing in one of the files with value present in second one.");
     }
     else
@@ -608,13 +669,23 @@ int domain(int argc, const char* argv[])
         std::tie(difference, num_one_missing) = analyze_this_parameter(*q1, *q2);
         cout << converter.ToString(q1->Param().GetParamIdent()) << '\t' << difference << endl;
         if (options.epsilon > 0 && difference > options.epsilon)
-          throw runtime_error("Error limit exceeded");
+          throw Fmi::Exception(BCP, "Error limit exceeded");
         if (num_one_missing > 0)
-          throw runtime_error("Warning: " + Fmi::to_string(num_one_missing) +
+          throw Fmi::Exception(BCP, Fmi::to_string(num_one_missing) +
                " points had one or several value missing in one of the files with value present in second one.");
         }
     }
   }
+
+  if (options.debug && param_diffs.size() > 0)
+  {
+    cout << "Max differences per parameter:" << endl;
+    for (const auto& [paramName, diff] : param_diffs)
+    {
+      cout << paramName <<  ": " << diff << '\n';
+    }
+  }
+
   return 0;
 }
 
@@ -629,6 +700,20 @@ int main(int argc, const char* argv[])
   try
   {
     return domain(argc, argv);
+  }
+  catch (const Fmi::Exception& e)
+  {
+    if (options.debug && param_diffs.size() > 0)
+    {
+      cout << "Max differences per parameter:" << endl;
+      for (const auto& [paramName, diff] : param_diffs)
+      {
+        cout << paramName <<  ": " << diff << '\n';
+      }
+    }
+
+    cout << e << endl;
+    return 1;
   }
   catch (exception& e)
   {

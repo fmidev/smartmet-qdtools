@@ -125,12 +125,13 @@ sub DoTest {
             }
         }
         else {
-            my ($difference) = `$qddifference $resultfile $tmpfile`;
+            my ($difference, @remaining) = `$qddifference $resultfile $tmpfile`;
             my $ret = $?;
             if ( $ret != 0 ) {
                 ++$errors;
                 print " FAILED!\nqddifference says:\n$difference";
                 print "( $resultfile <> $tmpfile in $results/ )\n";
+                foreach (@remaining) { print $_; }
             }
             else {
                 $difference =~ s/^\s+//;

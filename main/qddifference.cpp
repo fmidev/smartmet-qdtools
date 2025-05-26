@@ -31,6 +31,7 @@
  */
 // ======================================================================
 
+#include <macgyver/Join.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiFileSystem.h>
@@ -179,21 +180,68 @@ bool parse_command_line(int argc, const char* argv[])
  */
 // ----------------------------------------------------------------------
 
-double analyze_all_parameters(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
+namespace
 {
-  bool ignoresubs = false;
+  std::set<std::string> getParameters(NFmiFastQueryInfo& theQ)
+  {
+    std::set<std::string> parameters;
+    bool ignoresubs = false;
+
+    for (theQ.ResetParam(); theQ.NextParam(ignoresubs);)
+    {
+      const NFmiParam* param = theQ.Param().GetParam();
+      if (!param) continue;  // Not expected to happen, but just in case
+      const long ident = param->GetIdent();
+      if (ident != kFmiBadParameter)
+        parameters.insert((const char *)param->GetName());
+    }
+
+    return parameters;
+  }
+
+  void findParameter(NFmiFastQueryInfo& theQ, const std::string& paramName)
+  {
+    bool ignoresubs = false;
+    theQ.ResetParam();
+    while (theQ.NextParam(ignoresubs))
+    {
+      const NFmiParam* param = theQ.Param().GetParam();
+      if (!param) continue;  // Not expected to happen, but just in case
+      if (param->GetName() == paramName)
+        return;  // Found the parameter, no need to continue
+    }
+    throw Fmi::Exception(BCP, "Parameter '" + paramName + "' not found in the query data");
+  }
+}
+
+std::pair<double, std::size_t>
+analyze_all_parameters(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
+{
   double maxdiff = 0.0;
   int points = 0;
   int differentpoints = 0;
+  std::size_t num_one_missing = 0;
 
-  for (theQ1.ResetLocation(), theQ2.ResetLocation(); theQ1.NextLocation() && theQ2.NextLocation();)
-    for (theQ1.ResetTime(), theQ2.ResetTime(); theQ1.NextTime() && theQ2.NextTime();)
-      for (theQ1.ResetLevel(), theQ2.ResetLevel(); theQ1.NextLevel() && theQ2.NextLevel();)
-        for (theQ1.ResetParam(), theQ2.ResetParam();
-             theQ1.NextParam(ignoresubs) && theQ2.NextParam(ignoresubs);)
+  const std::set<std::string> params1 = getParameters(theQ1);
+  const std::set<std::string> params2 = getParameters(theQ2);
+  if (params1 != params2)
+  {
+    std::ostringstream errorMsg;
+    errorMsg << "The query data files have different parameters:\n"
+             << "File 1 parameters: " << Fmi::join(params1, ", ") << "\n"
+             << "File 2 parameters: " << Fmi::join(params2, ", ");
+    throw Fmi::Exception(BCP, errorMsg.str());
+  }
+
+  for (const auto& paramName : params1)
+  {
+    findParameter(theQ1, paramName);
+    findParameter(theQ2, paramName);
+    bool iswinddir = (theQ1.Param().GetParam()->GetIdent() == kFmiWindDirection);
+    for (theQ1.ResetLocation(), theQ2.ResetLocation(); theQ1.NextLocation() && theQ2.NextLocation();)
+      for (theQ1.ResetTime(), theQ2.ResetTime(); theQ1.NextTime() && theQ2.NextTime();)
+        for (theQ1.ResetLevel(), theQ2.ResetLevel(); theQ1.NextLevel() && theQ2.NextLevel();)
         {
-          bool iswinddir = (theQ1.Param().GetParam()->GetIdent() == kFmiWindDirection);
-
           const double value1 = theQ1.FloatValue();
           const double value2 = theQ2.FloatValue();
 
@@ -208,12 +256,17 @@ double analyze_all_parameters(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2
             if (diff != 0.0)
               ++differentpoints;
           }
+          else if ((value1 == kFloatMissing) ^ (value2 == kFloatMissing))
+          {
+            ++num_one_missing;
+          }
         }
+  }
 
   if (options.percentage)
-    return 100.0 * differentpoints / points;
+    return std::make_pair(100.0 * differentpoints / points, num_one_missing);
   else
-    return maxdiff;
+    return std::make_pair(maxdiff, num_one_missing);
 }
 
 // ----------------------------------------------------------------------
@@ -222,11 +275,13 @@ double analyze_all_parameters(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2
  */
 // ----------------------------------------------------------------------
 
-double analyze_given_parameters(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
+std::pair<double, std::size_t>
+analyze_given_parameters(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
 {
   double maxdiff = 0.0;
   int points = 0;
   int differentpoints = 0;
+  std::size_t num_one_missing = 0;
 
   for (unsigned int i = 0; i < options.parameters.size(); i++)
   {
@@ -255,13 +310,17 @@ double analyze_given_parameters(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& the
             if (diff != 0.0)
               ++differentpoints;
           }
+          else if ((value1 == kFloatMissing) ^ (value2 == kFloatMissing))
+          {
+            ++num_one_missing;
+          }
         }
   }
 
   if (options.percentage)
-    return 100.0 * differentpoints / points;
+    return std::make_pair(100.0 * differentpoints / points, num_one_missing);
   else
-    return maxdiff;
+    return std::make_pair(maxdiff, num_one_missing);
 }
 
 // ----------------------------------------------------------------------
@@ -270,13 +329,15 @@ double analyze_given_parameters(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& the
  */
 // ----------------------------------------------------------------------
 
-double analyze_this_parameter(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
+std::pair<double, std::size_t>
+analyze_this_parameter(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
 {
   bool iswinddir = (theQ1.Param().GetParam()->GetIdent() == kFmiWindDirection);
 
   double maxdiff = 0.0;
   int points = 0;
   int differentpoints = 0;
+  std::size_t num_one_missing = 0;
 
   for (theQ1.ResetLocation(), theQ2.ResetLocation(); theQ1.NextLocation() && theQ2.NextLocation();)
     for (theQ1.ResetTime(), theQ2.ResetTime(); theQ1.NextTime() && theQ2.NextTime();)
@@ -297,12 +358,16 @@ double analyze_this_parameter(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2
           if (diff != 0.0)
             ++differentpoints;
         }
+        else if ((value1 == kFloatMissing) ^ (value2 == kFloatMissing))
+        {
+          ++num_one_missing;
+        }
       }
 
   if (options.percentage)
-    return 100.0 * differentpoints / points;
+    return std::make_pair(100.0 * differentpoints / points, num_one_missing);
   else
-    return maxdiff;
+    return std::make_pair(maxdiff, num_one_missing);
 }
 
 // ----------------------------------------------------------------------
@@ -311,38 +376,60 @@ double analyze_this_parameter(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2
  */
 // ----------------------------------------------------------------------
 
-double analyze_all_parameters_now(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
+std::pair<double, std::size_t>
+analyze_all_parameters_now(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
 {
-  bool ignoresubs = false;
   double maxdiff = 0.0;
   int points = 0;
   int differentpoints = 0;
+  std::size_t num_one_missing = 0;
 
-  for (theQ1.ResetLocation(), theQ2.ResetLocation(); theQ1.NextLocation() && theQ2.NextLocation();)
-    for (theQ1.ResetLevel(), theQ2.ResetLevel(); theQ1.NextLevel() && theQ2.NextLevel();)
-      for (theQ1.ResetParam(), theQ2.ResetParam();
-           theQ1.NextParam(ignoresubs) && theQ2.NextParam(ignoresubs);)
-      {
-        bool iswinddir = (theQ1.Param().GetParam()->GetIdent() == kFmiWindDirection);
-        const double value1 = theQ1.FloatValue();
-        const double value2 = theQ2.FloatValue();
-        if (value1 != kFloatMissing && value2 != kFloatMissing)
+  const std::set<std::string> params1 = getParameters(theQ1);
+  const std::set<std::string> params2 = getParameters(theQ2);
+  if (params1 != params2)
+  {
+    std::ostringstream errorMsg;
+    errorMsg << "The query data files have different parameters:\n"
+             << "File 1 parameters: " << Fmi::join(params1, ", ") << "\n"
+             << "File 2 parameters: " << Fmi::join(params2, ", ");
+    throw Fmi::Exception(BCP, errorMsg.str());
+  }
+
+  for (unsigned int i = 0; i < options.parameters.size(); i++)
+  {
+    if (!theQ1.Param(options.parameters[i]) || !theQ2.Param(options.parameters[i]))
+      throw runtime_error("The files must contain the parameters given with -P");
+
+    bool iswinddir = (theQ1.Param().GetParam()->GetIdent() == kFmiWindDirection);
+
+    for (theQ1.ResetLocation(), theQ2.ResetLocation(); theQ1.NextLocation() && theQ2.NextLocation();)
+      for (theQ1.ResetLevel(), theQ2.ResetLevel(); theQ1.NextLevel() && theQ2.NextLevel();)
         {
-          double diff = abs(value2 - value1);
-          if (iswinddir)
-            diff = min(diff, abs(abs(value2 - value1) - 360));
+          const double value1 = theQ1.FloatValue();
+          const double value2 = theQ2.FloatValue();
+          if (value1 != kFloatMissing && value2 != kFloatMissing)
+          {
+            double diff = abs(value2 - value1);
+            if (iswinddir)
+              diff = min(diff, abs(abs(value2 - value1) - 360));
 
-          maxdiff = max(diff, maxdiff);
-          ++points;
-          if (diff != 0.0)
-            ++differentpoints;
-        }
+            maxdiff = max(diff, maxdiff);
+            ++points;
+            if (diff != 0.0)
+              ++differentpoints;
+          }
+          else if ((value1 == kFloatMissing) ^ (value2 == kFloatMissing))
+          {
+            ++num_one_missing;
+          }
       }
 
+  }
+
   if (options.percentage)
-    return 100.0 * differentpoints / points;
+    return std::make_pair(100.0 * differentpoints / points, num_one_missing);
   else
-    return maxdiff;
+    return std::make_pair(maxdiff, num_one_missing);
 }
 
 // ----------------------------------------------------------------------
@@ -351,11 +438,13 @@ double analyze_all_parameters_now(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& t
  */
 // ----------------------------------------------------------------------
 
-double analyze_given_parameters_now(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
+std::pair<double, std::size_t>
+analyze_given_parameters_now(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
 {
   double maxdiff = 0.0;
   int points = 0;
   int differentpoints = 0;
+  std::size_t num_one_missing = 0;
 
   for (unsigned int i = 0; i < options.parameters.size(); i++)
   {
@@ -383,13 +472,17 @@ double analyze_given_parameters_now(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo&
           if (diff != 0.0)
             ++differentpoints;
         }
-      }
+        else if ((value1 == kFloatMissing) ^ (value2 == kFloatMissing))
+        {
+          ++num_one_missing;
+        }
+    }
   }
 
   if (options.percentage)
-    return 100.0 * differentpoints / points;
+    return std::make_pair(100.0 * differentpoints / points, num_one_missing);
   else
-    return maxdiff;
+    return std::make_pair(maxdiff, num_one_missing);
 }
 
 // ----------------------------------------------------------------------
@@ -459,18 +552,23 @@ int domain(int argc, const char* argv[])
   // Establish what to do
 
   double difference = 0.0;
+  std::size_t num_one_missing = 0;
   if (options.alltimesteps)
   {
     for (q1->ResetTime(), q2->ResetTime(); q1->NextTime() && q2->NextTime();)
     {
+      std::size_t num_one_missing = 0;
       if (options.parameters.empty())
-        difference = analyze_all_parameters_now(*q1, *q2);
+        std::tie(difference, num_one_missing) = analyze_all_parameters_now(*q1, *q2);
       else
-        difference = analyze_given_parameters_now(*q1, *q2);
+        std::tie(difference, num_one_missing) = analyze_given_parameters_now(*q1, *q2);
       cout << q1->ValidTime().ToStr(kYYYYMMDDHHMM).CharPtr() << ' ' << difference << endl;
 
       if (options.epsilon > 0 && difference > options.epsilon)
         throw runtime_error("Error limit exceeded");
+      if (num_one_missing > 0)
+        throw runtime_error("Warning: " + Fmi::to_string(num_one_missing) +
+             " points had one or several value missing in one of the files with value present in second one.");
     }
   }
   else
@@ -481,19 +579,25 @@ int domain(int argc, const char* argv[])
       for (q1->ResetParam(), q2->ResetParam();
            q1->NextParam(ignoresubs) && q2->NextParam(ignoresubs);)
       {
-        difference = analyze_this_parameter(*q1, *q2);
+        std::tie(difference, num_one_missing) = analyze_this_parameter(*q1, *q2);
         cout << converter.ToString(q1->Param().GetParamIdent()) << '\t' << difference << endl;
 
         if (options.epsilon > 0 && difference > options.epsilon)
           throw runtime_error("Error limit exceeded");
-      }
+        if (num_one_missing > 0)
+          throw runtime_error("Warning: " + Fmi::to_string(num_one_missing) +
+               " points had one or several value missing in one of the files with value present in second one.");
+        }
     }
     else if (options.parameters.empty())
     {
-      difference = analyze_all_parameters(*q1, *q2);
+      const auto [difference, num_one_missing] = analyze_all_parameters(*q1, *q2);
       cout << difference << endl;
       if (options.epsilon > 0 && difference > options.epsilon)
         throw runtime_error("Error limit exceeded");
+      if (num_one_missing > 0)
+        throw runtime_error("Warning: " + Fmi::to_string(num_one_missing) +
+             " points had one or several value missing in one of the files with value present in second one.");
     }
     else
     {
@@ -501,11 +605,14 @@ int domain(int argc, const char* argv[])
       {
         if (!q1->Param(options.parameters[i]) || !q2->Param(options.parameters[i]))
           throw runtime_error("The files must contain the parameters given with -P");
-        difference = analyze_this_parameter(*q1, *q2);
+        std::tie(difference, num_one_missing) = analyze_this_parameter(*q1, *q2);
         cout << converter.ToString(q1->Param().GetParamIdent()) << '\t' << difference << endl;
         if (options.epsilon > 0 && difference > options.epsilon)
           throw runtime_error("Error limit exceeded");
-      }
+        if (num_one_missing > 0)
+          throw runtime_error("Warning: " + Fmi::to_string(num_one_missing) +
+               " points had one or several value missing in one of the files with value present in second one.");
+        }
     }
   }
   return 0;

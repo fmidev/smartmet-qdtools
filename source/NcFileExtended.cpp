@@ -40,6 +40,30 @@ catch (...)
   throw Fmi::Exception::Trace(BCP, "Operation failed!");
 }
 
+template <typename T>
+typename std::enable_if<
+  std::is_same<T, netCDF::NcVar>::value ||
+  std::is_base_of<netCDF::NcGroup, T>::value,
+  std::string>::type getDimNamesString(const T& var)
+{
+  try
+  {
+    std::string result;
+    const auto numDims = var.getDimCount();
+    for (int i = 0; i < numDims; ++i)
+    {
+      if (i > 0)
+        result += " ";
+      result += var.getDim(i).getName();
+    }
+    return result;
+  }
+  catch (...)
+  {
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
+  }
+}
+
 }  // anonymous namespace
 
 std::string nctools::get_att_string_value(const netCDF::NcAtt& att)
@@ -346,7 +370,8 @@ void nctools::NcFileExtended::copy_values(const Options &options,
       if (!wrf && !axis_match(var))
       {
         if (options.verbose)
-          std::cerr << "debug: no matching axis for " << var.getName() << "\n";
+          std::cerr << "debug: netCDF variable " << var.getName() << " skipped"
+                    << "(dimensions: " << getDimNamesString(var) << ")\n";
         continue;
       }
 

@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 25.5.20
+Version: 25.5.26
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -209,6 +209,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Mon May 26 2025 Andris Pavēnis <andris.pavenis@fmi.fi> 25.5.26-1.fmi
+- qddiffrence improvements
+
 * Tue May 20 2025 Andris Pavēnis <andris.pavenis@fmi.fi> 25.5.20-1.fmi
 - nctoqd: Fix bug that prevented copying values to SQD
 

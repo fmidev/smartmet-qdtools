@@ -10,25 +10,34 @@ URL: https://github.com/fmidev/smartmet-qdtools
 Source0: %{name}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot-%(%{__id_u} -n)
 
+# https://fedoraproject.org/wiki/Changes/Broken_RPATH_will_fail_rpmbuild
+%global __brp_check_rpaths %{nil}
+
 %if 0%{?rhel} && 0%{rhel} < 9
 %define smartmet_boost boost169
 %else
 %define smartmet_boost boost
 %endif
 
-%define smartmet_fmt_min 11.0.0
+%if 0%{?rhel} && 0%{rhel} <= 9
+%define smartmet_fmt_min 11.0.1
 %define smartmet_fmt_max 12.0.0
+%define smartmet_fmt fmt-libs >= %{smartmet_fmt_min}, fmt-libs < %{smartmet_fmt_max}
+%define smartmet_fmt_devel fmt-devel >= %{smartmet_fmt_min}, fmt-devel < %{smartmet_fmt_max}
+%else
+%define smartmet_fmt fmt
+%define smartmet_fmt_devel fmt-devel
+%endif
 
 BuildRequires: %{smartmet_boost}-devel
 BuildRequires: bzip2-devel
 BuildRequires: eccodes
 BuildRequires: eccodes-devel
-BuildRequires: fmt-devel >= %{smartmet_fmt_min}, fmt-devel < %{smartmet_fmt_max}
+BuildRequires: %{smartmet_fmt_devel}
 BuildRequires: gcc-c++
 BuildRequires: gdal310-devel
 BuildRequires: h5pp-devel
 BuildRequires: hdf5-devel >= 1.8.12
-BuildRequires: jasper-devel
 BuildRequires: libbufr >= 3.2
 BuildRequires: libecbufr-devel
 BuildRequires: libjpeg-devel
@@ -54,11 +63,10 @@ Requires: %{smartmet_boost}-system
 Requires: %{smartmet_boost}-thread
 Requires: bzip2-libs
 Requires: eccodes
-Requires: fmt-libs >= %{smartmet_fmt_min}, fmt-libs < %{smartmet_fmt_max}
+Requires: %{smartmet_fmt}
 Requires: gdal310-libs
 Requires: glibc
 Requires: hdf5 >= 1.8.12
-Requires: jasper-libs >= 1.900.1
 Requires: libbufr >= 3.2
 Requires: libecbufr
 Requires: libgcc

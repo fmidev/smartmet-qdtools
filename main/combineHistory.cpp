@@ -24,6 +24,7 @@
  *
  *  - -p for maximum age into the past in hours (default is 48)
  *  - -f for maximum age into the future in hours (default is 8)
+ *  - -S timestamp : use this time as reference instead of the wall clock
  *  - -v for verbose mode (written to standard error!)
  *  - -1 for taking only newest file from each input directory
  *  - -o require same origintime from each candidate
@@ -49,6 +50,7 @@
 // ======================================================================
 
 #include <macgyver/StringConversion.h>
+#include <macgyver/TimeParser.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileSystem.h>
@@ -76,6 +78,7 @@ void Usage(void)
        << endl
        << "\t-p <hours>\tmaximum age into the past (default 48)" << endl
        << "\t-f <hours>\tmaximum age into the future (default 8)" << endl
+       << "\t-S <timestamp>\treference time instead of wall clock" << endl
        << "\t-v\t\tverbose" << endl
        << "\t-o\t\trequire the same origin time" << endl
        << "\t-O <filename>\tmemory mapped output file" << endl
@@ -144,8 +147,9 @@ int main(int argc, const char *argv[])
   bool sameorigin = false;   // do not require same origintime
   bool newestorigin = true;  // pick newest origin time
   std::string outfile = "-";
+  NFmiMetTime now;
 
-  NFmiCmdLine cmdline(argc, argv, "vp!f!1otN!D!rO!");
+  NFmiCmdLine cmdline(argc, argv, "vp!f!1otN!D!rO!S!");
 
   if (cmdline.Status().IsError())
   {
@@ -190,6 +194,9 @@ int main(int argc, const char *argv[])
   if (cmdline.isOption('O'))
     outfile = cmdline.OptionValue('O');
 
+  if (cmdline.isOption('S'))
+    now = Fmi::TimeParser::parse(cmdline.OptionValue('S'));
+
   // Check arguments
 
   for (list<string>::const_iterator it = datapaths.begin(); it != datapaths.end(); ++it)
@@ -204,7 +211,6 @@ int main(int argc, const char *argv[])
   // Establish the minimum and maximum times to be included
   // in the output.
 
-  NFmiMetTime now;
   NFmiMetTime firsttime(now);
   NFmiMetTime lasttime(now);
   firsttime.ChangeByHours(-maxPastAge);

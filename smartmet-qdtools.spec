@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 25.5.26
+Version: 25.9.24
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -48,9 +48,9 @@ BuildRequires: netcdf-cxx4-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
 BuildRequires: smartmet-library-calculator-devel >= 25.3.19
-BuildRequires: smartmet-library-gis-devel >= 25.2.18
+BuildRequires: smartmet-library-gis-devel >= 25.9.15
 BuildRequires: smartmet-library-imagine-devel >= 25.2.18
-BuildRequires: smartmet-library-macgyver-devel >= 25.2.18
+BuildRequires: smartmet-library-macgyver-devel >= 25.9.4
 BuildRequires: smartmet-library-newbase-devel >= 25.3.20
 BuildRequires: smartmet-library-smarttools-devel >= 25.2.18
 BuildRequires: smartmet-timezones
@@ -76,14 +76,14 @@ Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
 Requires: netcdf-cxx4
 Requires: smartmet-library-calculator >= 25.3.19
-Requires: smartmet-library-gis >= 25.2.18
+Requires: smartmet-library-gis >= 25.9.15
 Requires: smartmet-library-imagine >= 25.2.18
-Requires: smartmet-library-macgyver >= 25.2.18
+Requires: smartmet-library-macgyver >= 25.9.4
 Requires: smartmet-library-newbase >= 25.3.20
 Requires: smartmet-library-smarttools >= 25.2.18
 Requires: smartmet-timezones >= 24.5.27
 Requires: zlib
-#TestRequires: smartmet-library-macgyver-devel >= 25.2.18
+#TestRequires: smartmet-library-macgyver-devel >= 25.9.4
 #TestRequires: gcc-c++
 #TestRequires: smartmet-library-newbase-devel >= 25.3.20
 #TestRequires: smartmet-qdtools-test-data
@@ -217,6 +217,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Sep 24 2025 Mika Heiskanen <mika.heiskanen@fmi.fi> - 25.9.24-1.fmi
+- Added combineHistory -S option for handling historical data
+
 * Mon May 26 2025 Andris Pavēnis <andris.pavenis@fmi.fi> 25.5.26-1.fmi
 - qddiffrence improvements
 

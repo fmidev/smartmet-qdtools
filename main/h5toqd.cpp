@@ -85,7 +85,7 @@ Options options;
  */
 // ----------------------------------------------------------------------
 
-bool parse_options(int argc, char *argv[])
+bool parse_options(int argc, char* argv[])
 {
   namespace po = boost::program_options;
   namespace fs = std::filesystem;
@@ -202,7 +202,7 @@ bool parse_options(int argc, char *argv[])
  */
 // ----------------------------------------------------------------------
 
-NFmiMetTime tomettime(const Fmi::DateTime &t)
+NFmiMetTime tomettime(const Fmi::DateTime& t)
 {
   return NFmiMetTime(t.date().year(),
                      t.date().month(),
@@ -212,7 +212,6 @@ NFmiMetTime tomettime(const Fmi::DateTime &t)
                      t.time_of_day().seconds(),
                      1);
 }
-
 
 // ----------------------------------------------------------------------
 /*!
@@ -304,7 +303,6 @@ int count_datas(const Fmi::HDF5::Hdf5File& file, int i)
 
   return counter;
 }
-
 
 // --------------------------------------------------------------------------------
 /*!
@@ -422,7 +420,7 @@ NFmiTimeDescriptor create_tdesc(const Fmi::HDF5::Hdf5File& file)
       t = tomettime(extract_valid_time(file, i));
       validtimes.insert(t);
     }
-    for (const auto &validtime : validtimes)
+    for (const auto& validtime : validtimes)
       tlist.Add(new NFmiMetTime(validtime));
   }
   else
@@ -458,10 +456,10 @@ NFmiTimeDescriptor create_tdesc(const Fmi::HDF5::Hdf5File& file)
  */
 // ----------------------------------------------------------------------
 
-FmiParameterName opera_name_to_newbase(const std::string &product,
-                                       const std::string &quantity,
+FmiParameterName opera_name_to_newbase(const std::string& product,
+                                       const std::string& quantity,
                                        const Fmi::HDF5::Hdf5File& file,
-                                       const std::string &prefix)
+                                       const std::string& prefix)
 {
   if (product == "PPI" || product == "CAPPI" || product == "PCAPPI")
   {
@@ -494,6 +492,8 @@ FmiParameterName opera_name_to_newbase(const std::string &product,
   {
     if (quantity == "ACRR")
       return kFmiPrecipitationAmount;
+    if (quantity == "RATE")
+      return kFmiPrecipitationRate;
   }
   else if (product == "VIL")
   {
@@ -679,7 +679,7 @@ NFmiParamDescriptor create_pdesc(const Fmi::HDF5::Hdf5File& file)
  */
 // ----------------------------------------------------------------------
 
-bool is_level_parameter(const std::string &product)
+bool is_level_parameter(const std::string& product)
 {
   if (product == "CAPPI")
     return true;
@@ -704,7 +704,7 @@ bool is_level_parameter(const std::string &product)
  */
 // ----------------------------------------------------------------------
 
-FmiLevelType level_type(const std::string &product)
+FmiLevelType level_type(const std::string& product)
 {
   if (product == "CAPPI")
     return kFmiHeight;
@@ -725,14 +725,15 @@ FmiLevelType level_type(const std::string &product)
 
 // ----------------------------------------------------------------------
 /*!
-*   Get prodpar attribute
-*/
+ *   Get prodpar attribute
+ */
 // ----------------------------------------------------------------------
 double get_prodpar(const Fmi::HDF5::Hdf5File& file, const std::string& iprefix)
 {
-  const std::vector<double> v_prodpar = file.get_attribute_vect_recursive<double>(iprefix, "what"s, "prodpar"s);
+  const std::vector<double> v_prodpar =
+      file.get_attribute_vect_recursive<double>(iprefix, "what"s, "prodpar"s);
   if (v_prodpar.empty())
-     throw std::runtime_error("prodpar attribute not found in " + iprefix + "/what (or is empty)");
+    throw std::runtime_error("prodpar attribute not found in " + iprefix + "/what (or is empty)");
   return v_prodpar.at(0);
 }
 
@@ -787,18 +788,18 @@ NFmiVPlaceDescriptor collect_levels(const Fmi::HDF5::Hdf5File& file)
 
   for (int i = 1; i <= n; i++)
   {
-  #if 0
+#if 0
     double prodpar = file.get_attribute<double>(dataset(i) + "/what", "prodpar");
     if (options.verbose)
       std::cout << "  " << i << ": " << prodpar << std::endl;
     levels.insert(prodpar);
-  #else
+#else
     // FIXME: double[2] provided in HDF files, but we only need one value (is it correct)
     double prodpar = get_prodpar(file, dataset(i) + "/what");
     if (options.verbose)
       std::cout << "  " << i << ": " << prodpar << std::endl;
     levels.insert(prodpar);
-  #endif
+#endif
   }
 
   // And finally build the level bag
@@ -1067,7 +1068,7 @@ NFmiHPlaceDescriptor create_hdesc(const Fmi::HDF5::Hdf5File& file)
         kRearth);
 
     // WGS84: Not sure if we should multiply by 2 for legacy reasons
-    NFmiArea *area = NFmiArea::CreateFromCenter(
+    NFmiArea* area = NFmiArea::CreateFromCenter(
         proj4, "FMI", NFmiPoint(lon, lat), 1000 * range_km, 1000 * range_km);
 
     // We set the grid resolution based on the number of bins in the data
@@ -1103,7 +1104,7 @@ NFmiHPlaceDescriptor create_hdesc(const Fmi::HDF5::Hdf5File& file)
  */
 // ----------------------------------------------------------------------
 
-void print_group_attributes(const Fmi::HDF5::Hdf5File& file, const std::string &dpath)
+void print_group_attributes(const Fmi::HDF5::Hdf5File& file, const std::string& dpath)
 {
   if (not file.is_group(dpath))
     return;
@@ -1113,14 +1114,10 @@ void print_group_attributes(const Fmi::HDF5::Hdf5File& file, const std::string &
   {
     const h5pp::AttrInfo attrInfo = file.get().getAttributeInfo(dpath, name);
     const std::string typeName = attrInfo.cppTypeName ? "type [" + *attrInfo.cppTypeName + "]" : "";
-    std::cout << "Attribute: " << dpath << "/" << name << " ( "
-              << typeName
-              << attrInfo.string() << " ) = "
-              << file.get_attribute_string(dpath, name)
-              << std::endl;
+    std::cout << "Attribute: " << dpath << "/" << name << " ( " << typeName << attrInfo.string()
+              << " ) = " << file.get_attribute_string(dpath, name) << std::endl;
   }
 }
-
 
 // ----------------------------------------------------------------------
 /*!
@@ -1172,8 +1169,8 @@ void print_hdf_information(const Fmi::HDF5::Hdf5File& file)
 // ----------------------------------------------------------------------
 
 double apply_gain_offset(double value,
-                         const std::optional<double> &gain,
-                         const std::optional<double> &offset)
+                         const std::optional<double>& gain,
+                         const std::optional<double>& offset)
 {
   if (gain)
     value *= *gain;
@@ -1182,14 +1179,13 @@ double apply_gain_offset(double value,
   return value;
 }
 
-
 // ----------------------------------------------------------------------
 /*!
  * \brief Copy one dataset
  */
 // ----------------------------------------------------------------------
 
-void copy_dataset(const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo &info, int datanum)
+void copy_dataset(const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo& info, int datanum)
 {
   std::string prefix = options.datasetname + Fmi::to_string(datanum);
 
@@ -1220,10 +1216,14 @@ void copy_dataset(const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo &info, int 
 
       // Establish numeric transformation
 
-      const std::optional<double> nodata = file.get_optional_attribute_recursive<double>(iprefix, "what", "nodata");
-      const std::optional<double> undetect = file.get_optional_attribute_recursive<double>(iprefix, "what", "undetect");
-      const std::optional<double> gain = file.get_optional_attribute_recursive<double>(iprefix, "what", "gain");
-      const std::optional<double> offset = file.get_optional_attribute_recursive<double>(iprefix, "what", "offset");
+      const std::optional<double> nodata =
+          file.get_optional_attribute_recursive<double>(iprefix, "what", "nodata");
+      const std::optional<double> undetect =
+          file.get_optional_attribute_recursive<double>(iprefix, "what", "undetect");
+      const std::optional<double> gain =
+          file.get_optional_attribute_recursive<double>(iprefix, "what", "gain");
+      const std::optional<double> offset =
+          file.get_optional_attribute_recursive<double>(iprefix, "what", "offset");
 
       FmiParameterName id = opera_name_to_newbase(product, quantity, file, iprefix + "/what");
 
@@ -1290,26 +1290,30 @@ void copy_dataset(const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo &info, int 
 
     // Establish numeric transformation
 
-    const std::optional<double> nodata = file.get_optional_attribute_recursive<double>(prefix, "what", "nodata");
-    const std::optional<double> undetect = file.get_optional_attribute_recursive<double>(prefix, "what", "undetect");
-    const std::optional<double> gain = file.get_optional_attribute_recursive<double>(prefix, "what", "gain");
-    const std::optional<double> offset = file.get_optional_attribute_recursive<double>(prefix, "what", "offset");
+    const std::optional<double> nodata =
+        file.get_optional_attribute_recursive<double>(prefix, "what", "nodata");
+    const std::optional<double> undetect =
+        file.get_optional_attribute_recursive<double>(prefix, "what", "undetect");
+    const std::optional<double> gain =
+        file.get_optional_attribute_recursive<double>(prefix, "what", "gain");
+    const std::optional<double> offset =
+        file.get_optional_attribute_recursive<double>(prefix, "what", "offset");
 
     FmiParameterName id = opera_name_to_newbase(product, quantity, file, "/" + prefix + "/what");
 
     if (!info.Param(id))
       throw std::runtime_error("Failed to activate product " + product +
                                " in output querydata with id " + converter.ToString(id));
-      // Copy the values
+    // Copy the values
 
     if (options.verbose)
       std::cout << "Reading " << prefix + "/data" << std::endl;
 
     std::vector<int> values = file.read_dataset<int>(prefix);
 
-      // Copy values into querydata. Unfortunately a simple loop
-      // will not do, the data would go upside down. Hence we need
-      // to index the data directly.
+    // Copy values into querydata. Unfortunately a simple loop
+    // will not do, the data would go upside down. Hence we need
+    // to index the data directly.
 
 #if 1
     const unsigned long width = info.Grid()->XNumber();
@@ -1362,7 +1366,7 @@ void copy_dataset(const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo &info, int 
  */
 // ----------------------------------------------------------------------
 
-void copy_dataset_pvol(const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo &info, int datanum)
+void copy_dataset_pvol(const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo& info, int datanum)
 {
   std::string prefix = options.datasetname + Fmi::to_string(datanum);
 
@@ -1471,7 +1475,7 @@ void copy_dataset_pvol(const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo &info,
  */
 // ----------------------------------------------------------------------
 
-void copy_datasets(const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo &info)
+void copy_datasets(const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo& info)
 {
   std::string obj = file.get_attribute<std::string>("/what", "object");
 
@@ -1491,7 +1495,7 @@ void copy_datasets(const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo &info)
  */
 // ----------------------------------------------------------------------
 
-std::set<std::string> collect_attributes(const Fmi::HDF5::Hdf5File& file, const std::string &name)
+std::set<std::string> collect_attributes(const Fmi::HDF5::Hdf5File& file, const std::string& name)
 {
   std::set<std::string> ret;
 
@@ -1516,7 +1520,8 @@ std::map<std::string, std::string> get_source_settings(const Fmi::HDF5::Hdf5File
   std::map<std::string, std::string> ret;
 
   // Collect unique source settings
-  const std::optional<std::string> source = file.get_optional_attribute<std::string>("/what", "source");
+  const std::optional<std::string> source =
+      file.get_optional_attribute<std::string>("/what", "source");
   if (not source)
     return {};
 
@@ -1528,7 +1533,7 @@ std::map<std::string, std::string> get_source_settings(const Fmi::HDF5::Hdf5File
   boost::algorithm::split(parts, *source, boost::is_any_of(","));
 
   // Store the key-value pairs into a map
-  for (const auto &part : parts)
+  for (const auto& part : parts)
   {
     auto pos = part.find(':');
     if (pos != std::string::npos)
@@ -1595,10 +1600,10 @@ std::string get_interval(const Fmi::HDF5::Hdf5File& file)
  */
 // ----------------------------------------------------------------------
 
-std::string join(const std::set<std::string> &strings, const std::string &separator)
+std::string join(const std::set<std::string>& strings, const std::string& separator)
 {
   std::string ret;
-  for (const auto &str : strings)
+  for (const auto& str : strings)
   {
     if (!ret.empty())
       ret += separator;
@@ -1627,7 +1632,9 @@ std::string join(const std::set<std::string> &strings, const std::string &separa
  */
 // ----------------------------------------------------------------------
 
-std::string expand_name(const std::string &theName, const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo &info)
+std::string expand_name(const std::string& theName,
+                        const Fmi::HDF5::Hdf5File& file,
+                        NFmiFastQueryInfo& info)
 {
   auto name = theName;
   if (name.find("%ORIGINTIME") != std::string::npos)
@@ -1653,7 +1660,7 @@ std::string expand_name(const std::string &theName, const Fmi::HDF5::Hdf5File& f
   }
 
   auto source_settings = get_source_settings(file);
-  for (const auto &name_value : source_settings)
+  for (const auto& name_value : source_settings)
   {
     boost::replace_all(name, "%" + name_value.first, name_value.second);
   }
@@ -1670,9 +1677,9 @@ std::string expand_name(const std::string &theName, const Fmi::HDF5::Hdf5File& f
   return name;
 }
 
-std::string expand_name_and_case(const std::string &theName,
+std::string expand_name_and_case(const std::string& theName,
                                  const Fmi::HDF5::Hdf5File& file,
-                                 NFmiFastQueryInfo &info)
+                                 NFmiFastQueryInfo& info)
 {
   auto name = expand_name(theName, file, info);
 
@@ -1695,7 +1702,7 @@ std::string expand_name_and_case(const std::string &theName,
  */
 // ----------------------------------------------------------------------
 
-int run(int argc, char *argv[])
+int run(int argc, char* argv[])
 {
   if (!parse_options(argc, argv))
     return 0;
@@ -1773,7 +1780,7 @@ int run(int argc, char *argv[])
  */
 // ----------------------------------------------------------------------
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
   try
   {
@@ -1784,7 +1791,7 @@ int main(int argc, char *argv[])
     std::cerr << e << std::endl;
     return 1;
   }
-  catch (std::exception &e)
+  catch (std::exception& e)
   {
     std::cerr << "Error: " << e.what() << std::endl;
     return 1;

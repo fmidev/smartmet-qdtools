@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 25.9.24
+Version: 25.10.8
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -217,6 +217,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Oct  8 2025 Mika Heiskanen <mika.heiskanen@fmi.fi> - 25.10.8-1.fmi
+- Enabled new RR product
+
 * Wed Sep 24 2025 Mika Heiskanen <mika.heiskanen@fmi.fi> - 25.9.24-1.fmi
 - Added combineHistory -S option for handling historical data
 

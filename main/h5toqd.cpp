@@ -30,7 +30,9 @@
 #include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiVPlaceDescriptor.h>
+#include <cpl_error.h>
 #include <filesystem>
+#include <gdal.h>
 #include <iostream>
 #include <memory>
 #include <numeric>
@@ -61,6 +63,7 @@ struct Options
   bool lowercase = false;               // --lowercase
   bool uppercase = false;               // --uppercase
   bool startepochs = false;             // --startepochs
+  bool quietproj = false;               // --quietproj
   std::string projection;               // -P --projection
   std::string infile = "-";             // -i --infile
   std::string outfile = "-";            // -o --outfile
@@ -104,6 +107,7 @@ bool parse_options(int argc, char* argv[])
   // clang-format off
   desc.add_options()("help,h", "print out help message")(
       "verbose,v", po::bool_switch(&options.verbose), "set verbose mode on")(
+      "quietproj", po::bool_switch(&options.quietproj), "disable PROJ error messages")(
       "version,V", "display version number")(
       "projection,P", po::value(&options.projection), "projection")(
       "infile,i", po::value(&options.infile), "input HDF5 file")(
@@ -1042,7 +1046,7 @@ NFmiHPlaceDescriptor create_hdesc(const Fmi::HDF5::Hdf5File& file)
 
       std::shared_ptr<NFmiArea> area(NFmiArea::CreateFromCorners(
           projdef, sphere, NFmiPoint(LL_lon, LL_lat), NFmiPoint(UR_lon, UR_lat)));
-      std::cout << "B: area=" << *area << std::endl;
+      // std::cout << "B: area=" << *area << std::endl;
 
       NFmiGrid grid(area->Clone(), xsize, ysize);
       return NFmiHPlaceDescriptor(grid);
@@ -1696,6 +1700,16 @@ std::string expand_name_and_case(const std::string& theName,
   return name;
 }
 
+// Filter out PROJ error messages
+static void MyProjErrorHandler(CPLErr cls, int code, const char* msg)
+{
+  // Drop lines that GDAL forwards from PROJ
+  if (msg && std::string(msg).rfind("PROJ:", 0) == 0)
+    return;
+  // Otherwise, use the default behavior
+  CPLDefaultErrorHandler(cls, code, msg);
+}
+
 // ----------------------------------------------------------------------
 /*!
  * \brief Main program without exception handling
@@ -1709,6 +1723,9 @@ int run(int argc, char* argv[])
 
   if (options.verbose)
     std::cout << "Opening file '" << options.infile << "'" << std::endl;
+
+  if (options.quietproj)
+    CPLSetErrorHandler(MyProjErrorHandler);
 
   Fmi::HDF5::Hdf5File file(options.infile, h5pp::FileAccess::READONLY);
 

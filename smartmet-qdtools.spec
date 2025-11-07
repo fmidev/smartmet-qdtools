@@ -42,6 +42,7 @@ BuildRequires: libbufr >= 3.2
 BuildRequires: libecbufr-devel
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
+BuildRequires: dtl
 BuildRequires: make
 BuildRequires: mdsplib >= 21.3.1
 BuildRequires: netcdf-cxx4-devel

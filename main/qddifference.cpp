@@ -39,10 +39,14 @@
 #include <newbase/NFmiStringTools.h>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
 
 #include <iostream>
 #include <stdexcept>
 #include <vector>
+#include <dtl/dtl.hpp>
+
 
 using namespace std;
 
@@ -188,6 +192,32 @@ bool parse_command_line(int argc, const char* argv[])
 
 namespace
 {
+
+  std::string get_diff(const std::string& str1, const std::string& str2)
+  {
+    try
+    {
+      std::vector<std::string> l1, l2;
+      boost::algorithm::split(l1, str1, boost::algorithm::is_any_of("\n"));
+      boost::algorithm::split(l2, str2, boost::algorithm::is_any_of("\n"));
+      dtl::Diff<std::string> d(l1, l2);
+      d.compose();
+      d.composeUnifiedHunks();
+
+      std::ostringstream out;
+      d.printUnifiedFormat(out);
+      std::string ret = out.str();
+
+      if (ret.size() > 5000)
+        return "  Diff size " + std::to_string(ret.size()) + " is too big (>5000)";
+      return "\n" + ret;
+    }
+    catch (...)
+    {
+      throw Fmi::Exception::Trace(BCP, "Operation failed!");
+    }
+  }
+
   // Parameters for which differences were found
   std::map<std::string, double> param_diffs;
 
@@ -549,33 +579,57 @@ try
   for (q1.ResetTime(), q2.ResetTime(); q1.NextTime() && q2.NextTime();)
   {
     if (q1.ValidTime() != q2.ValidTime())
-      throw runtime_error("Data not comparable: valid times differ");
+    {
+      Fmi::Exception error(BCP, "Data not comparable: valid times differ");
+      error.addParameter("Time1", q1.ValidTime().PosixTime().to_iso_extended_string());
+      error.addParameter("Time2", q2.ValidTime().PosixTime().to_iso_extended_string());
+      throw error;
+    }
   }
 
   for (q1.ResetLevel(), q2.ResetLevel(); q1.NextLevel() && q2.NextLevel();)
   {
     if (q1.LevelType() != q2.LevelType())
-      throw runtime_error("Data not comparable: level types differ");
+      throw Fmi::Exception(BCP, "Data not comparable: level types differ")
+          .addParameter("LevelType1", Fmi::to_string(q1.LevelType()))
+          .addParameter("LevelType2", Fmi::to_string(q2.LevelType()));
     if (q1.Level()->LevelValue() != q2.Level()->LevelValue())
-      throw runtime_error("Data not comparable: level values differ");
+      throw Fmi::Exception(BCP, "Data not comparable: level values differ")
+          .addParameter("LevelValue1", Fmi::to_string(q1.Level()->LevelValue()))
+          .addParameter("LevelValue2", Fmi::to_string(q2.Level()->LevelValue()));
   }
 
   if (q1.IsGrid() ^ q2.IsGrid())
-    throw runtime_error("Data not comparable: one has a grid, one does not");
+    throw Fmi::Exception(BCP, "Data not comparable: one has a grid, one does not")
+        .addParameter("IsGrid1", Fmi::to_string(q1.IsGrid()))
+        .addParameter("IsGrid2", Fmi::to_string(q2.IsGrid()));
 
   if (q1.IsArea() && q2.IsArea())
   {
     if (*q1.Area() != *q2.Area())
-      throw runtime_error("Data not comparable, areas differ");
+    {
+      Fmi::Exception error(BCP, "Data not comparable, areas differ");
+      error.addParameter("Area1", q1.Area()->SimpleWKT());
+      error.addParameter("Area2", q2.Area()->SimpleWKT());
+      throw error;
+    }
   }
 
   if (q1.GridHashValue() != q2.GridHashValue())
-    throw runtime_error("Data not comparable, grids differ");
+  {
+    std::ostringstream s1, s2, out;
+    s1 << q1.HPlaceDescriptor();
+    s2 << q2.HPlaceDescriptor();
+    const std::string diff = get_diff(s1.str(), s2.str());
+    Fmi::Exception error(BCP, "Data not comparable, grids differ");
+    error.addParameter("Diff (NFmiHPlaceDescriptor)", diff);
+    throw error;
+  }
 }
 catch (...)
 {
   // Catch any exceptions and rethrow them with additional context
-  throw Fmi::Exception::Trace(BCP, "Error analyzing all parameters")
+  throw Fmi::Exception::SquashTrace(BCP, "Error analyzing all parameters")
       .addParameter("File1", options.inputfile1)
       .addParameter("File2", options.inputfile2);
 }
@@ -717,12 +771,12 @@ int main(int argc, const char* argv[])
   }
   catch (exception& e)
   {
-    cout << "Error: " << e.what() << endl;
+    cerr << "Error: " << e.what() << endl;
     return 1;
   }
   catch (...)
   {
-    cout << "Error: Caught an unknown exception" << endl;
+    cerr << "Error: Caught an unknown exception" << endl;
     return 1;
   }
 }

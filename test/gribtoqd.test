@@ -26,10 +26,16 @@ case $eccodes_version in
     2.38.*)
         version_suffixes="38 37 32"
         ;;
-    2.39.*|2.[4-9].*)
+    2.39.*)
         version_suffixes="39 38 37 32"
         ;;
+    2.4[0-9].*|2.[5-9][0-9].*)
+        version_suffixes="44 39 38 37 32"
+        ;;
 esac
+
+echo "eccodes version   : $eccodes_version"
+echo "version_suffixes  : $version_suffixes"
 
 errors=0
 
@@ -72,7 +78,8 @@ for f in data/grib/*.grib*; do
             *.gz) zcat $f >$input ;;
             *.zstd) zstdcat $f >$input ;;
         esac
-        if $PROG -c ../cnf/grib.conf -o $tmpfile $input ; then
+        cmd="$PROG -c ../cnf/grib.conf -o $tmpfile $input"
+        if $cmd ; then
             eval $CMP
             ERR=$?
             printf '%-60s' "$name"
@@ -81,7 +88,7 @@ for f in data/grib/*.grib*; do
 	    rm -f $tmpfile
 	    else
 		errors=$(($errors+1))
-		echo FAILED
+		echo "FAILED ($cmd)"
 		$QDINFO -a -q $resultfile > ${tmpfile}.info_ok
 		$QDINFO -a -q $tmpfile > ${tmpfile}.info_fail
 		diff -u ${tmpfile}.info_ok ${tmpfile}.info_fail | head -100
@@ -89,7 +96,7 @@ for f in data/grib/*.grib*; do
 	    fi
 	else
 	    errors=$(($errors+1))
-	    echo "FAILED to run $PROG"
+	    echo "FAILED to run $cmd"
 	fi
 	if test $f != $input; then
 	    rm -f $input

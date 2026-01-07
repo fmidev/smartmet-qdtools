@@ -52,7 +52,7 @@ fi
 
 if ! [ -z "$fail_list" ] ; then
     echo ''
-    echo '###### Following tests were failed unexpecyedly'
+    echo '###### Following tests were failed unexpectedly'
     for prog in $fail_list; do
         echo "    $prog"
     done

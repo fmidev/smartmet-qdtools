@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 25.11.3
+Version: 26.1.7
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -31,8 +31,8 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot-%(%{__id_u} -n)
 
 BuildRequires: %{smartmet_boost}-devel
 BuildRequires: bzip2-devel
-BuildRequires: eccodes
-BuildRequires: eccodes-devel
+BuildRequires: eccodes = 2.27.1
+BuildRequires: eccodes-devel = 2.27.1
 BuildRequires: %{smartmet_fmt_devel}
 BuildRequires: gcc-c++
 BuildRequires: gdal310-devel
@@ -63,7 +63,7 @@ Requires: %{smartmet_boost}-regex
 Requires: %{smartmet_boost}-system
 Requires: %{smartmet_boost}-thread
 Requires: bzip2-libs
-Requires: eccodes
+Requires: eccodes = 2.27.1
 Requires: %{smartmet_fmt}
 Requires: gdal310-libs
 Requires: glibc
@@ -218,6 +218,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Jan  7 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.1.7-1.fmi
+- Require a specific eccodes version
+
 * Mon Nov  3 2025 Mika Heiskanen <mika.heiskanen@fmi.fi> - 25.11.3-1.fmi
 - Added h5toqd --quiet
 

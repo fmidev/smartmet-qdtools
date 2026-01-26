@@ -35,7 +35,7 @@ BuildRequires: eccodes
 BuildRequires: eccodes-devel
 BuildRequires: %{smartmet_fmt_devel}
 BuildRequires: gcc-c++
-BuildRequires: gdal310-devel
+BuildRequires: gdal312-devel
 BuildRequires: h5pp-devel
 BuildRequires: hdf5-devel >= 1.8.12
 BuildRequires: libbufr >= 3.2
@@ -65,7 +65,7 @@ Requires: %{smartmet_boost}-thread
 Requires: bzip2-libs
 Requires: eccodes
 Requires: %{smartmet_fmt}
-Requires: gdal310-libs
+Requires: gdal312-libs
 Requires: glibc
 Requires: hdf5 >= 1.8.12
 Requires: libbufr >= 3.2

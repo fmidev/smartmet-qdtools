@@ -19,15 +19,10 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot-%(%{__id_u} -n)
 %define smartmet_boost boost
 %endif
 
-%if 0%{?rhel} && 0%{rhel} <= 9
-%define smartmet_fmt_min 11.0.1
-%define smartmet_fmt_max 12.0.0
+%define smartmet_fmt_min 12.0.0
+%define smartmet_fmt_max 13.0.0
 %define smartmet_fmt fmt-libs >= %{smartmet_fmt_min}, fmt-libs < %{smartmet_fmt_max}
 %define smartmet_fmt_devel fmt-devel >= %{smartmet_fmt_min}, fmt-devel < %{smartmet_fmt_max}
-%else
-%define smartmet_fmt fmt
-%define smartmet_fmt_devel fmt-devel
-%endif
 
 BuildRequires: %{smartmet_boost}-devel
 BuildRequires: bzip2-devel
@@ -35,7 +30,7 @@ BuildRequires: eccodes
 BuildRequires: eccodes-devel
 BuildRequires: %{smartmet_fmt_devel}
 BuildRequires: gcc-c++
-BuildRequires: gdal310-devel
+BuildRequires: gdal312-devel
 BuildRequires: h5pp-devel
 BuildRequires: hdf5-devel >= 1.8.12
 BuildRequires: libbufr >= 3.2
@@ -48,12 +43,12 @@ BuildRequires: mdsplib >= 21.3.1
 BuildRequires: netcdf-cxx4-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
-BuildRequires: smartmet-library-calculator-devel >= 25.10.7
-BuildRequires: smartmet-library-gis-devel >= 25.9.15
-BuildRequires: smartmet-library-imagine-devel >= 25.2.18
-BuildRequires: smartmet-library-macgyver-devel >= 25.10.30
-BuildRequires: smartmet-library-newbase-devel >= 25.3.20
-BuildRequires: smartmet-library-smarttools-devel >= 25.2.18
+BuildRequires: smartmet-library-calculator-devel >= 26.2.4
+BuildRequires: smartmet-library-gis-devel >= 26.2.4
+BuildRequires: smartmet-library-imagine-devel >= 26.2.4
+BuildRequires: smartmet-library-macgyver-devel >= 26.2.4
+BuildRequires: smartmet-library-newbase-devel >= 26.2.4
+BuildRequires: smartmet-library-smarttools-devel >= 26.2.4
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
 Requires: %{smartmet_boost}-filesystem
@@ -65,7 +60,7 @@ Requires: %{smartmet_boost}-thread
 Requires: bzip2-libs
 Requires: eccodes
 Requires: %{smartmet_fmt}
-Requires: gdal310-libs
+Requires: gdal312-libs
 Requires: glibc
 Requires: hdf5 >= 1.8.12
 Requires: libbufr >= 3.2
@@ -76,17 +71,17 @@ Requires: libpng
 Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
 Requires: netcdf-cxx4
-Requires: smartmet-library-calculator >= 25.10.7
-Requires: smartmet-library-gis >= 25.9.15
-Requires: smartmet-library-imagine >= 25.2.18
-Requires: smartmet-library-macgyver >= 25.10.30
-Requires: smartmet-library-newbase >= 25.3.20
-Requires: smartmet-library-smarttools >= 25.2.18
+Requires: smartmet-library-calculator >= 26.2.4
+Requires: smartmet-library-gis >= 26.2.4
+Requires: smartmet-library-imagine >= 26.2.4
+Requires: smartmet-library-macgyver >= 26.2.4
+Requires: smartmet-library-newbase >= 26.2.4
+Requires: smartmet-library-smarttools >= 26.2.4
 Requires: smartmet-timezones >= 24.5.27
 Requires: zlib
-#TestRequires: smartmet-library-macgyver-devel >= 25.10.30
+#TestRequires: smartmet-library-macgyver-devel >= 26.2.4
 #TestRequires: gcc-c++
-#TestRequires: smartmet-library-newbase-devel >= 25.3.20
+#TestRequires: smartmet-library-newbase-devel >= 26.2.4
 #TestRequires: smartmet-qdtools-test-data
 #TestRequires: libbufr
 

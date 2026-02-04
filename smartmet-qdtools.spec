@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 25.11.3
+Version: 26.2.4
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -213,6 +213,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Wed Feb  4 2026 Andris Pavēnis <andris.pavenis@fmi.fi> 26.2.4-1.fmi
+- Update to proj-9.7, gdal-3.12, fmt-12
+
 * Mon Nov  3 2025 Mika Heiskanen <mika.heiskanen@fmi.fi> - 25.11.3-1.fmi
 - Added h5toqd --quiet
 

@@ -25,9 +25,8 @@ namespace HDF5
 
 namespace detail
 {
-    // h5pp does not currently support byte swap for different endianess
-    // so we need to do it ourselves
-    constexpr const bool h5pp_support_endianess = false;
+    // h5pp versions before 1.11.3 do not handle endianness, so we need to do it ourselves when necessary
+    constexpr const bool h5pp_support_endianess = (H5PP_VERSION >= 11103);
 }
 
 class Hdf5File

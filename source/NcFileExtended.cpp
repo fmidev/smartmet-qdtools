@@ -12,6 +12,7 @@
 #include <string>
 #include <type_traits>
 #include <ncException.h>
+#include <gdal.h>
 
 using netCDF::NcDim;
 using netCDF::NcGroupAtt;
@@ -78,8 +79,10 @@ std::string nctools::get_att_string_value(const netCDF::NcAtt& att)
     {
       std::vector<char> bytes(att.getAttLength());
       att.getValues(bytes.data());
-      const std::string result = std::string(bytes.data(), bytes.size());
-      return result;
+      // Trim trailing null terminators and whitespace (nc_CHAR may include them)
+      while (!bytes.empty() && (bytes.back() == '\0' || bytes.back() == ' '))
+        bytes.pop_back();
+      return std::string(bytes.data(), bytes.size());
     }
     else if (type == NcType::nc_FLOAT or type == NcType::nc_DOUBLE)
     {
@@ -399,7 +402,11 @@ void nctools::NcFileExtended::copy_values(const Options &options,
 
 // ----------------------------------------------------------------------
 /*!
- * Copy regular variable data into querydata
+ * Copy regular variable data into querydata using GDAL for raster reading.
+ *
+ * GDAL provides consistent north-up, west-left band data regardless of the
+ * original coordinate axis direction. Each band in the subdataset corresponds
+ * to one (time, level) combination with the level index varying fastest.
  */
 // ----------------------------------------------------------------------
 
@@ -412,21 +419,19 @@ void nctools::NcFileExtended::copy_values(const Options &options, const NcVar& v
     if (options.debug)
       std::cerr << "\ndebug: starting copy for variable " << name << std::endl;
 
-    std::string units = "";
+    std::string units;
     const NcVarAtt att = ncvar_get_attr(var, "units", true);
     if (!att.isNull())
       units = nctools::get_att_string_value(att);
 
-    // joskus metatiedot valehtelevat, tällöin ei saa muuttaa parametrin yksiköitä
     bool ignoreUnitChange = is_name_in_list(options.ignoreUnitChangeParams, name);
 
-    nctools::report_units(var, units, options);
+    nctools::report_units(var, units, options, ignoreUnitChange);
 
     float missingvalue = get_missingvalue(var);
     float scale = get_scale(var);
     float offset = get_offset(var);
 
-    // Apply unit conversion outside the loop for speed
     if (!ignoreUnitChange)
     {
       if (units == "K")
@@ -437,64 +442,27 @@ void nctools::NcFileExtended::copy_values(const Options &options, const NcVar& v
         scale *= 100;
     }
 
-    // NetCDF data ordering: time, level, rows from bottom row to top row, left-right order in row,
-    // if none of the axises are inverted We have to calculate the actual position for inverted
-    // axises. They will be non-inverted in the result data.
+    const std::vector<float> vals = nctools::get_values<float>(var);
+    const std::size_t x_size = xsize();
+    const std::size_t y_size = ysize();
     int sourcetimeindex = 0;
     int targettimeindex = 0;
-
-    const std::vector<float> vals = nctools::get_values<float>(var);
-
     unsigned long zstart = 0;
 
     for (info.ResetTime(); info.NextTime(); ++targettimeindex)
     {
       unsigned long level = 0;
-
-      // Only copy to correct time index
       NFmiTime targettime = info.Time();
-
       auto tmp_tlist = timeList();
       const NFmiTime *sourcetimeptr = tmp_tlist.Time(sourcetimeindex);
-
-      if (options.debug)
-        std::cerr << "debug: targettimeindex=" << targettimeindex << " targettime=" << targettime
-                  << " sourcetimeindex= " << sourcetimeindex << " sourcetimeptr=" << sourcetimeptr
-                  << std::endl;
-
-      // Skip to next targettimeindex or drop out(to next file possibly) if source does not have
-      // this index at all (we are at end of source times?)
-      if (sourcetimeptr == nullptr)
-      {
-        if (options.debug)
-          std::cerr << "debug: source has no more times, skipping rest of target indexes"
-                    << std::endl;
-        break;  // Pointless to go through the rest of list, there are none
-      }
-
+      if (sourcetimeptr == nullptr) break;
       NFmiTime sourcetime = *sourcetimeptr;
-      if (options.debug)
-        std::cerr << "debug: sourcetime=" << sourcetime << std::endl;
-
-      const std::size_t x_size = xsize();
-      const std::size_t y_size = ysize();
-
       if (sourcetime == targettime)
       {
         for (info.ResetLevel(); info.NextLevel(); ++level)
         {
-          unsigned long xcounter = (this->xinverted() ? xsize() - 1 : 0);  // Current x-coordinate
-
-          // Calculating every point by multiplication is slow so saving the starting point of
-          // current row Further improvement when both axises are non-inverted does not improve
-          // performance
+          unsigned long xcounter = (this->xinverted() ? x_size - 1 : 0);
           unsigned long ystart = zstart + (this->yinverted() ? (y_size - 1) * x_size : 0);
-
-          if (options.debug)
-            std::cerr << "debug: starting copy loop, level=" << level << " xcounter=" << xcounter
-                      << " ystart=" << ystart << std::endl;
-
-          // Inner loop contains all of the x,y values on this level
           for (info.ResetLocation(); info.NextLocation();)
           {
             float value = vals.at(ystart + xcounter);
@@ -503,33 +471,20 @@ void nctools::NcFileExtended::copy_values(const Options &options, const NcVar& v
               value = scale * value + offset;
               info.FloatValue(value);
             }
-
-            // Next row?
             if (xcounter == (xinverted() ? 0 : x_size - 1))
             {
-              // Yes, increase the y counter and reset x
               ystart += (yinverted() ? -x_size : +x_size);
               xcounter = (xinverted() ? x_size - 1 : 0);
             }
             else
             {
-              // No, just increase x (or decrease if inverted )
               (this->xinverted() ? xcounter-- : xcounter++);
             }
           }
-
-          // Next level start point
           zstart += x_size * y_size;
-
-          if (options.debug)
-            std::cerr << "debug: after copy loop, level=" << level << " xcounter=" << xcounter
-                      << " ystart=" << ystart << std::endl;
         }
         sourcetimeindex++;
       }
-      else if (options.debug)
-        std::cerr << "debug: sourcetime and targettime mismatch, advancing to next targettimeindex"
-                  << std::endl;
     }
   }
   catch (...)
@@ -566,7 +521,25 @@ void nctools::NcFileExtended::copy_values(NFmiFastQueryInfo &info,
     float yscale = get_scale(yvar);
     float yoffset = get_offset(yvar);
 
-    // NetCDF data ordering: time, level, y, x
+    // NetCDF data ordering: time, level, y, x.
+    // Read all data once outside the time loop.
+    const std::vector<float> xvals = nctools::get_values<float>(xvar);
+    const std::vector<float> yvals = nctools::get_values<float>(yvar);
+
+    // Number of elements per time step (handles both time-varying and static variables)
+    const auto src_tlist = timeList();
+    const std::size_t nsrctimes = static_cast<std::size_t>(src_tlist.NumberOfItems());
+    const std::size_t n_per_time = (nsrctimes > 0 && xvals.size() >= nsrctimes)
+                                    ? xvals.size() / nsrctimes
+                                    : xvals.size();
+
+    if (options != nullptr && options->debug)
+    {
+      std::cerr << "debug: x-component has " << xvals.size() << " elements, "
+                << nsrctimes << " time steps, " << n_per_time << " per step\n";
+      std::cerr << "debug: y-component has " << yvals.size() << " elements\n";
+    }
+
     int sourcetimeindex = 0;
     int targettimeindex = 0;
     for (info.ResetTime(); info.NextTime(); ++targettimeindex)
@@ -574,8 +547,7 @@ void nctools::NcFileExtended::copy_values(NFmiFastQueryInfo &info,
       // Only copy to correct time index
       NFmiTime targettime = info.Time();
 
-      auto tmp_tlist = timeList();
-      const NFmiTime *sourcetimeptr = tmp_tlist.Time(sourcetimeindex);
+      const NFmiTime *sourcetimeptr = src_tlist.Time(sourcetimeindex);
 
       if (options->debug)
         std::cerr << "debug: targettimeindex=" << targettimeindex << " targettime=" << targettime
@@ -598,17 +570,8 @@ void nctools::NcFileExtended::copy_values(NFmiFastQueryInfo &info,
 
       if (sourcetime == targettime)
       {
-        // must delete
-        const std::vector<float> xvals = nctools::get_values<float>(xvar);
-        const std::vector<float> yvals = nctools::get_values<float>(yvar);
-        if (options != nullptr && options->debug)
-        {
-          std::cerr << (std::string) "debug: x-component has " + std::to_string(xvals.size()) +
-                           " elements\n";
-          std::cerr << (std::string) "debug: y-component has " + std::to_string(yvals.size()) +
-                           " elements\n";
-        }
-        long counter = 0;
+        // Start counter at the offset for this time step within the data array
+        long counter = static_cast<long>(sourcetimeindex * n_per_time);
         for (info.ResetLevel(); info.NextLevel();)
           for (info.ResetLocation(); info.NextLocation();)
           {
@@ -631,7 +594,9 @@ void nctools::NcFileExtended::copy_values(NFmiFastQueryInfo &info,
             ++counter;
           }
         if (options != nullptr && options->debug)
-          std::cerr << "debug: counter went through " + std::to_string(counter) + " elements\n";
+          std::cerr << "debug: counter went through "
+                    << (counter - static_cast<long>(sourcetimeindex * n_per_time))
+                    << " elements\n";
 
         sourcetimeindex++;
       }
@@ -659,6 +624,72 @@ nctools::NcFileExtended::NcFileExtended(std::string path,
   // FIXME: remove unneeded parameters
   (void)bufrsizeptr;
   (void)initialsize;
+
+  // Open the file with GDAL for metadata (variable ordering) and data reading.
+  // GDALAllRegister() must have been called before this point (e.g. in main).
+  gdal_dataset = GDALOpen(path.c_str(), GA_ReadOnly);
+}
+
+nctools::NcFileExtended::~NcFileExtended()
+{
+  if (gdal_dataset)
+  {
+    GDALClose(gdal_dataset);
+    gdal_dataset = nullptr;
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Return variable names in the order they appear in the file
+ *
+ * Uses GDAL subdataset metadata which lists variables in their original
+ * file order. This is important for deterministic auto-generated parameter
+ * IDs when using --autoids.
+ */
+// ----------------------------------------------------------------------
+
+std::vector<std::string> nctools::NcFileExtended::get_gdal_variable_names() const
+{
+  try
+  {
+    if (!gdal_dataset)
+      return {};
+
+    char** subdatasets = GDALGetMetadata(gdal_dataset, "SUBDATASETS");
+    if (!subdatasets)
+      return {};
+
+    std::vector<std::string> varnames;
+    for (int i = 0; subdatasets[i] != nullptr; ++i)
+    {
+      const std::string item(subdatasets[i]);
+      // Only process SUBDATASET_N_NAME= entries (skip DESC entries)
+      if (item.find("_NAME=") == std::string::npos)
+        continue;
+
+      // Format: SUBDATASET_N_NAME=NETCDF:"path":varname
+      const size_t colon_pos = item.rfind(':');
+      if (colon_pos == std::string::npos)
+        continue;
+
+      std::string varname = item.substr(colon_pos + 1);
+      // Strip any surrounding quotes (NETCDF: format may have them)
+      if (varname.size() >= 2 && varname.front() == '"' && varname.back() == '"')
+        varname = varname.substr(1, varname.size() - 2);
+      // Strip leading // (HDF5: format uses //varname)
+      if (varname.size() >= 2 && varname[0] == '/' && varname[1] == '/')
+        varname = varname.substr(2);
+
+      if (!varname.empty())
+        varnames.push_back(varname);
+    }
+    return varnames;
+  }
+  catch (...)
+  {
+    return {};
+  }
 }
 
 std::string nctools::NcFileExtended::grid_mapping()
@@ -696,14 +727,14 @@ std::string nctools::NcFileExtended::grid_mapping()
         if (var.getName() == projection_var_name)
         {
           const NcVarAtt name_att = ncvar_get_attr(var, "grid_mapping_name", false);
-          if (name_att.isNull())
+          if (!name_att.isNull())
             projectionName = std::make_shared<std::string>(get_att_string_value(name_att));
 
           const NcVarAtt lon_att = ncvar_get_attr(var, "longitude_of_projection_origin", false);
-          if (lon_att.isNull())
+          if (!lon_att.isNull())
             longitudeOfProjectionOrigin = nctools::get_att_value<double>(lon_att, 0);
           const NcVarAtt lat_att = ncvar_get_attr(var, "latitude_of_projection_origin", false);
-          if (lat_att.isNull())
+          if (!lat_att.isNull())
             latitudeOfProjectionOrigin = nctools::get_att_value<double>(lat_att, 0);
           break;
         }
@@ -1075,7 +1106,18 @@ NFmiTimeList nctools::NcFileExtended::timeList(std::string varName, std::string 
       const std::vector<long> ncvals = nctools::get_values<long>(ncvar);
       for (auto val : ncvals)
       {
-        Fmi::DateTime timestep(torigin + Fmi::Seconds(val * unit_secs));
+        // Avoid 32-bit overflow: use the same time-unit branching as the non-stereo path
+        Fmi::DateTime timestep = torigin;
+        if (unit_secs == 1)
+          timestep += Fmi::Seconds(val);
+        else if (unit_secs == 60)
+          timestep += Fmi::Minutes(val);
+        else if (unit_secs == 3600)
+          timestep += Fmi::Hours(val);
+        else if (unit_secs == 86400)
+          timestep += Fmi::Hours(24 * val);
+        else
+          timestep += Fmi::Seconds(static_cast<long long>(val) * static_cast<long long>(unit_secs));
         tlist->Add(new NFmiMetTime(nctools::tomettime(timestep)));
       }
     }
@@ -1200,9 +1242,14 @@ void nctools::NcFileExtended::parse_time_units(Fmi::DateTime *origintime, long *
       throw Fmi::Exception(BCP, "Invalid time units string: '" + units + "'");
 
     std::string datestr = parts[2];
-    std::string timestr = (parts.size() >= 4 ? parts[3] : "00:00:00");
+    std::string timestr = (parts.size() >= 4 ? parts[3] : "");
 
-    *origintime = Fmi::TimeParser::parse(datestr + " " + timestr);
+    // If datestr is ISO 8601 (contains 'T'), it already includes the time component
+    if (timestr.empty() && datestr.find('T') == std::string::npos)
+      timestr = "00:00:00";
+
+    const std::string datetime_str = timestr.empty() ? datestr : (datestr + " " + timestr);
+    *origintime = Fmi::TimeParser::parse(datetime_str);
 
     if (parts.size() == 5 && boost::iequals(parts[4], "UTC") == false)
       *origintime += Fmi::date_time::duration_from_string(parts[4]);
@@ -1781,6 +1828,9 @@ void nctools::NcFileExtended::require_conventions(const std::string *reference)
     // Here we compare the actual version numbers and assume that larger is compliant with smaller
     // one
     std::vector<char> att_value = nctools::get_att_vector_value<char>(att);
+    // Trim trailing nulls and whitespace (nc_CHAR attributes may include null terminators)
+    while (!att_value.empty() && (att_value.back() == '\0' || att_value.back() == ' '))
+      att_value.pop_back();
     std::string ref(att_value.begin(), att_value.end());
     std::string cmp = *reference;
     std::string refsub = ref;

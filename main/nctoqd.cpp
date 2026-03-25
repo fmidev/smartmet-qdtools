@@ -8,6 +8,7 @@
 
 #include "NcFileExtended.h"
 #include "nctools.h"
+#include <gdal.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -453,12 +454,18 @@ int add_to_pbag(const nctools::NcFileExtended& ncfile,
   if (!ncfile.t_axis().isNull())
     ++wanted_dims;
 
-  // Note: We loop over variables the same way as in copy_values
-
-  const std::multimap<std::string, netCDF::NcVar> vars = ncfile.getVars();
-  for (const auto& item : vars)
+  // Build ordered list of variable names (GDAL file order, falling back to netCDF multimap)
+  std::vector<std::string> ordered_varnames = ncfile.get_gdal_variable_names();
+  if (ordered_varnames.empty())
   {
-    const netCDF::NcVar& var = item.second;
+    const std::multimap<std::string, netCDF::NcVar> all_vars = ncfile.getVars();
+    for (const auto& item : all_vars)
+      ordered_varnames.push_back(item.first);
+  }
+
+  for (const auto& varname : ordered_varnames)
+  {
+    const netCDF::NcVar var = ncfile.getVar(varname);
     if (var.isNull())
       continue;
 
@@ -522,6 +529,9 @@ int run(int argc, char* argv[])
 {
   try
   {
+    // Initialize GDAL for NetCDF reading
+    GDALAllRegister();
+
     // Parse options
     if (!parse_options(argc, argv, options))
       return 0;

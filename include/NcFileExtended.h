@@ -12,6 +12,7 @@
 #include <ncVar.h>
 #include <ncDim.h>
 #include <set>
+#include <gdal.h>
 
 namespace nctools
 {
@@ -25,6 +26,7 @@ class NcFileExtended : public netCDF::NcFile
                  size_t *bufrsizeptr = nullptr,  // optional tuning parameters
                  size_t initialsize = 0,
                  netCDF::NcFile::FileFormat = netCDF::NcFile::classic);
+  ~NcFileExtended();
 
   void setOptions(const nctools::Options &opts) { options = opts; }
   void setWRF(bool mode) { wrf = mode; }
@@ -88,6 +90,10 @@ class NcFileExtended : public netCDF::NcFile
 
   NFmiTimeList timeList(std::string varName = "time", std::string unitAttrName = "units");
 
+  // Returns variable names in the order they appear in the file (using GDAL subdatasets).
+  // Returns empty vector if GDAL cannot determine the order.
+  std::vector<std::string> get_gdal_variable_names() const;
+
   long timeshift = 0;  // Desired timeshift in minutes for time axis reading
   void require_conventions(const std::string *reference);  // Validate data conforms to the
                                                            // reference in string(nullptr or empty
@@ -103,6 +109,8 @@ class NcFileExtended : public netCDF::NcFile
   }
 
  private:
+
+  GDALDatasetH gdal_dataset = nullptr;  // GDAL handle for metadata and data reading
 
   std::shared_ptr<std::string> projectionName;
   bool wrf = false;

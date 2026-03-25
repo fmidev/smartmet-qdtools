@@ -442,6 +442,27 @@ void nctools::NcFileExtended::copy_values(const Options &options, const NcVar& v
         scale *= 100;
     }
 
+    // Determine valid_range for masking (replicates GDAL valid_range behaviour).
+    // Values outside [valid_min, valid_max] are treated as missing.
+    float valid_min = std::numeric_limits<float>::lowest();
+    float valid_max = std::numeric_limits<float>::max();
+    const NcVarAtt valid_range_att = ncvar_get_attr(var, "valid_range", true);
+    if (!valid_range_att.isNull() && valid_range_att.getAttLength() >= 2)
+    {
+      const auto range = get_att_vector_value<float>(valid_range_att);
+      valid_min = range[0];
+      valid_max = range[1];
+    }
+    else
+    {
+      const NcVarAtt vmin_att = ncvar_get_attr(var, "valid_min", true);
+      if (!vmin_att.isNull())
+        valid_min = get_att_value<float>(vmin_att, 0);
+      const NcVarAtt vmax_att = ncvar_get_attr(var, "valid_max", true);
+      if (!vmax_att.isNull())
+        valid_max = get_att_value<float>(vmax_att, 0);
+    }
+
     const std::vector<float> vals = nctools::get_values<float>(var);
     const std::size_t x_size = xsize();
     const std::size_t y_size = ysize();
@@ -466,7 +487,8 @@ void nctools::NcFileExtended::copy_values(const Options &options, const NcVar& v
           for (info.ResetLocation(); info.NextLocation();)
           {
             float value = vals.at(ystart + xcounter);
-            if (!IsMissingValue(value, missingvalue))
+            if (!IsMissingValue(value, missingvalue) &&
+                value >= valid_min && value <= valid_max)
             {
               value = scale * value + offset;
               info.FloatValue(value);

@@ -50,13 +50,10 @@ using Fmi::Exception;
  */
 // ----------------------------------------------------------------------
 
-void check_xaxis_units(const netCDF::NcVar& var)
+void check_xaxis_units(const std::string& units)
 {
-  const netCDF::NcVarAtt att = var.getAtt("units");
-  if (att.isNull())
+  if (units.empty())
     throw Exception(BCP, "X-axis has no units attribute");
-
-  std::string units = nctools::get_att_string_value(att);
 
   // Ref: CF conventions section 4.2 Longitude Coordinate
   if (units == "degrees_east")
@@ -90,13 +87,10 @@ void check_xaxis_units(const netCDF::NcVar& var)
  */
 // ----------------------------------------------------------------------
 
-void check_yaxis_units(const netCDF::NcVar& var)
+void check_yaxis_units(const std::string& units)
 {
-  const netCDF::NcVarAtt att = var.getAtt("units");
-  if (att.isNull())
+  if (units.empty())
     throw Exception(BCP, "Y-axis has no units attribute");
-
-  std::string units = nctools::get_att_string_value(att);
 
   // Ref: CF conventions section 4.1 Latitude Coordinate
   if (units == "degrees_north")
@@ -202,10 +196,8 @@ NFmiHPlaceDescriptor create_hdesc(nctools::NcFileExtended& ncfile)
 
 NFmiVPlaceDescriptor create_vdesc(const nctools::NcFileExtended& ncfile)
 {
-  const netCDF::NcVar& z = ncfile.z_axis();
-
   // Defaults if there are no levels
-  if (z.isNull())
+  if (!ncfile.has_z_axis())
   {
     if (options.verbose)
       std::cerr << "  Extracting default level only\n";
@@ -214,13 +206,11 @@ NFmiVPlaceDescriptor create_vdesc(const nctools::NcFileExtended& ncfile)
   }
 
   // Guess level type from z-axis units
-
   auto leveltype = kFmiAnyLevelType;
 
-  const netCDF::NcVarAtt units_att = z.getAtt("units");
-  if (!units_att.isNull())
+  const std::string units = ncfile.z_units();
+  if (!units.empty())
   {
-    std::string units = nctools::get_att_string_value(units_att);
     if (units == "Pa" || units == "hPa" || units == "mb")
       leveltype = kFmiPressureLevel;
     else if (units == "cm")
@@ -230,10 +220,9 @@ NFmiVPlaceDescriptor create_vdesc(const nctools::NcFileExtended& ncfile)
   }
 
   // Otherwise collect all levels
-
   NFmiLevelBag bag;
 
-  const std::vector<long> zvalues = nctools::get_values<long>(z);
+  const std::vector<long> zvalues = ncfile.get_z_values();
 
   if (options.verbose)
     std::cerr << "  Extracting " << zvalues.size() << " levels:";
@@ -443,58 +432,33 @@ int add_to_pbag(const nctools::NcFileExtended& ncfile,
   const NFmiString precision = "%.1f";
   const FmiInterpolationMethod interpolation = kLinearly;
 
-  // Number of dimensions the parameter must have
-  int wanted_dims = 0;
-  if (!ncfile.x_axis().isNull())
-    ++wanted_dims;
-  if (!ncfile.y_axis().isNull())
-    ++wanted_dims;
-  if (!ncfile.z_axis().isNull())
-    ++wanted_dims;
-  if (!ncfile.t_axis().isNull())
-    ++wanted_dims;
-
-  // Build ordered list of variable names (GDAL file order, falling back to netCDF multimap)
-  std::vector<std::string> ordered_varnames = ncfile.get_gdal_variable_names();
-  if (ordered_varnames.empty())
-  {
-    const std::multimap<std::string, netCDF::NcVar> all_vars = ncfile.getVars();
-    for (const auto& item : all_vars)
-      ordered_varnames.push_back(item.first);
-  }
+  // Build ordered list of variable names (GDAL file order, excludes coord vars)
+  const std::vector<std::string> ordered_varnames = ncfile.get_gdal_variable_names();
 
   for (const auto& varname : ordered_varnames)
   {
-    const netCDF::NcVar var = ncfile.getVar(varname);
-    if (var.isNull())
-      continue;
-
-    // Skip dimension variables
-    if (ncfile.is_dim(var.getName()))
-      continue;
-
     // Check dimensions
-
-    if (!ncfile.axis_match(var))
+    if (!ncfile.axis_match(varname))
     {
       if (options.verbose)
-        std::cout << "  Skipping variable " << nctools::get_name(var)
+        std::cout << "  Skipping variable " << varname
                   << " for not having requested dimensions\n";
       continue;
     }
 
     // Here we need to know only the id
+    const std::string paramname = ncfile.get_standard_name(varname);
     nctools::ParamInfo pinfo =
-        nctools::parse_parameter(nctools::get_name(var), paramconvs, options.autoid);
+        nctools::parse_parameter(paramname, paramconvs, options.autoid);
     if (pinfo.id < 1)
     {
       if (options.verbose)
-        std::cout << "  Skipping unknown variable '" << nctools::get_name(var) << "'\n";
+        std::cout << "  Skipping unknown variable '" << paramname << "'\n";
       continue;
     }
     else if (options.verbose)
     {
-      std::cout << "  Variable " << nctools::get_name(var) << " has id " << pinfo.id << " and name "
+      std::cout << "  Variable " << paramname << " has id " << pinfo.id << " and name "
                 << (nctools::get_enumconverter().ToString(pinfo.id).empty()
                         ? "undefined"
                         : nctools::get_enumconverter().ToString(pinfo.id))
@@ -572,7 +536,7 @@ int run(int argc, char* argv[])
         ncfile->setOptions(options);
         ncfile->setWRF(false);
 
-        if (ncfile->isNull())
+        if (!ncfile->is_open())
           throw Exception(BCP, "File '" + infile + "' does not contain valid NetCDF", nullptr);
 
         // When --info is given we only print useful metadata instead of generating anything
@@ -591,20 +555,13 @@ int run(int argc, char* argv[])
         // Save initialized state for further processing
         ncfilelist.push_back(ncfile);
 
-        std::string grid_mapping(ncfile->grid_mapping());
-
-        // FIXME: check number of value below
-        if (ncfile->x_axis().isNull())
+        if (!ncfile->has_x_axis())
           throw Exception(BCP, "X-axis has no values");
-        if (ncfile->y_axis().isNull())
+        if (!ncfile->has_y_axis())
           throw Exception(BCP, "Y-axis has no values");
-        if (!ncfile->z_axis().isNull() && false)
-          throw Exception(BCP, "Z-axis has no values");
-        if (!ncfile->t_axis().isNull() && false)
-          throw Exception(BCP, "T-axis has no values");
 
-        check_xaxis_units(ncfile->x_axis());
-        check_yaxis_units(ncfile->y_axis());
+        check_xaxis_units(ncfile->x_units());
+        check_yaxis_units(ncfile->y_units());
 
         if (ncfile->xsize() == 0)
           throw Exception(BCP, "X-dimension is of size zero");

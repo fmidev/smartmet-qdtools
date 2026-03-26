@@ -1,250 +1,171 @@
 #pragma once
+// GDAL-only NetCDF file wrapper. Does not expose any netCDF C++ types in the public API.
 
 #include "nctools.h"
 #include <macgyver/DateTime.h>
 #include <macgyver/StringConversion.h>
-#include <macgyver/TypeName.h>
-#include <macgyver/TypeTraits.h>
 #include <newbase/NFmiTimeList.h>
-#include <numeric>
-#include <memory>
-#include <ncFile.h>
-#include <ncVar.h>
-#include <ncDim.h>
-#include <set>
 #include <gdal.h>
+#include <memory>
+#include <optional>
+#include <string>
+#include <vector>
+
+class NFmiFastQueryInfo;
 
 namespace nctools
 {
-class NcFileExtended : public netCDF::NcFile
+
+class NcFileExtended
 {
  public:
   std::string path;
-  NcFileExtended(std::string path,
-                 long timeshift,
-                 netCDF::NcFile::FileMode = netCDF::NcFile::read,
-                 size_t *bufrsizeptr = nullptr,  // optional tuning parameters
-                 size_t initialsize = 0,
-                 netCDF::NcFile::FileFormat = netCDF::NcFile::classic);
+  long timeshift = 0;
+
+  NcFileExtended(std::string path, long timeshift = 0);
   ~NcFileExtended();
 
-  void setOptions(const nctools::Options &opts) { options = opts; }
+  bool is_open() const { return gdal_dataset != nullptr; }
+
+  void setOptions(const Options& opts) { options = opts; }
   void setWRF(bool mode) { wrf = mode; }
 
-  void initAxis(const std::optional<std::string> &xname,
-                const std::optional<std::string> &yname,
-                const std::optional<std::string> &zname,
-                const std::optional<std::string> &tname);
+  void initAxis(const std::optional<std::string>& xname,
+                const std::optional<std::string>& yname,
+                const std::optional<std::string>& zname,
+                const std::optional<std::string>& tname);
 
   void printInfo() const;
 
-  const netCDF::NcVar& x_axis() const { return x; }
-  const netCDF::NcVar& y_axis() const { return y; }
-  const netCDF::NcVar& z_axis() const { return z; }
-  const netCDF::NcVar& t_axis() const { return t; }
+  bool has_x_axis() const { return !x_name.empty(); }
+  bool has_y_axis() const { return !y_name.empty(); }
+  bool has_z_axis() const { return !z_name.empty(); }
+  bool has_t_axis() const { return !t_name.empty(); }
 
-  bool is_dim(const std::string &name) const;
+  std::string x_units() const;
+  std::string y_units() const;
+  std::string z_units() const;
 
-  bool axis_match(const netCDF::NcVar& var) const;
+  bool is_dim(const std::string& name) const;
+  bool axis_match(const std::string& varname) const;
 
   std::string grid_mapping();
-  unsigned long xsize();                 // Count of elements on x-axis
-  unsigned long ysize();                 // Count of elements on y-axis
-  unsigned long zsize();                 // Count of elements on z-axis
-  unsigned long tsize();                 // Count of elements on t-axis
-  unsigned long axis_size(const netCDF::NcVar& axis);  // Generic dimension of an axis(=count of elements)
-  unsigned long axis_size(const std::string &dimname) const;
+  unsigned long xsize() const { return _xsize; }
+  unsigned long ysize() const { return _ysize; }
+  unsigned long zsize() const { return _zsize; }
+  unsigned long tsize() const { return _tsize; }
 
-  float get_missingvalue(const netCDF::NcVar& var) const;
+  float get_missingvalue_for_var(const std::string& varname) const;
+  std::string get_standard_name(const std::string& varname) const;
+  std::vector<long> get_z_values() const;
 
-  std::shared_ptr<std::string> get_axis_units(
-        const netCDF::NcVar& axis);  // String presentation of a particular units on an axis
-  double get_axis_scale(const netCDF::NcVar& axis,
-                        std::shared_ptr<std::string> *source_units,
-                        const std::string *target_units = nullptr);  // Get scaling multiplier to
-                                                                     // convert axis to target
-                                                                     // units, default target being
-                                                                     // meters
-  double x_scale();  // x scaling multiplier to meters
-  double y_scale();  // y scaling multiplier to meters
-  double z_scale();  // z scaling multiplier to meters
+  double x_scale();
+  double y_scale();
+  double z_scale();
+
   double xmin();
   double xmax();
   double ymin();
   double ymax();
   double zmin();
   double zmax();
-  bool xinverted();        // True, if x axis is descending
-  bool yinverted();        // True, if y axis is descending
-  bool isStereographic();  // True, if this is a stereographic projection
+
+  bool xinverted();
+  bool yinverted();
+  bool isStereographic();
+
   double longitudeOfProjectionOrigin = 0;
   double latitudeOfProjectionOrigin = 0;
 
-  void copy_values(const Options &options,
-                   NFmiFastQueryInfo &info,
-                   const ParamConversions &paramconvs,
-                   bool useAutoGeneratedIds);  // Copy data to already existing querydata object
+  void copy_values(const Options& options,
+                   NFmiFastQueryInfo& info,
+                   const ParamConversions& paramconvs,
+                   bool useAutoGeneratedIds);
 
-  bool joinable(NcFileExtended &ncfile, std::vector<std::string> *failreasons = nullptr);
-  netCDF::NcVar find_variable(const std::string &name);
+  bool joinable(NcFileExtended& ncfile, std::vector<std::string>* failreasons = nullptr);
 
   NFmiTimeList timeList(std::string varName = "time", std::string unitAttrName = "units");
 
-  // Returns variable names in the order they appear in the file (using GDAL subdatasets).
-  // Returns empty vector if GDAL cannot determine the order.
+  // Returns variable names in the order they appear in the file (GDAL subdataset order).
+  // Only returns data variables, not coordinate variables (lat, lon, time, lev, etc.).
   std::vector<std::string> get_gdal_variable_names() const;
 
-  long timeshift = 0;  // Desired timeshift in minutes for time axis reading
-  void require_conventions(const std::string *reference);  // Validate data conforms to the
-                                                           // reference in string(nullptr or empty
-                                                           // string=always validates)
-
-  template <typename ReturnType>
-  typename std::enable_if<Fmi::is_numeric<ReturnType>::value, std::vector<ReturnType>>::type
-  get_var_vector(const netCDF::NcVar &var) const
-  {
-    std::vector<ReturnType> values;
-    var.getVar(&values[0]);
-    return values;
-  }
+  void require_conventions(const std::string* reference);
 
  private:
+  GDALDatasetH gdal_dataset = nullptr;
 
-  GDALDatasetH gdal_dataset = nullptr;  // GDAL handle for metadata and data reading
+  std::string x_name, y_name, z_name, t_name;
+
+  // Cached axis sizes (set in initAxis; _xsize/_ysize also set in load_first_var_meta)
+  mutable unsigned long _xsize = 0;
+  mutable unsigned long _ysize = 0;
+  unsigned long _zsize = 1;
+  unsigned long _tsize = 0;
+
+  // Cached axis scale values
+  double xscale_ = 0;
+  double yscale_ = 0;
+  double zscale_ = 0;
+  bool x_scale_set_ = false;
+  bool y_scale_set_ = false;
+  bool z_scale_set_ = false;
+
+  bool minmaxfound = false;
+  double _xmin = 0, _xmax = 0;
+  double _ymin = 0, _ymax = 0;
+  double _zmin = 0, _zmax = 0;
+  bool _xinverted = false;
+  bool _yinverted = false;
+  bool _y_lat_irregular = false;  // true when y-axis lat is irregular (GDAL resamples to ascending)
 
   std::shared_ptr<std::string> projectionName;
   bool wrf = false;
-  nctools::Options options;
+  Options options;
 
-  netCDF::NcVar x;
-  netCDF::NcVar y;
-  netCDF::NcVar z;
-  netCDF::NcVar t;
-
-  bool minmaxfound = false;
-  double _xmin = 0.0;
-  double _xmax = 0.0;
-  double _ymin = 0.0;
-  double _ymax = 0.0;
-  double _zmin = 0.0;
-  double _zmax = 0.0;
-  bool _xinverted = false;
-  bool _yinverted = false;
-  bool _zinverted = false;
-  std::shared_ptr<std::string> x_units, y_units, z_units;
-  double xscale = 0;
-  double yscale = 0;
-  double zscale = 0;
-
-  netCDF::NcVar axis(const std::set<std::string> &axisnames);  // Find generic axis by name
-  void find_axis_bounds(
-        const netCDF::NcVar& , int n, double &x1, double &x2, const char *name, bool &isdescending);
-  void find_lonlat_bounds(double &lon1, double &lat1, double &lon2, double &lat2);
-  void find_bounds();
-  void parse_time_units(Fmi::DateTime *origintime, long *timeunit) const;
-  void copy_values(NFmiFastQueryInfo &info,
-                   const ParamInfo &pinfo,
-                   const nctools::Options *options);
-  void copy_values(const Options &options, const netCDF::NcVar& var, NFmiFastQueryInfo &info);
   std::shared_ptr<NFmiTimeList> timelist;
+
+  // Cached first-variable metadata (key=value pairs from GDAL metadata, "key#attr" format)
+  // mutable to allow lazy initialization in const methods
+  mutable std::map<std::string, std::string> first_var_meta_;
+  mutable std::string first_var_name_;
+
+  // GDAL helpers
+  std::string open_var_ds_name(const std::string& varname) const;
+  GDALDatasetH open_var_dataset(const std::string& varname) const;
+  std::string get_first_var_meta(const std::string& key) const;
+  std::string get_coord_attr(const std::string& coordname, const std::string& attrname) const;
+  std::vector<double> get_dim_values_double(const std::string& dimname) const;
+  unsigned long compute_dim_size(const std::string& dimname) const;
+  std::string get_subdataset_desc(const std::string& varname) const;
+  std::vector<long> parse_desc_dims(const std::string& desc) const;
+  double axis_scale_from_units(const std::string& units) const;
+
+  void load_first_var_meta() const;
+  void merge_dim_meta(const std::string& dimname) const;  // merge metadata from a var that has dimname
+  void find_bounds();
+  void find_axis_bounds_gdal(const std::string& coordname,
+                             unsigned long n,
+                             double& x1,
+                             double& x2,
+                             const char* label,
+                             bool& isdescending,
+                             bool* is_irregular = nullptr);
+  void find_lonlat_bounds(double& lon1, double& lat1, double& lon2, double& lat2);
+
+  void copy_values_var(const Options& opts,
+                       const std::string& varname,
+                       NFmiFastQueryInfo& info);
+  void copy_values_wind(NFmiFastQueryInfo& info,
+                        const ParamInfo& pinfo,
+                        const Options* opts);
 };
 
-std::string get_name(const netCDF::NcVar& var);
-ParamInfo parse_parameter(const netCDF::NcVar& var, const ParamConversions &paramconvs, bool useAutoGeneratedIds);
-netCDF::NcVar find_variable(const netCDF::NcFile &ncfile, const std::string &name);
-float get_missingvalue(const netCDF::NcVar& var);
-float get_scale(const netCDF::NcVar& var);
-float get_offset(const netCDF::NcVar& var);
-float normalize_units(float value, const std::string &units);
-void report_units(const netCDF::NcVar& var,
-                  const std::string &units,
-                  const Options &options,
-                  bool ignoreUnitChange = false);
+// Free functions
+NFmiMetTime tomettime(const Fmi::DateTime& t);
 unsigned long get_units_in_seconds(std::string unit_str);
-NFmiMetTime tomettime(const Fmi::DateTime &t);
-void parse_time_units(const netCDF::NcVar& t, Fmi::DateTime *origintime, long *timeunit);
-
-template <typename ReturnType, typename ObjectType>
-typename std::enable_if<std::is_base_of<netCDF::NcAtt, ObjectType>::value, std::vector<ReturnType>>::type
-get_att_vector_value(const ObjectType& att)
-{
-  try
-  {
-    const auto length = att.getAttLength();
-    if (length == 0)
-      return std::vector<ReturnType>();
-
-    std::vector<ReturnType> values(length);
-    att.getValues(values.data());
-    return values;
-  }
-  catch (...)
-  {
-    auto error =  Fmi::Exception::Trace(BCP, "Operation failed!");
-    error.addParameter("Attribute name", att.getName());
-    error.addParameter("Return type", Fmi::demangle_cpp_type_name(typeid(ReturnType).name()));
-    error.addParameter("Attribute length", std::to_string(att.getAttLength()));
-    error.addParameter("Attribute type", att.getType().getName());
-    throw error;
-  }
-}
-
-template <typename ReturnType>
-typename std::enable_if<Fmi::is_numeric<ReturnType>::value, ReturnType>::type
-get_att_value(const netCDF::NcAtt& att, std::size_t index)
-{
-  try
-  {
-    const auto length = att.getAttLength();
-    if (att.getAttLength() < index + 1)
-      throw std::runtime_error("The attribute doesn not have element " + Fmi::to_string(index));
-
-    std::vector<ReturnType> values(length);
-    att.getValues(values.data());
-    return values.at(index);
-  }
-  catch (...)
-  {
-    auto error = Fmi::Exception::Trace(BCP, "Operation failed!");
-    error.addParameter("Attribute name", att.getName());
-    error.addParameter("Return type", Fmi::demangle_cpp_type_name(typeid(ReturnType).name()));
-    error.addParameter("Attribute length", std::to_string(att.getAttLength()));
-    error.addParameter("Attribute type", att.getType().getName());
-    error.addParameter("Index", std::to_string(index));
-    throw error;
-  }
-}
-
-template <typename ReturnType>
-typename std::enable_if<
-  Fmi::is_numeric<ReturnType>::value
-  or std::is_same<ReturnType, std::string>::value
-  , std::vector<ReturnType>>::type
-get_values(const netCDF::NcVar& var)
-{
-  try
-  {
-    const auto dims = var.getDims();
-    if (dims.empty())
-      return std::vector<ReturnType>();
-
-    const std::size_t length = std::accumulate(dims.begin(), dims.end(), 1,
-                                 [](std::size_t a, const netCDF::NcDim& b) { return a * b.getSize(); });
-    std::vector<ReturnType> values(length);
-    var.getVar(values.data());
-    return values;
-  }
-  catch (...)
-  {
-    auto error = Fmi::Exception::Trace(BCP, "Operation failed!");
-    error.addParameter("Variable name", var.getName());
-    error.addParameter("Return type", Fmi::demangle_cpp_type_name(typeid(ReturnType).name()));
-    error.addParameter("Variable length", std::to_string(var.getDimCount()));
-    error.addParameter("Variable type", var.getType().getName());
-    throw error;
-  }
-}
-
-std::string get_att_string_value(const netCDF::NcAtt& att);
+void parse_time_units_string(const std::string& units_str,
+                             Fmi::DateTime* origintime,
+                             long* timeunit);
 
 }  // namespace nctools

@@ -16,7 +16,7 @@ my $errors = 0;
 my %usednames = ();
 
 MaybeUnpackFile("data/netcdf", "vietnam.nc");
-MaybeUnpackFile("data/netcdf", "sla.nc");
+# MaybeUnpackFile("data/netcdf", "sla.nc");
 
 my $dir = $0;
 $dir =~ s%[^/]*$%%;

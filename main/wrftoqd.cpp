@@ -7,7 +7,11 @@
 // ======================================================================
 
 #include "NcFileExtended.h"
+#include "NcVarTools.h"
 #include "nctools.h"
+#include <ncDim.h>
+#include <ncFile.h>
+#include <ncVar.h>
 #include <boost/algorithm/string.hpp>
 #include <macgyver/Exception.h>
 #include <newbase/NFmiAreaFactory.h>
@@ -1498,20 +1502,21 @@ static std::string GetProducerNamePostFix(std::shared_ptr<NFmiQueryData> &data)
 // Tämä on alustavasti tehty WRF-datojen pohjalta.
 static int DoWrfData(nctools::Options &options,
                      nctools::NcFileExtended &ncFile,
+                     const netCDF::NcFile &nc_raw,
                      const nctools::ParamConversions &paramconvs)
 {
   try
   {
-    WRFData::DimensionMap dimensionMap = GetNCDimensionMap(options, ncFile);
-    WRFData::TotalDimensionDataSet dimDataSet = GetNCTotalDimensionDataSet(options, ncFile);
-    ::PrintWRFGlobalAttributes(options, ncFile);
-    BaseGridAreaData areaData = GetBaseAreaData(options, ncFile);
+    WRFData::DimensionMap dimensionMap = GetNCDimensionMap(options, nc_raw);
+    WRFData::TotalDimensionDataSet dimDataSet = GetNCTotalDimensionDataSet(options, nc_raw);
+    ::PrintWRFGlobalAttributes(options, nc_raw);
+    BaseGridAreaData areaData = GetBaseAreaData(options, nc_raw);
     std::vector<std::shared_ptr<NFmiQueryData> > dataVector;
     for (WRFData::TotalDimensionDataSet::iterator it = dimDataSet.begin(); it != dimDataSet.end();
          ++it)
     {
       std::shared_ptr<NFmiQueryInfo> qInfo(
-          ::CreateNewInnerInfo(options, *it, areaData, ncFile, paramconvs));
+          ::CreateNewInnerInfo(options, *it, areaData, nc_raw, paramconvs));
       if (qInfo)
       {
         std::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(*qInfo));
@@ -1572,8 +1577,8 @@ int run(int argc, char *argv[])
     if (!nctools::parse_options(argc, argv, options))
       return 0;
 
-    // Default is to exit in some non fatal situations
-    nctools::NcFileExtended ncfile(options.infiles[0], netCDF::NcFile::read);
+    // Open file via GDAL-only NcFileExtended for data reading
+    nctools::NcFileExtended ncfile(options.infiles[0]);
 
     ncfile.setOptions(options);
     ncfile.setWRF(true);
@@ -1581,8 +1586,11 @@ int run(int argc, char *argv[])
     // Establish wanted axis parameters, this throws if unsuccesful
     ncfile.initAxis(options.xdim, options.ydim, options.zdim, options.tdim);
 
-    if (ncfile.isNull())
+    if (!ncfile.is_open())
       throw Fmi::Exception(BCP, "File '" + options.infiles[0] + "' does not contain valid NetCDF");
+
+    // Open raw netCDF file for WRF metadata queries (dimensions, attributes, variables)
+    netCDF::NcFile nc_raw(options.infiles[0], netCDF::NcFile::read);
 
     // Parameter conversions
 
@@ -1592,7 +1600,7 @@ int run(int argc, char *argv[])
     nctools::debug_output(ncfile);
 #endif
 
-    return ::DoWrfData(options, ncfile, paramconvs);
+    return ::DoWrfData(options, ncfile, nc_raw, paramconvs);
   }
   catch (...)
   {

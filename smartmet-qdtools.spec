@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 26.2.6
+Version: 26.3.26
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -44,7 +44,7 @@ BuildRequires: netcdf-cxx4-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
 BuildRequires: smartmet-library-calculator-devel >= 26.2.4
-BuildRequires: smartmet-library-gis-devel >= 26.2.4
+BuildRequires: smartmet-library-gis-devel >= 26.3.26
 BuildRequires: smartmet-library-imagine-devel >= 26.2.4
 BuildRequires: smartmet-library-macgyver-devel >= 26.2.4
 BuildRequires: smartmet-library-newbase-devel >= 26.2.4
@@ -72,7 +72,7 @@ Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
 Requires: netcdf-cxx4
 Requires: smartmet-library-calculator >= 26.2.4
-Requires: smartmet-library-gis >= 26.2.4
+Requires: smartmet-library-gis >= 26.3.26
 Requires: smartmet-library-imagine >= 26.2.4
 Requires: smartmet-library-macgyver >= 26.2.4
 Requires: smartmet-library-newbase >= 26.2.4
@@ -213,6 +213,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Thu Mar 26 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.3.26-1.fmi
+- nctoqd now uses GDAL to read the input data, was using NetCDF C++ libraries directly
+
 * Fri Feb  6 2026 Andris Pavēnis <andris.pavenis@fmi.fi> 26.2.6-1.fmi
 - h5toqd: fix endian support for newer h5pp versions
 

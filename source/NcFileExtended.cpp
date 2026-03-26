@@ -1634,19 +1634,11 @@ NFmiTimeList nctools::NcFileExtended::timeList(std::string varName, std::string 
 
       for (double val_d : raw_values)
       {
-        const long timeoffset = static_cast<long>(val_d);
+        // Convert the (possibly fractional) time value to whole seconds to preserve sub-unit
+        // precision (e.g. 7.895833 days = 7 days + 21 h 30 min, not just 7 days).
+        const long seconds_offset = std::llround(val_d * timeunit);
         Fmi::DateTime validtime = origintime + Fmi::Minutes(timeshift);
-
-        if (timeunit == 1)
-          validtime += Fmi::Seconds(timeoffset);
-        else if (timeunit == 60)
-          validtime += Fmi::Minutes(timeoffset);
-        else if (timeunit == 60 * 60)
-          validtime += Fmi::Hours(timeoffset);
-        else if (timeunit == 24 * 60 * 60)
-          validtime += Fmi::Hours(24 * timeoffset);
-        else
-          validtime += Fmi::Seconds(timeoffset * timeunit);
+        validtime += Fmi::Seconds(seconds_offset);
 
         tlist->Add(new NFmiMetTime(tomettime(validtime)));
       }

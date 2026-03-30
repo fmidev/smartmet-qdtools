@@ -290,21 +290,14 @@ int count_datasets(const Fmi::HDF5::Hdf5File& file)
 int count_datas(const Fmi::HDF5::Hdf5File& file, int i)
 {
   const std::string prefix = dataset(i);
-  const std::vector<std::string> tmp = file.get().findGroups("", prefix, -1, 0);
-  const std::set<std::string> dataNames(tmp.begin(), tmp.end());
-
-  int counter(0);
+  int counter = 0;
   for (int j = 1; j < 100; j++)
   {
-    std::string dataname = std::string("data") + Fmi::to_string(j);
-    if (dataNames.count(dataname))
-    {
+    if (file.is_group(prefix + "/data" + Fmi::to_string(j)))
       counter++;
-      continue;
-    }
-    break;
+    else
+      break;
   }
-
   return counter;
 }
 
@@ -1113,14 +1106,9 @@ void print_group_attributes(const Fmi::HDF5::Hdf5File& file, const std::string& 
   if (not file.is_group(dpath))
     return;
 
-  const std::vector<std::string> attrNames = file.get().getAttributeNames(dpath);
-  for (const std::string& name : attrNames)
-  {
-    const h5pp::AttrInfo attrInfo = file.get().getAttributeInfo(dpath, name);
-    const std::string typeName = attrInfo.cppTypeName ? "type [" + *attrInfo.cppTypeName + "]" : "";
-    std::cout << "Attribute: " << dpath << "/" << name << " ( " << typeName << attrInfo.string()
-              << " ) = " << file.get_attribute_string(dpath, name) << std::endl;
-  }
+  for (const std::string& name : file.get_attribute_names(dpath))
+    std::cout << "Attribute: " << dpath << "/" << name
+              << " = " << file.get_attribute_string(dpath, name) << std::endl;
 }
 
 // ----------------------------------------------------------------------
@@ -1727,7 +1715,7 @@ int run(int argc, char* argv[])
   if (options.quietproj)
     CPLSetErrorHandler(MyProjErrorHandler);
 
-  Fmi::HDF5::Hdf5File file(options.infile, h5pp::FileAccess::READONLY);
+  Fmi::HDF5::Hdf5File file(options.infile);
 
   // Check that the data looks like Opera radar HDF data
 

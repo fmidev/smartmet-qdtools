@@ -1,3 +1,7 @@
+# smartmet-qdtools
+
+Part of [SmartMet Server](https://github.com/fmidev/smartmet-library-spine). See the [SmartMet Server documentation](https://github.com/fmidev/smartmet-library-spine) for an overview of the ecosystem.
+
 Table of Contents
 * [List of querydata handling tools](#list-of-querydata-handling-tools)
   * [Most important ones](#most-important-ones)

@@ -687,7 +687,7 @@ int wrtieee(float *array, int n, int header, FILE *output)
   unsigned long int l;
   int i, nbuf;
   unsigned char buff[BSIZ];
-  unsigned char h4[4];
+  unsigned char h4[4]={0, 0, 0, 0 };
 
   nbuf = 0;
   if (header)

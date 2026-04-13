@@ -2,8 +2,8 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 26.3.26
-Release: 2%{?dist}.fmi
+Version: 26.4.13
+Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -43,12 +43,12 @@ BuildRequires: mdsplib >= 21.3.1
 BuildRequires: netcdf-cxx4-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
-BuildRequires: smartmet-library-calculator-devel >= 26.2.4
-BuildRequires: smartmet-library-gis-devel >= 26.3.26
-BuildRequires: smartmet-library-imagine-devel >= 26.2.4
-BuildRequires: smartmet-library-macgyver-devel >= 26.2.4
+BuildRequires: smartmet-library-calculator-devel >= 26.4.13
+BuildRequires: smartmet-library-gis-devel >= 26.4.13
+BuildRequires: smartmet-library-imagine-devel >= 26.4.13
+BuildRequires: smartmet-library-macgyver-devel >= 26.4.13
 BuildRequires: smartmet-library-newbase-devel >= 26.2.4
-BuildRequires: smartmet-library-smarttools-devel >= 26.2.4
+BuildRequires: smartmet-library-smarttools-devel >= 26.4.13
 BuildRequires: smartmet-timezones
 BuildRequires: zlib-devel
 Requires: %{smartmet_boost}-filesystem
@@ -71,15 +71,15 @@ Requires: libpng
 Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
 Requires: netcdf-cxx4
-Requires: smartmet-library-calculator >= 26.2.4
-Requires: smartmet-library-gis >= 26.3.26
-Requires: smartmet-library-imagine >= 26.2.4
-Requires: smartmet-library-macgyver >= 26.2.4
+Requires: smartmet-library-calculator >= 26.4.13
+Requires: smartmet-library-gis >= 26.4.13
+Requires: smartmet-library-imagine >= 26.4.13
+Requires: smartmet-library-macgyver >= 26.4.13
 Requires: smartmet-library-newbase >= 26.2.4
-Requires: smartmet-library-smarttools >= 26.2.4
+Requires: smartmet-library-smarttools >= 26.4.13
 Requires: smartmet-timezones >= 24.5.27
 Requires: zlib
-#TestRequires: smartmet-library-macgyver-devel >= 26.2.4
+#TestRequires: smartmet-library-macgyver-devel >= 26.4.13
 #TestRequires: gcc-c++
 #TestRequires: smartmet-library-newbase-devel >= 26.2.4
 #TestRequires: smartmet-qdtools-test-data
@@ -213,6 +213,9 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/stations.csv
 
 %changelog
+* Mon Apr 13 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.4.13-1.fmi
+- Repackaged due to API changes
+
 * Thu Mar 26 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.3.26-2.fmi
 - Fixed nctoqd to accept floating point times which may have fractional parts (QDTOOLS-123)
 

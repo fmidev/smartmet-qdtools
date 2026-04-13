@@ -30,6 +30,8 @@ Print results as a PHP hash table
 Print results as a PHP hash table with named data fields
 * **-E**  
 Print times in Epoch seconds
+* **-Q**  
+Quiet mode
 * **-v**  
 Verbose mode  
 

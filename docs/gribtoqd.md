@@ -56,9 +56,11 @@ Before using gribtoqd user should know something about grib file structure. It i
 * **-G <x1,y1,x2,y2>**  
     Define the minimal subgrid to be cropped by the bottom left and top right longitude and latitude.
 * **-r <specHumId,hybridRHId=13,hybridRHName=RH>**  
-    Calculate and add relative humidity parameter to hybrid data. relative humidity parameter to hybrid data.
+    Calculate and add relative humidity parameter to hybrid data.
 * **-H <sfcPresId,hybridPreId=1,hybridPreName=P>**  
-    Calculate and add pressure parameter to hybrid data. Give surfacePressure-id, generated pressure id and name are optional. pressure parameter to hybrid data. Give surfacePressure-id, generated pressure idand name are optional.
+    Calculate and add pressure parameter to hybrid data. Give surfacePressure-id; generated pressure id and name are optional.
+* **-R <wantedStep:parid1[,parid2,...]>**  
+    Step range filter. Only accept data with the specified step range for the listed parameter ids. Format: wantedStep:parid1[,parid2,...]
 
 ### Grib definitions
 

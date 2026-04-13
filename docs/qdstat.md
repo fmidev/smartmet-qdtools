@@ -37,6 +37,10 @@ width of the bar distribution
 times to process  
 * **-p** [ --parameters ] arg  
 parameters to process  
+* **-z** [ --levels ] arg  
+levels to process  
+* **-Z** [ --allevels ]  
+for all levels  
 * **-w** [ --stations ] arg  
 stations to process  
 

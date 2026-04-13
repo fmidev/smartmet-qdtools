@@ -16,16 +16,54 @@ Converts CF-1.4 conforming NetCDF to querydata. Only features in known use are s
     input netcdf file
 * **-o [ --outfile ] arg**  
     output querydata file
-* **\c [ --config ] arg**  
+* **-c [ --config ] arg**  
     configuration file for parameter name conversions
+* **-C [ --configs ] arg**  
+    extra NetCDF name conversions (take precedence over standard names)
+* **-n [ --conventions ] arg**  
+    minimum NetCDF conventions to verify, or empty string if no check wanted (default: CF-1.0)
+* **-d [ --debug ]**  
+    enable debugging output
 * **-t [ --timeshift ] arg**  
     additional time shift in minutes
 * **-p [ --producer ] arg**  
     producer number,name
+* **-P [ --projection ] arg**  
+    final data area projection
 * **--producernumber arg**  
     producer number
 * **--producername arg**  
     producer name
+* **-m [ --parameter ] arg**  
+    define parameter conversion (same format as in config)
+* **-a [ --globalAttributes ] arg**  
+    netCDF data's command-line given global attributes
+* **-s [ --fixstaggered ]**  
+    modifies staggered data to base form
+* **-u [ --ignoreunitchangeparams ] arg**  
+    ignore unit change params
+* **-T [ --tolerance ] arg**  
+    axis stepping tolerance
+* **-U [ --autoids ]**  
+    generate ids automatically for unknown parameters
+* **-x [ --excludeparams ] arg**  
+    exclude params
+* **--addparams arg**  
+    add parameters by calculating them
+* **--tdim arg**  
+    name of T-dimension parameter
+* **--xdim arg**  
+    name of X-dimension parameter
+* **--ydim arg**  
+    name of Y-dimension parameter
+* **--zdim arg**  
+    name of Z-dimension parameter
+* **--info**  
+    print information on data dimensions and exit
+* **--experimental**  
+    enable experimental features
+* **--mmap**  
+    memory map output file to save RAM
 
 The default configuration file for parameter name conversions is
 

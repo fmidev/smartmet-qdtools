@@ -41,6 +41,9 @@ Table of Contents
 * [qdset](docs/qdset.md) for changing querydata meta information (i.e. parameter names)
 * [qdgridcalc](docs/qdgridcalc.md) to calculate grid size for given projection area
 * [qdsmoother](docs/qdsmoother.md) to smoothen querydata to get nicer animations
+* [qddifference](docs/qddifference.md) for analyzing how much two querydata files differ
+* [qdextract](docs/qdextract.md) for extracting point data from grid data
+* [qdsoundingindex](docs/qdsoundingindex.md) for creating sounding index data from querydata
 
 ### Qdtools tutorials
 
@@ -71,6 +74,8 @@ Table of Contents
 * [metar2qd](docs/metar2qd.md) find METAR message form data and converts it to querydata
 * [nctoqd](docs/nctoqd.md) converts CF-1.4 conforming NetCDF to querydata
 * [wrftoqd](docs/wrftoqd.md) converts WRF NetCDF to querydata
+* [nc2qd](docs/nc2qd.md) converts netCDF to querydata
+* [kriging2qd](docs/kriging2qd.md) converts Kriging analysis output (ASCII) to querydata
 * [pgm2qd](docs/pgm2qd.md) converts RADAR formatted pgm files into querydata
 * [qdversionchange](docs/qdversionchange.md)
 * [synop2qd](docs/synop2qd.md) find SYNOP message from data and converts it to querydata
@@ -83,7 +88,7 @@ For handling shapefiles, two external programs are very handy:
 *  [QGis](http://www.qgis.org/) desktop tool for showing and modifying shapes
 *  [ogr2ogr](http://www.gdal.org/ogr2ogr.html) to change shape projections
 
-Smartmet tools:
+Smartmet tools (maintained in other SmartMet repositories):
 
 * [shape2ps](docs/shape2ps.md) for generating an image out of shapefiles
 * [shapefilter](docs/shapefilter.md) for extracting parts of a shapefile
@@ -91,6 +96,8 @@ Smartmet tools:
 * [shape2xml](docs/shape2xml.md) for browsing shape data
 
 ## Other tools
+
+These tools are maintained in other SmartMet repositories:
 
 * [cleaner](docs/cleaner.md) for removing aged files from the system
 * [compositealpha](docs/compositealpha.md) for adding transparency to a plain RGB image
@@ -101,7 +108,7 @@ Smartmet tools:
 * [Querydata producer names](docs/querydata-producer-names.md)
 * [Server directory structure](docs/server-directory-structure.md)
 * [Executing script](docs/executing-script.md)
-* [qdcontour](docs/qdcontour.md) legacy querydata rendering program for drawing animations.
+* [qdcontour](docs/qdcontour.md) legacy querydata rendering program for drawing animations (maintained in a separate repository).
 
 ## How to call the command line tools from scripts
 

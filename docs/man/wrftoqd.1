@@ -1,0 +1,125 @@
+.TH WRFTOQD 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+wrftoqd \- convert WRF NetCDF output to querydata
+.SH SYNOPSIS
+.B wrftoqd
+.RI [ options ]
+.I infile outfile
+.SH DESCRIPTION
+.B wrftoqd
+converts Weather Research and Forecasting (WRF) Model NetCDF output to
+querydata. The default dimension names match the WRF convention
+.RB ( time ", " west_east ", " south_north ).
+For generic CF-compliant NetCDF, see
+.BR nctoqd (1).
+.SH OPTIONS
+.TP
+.B \-h ", " \-\-help
+Print the help message.
+.TP
+.BI \-c " file" ", \-\-config " file
+Replacement NetCDF CF standard name conversion table (default
+.IR /usr/share/smartmet/formats/netcdf.conf ).
+.TP
+.BI \-C " file" ", \-\-configs " file
+Extra NetCDF name conversions; these take precedence over the standard
+conversion table.
+.TP
+.BI \-n " value" ", \-\-conventions " value
+Minimum NetCDF Conventions string to verify, or empty to disable
+checking (default
+.IR CF-1.0 ).
+.TP
+.B \-d ", " \-\-debug
+Enable debugging output.
+.TP
+.BI \-\-tdim " name"
+Name of the T-dimension parameter (default
+.IR time ).
+.TP
+.BI \-\-xdim " name"
+Name of the X-dimension parameter (default
+.IR west_east ).
+.TP
+.BI \-\-ydim " name"
+Name of the Y-dimension parameter (default
+.IR south_north ).
+.TP
+.BI \-\-zdim " name"
+Name of the Z-dimension parameter.
+.TP
+.B \-\-info
+Print information on the data dimensions and exit.
+.TP
+.B \-\-experimental
+Enable experimental features.
+.TP
+.BI \-i " file" ", \-\-infile " file
+Input NetCDF file.
+.TP
+.BI \-a " attrs" ", \-\-globalAttributes " attrs
+NetCDF global attributes given on the command line.
+.TP
+.B \-\-mmap
+Memory map the output file to save RAM.
+.TP
+.BI \-o " file" ", \-\-outfile " file
+Output querydata file.
+.TP
+.BI \-m " spec" ", \-\-parameter " spec
+Define a parameter conversion using the same format as the
+configuration file.
+.TP
+.BI \-p " number,name" ", \-\-producer " number,name
+Producer number and name.
+.TP
+.BI \-P " proj" ", \-\-projection " proj
+Final projection of the output data.
+.TP
+.BI \-\-producernumber " number"
+Producer number.
+.TP
+.BI \-\-producername " name"
+Producer name.
+.TP
+.B \-s ", " \-\-fixstaggered
+Modify staggered data to its base form.
+.TP
+.BI \-u " params" ", \-\-ignoreunitchangeparams " params
+Parameters to exclude from the unit-change pass.
+.TP
+.BI \-t " minutes" ", \-\-timeshift " minutes
+Additional time shift in minutes.
+.TP
+.BI \-T " value" ", \-\-tolerance " value
+Axis stepping tolerance.
+.TP
+.B \-U ", " \-\-autoids
+Generate ids automatically for unknown parameters, starting at 30000.
+.TP
+.B \-v ", " \-\-verbose
+Verbose mode.
+.TP
+.B \-V ", " \-\-version
+Display the version number.
+.TP
+.BI \-x " params" ", \-\-excludeparams " params
+Parameters to exclude.
+.TP
+.BI \-\-addparams " list"
+Add parameters by calculating them.
+.SH EXAMPLES
+Convert a WRF output file:
+.PP
+.RS 4
+wrftoqd \-i wrfout_d01.nc \-o wrf.sqd
+.RE
+.SH SEE ALSO
+.BR nctoqd (1),
+.BR nc2qd (1),
+.BR laps2qd (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

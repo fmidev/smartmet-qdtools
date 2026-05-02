@@ -1,0 +1,63 @@
+.TH QDINTERPOLATEAREA 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+qdinterpolatearea \- reproject querydata to a new grid or projection
+.SH SYNOPSIS
+.B qdinterpolatearea
+.RI [ options ]
+.I controlGridFile
+.B <
+.I inputData
+.B >
+.I outputData
+.SH DESCRIPTION
+.B qdinterpolatearea
+interpolates gridded querydata into a new grid. The target grid can be
+described either by a control grid file (whose projection and shape are
+copied) or directly with
+.B \-p
+and
+.BR \-s .
+.SH OPTIONS
+.TP
+.BI \-s " ColumnsxRows"
+Target grid size (default
+.IR 1x1 ).
+The size may also be expressed in kilometres or metres, e.g.\&
+.IR 10x10km .
+.TP
+.BI \-p " projection"
+Target projection string. When given, the control grid file argument
+is not required.
+.TP
+.BI \-i " inputfile"
+Input file instead of standard input.
+.TP
+.BI \-o " outputfile"
+Output file instead of standard output.
+.TP
+.BI \-t " threads"
+Maximum number of threads to use, or a percentage of all cores. The
+default is 4 threads.
+.SH EXAMPLES
+Project to a 10\(mu10 km Scandinavian stereographic grid:
+.PP
+.RS 4
+qdinterpolatearea \-p stereographic,20,90,60:6,51.3,49,70.2 \-s 10x10km \\
+.br
+\ \ \-i in.sqd \-o out.sqd
+.RE
+.PP
+Use the projection of an existing control grid:
+.PP
+.RS 4
+qdinterpolatearea myGrid.dat < in.sqd > out.sqd
+.RE
+.SH SEE ALSO
+.BR qdinterpolatetime (1),
+.BR qdproject (1),
+.BR qdgridcalc (1),
+.BR qdcrop (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

@@ -1,0 +1,75 @@
+.TH QDFILTER 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+qdfilter \- apply a sliding-window aggregator over querydata
+.SH SYNOPSIS
+.B qdfilter
+.RI [ options ]
+.I startoffset endoffset function querydata
+.SH DESCRIPTION
+.B qdfilter
+runs a sliding-window aggregator over the time dimension of the input
+querydata. For each output time step the value is computed from input
+samples in the offset window
+.RI [ startoffset , endoffset ]
+in minutes relative to the time step.
+.PP
+The recognised aggregator functions are
+.IR min ", " max ", " mean ", " meanabs ", " sum ", " change ", " median ", " maxmean ", and " sdev
+(sample standard deviation).
+.SH OPTIONS
+.TP
+.B \-Q
+Multifile mode \(em use all files in the directory.
+.TP
+.BI \-o " outfile"
+Output filename instead of standard output.
+.TP
+.BI \-p " param1,param2,..."
+Parameters to extract, comma-separated. Default is all parameters.
+.TP
+.BI \-l " level1,level2,..."
+Levels to extract, comma-separated. Default is all levels.
+.TP
+.B \-a
+Keep only the final time step in the data; the start offset is forced
+not to exceed the available data range. Useful for computing aggregates
+over the whole input.
+.TP
+.BI \-t " dt1,dt2,dt"
+Time interval to extract as offsets in local time from the origin time.
+.I dt1
+may be omitted (treated as zero); the optional
+.I dt
+sets the desired time step.
+.TP
+.BI \-T " dt1,dt2,dt"
+Same as
+.B \-t
+but in UTC.
+.TP
+.BI \-i " hour"
+Extract only the given local-time hour.
+.TP
+.BI \-I " hour"
+Extract only the given UTC hour.
+.SH EXAMPLES
+Compute the 06\(en18 UTC temperature maximum:
+.PP
+.RS 4
+qdfilter \-p Temperature \-I 18 \-720 0 max forecast.sqd > tmax.sqd
+.RE
+.PP
+Compute the 06\(en18 UTC precipitation sum:
+.PP
+.RS 4
+qdfilter \-p Precipitation1h \-I 18 \-660 0 sum forecast.sqd > rsum.sqd
+.RE
+.SH SEE ALSO
+.BR qdcrop (1),
+.BR qdinterpolatetime (1),
+.BR qdgridcalc (1),
+.BR qdscript (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

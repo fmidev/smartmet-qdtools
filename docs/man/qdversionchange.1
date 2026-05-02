@@ -1,0 +1,85 @@
+.TH QDVERSIONCHANGE 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+qdversionchange \- change the querydata format version and combined parameters
+.SH SYNOPSIS
+.B qdversionchange
+.RI [ options ]
+.RI [ qdVersion=7 " " keepCloudSymbol=0 ]
+.B <
+.I inputdata
+.B >
+.I outputData
+.SH DESCRIPTION
+.B qdversionchange
+re-encodes a querydata file in another format version, optionally
+constructing the combined parameters
+.IR TotalWind " and " WeatherAndCloudiness
+from their components. Various flags control which components are
+folded into the combined parameters.
+.SH OPTIONS
+.TP
+.BI \-i " inputfile"
+Specify the input filename. Enables memory-mapped input.
+.TP
+.BI \-t " 0|1"
+Build the
+.I TotalWind
+combined parameter (default 1).
+.TP
+.BI \-w " 0|1"
+Build the
+.I WeatherAndCloudiness
+combined parameter (default 1).
+.TP
+.B \-h
+Print the help message.
+.TP
+.BI \-g " parId"
+Add a wind gust parameter to TotalWind using the given parameter id.
+.TP
+.BI \-f " parId-list"
+Add precipitation form parameter values to Weather using the listed
+parameter ids.
+.TP
+.BI \-F " parId-list"
+Add fog parameter values to Weather using the listed parameter ids.
+.TP
+.BI \-P " parId-list"
+Add probability-of-thunder values to Weather using the listed
+parameter ids. Positive ids are removed from the result; negative ids
+are kept.
+.TP
+.B \-a
+Allow WeatherAndCloudiness to be created from the minimum
+.I N
+and one of
+.IR rr1h / rr3h / rr6h .
+.TP
+.BI \-m " count"
+Maximum number of worker threads (default: all).
+.TP
+.B \-p
+Add an accurate precipitation parameter and compute SnowFall per 1 h.
+.TP
+.B \-b
+Build a time bag instead of a time list when possible (required by the
+TAF editor).
+.TP
+.B \-N
+Convert observed
+.I N
+parameter from octas to percent (default: not).
+.SH EXAMPLES
+Convert to version 7 without rebuilding WeatherAndCloudiness:
+.PP
+.RS 4
+qdversionchange \-t 1 \-w 0 7 < input.sqd > output.sqd
+.RE
+.SH SEE ALSO
+.BR qdcrop (1),
+.BR qdcombine (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

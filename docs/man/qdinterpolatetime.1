@@ -1,0 +1,53 @@
+.TH QDINTERPOLATETIME 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+qdinterpolatetime \- resample querydata to a different time resolution
+.SH SYNOPSIS
+.B qdinterpolatetime
+.RI [ options ]
+.I timeResolutionInMinutes
+.RI [ startTimeResolutionInMinutes ]
+.RI [ maxSearchRangeInMinutes ]
+.B <
+.I infile
+.B >
+.I outfile
+.SH DESCRIPTION
+.B qdinterpolatetime
+resamples gridded querydata to the given time resolution. An optional
+starting resolution and maximum search range may be supplied as
+positional arguments after the target resolution.
+.SH OPTIONS
+.TP
+.BI \-i " infile"
+Read from the given file instead of standard input.
+.TP
+.BI \-o " outfile"
+Write to the given file instead of standard output.
+.PP
+The default for both
+.B \-i
+and
+.B \-o
+is
+.BR \- ,
+meaning standard input or standard output.
+.SH EXAMPLES
+Resample a forecast to 60-minute steps:
+.PP
+.RS 4
+qdinterpolatetime 60 < in.sqd > out.sqd
+.RE
+.PP
+Resample to 15-minute steps using a separate input file:
+.PP
+.RS 4
+qdinterpolatetime \-i in.sqd \-o out.sqd 15
+.RE
+.SH SEE ALSO
+.BR qdinterpolatearea (1),
+.BR qdfilter (1),
+.BR qdcrop (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

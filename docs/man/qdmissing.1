@@ -1,0 +1,63 @@
+.TH QDMISSING 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+qdmissing \- report missing values in querydata
+.SH SYNOPSIS
+.B qdmissing
+.RI [ options ]
+.I querydata
+.SH DESCRIPTION
+.B qdmissing
+prints how much of the given querydata is missing, expressed by default
+as a percentage. The output may be aggregated globally, per time step,
+or per station, and the program can also be used as a guard in scripts
+that should fail when too much data is missing.
+.SH OPTIONS
+.TP
+.B \-h
+Print the help message.
+.TP
+.B \-n
+Count NaN values instead of computing a missing-value percentage.
+.TP
+.B \-N
+Print the count instead of the percentage.
+.TP
+.B \-t
+Analyse all time steps separately.
+.TP
+.B \-w
+Analyse all stations separately.
+.TP
+.BI \-e " limit"
+Exit with a non-zero status when more than
+.I limit
+values are missing.
+.TP
+.BI \-T " zone"
+Time zone to use when printing time stamps.
+.TP
+.BI \-P " param1,param2,..."
+The parameters to inspect.
+.TP
+.B \-Z
+Suppress rows whose value is zero.
+.SH EXAMPLES
+Per-time-step report for temperature:
+.PP
+.RS 4
+qdmissing \-t \-P Temperature forecast.sqd
+.RE
+.PP
+Fail if more than 5% of values are missing:
+.PP
+.RS 4
+qdmissing \-e 5 forecast.sqd
+.RE
+.SH SEE ALSO
+.BR qdstat (1),
+.BR qdcheck (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

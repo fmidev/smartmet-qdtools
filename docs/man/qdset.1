@@ -1,0 +1,97 @@
+.TH QDSET 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+qdset \- modify metadata fields in querydata
+.SH SYNOPSIS
+.B qdset
+.RI [ options ]
+.I dataFile param
+.SH DESCRIPTION
+.B qdset
+modifies metadata in a querydata file in place. Most options affect a
+single parameter (selected with the
+.I param
+argument, given as a parameter id or name); options
+.B \-N
+and
+.B \-D
+change the producer for all parameters and do not require the
+.I param
+argument.
+.PP
+Default values for the metadata are the parameter's current values, so
+only changed fields need to be supplied.
+.SH OPTIONS
+.TP
+.BI \-d " paramId"
+New parameter id or name (see
+.BR qdinfo (1)
+.B \-l
+for the list of recognised names).
+.TP
+.BI \-n " description"
+New parameter description.
+.TP
+.BI \-N " name"
+New producer name. Applies to all parameters.
+.TP
+.BI \-D " id"
+New producer id. Applies to all parameters.
+.TP
+.BI \-l " value"
+New minimum value for the parameter.
+.TP
+.BI \-u " value"
+New maximum value for the parameter.
+.TP
+.BI \-i " 0\-5"
+New interpolation method (see
+.BR FmiInterpolationMethod ).
+.TP
+.BI \-t " 0\-8"
+New parameter type (see
+.BR FmiParamType ).
+.TP
+.BI \-s " value"
+New parameter scale.
+.TP
+.BI \-b " value"
+New parameter base.
+.TP
+.BI \-p " spec"
+New parameter precision string, e.g.\&
+.IR %0.1f .
+.TP
+.BI \-Z " value"
+New level value.
+.TP
+.BI \-L " value"
+New level type.
+.TP
+.BI \-T " time"
+New UTC origin time in ISO, SQL or timestamp format.
+.TP
+.BI \-w " stationId"
+New station id.
+.TP
+.BI \-W " stationName"
+New station name.
+.SH EXAMPLES
+Rename the description of the Temperature parameter:
+.PP
+.RS 4
+qdset \-n 'Temperature' forecast.sqd Temperature
+.RE
+.PP
+Change the producer for the whole file:
+.PP
+.RS 4
+qdset \-N ECMWF \-D 240 forecast.sqd
+.RE
+.SH SEE ALSO
+.BR qdinfo (1),
+.BR qdcrop (1),
+.BR qdscript (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

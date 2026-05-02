@@ -1,0 +1,66 @@
+.TH QDVIEW 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+qdview \- render the grid or station bounding box of querydata as PNG
+.SH SYNOPSIS
+.B qdview
+.RI [ options ]
+.RI [ querydata ]
+.RI [ pngfile ]
+.SH DESCRIPTION
+.B qdview
+draws the grid in a querydata file (or, for point data, the
+longitude/latitude bounding box covered by the stations) onto a PNG
+image. Coastline data from GSHHS is rendered behind the grid for
+context.
+.PP
+If neither width nor height is given, the height is computed from the
+default width. If only one of the two is given, the other is computed
+from the data projection so that the aspect ratio is preserved.
+.PP
+Available GSHHS resolutions are
+.I crude
+(25 km),
+.I low
+(5 km),
+.I intermediate
+(1 km),
+.I high
+(0.2 km), and
+.IR full .
+.SH OPTIONS
+.TP
+.BI \-x " width"
+Image width (default 400).
+.TP
+.BI \-y " height"
+Image height.
+.TP
+.BI \-m " degrees"
+Default margin around map data.
+.TP
+.BI \-r " char"
+GSHHS resolution character (default
+.IR crude ).
+.TP
+.BI \-s " pixels"
+Width of the square dot drawn at every grid point.
+.TP
+.BI \-S " pixels"
+Width of the square dot, but only at valid points.
+.TP
+.BI \-p " param"
+Parameter used to determine which points are valid (default: all).
+.SH EXAMPLES
+Render a grid with low-resolution coastlines:
+.PP
+.RS 4
+qdview \-x 600 \-r l forecast.sqd grid.png
+.RE
+.SH SEE ALSO
+.BR qdinfo (1),
+.BR qdcrop (1),
+.BR qdproject (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

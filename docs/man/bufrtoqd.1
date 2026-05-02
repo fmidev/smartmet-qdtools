@@ -1,0 +1,127 @@
+.TH BUFRTOQD 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+bufrtoqd \- convert BUFR observations to querydata
+.SH SYNOPSIS
+.B bufrtoqd
+.RI [ options ]
+.I infile/dir outfile
+.SH DESCRIPTION
+.B bufrtoqd
+reads one or more BUFR observation messages and writes the contents as
+querydata. The input may be a single BUFR file or a directory of BUFR
+files. Mapping from BUFR descriptors to querydata parameters is driven
+by a configuration file.
+.PP
+By default the conversion uses the BUFR descriptor code rather than the
+parameter name; this avoids ambiguity when several BUFR descriptors
+share a name (for instance code 010004 and 007004 are both named
+PRESSURE). The previous name-based behaviour can be restored with
+.BR \-\-usebufrname .
+.SH OPTIONS
+.TP
+.B \-h ", " \-\-help
+Print the help message.
+.TP
+.B \-V ", " \-\-version
+Display the version number.
+.TP
+.B \-v ", " \-\-verbose
+Verbose mode.
+.TP
+.B \-\-debug
+Debug mode.
+.TP
+.B \-\-subsets
+Decode all subsets, not just the first one.
+.TP
+.B \-\-insignificant
+Extract sounding levels with zero extended vertical significance (BUFR
+code 8042). This may inflate the output considerably for high-resolution
+soundings.
+.TP
+.BI \-\-roundtohours " hours"
+Round observation times to multiples of the given number of hours.
+.TP
+.BI \-c " file" ", \-\-config " file
+BUFR parameter configuration file (default
+.IR /usr/share/smartmet/formats/bufr.conf ).
+.TP
+.BI \-s " file" ", \-\-stations " file
+Stations CSV file (default
+.IR /usr/share/smartmet/stations.csv ).
+.TP
+.BI \-i " path" ", \-\-infile " path
+Input BUFR file or directory.
+.TP
+.BI \-o " file" ", \-\-outfile " file
+Output querydata file.
+.TP
+.BI \-m " number" ", \-\-message " number
+Extract only the given message number.
+.TP
+.BI \-C " name" ", \-\-category " name
+Extract only the given BUFR data category. Recognised names include
+.IR land ", " sea ", " sounding ", " synoptic ", " radar ", " upper\ air\ level ,
+and others.
+.TP
+.BI \-B " file" ", \-\-localtableB " file
+Local BUFR table B.
+.TP
+.BI \-D " file" ", \-\-localtableD " file
+Local BUFR table D.
+.TP
+.BI \-p " number,name" ", \-\-producer " number,name
+Producer number and name.
+.TP
+.BI \-\-producernumber " number"
+Producer number (default 0).
+.TP
+.BI \-\-producername " name"
+Producer name (default UNKNOWN).
+.TP
+.B \-a ", " \-\-autoproducer
+Guess the producer automatically.
+.TP
+.B \-\-usebufrname
+Use BUFR parameter name instead of code number for mapping.
+.TP
+.B \-I ", " \-\-Ident
+Load only AMDAR messages that carry an aircraft registration or other
+identification.
+.TP
+.BI \-r " spec" ", \-\-remap " spec
+Remap AMDAR BUFR message codes; format
+.IR name1,code1,code2,code3;name2,code1,... .
+.TP
+.BI \-N " count" ", \-\-minobservatios " count
+Minimum number of observations for an acceptable AMDAR (default 3).
+.TP
+.BI \-M " hours" ", \-\-maxdurationhours " hours
+Maximum AMDAR takeoff/landing phase duration in hours (default 2).
+.TP
+.B \-t ", " \-\-totalcloudoctas
+Disable octa-to-percentage conversion for TotalCloudCover.
+.TP
+.B \-f ", " \-\-forcepressurechangesign
+Set PressureChange sign to match PressureTendency value.
+.SH EXAMPLES
+Convert all BUFR files in a directory:
+.PP
+.RS 4
+bufrtoqd \-i /data/bufr \-o synop.sqd
+.RE
+.PP
+Extract only sounding category messages:
+.PP
+.RS 4
+bufrtoqd \-C sounding \-i /data/bufr \-o sounding.sqd
+.RE
+.SH SEE ALSO
+.BR synop2qd (1),
+.BR temp2qd (1),
+.BR radartoqd (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

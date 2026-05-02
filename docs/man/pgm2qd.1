@@ -1,0 +1,55 @@
+.TH PGM2QD 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+pgm2qd \- convert RADAR-formatted PGM files to querydata
+.SH SYNOPSIS
+.B pgm2qd
+.RI [ options ]
+.I inputdata outputdata
+.SH DESCRIPTION
+.B pgm2qd
+converts RADAR-formatted PGM image files into querydata. To assemble a
+3D volume from many slices, see
+.BR combinepgms2qd (1).
+.SH OPTIONS
+.TP
+.B \-h
+Print the help message.
+.TP
+.B \-v
+Verbose mode.
+.TP
+.B \-f
+Force rewrite even if the output already exists.
+.TP
+.BI \-e " ellipsoid"
+Reference ellipsoid (default
+.IR intl ).
+Run
+.B cs2cs \-le
+for a list of recognised ellipsoids.
+.TP
+.BI \-t " dir"
+Temporary work directory (default
+.IR /tmp ).
+.TP
+.BI \-p " id,name"
+Producer id and name (default
+.IR 1014,NRD ).
+.TP
+.BI \-l " minutes"
+Age limit for input files in minutes (default: none).
+.SH EXAMPLES
+Convert a single radar PGM into querydata:
+.PP
+.RS 4
+pgm2qd radar.pgm radar.sqd
+.RE
+.SH SEE ALSO
+.BR combinepgms2qd (1),
+.BR radartoqd (1),
+.BR h5toqd (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

@@ -1,0 +1,36 @@
+.TH FLASH2QD 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+flash2qd \- convert lightning flash observations to querydata
+.SH SYNOPSIS
+.B flash2qd
+.RB [ \-s
+.IR lineCount ]
+.RB [ \-t ]
+.I flashData
+.B >
+.I flash.sqd
+.SH DESCRIPTION
+.B flash2qd
+reads an ASCII lightning flash data file and writes the observations as
+querydata to standard output.
+.SH OPTIONS
+.TP
+.BI \-s " lineCount"
+Skip the given number of lines from the start of the input (default 0).
+.TP
+.B \-t
+Convert input timestamps from local time to UTC. By default no
+conversion is applied.
+.SH EXAMPLES
+Convert a flash data file, skipping a header line:
+.PP
+.RS 4
+flash2qd \-s 1 myflashdata.txt > flash.sqd
+.RE
+.SH SEE ALSO
+.BR qdinfo (1),
+.BR qdpoint (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

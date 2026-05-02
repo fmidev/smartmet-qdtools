@@ -1,0 +1,63 @@
+.TH QDSOUNDING 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+qdsounding \- extract atmospheric soundings from querydata
+.SH SYNOPSIS
+.B qdsounding
+.RI [ options ]
+.I querydata
+.SH DESCRIPTION
+.B qdsounding
+extracts atmospheric soundings from querydata. For point data the
+default is to print soundings for every station; for grid data, target
+locations must be specified explicitly.
+.PP
+Option
+.B \-P
+is required so that scripts cannot rely on a fixed parameter ordering
+inside the querydata.
+.SH OPTIONS
+.TP
+.B \-h
+Print the help message.
+.TP
+.BI \-P " param1,param2,..."
+The desired parameters.
+.TP
+.BI \-w " wmo1,wmo2,..."
+WMO station numbers.
+.TP
+.BI \-p " loc1,loc2,..."
+Location names. Coordinate pairs
+.IR lon1,lat1,lon2,lat2,...
+are also accepted.
+.TP
+.BI \-x " lon"
+Longitude.
+.TP
+.BI \-y " lat"
+Latitude.
+.TP
+.BI \-t " zone"
+Time zone (default
+.IR Europe/Helsinki ).
+.TP
+.BI \-c " file"
+Coordinate file.
+.TP
+.B \-z
+Print level value after the level index.
+.SH EXAMPLES
+Print a temperature/dew-point sounding for a single station:
+.PP
+.RS 4
+qdsounding \-P Temperature,DewPoint \-w 02963 sounding.sqd
+.RE
+.SH SEE ALSO
+.BR qdsoundingindex (1),
+.BR temp2qd (1),
+.BR qdpoint (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

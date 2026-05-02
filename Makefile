@@ -102,6 +102,8 @@ clean:
 format:
 	clang-format -i -style=file include/*.h source/*.cpp main/*.cpp
 
+mandir ?= $(PREFIX)/share/man
+
 install:
 	mkdir -p $(bindir)
 	@list='$(MAINPROGS)'; \
@@ -117,6 +119,13 @@ install:
 	$(INSTALL_DATA) cnf/bufr.conf $(datadir)/smartmet/formats/
 	$(INSTALL_DATA) cnf/stations.csv $(datadir)/smartmet/
 	$(INSTALL_DATA) cnf/parameters.csv $(datadir)/smartmet/
+	mkdir -p $(mandir)/man1
+	@for page in docs/man/*.1; do \
+	  base=`basename $$page`; \
+	  echo $(INSTALL_DATA) $$page $(mandir)/man1/$$base; \
+	  $(INSTALL_DATA) $$page $(mandir)/man1/$$base; \
+	  gzip -nf $(mandir)/man1/$$base; \
+	done
 
 test:
 	cd test && make test

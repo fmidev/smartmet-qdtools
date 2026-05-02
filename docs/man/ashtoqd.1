@@ -1,0 +1,66 @@
+.TH ASHTOQD 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+ashtoqd \- convert MetOffice volcanic ash advisories to querydata
+.SH SYNOPSIS
+.B ashtoqd
+.RI [ options ]
+.I indir outfile
+.SH DESCRIPTION
+.B ashtoqd
+converts MetOffice CSV volcanic ash advisories into querydata. Ash
+concentrations and ash cloud boundaries cannot be combined into a single
+output because their model run times differ; only one of them is
+extracted per invocation.
+.SH OPTIONS
+.TP
+.B \-h ", " \-\-help
+Print the help message.
+.TP
+.B \-V ", " \-\-version
+Display the version number.
+.TP
+.B \-v ", " \-\-verbose
+Verbose mode.
+.TP
+.BI \-t " time" ", \-\-time " time
+Model run time.
+.TP
+.BI \-P " projection" ", \-\-projection " projection
+Output projection.
+.TP
+.BI \-i " indir" ", \-\-indir " indir
+Input CSV directory.
+.TP
+.BI \-o " outfile" ", \-\-outfile " outfile
+Output querydata file.
+.TP
+.B \-b ", " \-\-boundary
+Extract boundary information instead of concentrations.
+.TP
+.BI \-p " number,name" ", \-\-producer " number,name
+Producer number and name.
+.TP
+.BI \-\-producernumber " number"
+Producer number.
+.TP
+.BI \-\-producername " name"
+Producer name.
+.SH EXAMPLES
+Convert concentrations from a directory of CSV files:
+.PP
+.RS 4
+ashtoqd \-i /data/ash/csv \-o ash.sqd
+.RE
+.PP
+Extract boundary polygons instead:
+.PP
+.RS 4
+ashtoqd \-b \-i /data/ash/csv \-o ash_boundary.sqd
+.RE
+.SH SEE ALSO
+.BR qdinfo (1),
+.BR qdcrop (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

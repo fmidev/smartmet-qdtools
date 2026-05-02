@@ -1,0 +1,89 @@
+.TH QDTOGRIB 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+qdtogrib \- convert querydata to GRIB
+.SH SYNOPSIS
+.B qdtogrib
+.RI [ options ]
+.I infile outfile
+.SH DESCRIPTION
+.B qdtogrib
+converts querydata to GRIB format. By default GRIB2 is produced; pass
+.B \-1
+for GRIB1. The mapping between querydata parameters and GRIB codes is
+read from a configuration file.
+.SH OPTIONS
+.TP
+.B \-h ", " \-\-help
+Print the help message.
+.TP
+.B \-V ", " \-\-version
+Display the version number.
+.TP
+.B \-v ", " \-\-verbose
+Verbose mode.
+.TP
+.B \-D ", " \-\-dump
+Dump the resulting GRIB contents using the eccodes dumper.
+.TP
+.BI \-i " file" ", \-\-infile " file
+Input querydata.
+.TP
+.BI \-o " file" ", \-\-outfile " file
+Output GRIB file.
+.TP
+.B \-1 ", " \-\-grib1
+Output GRIB1.
+.TP
+.B \-2 ", " \-\-grib2
+Output GRIB2 (the default).
+.TP
+.BI \-p " method" ", \-\-packing " method
+Packing method, e.g.\&
+.IR grid_simple ", " grid_ieee ", " grid_second_order ", " grid_jpeg .
+.TP
+.BI \-C " centre" ", \-\-centre " centre
+Originating centre.
+.TP
+.BI \-S " subcentre" ", \-\-subcentre " subcentre
+Subcentre (default 0).
+.TP
+.B \-L ", " \-\-list-centres
+List the centres known to the tool.
+.TP
+.B \-d ", " \-\-delete
+Ignore parameters that are not listed in the configuration.
+.TP
+.B \-I ", " \-\-ignore-origintime
+Use the first valid time as the forecast time, instead of the origin
+time.
+.TP
+.B \-s ", " \-\-split
+Split individual time steps into separate output messages.
+.TP
+.BI \-l " level" ", \-\-level " level
+Extract a specific level only.
+.TP
+.BI \-c " file" ", \-\-config " file
+Configuration file with conversion information (default
+.IR /usr/share/smartmet/formats/grib.conf ).
+.SH EXAMPLES
+Convert a querydata file to GRIB2:
+.PP
+.RS 4
+qdtogrib \-i forecast.sqd \-o forecast.grib2
+.RE
+.PP
+Produce a GRIB1 with JPEG packing:
+.PP
+.RS 4
+qdtogrib \-1 \-p grid_jpeg \-i forecast.sqd \-o forecast.grib
+.RE
+.SH SEE ALSO
+.BR gribtoqd (1),
+.BR grib2toqd (1),
+.BR grib2tojpg (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

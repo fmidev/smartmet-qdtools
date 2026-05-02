@@ -1,0 +1,68 @@
+.TH QDPROJECT 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+qdproject \- convert between map and geographic coordinates
+.SH SYNOPSIS
+.B qdproject
+.RI [ options ]
+.I "x1,y1 x2,y2 x3,y3 ..."
+.SH DESCRIPTION
+.B qdproject
+converts coordinates between geographic (longitude/latitude) and
+projected (pixel or world) representations. The projection can be
+described inline with
+.BR \-d ,
+read from a shape2ps-style configuration file with
+.BR \-c ,
+or taken from a querydata file with
+.BR \-q .
+.PP
+If no coordinates are given on the command line, whitespace-separated
+coordinate pairs are read from standard input.
+.SH OPTIONS
+.TP
+.B \-h
+Print the help message.
+.TP
+.B \-v
+Verbose mode \(em the original coordinates are also printed.
+.TP
+.BI \-d " desc"
+Projection description.
+.TP
+.BI \-c " conf"
+Configuration file containing the projection description.
+.TP
+.BI \-q " querydata"
+Querydata in the desired projection.
+.TP
+.B \-l
+Convert lon/lat pairs to pixel coordinates.
+.TP
+.B \-L
+Convert lon/lat pairs to world coordinates.
+.TP
+.B \-i
+Convert pixel coordinates to lon/lat.
+.TP
+.B \-I
+Convert world coordinates to lon/lat.
+.SH EXAMPLES
+Convert a longitude/latitude pair to world coordinates:
+.PP
+.RS 4
+qdproject \-d stereographic,20:6,51.3,49,70.2:600,\-1 \-L 25,60
+.RE
+.PP
+Use a querydata file's projection:
+.PP
+.RS 4
+qdproject \-q referencedata.sqd \-L 25,60
+.RE
+.SH SEE ALSO
+.BR qdgridcalc (1),
+.BR qdinterpolatearea (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

@@ -1,0 +1,30 @@
+.TH LAPS2QD 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+laps2qd \- convert LAPS NetCDF analyses to querydata
+.SH SYNOPSIS
+.B laps2qd
+.RI [ options ]
+.I nc_in qd_out
+.SH DESCRIPTION
+.B laps2qd
+reads a LAPS-style NetCDF analysis file and writes the contents as
+querydata.
+.SH OPTIONS
+.TP
+.BI \-p " id,name"
+Producer id and name (default
+.IR 1201,ncprod ).
+.SH EXAMPLES
+Convert a LAPS NetCDF analysis to querydata:
+.PP
+.RS 4
+laps2qd laps.nc laps.sqd
+.RE
+.SH SEE ALSO
+.BR nc2qd (1),
+.BR nctoqd (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

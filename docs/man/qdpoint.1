@@ -1,0 +1,123 @@
+.TH QDPOINT 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+qdpoint \- extract a time series for one or more locations from querydata
+.SH SYNOPSIS
+.B qdpoint
+.RI [ options ]
+.I querydata
+.SH DESCRIPTION
+.B qdpoint
+extracts a time series of parameter values for the given location or
+locations from gridded or point querydata. It is commonly used in
+production for forecast graphs, meteograms and tabular reports.
+.PP
+Locations may be given by name, longitude/latitude or WMO station
+number. Named locations are looked up in the coordinate file, by
+default
+.IR /smartmet/share/coordinates/default.txt .
+.PP
+A small number of meta parameters can be requested in addition to the
+parameters in the querydata, including
+.IR MetaFeelsLike ", " MetaWindChill ", " MetaSummerSimmer ", " MetaThetaE ", " MetaElevationAngle ", " MetaSurfaceRadiation ", " MetaRainProbability ", " MetaSnowProb ", " MetaN ", " MetaNN ", " MetaIsDark ", " MetaDST ", " MetaNorth ,
+and
+.IR MetaMoonIlluminatedFraction .
+.SH OPTIONS
+.TP
+.B \-h ", " \-\-help
+Print the help message.
+.TP
+.B \-v ", " \-\-verbose
+Verbose mode.
+.TP
+.B \-V ", " \-\-version
+Display the version number.
+.TP
+.BI \-q " file" ", \-\-querydata " file
+Input querydata. The default is taken from
+.IR qdpoint::querydata_file .
+.TP
+.B \-Q ", " \-\-multidata
+Use all files from the input directories.
+.TP
+.BI \-c " file" ", \-\-coordinatefile " file
+Coordinate (location) configuration file.
+.TP
+.BI \-z " file" ", \-\-timezonefile " file
+Time-zone configuration file.
+.TP
+.BI \-t " zone" ", \-\-timezone " zone
+Time zone for the output time stamps.
+.TP
+.BI \-P " names" ", \-\-params " names
+Parameter name or number list.
+.TP
+.BI \-p " names" ", \-\-places " names
+Place name list.
+.TP
+.BI \-x " lon" ", \-\-longitude " lon
+Longitude of an explicit location.
+.TP
+.BI \-y " lat" ", \-\-latitude " lat
+Latitude of an explicit location.
+.TP
+.BI \-n " rows" ", \-\-rows " rows
+Number of data rows for each location (default \-1, all rows).
+.TP
+.BI \-w " wmo" ", \-\-stations " wmo
+WMO station numbers. Plain
+.B \-w
+or
+.B \-w all
+selects all stations.
+.TP
+.B \-s ", " \-\-list
+Print station metadata in addition to the data.
+.TP
+.BI \-l " file" ", \-\-locations " file
+Read locations from the given file.
+.TP
+.B \-f ", " \-\-force
+Force printing of empty rows.
+.TP
+.BI \-d " km" ", \-\-maxdist " km
+Maximum search distance for stations (default 100 km).
+.TP
+.BI \-N " count" ", \-\-count " count
+Maximum number of nearby stations to include (default 1).
+.TP
+.B \-C ", " \-\-validate
+Validate rows.
+.TP
+.BI \-m " string" ", \-\-missingvalue " string
+String to print for missing values (default
+.IR \- ).
+.TP
+.BI \-i " minutes" ", \-\-maxgap " minutes
+Maximum time gap to fill with interpolation, in minutes.
+.TP
+.B \-F ", " \-\-future
+Print only times in the future.
+.TP
+.BI \-u " value" ", \-\-uid " value
+Unused legacy option.
+.SH EXAMPLES
+Print temperature and wind for two named locations:
+.PP
+.RS 4
+qdpoint \-q forecast.sqd \-p Helsinki,Tampere \-P Temperature,WindSpeedMS
+.RE
+.PP
+Print all parameters at a coordinate:
+.PP
+.RS 4
+qdpoint \-q forecast.sqd \-x 24.94 \-y 60.17
+.RE
+.SH SEE ALSO
+.BR qdarea (1),
+.BR qdextract (1),
+.BR qd2csv (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

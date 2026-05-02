@@ -1,0 +1,158 @@
+.TH QDCROP 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+qdcrop \- extract a subset of querydata
+.SH SYNOPSIS
+.B qdcrop
+.RI [ options ]
+.RI [ inputquerydata ]
+.RI [ outputquerydata ]
+.SH DESCRIPTION
+.B qdcrop
+extracts a subset of the original gridded querydata: a subgrid, a
+subset of parameters and levels, a subset of times, or a combination of
+these. It is commonly used in production routines to reduce the work
+required by later processing steps.
+.PP
+If the output filename is omitted or is
+.RB \(lq \- \(rq,
+the result is written to standard output.
+.SH OPTIONS
+.SS Input
+.TP
+.B \-V
+Preserve the querydata version number of the input.
+.TP
+.B \-R
+Read all files in the input directory.
+.SS Spatial selection
+.TP
+.BI \-g " WxH+X+Y"
+Subgrid in ImageMagick geometry style. For example,
+.I 100x200+10+20
+extracts a 100\(mu200 grid starting from grid coordinates 10,20.
+.TP
+.BI \-G " lon1,lat1,lon2,lat2"
+Minimal subgrid to crop, defined by the bottom-left and top-right
+longitude and latitude.
+.TP
+.BI \-d " XxY"
+Subgrid stepsize. For example,
+.I 2x2
+extracts every second grid point. Default is
+.IR 1x1 .
+.TP
+.BI \-P " projection"
+Interpolate the cropped data to a new projection. The string syntax
+matches
+.BR qdinterpolatearea (1),
+e.g.\&
+.IR latlon:x1,y1,x2,y2:20x20km .
+.SS Parameters
+.TP
+.BI \-p " p1,p2,..."
+Parameters to extract, as a comma-separated list of names or numbers
+(e.g.\&
+.I Temperature,Precipitation1h
+or
+.IR 4,353 ).
+By default, all parameters are extracted.
+.TP
+.BI \-r " p1,p2,..."
+Parameters to remove.
+.TP
+.BI \-a " p1,p2,..."
+Parameters to add with missing values, unless already present.
+.TP
+.BI \-A " p1,p2,..."
+Parameters to copy from the origin time to all time steps. Useful for
+propagating topography and other static fields.
+.TP
+.BI \-n " old1,id1,name1,..."
+Rename parameters. The argument list must contain three elements per
+rename task: the old parameter (number or name), the new id, and the
+new name.
+.SS Levels
+.TP
+.BI \-l " l1,l2,..."
+Levels to extract, as a comma-separated list of level numbers. By
+default, all levels are extracted.
+.SS Time selection
+.TP
+.BI \-S " YYYYMMDDHHMI,..."
+Specific time stamps to extract, in UTC.
+.TP
+.BI \-t " dt1,dt2,dt"
+Time interval as offsets from the origin time, in local time. For
+example,
+.I 24,48
+extracts times between +24 and +48 hours.
+.I dt1
+may be omitted (then assumed zero); the optional
+.I dt
+sets the desired time step.
+.TP
+.BI \-T " dt1,dt2,dt"
+Same as
+.B \-t
+but interpreted in UTC.
+.TP
+.BI \-z " YYYYMMDDHHMI"
+Local reference time to use instead of the origin time.
+.TP
+.BI \-Z " YYYYMMDDHHMI"
+UTC reference time to use instead of the origin time.
+.TP
+.BI \-i " hour"
+Extract a specific hour in local time.
+.TP
+.BI \-I " hour"
+Extract a specific hour in UTC.
+.TP
+.BI \-M " minute"
+Extract a specific minute (UTC).
+.SS Stations (point data)
+.TP
+.BI \-w " wmo1,wmo2-wmo3,..."
+Stations to keep, identified by WMO numbers or ranges.
+.TP
+.BI \-W " wmo1,wmo2-wmo3,..."
+Stations to remove, identified by WMO numbers or ranges.
+.SS Other
+.TP
+.BI \-m " limit\fR|\fIparam,limit"
+Maximum allowed amount of missing values for a time step to be
+included. May be limited to a single parameter.
+.TP
+.BI \-N " name"
+Set a new producer name.
+.TP
+.BI \-D " number"
+Set a new producer number.
+.SH EXAMPLES
+Extract a 200\(mu200 subgrid:
+.PP
+.RS 4
+qdcrop \-g 200x200+0+0 in.sqd out.sqd
+.RE
+.PP
+Crop to a lat/lon bounding box and reduce parameters:
+.PP
+.RS 4
+qdcrop \-G 18,59,32,71 \-p Temperature,Pressure in.sqd out.sqd
+.RE
+.PP
+Extract +24..+48h from origin time, every 3 hours:
+.PP
+.RS 4
+qdcrop \-T 24,48,3 in.sqd out.sqd
+.RE
+.SH SEE ALSO
+.BR qdcombine (1),
+.BR qdinfo (1),
+.BR qdinterpolatearea (1),
+.BR qdinterpolatetime (1),
+.BR qdproject (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

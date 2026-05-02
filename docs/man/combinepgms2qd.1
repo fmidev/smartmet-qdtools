@@ -1,0 +1,40 @@
+.TH COMBINEPGMS2QD 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+combinepgms2qd \- combine RADAR PGM slices into a 3D querydata file
+.SH SYNOPSIS
+.B combinepgms2qd
+.RI [ options ]
+.I inputfilepattern qdfileout
+.SH DESCRIPTION
+.B combinepgms2qd
+converts several RADAR-formatted PGM image files into a single
+querydata file. The intent is to assemble individual radar slices into a
+three-dimensional querydata volume.
+.SH OPTIONS
+.TP
+.B \-h
+Print the help message.
+.TP
+.B \-v
+Verbose mode.
+.TP
+.BI \-p " id,name"
+Set producer id and name (default
+.IR 1014,NRD ).
+.TP
+.BI \-t " count"
+Number of time steps in the result (default 0, meaning all available).
+.SH EXAMPLES
+Combine all PGM slices in a directory:
+.PP
+.RS 4
+combinepgms2qd '/data/radar/*.pgm' radar3d.sqd
+.RE
+.SH SEE ALSO
+.BR pgm2qd (1),
+.BR radartoqd (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

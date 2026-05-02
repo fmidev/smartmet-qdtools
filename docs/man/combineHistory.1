@@ -1,0 +1,79 @@
+.TH COMBINEHISTORY 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+combineHistory \- combine querydata files from one or more history directories
+.SH SYNOPSIS
+.B combineHistory
+.RI [ options ]
+.I directory
+.RI [ directory2 " ...] > " output
+.br
+.B combineHistory
+.RI [ options ]
+.B \-O
+.I outfile directory
+.RI [ directory2 " ...]"
+.SH DESCRIPTION
+.B combineHistory
+combines querydata files from one or more history directories into a
+single output. Files older than the
+.B \-p
+limit or further into the future than
+.B \-f
+are discarded. The result is written to standard output, or to a file
+when
+.B \-O
+is used.
+.SH OPTIONS
+.TP
+.BI \-p " hours"
+Maximum age into the past (default 48).
+.TP
+.BI \-f " hours"
+Maximum age into the future (default 8).
+.TP
+.BI \-S " timestamp"
+Reference time to use instead of the wall clock.
+.TP
+.B \-v
+Verbose mode.
+.TP
+.B \-o
+Require all input files to share the same origin time.
+.TP
+.BI \-O " filename"
+Memory-mapped output file.
+.TP
+.B \-r
+Pick the oldest origin time instead of the latest.
+.TP
+.B \-t
+Try to build a time bag instead of a time list.
+.TP
+.B \-1
+Take only the latest file from each directory.
+.TP
+.BI \-N " name"
+Set a new producer name.
+.TP
+.BI \-D " id"
+Set a new producer id.
+.SH EXAMPLES
+Combine the last 24 hours from a history directory:
+.PP
+.RS 4
+combineHistory \-p 24 /data/forecast/history > combined.sqd
+.RE
+.PP
+Memory-mapped output and only latest file per directory:
+.PP
+.RS 4
+combineHistory \-1 \-O combined.sqd /data/dir1 /data/dir2
+.RE
+.SH SEE ALSO
+.BR qdcombine (1),
+.BR qdcrop (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

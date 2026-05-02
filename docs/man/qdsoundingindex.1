@@ -1,0 +1,34 @@
+.TH QDSOUNDINGINDEX 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+qdsoundingindex \- compute sounding-derived stability indices
+.SH SYNOPSIS
+.B qdsoundingindex
+.RI [ options ]
+.I qdin qdout
+.SH DESCRIPTION
+.B qdsoundingindex
+reads sounding querydata and writes a new querydata file containing
+derived stability and convective indices, including LCL, LFC and EL
+levels and heights, and CAPE / CIN computed from the surface parcel,
+the 500\ m mixed-layer parcel, and the most unstable parcel.
+.SH OPTIONS
+.TP
+.BI \-n " name"
+Producer name (defaults to the producer of the input).
+.TP
+.BI \-t " count"
+Number of worker threads to use (default: all available cores).
+.SH EXAMPLES
+Compute stability indices for a sounding file:
+.PP
+.RS 4
+qdsoundingindex sounding.sqd indices.sqd
+.RE
+.SH SEE ALSO
+.BR qdsounding (1),
+.BR temp2qd (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

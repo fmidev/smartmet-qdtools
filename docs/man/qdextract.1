@@ -1,0 +1,72 @@
+.TH QDEXTRACT 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+qdextract \- extract point data from gridded or point querydata
+.SH SYNOPSIS
+.B qdextract
+.RI [ options ]
+.I locations
+.RI [ inputdata
+.RI [ outputdata ]]
+.SH DESCRIPTION
+.B qdextract
+reads a list of location descriptions from a file and extracts the
+corresponding point time series from gridded or point querydata into a
+new querydata file.
+.PP
+Input and output may be specified positionally or with
+.B \-i
+and
+.BR \-o ;
+using
+.B \-
+as a filename means standard input or standard output. Specifying a
+directory or filename for the output enables memory-mapped writes.
+.PP
+Location files may contain C++-style comments. After comment removal
+the file must begin with a number identifying the format:
+.IP \(bu 4
+1: a NFmiLocationBag C++ object follows.
+.IP \(bu 4
+2: a row-based location list with the rows
+.IR id ", unused, " name ", " "lon lat" .
+.IP \(bu 4
+3: a free-form list with rows
+.IR "id name lon lat" .
+Format 3 is recommended for clarity.
+.SH OPTIONS
+.TP
+.B \-h ", " \-\-help
+Print the help message.
+.TP
+.B \-V ", " \-\-version
+Display the version number.
+.TP
+.BI \-i " file" ", \-\-infile " file
+Input querydata.
+.TP
+.BI \-o " file" ", \-\-outfile " file
+Output querydata.
+.TP
+.BI \-l " file" ", \-\-locations " file
+Location descriptions file.
+.SH EXAMPLES
+Extract a set of stations from gridded forecast data:
+.PP
+.RS 4
+qdextract stations.txt forecast.sqd points.sqd
+.RE
+.PP
+Read input from stdin and write to stdout:
+.PP
+.RS 4
+qdextract stations.txt < forecast.sqd > points.sqd
+.RE
+.SH SEE ALSO
+.BR qdpoint (1),
+.BR qdarea (1),
+.BR qdcrop (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

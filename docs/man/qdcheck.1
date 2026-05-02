@@ -1,0 +1,46 @@
+.TH QDCHECK 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+qdcheck \- check querydata for outliers using a configuration file
+.SH SYNOPSIS
+.B qdcheck
+.RI [ options ]
+.I configfile infile outfile
+.SH DESCRIPTION
+.B qdcheck
+inspects the input querydata for outliers using rules from the given
+configuration file and writes a report describing the issues that were
+found.
+.SH OPTIONS
+.TP
+.B \-h ", " \-\-help
+Print the help message.
+.TP
+.B \-V ", " \-\-version
+Display the version number.
+.TP
+.B \-\-check-dewpoint-difference
+Enable the check that requires temperature to be at least the dew
+point.
+.TP
+.BI \-\-config " file"
+Configuration file describing the checks to apply.
+.TP
+.BI \-\-infile " file"
+Input querydata.
+.TP
+.BI \-\-outfile " file"
+Output report filename.
+.SH EXAMPLES
+Run the standard checks against a forecast file:
+.PP
+.RS 4
+qdcheck checks.conf forecast.sqd report.txt
+.RE
+.SH SEE ALSO
+.BR qdstat (1),
+.BR qdmissing (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

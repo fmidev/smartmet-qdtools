@@ -1,0 +1,57 @@
+.TH QDDIFF 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+qddiff \- extract the differences between two querydata files
+.SH SYNOPSIS
+.B qddiff
+.RI [ options ]
+.I inputfile1 inputfile2 outputfile
+.br
+.B qddiff
+.RI [ options ]
+.I inputdir outputfile
+.SH DESCRIPTION
+.B qddiff
+writes a querydata file containing the differences between two inputs.
+The second form is equivalent to the first with the second-newest file
+in
+.I inputdir
+substituted for
+.I inputfile1
+and the newest file substituted for
+.IR inputfile2 .
+.PP
+For numerical differences between fields, see
+.BR qddifference (1).
+.SH OPTIONS
+.TP
+.B \-h
+Print the help message.
+.TP
+.B \-t
+Extract only new time steps.
+.TP
+.B \-p
+Extract only common times whose parameter values changed.
+.TP
+.B \-v
+Verbose mode.
+.TP
+.B \-V
+Very verbose mode; prints an analysis of the differences.
+.TP
+.B \-d
+Debug mode (implies verbose).
+.SH EXAMPLES
+Diff the two newest files in a forecast history directory:
+.PP
+.RS 4
+qddiff /data/forecast/history changes.sqd
+.RE
+.SH SEE ALSO
+.BR qddifference (1),
+.BR qdcombine (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

@@ -1,0 +1,37 @@
+.TH GRIB2TOJPG 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+grib2tojpg \- render GRIB messages as JPEG images
+.SH SYNOPSIS
+.B grib2tojpg
+.RI [ options ]
+.I inputgribfile
+.SH DESCRIPTION
+.B grib2tojpg
+renders the messages contained in a GRIB file as JPEG images, one image
+per message. The resulting filenames are built from the timestamp and a
+caller-specified prefix.
+.SH OPTIONS
+.TP
+.BI \-O " prefix"
+Prefix for the output filename (path, prefix or both).
+.TP
+.BI \-T " pattern"
+.BR strftime (3)
+pattern used for the timestamp portion of the output filename.
+.TP
+.B \-I
+Do not invert the luminance channel.
+.SH EXAMPLES
+Render a GRIB file to JPEGs in the current directory:
+.PP
+.RS 4
+grib2tojpg \-O radar_ \-T %Y%m%d%H%M radar.grib
+.RE
+.SH SEE ALSO
+.BR gribtoqd (1),
+.BR grib2toqd (1),
+.BR qdtogrib (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

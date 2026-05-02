@@ -1,0 +1,55 @@
+.TH QD2CSV 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+qd2csv \- print point querydata as CSV
+.SH SYNOPSIS
+.B qd2csv
+.RB [ \-latlon ]
+.I querydata
+.SH DESCRIPTION
+.B qd2csv
+reads point (station) querydata and prints all observations as
+comma-separated values on standard output. Times are printed in UTC.
+.PP
+The output contains one row per (station, time) pair, with one column
+per non-empty parameter. Columns containing only missing values are
+omitted. Missing values within retained columns are written as
+.BR NA .
+.PP
+Column names are built from the parameter name and, for non-surface
+data, a level suffix:
+.RS 4
+_P\fIvalue\fR for pressure levels,
+.br
+_M\fIvalue\fR for mean-sea-level data,
+.br
+_A\fIvalue\fR for altitude,
+.br
+_H\fIvalue\fR for height,
+.br
+_L\fIvalue\fR for hybrid (model) levels.
+.RE
+.SH OPTIONS
+.TP
+.B \-latlon
+Include station latitude and longitude as the second and third columns
+of every row.
+.SH EXAMPLES
+Convert a station file to CSV:
+.PP
+.RS 4
+qd2csv stations.sqd > stations.csv
+.RE
+.PP
+Include coordinates:
+.PP
+.RS 4
+qd2csv \-latlon stations.sqd > stations.csv
+.RE
+.SH SEE ALSO
+.BR csv2qd (1),
+.BR qdpoint (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

@@ -1,0 +1,81 @@
+.TH QDSTAT 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+qdstat \- compute statistics on querydata values
+.SH SYNOPSIS
+.B qdstat
+.RI [ options ]
+.I querydata
+.br
+.B qdstat \-i
+.I querydata
+.RI [ options ]
+.br
+.B qdstat
+.RI [ options ] " <"
+.I querydata
+.SH DESCRIPTION
+.B qdstat
+computes simple summary statistics of values in querydata. The output
+can be aggregated globally or broken down by time, level, station and
+parameter, and can show either counts or percentages or a histogram.
+.SH OPTIONS
+.TP
+.B \-h ", " \-\-help
+Print the help message.
+.TP
+.B \-V ", " \-\-version
+Display the version number.
+.TP
+.BI \-i " file" ", \-\-infile " file
+Input querydata.
+.TP
+.B \-T ", " \-\-alltimes
+Compute over all times.
+.TP
+.B \-W ", " \-\-allstations
+Compute over all stations.
+.TP
+.B \-Z ", " \-\-allevels
+Compute over all levels.
+.TP
+.B \-r ", " \-\-percentages
+Print percentages instead of counts.
+.TP
+.B \-d ", " \-\-distribution
+Print the distribution of values.
+.TP
+.BI \-I " value" ", \-\-ignore " value
+Ignore the given value when computing statistics.
+.TP
+.BI \-b " count" ", \-\-bins " count
+Maximum number of bins in the distribution.
+.TP
+.BI \-B " width" ", \-\-barsize " width
+Width of the distribution bars.
+.TP
+.BI \-t " spec" ", \-\-times " spec
+Times to process.
+.TP
+.BI \-p " names" ", \-\-params " names
+Parameters to process.
+.TP
+.BI \-w " ids" ", \-\-stations " ids
+Stations to process.
+.TP
+.BI \-z " levels" ", \-\-levels " levels
+Levels to process.
+.SH EXAMPLES
+Print a histogram of temperature values:
+.PP
+.RS 4
+qdstat \-d \-p Temperature forecast.sqd
+.RE
+.SH SEE ALSO
+.BR qdmissing (1),
+.BR qdcheck (1),
+.BR qddifference (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

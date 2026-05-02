@@ -1,0 +1,91 @@
+.TH CSV2QD 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+csv2qd \- convert CSV station data to querydata
+.SH SYNOPSIS
+.B csv2qd
+.RI [ options ]
+.I infile outfile
+.SH DESCRIPTION
+.B csv2qd
+converts ASCII data in CSV form to querydata. By default the first
+column must contain the station id and the second the UTC time; the
+remaining columns are interpreted as parameter values whose names are
+specified with
+.BR \-p .
+The column ordering can be customised with
+.BR \-O .
+.SH OPTIONS
+.TP
+.B \-h ", " \-\-help
+Print the help message.
+.TP
+.B \-v ", " \-\-verbose
+Verbose mode.
+.TP
+.B \-q ", " \-\-quiet
+Quiet mode.
+.TP
+.B \-V ", " \-\-version
+Display the version number.
+.TP
+.BI \-m " string" ", \-\-missing " string
+Missing value string (default is the empty string).
+.TP
+.BI \-\-prodnum " number"
+Producer number (default 1001).
+.TP
+.BI \-\-prodname " name"
+Producer name (default SYNOP).
+.TP
+.BI \-i " file" ", \-\-infile " file
+Input CSV file.
+.TP
+.BI \-o " file" ", \-\-outfile " file
+Output querydata file.
+.TP
+.BI \-\-files " list"
+All input files and the output file given as a single list.
+.TP
+.BI \-p " names" ", \-\-params " names
+Parameter names of the CSV columns.
+.TP
+.BI \-P " file" ", \-\-paramsfile " file
+Parameter configuration file (default
+.IR /usr/share/smartmet/parameters.csv ).
+.TP
+.BI \-O " order" ", \-\-order " order
+Column ordering. Recognised values are
+.IR idtime ", " timeid ", " idtimelevel ", " idleveltime ", " timeidlevel ", " timelevelid ", " levelidtime
+and
+.IR leveltimeid .
+.TP
+.BI \-S " file" ", \-\-stationsfile " file
+Station configuration file (default
+.IR /smartmet/share/csv/stations.csv ).
+.TP
+.B \-A ", " \-\-allstations
+Store every station from the station file in the output, not only the
+ones with data.
+.TP
+.BI \-\-origintime " time"
+Origin time of the output querydata.
+.TP
+.BI \-t " zone" ", \-\-timezone " zone
+Time zone of the input timestamps.
+.TP
+.BI \-\-leveltype " number"
+Level type as a number.
+.SH EXAMPLES
+Convert a SYNOP-style CSV file with named columns:
+.PP
+.RS 4
+csv2qd \-p Temperature,DewPoint,Pressure obs.csv obs.sqd
+.RE
+.SH SEE ALSO
+.BR qd2csv (1),
+.BR qdpoint (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

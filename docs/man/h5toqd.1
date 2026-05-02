@@ -1,0 +1,114 @@
+.TH H5TOQD 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+h5toqd \- convert EUMETNET OPERA HDF5 radar files to querydata
+.SH SYNOPSIS
+.B h5toqd
+.RI [ options ]
+.I infile outfile
+.SH DESCRIPTION
+.B h5toqd
+converts EUMETNET OPERA radar files in HDF5 (ODIM) format to
+querydata. Only the features that are known to be in active use are
+supported.
+.PP
+The output filename may contain placeholders that are substituted from
+ODIM metadata:
+.IR %ORIGINTIME ", " %PRODUCT ", " %QUANTITY ", " %WMO ", " %RAD ", " %PLC ", " %NOD ", " %ORG ", " %CTY ,
+and
+.IR %INTERVAL .
+If a setting is missing, a default replacement is used; the defaults
+can be overridden with the
+.B \-\-default-*
+options.
+.SH OPTIONS
+.TP
+.B \-h ", " \-\-help
+Print the help message.
+.TP
+.B \-v ", " \-\-verbose
+Verbose mode.
+.TP
+.B \-\-quietproj
+Disable PROJ error messages.
+.TP
+.B \-V ", " \-\-version
+Display the version number.
+.TP
+.BI \-P " proj" ", \-\-projection " proj
+Output projection.
+.TP
+.BI \-i " file" ", \-\-infile " file
+Input HDF5 file.
+.TP
+.BI \-o " file" ", \-\-outfile " file
+Output querydata file.
+.TP
+.B \-\-prodparfix
+Take the last number from the prodpar array.
+.TP
+.B \-\-lowercase
+Convert the output filename to lower case.
+.TP
+.B \-\-uppercase
+Convert the output filename to upper case.
+.TP
+.BI \-\-datasetname " prefix"
+Dataset name prefix (default
+.IR dataset ).
+.TP
+.BI \-p " number,name" ", \-\-producer " number,name
+Producer number and name.
+.TP
+.BI \-\-producernumber " number"
+Producer number (default 1014).
+.TP
+.BI \-\-producername " name"
+Producer name (default RADAR).
+.TP
+.B \-\-startepochs
+Use the HDF5 startepochs value as the valid time.
+.TP
+.BI \-\-default-plc " value"
+Default replacement for
+.IR %PLC .
+.TP
+.BI \-\-default-wmo " value"
+Default replacement for
+.IR %WMO .
+.TP
+.BI \-\-default-rad " value"
+Default replacement for
+.IR %RAD .
+.TP
+.BI \-\-default-nod " value"
+Default replacement for
+.IR %NOD .
+.TP
+.BI \-\-default-org " value"
+Default replacement for
+.IR %ORG .
+.TP
+.BI \-\-default-cty " value"
+Default replacement for
+.IR %CTY .
+.SH EXAMPLES
+Convert an OPERA HDF5 radar file:
+.PP
+.RS 4
+h5toqd \-i radar.h5 \-o radar.sqd
+.RE
+.PP
+Use ODIM placeholders in the output name:
+.PP
+.RS 4
+h5toqd \-i radar.h5 \-o '%ORIGINTIME_%QUANTITY.sqd'
+.RE
+.SH SEE ALSO
+.BR radartoqd (1),
+.BR pgm2qd (1),
+.BR combinepgms2qd (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

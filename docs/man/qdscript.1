@@ -1,0 +1,64 @@
+.TH QDSCRIPT 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+qdscript \- run a SmartTool macro against querydata
+.SH SYNOPSIS
+.B qdscript
+.RI [ options ]
+.I macroFile
+.RI [ "qdata1 qdata2" ...]
+.B <
+.I inputdata
+.B >
+.I outputData
+.SH DESCRIPTION
+.B qdscript
+applies a SmartTool macro to querydata. The macro can read additional
+helper datasets passed as positional arguments after the macro file.
+The default is to iterate the macro through every level in the input;
+this can be disabled with
+.B \-l
+when the macro itself handles level indexing.
+.SH OPTIONS
+.TP
+.BI \-i " infile"
+Input querydata. Default is standard input.
+.TP
+.BI \-o " outfile"
+Output querydata. Default is standard output.
+.TP
+.BI \-a " p1,p2,..."
+Parameters to add to the data.
+.TP
+.BI \-A " id1,name1,id2,name2,..."
+Parameter id and name pairs to add to the data.
+.TP
+.BI \-d " file"
+Dictionary file used to translate messages.
+.TP
+.B \-s
+Treat all single-time-step datas as stationary (default false).
+.TP
+.B \-l
+Do not iterate over levels separately; the SmartTool script handles
+specific levels.
+.SH EXAMPLES
+Run a SmartTool macro on a querydata file:
+.PP
+.RS 4
+qdscript MyMacro.st < input.sqd > output.sqd
+.RE
+.PP
+Provide a helper dataset:
+.PP
+.RS 4
+qdscript MyMacro.st helper.sqd < input.sqd > output.sqd
+.RE
+.SH SEE ALSO
+.BR qdgridcalc (1),
+.BR qdfilter (1),
+.BR qdcrop (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

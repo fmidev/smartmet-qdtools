@@ -1,0 +1,47 @@
+.TH QDGRIDCALC 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+qdgridcalc \- compute grid sizes or resolutions for a projection
+.SH SYNOPSIS
+.B qdgridcalc
+.RI [ options ]
+.I projectionstring x_km y_km
+.SH DESCRIPTION
+.B qdgridcalc
+computes the X and Y grid sizes that achieve the desired
+X- and Y-direction resolutions (in kilometres) for the given
+projection. With
+.B \-s
+the inputs are interpreted as the desired grid sizes and the resulting
+resolutions are printed instead.
+.SH OPTIONS
+.TP
+.B \-s
+Treat the
+.I x_km
+and
+.I y_km
+arguments as grid sizes and compute the corresponding resolution.
+.TP
+.BI \-f " qddatafile"
+Print the grid sizes of the given querydata file. This overrides the
+need to specify a projection string and resolutions.
+.SH EXAMPLES
+Compute grid dimensions for a 10 km resolution:
+.PP
+.RS 4
+qdgridcalc stereographic,20,90,60:6,51.3,49,70.2 10 10
+.RE
+.PP
+Show the grid size of an existing querydata file:
+.PP
+.RS 4
+qdgridcalc \-f forecast.sqd
+.RE
+.SH SEE ALSO
+.BR qdproject (1),
+.BR qdinterpolatearea (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

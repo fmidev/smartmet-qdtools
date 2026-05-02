@@ -1,0 +1,60 @@
+.TH SYNOP2QD 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+synop2qd \- convert SYNOP/SHIP/BUOY messages to querydata
+.SH SYNOPSIS
+.B synop2qd
+.RI [ options ]
+.IR fileFilter1 [, fileFilter2 ,...]
+.B >
+.I output
+.SH DESCRIPTION
+.B synop2qd
+reads the given files and tries to find SYNOP, SHIP or BUOY messages.
+All recognised messages are combined into a single querydata file
+written to standard output.
+.PP
+A station info file is shipped at
+.IR /usr/share/smartmet/stations.csv .
+.SH OPTIONS
+.TP
+.BI \-s " stationInfoFile"
+File containing SYNOP station info.
+.TP
+.B \-f
+Use WMO flat-table station format.
+.TP
+.BI \-p " id,name"
+Producer id and name (e.g.\&
+.IR 1001,SYNOP ", " 1002,SHIP ", " 1017,BUOY ).
+.TP
+.B \-t
+Snap times to the nearest synoptic time (3 h resolution).
+.TP
+.B \-v
+Verbose mode.
+.TP
+.B \-S
+Convert SHIP messages (do not combine with
+.BR \-B ).
+.TP
+.B \-B
+Convert BUOY messages (do not combine with
+.BR \-S ).
+.TP
+.BI \-r " date"
+Reference date used instead of wall-clock time.
+.SH EXAMPLES
+Convert a SYNOP file:
+.PP
+.RS 4
+synop2qd \-s /usr/share/smartmet/stations.csv synop.txt > synop.sqd
+.RE
+.SH SEE ALSO
+.BR metar2qd (1),
+.BR temp2qd (1),
+.BR bufrtoqd (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

@@ -211,6 +211,7 @@ make %{_smp_mflags}
 %{_datadir}/smartmet/formats/bufr.conf
 %{_datadir}/smartmet/parameters.csv
 %{_datadir}/smartmet/stations.csv
+%{_mandir}/man1/*.1.gz
 
 %changelog
 * Mon Apr 13 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.4.13-1.fmi

@@ -1,0 +1,49 @@
+.TH METAR2QD 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+metar2qd \- convert METAR/SPECI airport observations to querydata
+.SH SYNOPSIS
+.B metar2qd
+.RI [ options ]
+.IR fileFilter1 [, fileFilter2 ,...]
+.B >
+.I output
+.SH DESCRIPTION
+.B metar2qd
+reads the given files and tries to find METAR (and SPECI) messages in
+them. All recognised messages are combined into a single querydata file
+written to standard output.
+.SH OPTIONS
+.TP
+.BI \-s " file"
+Station info CSV file. The expected format is the one converted from
+the master-location-identifier-database spreadsheet.
+.TP
+.B \-v
+Verbose warning and error reporting.
+.TP
+.B \-F
+Ignore bad station descriptions in the station info file.
+.TP
+.BI \-r " minutes"
+Round message times to the given resolution (default 30 minutes).
+.TP
+.BI \-n " 0|1"
+Try reading NOAA METAR format files (default false).
+.TP
+.B \-W
+Do not create a combined Wind parameter in the result.
+.SH EXAMPLES
+Convert a directory of METAR files:
+.PP
+.RS 4
+metar2qd \-s stations.csv '/data/metar/*.txt' > metar.sqd
+.RE
+.SH SEE ALSO
+.BR synop2qd (1),
+.BR temp2qd (1),
+.BR bufrtoqd (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

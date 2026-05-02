@@ -1,0 +1,83 @@
+.TH QDAREA 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+qdarea \- compute weather statistics over named locations and areas
+.SH SYNOPSIS
+.B qdarea
+.RI [ options ]
+.SH DESCRIPTION
+.B qdarea
+extracts weather information over user-defined points, circles around
+points, and arbitrary polygons in querydata. Typical uses include daily
+maximum temperatures at a single location, mean wind speed within a
+radius of a point, or maxima over a sea area defined by a shape.
+.PP
+The result list is given with
+.B \-P
+in the form
+.IR areafunction(timefunction(parametername)) ;
+when the area and time function are the same, the simpler form
+.I function(parametername)
+may be used. The same simpler form is acceptable for point locations
+where there is no area to aggregate over.
+.SH OPTIONS
+.TP
+.BI \-P " paramlist"
+Comma-separated list of results to compute, e.g.\&
+.IR mean(min(t2m)),mean(max(t2m)) .
+.TP
+.BI \-p " location"
+Location specification, for example
+.I Helsinki:25
+(25 km radius around Helsinki) or
+.IR merialueet/B1 .
+.TP
+.BI \-T " interval"
+Time interval. For example,
+.I 06\-18
+selects daytime hours and
+.I 6:12
+selects nights as well.
+.TP
+.BI \-t " timezone"
+Time zone, e.g.\&
+.IR Europe/Helsinki " or " UTC .
+The default is taken from
+.IR fmi.conf .
+.TP
+.BI \-q " querydata"
+Querydata file. The default is taken from
+.IR fmi.conf .
+.TP
+.BI \-c " coordinatefile"
+Coordinate file. The default is taken from
+.IR fmi.conf .
+.TP
+.B \-s
+Print results as a PHP hash table.
+.TP
+.BI \-S " namelist"
+Print results as a PHP hash table with named data fields.
+.TP
+.B \-E
+Print times as Epoch seconds.
+.TP
+.B \-v
+Verbose mode.
+.TP
+.B \-Q
+Quiet mode \(em do not print mere warnings.
+.SH EXAMPLES
+Mean of daily maxima of wind speed and mean wind direction over the sea
+area B1:
+.PP
+.RS 4
+qdarea \-T 24 \-p merialueet/B1 \-P 'mean(max(wspd)),mean(wdir)'
+.RE
+.SH SEE ALSO
+.BR qdpoint (1),
+.BR qdextract (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

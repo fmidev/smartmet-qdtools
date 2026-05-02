@@ -1,0 +1,101 @@
+.TH QDINFO 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+qdinfo \- print information about a querydata file
+.SH SYNOPSIS
+.B qdinfo
+.RI [ options ]
+.SH DESCRIPTION
+.B qdinfo
+prints information about the given querydata file. The user can either
+select the subset of information to be printed, such as the locations in
+the querydata, or print all of them.
+.PP
+.B qdinfo
+is not usually used in production scripts, but it can be when its output
+is processed by a programming language to extract the desired words.
+.PP
+The querydata filename is not a mandatory argument because option
+.B \-l
+prints all known parameter names without needing input data. For all
+other options, the input file must be given with
+.BR \-q .
+.SH OPTIONS
+.TP
+.BI \-q " filename"
+The querydata to inspect. If a directory is given, the newest file in it
+is used.
+.TP
+.B \-A
+All of the options below combined.
+.TP
+.B \-l
+List all recognized parameter names. Does not require
+.BR \-q .
+.TP
+.B \-p
+List all parameters present in the querydata.
+.TP
+.BI \-T " [format]"
+Show querydata times in UTC. An optional
+.BR strftime (3)
+format string may be given (default
+.IR %Y%m%d%H ).
+.TP
+.B \-a
+All of the options below combined.
+.TP
+.B \-v
+Show the querydata version number.
+.TP
+.B \-P
+Show all parameters in the querydata, including subparameters.
+.TP
+.BI \-t " [format]"
+Show querydata times in local time. An optional
+.BR strftime (3)
+format string may be given.
+.TP
+.B \-x
+Show querydata projection information.
+.TP
+.B \-X
+Show querydata location information.
+.TP
+.B \-z
+Show querydata level information.
+.TP
+.B \-r
+Show querydata producer information.
+.TP
+.B \-M
+Show all metadata values.
+.TP
+.BI \-m " key"
+Show the metadata value for the given key.
+.SH EXAMPLES
+List parameters in a file:
+.PP
+.RS 4
+qdinfo \-q forecast.sqd \-p
+.RE
+.PP
+Show all known parameter names without reading any data:
+.PP
+.RS 4
+qdinfo \-l
+.RE
+.PP
+Show times, locations and projection of the newest file in a directory:
+.PP
+.RS 4
+qdinfo \-q /data/ecmwf \-T \-X \-x
+.RE
+.SH SEE ALSO
+.BR qdcrop (1),
+.BR qdarea (1),
+.BR qdpoint (1),
+.BR qdstat (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

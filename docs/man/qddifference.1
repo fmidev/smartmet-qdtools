@@ -1,0 +1,49 @@
+.TH QDDIFFERENCE 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+qddifference \- print numerical differences between two querydata files
+.SH SYNOPSIS
+.B qddifference
+.RI [ options ]
+.I querydata1 querydata2
+.SH DESCRIPTION
+.B qddifference
+displays the numerical difference between two querydata files. The
+program prints summary statistics, optionally per time step or per
+parameter, and exits with status 0 when the maximum absolute difference
+is within a specified tolerance.
+.PP
+For extracting the differing fields into a new querydata file, see
+.BR qddiff (1).
+.SH OPTIONS
+.TP
+.B \-h
+Print the help message.
+.TP
+.B \-t
+Analyse all time steps separately.
+.TP
+.BI \-P " param1,param2,..."
+The desired parameters.
+.TP
+.B \-p
+Analyse the percentage of points that differ.
+.TP
+.BI \-e " eps"
+Maximum allowed difference for an exit status of 0.
+.TP
+.B \-d
+Display debug information.
+.SH EXAMPLES
+Compare two forecasts and tolerate differences up to 0.1:
+.PP
+.RS 4
+qddifference \-e 0.1 forecast_a.sqd forecast_b.sqd
+.RE
+.SH SEE ALSO
+.BR qddiff (1),
+.BR qdstat (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

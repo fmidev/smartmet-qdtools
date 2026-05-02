@@ -1,0 +1,117 @@
+.TH GRIB2TOQD 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+grib2toqd \- convert a single GRIB2 file to querydata
+.SH SYNOPSIS
+.B grib2toqd
+.RI [ options ]
+.I inputgribfile
+.B >
+.I outputqdata
+.SH DESCRIPTION
+.B grib2toqd
+reads a single GRIB file (most commonly GRIB2) and writes querydata to
+standard output, or to a file given with
+.BR \-o .
+For converting multiple GRIB files at once, see
+.BR gribtoqd (1).
+.SH OPTIONS
+.TP
+.BI \-m " size"
+Maximum size of generated data in megabytes (default 1024).
+.TP
+.BI \-o " output"
+Write to the given file instead of standard output.
+.TP
+.BI \-l " spec"
+Ignore individual levels, given as
+.IR t<type>v<value>,...\&
+(for example
+.IR t105v3,t109v255 ).
+A
+.B *
+wildcard in the value position ignores all values of the given level
+type.
+.TP
+.BI \-L " types"
+Accept only the listed level types.
+.TP
+.BI \-p " id,name"
+Producer id and name for the result.
+.TP
+.BI \-D " path"
+Path to grib_api / eccodes definitions files. Defaults to
+.B GRIB_DEFINITION_PATH
+or the system setting.
+.TP
+.B \-f
+Disable the latlon-globe-fix that converts a 0\(en360 longitude range
+into \-180\(en180.
+.TP
+.B \-n
+Name output files by level type, e.g.\&
+.IR output.sqd_levelType_100 .
+.TP
+.B \-t
+Report run time on standard error after completion.
+.TP
+.B \-v
+Verbose mode.
+.TP
+.B \-d
+Crop all parameters except those listed in the parameter change table
+(see
+.BR \-c ).
+.TP
+.BI \-c " file"
+Parameter change table file containing parameter id and name remaps.
+.TP
+.BI \-g " count"
+Print info about the first
+.I count
+grids on standard error;
+.B \-1
+prints information about every grid.
+.TP
+.BI \-H " spec"
+Calculate and add a pressure parameter to hybrid data; format
+.IR sfcPresId,hybridPreId=1,hybridPreName=P .
+.TP
+.BI \-r " spec"
+Calculate and add a relative humidity parameter to hybrid data; format
+.IR specHumId,hybridRHId=13,hybridRHName=RH .
+.TP
+.BI \-G " x1,y1,x2,y2"
+Minimal subgrid to crop, defined by bottom-left and top-right
+longitude/latitude.
+.TP
+.BI \-P " proj"
+Project the data to the given projection. The string follows the
+.B NFmiAreaFactory
+convention used elsewhere in newbase, for example
+.IR stereographic,20,90,60:6,51.3,49,70.2:82,91 .
+Different grid sizes for surface, pressure and hybrid data may be given
+by appending extra dimensions, or three full projection strings may be
+separated with semicolons.
+.SH EXAMPLES
+Convert a GRIB2 file to querydata:
+.PP
+.RS 4
+grib2toqd ecmwf.grib2 > ecmwf.sqd
+.RE
+.PP
+Project to a stereographic FMI Scandinavia area:
+.PP
+.RS 4
+grib2toqd \-P stereographic,20,90,60:6,51.3,49,70.2:82,91 \\
+.br
+\ \ ecmwf.grib2 \-o ecmwf.sqd
+.RE
+.SH SEE ALSO
+.BR gribtoqd (1),
+.BR qdtogrib (1),
+.BR grib2tojpg (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

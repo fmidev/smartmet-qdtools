@@ -1,0 +1,71 @@
+.TH RADARTOQD 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+radartoqd \- convert OPERA BUFR radar data to querydata
+.SH SYNOPSIS
+.B radartoqd
+.RI [ options ]
+.I infile outfile
+.SH DESCRIPTION
+.B radartoqd
+converts EUMETNET OPERA BUFR radar data into querydata. For radar data
+in HDF5/ODIM format see
+.BR h5toqd (1).
+.SH OPTIONS
+.TP
+.B \-h ", " \-\-help
+Print the help message.
+.TP
+.B \-V ", " \-\-version
+Display the version number.
+.TP
+.B \-v ", " \-\-verbose
+Verbose mode.
+.TP
+.B \-q ", " \-\-quiet
+Disable warning messages.
+.TP
+.B \-\-debug
+Print debugging information.
+.TP
+.B \-\-allow-overflow
+Allow overflow in packed intensities.
+.TP
+.BI \-t " dir" ", \-\-tabdir " dir
+BUFR tables directory (default
+.IR /usr/share/bufr ).
+.TP
+.BI \-i " file" ", \-\-infile " file
+Input BUFR file.
+.TP
+.BI \-o " file" ", \-\-outfile " file
+Output querydata file.
+.TP
+.BI \-\-param " name"
+Parameter name to use in the output.
+.TP
+.BI \-P " proj" ", \-\-projection " proj
+Output projection.
+.TP
+.BI \-p " number,name" ", \-\-producer " number,name
+Producer number and name.
+.TP
+.BI \-\-producernumber " number"
+Producer number (default 1014).
+.TP
+.BI \-\-producername " name"
+Producer name (default RADAR).
+.SH EXAMPLES
+Convert an OPERA BUFR radar file:
+.PP
+.RS 4
+radartoqd \-i radar.bufr \-o radar.sqd
+.RE
+.SH SEE ALSO
+.BR h5toqd (1),
+.BR pgm2qd (1),
+.BR combinepgms2qd (1),
+.BR bufrtoqd (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

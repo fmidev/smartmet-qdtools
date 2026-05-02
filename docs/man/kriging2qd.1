@@ -1,0 +1,44 @@
+.TH KRIGING2QD 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+kriging2qd \- convert ASCII Kriging-analysis output to querydata
+.SH SYNOPSIS
+.B kriging2qd
+.RI [ options ]
+.I inputfile outputfile
+.SH DESCRIPTION
+.B kriging2qd
+reads the ASCII data produced by a Kriging analysis and writes a
+querydata file to the given output path.
+.SH OPTIONS
+.TP
+.B \-h
+Print the help message.
+.TP
+.B \-v
+Verbose mode.
+.TP
+.BI \-p " param1,param2,param3"
+Parameter names. Default is
+.IR Temperature .
+.TP
+.BI \-t " time"
+Valid time stamp. Default is the current time.
+.TP
+.BI \-T " time"
+Origin time. Default is the valid time.
+.TP
+.BI \-m " value"
+Missing value marker (default 32700).
+.SH EXAMPLES
+Convert Kriging-analysis output for temperature:
+.PP
+.RS 4
+kriging2qd \-p Temperature analysis.txt analysis.sqd
+.RE
+.SH SEE ALSO
+.BR csv2qd (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

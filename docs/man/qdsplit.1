@@ -1,0 +1,51 @@
+.TH QDSPLIT 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+qdsplit \- split a querydata file into per-time-step files
+.SH SYNOPSIS
+.B qdsplit
+.RI [ options ]
+.I inputfile outputdir
+.SH DESCRIPTION
+.B qdsplit
+splits each time step in the input querydata into a separate file in
+the output directory. This is useful for assembling rolling forecast
+archives where each time step is stored individually.
+.SH OPTIONS
+.TP
+.B \-h
+Print the help message.
+.TP
+.B \-v
+Verbose mode.
+.TP
+.B \-s
+Use short filenames.
+.TP
+.BI \-t " n"
+Number of time steps to process simultaneously (default 1).
+.TP
+.BI \-T " n"
+As
+.B \-t
+but use memory-mapped output.
+.TP
+.BI \-m " percent"
+How much data is allowed to be missing before the time step is
+discarded, in percent (default 100).
+.TP
+.B \-O
+Set the origin time equal to the valid time in the resulting files.
+.SH EXAMPLES
+Split a forecast file into per-hour files:
+.PP
+.RS 4
+qdsplit forecast.sqd /data/forecast/by_time
+.RE
+.SH SEE ALSO
+.BR qdcombine (1),
+.BR combineHistory (1),
+.BR qdcrop (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

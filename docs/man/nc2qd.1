@@ -1,0 +1,32 @@
+.TH NC2QD 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+nc2qd \- convert simple NetCDF files to querydata
+.SH SYNOPSIS
+.B nc2qd
+.RI [ options ]
+.I nc_in qd_out
+.SH DESCRIPTION
+.B nc2qd
+is a minimal NetCDF-to-querydata converter intended for simple input
+files. For CF-compliant NetCDF, see
+.BR nctoqd (1).
+.SH OPTIONS
+.TP
+.BI \-p " id,name"
+Producer id and name (default
+.IR 1201,ncprod ).
+.SH EXAMPLES
+Convert a NetCDF file to querydata:
+.PP
+.RS 4
+nc2qd input.nc output.sqd
+.RE
+.SH SEE ALSO
+.BR nctoqd (1),
+.BR laps2qd (1),
+.BR wrftoqd (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

@@ -1,0 +1,38 @@
+.TH QDSMOOTHER 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+qdsmoother \- spatially smooth querydata fields
+.SH SYNOPSIS
+.B qdsmoother
+.RI [ options ]
+.I conf input output
+.SH DESCRIPTION
+.B qdsmoother
+applies spatial smoothing to fields in querydata. Smoothing rules are
+read from
+.IR conf .
+If
+.I input
+is a directory the newest file in it is used; if
+.I output
+is a directory the input filename is reused.
+.SH OPTIONS
+.TP
+.B \-h
+Print the help message.
+.TP
+.B \-v
+Verbose mode.
+.SH EXAMPLES
+Smooth the newest file in a forecast directory:
+.PP
+.RS 4
+qdsmoother smoother.conf /data/forecast /data/smoothed
+.RE
+.SH SEE ALSO
+.BR qdfilter (1),
+.BR qdscript (1),
+.BR qdinfo (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

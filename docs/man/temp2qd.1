@@ -1,0 +1,41 @@
+.TH TEMP2QD 1 "2026-05-02" "smartmet-qdtools" "SmartMet Tools"
+.SH NAME
+temp2qd \- convert TEMP sounding messages to querydata
+.SH SYNOPSIS
+.B temp2qd
+.RI [ options ]
+.IR fileFilter1 [, fileFilter2 ,...]
+.B >
+.I output
+.SH DESCRIPTION
+.B temp2qd
+reads the given files and tries to find TEMP sounding messages in
+them. All recognised soundings are combined into a single querydata
+file written to standard output.
+.SH OPTIONS
+.TP
+.BI \-s " stationInfoFile"
+Station info CSV file (default
+.IR /usr/share/smartmet/stations.csv ).
+.TP
+.BI \-p " id,name"
+Producer id and name (e.g.\&
+.IR 1005,UAIR ).
+.TP
+.B \-t
+Snap times to the nearest synoptic time.
+.SH EXAMPLES
+Convert a directory of TEMP messages:
+.PP
+.RS 4
+temp2qd '/data/temp/*.txt' > temp.sqd
+.RE
+.SH SEE ALSO
+.BR qdsounding (1),
+.BR qdsoundingindex (1),
+.BR synop2qd (1),
+.BR bufrtoqd (1)
+.SH AUTHOR
+Finnish Meteorological Institute
+.PP
+Report issues at <https://github.com/fmidev/smartmet-qdtools/issues>.

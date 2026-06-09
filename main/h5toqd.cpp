@@ -32,6 +32,7 @@
 #include <newbase/NFmiVPlaceDescriptor.h>
 #include <cpl_error.h>
 #include <filesystem>
+#include <fstream>
 #include <gdal.h>
 #include <iostream>
 #include <memory>

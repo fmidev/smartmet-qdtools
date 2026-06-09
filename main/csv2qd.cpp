@@ -35,6 +35,7 @@
 #include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiVPlaceDescriptor.h>
+#include <fstream>
 #include <iostream>
 #include <list>
 #include <set>

@@ -55,7 +55,7 @@ try
         throw std::runtime_error("GDAL failed to open HDF5 file: " + path);
 
     // Load all attribute metadata (GDAL flattens HDF5 group attributes)
-    char** papszMD = gdal_ds->GetMetadata("");
+    CSLConstList papszMD = gdal_ds->GetMetadata("");
     if (papszMD != nullptr)
     {
         for (int i = 0; papszMD[i] != nullptr; ++i)
@@ -68,7 +68,7 @@ try
     }
 
     // Load subdatasets (multi-dataset HDF5 files like PVOL)
-    char** papszSub = gdal_ds->GetMetadata("SUBDATASETS");
+    CSLConstList papszSub = gdal_ds->GetMetadata("SUBDATASETS");
     if (papszSub != nullptr)
     {
         for (int i = 0; papszSub[i] != nullptr; ++i)

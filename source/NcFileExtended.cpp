@@ -239,7 +239,7 @@ std::string nctools::NcFileExtended::open_var_ds_name(const std::string& varname
     return {};
 
   // Try to find exact subdataset name from GDAL SUBDATASETS metadata
-  char** subdatasets = GDALGetMetadata(gdal_dataset, "SUBDATASETS");
+  CSLConstList subdatasets = GDALGetMetadata(gdal_dataset, "SUBDATASETS");
   if (subdatasets)
   {
     for (int i = 0; subdatasets[i]; i++)
@@ -301,7 +301,7 @@ void nctools::NcFileExtended::load_first_var_meta() const
     // No subdatasets: single-variable file. Load metadata directly from top-level dataset.
     if (!gdal_dataset)
       return;
-    char** meta = GDALGetMetadata(gdal_dataset, nullptr);
+    CSLConstList meta = GDALGetMetadata(gdal_dataset, nullptr);
     if (!meta)
       return;
     // Determine variable name from metadata keys (e.g. "cnc_PM10#units" → "cnc_PM10")
@@ -338,7 +338,7 @@ void nctools::NcFileExtended::load_first_var_meta() const
   auto load_from_ds = [&](const std::string& vname, GDALDatasetH ds)
   {
     first_var_name_ = vname;
-    char** meta = GDALGetMetadata(ds, nullptr);
+    CSLConstList meta = GDALGetMetadata(ds, nullptr);
     for (int i = 0; meta && meta[i]; i++)
     {
       const std::string item(meta[i]);
@@ -413,7 +413,7 @@ void nctools::NcFileExtended::merge_dim_meta(const std::string& dimname) const
     GDALDatasetH ds = open_var_dataset(vname);
     if (!ds)
       continue;
-    char** meta = GDALGetMetadata(ds, nullptr);
+    CSLConstList meta = GDALGetMetadata(ds, nullptr);
     bool has_dim = false;
     for (int i = 0; meta && meta[i]; i++)
     {
@@ -501,7 +501,7 @@ std::string nctools::NcFileExtended::get_subdataset_desc(const std::string& varn
 {
   if (!gdal_dataset)
     return {};
-  char** meta = GDALGetMetadata(gdal_dataset, "SUBDATASETS");
+  CSLConstList meta = GDALGetMetadata(gdal_dataset, "SUBDATASETS");
   if (!meta)
     return {};
 
@@ -611,12 +611,12 @@ std::vector<std::string> nctools::NcFileExtended::get_gdal_variable_names() cons
     if (!gdal_dataset)
       return {};
 
-    char** subdatasets = GDALGetMetadata(gdal_dataset, "SUBDATASETS");
+    CSLConstList subdatasets = GDALGetMetadata(gdal_dataset, "SUBDATASETS");
     if (!subdatasets)
     {
       // No subdatasets: single-variable file.
       // Find the variable name from the top-level metadata keys (e.g. "cnc_PM10#units").
-      char** meta = GDALGetMetadata(gdal_dataset, nullptr);
+      CSLConstList meta = GDALGetMetadata(gdal_dataset, nullptr);
       for (int i = 0; meta && meta[i]; i++)
       {
         const std::string item(meta[i]);
@@ -2224,7 +2224,7 @@ void nctools::NcFileExtended::printInfo() const
     std::cout << "    Variables (GDAL SUBDATASETS):\n";
     if (!gdal_dataset)
       return;
-    char** subdatasets = GDALGetMetadata(gdal_dataset, "SUBDATASETS");
+    CSLConstList subdatasets = GDALGetMetadata(gdal_dataset, "SUBDATASETS");
     for (int i = 0; subdatasets && subdatasets[i]; i++)
     {
       const std::string item(subdatasets[i]);

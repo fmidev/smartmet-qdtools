@@ -42,6 +42,8 @@
 #include <boost/thread.hpp>
 #include <fmt/format.h>
 #include <macgyver/StringConversion.h>
+#include <macgyver/ThreadName.h>
+#include <atomic>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiAreaTools.h>
 #include <newbase/NFmiCmdLine.h>
@@ -1102,6 +1104,8 @@ static void DoErrorReporting(const std::string &theBaseString,
 static void ConvertSingleGribFile(const GribFilterOptions &theGribFilterOptionsIn,
                                   const string &theGribFileName)
 {
+  static std::atomic<unsigned> gribWorkerCounter{0};
+  Fmi::set_thread_name(fmt::format("grib2qd-{}", ++gribWorkerCounter));
   GribFilterOptions gribFilterOptionsLocal = theGribFilterOptionsIn;
   gribFilterOptionsLocal.itsInputFileNameStr = theGribFileName;
   if ((gribFilterOptionsLocal.itsInputFile =

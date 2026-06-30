@@ -62,9 +62,17 @@ This file is part of libECBUFR.
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <thread>
+#include <vector>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 #ifdef UNIX
 #include <sys/ioctl.h>
+#include <sys/wait.h>
+#include <unistd.h>
 #endif
 
 extern "C"
@@ -263,6 +271,7 @@ struct Options
   int maxdurationhours = 2;                                        // -M --maxdurationhours
   bool totalcloudoctas = false;                                    // -t --totalcloudoctas
   bool forcepressurechangesign = false;                            // -f --forcepressurechangesign
+  int threads = 0;                                          // -j --threads (0 = one process/core)
 };
 
 Options options;
@@ -448,7 +457,11 @@ bool parse_options(int argc, char *argv[], Options &options)
       "disable octas to percentage conversion for TotalCloudCover")(
       "forcepressurechangesign,f",
       po::bool_switch(&options.forcepressurechangesign),
-      "Set PressureChange sign to match PressureTendency value");
+      "Set PressureChange sign to match PressureTendency value")(
+      "threads,j",
+      po::value(&options.threads),
+      "number of parallel worker processes for decoding input files (default: 0 = one per "
+      "core)");
 
   po::positional_options_description p;
   p.add("infile", 1);
@@ -1103,69 +1116,395 @@ void read_message(const std::string &filename,
  */
 // ----------------------------------------------------------------------
 
-std::pair<BufrDataCategory, Messages> read_messages(const std::list<std::string> &files)
+// Load CMC table B/D plus the table list (and any local tables). Each decode
+// process needs its own set, since libECBUFR mutates table state while decoding
+// (e.g. when a message embeds local tables).
+struct BufrTableSet
 {
-  Messages messages;
+  LinkedList *list = nullptr;
+  BUFR_Tables *file_tables = nullptr;
+};
 
-  // We verify that there is only one type of message
-  std::set<int> datacategories;
-
-  // Load CMC Table B and D
-
-  BUFR_Tables *file_tables = bufr_create_tables();
-  bufr_load_cmc_tables(file_tables);
-
-  // Load all tables into a list
+static BufrTableSet load_bufr_tables()
+{
+  BufrTableSet ts;
+  ts.file_tables = bufr_create_tables();
+  bufr_load_cmc_tables(ts.file_tables);
 
   int tablenos[2] = {13, 0};
-  LinkedList *tables_list = bufr_load_tables_list(getenv("BUFR_TABLES"), tablenos, 1);
+  ts.list = bufr_load_tables_list(getenv("BUFR_TABLES"), tablenos, 1);
 
   // Add version 14 to the list
-
-  lst_addfirst(tables_list, lst_newnode(file_tables));
+  lst_addfirst(ts.list, lst_newnode(ts.file_tables));
 
   // Load local tables to the list (if they are used)
-
   if (!options.localtableB.empty() || !options.localtableD.empty())
   {
-    if (options.verbose)
-      std::cout << "Reading local tables B and D" << std::endl;
-
     char *tableB = const_cast<char *>(options.localtableB.c_str());
     char *tableD = const_cast<char *>(options.localtableD.c_str());
 
     // This prints a warning if both tableB and tableD are 0.
     // Never tested what happens if only one is given.
-
-    bufr_tables_list_addlocal(tables_list, tableB, tableD);
+    bufr_tables_list_addlocal(ts.list, tableB, tableD);
   }
 
-  // Process the files
+  return ts;
+}
 
-  int succesful_parse_events = 0;
-  int errorneous_parse_events = 0;
-
-  for (const std::string &file : files)
+// Decode a contiguous range [lo,hi) of the file list into msgs/cats, counting
+// successes/failures. Shared by the serial path, the fork() children and the
+// in-parent fallback. Each call loads its own BUFR tables.
+static void decode_file_range(const std::vector<std::string> &files,
+                              size_t lo,
+                              size_t hi,
+                              Messages &msgs,
+                              std::set<int> &cats,
+                              int &ok,
+                              int &err)
+{
+  BufrTableSet tt = load_bufr_tables();
+  for (size_t i = lo; i < hi; ++i)
   {
-    // Reset for each file
-    replicating = false;
-
+    replicating = false;  // reset for each file
     try
     {
-      read_message(file, messages, file_tables, tables_list, datacategories);
-      succesful_parse_events++;
+      read_message(files[i], msgs, tt.file_tables, tt.list, cats);
+      ++ok;
     }
     catch (std::exception &e)
     {
-      errorneous_parse_events++;
+      ++err;
       std::cerr << "Warning: " << e.what() << std::endl;
     }
     catch (...)
     {
-      errorneous_parse_events++;
-      std::cerr << "Warning: Failed to interpret message '" << file << "'" << std::endl;
+      ++err;
+      std::cerr << "Warning: Failed to interpret message '" << files[i] << "'" << std::endl;
     }
   }
+  // Tables are intentionally not freed: the process is short-lived and the
+  // original code never freed them either.
+}
+
+#ifdef UNIX
+// Minimal binary (de)serialization of decoded messages, used to ship a fork
+// child's results back to the parent through a temp file. Parent and children
+// are the same binary on the same host, so raw fixed-width writes are safe.
+// Everything goes through one in-memory buffer (a single fwrite / single read)
+// because there can be millions of records, and per-field stdio calls otherwise
+// dominate the parent's merge.
+
+static void buf_put(std::string &b, const void *p, size_t n)
+{
+  b.append(static_cast<const char *>(p), n);
+}
+template <typename T>
+static void buf_put_pod(std::string &b, T v)
+{
+  buf_put(b, &v, sizeof v);
+}
+static void buf_put_str(std::string &b, const std::string &s)
+{
+  buf_put_pod<uint32_t>(b, static_cast<uint32_t>(s.size()));
+  buf_put(b, s.data(), s.size());
+}
+
+struct Cursor
+{
+  const char *p;
+  const char *e;
+  bool get(void *o, size_t n)
+  {
+    if (p + n > e)
+      return false;
+    std::memcpy(o, p, n);
+    p += n;
+    return true;
+  }
+  template <typename T>
+  T pod()
+  {
+    T v = T();
+    get(&v, sizeof v);
+    return v;
+  }
+  std::string str()
+  {
+    uint32_t n = pod<uint32_t>();
+    std::string s;
+    if (p + n <= e)
+    {
+      s.assign(p, n);
+      p += n;
+    }
+    return s;
+  }
+};
+
+// Append one input file's decode result (its messages, categories, ok/err flag)
+// to a worker's output buffer. Workers emit one such block per file they handle.
+static void serialize_file(std::string &b, const Messages &msgs, const std::set<int> &cats, int ok,
+                           int err)
+{
+  buf_put_pod<int32_t>(b, ok);
+  buf_put_pod<int32_t>(b, err);
+  buf_put_pod<uint32_t>(b, static_cast<uint32_t>(cats.size()));
+  for (int c : cats)
+    buf_put_pod<int32_t>(b, c);
+  buf_put_pod<uint32_t>(b, static_cast<uint32_t>(msgs.size()));
+  for (const Message &m : msgs)
+  {
+    buf_put_pod<uint32_t>(b, static_cast<uint32_t>(m.size()));
+    for (const auto &kv : m)
+    {
+      buf_put_pod<int32_t>(b, kv.first);
+      buf_put_pod<double>(b, kv.second.value);
+      buf_put_str(b, kv.second.name);
+      buf_put_str(b, kv.second.units);
+      buf_put_str(b, kv.second.svalue);
+    }
+  }
+}
+
+// Read one file's block from the cursor into msgs/cats and accumulate ok/err.
+// Returns false when the buffer is exhausted (no more blocks).
+static bool deserialize_file(Cursor &c, Messages &msgs, std::set<int> &cats, int &ok, int &err)
+{
+  if (c.p + 2 * sizeof(int32_t) > c.e)
+    return false;
+  ok += c.pod<int32_t>();
+  err += c.pod<int32_t>();
+  uint32_t ncats = c.pod<uint32_t>();
+  for (uint32_t i = 0; i < ncats; ++i)
+    cats.insert(c.pod<int32_t>());
+  uint32_t nm = c.pod<uint32_t>();
+  for (uint32_t i = 0; i < nm; ++i)
+  {
+    Message m;
+    uint32_t ne = c.pod<uint32_t>();
+    for (uint32_t j = 0; j < ne; ++j)
+    {
+      int key = c.pod<int32_t>();
+      record r;
+      r.value = c.pod<double>();
+      r.name = c.str();
+      r.units = c.str();
+      r.svalue = c.str();
+      m.emplace(key, std::move(r));
+    }
+    msgs.push_back(std::move(m));
+  }
+  return true;
+}
+
+// Read an entire file into memory
+static std::string slurp_file(const std::string &path)
+{
+  std::string data;
+  FILE *in = fopen(path.c_str(), "rb");
+  if (in != nullptr)
+  {
+    if (fseek(in, 0, SEEK_END) == 0)
+    {
+      long sz = ftell(in);
+      if (sz > 0)
+      {
+        data.resize(static_cast<size_t>(sz));
+        rewind(in);
+        if (fread(&data[0], 1, data.size(), in) != data.size())
+          data.clear();
+      }
+    }
+    fclose(in);
+  }
+  return data;
+}
+#endif  // UNIX
+
+std::pair<BufrDataCategory, Messages> read_messages(const std::list<std::string> &files)
+{
+  // Decoding the files is the dominant cost (~80% of the run, almost all inside
+  // libECBUFR, which is NOT thread-safe). Since the files are independent, fork
+  // one worker process per CPU, each decoding a contiguous range of the file
+  // list with its own libECBUFR state, and ship the decoded records back to the
+  // parent. Concatenating the ranges in order makes the output identical to a
+  // serial run.
+
+  std::vector<std::string> filevec(files.begin(), files.end());
+  const size_t nfiles = filevec.size();
+
+  unsigned nproc;
+  if (options.threads > 0)
+    nproc = static_cast<unsigned>(options.threads);
+  else
+  {
+    nproc = std::thread::hardware_concurrency();
+    if (nproc == 0)
+      nproc = 1;
+  }
+  if (nproc > nfiles)
+    nproc = (nfiles == 0 ? 1 : static_cast<unsigned>(nfiles));
+
+  Messages messages;
+  std::set<int> datacategories;
+  int succesful_parse_events = 0;
+  int errorneous_parse_events = 0;
+
+#ifdef UNIX
+  const bool parallel = (nproc > 1);
+#else
+  const bool parallel = false;
+#endif
+
+  if (options.verbose)
+    std::cout << "Decoding " << nfiles << " files using " << nproc
+              << (parallel ? " worker process(es)" : " process (serial)") << std::endl;
+
+  if (!parallel)
+  {
+    decode_file_range(filevec,
+                      0,
+                      nfiles,
+                      messages,
+                      datacategories,
+                      succesful_parse_events,
+                      errorneous_parse_events);
+  }
+#ifdef UNIX
+  else
+  {
+    // One temp file per worker for its serialized per-file result blocks
+    std::vector<std::string> paths(nproc);
+    for (unsigned t = 0; t < nproc; ++t)
+    {
+      char tmpl[] = "/tmp/bufrtoqd_chunk_XXXXXX";
+      int fd = mkstemp(tmpl);
+      if (fd >= 0)
+        close(fd);
+      paths[t] = tmpl;
+    }
+
+    std::fflush(nullptr);  // avoid duplicating buffered stdio across fork
+
+    // Round-robin file assignment (worker t handles files t, t+nproc, t+2*nproc,
+    // ...). The input files vary enormously in size (a few multi-station bulletins
+    // dwarf the rest); striding spreads any such cluster across all workers instead
+    // of letting it land in one and become a straggler.
+    std::vector<pid_t> pids(nproc, -1);
+    for (unsigned t = 0; t < nproc; ++t)
+    {
+      pid_t pid = fork();
+      if (pid == 0)
+      {
+        BufrTableSet tt = load_bufr_tables();
+        std::string buf;
+        for (size_t i = t; i < nfiles; i += nproc)
+        {
+          Messages fmsgs;
+          std::set<int> fcats;
+          int ok = 0, err = 0;
+          replicating = false;
+          try
+          {
+            read_message(filevec[i], fmsgs, tt.file_tables, tt.list, fcats);
+            ok = 1;
+          }
+          catch (std::exception &e)
+          {
+            err = 1;
+            std::cerr << "Warning: " << e.what() << std::endl;
+          }
+          catch (...)
+          {
+            err = 1;
+            std::cerr << "Warning: Failed to interpret message '" << filevec[i] << "'" << std::endl;
+          }
+          serialize_file(buf, fmsgs, fcats, ok, err);
+        }
+        FILE *out = fopen(paths[t].c_str(), "wb");
+        bool wrote = (out != nullptr) && (fwrite(buf.data(), 1, buf.size(), out) == buf.size());
+        if (out != nullptr)
+          wrote = (fclose(out) == 0) && wrote;
+        _exit(wrote ? 0 : 1);
+      }
+      pids[t] = pid;  // pid>0 on success, -1 on fork failure
+    }
+
+    // Collect each file's messages keyed by its original index, then merge in order
+    std::vector<Messages> per_file(nfiles);
+    BufrTableSet parent_tables;  // loaded lazily, only if a worker fails
+    bool parent_tables_loaded = false;
+
+    for (unsigned t = 0; t < nproc; ++t)
+    {
+      bool use_child = false;
+      if (pids[t] > 0)
+      {
+        int status = 0;
+        if (waitpid(pids[t], &status, 0) == pids[t] && WIFEXITED(status) &&
+            WEXITSTATUS(status) == 0)
+          use_child = true;
+      }
+
+      if (use_child)
+      {
+        std::string data = slurp_file(paths[t]);
+        Cursor c{data.data(), data.data() + data.size()};
+        size_t idx = t;
+        while (idx < nfiles && deserialize_file(c,
+                                                per_file[idx],
+                                                datacategories,
+                                                succesful_parse_events,
+                                                errorneous_parse_events))
+          idx += nproc;
+        if (idx < nfiles)
+          use_child = false;  // truncated output: decode the rest in the parent
+      }
+
+      if (!use_child)
+      {
+        std::cerr << "Warning: decode worker " << t
+                  << " failed; decoding its files in the main process" << std::endl;
+        if (!parent_tables_loaded)
+        {
+          parent_tables = load_bufr_tables();
+          parent_tables_loaded = true;
+        }
+        for (size_t i = t; i < nfiles; i += nproc)
+        {
+          if (!per_file[i].empty())
+            continue;  // already filled from the worker's (partial) output
+          replicating = false;
+          try
+          {
+            read_message(filevec[i],
+                         per_file[i],
+                         parent_tables.file_tables,
+                         parent_tables.list,
+                         datacategories);
+            ++succesful_parse_events;
+          }
+          catch (std::exception &e)
+          {
+            ++errorneous_parse_events;
+            std::cerr << "Warning: " << e.what() << std::endl;
+          }
+          catch (...)
+          {
+            ++errorneous_parse_events;
+            std::cerr << "Warning: Failed to interpret message '" << filevec[i] << "'" << std::endl;
+          }
+        }
+      }
+
+      unlink(paths[t].c_str());
+    }
+
+    // Merge per-file results in original file order (splice is O(1))
+    for (size_t i = 0; i < nfiles; ++i)
+      messages.splice(messages.end(), per_file[i]);
+  }
+#endif  // UNIX
 
   if (datacategories.size() == 0)
     throw std::runtime_error("Failed to find any bufr data categories");

@@ -68,6 +68,7 @@ This file is part of libECBUFR.
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <unordered_map>
 
 #ifdef UNIX
 #include <sys/ioctl.h>
@@ -94,6 +95,12 @@ struct ParNameInfo
 
 typedef std::map<std::string, ParNameInfo> NameMap;
 // typedef std::map<std::string, FmiParameterName> NameMap;
+
+// Fast integer (BUFR descriptor code) keyed view of the active NameMap, used in
+// the hot per-record loops to avoid formatting each code into a zero-padded
+// 6-digit string and looking it up in a string-keyed map for every value. Only
+// the default (!usebufrname) path uses it; --usebufrname keeps string lookups.
+typedef std::unordered_map<int, const ParNameInfo *> CodeIndex;
 
 const std::string REMAP_IDENT("ident");
 const std::string REMAP_PHASE("phaseofflight");
@@ -1540,16 +1547,25 @@ std::pair<BufrDataCategory, Messages> read_messages(const std::list<std::string>
 std::set<std::string> collect_names(const Messages &messages)
 {
   std::set<std::string> names;
-  for (const Message &msg : messages)
+
+  if (options.usebufrname)
   {
-    for (const Message::value_type &value : msg)
-    {
-      if (options.usebufrname)
+    for (const Message &msg : messages)
+      for (const Message::value_type &value : msg)
         names.insert(value.second.name);
-      else
-        names.insert(fmt::format("{:0>6}", value.first));
-    }
+    return names;
   }
+
+  // Collect the distinct integer BUFR codes first, then format only those (a few
+  // dozen) into zero-padded strings, instead of formatting every single record.
+  std::set<int> codes;
+  for (const Message &msg : messages)
+    for (const Message::value_type &value : msg)
+      codes.insert(value.first);
+
+  for (int code : codes)
+    names.insert(fmt::format("{:0>6}", code));
+
   return names;
 }
 
@@ -1578,6 +1594,39 @@ NameMap map_names(const std::set<std::string> &names, const NameMap &pmap)
   }
 
   return namemap;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Build an integer-keyed index into the namemap for fast lookups
+ *
+ * Records are keyed by the integer BUFR descriptor code. Looking the parameter
+ * info up directly by integer avoids formatting each code into a zero-padded
+ * 6-digit string for every value (the hot path in copy_params/get_obscount).
+ * The returned pointers alias entries in 'namemap', which must outlive the index.
+ * Only the default (!usebufrname) path uses integer keys.
+ */
+// ----------------------------------------------------------------------
+
+CodeIndex build_code_index(const NameMap &namemap)
+{
+  CodeIndex index;
+  if (options.usebufrname)
+    return index;
+
+  index.reserve(namemap.size());
+  for (const NameMap::value_type &name_info : namemap)
+  {
+    try
+    {
+      index.emplace(Fmi::stoi(name_info.first), &name_info.second);
+    }
+    catch (...)
+    {
+      // Key is not a numeric BUFR code; should not happen for !usebufrname
+    }
+  }
+  return index;
 }
 
 // ----------------------------------------------------------------------
@@ -2380,15 +2429,31 @@ float normal_value(const record &rec)
  */
 // ----------------------------------------------------------------------
 
-void copy_params(NFmiFastQueryInfo &info, const Message &msg, const NameMap &namemap)
+void copy_params(NFmiFastQueryInfo &info,
+                 const Message &msg,
+                 const NameMap &namemap,
+                 const CodeIndex &codeindex)
 {
   for (const Message::value_type &value : msg)
   {
-    auto key = options.usebufrname ? value.second.name : fmt::format("{:0>6}", value.first);
-    NameMap::const_iterator it = namemap.find(key);
-    if (it != namemap.end())
+    const ParNameInfo *pinfo = nullptr;
+
+    if (options.usebufrname)
     {
-      if (!info.Param(it->second.parId))
+      NameMap::const_iterator it = namemap.find(value.second.name);
+      if (it != namemap.end())
+        pinfo = &it->second;
+    }
+    else
+    {
+      CodeIndex::const_iterator it = codeindex.find(value.first);
+      if (it != codeindex.end())
+        pinfo = it->second;
+    }
+
+    if (pinfo != nullptr)
+    {
+      if (!info.Param(pinfo->parId))
         throw std::runtime_error("Internal error in handling parameters of the messages");
       info.FloatValue(normal_value(value.second));
     }
@@ -2403,7 +2468,8 @@ void copy_params(NFmiFastQueryInfo &info, const Message &msg, const NameMap &nam
 
 void copy_records_sounding(NFmiFastQueryInfo &info,
                            const Messages &messages,
-                           const NameMap &namemap)
+                           const NameMap &namemap,
+                           const CodeIndex &codeindex)
 {
   info.First();
 
@@ -2416,14 +2482,27 @@ void copy_records_sounding(NFmiFastQueryInfo &info,
   NFmiMetTime t;
   std::string ident, lastident;
 
+  // Select the station's location only when its ident changes. Location() is a
+  // linear scan over all stations, and consecutive sounding levels share the
+  // same station, so re-selecting every level is wasted work. Nothing else in
+  // the loop moves the location cursor, so the cached selection stays valid.
+  long curlocident = -1;    // ident currently selected in info
+  bool loccurrent = false;  // whether that selection succeeded
+
   for (const Message &msg : messages)
   {
     try
     {
       NFmiStation station = get_station(msg);
 
-      // We ignore stations with invalid coordinates
-      if (!info.Location(station.GetIdent()))
+      // We ignore stations with invalid coordinates (filtered from the descriptor)
+      long locident = station.GetIdent();
+      if (locident != curlocident)
+      {
+        loccurrent = info.Location(locident);
+        curlocident = locident;
+      }
+      if (!loccurrent)
         continue;
 
       if (options.requireident)
@@ -2482,7 +2561,7 @@ void copy_records_sounding(NFmiFastQueryInfo &info,
       if (!info.NextLevel())
         throw std::runtime_error("Changing to next level failed");
 
-      copy_params(info, msg, namemap);
+      copy_params(info, msg, namemap, codeindex);
     }
     catch (...)
     {
@@ -2502,6 +2581,7 @@ void copy_records_sounding(NFmiFastQueryInfo &info,
 void copy_records_amdar(NFmiFastQueryInfo &info,
                         const Messages &messages,
                         const NameMap &namemap,
+                        const CodeIndex &codeindex,
                         const IdentTimeMap &identtimemap)
 {
   info.First();
@@ -2598,7 +2678,7 @@ void copy_records_amdar(NFmiFastQueryInfo &info,
       info.Param(kFmiLatitude);
       info.FloatValue(lat);
 
-      copy_params(info, msg, namemap);
+      copy_params(info, msg, namemap, codeindex);
     }
   }
 }
@@ -2619,7 +2699,8 @@ void copy_records_amdar(NFmiFastQueryInfo &info,
 
 void copy_records_buoy_ship(NFmiFastQueryInfo &info,
                             const Messages &messages,
-                            const NameMap &namemap)
+                            const NameMap &namemap,
+                            const CodeIndex &codeindex)
 {
   info.First();
 
@@ -2687,7 +2768,7 @@ void copy_records_buoy_ship(NFmiFastQueryInfo &info,
     {
       laststation = name;
 
-      copy_params(info, msg, namemap);
+      copy_params(info, msg, namemap, codeindex);
 
       info.Param(kFmiLongitude);
       info.FloatValue(lon);
@@ -2710,16 +2791,20 @@ void copy_records(NFmiFastQueryInfo &info,
                   BufrDataCategory category,
                   const std::map<std::string, NFmiMetTime> &messageTimes)
 {
+  // Integer-keyed index for fast parameter lookups (see build_code_index)
+
+  const CodeIndex codeindex = build_code_index(namemap);
+
   // Handle special cases
 
   if (category == kBufrSounding)
-    return copy_records_sounding(info, messages, namemap);
+    return copy_records_sounding(info, messages, namemap, codeindex);
 
   if (category == kBufrUpperAirLevel)
-    return copy_records_amdar(info, messages, namemap, messageTimes);
+    return copy_records_amdar(info, messages, namemap, codeindex, messageTimes);
 
   if (category == kBufrSeaSurface)
-    return copy_records_buoy_ship(info, messages, namemap);
+    return copy_records_buoy_ship(info, messages, namemap, codeindex);
 
   // Normal case with no funny business with levels or times
 
@@ -2738,7 +2823,7 @@ void copy_records(NFmiFastQueryInfo &info,
       if (!info.Location(station.GetIdent()))
         continue;
 
-      copy_params(info, msg, namemap);
+      copy_params(info, msg, namemap, codeindex);
     }
     catch (...)
     {

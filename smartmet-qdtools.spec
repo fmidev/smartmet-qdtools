@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 26.6.30
+Version: 26.7.3
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -214,6 +214,9 @@ make %{_smp_mflags}
 %{_mandir}/man1/*.1.gz
 
 %changelog
+* Fri Jul  3 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.7.3-1.fmi
+- bufrtoqd fixes
+
 * Tue Jun 30 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.6.30-1.fmi
 - bufrtoqd speed improvements
 

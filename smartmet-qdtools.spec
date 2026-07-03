@@ -3,7 +3,7 @@
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
 Version: 26.7.3
-Release: 1%{?dist}.fmi
+Release: 2%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -33,6 +33,7 @@ BuildRequires: gcc-c++
 BuildRequires: gdal312-devel
 BuildRequires: h5pp-devel
 BuildRequires: hdf5-devel >= 1.8.12
+BuildRequires: jemalloc-devel
 BuildRequires: libbufr >= 3.2
 BuildRequires: libecbufr-devel
 BuildRequires: libjpeg-devel
@@ -63,6 +64,7 @@ Requires: %{smartmet_fmt}
 Requires: gdal312-libs
 Requires: glibc
 Requires: hdf5 >= 1.8.12
+Requires: jemalloc
 Requires: libbufr >= 3.2
 Requires: libecbufr
 Requires: libgcc
@@ -214,6 +216,13 @@ make %{_smp_mflags}
 %{_mandir}/man1/*.1.gz
 
 %changelog
+* Fri Jul 03 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.7.3-2.fmi
+- bufrtoqd now decodes BUFR with eccodes instead of libecbufr, which is much
+  faster on large multi-subset messages (e.g. high resolution soundings) and
+  decodes all subsets correctly
+- Linked jemalloc into all tools to reduce the eccodes per-message allocation
+  overhead
+
 * Fri Jul  3 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.7.3-1.fmi
 - bufrtoqd fixes
 

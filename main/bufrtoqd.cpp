@@ -2,31 +2,12 @@
 /*!
  * \brief BUFR point observations conversion to querydata
  *
- * Much of the code comes from the bufr_decoder utility included
- * in the Environmental Canada BUFR Library
+ * BUFR messages are decoded with ECMWF's ecCodes library. Each message is
+ * unpacked and its fully expanded data elements are read via the BUFR keys
+ * iterator, using the "->code" and "->units" key attributes to obtain the
+ * BUFR descriptor and unit of every element.
  */
 // ======================================================================
-
-// libECBUFR license:
-
-/***
-Copyright Her Majesty The Queen in Right of Canada, Environment Canada, 2009.
-Copyright Sa Majeste la Reine du Chef du Canada, Environnement Canada, 2009.
-
-This file is part of libECBUFR.
-
-    libECBUFR is free software: you can redistribute it and/or modify
-    it under the terms of the Lesser GNU General Public License,
-    version 3, as published by the Free Software Foundation.
-
-    libECBUFR is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    Lesser GNU General Public License for more details.
-
-    You should have received a copy of the Lesser GNU General Public
-    License along with libECBUFR.  If not, see <http://www.gnu.org/licenses/>.
-***/
 
 #ifdef _MSC_VER
 #pragma warning(disable : 4505 4512 4996)  // Disables many useless or 3rd-party-code generated
@@ -68,12 +49,9 @@ This file is part of libECBUFR.
 #include <sys/ioctl.h>
 #endif
 
-extern "C"
-{
-#include <bufr_api.h>
-#include <bufr_local.h>
-#include <bufr_value.h>
-}
+#include <cstring>
+#include <eccodes.h>
+#include <vector>
 
 namespace fs = std::filesystem;
 struct ParNameInfo
@@ -189,7 +167,7 @@ std::string data_category_name(BufrDataCategory category)
  */
 // ----------------------------------------------------------------------
 
-BufrDataCategory data_category(const std::string &name)
+BufrDataCategory data_category(const std::string& name)
 {
   // Inverse of data_category_name
   if (name == "land surface")
@@ -280,7 +258,7 @@ Options options;
  */
 // ----------------------------------------------------------------------
 
-void parse_option_remap(const std::string &remapdef)
+void parse_option_remap(const std::string& remapdef)
 {
   // Parse remapping option for bufr codes
   //
@@ -395,7 +373,7 @@ void parse_option_remap(const std::string &remapdef)
  */
 // ----------------------------------------------------------------------
 
-bool parse_options(int argc, char *argv[], Options &options)
+bool parse_options(int argc, char* argv[], Options& options)
 {
   namespace po = boost::program_options;
 
@@ -420,7 +398,9 @@ bool parse_options(int argc, char *argv[], Options &options)
   desc.add_options()("help,h", "print out help message")("version,V", "display version number")(
       "verbose,v", po::bool_switch(&options.verbose), "set verbose mode on")(
       "debug", po::bool_switch(&options.debug), "set debug mode on")(
-      "subsets", po::bool_switch(&options.subsets), "decode all subsets, not just first ones")(
+      "subsets",
+      po::bool_switch(&options.subsets),
+      "deprecated and ignored: all subsets are always decoded")(
       "insignificant",
       po::bool_switch(&options.insignificant),
       "extract also insignificant sounding levels")(
@@ -559,13 +539,8 @@ bool parse_options(int argc, char *argv[], Options &options)
  */
 // ----------------------------------------------------------------------
 
-void validate_category(BufrDataCategory category)
+bool supported_category(BufrDataCategory category)
 {
-  std::string name = data_category_name(category);
-
-  if (name.empty())
-    throw std::runtime_error("Data category " + Fmi::to_string(category) + " unknown");
-
   switch (category)
   {
     // We can handle these, probably
@@ -574,7 +549,7 @@ void validate_category(BufrDataCategory category)
     case kBufrSounding:
     case kBufrSynoptic:
     case kBufrUpperAirLevel:
-      break;
+      return true;
     // No sample data for these available during development:
     case kBufrSatSounding:
     case kBufrSatUpperAirLevel:
@@ -588,8 +563,19 @@ void validate_category(BufrDataCategory category)
     case kBufrOceanographic:
     case kBufrImage:
     default:
-      throw std::runtime_error("Cannot handle data category: " + name);
+      return false;
   }
+}
+
+void validate_category(BufrDataCategory category)
+{
+  std::string name = data_category_name(category);
+
+  if (name.empty())
+    throw std::runtime_error("Data category " + Fmi::to_string(category) + " unknown");
+
+  if (!supported_category(category))
+    throw std::runtime_error("Cannot handle data category: " + name);
 
   if (options.verbose)
     std::cout << "Data category: " << name << std::endl;
@@ -617,7 +603,7 @@ std::list<std::string> expand_input_files()
   std::list<fs::path> paths;
   copy(fs::directory_iterator(p), fs::directory_iterator(), back_inserter(paths));
 
-  for (const fs::path &path : paths)
+  for (const fs::path& path : paths)
   {
     if (fs::is_regular_file(path))
       files.push_back(path.string());
@@ -642,7 +628,7 @@ struct record
   record() : name(), units(), value(std::numeric_limits<double>::quiet_NaN()), svalue() {}
 };
 
-std::ostream &operator<<(std::ostream &out, const record &rec)
+std::ostream& operator<<(std::ostream& out, const record& rec)
 {
   out << rec.name << "=" << rec.svalue << " (" << rec.value << ") " << rec.units;
   return out;
@@ -666,91 +652,176 @@ typedef enum
 
 // ----------------------------------------------------------------------
 /*!
- * \brief Extract record name and units
+ * \brief One occurrence of an expanded data element (Table B descriptor)
+ *        in a decoded BUFR message.
+ *
+ * With eccodes a message is decoded once and its data is exposed as a
+ * flat, fully expanded list of keys. Delayed replications are expanded
+ * into ranked keys (#1#, #2#, ...) so a given descriptor code recurs once
+ * per replication level, exactly like the descriptor stream libecbufr used
+ * to produce. For compressed messages each element holds one value per
+ * subset (values.size() == nsubsets); constant elements are stored once
+ * (values.size() == 1).
  */
 // ----------------------------------------------------------------------
 
-void extract_record_name_and_units(record &rec, int desc, BufrDescriptor *bufr, BUFR_Tables *tables)
+struct BufrElement
 {
-  if (bufr_is_table_b(desc))
+  int code = -1;                     // BUFR descriptor, e.g. 4001 for 004001
+  int type = 0;                      // GRIB_TYPE_LONG / GRIB_TYPE_DOUBLE / GRIB_TYPE_STRING
+  std::string name;                  // eccodes element name (rank prefix stripped)
+  std::string units;                 // eccodes element units
+  std::vector<double> values;        // numeric values (size 1 or nsubsets)
+  std::vector<std::string> svalues;  // string values (size 1 or nsubsets)
+};
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Strip a leading "#rank#" prefix from an eccodes key name
+ */
+// ----------------------------------------------------------------------
+
+std::string strip_rank(const char* key)
+{
+  if (key[0] == '#')
   {
-    EntryTableB *tb = bufr_fetch_tableB(tables, desc);
-    if (tb)
-    {
-      /* according to descriptor 13+14=>64 15=>24 */
-      rec.name = tb->description;
-      rec.units = tb->unit;
-    }
-    else
-    {
-      std::cerr << "Warning: Descriptor " << desc << " not found in table B" << std::endl;
-    }
+    const char* p = strchr(key + 1, '#');
+    if (p != nullptr)
+      return std::string(p + 1);
   }
-  else if (bufr->encoding.type == TYPE_CCITT_IA5)
-  {
-    int fx = desc / 1000;
-    if (fx == 205)
-    {
-      rec.name = "Signify character";
-      rec.units = "CCITT_IA5";
-    }
-  }
-  else
-  {
-  }  // unknown
+  return std::string(key);
 }
 
 // ----------------------------------------------------------------------
 /*!
- * \brief Extract record value
+ * \brief Value of an element for the given subset, mapped to kFloatMissing
  */
 // ----------------------------------------------------------------------
 
-void extract_record_value(record &rec, BufrDescriptor *bufr)
+double element_value(const BufrElement& e, int subset)
 {
-  if (bufr->value)
+  if (e.values.empty())
+    return kFloatMissing;
+  double v = e.values[e.values.size() == 1 ? 0 : subset];
+  if (v == CODES_MISSING_DOUBLE || v == static_cast<double>(CODES_MISSING_LONG))
+    return kFloatMissing;
+  return v;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief String value of an element for the given subset
+ */
+// ----------------------------------------------------------------------
+
+const std::string& element_svalue(const BufrElement& e, int subset)
+{
+  static const std::string empty;
+  if (e.svalues.empty())
+    return empty;
+  return e.svalues[e.svalues.size() == 1 ? 0 : subset];
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Extract the expanded data elements of a decoded message
+ *
+ * The message must already have been unpacked. Only Table B data elements
+ * (those with a nonnegative descriptor code) are collected; section 1
+ * headers and attribute keys (e.g. "x->firstOrderStatisticalValue") are
+ * skipped.
+ */
+// ----------------------------------------------------------------------
+
+std::vector<BufrElement> extract_elements(codes_handle* h)
+{
+  std::vector<BufrElement> elements;
+
+  bufr_keys_iterator* kiter = codes_bufr_keys_iterator_new(h, 0);
+  if (kiter == nullptr)
+    throw std::runtime_error("Failed to create BUFR keys iterator");
+
+  // Reused across elements to avoid per-element allocations. The stack buffer
+  // covers the common cases (a single value, or one value per subset) so that
+  // most elements need neither codes_get_size nor a heap allocation here.
+  std::string attrkey;
+  double stackbuf[1024];
+
+  while (codes_bufr_keys_iterator_next(kiter))
   {
-    if (bufr->value->af)
+    const char* name = codes_bufr_keys_iterator_get_name(kiter);
+
+    // Skip attribute keys such as "airTemperature->firstOrderStatisticalValue"
+    if (strstr(name, "->") != nullptr)
+      continue;
+
+    // Fetch the BUFR descriptor code; skip non Table-B keys (headers etc)
+    attrkey = name;
+    attrkey += "->code";
+    long code = -1;
+    if (codes_get_long(h, attrkey.c_str(), &code) != CODES_SUCCESS || code < 0)
+      continue;
+
+    BufrElement e;
+    e.code = static_cast<int>(code);
+    e.name = strip_rank(name);
+
+    attrkey = name;
+    attrkey += "->units";
+    char units[256];
+    size_t ulen = sizeof(units);
+    if (codes_get_string(h, attrkey.c_str(), units, &ulen) == CODES_SUCCESS)
+      e.units = units;
+
+    // Character (CCITT IA5) elements are the only string-valued ones; deciding
+    // from the unit avoids a codes_get_native_type() key lookup per element.
+    bool is_string = (e.units.find("CCITT") != std::string::npos);
+
+    if (is_string)
     {
-      // we do not handle associated fields
+      e.type = GRIB_TYPE_STRING;
+      size_t size = 0;
+      codes_get_size(h, name, &size);
+      if (size == 0)
+        continue;
+      std::vector<char*> buf(size, nullptr);
+      size_t len = size;
+      if (codes_get_string_array(h, name, buf.data(), &len) == CODES_SUCCESS)
+      {
+        e.svalues.reserve(len);
+        for (size_t k = 0; k < len; k++)
+          e.svalues.emplace_back(buf[k] != nullptr ? buf[k] : "");
+      }
+      // eccodes owns the string storage; only the array itself is ours
+    }
+    else
+    {
+      e.type = GRIB_TYPE_DOUBLE;
+      size_t len = sizeof(stackbuf) / sizeof(stackbuf[0]);
+      int rc = codes_get_double_array(h, name, stackbuf, &len);
+      if (rc == CODES_SUCCESS)
+      {
+        e.values.assign(stackbuf, stackbuf + len);
+      }
+      else if (rc == GRIB_ARRAY_TOO_SMALL)
+      {
+        // Rare: more values than the stack buffer holds
+        size_t size = 0;
+        codes_get_size(h, name, &size);
+        e.values.resize(size);
+        len = size;
+        if (codes_get_double_array(h, name, e.values.data(), &len) == CODES_SUCCESS)
+          e.values.resize(len);
+        else
+          e.values.clear();
+      }
     }
 
-    if (bufr->value->type == VALTYPE_INT32 || bufr->value->type == VALTYPE_INT64)
-    {
-      int64_t value = bufr_descriptor_get_ivalue(bufr);
-      if (value == -1)
-        rec.value = kFloatMissing;
-      else
-        rec.value = static_cast<double>(value);
-    }
+    elements.push_back(std::move(e));
+  }
 
-    else if (bufr->value->type == VALTYPE_FLT32)
-    {
-      float value = bufr_descriptor_get_fvalue(bufr);
-      if (bufr_is_missing_float(value))
-        rec.value = kFloatMissing;
-      else
-        rec.value = value;
-    }
-
-    else if (bufr->value->type == VALTYPE_FLT64)
-    {
-      double value = bufr_descriptor_get_dvalue(bufr);
-      if (bufr_is_missing_double(value))
-        rec.value = kFloatMissing;
-      else
-        rec.value = value;
-    }
-
-    else if (bufr->value->type == VALTYPE_STRING)
-    {
-      int len = 0;
-      char *str = bufr_descriptor_get_svalue(bufr, &len);
-      if (str && !bufr_is_missing_string(str, len))
-        rec.svalue = str;
-      // rec.value will remain to be NaN
-    }
-  }  // if(bufr->value)
+  codes_bufr_keys_iterator_delete(kiter);
+  return elements;
 }
 
 // ----------------------------------------------------------------------
@@ -759,7 +830,7 @@ void extract_record_value(record &rec, BufrDescriptor *bufr)
  */
 // ----------------------------------------------------------------------
 
-bool message_looks_valid(const Message &msg)
+bool message_looks_valid(const Message& msg)
 {
   // Validate year
   Message::const_iterator yy = msg.find(4001);
@@ -792,7 +863,7 @@ bool message_looks_valid(const Message &msg)
  */
 // ----------------------------------------------------------------------
 
-void get_ident(const Message &msg, const MessageReMap &remap, std::string &ident)
+void get_ident(const Message& msg, const MessageReMap& remap, std::string& ident)
 {
   ident.clear();
 
@@ -811,7 +882,7 @@ void get_ident(const Message &msg, const MessageReMap &remap, std::string &ident
   }
 }
 
-Message::iterator get_ident(Message &msg, const MessageReMap remap, std::string &ident)
+Message::iterator get_ident(Message& msg, const MessageReMap remap, std::string& ident)
 {
   ident.clear();
 
@@ -840,7 +911,7 @@ Message::iterator get_ident(Message &msg, const MessageReMap remap, std::string 
  */
 // ----------------------------------------------------------------------
 
-bool message_has_ident(const Message &msg, std::string &ident)
+bool message_has_ident(const Message& msg, std::string& ident)
 {
   get_ident(msg, options.messageremap, ident);
 
@@ -853,7 +924,7 @@ bool message_has_ident(const Message &msg, std::string &ident)
  */
 // ----------------------------------------------------------------------
 
-bool message_is_significant(const Message &msg)
+bool message_is_significant(const Message& msg)
 {
   // Keep all levels if --insignificant was used
   if (options.insignificant)
@@ -874,54 +945,137 @@ bool message_is_significant(const Message &msg)
  */
 // ----------------------------------------------------------------------
 
-static bool replicating = false;  // set to true if FLAG_CLASS31 is encountered
+// ----------------------------------------------------------------------
+/*!
+ * \brief Split the expanded elements into one contiguous range per subset
+ *
+ * eccodes lays out subsets differently depending on compression:
+ *
+ *  - compressed: every element key holds one value per subset (or a single
+ *    value if constant), so all subsets share the same element list and are
+ *    distinguished by the array index.
+ *
+ *  - uncompressed: the subsets are fully expanded and concatenated into one
+ *    flat element list; each element holds a single value. Subset boundaries
+ *    are found from the recurrences of the leading (section 3) descriptor.
+ *
+ * Returns, for each subset, the [begin,end) range of element indices and the
+ * array index to use when reading a value.
+ */
+// ----------------------------------------------------------------------
 
-void append_message(Messages &messages, BUFR_Dataset *dts, BUFR_Tables *tables)
+struct SubsetRange
 {
-  int nsubsets = bufr_count_datasubset(dts);
+  size_t begin;
+  size_t end;
+  int index;  // array index into BufrElement::values / svalues
+};
 
-  int replication_count = -1;  // value of that descriptor
-  int replicating_desc = -1;   // the id of the descriptor following above
-  Message replicated_message;  // the message when replication starts
+std::vector<SubsetRange> subset_ranges(const std::vector<BufrElement>& elements,
+                                       long nsubsets,
+                                       bool compressed)
+{
+  std::vector<SubsetRange> ranges;
 
-  int nmax = (options.subsets ? nsubsets : 1);
+  if (nsubsets <= 1 || elements.empty())
+  {
+    ranges.push_back({0, elements.size(), 0});
+    return ranges;
+  }
 
-  for (int i = 0; i < nmax; i++)
+  if (compressed)
+  {
+    // Same element list for every subset, one value per subset
+    for (int s = 0; s < nsubsets; s++)
+      ranges.push_back({0, elements.size(), s});
+    return ranges;
+  }
+
+  // Uncompressed: split the flat list on recurrences of the leading descriptor
+
+  int lead = elements[0].code;
+  std::vector<size_t> starts;
+  for (size_t i = 0; i < elements.size(); i++)
+    if (elements[i].code == lead)
+      starts.push_back(i);
+
+  if (static_cast<long>(starts.size()) == nsubsets)
+  {
+    for (size_t k = 0; k < starts.size(); k++)
+      ranges.push_back({starts[k], (k + 1 < starts.size() ? starts[k + 1] : elements.size()), 0});
+  }
+  else if (elements.size() % nsubsets == 0)
+  {
+    // Leading descriptor is ambiguous; fall back to an even split
+    size_t per = elements.size() / nsubsets;
+    for (int s = 0; s < nsubsets; s++)
+      ranges.push_back({s * per, (s + 1) * per, 0});
+  }
+  else
+  {
+    // Cannot separate the subsets reliably; process as a single stream
+    ranges.push_back({0, elements.size(), 0});
+  }
+
+  return ranges;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Append records from a decoded message to a list
+ */
+// ----------------------------------------------------------------------
+
+void append_message(Messages& messages,
+                    const std::vector<BufrElement>& elements,
+                    long nsubsets,
+                    bool compressed)
+{
+  std::vector<SubsetRange> ranges = subset_ranges(elements, nsubsets, compressed);
+
+  for (const SubsetRange& range : ranges)
   {
     Message message;
-    DataSubset *subset = bufr_get_datasubset(dts, i);
-    int ndescriptors = bufr_datasubset_count_descriptor(subset);
+
+    // Replication state is reset for every subset
+    bool replicating = false;    // set to true if a class 31 descriptor is encountered
+    int replication_count = -1;  // value of that descriptor
+    int replicating_desc = -1;   // the id of the descriptor following above
+    Message replicated_message;  // the message when replication starts
 
     if (options.debug)
-      std::cout << "Subset " << i + 1 << " has " << ndescriptors << " descriptors" << std::endl;
+      std::cout << "Subset has " << (range.end - range.begin) << " descriptors" << std::endl;
 
-    // Loop over the descriptors
+    // Loop over the expanded descriptors of this subset
 
-    for (int j = 0; j < ndescriptors; j++)
+    for (size_t j = range.begin; j < range.end; j++)
     {
-      BufrDescriptor *bufr = bufr_datasubset_get_descriptor(subset, j);
+      const BufrElement& elem = elements[j];
+      int desc = elem.code;
 
-      if (bufr->flags & FLAG_CLASS31)
+      // Class 31 descriptors carry replication factors
+      bool is_class31 = (desc >= 31000 && desc < 32000);
+
+      if (is_class31)
       {
         replicating = true;
         replicated_message = message;
       }
 
-      if (bufr->flags & FLAG_SKIPPED)
-        continue;
-
-      int desc = (bufr->s_descriptor != 0 ? bufr->s_descriptor : bufr->descriptor);
-
       // Begin recording the info
       record rec;
-      extract_record_name_and_units(rec, desc, bufr, tables);
-      extract_record_value(rec, bufr);
+      rec.name = elem.name;
+      rec.units = elem.units;
+      if (elem.type == GRIB_TYPE_STRING)
+        rec.svalue = element_svalue(elem, range.index);
+      else
+        rec.value = element_value(elem, range.index);
 
       // std::cout << desc << " " << rec.name << " = " << rec.value << std::endl;
 
       if (replicating && replicating_desc < 0)
       {
-        if (!(bufr->flags & FLAG_CLASS31))
+        if (!is_class31)
         {
           replicating_desc = desc;
         }
@@ -970,15 +1124,14 @@ void append_message(Messages &messages, BUFR_Dataset *dts, BUFR_Tables *tables)
  */
 // ----------------------------------------------------------------------
 
-void read_message(const std::string &filename,
-                  Messages &messages,
-                  BUFR_Tables *file_tables,
-                  LinkedList *tables_list,
-                  std::set<int> &datacategories)
+void read_message(const std::string& filename,
+                  Messages& messages,
+                  std::set<int>& datacategories,
+                  std::set<int>& skipped_categories)
 {
   // Open the file
 
-  FILE *bufr = fopen(filename.c_str(),
+  FILE* bufr = fopen(filename.c_str(),
                      "rb");  // VC++ vaatii että avataan binäärisenä (Linuxissa se on default)
   if (bufr == nullptr)
   {
@@ -991,17 +1144,17 @@ void read_message(const std::string &filename,
   // Read the messages one by one
 
   int count = 0;
+  int err = CODES_SUCCESS;
+  codes_handle* h = nullptr;
 
-  BUFR_Message *msg = nullptr;
-
-  while (bufr_read_message(bufr, &msg) > 0)
+  while ((h = codes_handle_new_from_file(nullptr, bufr, PRODUCT_BUFR, &err)) != nullptr)
   {
     ++count;
 
     // If a particular message is wanted, skip all other messages
     if (options.messagenumber != 0 && count != options.messagenumber)
     {
-      bufr_free_message(msg);
+      codes_handle_delete(h);
       if (options.debug)
         std::cout << "Skipping message number " << count << std::endl;
       continue;
@@ -1011,97 +1164,78 @@ void read_message(const std::string &filename,
 
     try
     {
-      // Print message headers
+      // Data category lives in section 1 and can be read without unpacking
 
-      if (options.verbose)
+      long msg_type = -1;
+      codes_get_long(h, "dataCategory", &msg_type);
+
+      // Skip messages of a non-requested category (when -C is used)
+
+      if (!options.category.empty() &&
+          static_cast<int>(msg_type) != data_category(options.category))
       {
-        std::cout << "MESSAGE NUMBER " << count << std::endl;
-        bufr_print_message(msg, bufr_print_output);
-      }
-
-      // Save data category if necessary
-
-      if (options.category.empty())
-        datacategories.insert(msg->s1.msg_type);
-      else if (msg->s1.msg_type == data_category(options.category))
-        datacategories.insert(msg->s1.msg_type);
-      else
-      {
-        bufr_free_message(msg);
+        codes_handle_delete(h);
         if (options.debug)
           std::cout << "Message " << count << " in " << filename << " is not of desired category"
                     << std::endl;
         continue;
       }
 
-      // Use default tables first
+      // Skip categories the tool cannot handle *before* the expensive decode.
+      // Doing this after unpacking would fully expand large multi-subset
+      // messages (e.g. satellite soundings) only to reject them later.
 
-      BUFR_Tables *use_tables = file_tables;
-
-      // Try to find another if not compatible
-
-      if (use_tables->master.version != msg->s1.master_table_version)
-        use_tables = bufr_use_tables_list(tables_list, msg->s1.master_table_version);
-
-      // Read the dataset
-
-      BUFR_Dataset *dts = nullptr;
-      if (use_tables == nullptr)
+      if (!supported_category(BufrDataCategory(msg_type)))
       {
-        // dts = nullptr;  // is already null
-        std::cerr << "Warning: No BUFR table version " << msg->s1.master_table_version
-                  << " available" << std::endl;
-      }
-      else
-      {
-        dts = bufr_decode_message(msg, use_tables);
-        if (options.verbose)
-        {
-          std::cout << "Decoding message version " << msg->s1.master_table_version
-                    << " with BUFR tables version " << use_tables->master.version << std::endl;
-        }
+        skipped_categories.insert(static_cast<int>(msg_type));
+        codes_handle_delete(h);
+        if (options.debug)
+          std::cout << "Message " << count << " in " << filename << " has unsupported category "
+                    << msg_type << std::endl;
+        continue;
       }
 
-      if (dts == nullptr)
-      {
-        bufr_free_message(msg);
-        // continuing at this point may cause a segmentation fault
-        throw std::runtime_error("Could not decode message " + Fmi::to_string(count));
-      }
-      if (dts->data_flag & BUFR_FLAG_INVALID)
-      {
-        bufr_free_message(msg);
-        // continuing at this point may cause a segmentation fault
-        throw std::runtime_error("Message number " + Fmi::to_string(count) + " is invalid");
-      }
+      datacategories.insert(static_cast<int>(msg_type));
 
-      // Search for local table updates
+      long nsubsets = 1;
+      codes_get_long(h, "numberOfSubsets", &nsubsets);
+      long compressed = 0;
+      codes_get_long(h, "compressedData", &compressed);
 
-      if (bufr_contains_tables(dts))
+      if (options.verbose)
       {
-        BUFR_Tables *tables = bufr_extract_tables(dts);
-        if (tables != nullptr)
-        {
-          bufr_tables_list_merge(tables_list, tables);
-          bufr_free_tables(tables);
-        }
+        long version = -1;
+        codes_get_long(h, "masterTablesVersionNumber", &version);
+        std::cout << "MESSAGE NUMBER " << count << " (data category " << msg_type << ", "
+                  << nsubsets << " subsets, " << (compressed ? "compressed" : "uncompressed")
+                  << ", master table version " << version << ")" << std::endl;
       }
 
-      append_message(messages, dts, file_tables);
+      // Decode (expand and unpack) the message
 
-      // Done with the current message
+      int rc = codes_set_long(h, "unpack", 1);
+      if (rc != CODES_SUCCESS)
+        throw std::runtime_error("Message number " + Fmi::to_string(count) +
+                                 " could not be decoded: " + codes_get_error_message(rc));
 
-      bufr_free_dataset(dts);
-      bufr_free_message(msg);
+      std::vector<BufrElement> elements = extract_elements(h);
+
+      append_message(messages, elements, nsubsets, compressed != 0);
     }
-    catch (std::exception &e)
+    catch (std::exception& e)
     {
       std::cerr << "Warning: " << e.what() << "  ...skipping to next message in '" << filename
                 << "'" << std::endl;
     }
+
+    codes_handle_delete(h);
   }
 
   fclose(bufr);
+
+  if (err != CODES_SUCCESS)
+    throw std::runtime_error("Error reading BUFR file '" + filename +
+                             "': " + codes_get_error_message(err));
 }
 
 // ----------------------------------------------------------------------
@@ -1110,59 +1244,39 @@ void read_message(const std::string &filename,
  */
 // ----------------------------------------------------------------------
 
-std::pair<BufrDataCategory, Messages> read_messages(const std::list<std::string> &files)
+std::pair<BufrDataCategory, Messages> read_messages(const std::list<std::string>& files)
 {
   Messages messages;
 
   // We verify that there is only one type of message
   std::set<int> datacategories;
 
-  // Load CMC Table B and D
+  // Categories that were seen but skipped because the tool cannot handle them
+  std::set<int> skipped_categories;
 
-  BUFR_Tables *file_tables = bufr_create_tables();
-  bufr_load_cmc_tables(file_tables);
-
-  // Load all tables into a list
-
-  int tablenos[2] = {13, 0};
-  LinkedList *tables_list = bufr_load_tables_list(getenv("BUFR_TABLES"), tablenos, 1);
-
-  // Add version 14 to the list
-
-  lst_addfirst(tables_list, lst_newnode(file_tables));
-
-  // Load local tables to the list (if they are used)
+  // eccodes manages its own BUFR table definitions (selected per message from
+  // the master/local table version numbers), so the local table options are
+  // no longer used.
 
   if (!options.localtableB.empty() || !options.localtableD.empty())
-  {
-    if (options.verbose)
-      std::cout << "Reading local tables B and D" << std::endl;
-
-    char *tableB = const_cast<char *>(options.localtableB.c_str());
-    char *tableD = const_cast<char *>(options.localtableD.c_str());
-
-    // This prints a warning if both tableB and tableD are 0.
-    // Never tested what happens if only one is given.
-
-    bufr_tables_list_addlocal(tables_list, tableB, tableD);
-  }
+    std::cerr << "Warning: options -B/--localtableB and -D/--localtableD are ignored; "
+                 "eccodes uses its own BUFR table definitions (set ECCODES_DEFINITION_PATH "
+                 "to use custom tables)"
+              << std::endl;
 
   // Process the files
 
   int succesful_parse_events = 0;
   int errorneous_parse_events = 0;
 
-  for (const std::string &file : files)
+  for (const std::string& file : files)
   {
-    // Reset for each file
-    replicating = false;
-
     try
     {
-      read_message(file, messages, file_tables, tables_list, datacategories);
+      read_message(file, messages, datacategories, skipped_categories);
       succesful_parse_events++;
     }
-    catch (std::exception &e)
+    catch (std::exception& e)
     {
       errorneous_parse_events++;
       std::cerr << "Warning: " << e.what() << std::endl;
@@ -1175,7 +1289,26 @@ std::pair<BufrDataCategory, Messages> read_messages(const std::list<std::string>
   }
 
   if (datacategories.size() == 0)
+  {
+    if (!skipped_categories.empty())
+    {
+      std::list<std::string> names;
+      for (int tmp : skipped_categories)
+        names.push_back(data_category_name(BufrDataCategory(tmp)));
+      throw std::runtime_error("Cannot handle data category: " +
+                               boost::algorithm::join(names, ","));
+    }
     throw std::runtime_error("Failed to find any bufr data categories");
+  }
+
+  if (options.verbose && !skipped_categories.empty())
+  {
+    std::list<std::string> names;
+    for (int tmp : skipped_categories)
+      names.push_back(data_category_name(BufrDataCategory(tmp)));
+    std::cout << "Skipped unsupported data categories: " << boost::algorithm::join(names, ",")
+              << std::endl;
+  }
 
   // Cannot handle soundings and other data simultaneously
 
@@ -1205,7 +1338,7 @@ std::pair<BufrDataCategory, Messages> read_messages(const std::list<std::string>
  */
 // ----------------------------------------------------------------------
 
-std::set<std::string> collect_names(const Messages &messages)
+std::set<std::string> collect_names(const Messages& messages)
 {
   std::set<std::string> names;
 
@@ -1236,10 +1369,10 @@ std::set<std::string> collect_names(const Messages &messages)
  */
 // ----------------------------------------------------------------------
 
-NameMap map_names(const std::set<std::string> &names, const NameMap &pmap)
+NameMap map_names(const std::set<std::string>& names, const NameMap& pmap)
 {
   NameMap namemap;
-  for (const ::std::string &name : names)
+  for (const ::std::string& name : names)
   {
     NameMap::const_iterator it = pmap.find(name);
     if (it != pmap.end())
@@ -1303,7 +1436,7 @@ struct CsvConfig
 {
   NameMap pmap;
 
-  void add(const Fmi::CsvReader::row_type &row)
+  void add(const Fmi::CsvReader::row_type& row)
   {
     if (row.size() == 0)
       return;
@@ -1377,11 +1510,11 @@ NFmiAviationStationInfoSystem read_station_csv()
  */
 // ----------------------------------------------------------------------
 
-NFmiParamDescriptor create_pdesc(const NameMap &namemap, BufrDataCategory category)
+NFmiParamDescriptor create_pdesc(const NameMap& namemap, BufrDataCategory category)
 {
   NFmiParamBag pbag;
 
-  for (const NameMap::value_type &values : namemap)
+  for (const NameMap::value_type& values : namemap)
   {
     NFmiParam p(values.second.parId, values.second.shortName);
     p.InterpolationMethod(kLinearly);
@@ -1410,16 +1543,16 @@ NFmiParamDescriptor create_pdesc(const NameMap &namemap, BufrDataCategory catego
  */
 // ----------------------------------------------------------------------
 
-int count_sounding_levels(const Messages &messages)
+int count_sounding_levels(const Messages& messages)
 {
   int wmo_station = 0;
   int max_levels = 0;
   int levels = 0;
-  for (const Message &msg : messages)
+  for (const Message& msg : messages)
   {
     ++levels;
 
-    for (const Message::value_type &values : msg)
+    for (const Message::value_type& values : msg)
     {
       if (values.first == 1002)  // does wmo station change?
       {
@@ -1446,7 +1579,7 @@ int count_sounding_levels(const Messages &messages)
  */
 // ----------------------------------------------------------------------
 
-NFmiVPlaceDescriptor create_vdesc(const Messages &messages,
+NFmiVPlaceDescriptor create_vdesc(const Messages& messages,
                                   BufrDataCategory category,
                                   size_t levelcount)
 {
@@ -1522,7 +1655,7 @@ NFmiStation get_amdar_station()
 
   const float lon = kFloatMissing;
   const float lat = kFloatMissing;
-  const char *name = "AMDAR Dummy Station";
+  const char* name = "AMDAR Dummy Station";
 
   return NFmiStation(dummy_wmo, name, lon, lat);
 }
@@ -1562,14 +1695,14 @@ NFmiHPlaceDescriptor create_hdesc_amdar()
  */
 // ----------------------------------------------------------------------
 
-NFmiHPlaceDescriptor create_hdesc_buoy_ship(const Messages &messages)
+NFmiHPlaceDescriptor create_hdesc_buoy_ship(const Messages& messages)
 {
   // First list all unique station IDs
 
   typedef std::map<std::string, NFmiPoint> Stations;
   Stations stations;
 
-  for (const Message &msg : messages)
+  for (const Message& msg : messages)
   {
     Message::const_iterator p_id = msg.find(1005);
     if (p_id == msg.end())
@@ -1616,7 +1749,7 @@ NFmiHPlaceDescriptor create_hdesc_buoy_ship(const Messages &messages)
 
   NFmiLocationBag lbag;
   int number = 0;
-  for (const Stations::value_type &name_coord : stations)
+  for (const Stations::value_type& name_coord : stations)
   {
     ++number;
 
@@ -1638,7 +1771,7 @@ NFmiHPlaceDescriptor create_hdesc_buoy_ship(const Messages &messages)
  */
 // ----------------------------------------------------------------------
 
-NFmiStation get_station(const Message &msg)
+NFmiStation get_station(const Message& msg)
 {
   Message::const_iterator wmoblock = msg.find(1001);
   Message::const_iterator wmonumber = msg.find(1002);
@@ -1684,7 +1817,7 @@ NFmiStation get_station(const Message &msg)
  */
 // ----------------------------------------------------------------------
 
-int accuracy_estimate(const NFmiPoint &coord)
+int accuracy_estimate(const NFmiPoint& coord)
 {
   auto str = fmt::format("{}{}", coord.X(), coord.Y());
   return str.size();
@@ -1698,8 +1831,8 @@ int accuracy_estimate(const NFmiPoint &coord)
  */
 // ----------------------------------------------------------------------
 
-NFmiHPlaceDescriptor create_hdesc(const Messages &messages,
-                                  NFmiAviationStationInfoSystem &stationinfos,
+NFmiHPlaceDescriptor create_hdesc(const Messages& messages,
+                                  NFmiAviationStationInfoSystem& stationinfos,
                                   BufrDataCategory category)
 {
   // AMDAR descriptor is special (airplane measurements)
@@ -1714,7 +1847,7 @@ NFmiHPlaceDescriptor create_hdesc(const Messages &messages,
 
   std::map<long, NFmiStation> stations;
 
-  for (const Message &msg : messages)
+  for (const Message& msg : messages)
   {
     NFmiStation station = get_station(msg);
 
@@ -1722,10 +1855,10 @@ NFmiHPlaceDescriptor create_hdesc(const Messages &messages,
     {
       auto pos = stations.insert(std::make_pair(station.GetIdent(), station));
       // Handle stations with different coordinates
-      auto &iter = pos.first;
+      auto& iter = pos.first;
       if (!pos.second && iter->second.GetLocation() != station.GetLocation())
       {
-        auto &oldstation = iter->second;
+        auto& oldstation = iter->second;
         auto acc1 = accuracy_estimate(oldstation.GetLocation());
         auto acc2 = accuracy_estimate(station.GetLocation());
         // Use the one which seems to have more significant decimals
@@ -1740,11 +1873,11 @@ NFmiHPlaceDescriptor create_hdesc(const Messages &messages,
   // possible.
 
   NFmiLocationBag lbag;
-  for (const auto &id_station : stations)
+  for (const auto& id_station : stations)
   {
-    const auto &station = id_station.second;
+    const auto& station = id_station.second;
 
-    NFmiAviationStation *stationinfo = stationinfos.FindStation(station.GetIdent());
+    NFmiAviationStation* stationinfo = stationinfos.FindStation(station.GetIdent());
 
     if (stationinfo == 0)
     {
@@ -1778,7 +1911,7 @@ NFmiHPlaceDescriptor create_hdesc(const Messages &messages,
  */
 // ----------------------------------------------------------------------
 
-NFmiMetTime get_validtime(const Message &msg)
+NFmiMetTime get_validtime(const Message& msg)
 {
   Message::const_iterator yy_i = msg.find(4001);
   Message::const_iterator mm_i = msg.find(4002);
@@ -1836,12 +1969,12 @@ NFmiMetTime get_validtime(const Message &msg)
  */
 // ----------------------------------------------------------------------
 
-NFmiMetTime get_validtime_amdar(std::set<NFmiMetTime> &used_times,
-                                const Message &message,
-                                std::string &ident,
+NFmiMetTime get_validtime_amdar(std::set<NFmiMetTime>& used_times,
+                                const Message& message,
+                                std::string& ident,
                                 bool requireident = false,
                                 bool matchident = false,
-                                const IdentTimeMap &identtimemap = IdentTimeMap())
+                                const IdentTimeMap& identtimemap = IdentTimeMap())
 {
   // If selected/stored validtime is required and already exists for the amdar, use it
 
@@ -1862,11 +1995,11 @@ NFmiMetTime get_validtime_amdar(std::set<NFmiMetTime> &used_times,
   // to be the case in actual messages
   short year = -1, month = -1, day = -1, hour = -1, minute = -1, second = 0;
 
-  for (const Message::value_type &values : message)
+  for (const Message::value_type& values : message)
   {
     // shorthand variables
     const int descriptor = values.first;
-    const record &rec = values.second;
+    const record& rec = values.second;
 
     switch (descriptor)
     {
@@ -1938,9 +2071,9 @@ NFmiMetTime get_validtime_amdar(std::set<NFmiMetTime> &used_times,
  */
 // ----------------------------------------------------------------------
 
-NFmiTimeDescriptor create_tdesc_ident(const Messages &messages,
-                                      const TimeIdentList &timeidentlist,
-                                      const IdentTimeMap &identtimemap)
+NFmiTimeDescriptor create_tdesc_ident(const Messages& messages,
+                                      const TimeIdentList& timeidentlist,
+                                      const IdentTimeMap& identtimemap)
 {
   // Use the earliest message time for all messages/data for each amdar/sounding
 
@@ -1948,7 +2081,7 @@ NFmiTimeDescriptor create_tdesc_ident(const Messages &messages,
 
   if (options.debug)
   {
-    for (auto const &identtime : identtimemap)
+    for (auto const& identtime : identtimemap)
     {
       fprintf(stderr,
               "IdentTime %s %s\n",
@@ -1957,7 +2090,7 @@ NFmiTimeDescriptor create_tdesc_ident(const Messages &messages,
     }
   }
 
-  for (auto const &timeident : timeidentlist)
+  for (auto const& timeident : timeidentlist)
   {
     auto it = identtimemap.find(timeident);
     tlist.Add(new NFmiMetTime(it->second, true));
@@ -1980,7 +2113,7 @@ NFmiTimeDescriptor create_tdesc_ident(const Messages &messages,
  */
 // ----------------------------------------------------------------------
 
-NFmiTimeDescriptor create_tdesc_amdar(const Messages &messages)
+NFmiTimeDescriptor create_tdesc_amdar(const Messages& messages)
 {
   NFmiTimeList tlist;
 
@@ -1989,7 +2122,7 @@ NFmiTimeDescriptor create_tdesc_amdar(const Messages &messages)
   std::set<NFmiMetTime> validtimes;
   std::string ident;
 
-  for (const Message &msg : messages)
+  for (const Message& msg : messages)
   {
     // Return value can be ignored here
     get_validtime_amdar(validtimes, msg, ident);
@@ -1997,7 +2130,7 @@ NFmiTimeDescriptor create_tdesc_amdar(const Messages &messages)
 
   // Then the final timelist
 
-  for (const NFmiMetTime &t : validtimes)
+  for (const NFmiMetTime& t : validtimes)
   {
     tlist.Add(new NFmiMetTime(t));
   }
@@ -2012,10 +2145,10 @@ NFmiTimeDescriptor create_tdesc_amdar(const Messages &messages)
  */
 // ----------------------------------------------------------------------
 
-NFmiTimeDescriptor create_tdesc(const Messages &messages,
+NFmiTimeDescriptor create_tdesc(const Messages& messages,
                                 BufrDataCategory category,
-                                const TimeIdentList &timeidentlist,
-                                const IdentTimeMap &identtimemap)
+                                const TimeIdentList& timeidentlist,
+                                const IdentTimeMap& identtimemap)
 {
   // Special cases
 
@@ -2027,20 +2160,20 @@ NFmiTimeDescriptor create_tdesc(const Messages &messages,
   // Normal cases
 
   std::set<NFmiMetTime> validtimes;
-  for (const Message &msg : messages)
+  for (const Message& msg : messages)
   {
     try
     {
       validtimes.insert(get_validtime(msg));
     }
-    catch (const std::exception &e)
+    catch (const std::exception& e)
     {
       std::cerr << "Skipping errorneous valid time: " << e.what() << std::endl;
     }
   }
 
   NFmiTimeList tlist;
-  for (const NFmiMetTime &t : validtimes)
+  for (const NFmiMetTime& t : validtimes)
   {
     tlist.Add(new NFmiMetTime(t));
   }
@@ -2054,7 +2187,7 @@ NFmiTimeDescriptor create_tdesc(const Messages &messages,
  */
 // ----------------------------------------------------------------------
 
-float normal_value(const record &rec)
+float normal_value(int code, const record& rec)
 {
   if (rec.value == kFloatMissing)
     return kFloatMissing;
@@ -2063,15 +2196,17 @@ float normal_value(const record &rec)
   if (rec.units == "K")
     return static_cast<float>(rec.value - 273.15);
 
-  // Pascal to hecto-Pascal
-  if (rec.units == "PA")
+  // Pascal to hecto-Pascal. libecbufr reported the unit as "PA", eccodes as "Pa".
+  if (rec.units == "PA" || rec.units == "Pa")
     return static_cast<float>(rec.value / 100.0);
 
-  // Cloud 8ths to 0-100%. Note that obs may also be 9, hence a min check is needed
-  if (!options.totalcloudoctas && rec.name == "CLOUD AMOUNT" && rec.units == "CODE TABLE")
+  // Cloud amount (descriptor 020011) 8ths to 0-100%. Note that obs may also be 9,
+  // hence a min check is needed.
+  if (!options.totalcloudoctas && code == 20011 && rec.units == "CODE TABLE")
     return static_cast<float>(std::min(100.0, rec.value * 100 / 8));
 
-  if (rec.name.find("PRESENT WEATHER") != std::string::npos && rec.units == "CODE TABLE")
+  // Present weather (descriptor 020003)
+  if (code == 20003 && rec.units == "CODE TABLE")
   {
     // 508 No significant phenomenon to report, present and past weather omitted
 
@@ -2095,7 +2230,7 @@ void copy_params(NFmiFastQueryInfo &info,
                  const NameMap &namemap,
                  const CodeIndex &codeindex)
 {
-  for (const Message::value_type &value : msg)
+  for (const Message::value_type& value : msg)
   {
     const ParNameInfo *pinfo = nullptr;
 
@@ -2116,7 +2251,7 @@ void copy_params(NFmiFastQueryInfo &info,
     {
       if (!info.Param(pinfo->parId))
         throw std::runtime_error("Internal error in handling parameters of the messages");
-      info.FloatValue(normal_value(value.second));
+      info.FloatValue(normal_value(value.first, value.second));
     }
   }
 }
@@ -2255,7 +2390,7 @@ void copy_records_amdar(NFmiFastQueryInfo &info,
   std::set<NFmiMetTime> validtimes;
   std::string ident, lastident;
 
-  for (const Message &msg : messages)
+  for (const Message& msg : messages)
   {
     // Without -I option:
     // There is only one station and only one level, so the initial
@@ -2370,7 +2505,7 @@ void copy_records_buoy_ship(NFmiFastQueryInfo &info,
 
   std::string laststation = "";
 
-  for (const Message &msg : messages)
+  for (const Message& msg : messages)
   {
     if (!info.Time(get_validtime(msg)))
       throw std::runtime_error("Internal error in handling valid times of the messages");
@@ -2384,7 +2519,7 @@ void copy_records_buoy_ship(NFmiFastQueryInfo &info,
         continue;
     }
 
-    const std::string &name = p_id->second.svalue;
+    const std::string& name = p_id->second.svalue;
 
     if (laststation != name)
     {
@@ -2446,11 +2581,11 @@ void copy_records_buoy_ship(NFmiFastQueryInfo &info,
  */
 // ----------------------------------------------------------------------
 
-void copy_records(NFmiFastQueryInfo &info,
-                  const Messages &messages,
-                  const NameMap &namemap,
+void copy_records(NFmiFastQueryInfo& info,
+                  const Messages& messages,
+                  const NameMap& namemap,
                   BufrDataCategory category,
-                  const std::map<std::string, NFmiMetTime> &messageTimes)
+                  const std::map<std::string, NFmiMetTime>& messageTimes)
 {
   // Integer-keyed index for fast parameter lookups (see build_code_index)
 
@@ -2471,7 +2606,7 @@ void copy_records(NFmiFastQueryInfo &info,
 
   info.First();
 
-  for (const Message &msg : messages)
+  for (const Message& msg : messages)
   {
     try
     {
@@ -2548,7 +2683,7 @@ void guess_producer(BufrDataCategory category)
  */
 // ----------------------------------------------------------------------
 
-Message::const_iterator get_phase_amdar(const Message &msg)
+Message::const_iterator get_phase_amdar(const Message& msg)
 {
   auto codes = options.messageremap.find(REMAP_PHASE);
 
@@ -2570,7 +2705,7 @@ Message::const_iterator get_phase_amdar(const Message &msg)
  */
 // ----------------------------------------------------------------------
 
-Phase get_phase_amdar(Message &msg, bool remap, int &code)
+Phase get_phase_amdar(Message& msg, bool remap, int& code)
 {
   // Phase exists, it was checked at earlier state
 
@@ -2619,7 +2754,7 @@ Phase get_phase_amdar(Message &msg, bool remap, int &code)
  */
 // ----------------------------------------------------------------------
 
-Message::const_iterator get_altitude(const Message &msg)
+Message::const_iterator get_altitude(const Message& msg)
 {
   auto codes = options.messageremap.find(REMAP_ALTITUDE);
 
@@ -2643,7 +2778,7 @@ Message::const_iterator get_altitude(const Message &msg)
  */
 // ----------------------------------------------------------------------
 
-double get_altitude(Message &msg, bool remap)
+double get_altitude(Message& msg, bool remap)
 {
   // Altitude exists, it was checked at earlier state
 
@@ -2695,14 +2830,14 @@ double get_altitude(Message &msg, bool remap)
  */
 // ----------------------------------------------------------------------
 
-Phase get_phase_amdar(Message &msg,
-                      Message &lasttakeoffmsg,
+Phase get_phase_amdar(Message& msg,
+                      Message& lasttakeoffmsg,
                       Phase curphase,
-                      Phase &lastmsgphase,
-                      bool &phasechange,
-                      bool &phaserestart,
-                      bool &phasereset,
-                      double &lastaltitude)
+                      Phase& lastmsgphase,
+                      bool& phasechange,
+                      bool& phaserestart,
+                      bool& phasereset,
+                      double& lastaltitude)
 {
   int code;
   Phase msgphase = get_phase_amdar(msg, true, code);
@@ -2814,11 +2949,11 @@ Phase get_phase_amdar(Message &msg,
  */
 // ----------------------------------------------------------------------
 
-int get_obscount(const NameMap &namemap, const Message &msg)
+int get_obscount(const NameMap& namemap, const Message& msg)
 {
   int obscount = 0;
 
-  for (const Message::value_type &value : msg)
+  for (const Message::value_type& value : msg)
   {
     auto key = fmt::format("{:0>6}", value.first);
 
@@ -2838,7 +2973,7 @@ int get_obscount(const NameMap &namemap, const Message &msg)
  */
 // ----------------------------------------------------------------------
 
-void remove_duplicate_messages_amdar(const NameMap &namemap, Phase phase, Messages &phasemessages)
+void remove_duplicate_messages_amdar(const NameMap& namemap, Phase phase, Messages& phasemessages)
 {
   Messages::iterator mit = phasemessages.begin(), mit0 = phasemessages.end();
   std::set<NFmiMetTime> dummytimes;
@@ -2848,7 +2983,7 @@ void remove_duplicate_messages_amdar(const NameMap &namemap, Phase phase, Messag
 
   for (; (mit != phasemessages.end());)
   {
-    Message &msg = *mit;
+    Message& msg = *mit;
 
     double altitude = get_altitude(msg, false);
     bool altitudechange = ((mit == phasemessages.begin()) || (fabs(altitude - lastaltitude) > 1));
@@ -2915,11 +3050,11 @@ void remove_duplicate_messages_amdar(const NameMap &namemap, Phase phase, Messag
  */
 // ----------------------------------------------------------------------
 
-void limit_duration_amdar(const NameMap &namemap,
+void limit_duration_amdar(const NameMap& namemap,
                           Phase phase,
-                          Messages &phasemessages,
-                          IdentTimeMap &identtimemap,
-                          size_t &levelcount)
+                          Messages& phasemessages,
+                          IdentTimeMap& identtimemap,
+                          size_t& levelcount)
 {
   remove_duplicate_messages_amdar(namemap, phase, phasemessages);
 
@@ -3037,9 +3172,9 @@ void limit_duration_amdar(const NameMap &namemap,
  */
 // ----------------------------------------------------------------------
 
-void remap_message_amdar(Message &msg)
+void remap_message_amdar(Message& msg)
 {
-  for (auto const &codes : options.messageremap)
+  for (auto const& codes : options.messageremap)
   {
     // These have been remapped already
 
@@ -3093,11 +3228,11 @@ void remap_message_amdar(Message &msg)
  */
 // ----------------------------------------------------------------------
 
-void debug_state_amdar(const std::string &ident,
-                       const std::string &lastorigident,
+void debug_state_amdar(const std::string& ident,
+                       const std::string& lastorigident,
                        Phase curphase,
                        Phase lastphase,
-                       std::string &state)
+                       std::string& state)
 {
   state = (ident != lastorigident) ? "new " : "";
 
@@ -3163,14 +3298,14 @@ void debug_state_amdar(const std::string &ident,
  */
 // ----------------------------------------------------------------------
 
-void set_phase_amdar(Phase phase, Messages &phasemessages)
+void set_phase_amdar(Phase phase, Messages& phasemessages)
 {
   int code;
 
   if (phase != Takeoff)
     phase = Landing;
 
-  for (auto &msg : phasemessages)
+  for (auto& msg : phasemessages)
   {
     get_phase_amdar(msg, false, code);
 
@@ -3186,13 +3321,13 @@ void set_phase_amdar(Phase phase, Messages &phasemessages)
  */
 // ----------------------------------------------------------------------
 
-void store_messages_amdar(const NameMap &namemap,
-                          const std::string &nextident,
+void store_messages_amdar(const NameMap& namemap,
+                          const std::string& nextident,
                           Phase phase,
-                          Messages &phasemessages,
-                          IdentTimeMap &identtimemap,
-                          TimeIdentMessageMap &timeidentmessages,
-                          size_t &levelcount)
+                          Messages& phasemessages,
+                          IdentTimeMap& identtimemap,
+                          TimeIdentMessageMap& timeidentmessages,
+                          size_t& levelcount)
 {
   // Taking allowed max duration into account, ignore messages from the end of takeoff
   // or the start of landing. Remove duplicate messages. Ignore the phase/amdar if it
@@ -3245,13 +3380,13 @@ void store_messages_amdar(const NameMap &namemap,
  */
 // ----------------------------------------------------------------------
 
-void organize_messages_amdar(const Messages &origmessages,
-                             const NameMap &parammap,
-                             NameMap &namemap,
-                             Messages &messages,
-                             TimeIdentList &timeidentlist,
-                             IdentTimeMap &identtimemap,
-                             size_t &levelcount)
+void organize_messages_amdar(const Messages& origmessages,
+                             const NameMap& parammap,
+                             NameMap& namemap,
+                             Messages& messages,
+                             TimeIdentList& timeidentlist,
+                             IdentTimeMap& identtimemap,
+                             size_t& levelcount)
 {
   typedef std::map<std::string, Message> TimeMessageMap;
   typedef std::map<std::string, TimeMessageMap> MessageMap;
@@ -3266,7 +3401,7 @@ void organize_messages_amdar(const Messages &origmessages,
   // Store messages into a map using aircraft/amdar ident as the (main) key.
   // Filter off messages with missing/unknown ident, phase of flight or altitude
 
-  for (const Message &msg : origmessages)
+  for (const Message& msg : origmessages)
   {
     try
     {
@@ -3289,7 +3424,7 @@ void organize_messages_amdar(const Messages &origmessages,
 
       // Remap bufr codes. There are 3 remappings by default; ident, phase of flight and altitude
 
-      const Message &fmsg = ((options.messageremap.size() > 3) ? remappedmsg : msg);
+      const Message& fmsg = ((options.messageremap.size() > 3) ? remappedmsg : msg);
 
       if (options.messageremap.size() > 3)
       {
@@ -3319,7 +3454,7 @@ void organize_messages_amdar(const Messages &origmessages,
       else
         it->second.insert(std::make_pair(to_iso_string(t.PosixTime()), fmsg));
     }
-    catch (std::exception &e)
+    catch (std::exception& e)
     {
       std::cerr << "Warning: " << e.what() << " ... skipping message " << msgnbr << std::endl;
     }
@@ -3354,7 +3489,7 @@ void organize_messages_amdar(const Messages &origmessages,
 
     for (; imt != imm->second.end(); imt++)
     {
-      auto &msg = imt->second;
+      auto& msg = imt->second;
       auto iit = get_ident(msg, options.messageremap, msgident);
       const std::string ident = imm->first;
       bool identchange = (ident != lastorigident);
@@ -3401,7 +3536,7 @@ void organize_messages_amdar(const Messages &origmessages,
         lastident = ident + "_" + cntrstr + "_" + Fmi::to_string(curphase);
         lastorigident = ident;
 
-        auto *firstmessage = &msg;
+        auto* firstmessage = &msg;
 
         if (!phasemessages.empty())
         {
@@ -3477,13 +3612,13 @@ void organize_messages_amdar(const Messages &origmessages,
 
   // Store the amdar idents in time and messages in time and ident order into lists
 
-  for (auto const &timeidents : timeidentmessages)
+  for (auto const& timeidents : timeidentmessages)
   {
     if (options.debug)
       fprintf(
           stderr, "TimeIdent %s %lu idents\n", timeidents.first.c_str(), timeidents.second.size());
 
-    for (auto const &identmessages : timeidents.second)
+    for (auto const& identmessages : timeidents.second)
     {
       if (options.debug)
         fprintf(stderr,
@@ -3510,9 +3645,9 @@ void organize_messages_amdar(const Messages &origmessages,
  */
 // ----------------------------------------------------------------------
 
-void remove_duplicate_messages_sounding(const NameMap &namemap,
-                                        const std::string &ident,
-                                        Messages &soundingmessages)
+void remove_duplicate_messages_sounding(const NameMap& namemap,
+                                        const std::string& ident,
+                                        Messages& soundingmessages)
 {
   Messages::iterator mit = soundingmessages.begin(), mit0 = soundingmessages.end();
   double lastaltitude = 0.0;
@@ -3520,7 +3655,7 @@ void remove_duplicate_messages_sounding(const NameMap &namemap,
 
   for (; (mit != soundingmessages.end());)
   {
-    Message &msg = *mit;
+    Message& msg = *mit;
 
     double altitude = get_altitude(msg, false);
     bool altitudechange =
@@ -3578,11 +3713,11 @@ void remove_duplicate_messages_sounding(const NameMap &namemap,
  */
 // ----------------------------------------------------------------------
 
-void limit_duration_sounding(const NameMap &namemap,
-                             const std::string &ident,
-                             Messages &soundingmessages,
-                             IdentTimeMap &identtimemap,
-                             size_t &levelcount)
+void limit_duration_sounding(const NameMap& namemap,
+                             const std::string& ident,
+                             Messages& soundingmessages,
+                             IdentTimeMap& identtimemap,
+                             size_t& levelcount)
 {
   remove_duplicate_messages_sounding(namemap, ident, soundingmessages);
 
@@ -3672,15 +3807,15 @@ void limit_duration_sounding(const NameMap &namemap,
  */
 // ----------------------------------------------------------------------
 
-void store_messages_sounding(const NameMap &namemap,
+void store_messages_sounding(const NameMap& namemap,
                              long station,
-                             StationTimeSet &stationtimeset,
-                             const std::string &ident,
-                             const std::string &nextident,
-                             Messages &soundingmessages,
-                             IdentTimeMap &identtimemap,
-                             TimeIdentMessageMap &timeidentmessages,
-                             size_t &levelcount)
+                             StationTimeSet& stationtimeset,
+                             const std::string& ident,
+                             const std::string& nextident,
+                             Messages& soundingmessages,
+                             IdentTimeMap& identtimemap,
+                             TimeIdentMessageMap& timeidentmessages,
+                             size_t& levelcount)
 {
   // Taking allowed max duration into account, ignore messages from the end of sounding.
   // Remove duplicate messages. Ignore the sounding if it has too few messages/observations
@@ -3742,11 +3877,11 @@ void store_messages_sounding(const NameMap &namemap,
 
       int obscount1 = 0, obscount2 = 0, obscount;
 
-      for (auto const &msg1 : tii->second)
+      for (auto const& msg1 : tii->second)
         if ((obscount = get_obscount(namemap, msg1)) > obscount1)
           obscount1 = obscount;
 
-      for (auto const &msg2 : soundingmessages)
+      for (auto const& msg2 : soundingmessages)
         if ((obscount = get_obscount(namemap, msg2)) > obscount2)
           obscount2 = obscount;
 
@@ -3822,13 +3957,13 @@ void store_messages_sounding(const NameMap &namemap,
  */
 // ----------------------------------------------------------------------
 
-void organize_messages_sounding(const Messages &origmessages,
-                                const NameMap &parammap,
-                                NameMap &namemap,
-                                Messages &messages,
-                                TimeIdentList &timeidentlist,
-                                IdentTimeMap &identtimemap,
-                                size_t &levelcount)
+void organize_messages_sounding(const Messages& origmessages,
+                                const NameMap& parammap,
+                                NameMap& namemap,
+                                Messages& messages,
+                                TimeIdentList& timeidentlist,
+                                IdentTimeMap& identtimemap,
+                                size_t& levelcount)
 {
   typedef std::multimap<std::string, Message> TimeMessageMap;
   typedef std::map<long, TimeMessageMap> MessageMap;
@@ -3841,7 +3976,7 @@ void organize_messages_sounding(const Messages &origmessages,
   // Store messages into a map using station and time as the keys
   // Filter off messages with missing/unknown station or altitude
 
-  for (const Message &msg : origmessages)
+  for (const Message& msg : origmessages)
   {
     try
     {
@@ -3861,7 +3996,7 @@ void organize_messages_sounding(const Messages &origmessages,
 
       // Remap bufr codes. There are 3 remappings by default; ident, phase of flight and altitude
 
-      const Message &fmsg = ((options.messageremap.size() > 3) ? remappedmsg : msg);
+      const Message& fmsg = ((options.messageremap.size() > 3) ? remappedmsg : msg);
 
       if (options.messageremap.size() > 3)
       {
@@ -3891,7 +4026,7 @@ void organize_messages_sounding(const Messages &origmessages,
       else
         it->second.insert(std::make_pair(to_iso_string(t.PosixTime()), msg));
     }
-    catch (std::exception &e)
+    catch (std::exception& e)
     {
       std::cerr << "Warning: " << e.what() << " ... skipping message " << msgnbr << std::endl;
     }
@@ -3927,7 +4062,7 @@ void organize_messages_sounding(const Messages &origmessages,
 
     for (; imt != imm->second.end(); imt++)
     {
-      auto &msg = imt->second;
+      auto& msg = imt->second;
       long station = get_station(msg).GetIdent();
       bool stationchange = (station != laststation);
       double altitude = get_altitude(msg, true);
@@ -4010,13 +4145,13 @@ void organize_messages_sounding(const Messages &origmessages,
 
   // Store the sounding idents in time and messages in time and ident order into lists
 
-  for (auto const &timeidents : timeidentmessages)
+  for (auto const& timeidents : timeidentmessages)
   {
     if (options.debug)
       fprintf(
           stderr, "TimeIdent %s %lu idents\n", timeidents.first.c_str(), timeidents.second.size());
 
-    for (auto const &identmessages : timeidents.second)
+    for (auto const& identmessages : timeidents.second)
     {
       if (options.debug)
         fprintf(stderr,
@@ -4042,7 +4177,7 @@ void organize_messages_sounding(const Messages &origmessages,
  */
 // ----------------------------------------------------------------------
 
-void decode_cloudtypes(const Messages &origmessages, Messages &messages)
+void decode_cloudtypes(const Messages& origmessages, Messages& messages)
 {
   /*
     B 08 002	Vertical significance (surface observation)
@@ -4152,7 +4287,7 @@ void decode_cloudtypes(const Messages &origmessages, Messages &messages)
 
   Message msg;
 
-  for (auto const &message : origmessages)
+  for (auto const& message : origmessages)
   {
     msg = message;
 
@@ -4206,7 +4341,7 @@ void decode_cloudtypes(const Messages &origmessages, Messages &messages)
  */
 // ----------------------------------------------------------------------
 
-void set_pressurechange_sign_from_pressuretendency(Messages &messages)
+void set_pressurechange_sign_from_pressuretendency(Messages& messages)
 {
   /*
     0 Increasing, then decreasing; atmospheric pressure the same or higher than three hours ago
@@ -4226,7 +4361,7 @@ void set_pressurechange_sign_from_pressuretendency(Messages &messages)
     is increasing and vice versa. PressureTendency 0 is taken as increasing and 5 decreasing
   */
 
-  for (auto &msg : messages)
+  for (auto& msg : messages)
   {
     // PressureChange
 
@@ -4271,9 +4406,9 @@ void set_pressurechange_sign_from_pressuretendency(Messages &messages)
  */
 // ----------------------------------------------------------------------
 
-void set_totalcloud_octas_from_percentage(Messages &messages)
+void set_totalcloud_octas_from_percentage(Messages& messages)
 {
-  for (auto &msg : messages)
+  for (auto& msg : messages)
   {
     // Totalcloudcover octas
 
@@ -4313,27 +4448,16 @@ void set_totalcloud_octas_from_percentage(Messages &messages)
   }
 }
 
-// Circumvent bufr_set_debug(0) bug with own error handler:
-void noop_debug_handler(const char *message) {}
-
 // ----------------------------------------------------------------------
 /*!
  * \brief Main program without exception handling
  */
 // ----------------------------------------------------------------------
 
-int run(int argc, char *argv[])
+int run(int argc, char* argv[])
 {
   if (!parse_options(argc, argv, options))
     return 0;
-
-#ifdef _MSC_VER
-  if (options.debug)
-    bufr_set_debug(1);
-#endif
-
-  // libecbufr bug, this does not work: bufr_set_debug(0);
-  bufr_set_debug_handler(noop_debug_handler);
 
   // Read the parameter conversion table
 
@@ -4349,9 +4473,7 @@ int run(int argc, char *argv[])
 
   // Do the bufr operations
 
-  bufr_begin_api();
   std::pair<BufrDataCategory, Messages> tmp = read_messages(infiles);
-  bufr_end_api();
 
   BufrDataCategory category = tmp.first;
   validate_category(category);
@@ -4364,7 +4486,7 @@ int run(int argc, char *argv[])
   NameMap namemap;
 
   Messages preparedmessages;
-  const Messages &messages =
+  const Messages& messages =
       (options.requireident || (category == kBufrLandSurface)) ? preparedmessages : tmp.second;
   TimeIdentList timeidentlist;
   IdentTimeMap identtimemap;
@@ -4414,11 +4536,11 @@ int run(int argc, char *argv[])
   if (options.debug)
   {
     int i = 0;
-    for (const Message &msg : messages)
+    for (const Message& msg : messages)
     {
       std::cout << std::endl << "Message " << ++i << std::endl << std::endl;
 
-      for (const Message::value_type &value : msg)
+      for (const Message::value_type& value : msg)
         std::cout << value.first << "," << value.second.name << "," << value.second.units << ","
                   << value.second.value << "," << value.second.svalue << std::endl;
     }
@@ -4468,12 +4590,12 @@ int run(int argc, char *argv[])
  */
 // ----------------------------------------------------------------------
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 try
 {
   return run(argc, argv);
 }
-catch (std::exception &e)
+catch (std::exception& e)
 {
   std::cerr << "Fatal Error: " << e.what() << std::endl;
   return 1;

@@ -5,12 +5,6 @@ use warnings;
 use lib ".";
 use QDToolsTest;
 
-# Ensure that environment versiable is set also when libecbufr is just installed
-# and is script from /etc/profile is not yet executed
-if (!defined($ENV{BUFR_TABLES}) && -d "/usr/share/libecbufr") {
-    $ENV{BUFR_TABLES} = "/usr/share/libecbufr";
-}
-
 my $program = (-x "../bufrtoqd" ? "../bufrtoqd" : "bufrtoqd");
 
 my $errors = 0;
@@ -27,9 +21,13 @@ DoTest("land observations",
        "land.sqd",
        "-c ../cnf/bufr.conf -s ../cnf/stations.csv data/land.bufr");
 
+# Note: --usebufrname is no longer used. It maps parameters by the BUFR
+# element name, but eccodes exposes the abbreviated element name (e.g.
+# "airTemperature") rather than the WMO Table B description used in
+# cnf/bufr.conf, so the default code-based mapping is used instead.
 DoTest("airplane (AMDAR) observations",
        "amdar.sqd",
-       "--usebufrname -c ../cnf/bufr.conf -s ../cnf/stations.csv data/amdar.bufr");
+       "-c ../cnf/bufr.conf -s ../cnf/stations.csv data/amdar.bufr");
 
 DoTest("soundings",
        "sounding.sqd",

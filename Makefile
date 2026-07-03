@@ -23,7 +23,11 @@ INCLUDES +=  \
 	-isystem $(includedir)/ecbufr \
 	-I$(includedir)/smartmet
 
-LIBS += $(PREFIX_LDFLAGS) \
+# jemalloc is linked first so that it interposes malloc/free for every tool.
+# Its allocator markedly reduces the per-message allocation overhead of the
+# eccodes BUFR/GRIB decoders (see bufrtoqd, gribtoqd).
+LIBS += -ljemalloc \
+     $(PREFIX_LDFLAGS) \
      $(EXTRA_LIBS) \
 	-lsmartmet-calculator \
 	-lsmartmet-smarttools \
@@ -43,7 +47,7 @@ LIBS += $(PREFIX_LDFLAGS) \
 # Each part really needs only part of libraries used below.
 # Link them with only required
 EXTRA_LIBS :=
-bufrtoqd: EXTRA_LIBS += -lecbufr
+bufrtoqd: EXTRA_LIBS += -leccodes
 radartoqd: EXTRA_LIBS += -lecbufr -lbufr
 # Unfortunatelly HdfTools.o presence in libqdtools.a requires use of libqdf5 in common libraries for all
 #h5toqd: EXTRA_LIBS += -lhdf5

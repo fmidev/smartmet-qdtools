@@ -2,8 +2,8 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 26.7.3
-Release: 2%{?dist}.fmi
+Version: 26.7.6
+Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
 URL: https://github.com/fmidev/smartmet-qdtools
@@ -35,7 +35,6 @@ BuildRequires: h5pp-devel
 BuildRequires: hdf5-devel >= 1.8.12
 BuildRequires: jemalloc-devel
 BuildRequires: libbufr >= 3.2
-BuildRequires: libecbufr-devel
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: dtl
@@ -66,7 +65,6 @@ Requires: glibc
 Requires: hdf5 >= 1.8.12
 Requires: jemalloc
 Requires: libbufr >= 3.2
-Requires: libecbufr
 Requires: libgcc
 Requires: libjpeg
 Requires: libpng
@@ -86,10 +84,6 @@ Requires: zlib
 #TestRequires: smartmet-library-newbase-devel >= 26.6.26
 #TestRequires: smartmet-qdtools-test-data
 #TestRequires: libbufr
-
-%if 0%{?rhel} && 0%{rhel} >= 9
-BuildRequires: libecbufr-devel
-%endif
 
 Provides: ashtoqd = %{version}
 Provides: bufrtoqd = %{version}
@@ -216,6 +210,10 @@ make %{_smp_mflags}
 %{_mandir}/man1/*.1.gz
 
 %changelog
+* Mon Jul 06 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.7.6-1.fmi
+- Dropped the libecbufr dependency: bufrtoqd now uses eccodes, and radartoqd
+  only ever used the OPERA libbufr library, so the -lecbufr link was removed
+
 * Fri Jul 03 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.7.3-2.fmi
 - bufrtoqd now decodes BUFR with eccodes instead of libecbufr, which is much
   faster on large multi-subset messages (e.g. high resolution soundings) and

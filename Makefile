@@ -19,8 +19,6 @@ DEFINES = -DUNIX
 INCLUDES +=  \
 	-isystem $(includedir)/netcdf-3 \
 	-isystem $(includedir)/bufr \
-	-isystem $(includedir)/libecbufr \
-	-isystem $(includedir)/ecbufr \
 	-I$(includedir)/smartmet
 
 # jemalloc is linked first so that it interposes malloc/free for every tool.
@@ -48,7 +46,7 @@ LIBS += -ljemalloc \
 # Link them with only required
 EXTRA_LIBS :=
 bufrtoqd: EXTRA_LIBS += -leccodes
-radartoqd: EXTRA_LIBS += -lecbufr -lbufr
+radartoqd: EXTRA_LIBS += -lbufr
 # Unfortunatelly HdfTools.o presence in libqdtools.a requires use of libqdf5 in common libraries for all
 #h5toqd: EXTRA_LIBS += -lhdf5
 metar2qd: EXTRA_LIBS += -lmetar

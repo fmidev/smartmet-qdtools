@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 26.7.6
+Version: 26.7.9
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -26,8 +26,8 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot-%(%{__id_u} -n)
 
 BuildRequires: %{smartmet_boost}-devel
 BuildRequires: bzip2-devel
-BuildRequires: eccodes
-BuildRequires: eccodes-devel
+BuildRequires: eccodes <= 2.31.1
+BuildRequires: eccodes-devel <= 2.31.1
 BuildRequires: %{smartmet_fmt_devel}
 BuildRequires: gcc-c++
 BuildRequires: gdal312-devel
@@ -210,6 +210,9 @@ make %{_smp_mflags}
 %{_mandir}/man1/*.1.gz
 
 %changelog
+* Thu Jul  9 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.7.9-1.fmi
+- Fixed eccodes requirement
+
 * Mon Jul 06 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.7.6-1.fmi
 - Dropped the libecbufr dependency: bufrtoqd now uses eccodes, and radartoqd
   only ever used the OPERA libbufr library, so the -lecbufr link was removed

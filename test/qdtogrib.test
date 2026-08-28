@@ -3,9 +3,11 @@
 if [ -x ../qdtogrib ]; then
   PROG=../qdtogrib
   QDINFO=../qdinfo
+  PROG_OPTS="-c ../cnf/grib.conf"
 else
   PROG=qdtogrib
   QDINFO=qdinfo
+  PROG_OPTS=""
 fi
 
 errors=0
@@ -15,7 +17,7 @@ for f in data/qdtogrib/*; do
     resultfile=results/qdtogrib/${name}.grib2
 
     tmpfile=${resultfile}.tmp
-    $PROG -2 $f $tmpfile
+    $PROG ${PROG_OPTS} -2 $f $tmpfile
     cmp --quiet $resultfile $tmpfile
     ERR=$?
     printf '%-60s' "$name"

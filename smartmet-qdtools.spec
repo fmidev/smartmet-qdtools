@@ -58,7 +58,7 @@ Requires: %{smartmet_boost}-regex
 Requires: %{smartmet_boost}-system
 Requires: %{smartmet_boost}-thread
 Requires: bzip2-libs
-Requires: eccodes
+Requires: eccodes <= 2.31.1
 Requires: %{smartmet_fmt}
 Requires: gdal312-libs
 Requires: glibc

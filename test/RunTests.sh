@@ -3,7 +3,8 @@
 TESTS=$(find . -maxdepth 1 -a -type f -a -name '*.test' | sed -e 's:^\./::')
 
 # XFAIL="qdfilter.test radartoqd.test"
-XFAIL="nctoqd.test gribtoqd.test"
+#XFAIL="nctoqd.test gribtoqd.test"
+XFAIL=""
 
 echo "Running tests"
 

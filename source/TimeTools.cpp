@@ -71,9 +71,16 @@ const NFmiTime timezone_time(const NFmiTime &theUTCTime, const string &theZone)
   else if (theZone == "utc")
     zone = "UTC";
 
-  static string tzvalue = "TZ=" + zone;
-  putenv(const_cast<char *>(tzvalue.c_str()));
-  tzset();
+  // Change TZ only when the zone changes, the zone may differ for each
+  // location. The string used to be static, which kept the first zone for
+  // the rest of the run.
+  static string current_zone;
+  if (zone != current_zone)
+  {
+    setenv("TZ", zone.c_str(), 1);
+    tzset();
+    current_zone = zone;
+  }
 
   return toLocalTime(theUTCTime);
 }

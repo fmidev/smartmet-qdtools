@@ -32,8 +32,9 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
+#include <gis/TimeZoneFinder.h>
+#include <macgyver/Exception.h>
 #include <macgyver/StringConversion.h>
-#include <macgyver/WorldTimeZones.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiDataIntegrator.h>
 #include <newbase/NFmiDataModifierProb.h>
@@ -48,12 +49,15 @@
 #include <newbase/NFmiSettings.h>
 #include <newbase/NFmiStringTools.h>
 #include <newbase/NFmiValueString.h>
+#include <cmath>
 #include <list>
+#include <memory>
 #include <ogr_geometry.h>
 #include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #ifdef UNIX
 #include <sys/ioctl.h>
@@ -129,8 +133,8 @@ LocationList read_locationlist(const string& theFile)
 struct Options
 {
   bool verbose = false;
-  string timezonefile = NFmiSettings::Optional<string>(
-      "qdpoint::tzfile", "/usr/share/smartmet/timezones/timezone.shz");
+  string timezonefile =
+      NFmiSettings::Optional<string>("qdpoint::tzfile", Fmi::TimeZoneFinder::default_source);
   string timezone = NFmiSettings::Optional<string>("qdpoint::timezone", "local");
   string queryfile = NFmiSettings::Optional<string>("qdpoint::querydata_file", "");
   string coordinatefile = NFmiSettings::Optional<string>("qdpoint::coordinates",
@@ -214,9 +218,10 @@ bool parse_options(int argc, char* argv[])
       "coordinatefile,c",
       po::value(&options.coordinatefile),
       "location configuration file (qdpoint::coordinates or "
-      "/smartmet/share/coordinates/default.txt)")("timezonefile,z",
-                                                  po::value(&options.timezonefile),
-                                                  "timezone configuration file (qdpoint::tzfile)")(
+      "/smartmet/share/coordinates/default.txt)")(
+      "timezonefile,z",
+      po::value(&options.timezonefile),
+      "timezone polygons for local times (qdpoint::tzfile)")(
       "timezone,t", po::value(&options.timezone), "timezone (qdpoint::timezone)")(
       "params,P", po::value(&opt_params), "parameter name/number list")(
       "places,p", po::value(&opt_places), "place name list")(
@@ -1013,13 +1018,72 @@ float InterpolatedValue(NFmiFastQueryInfo& qd, int maxmissminutes)
 }
 
 // ----------------------------------------------------------------------
+/*!
+ * \brief Local timezones resolved on demand
+ *
+ * Reading the timezone polygons of the whole globe takes about a second,
+ * while reading only the polygons near a location takes a few hundredths
+ * of a second. Hence the polygons are read only when a local time is first
+ * needed, and only for a small area around each new location. Runs with
+ * many scattered locations switch to a single load of the whole globe.
+ */
+// ----------------------------------------------------------------------
+
+class LocalTimeZones
+{
+ public:
+  explicit LocalTimeZones(std::string theFile) : itsFile(std::move(theFile)) {}
+
+  // Many known locations: read the whole globe at once when first needed
+  void expectLocations(std::size_t theCount) { itsLoadAll = (theCount > max_local_areas); }
+
+  const std::string& zoneName(double lon, double lat)
+  {
+    if (itsGlobal)
+      return itsGlobal->zoneName(lon, lat);
+
+    for (const auto& finder : itsLocal)
+      if (finder->contains(lon, lat))
+        return finder->zoneName(lon, lat);
+
+    if (itsLoadAll || itsLocal.size() >= max_local_areas)
+    {
+      itsLocal.clear();
+      itsGlobal = std::make_unique<Fmi::TimeZoneFinder>(itsFile);
+      return itsGlobal->zoneName(lon, lat);
+    }
+
+    if (lon < -180 || lon > 180)
+      lon = std::remainder(lon, 360.0);
+
+    Fmi::TimeZoneFinder::Options options;
+    options.area = Fmi::TimeZoneFinder::Options::Area{std::max(-180.0, lon - margin),
+                                                      std::max(-90.0, lat - margin),
+                                                      std::min(180.0, lon + margin),
+                                                      std::min(90.0, lat + margin)};
+    itsLocal.push_back(std::make_unique<Fmi::TimeZoneFinder>(itsFile, options));
+    return itsLocal.back()->zoneName(lon, lat);
+  }
+
+ private:
+  // Reading an area takes about 0.06 seconds, the whole globe about 0.7 seconds
+  static constexpr std::size_t max_local_areas = 5;
+  static constexpr double margin = 0.25;  // degrees around a location
+
+  std::string itsFile;
+  std::vector<std::unique_ptr<Fmi::TimeZoneFinder>> itsLocal;
+  std::unique_ptr<Fmi::TimeZoneFinder> itsGlobal;
+  bool itsLoadAll = false;
+};
+
+// ----------------------------------------------------------------------
 // Tulosta asetetun sijainnin ja ajan halutut parametrit. Annettu boolean
 // määrää, tulostetaanko wmo numero.
 // ----------------------------------------------------------------------
 
 void PrintRow(NFmiFastQueryInfo& qd,
               bool ignoresubs,
-              const Fmi::WorldTimeZones& zones,
+              LocalTimeZones& zones,
               NFmiPoint lonlat = NFmiPoint(kFloatMissing, kFloatMissing))
 {
   // Kello nyt UTC-ajassa minuutin tarkkuudella
@@ -1051,7 +1115,7 @@ void PrintRow(NFmiFastQueryInfo& qd,
 	  else
 		t = utctime.LocalTime(static_cast<float>(lonlat.X()));
 #else
-    string tz = zones.zone_name(lonlat.X(), lonlat.Y());
+    const string& tz = zones.zoneName(lonlat.X(), lonlat.Y());
     t = TimeTools::timezone_time(utctime, tz);
 #endif
   }
@@ -1316,10 +1380,6 @@ int run(int argc, char* argv[])
   if (options.multimode)
     qmgr.multimode();
 
-  // Initialize timezone finder
-
-  Fmi::WorldTimeZones zones(options.timezonefile);
-
   // Muodostetaan paikka -x ja -y koordinaateista
 
   if (options.longitude != kFloatMissing && options.latitude != kFloatMissing)
@@ -1346,6 +1406,11 @@ int run(int argc, char* argv[])
              << "# Coordinate: " << it->second.X() << ' ' << it->second.Y() << endl;
     }
   }
+
+  // Timezone polygons are read on demand
+
+  LocalTimeZones zones(options.timezonefile);
+  zones.expectLocations(places.size() + options.locations.size());
 
   // Referenssipiste lähimpiä pisteitä haettaessa
 
@@ -1576,6 +1641,12 @@ int main(int argc, char* argv[])
   try
   {
     return run(argc, argv);
+  }
+  catch (const Fmi::Exception& e)
+  {
+    // For example unreadable timezone polygons
+    cerr << e.getStackTrace() << endl;
+    return 1;
   }
   catch (const std::runtime_error& e)
   {

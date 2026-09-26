@@ -49,7 +49,9 @@ Only print timesteps in the future.
 * **-s**  
 Also list the names and numbers of the stations being printed.  
 * **-t zone**  
-The timezone, as in America/Jamaica or UTC.  
+The timezone, as in America/Jamaica or UTC. The default is "local", the timezone of each location.  
+* **-z file**  
+The timezone polygons used to find the local timezone of a location. Any vector data source readable by GDAL will do, the timezone name must be in the attribute `tzid`. The default is the shapefile installed by the smartmet-timezones RPM, `/usr/share/smartmet/timezones/timezones-with-oceans.shp`, which contains the "with-oceans" release of [timezone-boundary-builder](https://github.com/evansiroky/timezone-boundary-builder), post-processed from OpenStreetMap data. The polygons are read only when a local time is first needed, and only near the locations being printed, which takes a few hundredths of a second per location. Runs with more than five locations read the whole globe once, which takes under a second.  
 * **-m string**  
 The string to be printed for missing values. The default is "-"  
 * **-i minutes**  

@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 26.7.9
+Version: 26.9.26
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -44,12 +44,12 @@ BuildRequires: netcdf-cxx4-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
 BuildRequires: smartmet-library-calculator-devel >= 26.4.13
-BuildRequires: smartmet-library-gis-devel >= 26.6.25
+BuildRequires: smartmet-library-gis-devel >= 26.9.26
 BuildRequires: smartmet-library-imagine-devel >= 26.4.13
 BuildRequires: smartmet-library-macgyver-devel >= 26.6.26
 BuildRequires: smartmet-library-newbase-devel >= 26.6.26
 BuildRequires: smartmet-library-smarttools-devel >= 26.6.26
-BuildRequires: smartmet-timezones
+BuildRequires: smartmet-timezones >= 26.9.26
 BuildRequires: zlib-devel
 Requires: %{smartmet_boost}-filesystem
 Requires: %{smartmet_boost}-iostreams
@@ -72,12 +72,12 @@ Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
 Requires: netcdf-cxx4
 Requires: smartmet-library-calculator >= 26.4.13
-Requires: smartmet-library-gis >= 26.6.25
+Requires: smartmet-library-gis >= 26.9.26
 Requires: smartmet-library-imagine >= 26.4.13
 Requires: smartmet-library-macgyver >= 26.6.26
 Requires: smartmet-library-newbase >= 26.6.26
 Requires: smartmet-library-smarttools >= 26.6.26
-Requires: smartmet-timezones >= 24.5.27
+Requires: smartmet-timezones >= 26.9.26
 Requires: zlib
 #TestRequires: smartmet-library-macgyver-devel >= 26.6.26
 #TestRequires: gcc-c++
@@ -210,6 +210,11 @@ make %{_smp_mflags}
 %{_mandir}/man1/*.1.gz
 
 %changelog
+* Sat Sep 26 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.9.26-1.fmi
+- qdpoint resolves local timezones from the timezone-boundary-builder polygons of smartmet-timezones instead of the timezone.shz raster
+- qdpoint reads the timezone polygons on demand and only near the printed locations
+- Fixed local times of all but the first location when printing several locations (the TZ setting was never changed after the first call)
+
 * Thu Jul  9 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.7.9-1.fmi
 - Fixed eccodes requirement
 

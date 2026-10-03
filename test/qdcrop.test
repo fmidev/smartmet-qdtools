@@ -180,21 +180,24 @@ sub DoTest
     if ($ret != 0)
     {
 	++$errors;
-        print " FAILED: return code $ret from gq2csv\n";
+        print " FAILED: return code $ret from $program\n";
         CatFile "$tmpfile.stderr";
     }
     elsif (not defined($resultfile)) {
 	++$errors;
         print " NO RESULT FILE\n";
-    } elsif (CheckQuerydataEqual($resultfile, $tmpfile, 0.0001))
-    {
-	print " OK\n";
-	unlink("$results/$tmpfile");
-    }
-    else
-    {
-	++$errors;
-	print " FAILED!\n";
-	print "( $resultfile <> $tmpfile )\n";
+    } else {
+        # CheckQuerydataEqual returns a list, using it in scalar context would test the message
+        my ($ok, $msg) = CheckQuerydataEqual($resultfile, $tmpfile, 0.0001);
+        if ($ok)
+        {
+            print " OK\n";
+            unlink("$tmpfile");
+        }
+        else
+        {
+            ++$errors;
+            print " $msg\n";
+        }
     }
 }

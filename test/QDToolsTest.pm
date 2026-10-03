@@ -166,7 +166,7 @@ sub EqualFiles($$)
     my ($fd1, $fd2);
 
     open ($fd1, CatCmd($file1) . " $file1 |");
-    open ($fd2, CatCmd($file2) . " $file1 |");
+    open ($fd2, CatCmd($file2) . " $file2 |");
     binmode($fd1);
     binmode($fd2);
 

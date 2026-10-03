@@ -1,0 +1,91 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use lib ".";
+use QDToolsTest;
+
+$ENV{TZ} = "Europe/Helsinki";
+
+my $program = (-x "../qdgridcalc" ? "../qdgridcalc" : "qdgridcalc");
+
+my $results = "results";
+
+my $paldata = "data/" . FindFile("data", "pal.sqd");
+
+my $errors = 0;
+
+my %usednames = ();
+
+DoTest("option -f gives the grid of the data",
+       "option_f",
+       "-f $paldata");
+
+DoTest("grid size for a resolution",
+       "resolution_10km",
+       "'stereographic,20,90,60:6,51.3,49,70.2' 10 10");
+
+DoTest("option -s gives the resolution for a grid size",
+       "option_s",
+       "-s 'stereographic,20,90,60:6,51.3,49,70.2' 100 120");
+
+DoTest("missing arguments fail",
+       "missing_arguments",
+       "'stereographic,20,90,60:6,51.3,49,70.2'",
+       "expected to fail");
+
+print "$errors errors\n";
+exit($errors);
+
+sub DoTest
+{
+    my($text,$name,$arguments,$expfail) = @_;
+
+    if(exists($usednames{$name}))
+    {
+	print "Error: $name used more than once\n";
+	exit(1);
+    }
+    $usednames{$name} = 1;
+
+    my $resultfile = FindResult($results, "qdgridcalc_$name");
+    my $tmpfile = RemoveCompressionExt(${resultfile}) . ".tmp";
+    my $stderr_fn = RemoveCompressionExt(${resultfile}) . ".stderr";
+
+    my $cmd = "$program $arguments >$tmpfile 2>$stderr_fn";
+    #print "CMD='$cmd'\n";
+
+    my $ret = system($cmd);
+
+    print padname($text);
+
+    if (defined $expfail)
+    {
+        if ($ret == 0)
+        {
+            ++$errors;
+            print " FAILED: command was expected to fail but it did not\n";
+        }
+        else
+        {
+            print " OK\n";
+        }
+    }
+    elsif ($ret != 0)
+    {
+	++$errors;
+        print " FAILED: return code $ret from '$cmd'\n";
+        CatFile $stderr_fn;
+    }
+    elsif (EqualFiles($resultfile, $tmpfile))
+    {
+	print " OK\n";
+	unlink($tmpfile);
+    }
+    else
+    {
+	++$errors;
+	print " FAILED!\n";
+	print "( $resultfile <> $tmpfile )\n";
+    }
+}

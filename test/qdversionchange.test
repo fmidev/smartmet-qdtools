@@ -1,0 +1,82 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use lib ".";
+use QDToolsTest;
+
+$ENV{TZ} = "Europe/Helsinki";
+
+my $program = (-x "../qdversionchange" ? "../qdversionchange" : "qdversionchange");
+
+my $results = "results";
+my $data = "data/" . FindFile("data", "pal.sqd");
+
+my $errors = 0;
+
+my %usednames = ();
+
+DoTest("default combination parameters",
+       "default",
+       "-i $data 7");
+
+DoTest("no combination parameters",
+       "no_combinations",
+       "-t 0 -w 0 -i $data 7");
+
+DoTest("total wind only",
+       "totalwind_only",
+       "-t 1 -w 0 -i $data 7");
+
+DoTest("weather and cloudiness from minimal parameters",
+       "minimal_weather",
+       "-t 0 -a -i $data 7");
+
+print "$errors errors\n";
+exit($errors);
+
+sub DoTest
+{
+    my($text,$name,$arguments) = @_;
+
+    if(exists($usednames{$name}))
+    {
+	print "Error: $name used more than once\n";
+	exit(1);
+    }
+    $usednames{$name} = 1;
+
+    my $resultfile = FindResult($results, "qdversionchange_$name");
+    my $tmpfile = RemoveCompressionExt("$resultfile").".tmp";
+
+    my $cmd = "$program $arguments > $tmpfile";
+    #print "CMD='$cmd'\n";
+
+    my $ret = system("$cmd 2>$tmpfile.stderr");
+
+    print padname($text);
+
+    if ($ret != 0)
+    {
+	++$errors;
+        print " FAILED: return code $ret from qdversionchange\n";
+        CatFile "$tmpfile.stderr";
+    }
+    elsif (not defined($resultfile)) {
+	++$errors;
+        print " NO RESULT FILE\n";
+    } else {
+        # CheckQuerydataEqual returns a list, using it in scalar context would test the message
+        my ($ok, $msg) = CheckQuerydataEqual($resultfile, $tmpfile, 0.0001);
+        if ($ok)
+        {
+            print " OK\n";
+            unlink("$tmpfile");
+        }
+        else
+        {
+            ++$errors;
+            print " $msg\n";
+        }
+    }
+}

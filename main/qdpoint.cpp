@@ -1021,11 +1021,13 @@ float InterpolatedValue(NFmiFastQueryInfo& qd, int maxmissminutes)
 /*!
  * \brief Local timezones resolved on demand
  *
- * Reading the timezone polygons of the whole globe takes about a second,
- * while reading only the polygons near a location takes a few hundredths
- * of a second. Hence the polygons are read only when a local time is first
- * needed, and only for a small area around each new location. Runs with
- * many scattered locations switch to a single load of the whole globe.
+ * Reading the timezone polygons of the whole globe takes about 7 CPU
+ * seconds (one second on 8 cores), while reading only the polygons near a
+ * location takes a few hundredths of a second, and the cost of an area
+ * grows with its size. Hence the polygons are read only when a local time
+ * is first needed: a small area around each location when there are only
+ * a few, one area covering all the known locations when there are more,
+ * and the whole globe only when the locations are scattered too widely.
  */
 // ----------------------------------------------------------------------
 
@@ -1034,13 +1036,48 @@ class LocalTimeZones
  public:
   explicit LocalTimeZones(std::string theFile) : itsFile(std::move(theFile)) {}
 
-  // Many known locations: read the whole globe at once when first needed
-  void expectLocations(std::size_t theCount) { itsLoadAll = (theCount > max_local_areas); }
+  // The locations given by name or by coordinates are known in advance
+  void expectLocations(const std::vector<NFmiPoint>& theLocations)
+  {
+    if (theLocations.size() <= max_local_areas)
+      return;
+
+    Fmi::TimeZoneFinder::Options::Area area{180, 90, -180, -90};
+    for (const auto& lonlat : theLocations)
+    {
+      const double lon = normalize(lonlat.X());
+      area.west = std::min(area.west, lon);
+      area.east = std::max(area.east, lon);
+      area.south = std::min(area.south, lonlat.Y());
+      area.north = std::max(area.north, lonlat.Y());
+    }
+    area.west = std::max(-180.0, area.west - margin);
+    area.east = std::min(180.0, area.east + margin);
+    area.south = std::max(-90.0, area.south - margin);
+    area.north = std::min(90.0, area.north + margin);
+
+    if (area.east - area.west <= max_area_width && area.north - area.south <= max_area_height)
+      itsArea = area;
+    else
+      itsLoadAll = true;
+  }
 
   const std::string& zoneName(double lon, double lat)
   {
     if (itsGlobal)
       return itsGlobal->zoneName(lon, lat);
+
+    if (itsArea)
+    {
+      if (!itsAreaFinder)
+      {
+        Fmi::TimeZoneFinder::Options options;
+        options.area = itsArea;
+        itsAreaFinder = std::make_unique<Fmi::TimeZoneFinder>(itsFile, options);
+      }
+      if (itsAreaFinder->contains(normalize(lon), lat))
+        return itsAreaFinder->zoneName(normalize(lon), lat);
+    }
 
     for (const auto& finder : itsLocal)
       if (finder->contains(lon, lat))
@@ -1053,8 +1090,7 @@ class LocalTimeZones
       return itsGlobal->zoneName(lon, lat);
     }
 
-    if (lon < -180 || lon > 180)
-      lon = std::remainder(lon, 360.0);
+    lon = normalize(lon);
 
     Fmi::TimeZoneFinder::Options options;
     options.area = Fmi::TimeZoneFinder::Options::Area{std::max(-180.0, lon - margin),
@@ -1066,11 +1102,22 @@ class LocalTimeZones
   }
 
  private:
-  // Reading an area takes about 0.06 seconds, the whole globe about 0.7 seconds
+  static double normalize(double lon)
+  {
+    return (lon < -180 || lon > 180) ? std::remainder(lon, 360.0) : lon;
+  }
+
+  // CPU time on 8 cores: an area around a location 0.05 s, an area around the
+  // 50 Finnish test locations of the download plugin 0.25 s, Europe 1.7 s,
+  // 90 x 60 degrees 2.3 s and the whole globe 6.8 s
   static constexpr std::size_t max_local_areas = 5;
-  static constexpr double margin = 0.25;  // degrees around a location
+  static constexpr double margin = 0.25;            // degrees around a location
+  static constexpr double max_area_width = 90.0;    // degrees
+  static constexpr double max_area_height = 60.0;   // degrees
 
   std::string itsFile;
+  std::optional<Fmi::TimeZoneFinder::Options::Area> itsArea;
+  std::unique_ptr<Fmi::TimeZoneFinder> itsAreaFinder;
   std::vector<std::unique_ptr<Fmi::TimeZoneFinder>> itsLocal;
   std::unique_ptr<Fmi::TimeZoneFinder> itsGlobal;
   bool itsLoadAll = false;
@@ -1410,7 +1457,14 @@ int run(int argc, char* argv[])
   // Timezone polygons are read on demand
 
   LocalTimeZones zones(options.timezonefile);
-  zones.expectLocations(places.size() + options.locations.size());
+  {
+    std::vector<NFmiPoint> known;
+    for (const auto& place : places)
+      known.push_back(place.second);
+    for (const auto& location : options.locations)
+      known.push_back(location.latlon);
+    zones.expectLocations(known);
+  }
 
   // Referenssipiste lähimpiä pisteitä haettaessa
 

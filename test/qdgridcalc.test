@@ -11,7 +11,9 @@ my $program = (-x "../qdgridcalc" ? "../qdgridcalc" : "qdgridcalc");
 
 my $results = "results";
 
-my $paldata = "data/" . FindFile("data", "pal.sqd");
+# qdgridcalc -f reads the file with a plain ifstream and cannot handle compressed data
+MaybeUnpackFile("data", "pal.sqd");
+my $paldata = "data/pal.sqd";
 
 my $errors = 0;
 

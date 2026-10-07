@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 26.9.26
+Version: 26.10.7
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -210,6 +210,9 @@ make %{_smp_mflags}
 %{_mandir}/man1/*.1.gz
 
 %changelog
+* Wed Oct 07 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.7-1.fmi
+- qdpoint reads one timezone area covering all the given locations instead of the whole globe when there are more than five of them, unless they are spread over more than 90x60 degrees
+
 * Sat Sep 26 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.9.26-1.fmi
 - qdpoint resolves local timezones from the timezone-boundary-builder polygons of smartmet-timezones instead of the timezone.shz raster
 - qdpoint reads the timezone polygons on demand and only near the printed locations

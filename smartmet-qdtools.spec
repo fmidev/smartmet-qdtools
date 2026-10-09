@@ -81,8 +81,8 @@ Requires: smartmet-timezones >= 26.9.26
 Requires: zlib
 #TestRequires: smartmet-library-macgyver-devel >= 26.6.26
 #TestRequires: gcc-c++
-#TestRequires: smartmet-library-newbase-devel >= 26.6.26
-#TestRequires: smartmet-qdtools-test-data >= 26.10.3
+#TestRequires: smartmet-library-newbase-devel >= 26.10.8
+#TestRequires: smartmet-qdtools-test-data >= 26.10.9
 #TestRequires: libbufr
 
 Provides: ashtoqd = %{version}

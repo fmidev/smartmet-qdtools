@@ -4771,9 +4771,13 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
       if (len_grib + msg - buffer > buffer_size)
       {
         buffer_size = static_cast<long>(len_grib + msg - buffer + 1000);
-        buffer = (unsigned char *)realloc((void *)buffer, buffer_size);
-        if (buffer == nullptr)
+        auto *new_buffer = (unsigned char *)realloc((void *)buffer, buffer_size);
+        if (new_buffer == nullptr)
+        {
+          free(buffer);
           throw runtime_error("ran out of memory");
+        }
+        buffer = new_buffer;
       }
       read_grib(theGribFilterOptions.itsInputFile, pos, len_grib, buffer);
 

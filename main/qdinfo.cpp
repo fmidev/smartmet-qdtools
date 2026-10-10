@@ -816,6 +816,9 @@ int domain(int argc, const char *argv[])
 
   NFmiFastQueryInfo *q = (qi.get() == 0 ? 0 : new NFmiFastQueryInfo(*qi));
 
+  if (!q && (cmdline.isOption('M') || cmdline.isOption('m')))
+    throw runtime_error("Error: Options -M and -m require option -q");
+
   bool opt_all_extended = cmdline.isOption('A');
   bool opt_all = cmdline.isOption('a') || opt_all_extended;
 

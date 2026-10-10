@@ -135,6 +135,9 @@ static NFmiQueryInfo MakeCombinedInnerInfo(vector<NFmiQueryData *> &theDataList,
     }
   }
 
+  if (maxLevelVPlaceDesc == nullptr)
+    throw runtime_error("Error in MakeCombinedInnerInfo: the query datas have no levels.");
+
   // Tehdään kaikkia datoja yhdistävä timeDescriptor
   NFmiTimeList timeList;
   for (set<NFmiMetTime>::iterator it1 = allTimes.begin(); it1 != allTimes.end(); ++it1)

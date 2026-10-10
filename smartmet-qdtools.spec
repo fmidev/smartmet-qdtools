@@ -213,6 +213,9 @@ make %{_smp_mflags}
 * Sat Oct 10 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.10-1.fmi
 - Fixed gribtoqd and grib2toqd -D leaving GRIB_DEFINITION_PATH pointing to freed memory
 - Use setenv for TZ in qdinfo and qdsounding
+- qdinfo: report missing -q for -M and -m instead of crashing
+- temp2qd: check for data without levels
+- gribtoqd: do not leak the buffer when realloc fails
 
 * Wed Oct 07 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.7-1.fmi
 - qdpoint reads one timezone area covering all the given locations instead of the whole globe when there are more than five of them, unless they are spread over more than 90x60 degrees

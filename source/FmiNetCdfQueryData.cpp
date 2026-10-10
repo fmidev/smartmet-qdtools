@@ -197,7 +197,7 @@ FmiNetCdfQueryData::FmiNetCdfQueryData(void)
 {
 }
 
-FmiNetCdfQueryData::~FmiNetCdfQueryData(void) {}
+FmiNetCdfQueryData::~FmiNetCdfQueryData(void) = default;
 static NFmiQueryData *MakeQueryData(const netCDF::NcFile &theNcFile,
                                     NFmiQueryInfo &theMetaInfo,
                                     std::vector<FmiVarInfo> &theVarInfos)

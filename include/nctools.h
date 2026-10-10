@@ -77,7 +77,7 @@ struct Options
  */
 // ----------------------------------------------------------------------
 
-typedef std::list<Fmi::CsvReader::row_type> ParamConversions;
+using ParamConversions = std::list<Fmi::CsvReader::row_type>;
 
 struct CsvParams
 {

@@ -180,13 +180,13 @@ struct GribFilterOptions
 
 class TotalQDataCollector
 {
-  typedef boost::shared_mutex MutexType;
-  typedef boost::shared_lock<MutexType>
-      ReadLock;  // Read-lockia ei oikeasti tarvita, mutta laitan sen tähän, jos joskus tarvitaankin
-  typedef boost::unique_lock<MutexType> WriteLock;
+  using MutexType = boost::shared_mutex;
+  using ReadLock = boost::shared_lock<MutexType>;  // Read-lockia ei oikeasti tarvita, mutta laitan
+                                                   // sen tähän, jos joskus tarvitaankin
+  using WriteLock = boost::unique_lock<MutexType>;
 
  public:
-  typedef list<vector<std::shared_ptr<NFmiQueryData> > > Container;
+  using Container = list<vector<std::shared_ptr<NFmiQueryData> > >;
 
   TotalQDataCollector(void) : itsAddCount(0), itsTotalGeneratedQDatas() {}
   void AddData(vector<std::shared_ptr<NFmiQueryData> > &theDataList)

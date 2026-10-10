@@ -47,7 +47,7 @@ struct ProjectionPimple
  */
 // ----------------------------------------------------------------------
 
-Projection::~Projection() {}
+Projection::~Projection() = default;
 // ----------------------------------------------------------------------
 /*!
  * The void constructor merely initializes the implementation pimple

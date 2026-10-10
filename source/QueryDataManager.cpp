@@ -309,7 +309,7 @@ std::map<double, int> QueryDataManager::nearest(const NFmiPoint& theLonLat,
                                                 double theMaxDistance,
                                                 bool theCheckingFlag)
 {
-  typedef std::map<double, int> ReturnType;
+  using ReturnType = std::map<double, int>;
   ReturnType ret;
 
   for (auto it = itsData.begin(); it != itsData.end(); ++it)

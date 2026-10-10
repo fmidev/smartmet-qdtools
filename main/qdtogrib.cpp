@@ -29,7 +29,7 @@
                                  // tulee varoituksia (MSVC++ kääntäjän 4996)
 #endif
 
-typedef std::vector<ParamChangeItem> ParamChangeTable;
+using ParamChangeTable = std::vector<ParamChangeItem>;
 
 // ----------------------------------------------------------------------
 /*!

@@ -82,8 +82,8 @@ using namespace std;
  */
 // ----------------------------------------------------------------------
 
-typedef std::vector<double> Values;
-typedef map<NFmiPoint, Values> KrigingData;
+using Values = std::vector<double>;
+using KrigingData = map<NFmiPoint, Values>;
 
 // ----------------------------------------------------------------------
 /*!

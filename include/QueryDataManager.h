@@ -56,9 +56,9 @@ class QueryDataManager
   std::string itsSearchPath;
   bool itsMultiMode;
 
-  typedef boost::tuple<std::string, NFmiQueryData *, NFmiFastQueryInfo *> value_type;
+  using value_type = boost::tuple<std::string, NFmiQueryData*, NFmiFastQueryInfo*>;
 
-  typedef std::vector<value_type> storage_type;
+  using storage_type = std::vector<value_type>;
   storage_type itsData;
   storage_type::const_iterator itsCurrentData;
 

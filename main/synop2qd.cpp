@@ -175,7 +175,7 @@ class NFmiSynopCode
     Clear();
   }
 
-  ~NFmiSynopCode(void){};
+  ~NFmiSynopCode(void) = default;
 
   void Clear(void)
   {

@@ -194,7 +194,7 @@ void print_change_analysis(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
 
   // Mark all parameters as unchanged
 
-  typedef map<FmiParameterName, int> ParamStatus;
+  using ParamStatus = map<FmiParameterName, int>;
   ParamStatus param_status;
 
   for (theQ2.ResetParam(); theQ2.NextParam(false);)
@@ -555,7 +555,7 @@ void find_inputfiles()
   // Sort the files by modification time. We allow for the chance
   // that there are two files created on the same second
 
-  typedef multimap<time_t, string> StampedFiles;
+  using StampedFiles = multimap<time_t, string>;
 
   StampedFiles stampedfiles;
   for (auto it = files.begin(); it != files.end(); ++it)

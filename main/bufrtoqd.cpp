@@ -63,14 +63,14 @@ struct ParNameInfo
   FmiParameterName parId;
 };
 
-typedef std::map<std::string, ParNameInfo> NameMap;
+using NameMap = std::map<std::string, ParNameInfo>;
 // typedef std::map<std::string, FmiParameterName> NameMap;
 
 // Fast integer (BUFR descriptor code) keyed view of the active NameMap, used in
 // the hot per-record loops to avoid formatting each code into a zero-padded
 // 6-digit string and looking it up in a string-keyed map for every value. Only
 // the default (!usebufrname) path uses it; --usebufrname keeps string lookups.
-typedef std::unordered_map<int, const ParNameInfo *> CodeIndex;
+using CodeIndex = std::unordered_map<int, const ParNameInfo*>;
 
 const std::string REMAP_IDENT("ident");
 const std::string REMAP_PHASE("phaseofflight");
@@ -78,7 +78,7 @@ const std::string REMAP_ALTITUDE("altitude");
 
 const int REMAP_PRIMARY_IDENT = 1006;
 
-typedef std::map<std::string, std::list<int>> MessageReMap;
+using MessageReMap = std::map<std::string, std::list<int>>;
 
 // ----------------------------------------------------------------------
 /*!
@@ -634,14 +634,14 @@ std::ostream& operator<<(std::ostream& out, const record& rec)
   return out;
 }
 
-typedef std::map<int, record> Message;
-typedef std::list<Message> Messages;
+using Message = std::map<int, record>;
+using Messages = std::list<Message>;
 
-typedef std::map<std::string, Messages> IdentMessageMap;
-typedef std::map<std::string, IdentMessageMap> TimeIdentMessageMap;
-typedef std::map<std::string, NFmiMetTime> IdentTimeMap;
-typedef std::list<std::string> TimeIdentList;
-typedef std::map<long, std::set<std::string>> StationTimeSet;
+using IdentMessageMap = std::map<std::string, Messages>;
+using TimeIdentMessageMap = std::map<std::string, IdentMessageMap>;
+using IdentTimeMap = std::map<std::string, NFmiMetTime>;
+using TimeIdentList = std::list<std::string>;
+using StationTimeSet = std::map<long, std::set<std::string>>;
 typedef enum
 {
   None = 0,
@@ -1699,7 +1699,7 @@ NFmiHPlaceDescriptor create_hdesc_buoy_ship(const Messages& messages)
 {
   // First list all unique station IDs
 
-  typedef std::map<std::string, NFmiPoint> Stations;
+  using Stations = std::map<std::string, NFmiPoint>;
   Stations stations;
 
   for (const Message& msg : messages)
@@ -3388,8 +3388,8 @@ void organize_messages_amdar(const Messages& origmessages,
                              IdentTimeMap& identtimemap,
                              size_t& levelcount)
 {
-  typedef std::map<std::string, Message> TimeMessageMap;
-  typedef std::map<std::string, TimeMessageMap> MessageMap;
+  using TimeMessageMap = std::map<std::string, Message>;
+  using MessageMap = std::map<std::string, TimeMessageMap>;
   MessageMap messagemap;
   Messages filteredmessages;
   Message remappedmsg;
@@ -3965,8 +3965,8 @@ void organize_messages_sounding(const Messages& origmessages,
                                 IdentTimeMap& identtimemap,
                                 size_t& levelcount)
 {
-  typedef std::multimap<std::string, Message> TimeMessageMap;
-  typedef std::map<long, TimeMessageMap> MessageMap;
+  using TimeMessageMap = std::multimap<std::string, Message>;
+  using MessageMap = std::map<long, TimeMessageMap>;
   MessageMap messagemap;
   Messages filteredmessages;
   Message remappedmsg;

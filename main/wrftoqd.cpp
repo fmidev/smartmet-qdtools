@@ -65,7 +65,7 @@ static const std::string bottomTopKeyWord = "bottom_top";
 
 namespace WRFData
 {
-typedef std::map<std::string, netCDF::NcDim> DimensionMap;
+using DimensionMap = std::map<std::string, netCDF::NcDim>;
 struct TotalDimensionData
 {
   TotalDimensionData()
@@ -202,7 +202,7 @@ struct TotalDimensionData
 };
 
 // Erilaiset dimensiopaketit ja niihin liittyvien parametrien nimet.
-typedef std::map<TotalDimensionData, std::vector<std::string> > TotalDimensionDataSet;
+using TotalDimensionDataSet = std::map<TotalDimensionData, std::vector<std::string> >;
 
 const int MissingInt = -999999;
 const double MissingDouble = -999999.;

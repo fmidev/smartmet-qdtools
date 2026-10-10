@@ -80,7 +80,7 @@ struct Location
   Location(const string& theName, const NFmiPoint& theLatLon) : name(theName), latlon(theLatLon) {}
 };
 
-typedef list<Location> LocationList;
+using LocationList = list<Location>;
 
 // ----------------------------------------------------------------------
 // Lue LocationList annetusta tiedostosta
@@ -324,7 +324,7 @@ std::map<std::string, NFmiPoint> FindPlaces(const std::vector<std::string>& theP
                                             const std::string& theCoordFile,
                                             bool theForceFlag)
 {
-  typedef std::map<std::string, NFmiPoint> ReturnType;
+  using ReturnType = std::map<std::string, NFmiPoint>;
   ReturnType ret;
 
   if (!NFmiFileSystem::FileExists(theCoordFile))
@@ -1415,7 +1415,7 @@ int run(int argc, char* argv[])
   if (!parse_options(argc, argv))
     return 0;
 
-  typedef map<string, NFmiPoint> PlacesType;
+  using PlacesType = map<string, NFmiPoint>;
   PlacesType places;
 
   // Initialize the querydata manager

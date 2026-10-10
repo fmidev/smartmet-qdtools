@@ -301,7 +301,7 @@ bool parse_options(int argc, char* argv[], Options& options)
  */
 // ----------------------------------------------------------------------
 
-typedef list<Fmi::CsvReader::row_type> CsvTable;
+using CsvTable = list<Fmi::CsvReader::row_type>;
 
 // ----------------------------------------------------------------------
 /*!
@@ -330,7 +330,7 @@ struct ParamInfo
   string interpolation;
   string precision;
 };
-typedef map<int, ParamInfo> Params;
+using Params = map<int, ParamInfo>;
 
 // ----------------------------------------------------------------------
 /*!
@@ -387,7 +387,7 @@ struct StationInfo
   string name;
 };
 
-typedef map<string, StationInfo> Stations;
+using Stations = map<string, StationInfo>;
 
 // ----------------------------------------------------------------------
 /*!
@@ -647,7 +647,7 @@ NFmiTimeDescriptor create_tdesc(const CsvTable& csv, const Fmi::TimeZonePtr& tz)
  */
 // ----------------------------------------------------------------------
 
-typedef map<string, unsigned int> LocationIndex;
+using LocationIndex = map<string, unsigned int>;
 
 LocationIndex make_location_index(NFmiFastQueryInfo& info,
                                   const CsvTable& csv,

@@ -1787,7 +1787,7 @@ list<string> CollectMetarFiles(const vector<string> &fileFilterList)
 
 list<string> SortMetarFiles(const list<string> &metarfiles)
 {
-  typedef multimap<time_t, string> SortedFiles;
+  using SortedFiles = multimap<time_t, string>;
   SortedFiles sortedfiles;
 
   for (const string &filename : metarfiles)

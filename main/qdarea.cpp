@@ -790,9 +790,9 @@ void parse_command_line(int argc, const char* argv[])
  */
 // ----------------------------------------------------------------------
 
-typedef vector<WeatherResult> Results;
-typedef map<WeatherPeriod, Results> TimedResults;
-typedef map<string, TimedResults> AreaResults;
+using Results = vector<WeatherResult>;
+using TimedResults = map<WeatherPeriod, Results>;
+using AreaResults = map<string, TimedResults>;
 
 static AreaResults results;
 

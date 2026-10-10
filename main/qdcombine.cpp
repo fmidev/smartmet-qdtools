@@ -91,8 +91,8 @@ static void FillCombinedData(const vector<string> &theDataFileNames,
 
     if (sourceInfo.Grid() && usedGrid == *sourceInfo.Grid())
     {
-      typedef std::pair<unsigned int, unsigned int> IndexPair;
-      typedef std::vector<IndexPair> Indexes;
+      using IndexPair = std::pair<unsigned int, unsigned int>;
+      using Indexes = std::vector<IndexPair>;
       Indexes params, times, levels;
 
       // Collect indexes for common parameters, times and levels
@@ -157,8 +157,8 @@ static void FillCombinedData(const vector<string> &theDataFileNames,
 
       if (!sourceInfo.Grid())
       {
-        typedef std::pair<unsigned int, unsigned int> IndexPair;
-        typedef std::vector<IndexPair> Indexes;
+        using IndexPair = std::pair<unsigned int, unsigned int>;
+        using Indexes = std::vector<IndexPair>;
         Indexes params, times, levels, locations;
 
         // Collect indexes for common parameters, times, levels and locations

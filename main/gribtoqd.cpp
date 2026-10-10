@@ -721,10 +721,9 @@ bool GribDefinitionPath(NFmiCmdLine &theCmdLine)
 {
   if (theCmdLine.isOption('D'))
   {
+    // setenv copies the value, putenv kept a pointer to this local string
     string definitionsPath = theCmdLine.OptionValue('D');
-    string environmentSettingStr = "GRIB_DEFINITION_PATH=";
-    environmentSettingStr += definitionsPath;
-    return putenv(const_cast<char *>(environmentSettingStr.c_str())) == 0;
+    return setenv("GRIB_DEFINITION_PATH", definitionsPath.c_str(), 1) == 0;
   }
   return true;
 }

@@ -436,8 +436,7 @@ void print_all_stations(NFmiFastQueryInfo &theQ)
 
 void set_timezone(const string &theZone)
 {
-  static string tzvalue = "TZ=" + theZone;
-  putenv(const_cast<char *>(tzvalue.c_str()));
+  setenv("TZ", theZone.c_str(), 1);
   tzset();
 }
 

@@ -207,9 +207,7 @@ const string format_time(const NFmiMetTime &mtime, const string &dateFormat, boo
 
 void set_timezone(const string &theZone)
 {
-  // must be static, see putenv specs!
-  static string tzvalue = "TZ=" + theZone;
-  putenv(const_cast<char *>(tzvalue.c_str()));
+  setenv("TZ", theZone.c_str(), 1);
   tzset();
 }
 

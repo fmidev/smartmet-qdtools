@@ -55,8 +55,8 @@ struct ProjectionPimple;
 class Projection
 {
  public:
-  ~Projection(void);
-  Projection(void);
+  ~Projection();
+  Projection();
   Projection(const Projection& theProjection);
   Projection& operator=(const Projection& theProjection);
 

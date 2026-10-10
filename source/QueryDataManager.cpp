@@ -141,7 +141,7 @@ void QueryDataManager::addfiles(const std::vector<std::string>& theFiles)
  */
 // ----------------------------------------------------------------------
 
-bool QueryDataManager::isset(void) const
+bool QueryDataManager::isset() const
 {
   return (itsCurrentData != itsData.end());
 }
@@ -158,7 +158,7 @@ bool QueryDataManager::isset(void) const
  */
 // ----------------------------------------------------------------------
 
-NFmiFastQueryInfo& QueryDataManager::info(void) const
+NFmiFastQueryInfo& QueryDataManager::info() const
 {
   if (isset())
     return *itsCurrentData->get<2>();

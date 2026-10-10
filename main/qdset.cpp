@@ -46,7 +46,7 @@ int main(int argc, const char* argv[])
 // Kaytto-ohjeet
 // ----------------------------------------------------------------------
 
-void Usage(void)
+void Usage()
 {
   cerr << "Usage: qdset [options] dataFile param(Id/name e.g. 4 or Temperature)" << endl
        << endl

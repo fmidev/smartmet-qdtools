@@ -106,7 +106,7 @@ get_values(const netCDF::NcVar& var)
 
 } // anonymous namespace
 
-void FmiTDimVarInfo::CalcTimeList(void)
+void FmiTDimVarInfo::CalcTimeList()
 {
   itsTimeList.Clear(true);
   for (size_t i = 0; i < itsOffsetValues.size(); i++)
@@ -131,7 +131,7 @@ FmiNcMetaData::FmiNcMetaData(bool useSurfaceInfo)
 {
 }
 
-FmiNcMetaData::~FmiNcMetaData(void)
+FmiNcMetaData::~FmiNcMetaData()
 {
   delete itsMetaInfo;
 }
@@ -165,7 +165,7 @@ void FmiNcMetaData::MakeMetaInfo(FmiTDimVarInfo &theTimeInfo, NFmiGrid &theGrid)
   }
 }
 
-std::string FmiNcMetaData::GetLevelDimName(void)
+std::string FmiNcMetaData::GetLevelDimName()
 {
   if (fUseSurfaceInfo)
     return itsSurfaceLevelInfo.itsDimName;
@@ -173,7 +173,7 @@ std::string FmiNcMetaData::GetLevelDimName(void)
     return itsMultiLevelInfo.itsDimName;
 }
 
-FmiNcLevelType FmiNcMetaData::GetLevelType(void)
+FmiNcLevelType FmiNcMetaData::GetLevelType()
 {
   if (fUseSurfaceInfo)
     return itsSurfaceLevelInfo.itsNcLevelType;
@@ -181,7 +181,7 @@ FmiNcLevelType FmiNcMetaData::GetLevelType(void)
     return itsMultiLevelInfo.itsNcLevelType;
 }
 
-FmiNetCdfQueryData::FmiNetCdfQueryData(void)
+FmiNetCdfQueryData::FmiNetCdfQueryData()
     : fDataOk(false),
       itsTInfo(),
       itsXInfo(),
@@ -287,7 +287,7 @@ std::vector<NFmiQueryData *> FmiNetCdfQueryData::CreateQueryDatas(const std::str
   return qDatas;
 }
 
-void FmiNetCdfQueryData::MakeAllMetaInfos(void)
+void FmiNetCdfQueryData::MakeAllMetaInfos()
 {
   itsSurfaceMetaData.MakeMetaInfo(itsTInfo, itsGrid);
   itsHeightLevelMetaData.MakeMetaInfo(itsTInfo, itsGrid);
@@ -295,7 +295,7 @@ void FmiNetCdfQueryData::MakeAllMetaInfos(void)
   itsHybridLevelMetaData.MakeMetaInfo(itsTInfo, itsGrid);
 }
 
-void FmiNetCdfQueryData::InitKnownParamMap(void)
+void FmiNetCdfQueryData::InitKnownParamMap()
 {
   itsKnownParameterMap.clear();
   // tässä on listattu tunnettuja parametrien standardi nimiä ja niiden vastineet FMI
@@ -303,7 +303,7 @@ void FmiNetCdfQueryData::InitKnownParamMap(void)
   itsKnownParameterMap.insert(std::make_pair("sea_water_temperature", kFmiTemperatureSea));
 }
 
-void FmiNetCdfQueryData::MakeWantedParamBag(void)
+void FmiNetCdfQueryData::MakeWantedParamBag()
 {
   if (itsNormalParameters.size())
   {
@@ -333,7 +333,7 @@ void FmiNetCdfQueryData::MakeWantedParamBag(void)
         "Error in FmiNetCdfQueryData::MakeWantedParamBag - parameters were missing.");
 }
 
-void FmiNetCdfQueryData::MakeWantedGrid(void)
+void FmiNetCdfQueryData::MakeWantedGrid()
 {
   if (itsGrid.Area() != nullptr)
     return;  // jos lat-lon projektiosta poikkeava, hila on jo rakennettu
@@ -433,7 +433,7 @@ static NFmiMetTime GetEpochTime(const std::string &theEpochTimeStr)
   throw std::runtime_error("Error in GetEpochTime - unknown error.");
 }
 
-void FmiNetCdfQueryData::CalcTimeList(void)
+void FmiNetCdfQueryData::CalcTimeList()
 {
   itsTInfo.CalcTimeList();
 }
@@ -862,7 +862,7 @@ static FmiNcProjectionType GetProjectionType(const netCDF::NcVar &theVar)
                            " is not supported yet.");
 }
 
-void FmiNetCdfQueryData::InitializeStreographicGrid(void)
+void FmiNetCdfQueryData::InitializeStreographicGrid()
 {
   if (itsProjectionInfo.La1 == kFloatMissing || itsProjectionInfo.Lo1 == kFloatMissing ||
       itsProjectionInfo.LoV == kFloatMissing || itsProjectionInfo.Dx == kFloatMissing ||
@@ -1011,7 +1011,7 @@ void FmiNetCdfQueryData::InitMetaInfo(const netCDF::NcFile &theNcFile)
   }
 }
 
-void FmiNetCdfQueryData::Clear(void)
+void FmiNetCdfQueryData::Clear()
 {
   itsTInfo = FmiTDimVarInfo();
   itsXInfo = FmiXYDimVarInfo();

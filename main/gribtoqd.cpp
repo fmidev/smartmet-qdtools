@@ -66,7 +66,7 @@ struct PointerDestroyer
 
 struct GeneratedHybridParamInfo
 {
-  GeneratedHybridParamInfo(void)
+  GeneratedHybridParamInfo()
       : fCalcHybridParam(false), itsGeneratedHybridParam(), itsHelpParamId(kFmiBadParameter)
   {
   }
@@ -93,7 +93,7 @@ class Reduced_ll_grib_exception
 
 struct GribFilterOptions
 {
-  GribFilterOptions(void)
+  GribFilterOptions()
       : itsOutputFileName(),
         fUseOutputFile(false),
         itsReturnStatus(0),
@@ -125,13 +125,13 @@ struct GribFilterOptions
   {
   }
 
-  ~GribFilterOptions(void)
+  ~GribFilterOptions()
   {
     if (itsInputFile)
       ::fclose(itsInputFile);  // suljetaan tiedosto, josta gribi luettu
   }
 
-  bool DoGlobalFix(void) const
+  bool DoGlobalFix() const
   {
     if (fDoAtlanticFix || fDoPacificFix || fDoLeftRightSwap)
       return true;
@@ -933,7 +933,7 @@ vector<string> GetDataFiles(const NFmiCmdLine &cmdline)
 class CombineDataStructureSearcher
 {
  public:
-  CombineDataStructureSearcher(void)
+  CombineDataStructureSearcher()
       : itsGridCounts(),
         itsValidTimes(),
         itsOrigTimes(),
@@ -984,7 +984,7 @@ class CombineDataStructureSearcher
     }
   }
 
-  NFmiHPlaceDescriptor GetGrid(void)
+  NFmiHPlaceDescriptor GetGrid()
   {
     int maxCount = -1;
     MyGrid mostPopularGrid;  // tähä etsitään 'suosituin' hila, ja sitä käytetään datan pohjana
@@ -1000,7 +1000,7 @@ class CombineDataStructureSearcher
         NFmiGrid(mostPopularGrid.itsArea, mostPopularGrid.itsNX, mostPopularGrid.itsNY));
   }
 
-  size_t GetGridCount(void) { return itsGridCounts.size(); }
+  size_t GetGridCount() { return itsGridCounts.size(); }
   NFmiHPlaceDescriptor GetGrid(size_t index)
   {
     if (index >= itsGridCounts.size())
@@ -1012,7 +1012,7 @@ class CombineDataStructureSearcher
     return NFmiHPlaceDescriptor(NFmiGrid(tmpGrid.itsArea, tmpGrid.itsNX, tmpGrid.itsNY));
   }
 
-  NFmiTimeDescriptor GetTimes(void)
+  NFmiTimeDescriptor GetTimes()
   {
     NFmiTimeList times;
     for (auto it = itsValidTimes.begin(); it != itsValidTimes.end(); ++it)
@@ -1024,7 +1024,7 @@ class CombineDataStructureSearcher
     return NFmiTimeDescriptor(*origTimeIt, times);
   }
 
-  NFmiVPlaceDescriptor GetLevels(void)
+  NFmiVPlaceDescriptor GetLevels()
   {
     NFmiLevelBag levels;
     for (auto it = itsLevels.begin(); it != itsLevels.end(); ++it)
@@ -1034,7 +1034,7 @@ class CombineDataStructureSearcher
     return NFmiVPlaceDescriptor(levels);
   }
 
-  NFmiParamDescriptor GetParams(void)
+  NFmiParamDescriptor GetParams()
   {
     auto prodIt =
         itsWantedProducers.begin();  // otetaan vain 1. producer, en jaksa nyt miettiä mikä voisi
@@ -5087,7 +5087,7 @@ int BuildAndStoreAllDatas(vector<string> &theFileList, GribFilterOptions &theGri
 // Kaytto-ohjeet
 // ----------------------------------------------------------------------
 
-void Usage(void)
+void Usage()
 {
   cerr << "Usage: grib2qd [options] inputfile1 [inputfile2 ...]  > outputqdata" << endl
        << endl

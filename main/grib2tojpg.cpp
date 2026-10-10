@@ -61,7 +61,7 @@ struct PointerDestroyer
 
 struct ParamChangeItem
 {
-  ParamChangeItem(void)
+  ParamChangeItem()
       : itsOriginalParamId(0),
         itsWantedParam(0,
                        "",
@@ -87,7 +87,7 @@ struct ParamChangeItem
   {
   }
 
-  ~ParamChangeItem(void) { delete itsLevel; }
+  ~ParamChangeItem() { delete itsLevel; }
   ParamChangeItem &operator=(const ParamChangeItem &theOther)
   {
     if (this != &theOther)
@@ -101,7 +101,7 @@ struct ParamChangeItem
     return *this;
   }
 
-  void Reset(void)
+  void Reset()
   {
     itsOriginalParamId = 0;
     itsWantedParam = NFmiParam(0,
@@ -126,7 +126,7 @@ struct ParamChangeItem
   NFmiLevel *itsLevel;  // jos ei 0-pointer, tehdään tästä levelistä pintaparametri
 };
 
-void Usage(void);
+void Usage();
 vector<NFmiQueryData *> ConvertGrib2QData(FILE *theInput,
                                           int theMaxQDataSizeInBytes,
                                           bool useOutputFile,
@@ -521,7 +521,7 @@ int main(int argc, const char **argv)
 // Kaytto-ohjeet
 // ----------------------------------------------------------------------
 
-void Usage(void)
+void Usage()
 {
   cout << "Usage: grib2jpg [options] inputgribfile " << endl
        << endl

@@ -37,7 +37,7 @@ using namespace std;  // tätä ei saa sitten laittaa headeriin, eikä ennen inc
 // Kaytto-ohjeet
 // ----------------------------------------------------------------------
 
-void usage(void)
+void usage()
 {
   cout << "Usage: qdinterpolatearea [options] controlGridFile < inputData > outputData\n"
           "\n"

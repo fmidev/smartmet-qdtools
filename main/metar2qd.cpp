@@ -181,7 +181,7 @@ struct MetarData
   static const size_t itsClType4Index = 22;
   static const size_t itsParamVectorSize = 23;
 
-  MetarData(void)
+  MetarData()
       : itsValues(),
         itsParamIds(),
         itsIcaoName("xxxx"),
@@ -568,7 +568,7 @@ static std::string GetStringAndAdvance(boost::sregex_token_iterator &it, bool mu
 class StationErrorStrings : public set<string>
 {
  public:
-  ~StationErrorStrings(void)
+  ~StationErrorStrings()
   {
     ofstream out("d://data//11caribia//missing_icao.txt");
     if (out)

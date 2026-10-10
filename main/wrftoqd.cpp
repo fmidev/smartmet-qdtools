@@ -84,7 +84,7 @@ struct TotalDimensionData
   }
 
   // Tarkistaa onko kyseessä staggered dimensio mukana ja laittaa tarvittaessa liput päälle.
-  void CheckStaggered(void)
+  void CheckStaggered()
   {
     try
     {
@@ -106,7 +106,7 @@ struct TotalDimensionData
   }
 
   // Tarkistaa xDimName:n ja yDimName:n, jos ne ovat väärin päin (x <-> y), vaihda arvot ristiin
-  void CheckFillOrder(void)
+  void CheckFillOrder()
   {
     try
     {
@@ -509,7 +509,7 @@ struct BaseGridAreaData
   {
   }
 
-  bool isEmpty(void) const
+  bool isEmpty() const
   {
     if (!DX || !DY || !baseSizeX || !baseSizeY || baseAreaString.empty())
       return true;
@@ -517,7 +517,7 @@ struct BaseGridAreaData
       return false;
   }
 
-  void calcBaseGrid(void)
+  void calcBaseGrid()
   {
     try
     {
@@ -530,7 +530,7 @@ struct BaseGridAreaData
     }
   }
 
-  void calcBaseArea(void)
+  void calcBaseArea()
   {
     try
     {

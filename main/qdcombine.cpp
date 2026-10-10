@@ -26,7 +26,7 @@ static const int kDontUseForcedLevelValue = -9999999;
 // Kaytto-ohjeet
 // ----------------------------------------------------------------------
 
-void Usage(void)
+void Usage()
 {
   cout << "Usage: qdcombine [options] directory [file2 file3...]> output" << endl
        << "       qdcombine [options] -o [outfile] directory [file2 file3...]" << endl

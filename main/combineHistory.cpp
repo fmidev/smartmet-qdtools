@@ -69,7 +69,7 @@ using namespace std;
  */
 // ----------------------------------------------------------------------
 
-void Usage(void)
+void Usage()
 {
   cout << "combineHistory [options] <directory> [<directory2> ...] > output" << endl
        << "combineHistory [options] -O outfile <directory> [<directory2> ...]" << endl

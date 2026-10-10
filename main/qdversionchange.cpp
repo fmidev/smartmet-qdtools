@@ -42,7 +42,7 @@
 
 using namespace std;
 
-void Usage(void);
+void Usage();
 void run(int argc, const char *argv[]);
 int GetIntegerOptionValue(const NFmiCmdLine &theCmdline, char theOption);
 
@@ -226,7 +226,7 @@ void run(int argc, const char *argv[])
 // Kaytto-ohjeet
 // ----------------------------------------------------------------------
 
-void Usage(void)
+void Usage()
 {
   cout << "Usage: qdversionchange [options] [qdVersion=7 keepCloudSymbol=0] < inputdata" << endl
        << " > outputData" << endl

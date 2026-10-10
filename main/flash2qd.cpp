@@ -39,7 +39,7 @@ bool ReadFlashFile(const std::string &theFileName,
                    std::vector<std::string> &theFlashStrings);
 NFmiQueryData *CreateFlashQueryData(std::vector<std::string> &theFlashStrings,
                                     bool fMakeLocal2UtcTimeConversion);
-void Usage(void);
+void Usage();
 void Domain(int argc, const char *argv[]);
 int GetIntegerOptionValue(const NFmiCmdLine &theCmdline, char theOption);
 
@@ -145,14 +145,14 @@ bool ParseFlashDataLine(const std::string &theLineStr, FlashData &theData)
   return false;
 }
 
-NFmiHPlaceDescriptor MakeHPlaceDescriptor(void)
+NFmiHPlaceDescriptor MakeHPlaceDescriptor()
 {
   NFmiLocationBag locs;
   locs.AddLocation(NFmiLocation());
   return NFmiHPlaceDescriptor(locs);
 }
 
-NFmiParamDescriptor MakeParamDescriptor(void)
+NFmiParamDescriptor MakeParamDescriptor()
 {
   NFmiProducer prod(1012, "flash");
   NFmiParamBag params;
@@ -263,7 +263,7 @@ bool ReadFlashFile(const std::string &theFileName,
   return false;
 }
 
-void Usage(void)
+void Usage()
 {
   cout << "Usage: flash2qd [-s lineCount] [-t] flashData > flash.sqd" << endl
        << endl

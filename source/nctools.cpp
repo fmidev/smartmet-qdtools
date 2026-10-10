@@ -42,7 +42,7 @@ int unknownParIdCounter = nctools::unknownParIdCounterBegin;  // jos tuntematon 
 
 namespace nctools
 {
-NFmiEnumConverter &get_enumconverter(void)
+NFmiEnumConverter& get_enumconverter()
 {
   return converter;
 }

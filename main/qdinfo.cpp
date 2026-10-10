@@ -62,7 +62,7 @@ void ReportVersion(NFmiFastQueryInfo *q)
  */
 // ----------------------------------------------------------------------
 
-void ReportParameterNames(void)
+void ReportParameterNames()
 {
   NFmiEnumConverter converter;
   const list<string> names = converter.Names();

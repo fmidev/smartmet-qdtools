@@ -95,7 +95,7 @@ struct PointerDestroyer
 
 struct GeneratedHybridParamInfo
 {
-  GeneratedHybridParamInfo(void)
+  GeneratedHybridParamInfo()
       : fCalcHybridParam(false), itsGeneratedHybridParam(), itsHelpParamId(kFmiBadParameter)
   {
   }
@@ -117,7 +117,7 @@ static const size_t gMBsize = 1024 * 1024;
 
 struct GribFilterOptions
 {
-  GribFilterOptions(void)
+  GribFilterOptions()
       : itsOutputFileName(),
         fUseOutputFile(false),
         itsMaxQDataSizeInBytes(1024 * gMBsize),
@@ -143,7 +143,7 @@ struct GribFilterOptions
   {
   }
 
-  ~GribFilterOptions(void)
+  ~GribFilterOptions()
   {
     if (itsInputFile)
       ::fclose(itsInputFile);  // suljetaan tiedosto, josta gribi luettu
@@ -188,7 +188,7 @@ class TotalQDataCollector
  public:
   using Container = list<vector<std::shared_ptr<NFmiQueryData> > >;
 
-  TotalQDataCollector(void) : itsAddCount(0), itsTotalGeneratedQDatas() {}
+  TotalQDataCollector() : itsAddCount(0), itsTotalGeneratedQDatas() {}
   void AddData(vector<std::shared_ptr<NFmiQueryData> > &theDataList)
   {
     if (theDataList.size())
@@ -199,8 +199,8 @@ class TotalQDataCollector
     }
   }
 
-  Container &TotalGeneratedQDatas(void) { return itsTotalGeneratedQDatas; }
-  int AddCount(void) const { return itsAddCount; }
+  Container& TotalGeneratedQDatas() { return itsTotalGeneratedQDatas; }
+  int AddCount() const { return itsAddCount; }
 
  private:
   MutexType itsMutex;
@@ -213,7 +213,7 @@ namespace
 TotalQDataCollector gTotalQDataCollector;
 }
 
-void Usage(void);
+void Usage();
 void ConvertGrib2QData(GribFilterOptions &theGribFilterOptions);
 void CreateQueryDatas(vector<GridRecordData *> &theGribRecordDatas,
                       GribFilterOptions &theGribFilterOptions,
@@ -805,7 +805,7 @@ static vector<string> GetDataFiles(const string &theFileOrPatternOrDirectory)
 class CombineDataStructureSearcher
 {
  public:
-  CombineDataStructureSearcher(void)
+  CombineDataStructureSearcher()
       : itsGridCounts(),
         itsValidTimes(),
         itsOrigTimes(),
@@ -856,7 +856,7 @@ class CombineDataStructureSearcher
     }
   }
 
-  NFmiHPlaceDescriptor GetGrid(void)
+  NFmiHPlaceDescriptor GetGrid()
   {
     int maxCount = -1;
     MyGrid mostPopularGrid;  // tähä etsitään 'suosituin' hila, ja sitä käytetään datan pohjana
@@ -872,7 +872,7 @@ class CombineDataStructureSearcher
         NFmiGrid(mostPopularGrid.itsArea, mostPopularGrid.itsNX, mostPopularGrid.itsNY));
   }
 
-  NFmiTimeDescriptor GetTimes(void)
+  NFmiTimeDescriptor GetTimes()
   {
     NFmiTimeList times;
     for (auto it = itsValidTimes.begin(); it != itsValidTimes.end(); ++it)
@@ -884,7 +884,7 @@ class CombineDataStructureSearcher
     return NFmiTimeDescriptor(*origTimeIt, times);
   }
 
-  NFmiVPlaceDescriptor GetLevels(void)
+  NFmiVPlaceDescriptor GetLevels()
   {
     NFmiLevelBag levels;
     for (auto it = itsLevels.begin(); it != itsLevels.end(); ++it)
@@ -894,7 +894,7 @@ class CombineDataStructureSearcher
     return NFmiVPlaceDescriptor(levels);
   }
 
-  NFmiParamDescriptor GetParams(void)
+  NFmiParamDescriptor GetParams()
   {
     auto prodIt =
         itsWantedProducers.begin();  // otetaan vain 1. producer, en jaksa nyt miettiä mikä voisi
@@ -1221,7 +1221,7 @@ int main(int argc, const char **argv)
 // Kaytto-ohjeet
 // ----------------------------------------------------------------------
 
-void Usage(void)
+void Usage()
 {
   cout << "Usage: grib2qd [options] inputgribfile  > outputqdata" << endl
        << endl

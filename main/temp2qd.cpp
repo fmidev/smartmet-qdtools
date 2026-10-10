@@ -23,7 +23,7 @@ using namespace std;
 const char *default_stations_file = "/usr/share/smartmet/stations.csv";
 
 void Domain(int argc, const char *argv[]);
-void Usage(void);
+void Usage();
 
 int main(int argc, const char *argv[])
 {
@@ -43,7 +43,7 @@ int main(int argc, const char *argv[])
 // Kaytto-ohjeet
 // ----------------------------------------------------------------------
 
-void Usage(void)
+void Usage()
 {
   //	cout << "Usage: temp2qd [options] fileFilter1[,fileFilter2,...] > output" << endl
   cerr << "Usage: temp2qd fileFilter1[,fileFilter2,...] > output" << endl

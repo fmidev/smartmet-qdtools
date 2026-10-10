@@ -30,12 +30,12 @@ class Projection;
 class ProjectionStore
 {
  public:
-  ~ProjectionStore(void);
-  ProjectionStore(void);
+  ~ProjectionStore();
+  ProjectionStore();
 
   void add(const std::string& theName, const Projection& theProjection);
 
-  std::set<std::string> names(void) const;
+  std::set<std::string> names() const;
 
   const Projection& projection(const std::string& theName) const;
 

@@ -23,7 +23,7 @@ void Domain(int argc, const char *argv[]);
 // ----------------------------------------------------------------------
 // Kaytto-ohjeet
 // ----------------------------------------------------------------------
-void Usage(void)
+void Usage()
 {
   cout << "Usage: qdgridcalc [options] projectionstring x_km y_km" << endl
        << endl

@@ -12,7 +12,7 @@ static NFmiEnumConverter converter;
 
 typedef struct NFmiParamCheckData__
 {
-  NFmiParamCheckData__(void)
+  NFmiParamCheckData__()
       : itsParamId(0),
         itsParamMissingDataMaxProcent(),
         itsParamStraightDataMaxProcent(),

@@ -29,7 +29,7 @@ enum FmiNcLevelType
 class FmiVarInfo
 {
  public:
-  FmiVarInfo(void)
+  FmiVarInfo()
       : itsVarName(),
         itsDimName(),
         itsParId(0),
@@ -53,8 +53,8 @@ class FmiVarInfo
 class FmiXYDimVarInfo
 {
  public:
-  FmiXYDimVarInfo(void) : itsVarName(), itsIndex(-1), itsValues() {}
-  bool IsEmpty(void) { return (itsIndex == -1); }
+  FmiXYDimVarInfo() : itsVarName(), itsIndex(-1), itsValues() {}
+  bool IsEmpty() { return (itsIndex == -1); }
   // private:
   std::string itsVarName;
   int itsIndex;  // muuttujan (var) indeksi NC-tiedostossa
@@ -64,7 +64,7 @@ class FmiXYDimVarInfo
 class FmiZDimVarInfo
 {
  public:
-  FmiZDimVarInfo(void)
+  FmiZDimVarInfo()
       : itsVarName(),
         itsDimName(),
         itsLevelUnitName(),
@@ -98,7 +98,7 @@ enum FmiNcTimeOffsetType
 class FmiTDimVarInfo
 {
  public:
-  FmiTDimVarInfo(void)
+  FmiTDimVarInfo()
       : itsVarName(),
         itsIndex(-1),
         itsOffsetValues(),
@@ -108,7 +108,7 @@ class FmiTDimVarInfo
         itsTimeOffsetType(kFmiNcNoTimeType)
   {
   }
-  void CalcTimeList(void);
+  void CalcTimeList();
 
   // private:
   std::string itsVarName;
@@ -129,7 +129,7 @@ enum FmiNcProjectionType
 class FmiProjectionInfo
 {
  public:
-  FmiProjectionInfo(void)
+  FmiProjectionInfo()
       : itsProjectionType(kFmiNcNoProjection),
         La1(kFloatMissing),
         Lo1(kFloatMissing),
@@ -163,11 +163,11 @@ class FmiNcMetaData
 {
  public:
   FmiNcMetaData(bool useSurfaceInfo);
-  ~FmiNcMetaData(void);
+  ~FmiNcMetaData();
 
   void MakeMetaInfo(FmiTDimVarInfo &theTimeInfo, NFmiGrid &theGrid);
-  std::string GetLevelDimName(void);
-  FmiNcLevelType GetLevelType(void);
+  std::string GetLevelDimName();
+  FmiNcLevelType GetLevelType();
 
   // private:
   bool fUseSurfaceInfo;
@@ -180,31 +180,31 @@ class FmiNcMetaData
 class FmiNetCdfQueryData
 {
  public:
-  FmiNetCdfQueryData(void);
-  ~FmiNetCdfQueryData(void);
+  FmiNetCdfQueryData();
+  ~FmiNetCdfQueryData();
 
-  bool DataOk(void) const { return fDataOk; }
+  bool DataOk() const { return fDataOk; }
   std::vector<NFmiQueryData *> CreateQueryDatas(const std::string &theNcFileName);
   void Producer(const NFmiProducer &theProducer) { itsProducer = theProducer; }
-  const std::string &ErrorMessage(void) const { return itsErrorMessage; }
+  const std::string& ErrorMessage() const { return itsErrorMessage; }
 
  private:
   void InitMetaInfo(const netCDF::NcFile &theNcFile);  // throws exceptions!
-  void MakeAllMetaInfos(void);
-  void InitKnownParamMap(void);
-  void Clear(void);
+  void MakeAllMetaInfos();
+  void InitKnownParamMap();
+  void Clear();
   void InitTimeDim(const netCDF::NcVar &theVar, const std::string &theVarName, int theIndex);
-  void CalcTimeList(void);
+  void CalcTimeList();
   void InitZDim(const netCDF::NcVar &theVar,
                 const std::string &theVarName,
                 int theIndex,
                 FmiNcLevelType theLevelType);
   void InitNormalVar(const netCDF::NcVar &theVar, const std::string &theVarName, int theIndex);
-  void MakeWantedGrid(void);
-  void MakeWantedParamBag(void);
+  void MakeWantedGrid();
+  void MakeWantedParamBag();
   FmiParameterName GetParameterName(const netCDF::NcVar &theVar, FmiParameterName theDefaultParName);
   void SeekProjectionInfo(const netCDF::NcFile &theNcFile);
-  void InitializeStreographicGrid(void);
+  void InitializeStreographicGrid();
   FmiZDimVarInfo &GetLevelInfo(const FmiNcLevelType theLevelType);
   bool IsSurfaceVariable(const netCDF::NcVar &theVar);
   void MakesureSurfaceMetaDataIsInitialized();

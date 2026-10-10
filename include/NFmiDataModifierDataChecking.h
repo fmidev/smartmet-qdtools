@@ -10,17 +10,17 @@
 class NFmiDataModifierDataChecking : public NFmiDataModifier
 {
  public:
-  NFmiDataModifierDataChecking(void) : itsCheckedDataCount(0), itsFoundDataCount(0){};
-  ~NFmiDataModifierDataChecking(void) override {};
-  void Clear(void) override
+  NFmiDataModifierDataChecking() : itsCheckedDataCount(0), itsFoundDataCount(0) {};
+  ~NFmiDataModifierDataChecking() override {};
+  void Clear() override
   {
     itsCheckedDataCount = 0;
     itsFoundDataCount = 0;
   };
-  int CheckedDataCount(void) { return itsCheckedDataCount; }
-  int FoundDataCount(void) { return itsFoundDataCount; }
+  int CheckedDataCount() { return itsCheckedDataCount; }
+  int FoundDataCount() { return itsFoundDataCount; }
   using NFmiDataModifier::CalculationResult;
-  float CalculationResult(void) override
+  float CalculationResult() override
   {
     float result =
         itsCheckedDataCount ? itsFoundDataCount / float(itsCheckedDataCount) * 100 : kFloatMissing;
@@ -35,8 +35,8 @@ class NFmiDataModifierDataChecking : public NFmiDataModifier
 class NFmiDataModifierDataMissing : public NFmiDataModifierDataChecking
 {
  public:
-  NFmiDataModifierDataMissing(void) : NFmiDataModifierDataChecking(){};
-  ~NFmiDataModifierDataMissing(void) override {};
+  NFmiDataModifierDataMissing() : NFmiDataModifierDataChecking() {};
+  ~NFmiDataModifierDataMissing() override {};
   using NFmiDataModifierDataChecking::Calculate;
   void Calculate(float theValue) override
   {
@@ -48,10 +48,9 @@ class NFmiDataModifierDataMissing : public NFmiDataModifierDataChecking
 class NFmiDataModifierDataStraight : public NFmiDataModifierDataChecking
 {
  public:
-  NFmiDataModifierDataStraight(void)
-      : NFmiDataModifierDataChecking(), itsLastValue(kFloatMissing){};
-  ~NFmiDataModifierDataStraight(void) override {};
-  void Clear(void) override
+  NFmiDataModifierDataStraight() : NFmiDataModifierDataChecking(), itsLastValue(kFloatMissing) {};
+  ~NFmiDataModifierDataStraight() override {};
+  void Clear() override
   {
     NFmiDataModifierDataChecking::Clear();
     itsLastValue = kFloatMissing;

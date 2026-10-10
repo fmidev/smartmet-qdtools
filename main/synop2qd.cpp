@@ -158,7 +158,7 @@ static float SynopVisCode2Metres(float theVisibility)
 class NFmiSynopCode
 {
  public:
-  NFmiSynopCode(void)
+  NFmiSynopCode()
       : itsCodeStr(), itsTime(), itsStation(), itsKnownStations(nullptr), fVerbose(false)
   {
     Clear();
@@ -175,9 +175,9 @@ class NFmiSynopCode
     Clear();
   }
 
-  ~NFmiSynopCode(void) = default;
+  ~NFmiSynopCode() = default;
 
-  void Clear(void)
+  void Clear()
   {
     itsCodeStr = "";
 
@@ -546,7 +546,7 @@ class NFmiSynopCode
   class StationErrorStrings : public set<string>
   {
    public:
-    ~StationErrorStrings(void)
+    ~StationErrorStrings()
     {
       ofstream out("d://data//11caribia//missing_wmo_ids.txt");
       if (out)
@@ -904,8 +904,8 @@ class NFmiSynopCode
   }
 
   void Time(const NFmiMetTime &theTime) { itsTime = theTime; }
-  const NFmiMetTime &Time(void) const { return itsTime; }
-  const NFmiStation &Station(void) const { return itsStation; }
+  const NFmiMetTime& Time() const { return itsTime; }
+  const NFmiStation& Station() const { return itsStation; }
   // private:
   std::string itsCodeStr;
 
@@ -946,7 +946,7 @@ class NFmiSynopCode
                                    // korjauksen koodi esim. RRP
 };
 
-static void Usage(void);
+static void Usage();
 
 static std::string GetMaxNCharsFromStart(const std::string &theStr, size_t kMaxCharsCount)
 {
@@ -959,7 +959,7 @@ static std::string GetMaxNCharsFromStart(const std::string &theStr, size_t kMaxC
 // Kaytto-ohjeet
 // ----------------------------------------------------------------------
 
-void Usage(void)
+void Usage()
 {
   cerr << "Usage: synop2qd [options] fileFilter1[,fileFilter2,...] > output" << endl
        << endl

@@ -274,7 +274,7 @@ void extract_time(NFmiFastQueryInfo& theQ)
   unique_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
   NFmiFastQueryInfo dstinfo(data.get());
 
-  if (data.get() == 0)
+  if (data.get() == nullptr)
     throw runtime_error("Could not allocate memory for result data");
 
   // copy the data for time selected time
@@ -345,7 +345,7 @@ void extract_times(NFmiFastQueryInfo& theQ, unsigned long index1, unsigned long 
     NFmiFastQueryInfo tmpinfo(
         theQ.ParamDescriptor(), tdesc, theQ.HPlaceDescriptor(), theQ.VPlaceDescriptor());
 
-    NFmiQueryData* qd = 0;
+    NFmiQueryData* qd = nullptr;
 
     if (!options.memorymapping)
       qd = NFmiQueryDataUtil::CreateEmptyData(tmpinfo);

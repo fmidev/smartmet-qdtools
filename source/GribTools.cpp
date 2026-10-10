@@ -170,16 +170,16 @@ ParamChangeItem::ParamChangeItem()
       ,
       itsConversionBase(0),
       itsConversionScale(1.f),
-      itsLevel(0)
+      itsLevel(nullptr)
 {
 }
 
-ParamChangeItem::ParamChangeItem(const ParamChangeItem &theOther)
+ParamChangeItem::ParamChangeItem(const ParamChangeItem& theOther)
     : itsOriginalParamId(theOther.itsOriginalParamId),
       itsWantedParam(theOther.itsWantedParam),
       itsConversionBase(theOther.itsConversionBase),
       itsConversionScale(theOther.itsConversionScale),
-      itsLevel(theOther.itsLevel ? new NFmiLevel(*theOther.itsLevel) : 0)
+      itsLevel(theOther.itsLevel ? new NFmiLevel(*theOther.itsLevel) : nullptr)
 {
 }
 
@@ -195,7 +195,7 @@ ParamChangeItem &ParamChangeItem::operator=(const ParamChangeItem &theOther)
     itsWantedParam = theOther.itsWantedParam;
     itsConversionBase = theOther.itsConversionBase;
     itsConversionScale = theOther.itsConversionScale;
-    itsLevel = theOther.itsLevel ? new NFmiLevel(*theOther.itsLevel) : 0;
+    itsLevel = theOther.itsLevel ? new NFmiLevel(*theOther.itsLevel) : nullptr;
   }
   return *this;
 }
@@ -215,7 +215,7 @@ void ParamChangeItem::Reset()
   itsConversionScale = 1.f;
   if (itsLevel)
     delete itsLevel;
-  itsLevel = 0;
+  itsLevel = nullptr;
 }
 
 // ----------------------------------------------------------------------

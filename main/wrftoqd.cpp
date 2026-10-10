@@ -1134,7 +1134,7 @@ static NFmiQueryInfo *CreateNewInnerInfo(
       return new NFmiQueryInfo(paramDesc, timeDesc, hplaceDesc, vplaceDesc);
     }
 
-    return 0;
+    return nullptr;
   }
   catch (...)
   {

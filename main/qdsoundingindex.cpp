@@ -54,7 +54,7 @@ static void run(int argc, const char* argv[])
   NFmiMilliSecondTimer debugTimer;
   debugTimer.StartTimer();
   std::shared_ptr<NFmiQueryData> data = NFmiSoundingIndexCalculator::CreateNewSoundingIndexData(
-      fileIn, producerName, true, 0, false, workerThreadCount);
+      fileIn, producerName, true, nullptr, false, workerThreadCount);
   debugTimer.StopTimer();
 
   std::string debugStr("Making ");

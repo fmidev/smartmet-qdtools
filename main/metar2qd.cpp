@@ -1946,7 +1946,7 @@ void run(int argc, const char *argv[])
 
   NFmiQueryData *newQData = ::MakeQueryDataFromBlocks(params, stationInfoSystem, dataBlocks);
 
-  if (newQData == 0)
+  if (newQData == nullptr)
     throw runtime_error("Error: Unable to create querydata from METAR data, stopping program...");
 
   if (makeTotalWindParameter)
@@ -1955,7 +1955,7 @@ void run(int argc, const char *argv[])
     NFmiFastQueryInfo tempInfo(newQData);
     NFmiQueryData *newQDataWithTotalWind = NFmiQueryDataUtil::MakeCombineParams(
         tempInfo, 7, false, true, false, kFmiWindGust, std::vector<int>(), false, 0, false, false);
-    if (newQDataWithTotalWind == 0)
+    if (newQDataWithTotalWind == nullptr)
       throw runtime_error(
           "Error: Unable to create querydata with totalWind-parameter, stopping program...");
     ::WriteMetarDataToCout(newQDataWithTotalWind);

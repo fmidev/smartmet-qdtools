@@ -359,8 +359,8 @@ int main(int argc, const char *argv[])
 
   // Now a second pass reads all files which contained valid time stamps
 
-  NFmiQueryData *outqd = 0;
-  NFmiFastQueryInfo *outqi = 0;
+  NFmiQueryData* outqd = nullptr;
+  NFmiFastQueryInfo* outqi = nullptr;
 
   // This will contain all times that have already been handled
   set<NFmiMetTime> handled_times;
@@ -376,7 +376,7 @@ int main(int argc, const char *argv[])
 
     // If first file, create output file
 
-    if (outqd == 0)
+    if (outqd == nullptr)
     {
       NFmiTimeBag timeBag;
       bool fUseTimeBag = false;

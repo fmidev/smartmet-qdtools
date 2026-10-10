@@ -158,7 +158,8 @@ static float SynopVisCode2Metres(float theVisibility)
 class NFmiSynopCode
 {
  public:
-  NFmiSynopCode(void) : itsCodeStr(), itsTime(), itsStation(), itsKnownStations(0), fVerbose(false)
+  NFmiSynopCode(void)
+      : itsCodeStr(), itsTime(), itsStation(), itsKnownStations(nullptr), fVerbose(false)
   {
     Clear();
   }
@@ -1119,7 +1120,7 @@ static NFmiQueryInfo *MakeNewInnerInfoForSYNOP(const std::vector<NFmiSynopCode> 
                                                bool fDoShipMessages,
                                                bool fDoBuoyMessages)
 {
-  NFmiQueryInfo *info = 0;
+  NFmiQueryInfo* info = nullptr;
   if (theSynops.size() > 0)
   {
     NFmiTimeList times(MakeTimeListForSynop(theSynops));
@@ -1829,7 +1830,7 @@ NFmiQueryData *MakeQueryDataFromSynopCodeDataVector(
     bool fDoShipMessages,
     bool fDoBuoyMessages)
 {
-  NFmiQueryData *newData = 0;
+  NFmiQueryData* newData = nullptr;
 
   NFmiQueryInfo *innerInfo = MakeNewInnerInfoForSYNOP(
       theSynopCodeVector, theWantedProducer, fDoShipMessages, fDoBuoyMessages);

@@ -558,7 +558,7 @@ NFmiHPlaceDescriptor MakeHPlaceDescriptor(NFmiFastQueryInfo& theQ,
   std::shared_ptr<NFmiArea> area(
       NFmiArea::CreateFromBBox(theQ.Grid()->Area()->SpatialReference(), bl, tr));
 
-  if (area.get() == 0)
+  if (area.get() == nullptr)
     throw runtime_error("Failed to create the new projection");
 
   NFmiGrid grid(area.get(), width, height);
@@ -978,7 +978,7 @@ void RemoveBadTimes(NFmiQueryData& theQD,
   NFmiFastQueryInfo tmpinfo(
       theQ.ParamDescriptor(), tdesc, theQ.HPlaceDescriptor(), theQ.VPlaceDescriptor(), theVersion);
   NFmiQueryData* data2 = NFmiQueryDataUtil::CreateEmptyData(tmpinfo);
-  if (data2 == 0)
+  if (data2 == nullptr)
     throw runtime_error("Could not allocate memory for result data");
   NFmiFastQueryInfo dstinfo(data2);
 
@@ -1398,7 +1398,7 @@ int run(int argc, const char* argv[])
   NFmiFastQueryInfo info(pdesc, tdesc, hdesc, vdesc, version);
 
   std::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
-  if (data.get() == 0)
+  if (data.get() == nullptr)
     throw runtime_error("Could not allocate memory for result data");
 
   NFmiFastQueryInfo dstinfo(data.get());
@@ -1446,7 +1446,7 @@ int run(int argc, const char* argv[])
       NFmiTimeDescriptor tdesc2(MakeTimeDescriptor(dstinfo, badtimes));
       NFmiFastQueryInfo info2(pdesc, tdesc2, hdesc, vdesc, version);
       NFmiQueryData* data2 = NFmiQueryDataUtil::CreateEmptyData(info2);
-      if (data2 == 0)
+      if (data2 == nullptr)
         throw runtime_error("Could not allocate memory for result data");
       NFmiFastQueryInfo dstinfo2(data2);
 

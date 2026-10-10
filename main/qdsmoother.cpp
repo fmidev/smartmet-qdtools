@@ -433,7 +433,7 @@ std::shared_ptr<NFmiQueryData> create_data(NFmiFastQueryInfo& theQ)
   NFmiFastQueryInfo info(pdesc, tdesc, hdesc, vdesc);
   std::shared_ptr<NFmiQueryData> qd(NFmiQueryDataUtil::CreateEmptyData(info));
 
-  if (qd.get() == 0)
+  if (qd.get() == nullptr)
     throw runtime_error("Insufficient memory for result data");
 
   // Fill the querydata with smoothened values
@@ -482,7 +482,7 @@ int run(int argc, const char* argv[])
     cout << "Smoothening data" << endl;
   std::shared_ptr<NFmiQueryData> outqd = create_data(q);
 
-  if (outqd.get() == 0)
+  if (outqd.get() == nullptr)
     throw runtime_error("Failed to create a smoothened querydata object");
 
   if (options.verbose)

@@ -114,7 +114,7 @@ void QueryDataManager::searchpath(const std::string& theSearchPath)
 
 void QueryDataManager::addfile(const std::string& theFile)
 {
-  itsData.push_back(value_type(theFile, 0));
+  itsData.push_back(value_type(theFile, nullptr));
 }
 
 // ----------------------------------------------------------------------

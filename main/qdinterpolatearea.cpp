@@ -135,7 +135,7 @@ void run(int argc, const char *argv[])
       maxthreads = Fmi::stoi(str);
   }
 
-  NFmiGrid *wantedGrid = 0;
+  NFmiGrid* wantedGrid = nullptr;
   if (projectionFromOptions)
   {
     string projectionString = cmdline.OptionValue('p');

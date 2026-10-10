@@ -455,13 +455,13 @@ int domain(int argc, const char* argv[])
   NFmiQueryData qd(filename);
   NFmiFastQueryInfo q(&qd);
 
-  NFmiArea* area = 0;
-  if (q.Area() != 0)
+  NFmiArea* area = nullptr;
+  if (q.Area() != nullptr)
     area = q.Area()->Clone();
   else
     area = create_bbox(q);
 
-  NFmiArea* drawarea = 0;
+  NFmiArea* drawarea = nullptr;
   if (margin == 0)
     drawarea = area;
   else

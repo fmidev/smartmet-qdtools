@@ -139,7 +139,7 @@ struct GribFilterOptions
         fVerbose(false),
         fTreatSingleLevelsAsSurfaceData(false),
         itsInputFileNameStr(),
-        itsInputFile(0)
+        itsInputFile(nullptr)
   {
   }
 
@@ -1077,10 +1077,10 @@ static void MakeTotalCombineQDatas(TotalQDataCollector &theTotalQDataCollector,
   }
 }
 
-static void DoErrorReporting(const std::string &theBaseString,
-                             const std::string &theSecondString,
-                             const std::string &theFileName,
-                             std::exception *theException = 0)
+static void DoErrorReporting(const std::string& theBaseString,
+                             const std::string& theSecondString,
+                             const std::string& theFileName,
+                             std::exception* theException = nullptr)
 {
   std::string errStr = theBaseString;
   errStr += "\n";
@@ -1491,7 +1491,7 @@ static void CalcCroppedGrid(GridRecordData *theGridRecordData)
 
   NFmiPoint latlon1 = grid.GridToLatLon(xy1);
   NFmiPoint latlon2 = grid.GridToLatLon(xy2);
-  NFmiArea *newArea = 0;
+  NFmiArea* newArea = nullptr;
   if (theGridRecordData->itsOrigGrid.itsArea->ClassId() == kNFmiLatLonArea)
     newArea = NFmiAreaTools::CreateLegacyLatLonArea(latlon1, latlon2);
   else
@@ -1516,7 +1516,7 @@ static void FillGridInfoFromGribHandle(grib_handle *theGribHandle,
       ::grib_get_long(theGribHandle, "gridDefinitionTemplateNumber", &gridDefinitionTemplateNumber);
   if (status == 0)
   {
-    NFmiArea *area = 0;
+    NFmiArea* area = nullptr;
 
     // From: definitions/grib2/section.3.def
     //
@@ -2913,7 +2913,7 @@ bool FillQDataWithGribRecords(std::shared_ptr<NFmiQueryData> &theQData,
 {
   NFmiFastQueryInfo info(theQData.get());
   int gribCount = static_cast<int>(theGribRecordDatas.size());
-  GridRecordData *tmp = 0;
+  GridRecordData* tmp = nullptr;
   int filledGridCount = 0;
   if (verbose)
     cerr << "Filling qdata grids ";

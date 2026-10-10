@@ -46,8 +46,8 @@ NFmiQueryDataChecker::NFmiQueryDataChecker(NFmiOhjausData* theOhjausData)
       itsRandomlyCheckedLocationCount(0),
       itsLocationCheckType(0),
       itsCheckList(0),
-      itsData(0),
-      itsInfo(0),
+      itsData(nullptr),
+      itsInfo(nullptr),
       itsRandomLocationIndexies(),
       fDoIndexRandomizing(true),
       itsOhjausData(theOhjausData)
@@ -114,7 +114,7 @@ bool NFmiQueryDataChecker::CheckedLocations(const NFmiString& theFileName)
 
 const NFmiParamBag* NFmiQueryDataChecker::DatasParamBag(void) const
 {
-  NFmiParamBag* params = 0;
+  NFmiParamBag* params = nullptr;
   if (itsInfo)
   {
     return &itsInfo->ParamBag();
@@ -159,8 +159,8 @@ void NFmiQueryDataChecker::Data(const NFmiQueryData* value)
     {
       delete itsData;
       delete itsInfo;
-      itsData = 0;
-      itsInfo = 0;
+      itsData = nullptr;
+      itsInfo = nullptr;
     }
     itsData = value->Clone();
     itsInfo = new NFmiFastQueryInfo(itsData);
@@ -176,8 +176,8 @@ bool NFmiQueryDataChecker::Data(const NFmiString& theFileName)
     {
       delete itsData;
       delete itsInfo;
-      itsData = 0;
-      itsInfo = 0;
+      itsData = nullptr;
+      itsInfo = nullptr;
     }
     itsData = new NFmiQueryData;
     try

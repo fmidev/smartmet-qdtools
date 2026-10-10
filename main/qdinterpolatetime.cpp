@@ -98,7 +98,7 @@ int run(int argc, const char* argv[])
   NFmiQueryData* newData = NFmiQueryDataUtil::InterpolateTimes(&qd,
                                                                timeResolutionInMinutes,
                                                                startTimeResolutionInMinutes,
-                                                               0,
+                                                               nullptr,
                                                                maxSearchRangeInMinutes,
                                                                generalInterpolationMethod);
 

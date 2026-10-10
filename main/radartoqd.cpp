@@ -1293,7 +1293,7 @@ std::shared_ptr<NFmiQueryData> make_querydata()
 
   NFmiFastQueryInfo qi(pdesc, tdesc, hdesc, vdesc);
   std::shared_ptr<NFmiQueryData> qd(NFmiQueryDataUtil::CreateEmptyData(qi));
-  if (qd.get() == 0)
+  if (qd.get() == nullptr)
     throw std::runtime_error("Failed to allocate memory for resulting querydata");
 
   NFmiFastQueryInfo info(qd.get());

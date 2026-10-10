@@ -115,8 +115,8 @@ static NFmiQueryInfo MakeCombinedInnerInfo(vector<NFmiQueryData *> &theDataList,
   set<NFmiStation> allStations;
   unsigned int maxLevelSize = 0;
 
-  const NFmiVPlaceDescriptor *maxLevelVPlaceDesc =
-      0;  // otetaan talteen sen datan vplaceDesc, jossa eniten leveleitä
+  const NFmiVPlaceDescriptor* maxLevelVPlaceDesc =
+      nullptr;  // otetaan talteen sen datan vplaceDesc, jossa eniten leveleitä
 
   NFmiMetTime originTime;  // otetaan vain currentti aika origin timeksi
   for (unsigned int i = 0; i < theDataList.size(); i++)

@@ -1879,7 +1879,7 @@ NFmiHPlaceDescriptor create_hdesc(const Messages& messages,
 
     NFmiAviationStation* stationinfo = stationinfos.FindStation(station.GetIdent());
 
-    if (stationinfo == 0)
+    if (stationinfo == nullptr)
     {
       // Cannot get a good name for the station
       lbag.AddLocation(station);
@@ -4557,7 +4557,7 @@ int run(int argc, char* argv[])
 
   NFmiFastQueryInfo qi(pdesc, tdesc, hdesc, vdesc);
   std::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(qi));
-  if (data.get() == 0)
+  if (data.get() == nullptr)
     throw std::runtime_error("Could not allocate memory for result data");
 
   NFmiFastQueryInfo info(data.get());

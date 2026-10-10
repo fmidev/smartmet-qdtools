@@ -583,7 +583,7 @@ float ThetaE(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 
 float RainProbability(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 {
-  if (qd.Grid() == 0)
+  if (qd.Grid() == nullptr)
     return kFloatMissing;
 
   if (!qd.Param(kFmiPrecipitation1h))

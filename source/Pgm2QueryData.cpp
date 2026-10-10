@@ -263,7 +263,7 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
   {
     if (theOptions.verbose)
       theReportStream << "Skipping non .pgm file " << theFileName << endl;
-    return 0;
+    return nullptr;
   }
 
   // Establish the output name from the header of the file
@@ -273,7 +273,7 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
   {
     if (theOptions.verbose)
       theReportStream << "Skipping nonexistent " << theFileName << endl;
-    return 0;
+    return nullptr;
   }
 
   // Skip the file if it is too old
@@ -285,7 +285,7 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
     {
       if (theOptions.verbose)
         theReportStream << "Skipping " << theFileName << " as too old" << endl;
-      return 0;
+      return nullptr;
     }
   }
 
@@ -295,7 +295,7 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
   {
     if (theOptions.verbose)
       theReportStream << "Could not open " << theFileName << endl;
-    return 0;
+    return nullptr;
   }
 
   std::string line;
@@ -307,7 +307,7 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
     infile.close();
     if (theOptions.verbose)
       theReportStream << "Skipping non-pgm file " << theFileName << endl;
-    return 0;
+    return nullptr;
   }
 
   // Read all comment lines, strip the comments away on the fly
@@ -334,7 +334,7 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
     if (theOptions.verbose)
       theReportStream << "Invalid header in file " << theFileName << endl
                       << " --> " << e.what() << endl;
-    return 0;
+    return nullptr;
   }
 
   // Read the P5 specs
@@ -345,7 +345,7 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
     infile.close();
     if (theOptions.verbose)
       theReportStream << "Failed to read pgm width, height and bytes from " << theFileName << endl;
-    return 0;
+    return nullptr;
   }
 
   // Skip the rest of the line after the bytesize indicator
@@ -357,7 +357,7 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
     infile.close();
     if (theOptions.verbose)
       theReportStream << "Nonnegative size fields in " << theFileName << endl;
-    return 0;
+    return nullptr;
   }
 
   const int valid_size1 = (1 << 8) - 1;
@@ -368,7 +368,7 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
     infile.close();
     if (theOptions.verbose)
       theReportStream << "Invalid bytesize " << bytes << " in " << theFileName << endl;
-    return 0;
+    return nullptr;
   }
 
   // Establish the position so that newbase can skip to this
@@ -381,7 +381,7 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
   {
     if (theOptions.verbose)
       theReportStream << "Observation time is missing in " << theFileName << endl;
-    return 0;
+    return nullptr;
   }
 
   // Must have parameter name
@@ -389,20 +389,20 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
   {
     if (theOptions.verbose)
       theReportStream << "Parameter missing from " << theFileName << endl;
-    return 0;
+    return nullptr;
   }
 
   // Establish the projection
   if (pgmHeaderInfo.projections.names().size() == 0)
   {
     theReportStream << "Header does not contain projection in " << theFileName << endl;
-    return 0;
+    return nullptr;
   }
 
   if (pgmHeaderInfo.projections.names().size() > 1)
   {
     theReportStream << "Header contains multiple projections in " << theFileName << endl;
-    return 0;
+    return nullptr;
   }
 
   NFmiQueryInfo tmpinfo = MakeQdInfo(pgmHeaderInfo, width, height, theOptions, theReportStream);
@@ -418,7 +418,7 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
                      header_end_pos))
   {
     infile.close();
-    return 0;
+    return nullptr;
   }
   infile.close();
 

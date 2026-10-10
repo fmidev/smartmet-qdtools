@@ -454,7 +454,7 @@ const NFmiHPlaceDescriptor make_hdesc(const KrigingData& theData)
   NFmiArea* area =
       NFmiAreaTools::CreateLegacyYKJArea(NFmiPoint(xmin, ymin), NFmiPoint(xmax, ymax), meters);
 
-  if (area == 0)
+  if (area == nullptr)
     throw runtime_error("Failed to construct the YKJ projection");
 
   // Then the grid
@@ -543,7 +543,7 @@ std::shared_ptr<NFmiQueryData> create_querydata(const KrigingData& theData)
   NFmiFastQueryInfo info(pdesc, tdesc, hdesc, vdesc);
   std::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
 
-  if (data.get() == 0)
+  if (data.get() == nullptr)
     throw runtime_error("Failed to allocate querydata");
 
   // And begin filling the data
@@ -601,7 +601,7 @@ int domain(int argc, const char* argv[])
 
   std::shared_ptr<NFmiQueryData> qd = create_querydata(kdata);
 
-  if (qd.get() == 0)
+  if (qd.get() == nullptr)
     throw runtime_error("Failed to create the querydata");
 
   // Write the querydata

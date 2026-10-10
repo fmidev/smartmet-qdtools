@@ -493,7 +493,7 @@ void process_difference()
   unique_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
   NFmiFastQueryInfo q(data.get());
 
-  if (data.get() == 0)
+  if (data.get() == nullptr)
     throw runtime_error("Could not allocate memory for result data");
 
   // Copy the values

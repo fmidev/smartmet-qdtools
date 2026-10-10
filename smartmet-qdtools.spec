@@ -217,6 +217,7 @@ make %{_smp_mflags}
 - temp2qd: check for data without levels
 - gribtoqd: do not leak the buffer when realloc fails
 - Use auto and return {} where clang-tidy suggests it, no functional changes
+- Mark overriding methods override and use nullptr, no functional changes
 
 * Wed Oct 07 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.7-1.fmi
 - qdpoint reads one timezone area covering all the given locations instead of the whole globe when there are more than five of them, unless they are spread over more than 90x60 degrees

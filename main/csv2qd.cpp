@@ -785,7 +785,7 @@ void write_querydata(const CsvTable& csv, const Params& params, const Stations& 
   unique_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(qi));
   NFmiFastQueryInfo info(data.get());
 
-  if (data.get() == 0)
+  if (data.get() == nullptr)
     throw runtime_error("Could not allocate memory for result data");
 
   info.SetProducer(NFmiProducer(options.producernumber, options.producername));

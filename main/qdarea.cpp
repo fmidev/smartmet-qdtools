@@ -582,7 +582,7 @@ void make_data_timestep_generator()
 
 void parse_interval_option(const string& theRequest)
 {
-  if (options.period.get() == 0)
+  if (options.period.get() == nullptr)
     throw runtime_error("Trying to parse interval before data period is established");
 
   vector<string> words = NFmiStringTools::Split(theRequest, "-");

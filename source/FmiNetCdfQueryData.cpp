@@ -127,7 +127,7 @@ FmiNcMetaData::FmiNcMetaData(bool useSurfaceInfo)
       itsMultiLevelInfo(),
       itsSurfaceLevelInfo(),
       itsParams(),
-      itsMetaInfo(0)
+      itsMetaInfo(nullptr)
 {
 }
 
@@ -138,7 +138,7 @@ FmiNcMetaData::~FmiNcMetaData(void)
 void FmiNcMetaData::MakeMetaInfo(FmiTDimVarInfo &theTimeInfo, NFmiGrid &theGrid)
 {
   delete itsMetaInfo;
-  itsMetaInfo = 0;
+  itsMetaInfo = nullptr;
   if (itsParams.GetSize())
   {
     if (itsMultiLevelInfo.itsNcLevelType != kFmiNcNoLevelType ||
@@ -335,7 +335,7 @@ void FmiNetCdfQueryData::MakeWantedParamBag(void)
 
 void FmiNetCdfQueryData::MakeWantedGrid(void)
 {
-  if (itsGrid.Area() != 0)
+  if (itsGrid.Area() != nullptr)
     return;  // jos lat-lon projektiosta poikkeava, hila on jo rakennettu
   size_t xSize = itsXInfo.itsValues.size();
   size_t ySize = itsYInfo.itsValues.size();

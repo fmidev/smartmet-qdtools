@@ -1010,13 +1010,13 @@ int run(const int argc, char *argv[])
   int option_flags = GRIB_DUMP_FLAG_VALUES | GRIB_DUMP_FLAG_READ_ONLY;
 #endif
 
-  if (gribHandle == 0)
+  if (gribHandle == nullptr)
     throw std::runtime_error("ERROR: Unable to create grib handle\n");
 
   if (qi.IsGrid() == false)
     throw std::runtime_error("ERROR: data wasn't grid data, but station data.\n");
 
-  FILE *out = 0;
+  FILE* out = nullptr;
   if (!options.split)
   {
     out = fopen(options.outfile.c_str(), "wb");

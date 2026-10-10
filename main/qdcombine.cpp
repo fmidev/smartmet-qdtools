@@ -387,7 +387,7 @@ int Run(int argc, const char *argv[])
 
   bool use_point_data = cmdline.isOption('P');
 
-  NFmiLevel *forcedLevel = 0;
+  NFmiLevel* forcedLevel = nullptr;
   if (cmdline.isOption('l'))
   {
     string levelForceStr = cmdline.OptionValue('l');
@@ -400,7 +400,7 @@ int Run(int argc, const char *argv[])
     forcedLevel = new NFmiLevel(forcedLevelType, forcedLevelValue);
   }
 
-  NFmiProducer *wantedProducer = 0;
+  NFmiProducer* wantedProducer = nullptr;
   if (cmdline.isOption('p'))
   {
     std::vector<std::string> strVector = NFmiStringTools::Split(cmdline.OptionValue('p'), ",");

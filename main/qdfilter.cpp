@@ -522,7 +522,7 @@ int run(int argc, const char* argv[])
   std::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
   NFmiFastQueryInfo dstinfo(data.get());
 
-  if (data.get() == 0)
+  if (data.get() == nullptr)
     throw runtime_error("Could not allocate memory for result data");
 
   // Check that the output does not contain composite parameters

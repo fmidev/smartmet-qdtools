@@ -47,7 +47,7 @@ std::string ToString(float theValue)
 
 void ReportVersion(NFmiFastQueryInfo *q)
 {
-  if (q == 0)
+  if (q == nullptr)
     throw runtime_error("Option -q is required for the given options");
 
   double version = q->InfoVersion();
@@ -114,7 +114,7 @@ std::string interpolation_name(FmiInterpolationMethod method)
 
 void ReportParameters(NFmiFastQueryInfo *q, bool ignoresubs)
 {
-  if (q == 0)
+  if (q == nullptr)
     throw runtime_error("Option -q is required for the given options");
 
   NFmiEnumConverter converter;
@@ -246,7 +246,7 @@ const string TimeString(const NFmiMetTime &theTime, bool theUtcFlag, string date
 
 void ReportTimes(NFmiFastQueryInfo *q, bool theUtcFlag, string dateFormat)
 {
-  if (q == 0)
+  if (q == nullptr)
     throw runtime_error("Option -q is required for the given options");
 
   cout << endl << "Time information on the querydata:" << endl << endl;
@@ -397,7 +397,7 @@ string LevelName(FmiLevelType theLevel)
 
 void ReportLevels(NFmiFastQueryInfo *q)
 {
-  if (q == 0)
+  if (q == nullptr)
     throw runtime_error("Option -q is required for the given options");
 
   cout << endl
@@ -431,7 +431,7 @@ void ReportLevels(NFmiFastQueryInfo *q)
 
 void ReportProducer(NFmiFastQueryInfo *q)
 {
-  if (q == 0)
+  if (q == nullptr)
     throw runtime_error("Option -q is required for the given options");
 
   // Must select some parameter, producer is parameter dependent
@@ -459,7 +459,7 @@ void ReportProducer(NFmiFastQueryInfo *q)
 
 void ReportProjection(NFmiFastQueryInfo *q)
 {
-  if (q == 0)
+  if (q == nullptr)
     throw runtime_error("Option -q is required for the given options");
 
   cout << endl << "Information on the querydata area:" << endl << endl;
@@ -467,7 +467,7 @@ void ReportProjection(NFmiFastQueryInfo *q)
   const NFmiArea *area = q->Area();
 
   // IsArea may return false even though Area may return one (for grids!)
-  if (area == 0)
+  if (area == nullptr)
   {
     cout << "The querydata has no area" << endl;
     return;
@@ -622,7 +622,7 @@ void ReportProjection(NFmiFastQueryInfo *q)
 
 void ReportLocations(NFmiFastQueryInfo *q)
 {
-  if (q == 0)
+  if (q == nullptr)
     throw runtime_error("Option -q is required for the given options");
 
   cout << endl << "Information on the locations:" << endl << endl;
@@ -655,7 +655,7 @@ void ReportLocations(NFmiFastQueryInfo *q)
 
 void ReportMetadata(NFmiFastQueryInfo *q)
 {
-  if (q == 0)
+  if (q == nullptr)
     throw runtime_error("Option -q is required for the given options");
 
   cout << endl << "Metadata information:" << endl << endl;
@@ -814,7 +814,7 @@ int domain(int argc, const char *argv[])
     qi.reset(new NFmiQueryInfo(filename));
   }
 
-  NFmiFastQueryInfo *q = (qi.get() == 0 ? 0 : new NFmiFastQueryInfo(*qi));
+  NFmiFastQueryInfo* q = (qi.get() == nullptr ? nullptr : new NFmiFastQueryInfo(*qi));
 
   if (!q && (cmdline.isOption('M') || cmdline.isOption('m')))
     throw runtime_error("Error: Options -M and -m require option -q");

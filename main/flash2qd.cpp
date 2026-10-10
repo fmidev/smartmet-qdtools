@@ -178,7 +178,7 @@ NFmiQueryData *CreateQueryData(const NFmiTimeList &theTimes)
 NFmiQueryData *CreateFlashQueryData(std::vector<std::string> &theFlashStrings,
                                     bool fMakeLocal2UtcTimeConversion)
 {
-  NFmiQueryData *data = 0;
+  NFmiQueryData* data = nullptr;
   if (!theFlashStrings.empty())
   {
     NFmiTimeList times;

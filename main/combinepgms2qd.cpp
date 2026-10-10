@@ -131,14 +131,14 @@ int domain(int argc, const char *argv[])
   std::shared_ptr<NFmiQueryData> dummyBaseData;  // tätä ei käytetä, eli luodaan '0'-pointteri,
                                                  // koska NFmiQueryDataUtil::CombineQueryDatas
                                                  // vaatii tälläistä mahd. pohjadataa
-  NFmiQueryData *data = NFmiQueryDataUtil::CombineQueryDatas(
+  NFmiQueryData* data = NFmiQueryDataUtil::CombineQueryDatas(
       false,
       dummyBaseData,
       qDataList,
       false,
       options.maxtimesteps,
-      0);  // false = yhdistely sliceista, 0 = ei lopetus funktoria käytössä
-  if (data == 0)
+      nullptr);  // false = yhdistely sliceista, 0 = ei lopetus funktoria käytössä
+  if (data == nullptr)
     throw std::runtime_error(std::string("Error, unable to create combined queryData"));
 
   std::unique_ptr<NFmiQueryData> dataPtr(data);  // tuhoaa automaattisesti datan lopuksi

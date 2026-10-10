@@ -1745,7 +1745,7 @@ int run(int argc, char* argv[])
   std::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(qi));
   NFmiFastQueryInfo info(data.get());
 
-  if (data.get() == 0)
+  if (data.get() == nullptr)
     throw std::runtime_error("Could not allocate memory for result data");
 
   info.SetProducer(

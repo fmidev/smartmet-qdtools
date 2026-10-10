@@ -119,7 +119,7 @@ struct GribFilterOptions
         itsGridSettings(),
         fVerbose(false),
         itsInputFileNameStr(),
-        itsInputFile(0),
+        itsInputFile(nullptr),
         itsStepRangeCheckedParams(),
         itsWantedStepRange(0)
   {
@@ -1682,11 +1682,11 @@ std::shared_ptr<NFmiQueryData> CreateEmptyQData(
   return qData;
 }
 
-void DoErrorReporting(const std::string &theBaseString,
-                      const std::string &theSecondString,
-                      const std::string &theFileName,
-                      std::exception *theException = 0,
-                      std::string *theErrorString = 0)
+void DoErrorReporting(const std::string& theBaseString,
+                      const std::string& theSecondString,
+                      const std::string& theFileName,
+                      std::exception* theException = nullptr,
+                      std::string* theErrorString = nullptr)
 {
   std::string errStr = theBaseString;
   errStr += "\n";
@@ -1970,7 +1970,7 @@ void CalcCroppedGrid(GridRecordData *theGridRecordData)
 
   NFmiPoint latlon1 = grid.GridToLatLon(xy1);
   NFmiPoint latlon2 = grid.GridToLatLon(xy2);
-  NFmiArea *newArea = 0;
+  NFmiArea* newArea = nullptr;
   if (theGridRecordData->itsOrigGrid.itsArea->ClassId() == kNFmiLatLonArea)
   {
     newArea = NFmiAreaTools::CreateLegacyLatLonArea(latlon1, latlon2);
@@ -3237,7 +3237,7 @@ bool FillQDataWithGribRecords(std::shared_ptr<NFmiQueryData> &theQData,
 {
   NFmiFastQueryInfo info(theQData.get());
   int gribCount = static_cast<int>(theGribRecordDatas.size());
-  GridRecordData *tmp = 0;
+  GridRecordData* tmp = nullptr;
   int filledGridCount = 0;
   if (verbose)
     cerr << "Filling qdata grids ";
@@ -3627,7 +3627,7 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
   {
     grib_handle *gribHandle = nullptr;
     grib_context *gribContext = grib_context_get_default();
-    grib_multi_support_on(0);
+    grib_multi_support_on(nullptr);
 
     int err = 0;
     int counter = 0;
@@ -3782,8 +3782,11 @@ void ConvertOneGribFile(const GribFilterOptions &theGribFilterOptionsIn,
     {
       std::string errorStr(
           "Encountered reduced_ll grib data, ignoring it and won't use wgrib to unpack it");
-      DoErrorReporting(
-          "Error accured when converting grib-file:", "with error:", theGribFileName, 0, &errorStr);
+      DoErrorReporting("Error accured when converting grib-file:",
+                       "with error:",
+                       theGribFileName,
+                       nullptr,
+                       &errorStr);
     }
     else
     {
@@ -4215,7 +4218,7 @@ NFmiArea *CreateArea(unsigned char *gds,
                      GribFilterOptions &theGribFilterOptions,
                      bool fDoYAxisFlip)
 {
-  NFmiArea *area = 0;
+  NFmiArea* area = nullptr;
   if (GDS_LatLon(gds))
     area = wgrib2qd::CreateLatlonArea(
         gds, bds, scanIModePos, scanJModePos, theGribFilterOptions, fDoYAxisFlip);
@@ -4620,7 +4623,7 @@ bool FillQDataWithGribRecords(NFmiQueryData &theQData, vector<GridRecordData *> 
 {
   NFmiFastQueryInfo info(&theQData);
   int gribCount = static_cast<int>(theGribRecordDatas.size());
-  GridRecordData *tmp = 0;
+  GridRecordData* tmp = nullptr;
   int filledGridCount = 0;
   for (int i = 0; i < gribCount; i++)
   {
@@ -4731,11 +4734,11 @@ void FreeDatas(vector<GridRecordData *> &theGribRecordDatas, float *array, unsig
 void ConvertGrib(GribFilterOptions &theGribFilterOptions)
 {
   vector<std::shared_ptr<NFmiQueryData> > datas;
-  unsigned char *buffer, *msg, *pds, *gds, *bms = 0, *bds, *pointer;
+  unsigned char *buffer, *msg, *pds, *gds, *bms = nullptr, *bds, *pointer;
   long int len_grib, pos = 0, nxny = 0, last_nxny = 0, buffer_size, count = 1;
   int nx, ny;
   double temp;
-  float *array = 0;
+  float* array = nullptr;
   vector<long> variableLengthRows;
   long usedOutputGridRowLength =
       0;  // jos reduced grid (vaihtuva rivi leveys), tehdää tämän levyinen loppu hila
@@ -4954,7 +4957,7 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
 
     }  // for-loop
 
-    CreateQueryDatas(gribRecordDatas, theGribFilterOptions, 0);
+    CreateQueryDatas(gribRecordDatas, theGribFilterOptions, nullptr);
   }  // end of try
   catch (...)
   {

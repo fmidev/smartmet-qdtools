@@ -74,16 +74,16 @@ struct ParamChangeItem
         ,
         itsConversionBase(0),
         itsConversionScale(1.f),
-        itsLevel(0)
+        itsLevel(nullptr)
   {
   }
 
-  ParamChangeItem(const ParamChangeItem &theOther)
+  ParamChangeItem(const ParamChangeItem& theOther)
       : itsOriginalParamId(theOther.itsOriginalParamId),
         itsWantedParam(theOther.itsWantedParam),
         itsConversionBase(theOther.itsConversionBase),
         itsConversionScale(theOther.itsConversionScale),
-        itsLevel(theOther.itsLevel ? new NFmiLevel(*theOther.itsLevel) : 0)
+        itsLevel(theOther.itsLevel ? new NFmiLevel(*theOther.itsLevel) : nullptr)
   {
   }
 
@@ -96,7 +96,7 @@ struct ParamChangeItem
       itsWantedParam = theOther.itsWantedParam;
       itsConversionBase = theOther.itsConversionBase;
       itsConversionScale = theOther.itsConversionScale;
-      itsLevel = theOther.itsLevel ? new NFmiLevel(*theOther.itsLevel) : 0;
+      itsLevel = theOther.itsLevel ? new NFmiLevel(*theOther.itsLevel) : nullptr;
     }
     return *this;
   }
@@ -116,7 +116,7 @@ struct ParamChangeItem
     itsConversionScale = 1.f;
     if (itsLevel)
       delete itsLevel;
-    itsLevel = 0;
+    itsLevel = nullptr;
   }
 
   unsigned long itsOriginalParamId;
@@ -305,7 +305,7 @@ static void HandleProjectionString(const string &theProjStr,
   }
   NFmiGrid *wantedGrid = ::CreateWantedGrid(projStringUsed);
   std::unique_ptr<NFmiGrid> wantedGridPtr(wantedGrid);  // tuhoaa lopuksi dynaamisen datan
-  if (wantedGrid == 0)
+  if (wantedGrid == nullptr)
     throw std::runtime_error(
         "Error with -P option in HandleProjectionString-function, unable to create the wanted "
         "projection grid.");
@@ -317,7 +317,7 @@ static void HandleProjectionString(const string &theProjStr,
 
 int main(int argc, const char **argv)
 {
-  FILE *input = 0;
+  FILE* input = nullptr;
 
   // Optiot:
   string inputFileName;   // annetaan pakollisena argumenttina
@@ -389,7 +389,7 @@ int main(int argc, const char **argv)
       string opt_bounds = cmdline.OptionValue('G');
       latlonCropRect = ::GetLatlonCropRect(opt_bounds);
     }
-    NFmiGrid *wantedGrid = 0;
+    NFmiGrid* wantedGrid = nullptr;
     NFmiPoint pressureDataGridSize = gMissingGridSize;
     NFmiPoint hybridDataGridSize = gMissingGridSize;
     if (cmdline.isOption('P'))
@@ -701,7 +701,7 @@ static void CalcCroppedGrid(GridRecordData *theGridRecordData)
 
   NFmiPoint latlon1 = grid.GridToLatLon(xy1);
   NFmiPoint latlon2 = grid.GridToLatLon(xy2);
-  NFmiArea *newArea = 0;
+  NFmiArea* newArea = nullptr;
   if (theGridRecordData->itsOrigGrid.itsArea->ClassId() == kNFmiLatLonArea)
     newArea = NFmiAreaTools::CreateLegacyLatLonArea(latlon1, latlon2);
   else
@@ -728,7 +728,7 @@ static void FillGridInfoFromGribHandle(grib_handle *theGribHandle,
       ::grib_get_long(theGribHandle, "gridDefinitionTemplateNumber", &gridDefinitionTemplateNumber);
   if (status == 0)
   {
-    NFmiArea *area = 0;
+    NFmiArea* area = nullptr;
     switch (gridDefinitionTemplateNumber)
     {
       case 0:  // 0 = latlonArea
@@ -1205,7 +1205,7 @@ static void ChangeParamSettingsIfNeeded(vector<ParamChangeItem> &theParamChangeT
         break;
       }
       else if (paramChangeItem.itsOriginalParamId == theGribData->itsParam.GetParamIdent() &&
-               paramChangeItem.itsLevel == 0)
+               paramChangeItem.itsLevel == nullptr)
       {
         theGribData->itsParam.SetParam(paramChangeItem.itsWantedParam);
         if (verbose)
@@ -1596,7 +1596,7 @@ NFmiQueryData *CreateQueryData(vector<GridRecordData *> &theGribRecordDatas,
   {
     FillQDataWithGribRecords(theGribRecordDatas);
   }
-  return 0;
+  return nullptr;
 }
 
 void CheckInfoSize(const NFmiQueryInfo &theInfo, int theMaxQDataSizeInBytes)
@@ -1656,7 +1656,7 @@ static void buildPowGamma(unsigned char table[],
 bool FillQDataWithGribRecords(vector<GridRecordData *> &theGribRecordDatas)
 {
   int gribCount = static_cast<int>(theGribRecordDatas.size());
-  GridRecordData *tmp = 0;
+  GridRecordData* tmp = nullptr;
   int filledGridCount = 0;
 
   cerr << "Exporting JPEGs ";

@@ -161,7 +161,7 @@ std::shared_ptr<NFmiArea> create_projection_from_conf(const string& theFile)
     }
   }
 
-  if (area.get() == 0)
+  if (area.get() == nullptr)
     throw runtime_error("Failed to find a projection from '" + theFile + "'");
 
   return area;
@@ -275,7 +275,7 @@ int run(int argc, const char* argv[])
   else if (cmdline.isOption('q'))
     area = create_projection_from_querydata(cmdline.OptionValue('q'));
 
-  if (area.get() == 0)
+  if (area.get() == nullptr)
     throw runtime_error("Failed to create a projection");
 
   // Check how many of the conversion options are given

@@ -120,9 +120,9 @@ int domain(int argc, const char* argv[])
 
   NFmiEnumConverter converter;
   if (coordOutput)
-    cout << "\"id\",\"lat\",\"lon\",\"date\"";
+    cout << R"("id","lat","lon","date")";
   else
-    cout << "\"id\",\"date\"";
+    cout << R"("id","date")";
   for (q->ResetLevel(); q->NextLevel();)
     for (q->ResetParam(); q->NextParam();)
     {

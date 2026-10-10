@@ -377,7 +377,7 @@ static std::shared_ptr<NFmiGrid> GetGridFromProjectionStr(string &theProjectionS
 static std::shared_ptr<NFmiGrid> CreateDeepGribCopy(std::shared_ptr<NFmiGrid> &theGrid)
 {
   if (theGrid)
-    return std::shared_ptr<NFmiGrid>(new NFmiGrid(*theGrid));
+    return std::make_shared<NFmiGrid>(*theGrid);
   else
     return {};
 }

@@ -525,8 +525,8 @@ void establish_time_period()
   qinfo.LastTime();
   const TextGenPosixTime lasttime = qinfo.ValidTime();
 
-  options.period = std::shared_ptr<WeatherPeriod>(new WeatherPeriod(
-      TextGenPosixTime::LocalTime(firsttime), TextGenPosixTime::LocalTime(lasttime)));
+  options.period = std::make_shared<WeatherPeriod>(TextGenPosixTime::LocalTime(firsttime),
+                                                   TextGenPosixTime::LocalTime(lasttime));
 
   if (options.verbose)
   {

@@ -13,6 +13,7 @@
 #include <newbase/NFmiAreaTools.h>
 #include <newbase/NFmiGlobals.h>
 #include <newbase/NFmiPoint.h>
+#include <memory>
 #include <stdexcept>
 
 using namespace Imagine;
@@ -81,7 +82,7 @@ Projection& Projection::operator=(const Projection& theProjection)
 {
   if (this != &theProjection)
   {
-    itsPimple.reset(new ProjectionPimple(*theProjection.itsPimple));
+    itsPimple = std::make_shared<ProjectionPimple>(*theProjection.itsPimple);
   }
   return *this;
 }

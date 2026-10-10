@@ -1503,7 +1503,7 @@ const std::string gSpeciWord = "SPECI";
 const std::string gNilWord = "NIL";
 
 const boost::regex gNoaaTimeLineReg(
-    "\\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}");  // esim.     2013/08/09 02:45
+    R"(\d{4}/\d{2}/\d{2} \d{2}:\d{2})");  // esim.     2013/08/09 02:45
 
 static bool IsMetarFileInNoaaFormat(std::ifstream &input)
 {

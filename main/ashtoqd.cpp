@@ -68,9 +68,9 @@ const int level_position_in_filename = 19;
 const int concentration_position_in_filename = 16;
 
 const char* concentration_regex =
-    "V..06_ASH_CONC_C.\\d{2}FL\\d{3}-\\d{3}DT\\d{12}VT\\d{12}IT\\d{6}_T\\d{3}.CSV";
+    R"(V..06_ASH_CONC_C.\d{2}FL\d{3}-\d{3}DT\d{12}VT\d{12}IT\d{6}_T\d{3}.CSV)";
 const char* boundary_regex =
-    "V..01_ASH_CONC_C.\\d{2}FL\\d{3}-\\d{3}DT\\d{12}VT\\d{12}IT\\d{6}_T\\d{3}.CSV";
+    R"(V..01_ASH_CONC_C.\d{2}FL\d{3}-\d{3}DT\d{12}VT\d{12}IT\d{6}_T\d{3}.CSV)";
 
 // ----------------------------------------------------------------------
 /*!

@@ -109,10 +109,9 @@ get_values(const netCDF::NcVar& var)
 void FmiTDimVarInfo::CalcTimeList()
 {
   itsTimeList.Clear(true);
-  for (size_t i = 0; i < itsOffsetValues.size(); i++)
+  for (long changeByMinutesValue : itsOffsetValues)
   {
     NFmiMetTime aTime = itsEpochTime;
-    long changeByMinutesValue = itsOffsetValues[i];
     if (itsTimeOffsetType == kFmiNcSeconds)
       changeByMinutesValue /= 60;
     aTime.ChangeByMinutes(changeByMinutesValue);
@@ -205,17 +204,17 @@ static NFmiQueryData *MakeQueryData(const netCDF::NcFile &theNcFile,
   NFmiQueryData *qData = NFmiQueryDataUtil::CreateEmptyData(theMetaInfo);
   NFmiFastQueryInfo fInfo(qData);
 
-  for (size_t i = 0; i < theVarInfos.size(); i++)
+  for (auto& theVarInfo : theVarInfos)
   {
-    if (fInfo.Param(static_cast<FmiParameterName>(theVarInfos[i].itsParId)))  // theVarInfos:issa on
-                                                                              // kaikki parametrit
-                                                                              // surface ja level
-                                                                              // paramit, joten
-                                                                              // pitää tarkistaa,
-                                                                              // löytyykö tästä
-                                                                              // datasta erikseen
+    if (fInfo.Param(static_cast<FmiParameterName>(theVarInfo.itsParId)))  // theVarInfos:issa on
+                                                                          // kaikki parametrit
+                                                                          // surface ja level
+                                                                          // paramit, joten
+                                                                          // pitää tarkistaa,
+                                                                          // löytyykö tästä
+                                                                          // datasta erikseen
     {
-      const netCDF::NcVar var = theNcFile.getVar(theVarInfos[i].itsVarName);
+      const netCDF::NcVar var = theNcFile.getVar(theVarInfo.itsVarName);
       if (!var.isNull())  // Pitäisi löytyä!!
       {
         // NetCDF conventioiden mukaan juoksu järjestys on:
@@ -231,7 +230,7 @@ static NFmiQueryData *MakeQueryData(const netCDF::NcFile &theNcFile,
               float value = values.at(counter);
               // jos ei ole fill-value, laitetaan arvo queryDataan, jos oli, jätetään qDatan missing
               // arvo voimaan (data luodan alustettuna puuttuvilla arvoilla)
-              if (value != theVarInfos[i].itsFillValue)
+              if (value != theVarInfo.itsFillValue)
                 fInfo.FloatValue(value);
               counter++;
             }
@@ -307,10 +306,10 @@ void FmiNetCdfQueryData::MakeWantedParamBag()
 {
   if (itsNormalParameters.size())
   {
-    for (size_t i = 0; i < itsNormalParameters.size(); i++)
+    for (auto& itsNormalParameter : itsNormalParameters)
     {
-      NFmiParam param(itsNormalParameters[i].itsParId,
-                      itsNormalParameters[i].itsVarName,
+      NFmiParam param(itsNormalParameter.itsParId,
+                      itsNormalParameter.itsVarName,
                       kFloatMissing,
                       kFloatMissing,
                       1,
@@ -318,13 +317,13 @@ void FmiNetCdfQueryData::MakeWantedParamBag()
                       "%.1f",
                       kLinearly);
       NFmiDataIdent dataIdent(param, itsProducer);
-      if (itsNormalParameters[i].itsNcLevelType == kFmiNcSurface)
+      if (itsNormalParameter.itsNcLevelType == kFmiNcSurface)
         itsSurfaceMetaData.itsParams.Add(dataIdent);
-      else if (itsNormalParameters[i].itsNcLevelType == kFmiNcHeight)
+      else if (itsNormalParameter.itsNcLevelType == kFmiNcHeight)
         itsHeightLevelMetaData.itsParams.Add(dataIdent);
-      else if (itsNormalParameters[i].itsNcLevelType == kFmiNcPressureLevel)
+      else if (itsNormalParameter.itsNcLevelType == kFmiNcPressureLevel)
         itsPressureLevelMetaData.itsParams.Add(dataIdent);
-      else if (itsNormalParameters[i].itsNcLevelType == kFmiNcHybrid)
+      else if (itsNormalParameter.itsNcLevelType == kFmiNcHybrid)
         itsHybridLevelMetaData.itsParams.Add(dataIdent);
     }
   }

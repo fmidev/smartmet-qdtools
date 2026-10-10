@@ -692,10 +692,9 @@ bool GetIgnoreLevelList(NFmiCmdLine &theCmdLine, NFmiLevelBag &theIgnoredLevelLi
   {
     string ignoredLevelsStr = theCmdLine.OptionValue('l');
     vector<string> ignoredLevelsStrVector = NFmiStringTools::Split(ignoredLevelsStr);
-    for (unsigned int i = 0; i < ignoredLevelsStrVector.size(); i++)
+    for (auto& i : ignoredLevelsStrVector)
     {  // yksittäiset stringit siis muotoa t105v3 jne. eli leveltyyppi 105 ja sen arvo 3
-      vector<string> levelStrVec =
-          NFmiStringTools::Split(NFmiStringTools::LowerCase(ignoredLevelsStrVector[i]), "v");
+      vector<string> levelStrVec = NFmiStringTools::Split(NFmiStringTools::LowerCase(i), "v");
       if (levelStrVec.size() == 2 && levelStrVec[0].at(0) == 't')
       {
         string levelTypeStr(levelStrVec[0].begin() + 1, levelStrVec[0].end());
@@ -735,9 +734,9 @@ vector<FmiLevelType> GetAcceptedLevelTypes(NFmiCmdLine &theCmdLine)
   {
     vector<string> acceptOnlyLevelTypesStrVector =
         NFmiStringTools::Split(theCmdLine.OptionValue('L'));
-    for (unsigned int i = 0; i < acceptOnlyLevelTypesStrVector.size(); i++)
+    for (const auto& i : acceptOnlyLevelTypesStrVector)
     {
-      unsigned long levelType = Fmi::stoul(acceptOnlyLevelTypesStrVector[i]);
+      unsigned long levelType = Fmi::stoul(i);
       acceptOnlyLevelTypes.push_back(static_cast<FmiLevelType>(
           levelType));  // stringtools-convert ei osaa heti tehdä FmiLevelType-tyyppiä
     }
@@ -889,12 +888,12 @@ std::vector<std::string> MakeFullPathFileList(list<string> &theFileNameList,
                                               const std::string &theDirectory)
 {
   vector<string> fullFileNameVector;
-  for (auto it = theFileNameList.begin(); it != theFileNameList.end(); ++it)
+  for (auto& it : theFileNameList)
   {
     std::string fullFileName = theDirectory;
     if (fullFileName.size() && fullFileName[fullFileName.size() - 1] != kFmiDirectorySeparator)
       fullFileName += kFmiDirectorySeparator;
-    fullFileName += *it;
+    fullFileName += it;
     fullFileNameVector.push_back(fullFileName);
   }
   return fullFileNameVector;
@@ -988,12 +987,12 @@ class CombineDataStructureSearcher
   {
     int maxCount = -1;
     MyGrid mostPopularGrid;  // tähä etsitään 'suosituin' hila, ja sitä käytetään datan pohjana
-    for (auto it = itsGridCounts.begin(); it != itsGridCounts.end(); ++it)
+    for (auto& itsGridCount : itsGridCounts)
     {
-      if ((*it).second > maxCount)
+      if (itsGridCount.second > maxCount)
       {
-        mostPopularGrid = (*it).first;
-        maxCount = (*it).second;
+        mostPopularGrid = itsGridCount.first;
+        maxCount = itsGridCount.second;
       }
     }
     return NFmiHPlaceDescriptor(
@@ -1015,9 +1014,9 @@ class CombineDataStructureSearcher
   NFmiTimeDescriptor GetTimes()
   {
     NFmiTimeList times;
-    for (auto it = itsValidTimes.begin(); it != itsValidTimes.end(); ++it)
+    for (const auto& itsValidTime : itsValidTimes)
     {
-      times.Add(new NFmiMetTime(*it));
+      times.Add(new NFmiMetTime(itsValidTime));
     }
     auto origTimeIt = itsOrigTimes.begin();  // otetaan vain 1. origtime, en jaksa nyt miettiä mikä
                                              // voisi olla sopivin, jos on useita vaihtoehtoja
@@ -1027,9 +1026,9 @@ class CombineDataStructureSearcher
   NFmiVPlaceDescriptor GetLevels()
   {
     NFmiLevelBag levels;
-    for (auto it = itsLevels.begin(); it != itsLevels.end(); ++it)
+    for (const auto& itsLevel : itsLevels)
     {
-      levels.AddLevel(*it);
+      levels.AddLevel(itsLevel);
     }
     return NFmiVPlaceDescriptor(levels);
   }
@@ -1040,9 +1039,9 @@ class CombineDataStructureSearcher
         itsWantedProducers.begin();  // otetaan vain 1. producer, en jaksa nyt miettiä mikä voisi
                                      // olla sopivin, jos on useita vaihtoehtoja
     NFmiParamBag params;
-    for (auto it = itsParams.begin(); it != itsParams.end(); ++it)
+    for (const auto& itsParam : itsParams)
     {
-      params.Add(NFmiDataIdent(*it, *prodIt));
+      params.Add(NFmiDataIdent(itsParam, *prodIt));
     }
     return NFmiParamDescriptor(params);
   }
@@ -1060,9 +1059,9 @@ class CombineDataStructureSearcher
 set<long> FindAllLevelTypes(vector<std::shared_ptr<NFmiQueryData> > &theTotalQDataCollector)
 {
   set<long> levelTypes;
-  for (size_t i = 0; i < theTotalQDataCollector.size(); i++)
+  for (auto& i : theTotalQDataCollector)
   {
-    levelTypes.insert(GetLevelType(theTotalQDataCollector[i]));
+    levelTypes.insert(GetLevelType(i));
   }
   return levelTypes;
 }
@@ -1086,11 +1085,11 @@ bool FillQData(std::shared_ptr<NFmiQueryData> &theQData,
   long levelType = GetLevelType(theQData);
   NFmiFastQueryInfo destInfo(theQData.get());
 
-  for (size_t i = 0; i < theTotalQDataCollector.size(); i++)
+  for (auto& i : theTotalQDataCollector)
   {
-    if (levelType == GetLevelType(theTotalQDataCollector[i]))
+    if (levelType == GetLevelType(i))
     {
-      NFmiFastQueryInfo sourceInfo(theTotalQDataCollector[i].get());
+      NFmiFastQueryInfo sourceInfo(i.get());
       if (destInfo.HPlaceDescriptor() == sourceInfo.HPlaceDescriptor())
         for (sourceInfo.ResetParam(); sourceInfo.NextParam();)
           if (destInfo.Param(static_cast<FmiParameterName>(sourceInfo.Param().GetParamIdent())))
@@ -1211,10 +1210,10 @@ struct ConnectionEdgeInfo
 bool IsConnectionEdgeIndexUsed(
     vector<pair<set<size_t>, set<size_t> > > &connectedDataIndexiesVector, size_t index)
 {
-  for (size_t i = 0; i < connectedDataIndexiesVector.size(); i++)
+  for (auto& i : connectedDataIndexiesVector)
   {
-    auto it = connectedDataIndexiesVector[i].first.find(index);
-    if (it != connectedDataIndexiesVector[i].first.end())
+    auto it = i.first.find(index);
+    if (it != i.first.end())
       return true;
   }
   return false;
@@ -1438,17 +1437,17 @@ vector<pair<NFmiGrid, FmiLevelType> > CalcGrids2(
   // avulla
   // uuden yhdistelmä hilan nurkkapisteet ja hilakoot.
   vector<pair<NFmiGrid, FmiLevelType> > gridVector;
-  for (size_t i = 0; i < connectedEdgeDataIndexies.size(); i++)
+  for (auto& connectedEdgeDataIndexie : connectedEdgeDataIndexies)
   {
     NFmiPoint bottomLeft = NFmiPoint::gMissingLatlon;
     NFmiPoint topRight = NFmiPoint::gMissingLatlon;
     unsigned long xSize = 0;
     unsigned long ySize = 0;
     FmiLevelType leveltype = kFmiNoLevelType;
-    set<size_t> connectedEdgeIndexies = connectedEdgeDataIndexies[i].first;
-    for (auto it = connectedEdgeIndexies.begin(); it != connectedEdgeIndexies.end(); ++it)
+    set<size_t> connectedEdgeIndexies = connectedEdgeDataIndexie.first;
+    for (unsigned long connectedEdgeIndexie : connectedEdgeIndexies)
     {
-      ConnectionEdgeInfo &connectionEdgeInfo = connectionEdgeInfoVector[*it];
+      ConnectionEdgeInfo& connectionEdgeInfo = connectionEdgeInfoVector[connectedEdgeIndexie];
       if (leveltype == kFmiNoLevelType)
         leveltype = connectionEdgeInfo.levelType;
       ::CalcAreaConnection(connectionEdgeInfo, bottomLeft, topRight, xSize, ySize);
@@ -1468,9 +1467,9 @@ NFmiQueryInfo MakeQueryInfo(pair<NFmiGrid, FmiLevelType> &newGridInfo,
   NFmiParamDescriptor combinedParams;
   NFmiLevelBag combinedLevelBag;
   NFmiTimeList combinedTimeList;
-  for (size_t i = 0; i < origDataVector.size(); i++)
+  for (auto& i : origDataVector)
   {
-    NFmiFastQueryInfo info(origDataVector[i].get());
+    NFmiFastQueryInfo info(i.get());
     if (newGridInfo.second == info.Level()->LevelType())
     {
       combinedParams = combinedParams.Combine(info.ParamDescriptor());
@@ -1492,10 +1491,10 @@ void FillCombinedAreaData(std::shared_ptr<NFmiQueryData> &newData,
                           vector<std::shared_ptr<NFmiQueryData> > &origDataVector)
 {
   NFmiFastQueryInfo info(newData.get());
-  for (size_t i = 0; i < origDataVector.size(); i++)
+  for (auto& i : origDataVector)
   {
     info.First();  // tämä mm. asettaa osoittamaan 1. leveliin
-    NFmiFastQueryInfo sourceInfo(origDataVector[i].get());
+    NFmiFastQueryInfo sourceInfo(i.get());
     if (info.Level()->LevelType() == sourceInfo.Level()->LevelType())
       for (info.ResetParam(); info.NextParam();)
         if (sourceInfo.Param(static_cast<FmiParameterName>(info.Param().GetParamIdent())))
@@ -1517,10 +1516,10 @@ void AddNotCombinedDataToVector(vector<std::shared_ptr<NFmiQueryData> > &areaCom
                                 vector<ConnectionEdgeInfo> &connectionEdgeInfoVector)
 {
   set<size_t> combinedDataIndexies;
-  for (size_t i = 0; i < connectionEdgeInfoVector.size(); i++)
+  for (auto& i : connectionEdgeInfoVector)
   {
-    combinedDataIndexies.insert(connectionEdgeInfoVector[i].data1Index);
-    combinedDataIndexies.insert(connectionEdgeInfoVector[i].data2Index);
+    combinedDataIndexies.insert(i.data1Index);
+    combinedDataIndexies.insert(i.data2Index);
   }
 
   auto it = combinedDataIndexies.begin();
@@ -1578,9 +1577,9 @@ vector<std::shared_ptr<NFmiQueryData> > TryAreaCombination(
     vector<pair<NFmiGrid, FmiLevelType> > gridVector = CalcGrids2(connectionEdgeInfoVector);
     if (gridVector.size())
     {
-      for (size_t i = 0; i < gridVector.size(); i++)
+      for (auto& i : gridVector)
       {
-        NFmiQueryInfo innerInfo = MakeQueryInfo(gridVector[i], origDataVector);
+        NFmiQueryInfo innerInfo = MakeQueryInfo(i, origDataVector);
         std::shared_ptr<NFmiQueryData> newData(NFmiQueryDataUtil::CreateEmptyData(innerInfo));
         if (newData)
         {
@@ -1604,13 +1603,12 @@ vector<NFmiHPlaceDescriptor> GetUniqueHPlaceDescriptors(
     vector<std::shared_ptr<NFmiQueryData> > &theTotalQDataCollector)
 {
   vector<NFmiHPlaceDescriptor> hplaceDescriptors;
-  for (size_t i = 0; i < theTotalQDataCollector.size(); i++)
+  for (auto& i : theTotalQDataCollector)
   {
-    auto it = std::find(hplaceDescriptors.begin(),
-                        hplaceDescriptors.end(),
-                        theTotalQDataCollector[i]->Info()->HPlaceDescriptor());
+    auto it = std::find(
+        hplaceDescriptors.begin(), hplaceDescriptors.end(), i->Info()->HPlaceDescriptor());
     if (it == hplaceDescriptors.end())
-      hplaceDescriptors.push_back(theTotalQDataCollector[i]->Info()->HPlaceDescriptor());
+      hplaceDescriptors.push_back(i->Info()->HPlaceDescriptor());
   }
   return hplaceDescriptors;
 }
@@ -1643,9 +1641,9 @@ std::shared_ptr<NFmiQueryData> CreateEmptyQData(
   set<float> levels;
   NFmiMetTime origTime;
   NFmiProducer producer;
-  for (size_t i = 0; i < theTotalQDataCollector.size(); i++)
+  for (auto& i : theTotalQDataCollector)
   {
-    NFmiFastQueryInfo info(theTotalQDataCollector[i].get());
+    NFmiFastQueryInfo info(i.get());
     if (levelType == static_cast<long>(info.Level()->GetIdent()))
     {
       if (hplaceDescriptor == info.HPlaceDescriptor())
@@ -1663,16 +1661,16 @@ std::shared_ptr<NFmiQueryData> CreateEmptyQData(
   if (!params.empty() && !validTimes.empty() && !levels.empty())
   {
     NFmiTimeList timeList;
-    for (auto it = validTimes.begin(); it != validTimes.end(); ++it)
-      timeList.Add(new NFmiMetTime(*it));
+    for (const auto& validTime : validTimes)
+      timeList.Add(new NFmiMetTime(validTime));
     NFmiTimeDescriptor timeDescriptor(origTime, timeList);
     NFmiParamBag paramBag;
-    for (auto it = params.begin(); it != params.end(); ++it)
-      paramBag.Add(NFmiDataIdent(*it, producer));
+    for (const auto& param : params)
+      paramBag.Add(NFmiDataIdent(param, producer));
     NFmiParamDescriptor paramDescriptor(paramBag);
     NFmiLevelBag levelBag;
-    for (auto it = levels.begin(); it != levels.end(); ++it)
-      levelBag.AddLevel(NFmiLevel(levelType, NFmiStringTools::Convert(*it), *it));
+    for (float level : levels)
+      levelBag.AddLevel(NFmiLevel(levelType, NFmiStringTools::Convert(level), level));
     NFmiVPlaceDescriptor vplaceDescriptor(levelBag);
 
     NFmiQueryInfo innerInfo(paramDescriptor, timeDescriptor, hplaceDescriptor, vplaceDescriptor);
@@ -2565,10 +2563,8 @@ void ChangeParamSettingsIfNeeded(vector<ParamChangeItem> &theParamChangeTable,
 {
   if (theParamChangeTable.size() > 0)
   {  // muutetaan tarvittaessa parametrin nimeä ja id:tä
-    for (unsigned int i = 0; i < theParamChangeTable.size(); i++)
+    for (auto& paramChangeItem : theParamChangeTable)
     {
-      ParamChangeItem &paramChangeItem = theParamChangeTable[i];
-
       if (paramChangeItem.itsOriginalParamId ==
           static_cast<long>(theGribData->itsParam.GetParamIdent()))
       {
@@ -2686,9 +2682,9 @@ bool AcceptThisLevelType(GridRecordData *data, vector<FmiLevelType> &theAcceptOn
 {
   if (theAcceptOnlyLevelTypes.size() > 0)
   {
-    for (unsigned int i = 0; i < theAcceptOnlyLevelTypes.size(); i++)
+    for (auto& theAcceptOnlyLevelType : theAcceptOnlyLevelTypes)
     {
-      if (theAcceptOnlyLevelTypes[i] == data->itsLevel.LevelType())
+      if (theAcceptOnlyLevelType == data->itsLevel.LevelType())
         return true;  // skipataan jokerin valuen yhteydessä kaikki kyseisen level tyypin kentät
     }
     return false;  // jos oli accept lista mutta ei löytynyt leveltypeä siitä, hylkää
@@ -2702,9 +2698,8 @@ bool CropParam(GridRecordData *gribData,
 {
   if (fCropParamsNotMensionedInTable && theParamChangeTable.size())
   {
-    for (unsigned int i = 0; i < theParamChangeTable.size(); i++)
+    for (auto& paramChangeItem : theParamChangeTable)
     {
-      ParamChangeItem &paramChangeItem = theParamChangeTable[i];
       if (static_cast<long>(gribData->itsParam.GetParamIdent()) ==
           paramChangeItem.itsWantedParam.GetIdent())
       {
@@ -2847,9 +2842,8 @@ void MakeParameterConversions(GridRecordData *theGridRecordData,
 {
   if (theParamChangeTable.size() > 0)
   {  // tehdään tarvittaessa parametrille base+scale muunnos
-    for (unsigned int p = 0; p < theParamChangeTable.size(); p++)
+    for (const auto& paramChangeItem : theParamChangeTable)
     {
-      const ParamChangeItem &paramChangeItem = theParamChangeTable[p];
       if (paramChangeItem.itsWantedParam.GetIdent() ==
           static_cast<long>(theGridRecordData->itsParam.GetParamIdent()))  // parametri on jo
                                                                            // muutettu, nyt
@@ -2948,9 +2942,9 @@ vector<NFmiHPlaceDescriptor> GetAllHPlaceDescriptors(vector<GridRecordData *> &t
 {
   set<MyGrid> gribDataSet;
 
-  for (size_t i = 0; i < theGribRecordDatas.size(); i++)
+  for (auto& theGribRecordData : theGribRecordDatas)
   {
-    MyGrid &tmpGrid = theGribRecordDatas[i]->itsGrid;
+    MyGrid& tmpGrid = theGribRecordData->itsGrid;
     gribDataSet.insert(tmpGrid);
   }
 
@@ -3289,13 +3283,13 @@ std::shared_ptr<NFmiQueryData> GetSurfaceData(vector<std::shared_ptr<NFmiQueryDa
                                               FmiParameterName thePressureAtStationParId)
 {
   std::shared_ptr<NFmiQueryData> surfaceData;
-  for (size_t i = 0; i < theQdatas.size(); i++)
+  for (auto& theQdata : theQdatas)
   {
-    if (theQdatas[i]->Info()->SizeLevels() == 1)
+    if (theQdata->Info()->SizeLevels() == 1)
     {
-      if (theQdatas[i]->Info()->Param(thePressureAtStationParId))
+      if (theQdata->Info()->Param(thePressureAtStationParId))
       {
-        surfaceData = theQdatas[i];
+        surfaceData = theQdata;
         break;
       }
     }
@@ -3307,16 +3301,16 @@ std::shared_ptr<NFmiQueryData> GetHybridData(vector<std::shared_ptr<NFmiQueryDat
                                              FmiParameterName pressureId)
 {
   std::shared_ptr<NFmiQueryData> data;
-  for (size_t i = 0; i < theQdatas.size(); i++)
+  for (auto& theQdata : theQdatas)
   {
     // Huom! ei tarvitse olla useita leveleitä datassa, koska yksittäinen grib-tiedosto voi sisältää
     // vain yhden levelin dataa
-    theQdatas[i]->Info()->FirstLevel();
-    if (theQdatas[i]->Info()->Level()->LevelType() == kFmiHybridLevel)  // pitää olla hybrid tyyppiä
+    theQdata->Info()->FirstLevel();
+    if (theQdata->Info()->Level()->LevelType() == kFmiHybridLevel)  // pitää olla hybrid tyyppiä
     {
-      if (theQdatas[i]->Info()->Param(pressureId))  // pitää löytyä paine parametri
+      if (theQdata->Info()->Param(pressureId))  // pitää löytyä paine parametri
       {
-        data = theQdatas[i];
+        data = theQdata;
         break;
       }
     }
@@ -3327,15 +3321,14 @@ std::shared_ptr<NFmiQueryData> GetHybridData(vector<std::shared_ptr<NFmiQueryDat
 std::shared_ptr<NFmiQueryData> GetPressureData(vector<std::shared_ptr<NFmiQueryData> > &theQdatas)
 {
   std::shared_ptr<NFmiQueryData> data;
-  for (size_t i = 0; i < theQdatas.size(); i++)
+  for (auto& theQdata : theQdatas)
   {
     // Huom! ei tarvitse olla useita leveleitä datassa, koska yksittäinen grib-tiedosto voi sisältää
     // vain yhden levelin dataa
-    theQdatas[i]->Info()->FirstLevel();
-    if (theQdatas[i]->Info()->Level()->LevelType() ==
-        kFmiPressureLevel)  // pitää olla pressure tyyppiä
+    theQdata->Info()->FirstLevel();
+    if (theQdata->Info()->Level()->LevelType() == kFmiPressureLevel)  // pitää olla pressure tyyppiä
     {
-      data = theQdatas[i];
+      data = theQdata;
       break;
     }
   }
@@ -3345,13 +3338,12 @@ std::shared_ptr<NFmiQueryData> GetPressureData(vector<std::shared_ptr<NFmiQueryD
 std::shared_ptr<NFmiQueryData> GetGroundData(vector<std::shared_ptr<NFmiQueryData> > &theQdatas)
 {
   std::shared_ptr<NFmiQueryData> data;
-  for (size_t i = 0; i < theQdatas.size(); i++)
+  for (auto& theQdata : theQdatas)
   {
-    theQdatas[i]->Info()->FirstLevel();
-    if (theQdatas[i]->Info()->Level()->LevelType() ==
-        kFmiGroundSurface)  // pitää olla ground tyyppiä
+    theQdata->Info()->FirstLevel();
+    if (theQdata->Info()->Level()->LevelType() == kFmiGroundSurface)  // pitää olla ground tyyppiä
     {
-      data = theQdatas[i];
+      data = theQdata;
       break;
     }
   }
@@ -4364,9 +4356,8 @@ void MakeParameterConversions(GridRecordData *theGridRecordData,
 {
   if (theParamChangeTable.size() > 0)
   {  // tehdään tarvittaessa parametrille base+scale muunnos
-    for (unsigned int i = 0; i < theParamChangeTable.size(); i++)
+    for (auto& paramChangeItem : theParamChangeTable)
     {
-      ParamChangeItem &paramChangeItem = theParamChangeTable[i];
       if (paramChangeItem.itsWantedParam.GetIdent() ==
           static_cast<long>(theGridRecordData->itsParam.GetParamIdent()))  // parametri on jo
                                                                            // muutettu, nyt
@@ -4703,12 +4694,12 @@ vector<std::shared_ptr<NFmiQueryData> > CreateQueryDatas(
         wgrib2qd::GetAllHPlaceDescriptors(theGribRecordDatas, useOutputFile);
     vector<NFmiVPlaceDescriptor> vPlaceDescriptors =
         wgrib2qd::GetAllVPlaceDescriptors(theGribRecordDatas, useOutputFile);
-    for (unsigned int j = 0; j < vPlaceDescriptors.size(); j++)
+    for (auto& vPlaceDescriptor : vPlaceDescriptors)
     {
-      for (unsigned int i = 0; i < hPlaceDescriptors.size(); i++)
+      for (auto& hPlaceDescriptor : hPlaceDescriptors)
       {
-        std::shared_ptr<NFmiQueryData> qdata = wgrib2qd::CreateQueryData(
-            theGribRecordDatas, hPlaceDescriptors[i], vPlaceDescriptors[j]);
+        std::shared_ptr<NFmiQueryData> qdata =
+            wgrib2qd::CreateQueryData(theGribRecordDatas, hPlaceDescriptor, vPlaceDescriptor);
         if (qdata)
           qdatas.push_back(qdata);
       }
@@ -5022,12 +5013,12 @@ void MakeTotalCombineQDatas(vector<std::shared_ptr<NFmiQueryData> > &theTotalQDa
         GetUniqueHPlaceDescriptors(theTotalQDataCollector);
     // 2. Hae jokaiselle leveltyyppi ja hplaceDescriptri parille yhteiset parametrit ja ajat
     vector<std::shared_ptr<NFmiQueryData> > generatedEmptyQDatas;
-    for (auto it = levelTypes.begin(); it != levelTypes.end(); ++it)
+    for (long levelType : levelTypes)
     {
-      for (size_t i = 0; i < hplaceDescriptors.size(); i++)
+      for (const auto& hplaceDescriptor : hplaceDescriptors)
       {
         std::shared_ptr<NFmiQueryData> qData =
-            CreateEmptyQData(*it, hplaceDescriptors[i], theTotalQDataCollector);
+            CreateEmptyQData(levelType, hplaceDescriptor, theTotalQDataCollector);
         if (qData)
           generatedEmptyQDatas.push_back(qData);
       }
@@ -5035,10 +5026,10 @@ void MakeTotalCombineQDatas(vector<std::shared_ptr<NFmiQueryData> > &theTotalQDa
     // 3. täytä eri datat
     vector<std::shared_ptr<NFmiQueryData> >
         generatedFilledQDatas;  // kaikkia datoja ei välttämättä täytetä, on olemassa kombinaatioita
-    for (size_t i = 0; i < generatedEmptyQDatas.size(); i++)
+    for (auto& generatedEmptyQData : generatedEmptyQDatas)
     {
-      if (FillQData(generatedEmptyQDatas[i], theTotalQDataCollector))
-        generatedFilledQDatas.push_back(generatedEmptyQDatas[i]);
+      if (FillQData(generatedEmptyQData, theTotalQDataCollector))
+        generatedFilledQDatas.push_back(generatedEmptyQData);
     }
     // 4. Jos haluataan alueellisia yhdistemiä, se tehdään tässä
     if (theGribFilterOptionsOut.fTryAreaCombination)

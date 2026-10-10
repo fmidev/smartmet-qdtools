@@ -373,10 +373,10 @@ bool parse_options(int argc, char *argv[])
 
 bool ignore_param(long id)
 {
-  for (size_t i = 0; i < options.ptable.size(); ++i)
+  for (auto& i : options.ptable)
   {
     // Note: conversion in reverse direction!
-    if (id == options.ptable[i].itsWantedParam.GetIdent())
+    if (id == i.itsWantedParam.GetIdent())
       return false;
   }
   return true;
@@ -783,12 +783,12 @@ void set_parameters(grib_handle *gribHandle, const NFmiParam &theParam)
 
   long usedParId = theParam.GetIdent();
 
-  for (size_t i = 0; i < options.ptable.size(); ++i)
+  for (auto& i : options.ptable)
   {
     // Note: conversion in reverse direction!
-    if (usedParId == options.ptable[i].itsWantedParam.GetIdent())
+    if (usedParId == i.itsWantedParam.GetIdent())
     {
-      usedParId = options.ptable[i].itsOriginalParamId;
+      usedParId = i.itsOriginalParamId;
       break;
     }
   }
@@ -800,13 +800,13 @@ void set_parameters(grib_handle *gribHandle, const NFmiParam &theParam)
 
 void get_conversion(long id, float *scale, float *offset)
 {
-  for (size_t i = 0; i < options.ptable.size(); ++i)
+  for (auto& i : options.ptable)
   {
     // Note: conversion in reverse direction!
-    if (id == options.ptable[i].itsWantedParam.GetIdent())
+    if (id == i.itsWantedParam.GetIdent())
     {
-      *scale = options.ptable[i].itsConversionScale;
-      *offset = options.ptable[i].itsConversionBase;
+      *scale = i.itsConversionScale;
+      *offset = i.itsConversionBase;
       break;
     }
   }

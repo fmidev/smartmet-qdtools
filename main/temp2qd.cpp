@@ -73,9 +73,9 @@ struct PointerDestroyer
 static void FillCombinedSoundingData(vector<NFmiQueryData *> &theDataList,
                                      NFmiFastQueryInfo &theInfo)
 {
-  for (unsigned int i = 0; i < theDataList.size(); i++)
+  for (auto& i : theDataList)
   {
-    NFmiFastQueryInfo sourceInfo(theDataList[i]);
+    NFmiFastQueryInfo sourceInfo(i);
     for (sourceInfo.ResetTime(); sourceInfo.NextTime();)
     {
       if (theInfo.Time(sourceInfo.Time()))
@@ -119,9 +119,9 @@ static NFmiQueryInfo MakeCombinedInnerInfo(vector<NFmiQueryData *> &theDataList,
       nullptr;  // otetaan talteen sen datan vplaceDesc, jossa eniten leveleitä
 
   NFmiMetTime originTime;  // otetaan vain currentti aika origin timeksi
-  for (unsigned int i = 0; i < theDataList.size(); i++)
+  for (auto& i : theDataList)
   {
-    NFmiFastQueryInfo info(theDataList[i]);
+    NFmiFastQueryInfo info(i);
 
     for (info.ResetTime(); info.NextTime();)
       allTimes.insert(info.Time());
@@ -131,7 +131,7 @@ static NFmiQueryInfo MakeCombinedInnerInfo(vector<NFmiQueryData *> &theDataList,
     if (maxLevelSize < info.SizeLevels())
     {
       maxLevelSize = info.SizeLevels();
-      maxLevelVPlaceDesc = &(theDataList[i]->Info()->VPlaceDescriptor());
+      maxLevelVPlaceDesc = &(i->Info()->VPlaceDescriptor());
     }
   }
 
@@ -140,8 +140,8 @@ static NFmiQueryInfo MakeCombinedInnerInfo(vector<NFmiQueryData *> &theDataList,
 
   // Tehdään kaikkia datoja yhdistävä timeDescriptor
   NFmiTimeList timeList;
-  for (auto it1 = allTimes.begin(); it1 != allTimes.end(); ++it1)
-    timeList.Add(new NFmiMetTime(*it1));
+  for (const auto& allTime : allTimes)
+    timeList.Add(new NFmiMetTime(allTime));
   NFmiTimeDescriptor timeDesc(originTime, timeList);
 
   // Otetaan 1. datasta paramdesc, koska se on sama kaikille
@@ -150,8 +150,8 @@ static NFmiQueryInfo MakeCombinedInnerInfo(vector<NFmiQueryData *> &theDataList,
   paramDesc.SetProducer(theWantedProducer);
 
   NFmiLocationBag locationBag;
-  for (auto it2 = allStations.begin(); it2 != allStations.end(); ++it2)
-    locationBag.AddLocation(*it2, false);
+  for (const auto& allStation : allStations)
+    locationBag.AddLocation(allStation, false);
   NFmiHPlaceDescriptor hplaceDesc(locationBag);
 
   NFmiQueryInfo info(paramDesc, timeDesc, hplaceDesc, *maxLevelVPlaceDesc);
@@ -232,17 +232,16 @@ void Domain(int argc, const char *argv[])
   bool foundAnyFiles = false;
   bool couldDecodeSoundings = false;
   vector<NFmiQueryData *> qDataList;
-  for (unsigned int j = 0; j < fileFilterList.size(); j++)
+  for (auto filePatternStr : fileFilterList)
   {
     //	2. Hae jokaista filefilteriä vastaavat tiedostonimet omaan listaan
-    std::string filePatternStr = fileFilterList[j];
     std::string usedPath = NFmiFileSystem::PathFromPattern(filePatternStr);
     list<string> fileList = NFmiFileSystem::PatternFiles(filePatternStr);
-    for (auto it = fileList.begin(); it != fileList.end(); ++it)
+    for (auto& it : fileList)
     {
       //	3. Lue listan tiedostot vuorollaan sisään ja tulkitse siitä mahdolliset TEMPit
       // querydataksi
-      std::string finalFileName = usedPath + *it;
+      std::string finalFileName = usedPath + it;
       foundAnyFiles = true;
       string tempFileContent;
       //			if(NFmiFileSystem::ReadFile2String(wantedPath + fileListVec[k],

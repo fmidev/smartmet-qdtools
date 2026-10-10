@@ -60,6 +60,7 @@
 #include <newbase/NFmiTimeList.h>
 
 #include <fstream>
+#include <ranges>
 
 using namespace std;
 
@@ -199,11 +200,11 @@ int main(int argc, const char *argv[])
 
   // Check arguments
 
-  for (auto it = datapaths.begin(); it != datapaths.end(); ++it)
+  for (auto& datapath : datapaths)
   {
-    if (!NFmiFileSystem::DirectoryExists(*it) && !NFmiFileSystem::FileReadable(*it))
+    if (!NFmiFileSystem::DirectoryExists(datapath) && !NFmiFileSystem::FileReadable(datapath))
     {
-      cerr << "Error: Directory '" << *it << "' does not exist" << endl;
+      cerr << "Error: Directory '" << datapath << "' does not exist" << endl;
       return 1;
     }
   }
@@ -230,26 +231,26 @@ int main(int argc, const char *argv[])
 
   list<string> files;
 
-  for (auto dir = datapaths.begin(); dir != datapaths.end(); ++dir)
+  for (auto& datapath : datapaths)
   {
-    if (NFmiFileSystem::FileReadable(*dir))
-      files.push_back(*dir);
+    if (NFmiFileSystem::FileReadable(datapath))
+      files.push_back(datapath);
 
     else if (latest)
     {
-      string newest = NFmiFileSystem::NewestFile(*dir);
+      string newest = NFmiFileSystem::NewestFile(datapath);
       if (newest.empty())
       {
-        cerr << "Directory '" + *dir + "' is empty" << endl;
+        cerr << "Directory '" + datapath + "' is empty" << endl;
         return 1;
       }
-      files.push_back(*dir + '/' + newest);
+      files.push_back(datapath + '/' + newest);
     }
     else
     {
       list<string> dirfiles;
 
-      dirfiles = NFmiFileSystem::DirectoryFiles(*dir);
+      dirfiles = NFmiFileSystem::DirectoryFiles(datapath);
 
       // Alphabetical order is assumed to be the time order
       // so that reverse alphabetical orders gives files
@@ -258,9 +259,9 @@ int main(int argc, const char *argv[])
       dirfiles.sort();
       dirfiles.reverse();
 
-      for (auto fit = dirfiles.begin(); fit != dirfiles.end(); ++fit)
+      for (auto& dirfile : dirfiles)
       {
-        files.push_back(*dir + '/' + *fit);
+        files.push_back(datapath + '/' + dirfile);
       }
     }
   }
@@ -277,10 +278,8 @@ int main(int argc, const char *argv[])
 
   NFmiParamBag pbag;
 
-  for (auto it = files.begin(); it != files.end(); ++it)
+  for (auto filename : files)
   {
-    const string filename = *it;
-
     if (verbose)
       cerr << "Reading " << filename << " header" << endl;
 
@@ -365,9 +364,9 @@ int main(int argc, const char *argv[])
   // This will contain all times that have already been handled
   set<NFmiMetTime> handled_times;
 
-  for (auto it = accepted_files.rbegin(); it != accepted_files.rend(); ++it)
+  for (auto& accepted_file : std::ranges::reverse_view(accepted_files))
   {
-    const string &filename = it->second;
+    const string& filename = accepted_file.second;
     if (verbose)
       cerr << "Reading " << filename << endl;
 

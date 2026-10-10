@@ -340,9 +340,9 @@ int run(int argc, char *argv[])
   dataChecker.Data(&data);
   NFmiParamBag params(*dataChecker.DatasParamBag());
   params.SetActivities(false);
-  for (unsigned int i = 0; i < ohjausData.itsParamIdCheckList.size(); i++)
+  for (auto& i : ohjausData.itsParamIdCheckList)
   {
-    if (params.SetCurrent(ohjausData.itsParamIdCheckList[i].itsParamId, false))
+    if (params.SetCurrent(i.itsParamId, false))
       params.Current(false)->SetActive(true);
   }
   dataChecker.ParamBag(params);

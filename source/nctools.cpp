@@ -268,9 +268,10 @@ bool parse_options(int argc, char *argv[], Options &options)
     // erotelty ;-merkeillä ja avain/arvot on eroteltu = -merkeillä
     auto attributeListParts =
         NFmiStringTools::Split<std::list<std::string>>(tmpCmdLineGlobalAttributesStr, ";");
-    for (auto it = attributeListParts.begin(); it != attributeListParts.end(); ++it)
+    for (auto& attributeListPart : attributeListParts)
     {
-      auto attributeParts = NFmiStringTools::Split<std::vector<std::string>>(*it, "=");
+      auto attributeParts =
+          NFmiStringTools::Split<std::vector<std::string>>(attributeListPart, "=");
       if (attributeParts.size() == 2)
         options.cmdLineGlobalAttributes.insert(
             std::make_pair(attributeParts[0], attributeParts[1]));

@@ -453,9 +453,9 @@ void parse_parameter_option(const string& theRequest)
   const vector<string> requests = NFmiStringTools::Split(theRequest);
 
   // Parse the individual requests
-  for (auto it = requests.begin(); it != requests.end(); ++it)
+  for (const auto& request : requests)
   {
-    options.parameters.emplace_back(*it);
+    options.parameters.emplace_back(request);
   }
 }
 
@@ -501,10 +501,10 @@ void parse_php_names_option(const string& theRequest)
 void parse_area_option(const string& theRequest)
 {
   vector<string> areas = NFmiStringTools::Split(theRequest, "::");
-  for (auto it = areas.begin(); it != areas.end(); ++it)
+  for (auto& it : areas)
   {
-    WeatherArea area(*it);
-    options.areas.insert(make_pair(*it, area));
+    WeatherArea area(it);
+    options.areas.insert(make_pair(it, area));
   }
 }
 
@@ -715,13 +715,13 @@ void parse_command_line(int argc, const char* argv[])
 
   options.sources.resize(options.querydata.size());
 
-  for (auto it = options.sources.begin(); it != options.sources.end(); ++it)
+  for (auto& source : options.sources)
   {
     std::shared_ptr<WeatherSource> weathersource(new LatestWeatherSource());
     std::shared_ptr<MaskSource> masksource(new RegularMaskSource());
 
-    it->setWeatherSource(weathersource);
-    it->setMaskSource(masksource);
+    source.setWeatherSource(weathersource);
+    source.setMaskSource(masksource);
   }
 
   // Must set timezone before parsing -T option
@@ -765,10 +765,10 @@ void parse_command_line(int argc, const char* argv[])
   if (options.coordinatefile.empty())
     throw runtime_error("The specified coordinatefile string is empty");
 
-  for (auto qt = options.querydata.begin(); qt != options.querydata.end(); ++qt)
+  for (auto& qt : options.querydata)
   {
-    if (!NFmiFileSystem::FileExists(*qt) && !NFmiFileSystem::DirectoryExists(*qt))
-      throw runtime_error("The querydata '" + *qt + "' does not exist");
+    if (!NFmiFileSystem::FileExists(qt) && !NFmiFileSystem::DirectoryExists(qt))
+      throw runtime_error("The querydata '" + qt + "' does not exist");
   }
 
   if (!NFmiFileSystem::FileExists(options.coordinatefile))
@@ -897,17 +897,17 @@ void calculate_results()
       const WeatherPeriod period = options.generator->period(i);
       Results newresults;
 
-      for (auto it = options.parameters.begin(); it != options.parameters.end(); ++it)
+      for (auto& parameter : options.parameters)
       {
         WeatherResult result = forecaster.analyze(sources,
-                                                  it->parameter,
-                                                  it->areafunction,
-                                                  it->timefunction,
+                                                  parameter.parameter,
+                                                  parameter.areafunction,
+                                                  parameter.timefunction,
                                                   area,
                                                   period,
                                                   DefaultAcceptor(),
                                                   DefaultAcceptor(),
-                                                  *(it->tester));
+                                                  *(parameter.tester));
         newresults.push_back(result);
       }
 
@@ -972,14 +972,14 @@ string format_value(double theValue, const string& theMissing)
 
 void print_results()
 {
-  for (auto at = results.begin(); at != results.end(); ++at)
+  for (auto& result : results)
   {
-    for (auto it = at->second.begin(); it != at->second.end(); ++it)
+    for (auto it = result.second.begin(); it != result.second.end(); ++it)
     {
-      cout << at->first << ' ' << format_time_period(it->first, ' ');
-      for (auto jt = it->second.begin(); jt != it->second.end(); ++jt)
+      cout << result.first << ' ' << format_time_period(it->first, ' ');
+      for (auto& jt : it->second)
       {
-        cout << ' ' << format_value(jt->value(), "-");
+        cout << ' ' << format_value(jt.value(), "-");
       }
       cout << endl;
     }
@@ -1031,8 +1031,8 @@ void print_php_results()
     for (unsigned int i = 0; i < options.parameters.size(); i++)
     {
       MaximumCalculator calculator;
-      for (auto it = at->second.begin(); it != at->second.end(); ++it)
-        calculator(it->second[i].value());
+      for (auto& it : at->second)
+        calculator(it.second[i].value());
 
       if (i > 0)
         cout << ',';
@@ -1048,8 +1048,8 @@ void print_php_results()
     for (unsigned int i = 0; i < options.parameters.size(); i++)
     {
       MinimumCalculator calculator;
-      for (auto it = at->second.begin(); it != at->second.end(); ++it)
-        calculator(it->second[i].value());
+      for (auto& it : at->second)
+        calculator(it.second[i].value());
 
       if (i > 0)
         cout << ',';

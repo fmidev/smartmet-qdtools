@@ -747,9 +747,9 @@ void copy_ash_concentration_file(NFmiFastQueryInfo& info, const fs::path& file)
 
   NFmiIndexMask mask = NFmiIndexMaskTools::MaskInside(*info.Grid(), path);
 
-  for (auto it = mask.begin(); it != mask.end(); ++it)
+  for (unsigned long it : mask)
   {
-    info.LocationIndex(*it);
+    info.LocationIndex(it);
     if (concentration > info.FloatValue())
       info.FloatValue(concentration);
   }
@@ -803,9 +803,9 @@ void copy_ash_boundary_file(NFmiFastQueryInfo& info, const fs::path& file)
 
     NFmiIndexMask mask = NFmiIndexMaskTools::MaskInside(*info.Grid(), path);
 
-    for (auto it = mask.begin(); it != mask.end(); ++it)
+    for (unsigned long it : mask)
     {
-      info.LocationIndex(*it);
+      info.LocationIndex(it);
       info.FloatValue(1);
     }
   }

@@ -418,10 +418,10 @@ const NFmiHPlaceDescriptor make_hdesc(const KrigingData& theData)
   set<double> xset;
   set<double> yset;
 
-  for (auto it = theData.begin(), end = theData.end(); it != end; ++it)
+  for (const auto& it : theData)
   {
-    xset.insert(it->first.X());
-    yset.insert(it->first.Y());
+    xset.insert(it.first.X());
+    yset.insert(it.first.Y());
   }
 
   // We require atleast a 2x2 grid
@@ -551,21 +551,21 @@ std::shared_ptr<NFmiQueryData> create_querydata(const KrigingData& theData)
   NFmiFastQueryInfo q(data.get());
   q.First();
 
-  for (auto it = theData.begin(), end = theData.end(); it != end; ++it)
+  for (const auto& it : theData)
   {
-    NFmiPoint latlon = q.Area()->WorldXYToLatLon(it->first);
+    NFmiPoint latlon = q.Area()->WorldXYToLatLon(it.first);
 
     if (!q.NearestPoint(latlon))
     {
       ostringstream out;
-      out << setprecision(16) << it->first.X() << ',' << it->first.Y();
+      out << setprecision(16) << it.first.X() << ',' << it.first.Y();
 
       throw runtime_error("Failed to set coordinate " + out.str() +
                           " in the querydata, perhaps grid is wrong?");
     }
 
     q.FirstParam();
-    for (const auto& value : it->second)
+    for (const auto& value : it.second)
     {
       if (value == options.missingvalue)
         q.FloatValue(kFloatMissing);

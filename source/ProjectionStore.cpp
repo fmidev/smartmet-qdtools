@@ -87,8 +87,8 @@ std::set<std::string> ProjectionStore::names() const
 {
   std::set<std::string> result;
 
-  for (auto it = itsPimple->itsStore.begin(); it != itsPimple->itsStore.end(); ++it)
-    result.insert(it->first);
+  for (auto& it : itsPimple->itsStore)
+    result.insert(it.first);
 
   return result;
 }

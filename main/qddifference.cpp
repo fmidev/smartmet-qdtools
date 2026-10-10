@@ -171,11 +171,11 @@ bool parse_command_line(int argc, const char* argv[])
       options.allparams = true;
     else
     {
-      for (auto it = args.begin(); it != args.end(); ++it)
+      for (const auto& arg : args)
       {
-        auto param = FmiParameterName(converter.ToEnum(*it));
+        auto param = FmiParameterName(converter.ToEnum(arg));
         if (param == kFmiBadParameter)
-          throw runtime_error(string("Parameter '" + *it + "' is not recognized"));
+          throw runtime_error(string("Parameter '" + arg + "' is not recognized"));
         options.parameters.push_back(param);
       }
     }
@@ -334,9 +334,9 @@ try
   int differentpoints = 0;
   std::size_t num_one_missing = 0;
 
-  for (unsigned int i = 0; i < options.parameters.size(); i++)
+  for (auto& parameter : options.parameters)
   {
-    if (!theQ1.Param(options.parameters[i]) || !theQ2.Param(options.parameters[i]))
+    if (!theQ1.Param(parameter) || !theQ2.Param(parameter))
       throw runtime_error("The files must contain the parameters given with -P");
 
     bool iswinddir = (theQ1.Param().GetParam()->GetIdent() == kFmiWindDirection);
@@ -462,9 +462,9 @@ try
     throw Fmi::Exception(BCP, errorMsg.str());
   }
 
-  for (unsigned int i = 0; i < options.parameters.size(); i++)
+  for (auto& parameter : options.parameters)
   {
-    if (!theQ1.Param(options.parameters[i]) || !theQ2.Param(options.parameters[i]))
+    if (!theQ1.Param(parameter) || !theQ2.Param(parameter))
       throw runtime_error("The files must contain the parameters given with -P");
 
     bool iswinddir = (theQ1.Param().GetParam()->GetIdent() == kFmiWindDirection);
@@ -521,9 +521,9 @@ try
   int differentpoints = 0;
   std::size_t num_one_missing = 0;
 
-  for (unsigned int i = 0; i < options.parameters.size(); i++)
+  for (auto& parameter : options.parameters)
   {
-    if (!theQ1.Param(options.parameters[i]) || !theQ2.Param(options.parameters[i]))
+    if (!theQ1.Param(parameter) || !theQ2.Param(parameter))
       throw runtime_error("The files must contain the parameters given with -P");
 
     bool iswinddir = (theQ1.Param().GetParam()->GetIdent() == kFmiWindDirection);

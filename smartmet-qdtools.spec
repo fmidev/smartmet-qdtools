@@ -222,6 +222,7 @@ make %{_smp_mflags}
 - Remove redundant void parameter lists and use bool literals, no functional changes
 - Use emplace and C++ standard library headers where clang-tidy suggests it, no functional changes
 - Use raw string literals and std::make_shared where clang-tidy suggests it, no functional changes
+- Use range-based for loops where clang-tidy suggests it, no functional changes
 
 * Wed Oct 07 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.7-1.fmi
 - qdpoint reads one timezone area covering all the given locations instead of the whole globe when there are more than five of them, unless they are spread over more than 90x60 degrees

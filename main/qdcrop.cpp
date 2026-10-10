@@ -621,11 +621,11 @@ NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo& theQ,
 
   if (!theParams.empty())
   {
-    for (auto it = theParams.begin(); it != theParams.end(); ++it)
+    for (const auto& theParam : theParams)
     {
-      FmiParameterName paramnum = parse_param(*it);
+      FmiParameterName paramnum = parse_param(theParam);
       if (!theQ.Param(paramnum))
-        throw runtime_error("Source data does not contain parameter " + *it);
+        throw runtime_error("Source data does not contain parameter " + theParam);
 
       pbag.Add(theQ.Param());
     }
@@ -633,13 +633,13 @@ NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo& theQ,
   else if (!theDelParams.empty())
   {
     pbag = theQ.ParamBag();
-    for (auto it = theDelParams.begin(); it != theDelParams.end(); ++it)
+    for (const auto& theDelParam : theDelParams)
     {
-      FmiParameterName paramnum = parse_param(*it);
+      FmiParameterName paramnum = parse_param(theDelParam);
       if (!pbag.SetCurrent(paramnum))
-        throw runtime_error("Source data does not contain standalone parameter " + *it);
+        throw runtime_error("Source data does not contain standalone parameter " + theDelParam);
       if (!pbag.Remove())
-        throw runtime_error("Failed to remove parameter " + *it + " from querydata");
+        throw runtime_error("Failed to remove parameter " + theDelParam + " from querydata");
     }
   }
   else
@@ -649,11 +649,11 @@ NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo& theQ,
 
   // Keep analysis parameters
   {
-    for (auto it = theAnalysisParams.begin(); it != theAnalysisParams.end(); ++it)
+    for (const auto& theAnalysisParam : theAnalysisParams)
     {
-      FmiParameterName paramnum = parse_param(*it);
+      FmiParameterName paramnum = parse_param(theAnalysisParam);
       if (!theQ.Param(paramnum))
-        throw runtime_error("Source data does not contain parameter " + *it);
+        throw runtime_error("Source data does not contain parameter " + theAnalysisParam);
       if (!pbag.SetCurrent(paramnum))
         pbag.Add(theQ.Param());
     }
@@ -662,13 +662,13 @@ NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo& theQ,
   // Add new parameters
 
   {
-    for (auto it = theNewParams.begin(); it != theNewParams.end(); ++it)
+    for (const auto& theNewParam : theNewParams)
     {
-      FmiParameterName paramnum = parse_param(*it);
+      FmiParameterName paramnum = parse_param(theNewParam);
       // If the parameter is already in the data - we simply keep it
       if (!theQ.Param(paramnum))
       {
-        NFmiParam param(paramnum, *it);
+        NFmiParam param(paramnum, theNewParam);
         pbag.Add(param);
       }
     }
@@ -713,10 +713,10 @@ NFmiTimeDescriptor MakeTimeDescriptor(NFmiFastQueryInfo& theQ,
     NFmiMetTime origintime = theQ.OriginTime();
     NFmiMetTime reftime = origintime;
     NFmiTimeList datatimes;
-    for (auto it = theCrops.begin(); it != theCrops.end(); ++it)
+    for (const auto& theCrop : theCrops)
     {
-      if (theQ.Time(*it))
-        datatimes.Add(new NFmiMetTime(*it));
+      if (theQ.Time(theCrop))
+        datatimes.Add(new NFmiMetTime(theCrop));
     }
     NFmiTimeDescriptor tdesc(origintime, datatimes);
     return tdesc;
@@ -1299,8 +1299,8 @@ int run(int argc, const char* argv[])
   if (cmdline.isOption('S'))
   {
     vector<string> times = NFmiStringTools::Split(cmdline.OptionValue('S'), ",");
-    for (auto it = times.begin(); it != times.end(); ++it)
-      opt_crops.push_back(ParseDate(*it));
+    for (auto& time : times)
+      opt_crops.push_back(ParseDate(time));
   }
 
   if (cmdline.isOption('R'))

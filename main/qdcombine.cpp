@@ -64,9 +64,9 @@ struct PointerDestroyer
 
 static void ReadGridData(vector<string> &theDataFileNames, MyGrid &theUsedGrid)
 {
-  for (unsigned int i = 0; i < theDataFileNames.size(); i++)
+  for (const auto& theDataFileName : theDataFileNames)
   {
-    NFmiQueryData qd(theDataFileNames[i]);
+    NFmiQueryData qd(theDataFileName);
 
     const NFmiGrid *grid = qd.Info()->Grid();
 
@@ -84,9 +84,9 @@ static void FillCombinedData(const vector<string> &theDataFileNames,
                              NFmiLevel *theForcedLevel)
 {
   MyGrid usedGrid(*theInfo.Grid());
-  for (unsigned int i = 0; i < theDataFileNames.size(); i++)
+  for (const auto& theDataFileName : theDataFileNames)
   {
-    NFmiQueryData qd(theDataFileNames[i]);
+    NFmiQueryData qd(theDataFileName);
     NFmiFastQueryInfo sourceInfo(&qd);
 
     if (sourceInfo.Grid() && usedGrid == *sourceInfo.Grid())
@@ -150,9 +150,9 @@ static void FillCombinedData(const vector<string> &theDataFileNames,
     FillCombinedData(theDataFileNames, theInfo, theForcedLevel);
   else
   {
-    for (unsigned int i = 0; i < theDataFileNames.size(); i++)
+    for (const auto& theDataFileName : theDataFileNames)
     {
-      NFmiQueryData qd(theDataFileNames[i]);
+      NFmiQueryData qd(theDataFileName);
       NFmiFastQueryInfo sourceInfo(&qd);
 
       if (!sourceInfo.Grid())
@@ -261,9 +261,9 @@ static NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
 
   std::set<NFmiStation> stations;  // for point data only
 
-  for (unsigned int i = 0; i < dataFileNames.size(); i++)
+  for (const auto& dataFileName : dataFileNames)
   {
-    NFmiQueryData data(dataFileNames[i]);
+    NFmiQueryData data(dataFileName);
     NFmiFastQueryInfo info(&data);
 
     bool ok = false;
@@ -302,8 +302,8 @@ static NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
 
   // Tehdään kaikkia datoja yhdistävä tdescriptor
   NFmiTimeList timeList;
-  for (auto it1 = allTimes.begin(); it1 != allTimes.end(); ++it1)
-    timeList.Add(new NFmiMetTime(*it1));
+  for (const auto& allTime : allTimes)
+    timeList.Add(new NFmiMetTime(allTime));
   NFmiTimeDescriptor tdesc(originTime, timeList);
 
   // Tehdään kaikkia datoja yhdistävä paramDescriptor
@@ -312,9 +312,9 @@ static NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
     paramBag = firstParaBag;
   else
   {
-    for (auto it2 = allParams.begin(); it2 != allParams.end(); ++it2)
+    for (const auto& allParam : allParams)
     {
-      auto parId = static_cast<FmiParameterName>((*it2).GetIdent());
+      auto parId = static_cast<FmiParameterName>(allParam.GetIdent());
       if (parId == kFmiTotalWindMS ||
           parId == kFmiWeatherAndCloudiness)  // HUOM! yhdistelmä parametrit totalWind ja
                                               // weatherAndCloudiness ovat erikois tapauksia!!!
@@ -328,15 +328,15 @@ static NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
         delete dataIdent;
       }
       else
-        paramBag.Add(NFmiDataIdent(*it2, usedProducer));
+        paramBag.Add(NFmiDataIdent(allParam, usedProducer));
     }
   }
   NFmiParamDescriptor pdesc(paramBag);
 
   // Tehdään kaikkia datoja yhdistävä vPlaceDescriptor
   NFmiLevelBag levelBag;
-  for (auto it3 = allLevels.begin(); it3 != allLevels.end(); ++it3)
-    levelBag.AddLevel(*it3);
+  for (const auto& allLevel : allLevels)
+    levelBag.AddLevel(allLevel);
   NFmiVPlaceDescriptor vdesc(levelBag);
 
   if (use_point_data)
@@ -435,9 +435,9 @@ int Run(int argc, const char *argv[])
           std::string("Given data directory '" + dataDirectory + "' doesn't exist, exiting...\n"));
 
     list<string> dataFileNamesTmp = NFmiFileSystem::DirectoryFiles(dataDirectory);
-    for (auto ft = dataFileNamesTmp.begin(); ft != dataFileNamesTmp.end(); ++ft)
+    for (auto& ft : dataFileNamesTmp)
     {
-      string fullname = dataDirectory + "/" + *ft;
+      string fullname = dataDirectory + "/" + ft;
       dataFileNames.push_back(fullname);
     }
   }

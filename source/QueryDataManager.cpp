@@ -74,10 +74,10 @@ QueryDataManager::QueryDataManager() : itsSearchPath(), itsData(), itsCurrentDat
 
 QueryDataManager::~QueryDataManager()
 {
-  for (auto it = itsData.begin(); it != itsData.end(); ++it)
+  for (auto& it : itsData)
   {
-    delete it->get<1>();  // querydata
-    delete it->get<2>();  // fastqueryinfo
+    delete it.get<1>();  // querydata
+    delete it.get<2>();  // fastqueryinfo
   }
 }
 
@@ -127,9 +127,9 @@ void QueryDataManager::addfile(const std::string& theFile)
 
 void QueryDataManager::addfiles(const std::vector<std::string>& theFiles)
 {
-  for (auto it = theFiles.begin(); it != theFiles.end(); ++it)
+  for (const auto& theFile : theFiles)
   {
-    addfile(*it);
+    addfile(theFile);
   }
 }
 
@@ -265,17 +265,17 @@ std::set<int> QueryDataManager::stations()
 {
   std::set<int> ret;
 
-  for (auto it = itsData.begin(); it != itsData.end(); ++it)
+  for (auto& it : itsData)
   {
-    if (!it->get<1>())
+    if (!it.get<1>())
     {
-      std::string filename = NFmiFileSystem::FileComplete(it->get<0>(), itsSearchPath);
+      std::string filename = NFmiFileSystem::FileComplete(it.get<0>(), itsSearchPath);
       auto* qd = new NFmiQueryData(filename);
-      it->get<1>() = qd;
-      it->get<2>() = new NFmiFastQueryInfo(qd);
+      it.get<1>() = qd;
+      it.get<2>() = new NFmiFastQueryInfo(qd);
     }
 
-    NFmiFastQueryInfo& qi = *(it->get<2>());
+    NFmiFastQueryInfo& qi = *(it.get<2>());
 
     qi.ResetLocation();
     while (qi.NextLocation())
@@ -312,17 +312,17 @@ std::map<double, int> QueryDataManager::nearest(const NFmiPoint& theLonLat,
   using ReturnType = std::map<double, int>;
   ReturnType ret;
 
-  for (auto it = itsData.begin(); it != itsData.end(); ++it)
+  for (auto& it : itsData)
   {
-    if (!it->get<1>())
+    if (!it.get<1>())
     {
-      std::string filename = NFmiFileSystem::FileComplete(it->get<0>(), itsSearchPath);
+      std::string filename = NFmiFileSystem::FileComplete(it.get<0>(), itsSearchPath);
       auto* qd = new NFmiQueryData(filename);
-      it->get<1>() = qd;
-      it->get<2>() = new NFmiFastQueryInfo(qd);
+      it.get<1>() = qd;
+      it.get<2>() = new NFmiFastQueryInfo(qd);
     }
 
-    NFmiFastQueryInfo& qi = *(it->get<2>());
+    NFmiFastQueryInfo& qi = *(it.get<2>());
 
     // Won't find nearest points from grids
     if (qi.IsGrid())

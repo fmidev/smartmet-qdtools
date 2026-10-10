@@ -227,9 +227,8 @@ NFmiVPlaceDescriptor create_vdesc(const nctools::NcFileExtended& ncfile)
   if (options.verbose)
     std::cerr << "  Extracting " << zvalues.size() << " levels:";
 
-  for (std::size_t i = 0; i < zvalues.size(); i++)
+  for (long value : zvalues)
   {
-    auto value = zvalues.at(i);
     if (options.verbose)
       std::cerr << " " << value << std::flush;
     NFmiLevel level(leveltype, value);

@@ -333,8 +333,8 @@ static bool ConvertTimeList2TimeBag(NFmiTimeList &theTimeList, NFmiTimeBag &theT
 static NFmiTimeDescriptor MakeTimeDesc(const vector<MetarData> &dataBlocks)
 {
   set<NFmiMetTime> times;  // ker‰‰ eri ajat settiin ensin, sitten tee timelist jne.
-  for (size_t i = 0; i < dataBlocks.size(); i++)
-    times.insert(dataBlocks[i].itsTime);
+  for (const auto& dataBlock : dataBlocks)
+    times.insert(dataBlock.itsTime);
 
   // Tehdaan aluksi timelist, koska se on helpompi,
   NFmiTimeList timeList;
@@ -370,20 +370,20 @@ static NFmiHPlaceDescriptor MakeHPlaceDesc(NFmiAviationStationInfoSystem &theSta
                                            const vector<MetarData> &dataBlocks)
 {
   set<string> icaoStrSet;  // ker‰‰ eri icao tunnukset settiin ensin, sitten tee locationbag jne.
-  for (size_t i = 0; i < dataBlocks.size(); i++)
-    icaoStrSet.insert(dataBlocks[i].itsIcaoName);
+  for (const auto& dataBlock : dataBlocks)
+    icaoStrSet.insert(dataBlock.itsIcaoName);
 
   NFmiLocationBag locations;
-  for (auto it = icaoStrSet.begin(); it != icaoStrSet.end(); ++it)
+  for (const auto& it : icaoStrSet)
   {
-    NFmiAviationStation *aviationStation = theStationInfoSystem.FindStation(*it);
+    NFmiAviationStation* aviationStation = theStationInfoSystem.FindStation(it);
     if (aviationStation)
     {
       NFmiStation station(*aviationStation);
       if (theStationInfoSystem.WmoStationsWanted() == false)
       {
         // Tehd‰‰n lopullisesta asema nimesta ICAO-id + oikea nimi suluissa
-        string usedStationName(*it);
+        string usedStationName(it);
         usedStationName += " (";
         usedStationName += station.GetName();
         usedStationName += ")";
@@ -393,7 +393,7 @@ static NFmiHPlaceDescriptor MakeHPlaceDesc(NFmiAviationStationInfoSystem &theSta
                                        // sis‰ll‰ teht‰isiin aviationstationille clone
     }
     else
-      cerr << "Warning: Unknown ICAO station ID found: " << (*it).c_str()
+      cerr << "Warning: Unknown ICAO station ID found: " << it.c_str()
            << ", ignoring it and continuing..." << endl;
   }
 
@@ -413,9 +413,8 @@ static void FillInfoFromMetarData(NFmiFastQueryInfo &info, const vector<MetarDat
   int paramErrorCount = 0;
   int stationErrorCount = 0;
   info.First();
-  for (size_t i = 0; i < datas.size(); i++)
+  for (const auto& data : datas)
   {
-    const MetarData &data = datas[i];
     bool correctedOverRide = data.fIsCorrected;
     if (info.Time(data.itsTime))
     {
@@ -1483,11 +1482,11 @@ static bool DoNewHeaderStartHere(const string &theLineStr)
 static std::string RemoveControlCharacters(const std::string &theOrigStr)
 {
   std::string strippedStr;
-  for (size_t i = 0; i < theOrigStr.size(); i++)
+  for (char i : theOrigStr)
   {
-    auto ch = (unsigned char)(theOrigStr[i]);
+    auto ch = (unsigned char)i;
     if (isspace(ch) || iscntrl(ch) == 0)
-      strippedStr += theOrigStr[i];
+      strippedStr += i;
   }
   return strippedStr;
 }
@@ -1740,22 +1739,22 @@ list<string> CollectMetarFiles(const vector<string> &fileFilterList)
 {
   list<string> files;
 
-  for (unsigned int j = 0; j < fileFilterList.size(); j++)
+  for (const auto& j : fileFilterList)
   {
     if (fVerboseMode)
     {
-      cerr << "Scanning pattern " << fileFilterList[j] << " ... ";
+      cerr << "Scanning pattern " << j << " ... ";
       cerr.flush();
     }
 
-    list<string> fileList = NFmiFileSystem::PatternFiles(fileFilterList[j]);
+    list<string> fileList = NFmiFileSystem::PatternFiles(j);
 
     if (fVerboseMode)
       cerr << " found " << fileList.size() << " files" << endl;
 
     // Extract path from the pattern
 
-    NFmiFileString fileString(fileFilterList[j]);
+    NFmiFileString fileString(j);
     NFmiString wantedPathTmp(fileString.Device());
     wantedPathTmp += fileString.Path();
     string wantedPath(wantedPathTmp.CharPtr());
@@ -1968,9 +1967,9 @@ void run(int argc, const char *argv[])
   {
     cerr << "\nWarning, there were " << icaoIdUnknownSet.size()
          << " unknown ICAO id's in given messages that were ignored:" << endl;
-    for (auto it = icaoIdUnknownSet.begin(); it != icaoIdUnknownSet.end(); ++it)
+    for (const auto& it : icaoIdUnknownSet)
     {
-      cerr << *it << " ";
+      cerr << it << " ";
     }
     cerr << std::endl << std::endl;
   }

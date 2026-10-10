@@ -334,16 +334,16 @@ std::map<std::string, NFmiPoint> FindPlaces(const std::vector<std::string>& theP
   if (!locfinder.AddFile(theCoordFile, false))
     throw std::runtime_error("Reading file " + theCoordFile + " failed");
 
-  for (auto it = thePlaces.begin(); it != thePlaces.end(); ++it)
+  for (const auto& thePlace : thePlaces)
   {
-    NFmiPoint lonlat = locfinder.Find(it->c_str());
+    NFmiPoint lonlat = locfinder.Find(thePlace.c_str());
 
     // Tarkistetaan nimen loytyminen.
 
     if (locfinder.LastSearchFailed() && !theForceFlag)
-      throw std::runtime_error("Location " + *it + " is not in the database");
+      throw std::runtime_error("Location " + thePlace + " is not in the database");
     else
-      ret.insert(ReturnType::value_type(*it, lonlat));
+      ret.insert(ReturnType::value_type(thePlace, lonlat));
   }
 
   return ret;
@@ -1448,9 +1448,9 @@ int run(int argc, char* argv[])
 
     if (options.verbose)
     {
-      for (auto it = places.begin(); it != places.end(); ++it)
-        cout << "# Location: " << it->first << endl
-             << "# Coordinate: " << it->second.X() << ' ' << it->second.Y() << endl;
+      for (auto& place : places)
+        cout << "# Location: " << place.first << endl
+             << "# Coordinate: " << place.second.X() << ' ' << place.second.Y() << endl;
     }
   }
 
@@ -1489,8 +1489,8 @@ int run(int argc, char* argv[])
     std::map<double, int> stats = qmgr.nearest(
         referencelonlat, options.nearest_stations, 1000 * options.max_distance, options.validate);
 
-    for (auto it = stats.begin(); it != stats.end(); ++it)
-      options.stations.push_back(it->second);
+    for (auto& stat : stats)
+      options.stations.push_back(stat.second);
 
     // Ja putsataan places - sitä tarvittiin vain lähimpien pisteiden hakuun
     places.clear();

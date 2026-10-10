@@ -285,11 +285,12 @@ void print_change_analysis(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
 
   cout << endl;
 
-  for (auto it = param_status.begin(); it != param_status.end(); ++it)
+  for (auto& param_statu : param_status)
   {
-    cout << (it->second ? "CHANGED " : "unchanged ") << converter.ToString(it->first);
-    if (it->second)
-      cout << " in " << it->second << " timesteps";
+    cout << (param_statu.second ? "CHANGED " : "unchanged ")
+         << converter.ToString(param_statu.first);
+    if (param_statu.second)
+      cout << " in " << param_statu.second << " timesteps";
     cout << endl;
   }
 }
@@ -558,9 +559,9 @@ void find_inputfiles()
   using StampedFiles = multimap<time_t, string>;
 
   StampedFiles stampedfiles;
-  for (auto it = files.begin(); it != files.end(); ++it)
+  for (auto& file : files)
   {
-    const string filename = options.inputdir + '/' + *it;
+    const string filename = options.inputdir + '/' + file;
     const time_t modtime = NFmiFileSystem::FileModificationTime(filename);
     stampedfiles.insert(StampedFiles::value_type(modtime, filename));
   }

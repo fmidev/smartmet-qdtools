@@ -255,13 +255,13 @@ const NFmiParamDescriptor make_param_descriptor(NFmiFastQueryInfo& theQ)
 
   NFmiEnumConverter converter;
 
-  for (auto it = params.begin(); it != params.end(); ++it)
+  for (const auto& param : params)
   {
-    auto paramnum = FmiParameterName(converter.ToEnum(*it));
+    auto paramnum = FmiParameterName(converter.ToEnum(param));
     if (paramnum == kFmiBadParameter)
-      throw runtime_error("Parameter '" + *it + "' is not known to newbase");
+      throw runtime_error("Parameter '" + param + "' is not known to newbase");
     if (!theQ.Param(paramnum))
-      throw runtime_error("Source data does not contain parameter '" + *it + "'");
+      throw runtime_error("Source data does not contain parameter '" + param + "'");
     bag.Add(theQ.Param());
   }
 
@@ -287,16 +287,16 @@ void handle_times(const NFmiMetTime& theFirstTime,
                   const vector<string>& theSpecs,
                   bool theFlag)
 {
-  for (auto it = theSpecs.begin(); it != theSpecs.end(); ++it)
+  for (const auto& theSpec : theSpecs)
   {
-    auto words = NFmiStringTools::Split<vector<int> >(*it, ":");
+    auto words = NFmiStringTools::Split<vector<int> >(theSpec, ":");
     if (words.size() != 3)
-      throw runtime_error("Invalid time specification '" + *it + "'");
+      throw runtime_error("Invalid time specification '" + theSpec + "'");
     const int t1 = words[0];
     const int t2 = words[1];
     const int dt = words[2];
     if (t1 < 0 || t2 < 0 || dt < 0)
-      throw runtime_error("Invalid time specification '" + *it + "'");
+      throw runtime_error("Invalid time specification '" + theSpec + "'");
 
     for (int t = t1; t <= t2; ++t)
     {
@@ -351,8 +351,8 @@ const NFmiTimeDescriptor make_time_descriptor(NFmiFastQueryInfo& theQ)
   // Build the final timelist
 
   NFmiTimeList tlist;
-  for (auto it = times.begin(); it != times.end(); ++it)
-    tlist.Add(new NFmiMetTime(*it));
+  for (const auto& time : times)
+    tlist.Add(new NFmiMetTime(time));
 
   NFmiTimeDescriptor desc(theQ.OriginTime(), tlist);
   return desc;

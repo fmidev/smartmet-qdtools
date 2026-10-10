@@ -365,18 +365,18 @@ void extract_times(NFmiFastQueryInfo& theQ, unsigned long index1, unsigned long 
 
   for (theQ.ResetParam(); theQ.NextParam();)
   {
-    for (std::size_t i = 0; i < infos.size(); i++)
-      infos[i]->ParamIndex(theQ.ParamIndex());
+    for (auto& info : infos)
+      info->ParamIndex(theQ.ParamIndex());
 
     for (theQ.ResetLocation(); theQ.NextLocation();)
     {
-      for (std::size_t i = 0; i < infos.size(); i++)
-        infos[i]->LocationIndex(theQ.LocationIndex());
+      for (auto& info : infos)
+        info->LocationIndex(theQ.LocationIndex());
 
       for (theQ.ResetLevel(); theQ.NextLevel();)
       {
-        for (std::size_t i = 0; i < infos.size(); i++)
-          infos[i]->LevelIndex(theQ.LevelIndex());
+        for (auto& info : infos)
+          info->LevelIndex(theQ.LevelIndex());
         {
           for (unsigned long i = index1; i < index2; ++i)
           {

@@ -203,13 +203,13 @@ NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo& theQ, const vector<st
   NFmiParamBag pbag;
 
   NFmiEnumConverter converter;
-  for (auto it = theParams.begin(); it != theParams.end(); ++it)
+  for (const auto& theParam : theParams)
   {
-    auto paramnum = FmiParameterName(converter.ToEnum(*it));
+    auto paramnum = FmiParameterName(converter.ToEnum(theParam));
     if (paramnum == kFmiBadParameter)
-      throw runtime_error("Parameter " + *it + " is not known to newbase");
+      throw runtime_error("Parameter " + theParam + " is not known to newbase");
     if (!theQ.Param(paramnum))
-      throw runtime_error("Source data does not contain parameter " + *it);
+      throw runtime_error("Source data does not contain parameter " + theParam);
     pbag.Add(theQ.Param());
   }
 

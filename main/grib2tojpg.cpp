@@ -538,9 +538,9 @@ static bool AcceptThisLevelType(GridRecordData *data, vector<FmiLevelType> &theA
 {
   if (theAcceptOnlyLevelTypes.size() > 0)
   {
-    for (unsigned int i = 0; i < theAcceptOnlyLevelTypes.size(); i++)
+    for (auto& theAcceptOnlyLevelType : theAcceptOnlyLevelTypes)
     {
-      if (theAcceptOnlyLevelTypes[i] == data->itsLevel.LevelType())
+      if (theAcceptOnlyLevelType == data->itsLevel.LevelType())
         return true;  // skipataan jokerin valuen yhteydessä kaikki kyseisen level tyypin kentät
     }
     return false;  // jos oli accept lista mutta ei löytynyt leveltypeä siitä, hylkää
@@ -969,9 +969,8 @@ static void MakeParameterConversions(GridRecordData *theGridRecordData,
 {
   if (theParamChangeTable.size() > 0)
   {  // tehdään tarvittaessa parametrille base+scale muunnos
-    for (unsigned int p = 0; p < theParamChangeTable.size(); p++)
+    for (auto& paramChangeItem : theParamChangeTable)
     {
-      ParamChangeItem &paramChangeItem = theParamChangeTable[p];
       if (paramChangeItem.itsWantedParam.GetIdent() ==
           static_cast<long>(theGridRecordData->itsParam.GetParamIdent()))  // parametri on jo
                                                                            // muutettu, nyt
@@ -1185,9 +1184,8 @@ static void ChangeParamSettingsIfNeeded(vector<ParamChangeItem> &theParamChangeT
 {
   if (theParamChangeTable.size() > 0)
   {  // muutetaan tarvittaessa parametrin nimeä ja id:tä
-    for (unsigned int i = 0; i < theParamChangeTable.size(); i++)
+    for (auto& paramChangeItem : theParamChangeTable)
     {
-      ParamChangeItem &paramChangeItem = theParamChangeTable[i];
       if (paramChangeItem.itsOriginalParamId == theGribData->itsParam.GetParamIdent() &&
           paramChangeItem.itsLevel && (*paramChangeItem.itsLevel) == theGribData->itsLevel)
       {
@@ -1225,9 +1223,8 @@ static bool CropParam(GridRecordData *gribData,
 {
   if (fCropParamsNotMensionedInTable && theParamChangeTable.size())
   {
-    for (unsigned int i = 0; i < theParamChangeTable.size(); i++)
+    for (auto& paramChangeItem : theParamChangeTable)
     {
-      ParamChangeItem &paramChangeItem = theParamChangeTable[i];
       if (static_cast<long>(gribData->itsParam.GetParamIdent()) ==
           paramChangeItem.itsWantedParam.GetIdent())
       {

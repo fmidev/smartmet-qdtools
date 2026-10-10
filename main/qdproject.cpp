@@ -207,28 +207,28 @@ void project_coordinates(bool verbose,
   // Now project the coordinates and print them
 
   NFmiPoint result;
-  for (auto it = coords.begin(); it != coords.end(); ++it)
+  for (auto& coord : coords)
   {
     switch (theOption)
     {
       case 'l':
-        result = theArea.ToXY(*it);
+        result = theArea.ToXY(coord);
         break;
       case 'L':
-        result = theArea.LatLonToWorldXY(*it);
+        result = theArea.LatLonToWorldXY(coord);
         break;
       case 'i':
-        result = theArea.ToLatLon(*it);
+        result = theArea.ToLatLon(coord);
         break;
       case 'I':
-        result = theArea.WorldXYToLatLon(*it);
+        result = theArea.WorldXYToLatLon(coord);
         break;
       default:
         throw runtime_error("Internal error - unhandled projection while projecting");
     }
     cout << setprecision(10) << result.X() << ' ' << result.Y();
     if (verbose)
-      cout << ' ' << it->X() << ' ' << it->Y();
+      cout << ' ' << coord.X() << ' ' << coord.Y();
     cout << endl;
   }
 }

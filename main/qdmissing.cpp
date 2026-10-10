@@ -185,11 +185,11 @@ bool parse_command_line(int argc, const char* argv[])
   if (cmdline.isOption('P'))
   {
     const vector<string> args = NFmiStringTools::Split(cmdline.OptionValue('P'));
-    for (auto it = args.begin(); it != args.end(); ++it)
+    for (const auto& arg : args)
     {
-      auto param = FmiParameterName(converter.ToEnum(*it));
+      auto param = FmiParameterName(converter.ToEnum(arg));
       if (param == kFmiBadParameter)
-        throw runtime_error(string("Parameter '" + *it + "' is not recognized"));
+        throw runtime_error(string("Parameter '" + arg + "' is not recognized"));
       options.parameters.push_back(param);
     }
   }

@@ -1495,9 +1495,9 @@ static void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
 
 static bool StringContainsOnlyDigits(const std::string &str)
 {
-  for (size_t i = 0; i < str.size(); i++)
+  for (char i : str)
   {
-    if (str[i] < '0' || str[i] > '9')
+    if (i < '0' || i > '9')
       return false;
   }
   return true;
@@ -1639,10 +1639,9 @@ void FillSynopCodeDataVectorFromSYNOPStr(const NFmiMetTime &referenceTime,
 
   NFmiMetTime possibleSynoptime = NFmiMetTime::gMissingTime;
   std::string possibleCorrectionField;
-  for (int j = 0; j < static_cast<int>(aaCodeBlocks.size());
-       j++)  // Huom! 1. stringiä ei oteta, koska se on turha headeri osa
+  for (auto usedSynopBlock :
+       aaCodeBlocks)  // Huom! 1. stringiä ei oteta, koska se on turha headeri osa
   {
-    string usedSynopBlock = aaCodeBlocks[j];
     usedSynopBlock = NFmiStringTools::TrimL(usedSynopBlock);
     bool usePossibleSynopTime = false;
     if (usedSynopBlock.size() > 1 && (usedSynopBlock[0] == '\r' || usedSynopBlock[0] == '\n'))
@@ -1938,17 +1937,16 @@ void Domain(int argc, const char *argv[])
   std::set<unsigned long> unknownWmoIdsInOut;
   bool foundAnyFiles = false;
   std::vector<NFmiSynopCode> synopCodeVector;
-  for (unsigned int j = 0; j < fileFilterList.size(); j++)
+  for (auto filePatternStr : fileFilterList)
   {
     //	2. Hae jokaista filefilteriä vastaavat tiedostonimet omaan listaan
-    std::string filePatternStr = fileFilterList[j];
     std::string usedPath = NFmiFileSystem::PathFromPattern(filePatternStr);
     list<string> fileList = NFmiFileSystem::PatternFiles(filePatternStr);
-    for (auto it = fileList.begin(); it != fileList.end(); ++it)
+    for (auto& it : fileList)
     {
       //	3. Lue listan tiedostot vuorollaan sisään ja tulkitse siitä sanomat
       // synopCode-vektoriin
-      std::string finalFileName = usedPath + *it;
+      std::string finalFileName = usedPath + it;
       foundAnyFiles = true;
       string synopFileContent;
       if (NFmiFileSystem::ReadFile2String(finalFileName, synopFileContent))
@@ -1963,7 +1961,7 @@ void Domain(int argc, const char *argv[])
                                               doShipMessages,
                                               doBuoyMessages,
                                               unknownWmoIdsInOut,
-                                              *it);
+                                              it);
       }
       else
         cerr << "Warning, couldn't read the file: '" << finalFileName
@@ -1978,8 +1976,8 @@ void Domain(int argc, const char *argv[])
   {
     cerr << "Warning, there were messages from unknown stations (" << unknownWmoIdsInOut.size()
          << ") that were ignored." << endl;
-    for (auto it = unknownWmoIdsInOut.begin(); it != unknownWmoIdsInOut.end(); ++it)
-      cerr << *it << " ";
+    for (unsigned long it : unknownWmoIdsInOut)
+      cerr << it << " ";
     cerr << endl;
   }
   //	6. Tee synopCode-vektorista lopullinen data kerralla

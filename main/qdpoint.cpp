@@ -112,7 +112,7 @@ LocationList read_locationlist(const string& theFile)
         string name = parts[0];
         auto lon = NFmiStringTools::Convert<double>(parts[1]);
         auto lat = NFmiStringTools::Convert<double>(parts[2]);
-        ret.push_back(Location(name, NFmiPoint(lon, lat)));
+        ret.emplace_back(name, NFmiPoint(lon, lat));
       }
       catch (...)
       {

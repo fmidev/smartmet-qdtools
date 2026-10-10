@@ -98,15 +98,15 @@ static void FillCombinedData(const vector<string> &theDataFileNames,
       // Collect indexes for common parameters, times and levels
       for (sourceInfo.ResetParam(); sourceInfo.NextParam();)
         if (theInfo.Param(*(sourceInfo.Param().GetParam())))
-          params.push_back(IndexPair(sourceInfo.ParamIndex(), theInfo.ParamIndex()));
+          params.emplace_back(sourceInfo.ParamIndex(), theInfo.ParamIndex());
 
       for (sourceInfo.ResetTime(); sourceInfo.NextTime();)
         if (theInfo.Time(sourceInfo.Time()))
-          times.push_back(IndexPair(sourceInfo.TimeIndex(), theInfo.TimeIndex()));
+          times.emplace_back(sourceInfo.TimeIndex(), theInfo.TimeIndex());
 
       for (sourceInfo.ResetLevel(); sourceInfo.NextLevel();)
         if (theForcedLevel || theInfo.Level(*sourceInfo.Level()))
-          levels.push_back(IndexPair(sourceInfo.LevelIndex(), theInfo.LevelIndex()));
+          levels.emplace_back(sourceInfo.LevelIndex(), theInfo.LevelIndex());
 
       // We avoid unnecessary location loops with this extra test
 
@@ -164,19 +164,19 @@ static void FillCombinedData(const vector<string> &theDataFileNames,
         // Collect indexes for common parameters, times, levels and locations
         for (sourceInfo.ResetParam(); sourceInfo.NextParam();)
           if (theInfo.Param(*(sourceInfo.Param().GetParam())))
-            params.push_back(IndexPair(sourceInfo.ParamIndex(), theInfo.ParamIndex()));
+            params.emplace_back(sourceInfo.ParamIndex(), theInfo.ParamIndex());
 
         for (sourceInfo.ResetTime(); sourceInfo.NextTime();)
           if (theInfo.Time(sourceInfo.Time()))
-            times.push_back(IndexPair(sourceInfo.TimeIndex(), theInfo.TimeIndex()));
+            times.emplace_back(sourceInfo.TimeIndex(), theInfo.TimeIndex());
 
         for (sourceInfo.ResetLevel(); sourceInfo.NextLevel();)
           if (theForcedLevel || theInfo.Level(*sourceInfo.Level()))
-            levels.push_back(IndexPair(sourceInfo.LevelIndex(), theInfo.LevelIndex()));
+            levels.emplace_back(sourceInfo.LevelIndex(), theInfo.LevelIndex());
 
         for (sourceInfo.ResetLocation(); sourceInfo.NextLocation();)
           if (theInfo.Location(sourceInfo.Location()->GetIdent()))
-            locations.push_back(IndexPair(sourceInfo.LocationIndex(), theInfo.LocationIndex()));
+            locations.emplace_back(sourceInfo.LocationIndex(), theInfo.LocationIndex());
 
         // We avoid unnecessary location loops with this extra test
 

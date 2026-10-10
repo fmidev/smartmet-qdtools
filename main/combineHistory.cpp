@@ -170,7 +170,7 @@ int main(int argc, const char *argv[])
   list<string> datapaths;
   {
     for (int i = 1; i <= cmdline.NumberofParameters(); i++)
-      datapaths.push_back(cmdline.Parameter(i));
+      datapaths.emplace_back(cmdline.Parameter(i));
   }
 
   if (cmdline.isOption('v'))

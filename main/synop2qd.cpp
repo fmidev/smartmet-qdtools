@@ -1932,7 +1932,7 @@ void Domain(int argc, const char *argv[])
   vector<string> fileFilterList;
   for (int i = 1; i <= numOfParams; i++)
   {
-    fileFilterList.push_back(cmdline.Parameter(i));
+    fileFilterList.emplace_back(cmdline.Parameter(i));
   }
 
   std::set<unsigned long> unknownWmoIdsInOut;

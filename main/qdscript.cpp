@@ -59,7 +59,7 @@ void Run(int argc, const char *argv[])
   if (cmdline.NumberofParameters() > 1)
   {
     for (int i = 2; i <= cmdline.NumberofParameters(); i++)
-      helperFileNameList.push_back(cmdline.Parameter(i));
+      helperFileNameList.emplace_back(cmdline.Parameter(i));
   }
 
 #ifndef UNIX
@@ -243,7 +243,7 @@ void AddNonExistingParamToVector(FmiParameterName paramId,
                     kFloatMissing,
                     "%.1f",
                     kLinearly);
-    paramVectorInOut.push_back(NFmiDataIdent(param, fastInfo.FirstParamProducer()));
+    paramVectorInOut.emplace_back(param, fastInfo.FirstParamProducer());
   }
 }
 

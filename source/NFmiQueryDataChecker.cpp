@@ -30,9 +30,9 @@
 #include <newbase/NFmiQueryData.h>
 
 #include <algorithm>
+#include <ctime>
 #include <fstream>
 #include <set>
-#include <time.h>
 
 //--------------------------------------------------------
 // Constructor/Destructor

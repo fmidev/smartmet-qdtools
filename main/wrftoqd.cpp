@@ -1014,11 +1014,11 @@ static netCDF::NcVar GetWantedLevelVariable(const netCDF::NcFile &ncFile,
   try
   {
     std::vector<std::pair<std::string, FmiLevelType> > possibleLevelVarNames;
-    possibleLevelVarNames.push_back(std::make_pair("znu", kFmiHybridLevel));
-    possibleLevelVarNames.push_back(std::make_pair("znw", kFmiHybridLevel));
-    possibleLevelVarNames.push_back(std::make_pair("zs", kFmiHybridLevel));
-    possibleLevelVarNames.push_back(std::make_pair("dzs", kFmiHybridLevel));
-    possibleLevelVarNames.push_back(std::make_pair("pressure", kFmiPressureLevel));
+    possibleLevelVarNames.emplace_back("znu", kFmiHybridLevel);
+    possibleLevelVarNames.emplace_back("znw", kFmiHybridLevel);
+    possibleLevelVarNames.emplace_back("zs", kFmiHybridLevel);
+    possibleLevelVarNames.emplace_back("dzs", kFmiHybridLevel);
+    possibleLevelVarNames.emplace_back("pressure", kFmiPressureLevel);
 
     for (size_t i = 0; i < possibleLevelVarNames.size(); i++)
     {

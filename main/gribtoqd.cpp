@@ -916,7 +916,7 @@ vector<string> GetDataFiles(const NFmiCmdLine &cmdline)
     }
     else if (NFmiFileSystem::FileExists(path))
     {
-      all_files.push_back(path);
+      all_files.emplace_back(path);
     }
     else
     {
@@ -1274,8 +1274,7 @@ vector<pair<set<size_t>, set<size_t> > > CalcConnectedDataIndexies(
       CheckForConnectingDataIndexies(
           connectionEdgeInfoVector, connectionDataIndexies, connectionEdgeIndexies, i + 1);
       if (connectionEdgeIndexies.size())
-        connectedDataIndexiesVector.push_back(
-            make_pair(connectionEdgeIndexies, connectionDataIndexies));
+        connectedDataIndexiesVector.emplace_back(connectionEdgeIndexies, connectionDataIndexies);
     }
   }
   return connectedDataIndexiesVector;
@@ -1458,7 +1457,7 @@ vector<pair<NFmiGrid, FmiLevelType> > CalcGrids2(
     auto *area = NFmiAreaTools::CreateLegacyLatLonArea(bottomLeft, topRight);
 
     NFmiGrid grid(area, xSize, ySize);
-    gridVector.push_back(make_pair(grid, leveltype));
+    gridVector.emplace_back(grid, leveltype);
   }
   return gridVector;
 }
@@ -2963,7 +2962,7 @@ vector<NFmiHPlaceDescriptor> GetAllHPlaceDescriptors(vector<GridRecordData *> &t
     for (; it2 != gribDataSet.end(); ++it2)
     {
       NFmiGrid grid((*it2).itsArea, (*it2).itsNX, (*it2).itsNY);
-      hPlaces.push_back(NFmiHPlaceDescriptor(grid));
+      hPlaces.emplace_back(grid);
     }
   }
   else
@@ -2972,7 +2971,7 @@ vector<NFmiHPlaceDescriptor> GetAllHPlaceDescriptors(vector<GridRecordData *> &t
     // hirlam gribeissä esiintyvä 2x2 kokoinen yksi hila
     MyGrid &tmpGrid = theGribRecordDatas[theGribRecordDatas.size() > 1 ? 1 : 0]->itsGrid;
     NFmiGrid grid(tmpGrid.itsArea, tmpGrid.itsNX, tmpGrid.itsNY);
-    hPlaces.push_back(NFmiHPlaceDescriptor(grid));
+    hPlaces.emplace_back(grid);
   }
   return hPlaces;
 }
@@ -4497,7 +4496,7 @@ vector<NFmiHPlaceDescriptor> GetAllHPlaceDescriptors(vector<GridRecordData *> &t
     for (; it2 != gribDataSet.end(); ++it2)
     {
       NFmiGrid grid((*it2).itsArea, (*it2).itsNX, (*it2).itsNY);
-      hPlaces.push_back(NFmiHPlaceDescriptor(grid));
+      hPlaces.emplace_back(grid);
     }
   }
   else
@@ -4506,7 +4505,7 @@ vector<NFmiHPlaceDescriptor> GetAllHPlaceDescriptors(vector<GridRecordData *> &t
     // hirlam gribeissä esiintyvä 2x2 kokoinen yksi hila
     MyGrid &tmpGrid = theGribRecordDatas[theGribRecordDatas.size() > 1 ? 1 : 0]->itsGrid;
     NFmiGrid grid(tmpGrid.itsArea, tmpGrid.itsNX, tmpGrid.itsNY);
-    hPlaces.push_back(NFmiHPlaceDescriptor(grid));
+    hPlaces.emplace_back(grid);
   }
   return hPlaces;
 }

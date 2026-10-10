@@ -192,14 +192,14 @@ void project_coordinates(bool verbose,
       auto nums = NFmiStringTools::Split<vector<double> >(opt);
       if (nums.size() != 2)
         throw runtime_error("Could not convert '" + opt + "' to a coordinate");
-      coords.push_back(NFmiPoint(nums[0], nums[1]));
+      coords.emplace_back(nums[0], nums[1]);
     }
   }
   else
   {
     double x, y;
     while (cin >> x >> y)
-      coords.push_back(NFmiPoint(x, y));
+      coords.emplace_back(x, y);
     if (cin.bad())
       throw runtime_error("Error while reading coordinates from standard input");
   }

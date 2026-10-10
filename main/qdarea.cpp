@@ -455,7 +455,7 @@ void parse_parameter_option(const string& theRequest)
   // Parse the individual requests
   for (auto it = requests.begin(); it != requests.end(); ++it)
   {
-    options.parameters.push_back(ParameterRequest(*it));
+    options.parameters.emplace_back(*it);
   }
 }
 

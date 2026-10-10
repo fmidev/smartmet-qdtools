@@ -187,8 +187,8 @@ bool parse_command_line(int argc, const char *argv[])
 
   if (cmdline.isOption('x') && cmdline.isOption('y'))
   {
-    options.locations.push_back(cmdline.OptionValue('x'));
-    options.locations.push_back(cmdline.OptionValue('y'));
+    options.locations.emplace_back(cmdline.OptionValue('x'));
+    options.locations.emplace_back(cmdline.OptionValue('y'));
   }
   else if (cmdline.isOption('x') || cmdline.isOption('y'))
     throw runtime_error("Always use both -x and -y options simultaneously");
@@ -258,7 +258,7 @@ const vector<NFmiPoint> find_places(const vector<string> & /* theNames */)
         auto lon = NFmiStringTools::Convert<float>(options.locations[i]);
         auto lat = NFmiStringTools::Convert<float>(options.locations[i + 1]);
         options.locations[i] = options.locations[i] + "," + options.locations[i + 1];
-        coords.push_back(NFmiPoint(lon, lat));
+        coords.emplace_back(lon, lat);
         options.locations.erase(options.locations.begin() + i + 1);
       }
       catch (...)

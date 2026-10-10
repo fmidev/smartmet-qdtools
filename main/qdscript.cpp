@@ -210,7 +210,7 @@ FmiParameterName parse_param(const string &theName)
   // Try ascii name
 
   static NFmiEnumConverter converter;
-  FmiParameterName paramnum = FmiParameterName(converter.ToEnum(theName));
+  auto paramnum = FmiParameterName(converter.ToEnum(theName));
   if (paramnum != kFmiBadParameter)
     return paramnum;
 
@@ -256,7 +256,7 @@ std::vector<NFmiDataIdent> GetAddedParameters(NFmiCmdLine &cmdline, NFmiQueryDat
   {
     // Annettu lista parametrin newbase enum nimiä tai numeroita, joista samasta
     // string-arvosta muodostetaan par-id ja nimi
-    vector<string> names = NFmiStringTools::Split<vector<string>>(cmdline.OptionValue('a'));
+    auto names = NFmiStringTools::Split<vector<string>>(cmdline.OptionValue('a'));
     for (const string &name : names)
     {
       FmiParameterName paramId = parse_param(name);
@@ -267,14 +267,14 @@ std::vector<NFmiDataIdent> GetAddedParameters(NFmiCmdLine &cmdline, NFmiQueryDat
   {
     // Annettu lista parametrin id,nimi pareja, id on aina numero, eikä saa olla newbase enum
     // juttuun liittyvä stringi
-    vector<string> idNamePairs = NFmiStringTools::Split<vector<string>>(cmdline.OptionValue('A'));
+    auto idNamePairs = NFmiStringTools::Split<vector<string>>(cmdline.OptionValue('A'));
     if (idNamePairs.size() >= 2)
     {
       for (size_t index = 0; index < idNamePairs.size() - 1; index += 2)
       {
         try
         {
-          FmiParameterName paramId = static_cast<FmiParameterName>(stoi(idNamePairs[index]));
+          auto paramId = static_cast<FmiParameterName>(stoi(idNamePairs[index]));
           auto name = idNamePairs[index + 1];
           AddNonExistingParamToVector(paramId, name, fastInfo, possibleAddedParameters);
         }

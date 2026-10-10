@@ -25,7 +25,7 @@ catch (const netCDF::exceptions::NcException&)
 {
   if (!silent)
     std::cout << "NetCDF: attribute '" << name << "' not found" << std::endl;
-  return netCDF::NcVarAtt();
+  return {};
 }
 catch (...)
 {
@@ -404,7 +404,7 @@ static NFmiMetTime GetEpochTime(const std::string &theEpochTimeStr)
       {
         std::string dateStr = NFmiStringTools::Trim(
             wordVec[2], '(');  // pitää trimmata, koska aika voi olla sulkujen sisällä
-        std::vector<short> dateVec = NFmiStringTools::Split<std::vector<short> >(dateStr, "-");
+        auto dateVec = NFmiStringTools::Split<std::vector<short>>(dateStr, "-");
         if (dateVec.size() == 3)
         {
           std::string timeStr = NFmiStringTools::Trim(
@@ -412,7 +412,7 @@ static NFmiMetTime GetEpochTime(const std::string &theEpochTimeStr)
           timeStr = NFmiStringTools::Trim(timeStr, 'Z');  // pitää trimmata mahdollinen Z pois
           // pakko ottaa tämä float:eina, koska sekunnit voidaan antaa desimaalin kera ja sitä
           // konversio suoraan short:iksi ei kestä
-          std::vector<float> timeVec = NFmiStringTools::Split<std::vector<float> >(timeStr, ":");
+          auto timeVec = NFmiStringTools::Split<std::vector<float>>(timeStr, ":");
           if (dateVec.size() == 3)
           {
             NFmiMetTime thisTime(dateVec[0],
@@ -613,7 +613,7 @@ FmiParameterName FmiNetCdfQueryData::GetParameterName(const netCDF::NcVar &theVa
     //delete vals;
     //delete stdNameAttr;
     const std::string stdParName = get_att_string_value(stdNameAttr);
-    std::map<std::string, FmiParameterName>::iterator it = itsKnownParameterMap.find(stdParName);
+    auto it = itsKnownParameterMap.find(stdParName);
     if (it != itsKnownParameterMap.end())
       return (*it).second;
   }

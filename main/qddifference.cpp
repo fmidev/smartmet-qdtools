@@ -171,9 +171,9 @@ bool parse_command_line(int argc, const char* argv[])
       options.allparams = true;
     else
     {
-      for (vector<string>::const_iterator it = args.begin(); it != args.end(); ++it)
+      for (auto it = args.begin(); it != args.end(); ++it)
       {
-        FmiParameterName param = FmiParameterName(converter.ToEnum(*it));
+        auto param = FmiParameterName(converter.ToEnum(*it));
         if (param == kFmiBadParameter)
           throw runtime_error(string("Parameter '" + *it + "' is not recognized"));
         options.parameters.push_back(param);

@@ -169,9 +169,9 @@ void Domain(int argc, const char *argv[])
 
   std::string projStr = cmdline.Parameter(1);
   std::string xKmStr = cmdline.Parameter(2);
-  double xRes = NFmiStringTools::Convert<double>(xKmStr);
+  auto xRes = NFmiStringTools::Convert<double>(xKmStr);
   std::string yKmStr = cmdline.Parameter(3);
-  double yRes = NFmiStringTools::Convert<double>(yKmStr);
+  auto yRes = NFmiStringTools::Convert<double>(yKmStr);
 
   std::shared_ptr<NFmiArea> areaPtr = NFmiAreaFactory::Create(projStr);
   if (areaPtr.get())

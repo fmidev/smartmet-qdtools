@@ -833,11 +833,11 @@ std::vector<BufrElement> extract_elements(codes_handle* h)
 bool message_looks_valid(const Message& msg)
 {
   // Validate year
-  Message::const_iterator yy = msg.find(4001);
-  Message::const_iterator mm = msg.find(4002);
-  Message::const_iterator dd = msg.find(4003);
-  Message::const_iterator hh = msg.find(4004);
-  Message::const_iterator mi = msg.find(4005);
+  auto yy = msg.find(4001);
+  auto mm = msg.find(4002);
+  auto dd = msg.find(4003);
+  auto hh = msg.find(4004);
+  auto mi = msg.find(4005);
 
   if (yy == msg.end() || mm == msg.end() || dd == msg.end() || hh == msg.end() || mi == msg.end())
     return false;
@@ -886,7 +886,7 @@ Message::iterator get_ident(Message& msg, const MessageReMap remap, std::string&
 {
   ident.clear();
 
-  Message::iterator iit = msg.end();
+  auto iit = msg.end();
 
   auto codes = remap.find(REMAP_IDENT);
 
@@ -931,7 +931,7 @@ bool message_is_significant(const Message& msg)
     return true;
 
   // If there is no vertical significance value in the message, keep it
-  Message::const_iterator sig = msg.find(8042);  // extended vertical sounding sig.
+  auto sig = msg.find(8042);  // extended vertical sounding sig.
   if (sig == msg.end())
     return true;
 
@@ -1374,7 +1374,7 @@ NameMap map_names(const std::set<std::string>& names, const NameMap& pmap)
   NameMap namemap;
   for (const ::std::string& name : names)
   {
-    NameMap::const_iterator it = pmap.find(name);
+    auto it = pmap.find(name);
     if (it != pmap.end())
     {
       namemap.insert(NameMap::value_type(name, it->second));
@@ -1588,7 +1588,7 @@ NFmiVPlaceDescriptor create_vdesc(const Messages& messages,
     case kBufrLandSurface:
     case kBufrSeaSurface:
     case kBufrSynoptic:
-      return NFmiVPlaceDescriptor();
+      return {};
     case kBufrUpperAirLevel:
     {
       NFmiLevelBag lbag;
@@ -1619,7 +1619,7 @@ NFmiVPlaceDescriptor create_vdesc(const Messages& messages,
       int levels = count_sounding_levels(messages);
 
       if (levels == 0)
-        return NFmiVPlaceDescriptor();
+        return {};
 
       NFmiLevelBag lbag;
       for (int i = 1; i <= levels; ++i)
@@ -1704,7 +1704,7 @@ NFmiHPlaceDescriptor create_hdesc_buoy_ship(const Messages& messages)
 
   for (const Message& msg : messages)
   {
-    Message::const_iterator p_id = msg.find(1005);
+    auto p_id = msg.find(1005);
     if (p_id == msg.end())
       p_id = msg.find(1011);
 
@@ -1773,10 +1773,10 @@ NFmiHPlaceDescriptor create_hdesc_buoy_ship(const Messages& messages)
 
 NFmiStation get_station(const Message& msg)
 {
-  Message::const_iterator wmoblock = msg.find(1001);
-  Message::const_iterator wmonumber = msg.find(1002);
-  Message::const_iterator latitude = msg.find(5001);
-  Message::const_iterator longitude = msg.find(6001);
+  auto wmoblock = msg.find(1001);
+  auto wmonumber = msg.find(1002);
+  auto latitude = msg.find(5001);
+  auto longitude = msg.find(6001);
 
   if (wmoblock == msg.end() || wmonumber == msg.end())
   {
@@ -1913,12 +1913,12 @@ NFmiHPlaceDescriptor create_hdesc(const Messages& messages,
 
 NFmiMetTime get_validtime(const Message& msg)
 {
-  Message::const_iterator yy_i = msg.find(4001);
-  Message::const_iterator mm_i = msg.find(4002);
-  Message::const_iterator dd_i = msg.find(4003);
-  Message::const_iterator hh_i = msg.find(4004);
-  Message::const_iterator mi_i = msg.find(4005);
-  Message::const_iterator ss_i = (options.requireident ? msg.find(4006) : msg.end());
+  auto yy_i = msg.find(4001);
+  auto mm_i = msg.find(4002);
+  auto dd_i = msg.find(4003);
+  auto hh_i = msg.find(4004);
+  auto mi_i = msg.find(4005);
+  auto ss_i = (options.requireident ? msg.find(4006) : msg.end());
 
   if (yy_i == msg.end() || mm_i == msg.end() || dd_i == msg.end() || hh_i == msg.end() ||
       mi_i == msg.end())
@@ -1980,7 +1980,7 @@ NFmiMetTime get_validtime_amdar(std::set<NFmiMetTime>& used_times,
 
   if (requireident && message_has_ident(message, ident))
   {
-    IdentTimeMap::const_iterator tit = identtimemap.find(ident);
+    auto tit = identtimemap.find(ident);
 
     if (tit != identtimemap.end())
       return tit->second;
@@ -2236,13 +2236,13 @@ void copy_params(NFmiFastQueryInfo &info,
 
     if (options.usebufrname)
     {
-      NameMap::const_iterator it = namemap.find(value.second.name);
+      auto it = namemap.find(value.second.name);
       if (it != namemap.end())
         pinfo = &it->second;
     }
     else
     {
-      CodeIndex::const_iterator it = codeindex.find(value.first);
+      auto it = codeindex.find(value.first);
       if (it != codeindex.end())
         pinfo = it->second;
     }
@@ -2511,7 +2511,7 @@ void copy_records_buoy_ship(NFmiFastQueryInfo &info,
       throw std::runtime_error("Internal error in handling valid times of the messages");
 
     // Skip unknown locations
-    Message::const_iterator p_id = msg.find(1005);
+    auto p_id = msg.find(1005);
     if (p_id == msg.end())
     {
       p_id = msg.find(1011);
@@ -2957,7 +2957,7 @@ int get_obscount(const NameMap& namemap, const Message& msg)
   {
     auto key = fmt::format("{:0>6}", value.first);
 
-    NameMap::const_iterator it = namemap.find(key);
+    auto it = namemap.find(key);
 
     if ((it != namemap.end()) && (value.second.value != kFloatMissing))
       obscount++;
@@ -2975,7 +2975,7 @@ int get_obscount(const NameMap& namemap, const Message& msg)
 
 void remove_duplicate_messages_amdar(const NameMap& namemap, Phase phase, Messages& phasemessages)
 {
-  Messages::iterator mit = phasemessages.begin(), mit0 = phasemessages.end();
+  auto mit = phasemessages.begin(), mit0 = phasemessages.end();
   std::set<NFmiMetTime> dummytimes;
   std::string ident;
   double lastaltitude = 0.0;
@@ -3182,7 +3182,7 @@ void remap_message_amdar(Message& msg)
         (codes.first == REMAP_ALTITUDE))
       continue;
 
-    Message::iterator mit = msg.end();
+    auto mit = msg.end();
 
     for (const auto code : codes.second)
     {
@@ -3649,7 +3649,7 @@ void remove_duplicate_messages_sounding(const NameMap& namemap,
                                         const std::string& ident,
                                         Messages& soundingmessages)
 {
-  Messages::iterator mit = soundingmessages.begin(), mit0 = soundingmessages.end();
+  auto mit = soundingmessages.begin(), mit0 = soundingmessages.end();
   double lastaltitude = 0.0;
   int obscount0 = -1;
 
@@ -3726,7 +3726,7 @@ void limit_duration_sounding(const NameMap& namemap,
 
   Fmi::TimeDuration maxduration(Fmi::Hours(options.maxdurationhours)), td;
 
-  Messages::iterator mit = soundingmessages.begin();
+  auto mit = soundingmessages.begin();
   NFmiMetTime t, t0;
 
   for (; (mit != soundingmessages.end()); mit++)

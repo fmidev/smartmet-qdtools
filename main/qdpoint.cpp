@@ -110,8 +110,8 @@ LocationList read_locationlist(const string& theFile)
       try
       {
         string name = parts[0];
-        double lon = NFmiStringTools::Convert<double>(parts[1]);
-        double lat = NFmiStringTools::Convert<double>(parts[2]);
+        auto lon = NFmiStringTools::Convert<double>(parts[1]);
+        auto lat = NFmiStringTools::Convert<double>(parts[2]);
         ret.push_back(Location(name, NFmiPoint(lon, lat)));
       }
       catch (...)
@@ -334,7 +334,7 @@ std::map<std::string, NFmiPoint> FindPlaces(const std::vector<std::string>& theP
   if (!locfinder.AddFile(theCoordFile, false))
     throw std::runtime_error("Reading file " + theCoordFile + " failed");
 
-  for (vector<string>::const_iterator it = thePlaces.begin(); it != thePlaces.end(); ++it)
+  for (auto it = thePlaces.begin(); it != thePlaces.end(); ++it)
   {
     NFmiPoint lonlat = locfinder.Find(it->c_str());
 
@@ -818,7 +818,7 @@ const char* MetaPrecision(const string& name)
 
 FmiParameterName ParamEnum(const string& theParam)
 {
-  FmiParameterName num = FmiParameterName(converter.ToEnum(theParam));
+  auto num = FmiParameterName(converter.ToEnum(theParam));
   if (num != kFmiBadParameter)
     return num;
 
@@ -873,7 +873,7 @@ bool ValidRow(NFmiFastQueryInfo& qd,
 
   qd.ResetParam();
 
-  vector<string>::const_iterator iter = options.params.begin();
+  auto iter = options.params.begin();
 
   while (!valid)
   {
@@ -1173,7 +1173,7 @@ void PrintRow(NFmiFastQueryInfo& qd,
 
   qd.ResetParam();
 
-  vector<string>::const_iterator iter = options.params.begin();
+  auto iter = options.params.begin();
 
   while (true)
   {
@@ -1320,9 +1320,9 @@ void ReportStations(QueryDataManager& theMgr, const vector<int> theWmos, const N
   {
     if (options.verbose)
       cout << "# Stations " << theWmos.size() << endl;
-    vector<int>::const_iterator begin = theWmos.begin();
-    vector<int>::const_iterator end = theWmos.end();
-    for (vector<int>::const_iterator iter = begin; iter != end; ++iter)
+    auto begin = theWmos.begin();
+    auto end = theWmos.end();
+    for (auto iter = begin; iter != end; ++iter)
     {
       theMgr.setstation(*iter);
       PrintLocationInfo(theMgr, !IsBad(theLonLat), theLonLat);
@@ -1448,7 +1448,7 @@ int run(int argc, char* argv[])
 
     if (options.verbose)
     {
-      for (map<string, NFmiPoint>::const_iterator it = places.begin(); it != places.end(); ++it)
+      for (auto it = places.begin(); it != places.end(); ++it)
         cout << "# Location: " << it->first << endl
              << "# Coordinate: " << it->second.X() << ' ' << it->second.Y() << endl;
     }
@@ -1489,7 +1489,7 @@ int run(int argc, char* argv[])
     std::map<double, int> stats = qmgr.nearest(
         referencelonlat, options.nearest_stations, 1000 * options.max_distance, options.validate);
 
-    for (std::map<double, int>::const_iterator it = stats.begin(); it != stats.end(); ++it)
+    for (auto it = stats.begin(); it != stats.end(); ++it)
       options.stations.push_back(it->second);
 
     // Ja putsataan places - sitä tarvittiin vain lähimpien pisteiden hakuun
@@ -1530,9 +1530,9 @@ int run(int argc, char* argv[])
 
   if (!options.stations.empty())
   {
-    vector<int>::const_iterator begin = options.stations.begin();
-    vector<int>::const_iterator end = options.stations.end();
-    for (vector<int>::const_iterator iter = begin; iter != end; ++iter)
+    auto begin = options.stations.begin();
+    auto end = options.stations.end();
+    for (auto iter = begin; iter != end; ++iter)
     {
       qmgr.setstation(*iter);
       qi = &qmgr.info();
@@ -1581,8 +1581,7 @@ int run(int argc, char* argv[])
   }
   else if (!options.locations.empty())
   {
-    for (LocationList::const_iterator it = options.locations.begin(); it != options.locations.end();
-         ++it)
+    for (auto it = options.locations.begin(); it != options.locations.end(); ++it)
     {
       NFmiPoint lonlat = it->latlon;
       try
@@ -1631,7 +1630,7 @@ int run(int argc, char* argv[])
   }
   else
   {
-    for (PlacesType::const_iterator it = places.begin(); it != places.end(); ++it)
+    for (auto it = places.begin(); it != places.end(); ++it)
     {
       if (places.size() > 1)
         cout << "Location: " << it->first << endl;

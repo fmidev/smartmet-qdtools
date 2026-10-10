@@ -255,9 +255,9 @@ const NFmiParamDescriptor make_param_descriptor(NFmiFastQueryInfo& theQ)
 
   NFmiEnumConverter converter;
 
-  for (vector<string>::const_iterator it = params.begin(); it != params.end(); ++it)
+  for (auto it = params.begin(); it != params.end(); ++it)
   {
-    FmiParameterName paramnum = FmiParameterName(converter.ToEnum(*it));
+    auto paramnum = FmiParameterName(converter.ToEnum(*it));
     if (paramnum == kFmiBadParameter)
       throw runtime_error("Parameter '" + *it + "' is not known to newbase");
     if (!theQ.Param(paramnum))
@@ -287,9 +287,9 @@ void handle_times(const NFmiMetTime& theFirstTime,
                   const vector<string>& theSpecs,
                   bool theFlag)
 {
-  for (vector<string>::const_iterator it = theSpecs.begin(); it != theSpecs.end(); ++it)
+  for (auto it = theSpecs.begin(); it != theSpecs.end(); ++it)
   {
-    vector<int> words = NFmiStringTools::Split<vector<int> >(*it, ":");
+    auto words = NFmiStringTools::Split<vector<int> >(*it, ":");
     if (words.size() != 3)
       throw runtime_error("Invalid time specification '" + *it + "'");
     const int t1 = words[0];
@@ -338,20 +338,20 @@ const NFmiTimeDescriptor make_time_descriptor(NFmiFastQueryInfo& theQ)
 
   // Omissions
 
-  const string omit = NFmiSettings::Optional<string>("times::omit", "");
+  const auto omit = NFmiSettings::Optional<string>("times::omit", "");
   const vector<string> omissions = NFmiStringTools::Split(omit);
   handle_times(firsttime, lasttime, times, omissions, false);
 
   // Add requirements
 
-  const string req = NFmiSettings::Optional<string>("times::require", "");
+  const auto req = NFmiSettings::Optional<string>("times::require", "");
   const vector<string> requirements = NFmiStringTools::Split(req);
   handle_times(firsttime, lasttime, times, requirements, true);
 
   // Build the final timelist
 
   NFmiTimeList tlist;
-  for (set<NFmiMetTime>::const_iterator it = times.begin(); it != times.end(); ++it)
+  for (auto it = times.begin(); it != times.end(); ++it)
     tlist.Add(new NFmiMetTime(*it));
 
   NFmiTimeDescriptor desc(theQ.OriginTime(), tlist);
@@ -387,8 +387,8 @@ void smoothen_data(NFmiQueryData& theQD, NFmiFastQueryInfo& theQ)
     const string radiusvar = var + "::radius";
     const string factorvar = var + "::factor";
 
-    const string method = NFmiSettings::Optional<string>(typevar.c_str(), "None");
-    const double radius = NFmiSettings::Optional<double>(radiusvar.c_str(), 0);
+    const auto method = NFmiSettings::Optional<string>(typevar.c_str(), "None");
+    const auto radius = NFmiSettings::Optional<double>(radiusvar.c_str(), 0);
     const int factor = NFmiSettings::Optional<int>(factorvar.c_str(), 0);
 
     if (options.verbose)

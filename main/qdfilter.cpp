@@ -203,9 +203,9 @@ NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo& theQ, const vector<st
   NFmiParamBag pbag;
 
   NFmiEnumConverter converter;
-  for (vector<string>::const_iterator it = theParams.begin(); it != theParams.end(); ++it)
+  for (auto it = theParams.begin(); it != theParams.end(); ++it)
   {
-    FmiParameterName paramnum = FmiParameterName(converter.ToEnum(*it));
+    auto paramnum = FmiParameterName(converter.ToEnum(*it));
     if (paramnum == kFmiBadParameter)
       throw runtime_error("Parameter " + *it + " is not known to newbase");
     if (!theQ.Param(paramnum))
@@ -529,7 +529,7 @@ int run(int argc, const char* argv[])
 
   for (dstinfo.ResetParam(); dstinfo.NextParam();)
   {
-    FmiParameterName p = FmiParameterName(dstinfo.Param().GetParam()->GetIdent());
+    auto p = FmiParameterName(dstinfo.Param().GetParam()->GetIdent());
     if (p == kFmiWeatherAndCloudiness)
       throw runtime_error("Cannot filter WeatherAndCloudiness");
     if (p == kFmiTotalWindMS)

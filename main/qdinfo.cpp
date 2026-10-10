@@ -69,7 +69,7 @@ void ReportParameterNames(void)
 
   cout << "The list of parameters known by newbase is:" << endl << endl;
 
-  for (list<string>::const_iterator it = names.begin(); it != names.end(); ++it)
+  for (auto it = names.begin(); it != names.end(); ++it)
   {
     cout << converter.ToEnum(*it) << '\t' << *it << endl;
   }

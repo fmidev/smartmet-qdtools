@@ -252,10 +252,10 @@ static NFmiMetTime GetTime(const std::string &timeStr,
     {
       NFmiMetTime currentTime(theTimeRoundingResolution);
       NFmiMetTime aTime(currentTime);
-      short aDay = NFmiStringTools::Convert<short>(string(timeStr.begin(), timeStr.begin() + 2));
-      short aHour =
+      auto aDay = NFmiStringTools::Convert<short>(string(timeStr.begin(), timeStr.begin() + 2));
+      auto aHour =
           NFmiStringTools::Convert<short>(string(timeStr.begin() + 2, timeStr.begin() + 4));
-      short aMinute =
+      auto aMinute =
           NFmiStringTools::Convert<short>(string(timeStr.begin() + 4, timeStr.begin() + 6));
       aTime.SetDay(aDay);
       aTime.SetHour(aHour);
@@ -338,7 +338,7 @@ static NFmiTimeDescriptor MakeTimeDesc(const vector<MetarData> &dataBlocks)
 
   // Tehdaan aluksi timelist, koska se on helpompi,
   NFmiTimeList timeList;
-  set<NFmiMetTime>::iterator it = times.begin();
+  auto it = times.begin();
   if (it != times.end())
   {
     NFmiMetTime origTime(*it);
@@ -374,7 +374,7 @@ static NFmiHPlaceDescriptor MakeHPlaceDesc(NFmiAviationStationInfoSystem &theSta
     icaoStrSet.insert(dataBlocks[i].itsIcaoName);
 
   NFmiLocationBag locations;
-  for (set<string>::iterator it = icaoStrSet.begin(); it != icaoStrSet.end(); ++it)
+  for (auto it = icaoStrSet.begin(); it != icaoStrSet.end(); ++it)
   {
     NFmiAviationStation *aviationStation = theStationInfoSystem.FindStation(*it);
     if (aviationStation)
@@ -556,7 +556,7 @@ static std::string GetStringAndAdvance(boost::sregex_token_iterator &it, bool mu
   if (mustExist)
     throw runtime_error(
         "Error: The header-section was incomplete in input data, stopping program...");
-  return string();  // muutoin palauta tyhjä stringi
+  return {};  // muutoin palauta tyhjä stringi
 }
 
 // ----------------------------------------------------------------------
@@ -574,7 +574,7 @@ class StationErrorStrings : public set<string>
     if (out)
     {
       out << endl << "Here is list of all unknown ICAO ids:" << endl;
-      StationErrorStrings::iterator it = begin();
+      auto it = begin();
       for (; it != end(); ++it)
         out << *it << ", ";
       out << endl << endl;
@@ -1042,7 +1042,7 @@ static bool FindWeatherValue(const string &theWord,
     // sanasta edes osana.
     // Tämä siksi että joskus metareissa on jotain viilauksia ja standardi sanojen perässä voi olla
     // jotain maa kohtaisia virityksiä.
-    map<string, float>::iterator lb = ww_symbols.lower_bound(theWord);
+    auto lb = ww_symbols.lower_bound(theWord);
     if (lb != ww_symbols.end() && !(ww_symbols.key_comp()(theWord, lb->first)))
     {
       // avain löytyi heti, otetaan sen arvo käyttöön
@@ -1068,7 +1068,7 @@ static bool FindWeatherValue(const string &theWord,
   }
   else
   {
-    map<string, float>::iterator it = ww_symbols.find(theWord);
+    auto it = ww_symbols.find(theWord);
     if (it != ww_symbols.end())
     {
       value = (*it).second;
@@ -1439,7 +1439,7 @@ static bool CheckIsOldMessageMachineStartWord(const string &theStr)
   {
     if (theStr.size() == 10)
     {
-      double tmpValue = NFmiStringTools::Convert<double>(theStr);
+      auto tmpValue = NFmiStringTools::Convert<double>(theStr);
       tmpValue++;  // tämä poistaa varoituksen että muuttujaa ei käytetä (Convert:in ainoa käyttö
                    // edellä oli tarkistaa
       // että stringi muuttuu luvuksi)
@@ -1485,7 +1485,7 @@ static std::string RemoveControlCharacters(const std::string &theOrigStr)
   std::string strippedStr;
   for (size_t i = 0; i < theOrigStr.size(); i++)
   {
-    unsigned char ch = (unsigned char)(theOrigStr[i]);
+    auto ch = (unsigned char)(theOrigStr[i]);
     if (isspace(ch) || iscntrl(ch) == 0)
       strippedStr += theOrigStr[i];
   }
@@ -1524,11 +1524,11 @@ static NFmiMetTime GetNoaaTime(std::string &timeStr)
   boost::split(to_vec, timeStr, boost::is_any_of("/ :"));
   if (to_vec.size() >= 5)
   {
-    short year = boost::lexical_cast<short>(to_vec[0]);
-    short month = boost::lexical_cast<short>(to_vec[1]);
-    short day = boost::lexical_cast<short>(to_vec[2]);
-    short hour = boost::lexical_cast<short>(to_vec[3]);
-    short minute = boost::lexical_cast<short>(to_vec[4]);
+    auto year = boost::lexical_cast<short>(to_vec[0]);
+    auto month = boost::lexical_cast<short>(to_vec[1]);
+    auto day = boost::lexical_cast<short>(to_vec[2]);
+    auto hour = boost::lexical_cast<short>(to_vec[3]);
+    auto minute = boost::lexical_cast<short>(to_vec[4]);
     return NFmiMetTime(year, month, day, hour, minute);
   }
   else
@@ -1968,9 +1968,7 @@ void run(int argc, const char *argv[])
   {
     cerr << "\nWarning, there were " << icaoIdUnknownSet.size()
          << " unknown ICAO id's in given messages that were ignored:" << endl;
-    for (std::set<std::string>::iterator it = icaoIdUnknownSet.begin();
-         it != icaoIdUnknownSet.end();
-         ++it)
+    for (auto it = icaoIdUnknownSet.begin(); it != icaoIdUnknownSet.end(); ++it)
     {
       cerr << *it << " ";
     }

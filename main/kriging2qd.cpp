@@ -386,7 +386,7 @@ typename T::value_type smallest_step(const T& theValues)
 {
   typename T::value_type mindiff = -1;
 
-  for (typename T::const_iterator it = theValues.begin(), end = theValues.end(); it != end;)
+  for (auto it = theValues.begin(), end = theValues.end(); it != end;)
   {
     typename T::value_type value1 = *it;
     ++it;
@@ -418,7 +418,7 @@ const NFmiHPlaceDescriptor make_hdesc(const KrigingData& theData)
   set<double> xset;
   set<double> yset;
 
-  for (KrigingData::const_iterator it = theData.begin(), end = theData.end(); it != end; ++it)
+  for (auto it = theData.begin(), end = theData.end(); it != end; ++it)
   {
     xset.insert(it->first.X());
     yset.insert(it->first.Y());
@@ -551,7 +551,7 @@ std::shared_ptr<NFmiQueryData> create_querydata(const KrigingData& theData)
   NFmiFastQueryInfo q(data.get());
   q.First();
 
-  for (KrigingData::const_iterator it = theData.begin(), end = theData.end(); it != end; ++it)
+  for (auto it = theData.begin(), end = theData.end(); it != end; ++it)
   {
     NFmiPoint latlon = q.Area()->WorldXYToLatLon(it->first);
 

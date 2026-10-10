@@ -306,8 +306,7 @@ bool NFmiQueryDataChecker::GoThroughData(NFmiDataModifier* theModifier)
 void NFmiQueryDataChecker::CheckOutOfLimitsTerms(NFmiParamCheckData& theParamCheckData,
                                                  NFmiDataModifier* theModifier)
 {
-  NFmiDataModifierMinMax* modifier =
-      static_cast<NFmiDataModifierMinMax*>(theModifier);  // rumaa, mutta voi voi
+  auto* modifier = static_cast<NFmiDataModifierMinMax*>(theModifier);  // rumaa, mutta voi voi
   float minValue = modifier->MinValue();
   float maxValue = modifier->MaxValue();
   theParamCheckData.itsCheckedParamMinValue = minValue;

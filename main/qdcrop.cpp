@@ -333,7 +333,7 @@ FmiParameterName parse_param(const string& theName)
 {
   // Try ascii name
 
-  FmiParameterName paramnum = FmiParameterName(converter.ToEnum(theName));
+  auto paramnum = FmiParameterName(converter.ToEnum(theName));
   if (paramnum != kFmiBadParameter)
     return paramnum;
 
@@ -474,7 +474,7 @@ NFmiHPlaceDescriptor MakeHPlaceDescriptor(NFmiFastQueryInfo& theQ,
   }
   else if (!theBounds.empty())
   {
-    vector<double> coords = NFmiStringTools::Split<vector<double> >(theBounds);
+    auto coords = NFmiStringTools::Split<vector<double> >(theBounds);
     if (coords.size() != 4)
       throw runtime_error("-G option parameter must have exactly 4 comma separated numbers");
 
@@ -621,7 +621,7 @@ NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo& theQ,
 
   if (!theParams.empty())
   {
-    for (vector<string>::const_iterator it = theParams.begin(); it != theParams.end(); ++it)
+    for (auto it = theParams.begin(); it != theParams.end(); ++it)
     {
       FmiParameterName paramnum = parse_param(*it);
       if (!theQ.Param(paramnum))
@@ -633,7 +633,7 @@ NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo& theQ,
   else if (!theDelParams.empty())
   {
     pbag = theQ.ParamBag();
-    for (vector<string>::const_iterator it = theDelParams.begin(); it != theDelParams.end(); ++it)
+    for (auto it = theDelParams.begin(); it != theDelParams.end(); ++it)
     {
       FmiParameterName paramnum = parse_param(*it);
       if (!pbag.SetCurrent(paramnum))
@@ -649,9 +649,7 @@ NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo& theQ,
 
   // Keep analysis parameters
   {
-    for (vector<string>::const_iterator it = theAnalysisParams.begin();
-         it != theAnalysisParams.end();
-         ++it)
+    for (auto it = theAnalysisParams.begin(); it != theAnalysisParams.end(); ++it)
     {
       FmiParameterName paramnum = parse_param(*it);
       if (!theQ.Param(paramnum))
@@ -664,7 +662,7 @@ NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo& theQ,
   // Add new parameters
 
   {
-    for (vector<string>::const_iterator it = theNewParams.begin(); it != theNewParams.end(); ++it)
+    for (auto it = theNewParams.begin(); it != theNewParams.end(); ++it)
     {
       FmiParameterName paramnum = parse_param(*it);
       // If the parameter is already in the data - we simply keep it
@@ -715,7 +713,7 @@ NFmiTimeDescriptor MakeTimeDescriptor(NFmiFastQueryInfo& theQ,
     NFmiMetTime origintime = theQ.OriginTime();
     NFmiMetTime reftime = origintime;
     NFmiTimeList datatimes;
-    for (vector<NFmiTime>::const_iterator it = theCrops.begin(); it != theCrops.end(); ++it)
+    for (auto it = theCrops.begin(); it != theCrops.end(); ++it)
     {
       if (theQ.Time(*it))
         datatimes.Add(new NFmiMetTime(*it));
@@ -869,11 +867,11 @@ NFmiTime ParseDate(const string& theTime)
     throw runtime_error("The time stamp '" + theTime + "' must be of the form YYYYMMDDHHMI");
   try
   {
-    short year = NFmiStringTools::Convert<short>(theTime.substr(0, 4));
-    short month = NFmiStringTools::Convert<short>(theTime.substr(4, 2));
-    short day = NFmiStringTools::Convert<short>(theTime.substr(6, 2));
-    short hour = NFmiStringTools::Convert<short>(theTime.substr(8, 2));
-    short minute = NFmiStringTools::Convert<short>(theTime.substr(10, 2));
+    auto year = NFmiStringTools::Convert<short>(theTime.substr(0, 4));
+    auto month = NFmiStringTools::Convert<short>(theTime.substr(4, 2));
+    auto day = NFmiStringTools::Convert<short>(theTime.substr(6, 2));
+    auto hour = NFmiStringTools::Convert<short>(theTime.substr(8, 2));
+    auto minute = NFmiStringTools::Convert<short>(theTime.substr(10, 2));
     return NFmiTime(year, month, day, hour, minute);
   }
   catch (...)
@@ -1301,7 +1299,7 @@ int run(int argc, const char* argv[])
   if (cmdline.isOption('S'))
   {
     vector<string> times = NFmiStringTools::Split(cmdline.OptionValue('S'), ",");
-    for (vector<string>::const_iterator it = times.begin(); it != times.end(); ++it)
+    for (auto it = times.begin(); it != times.end(); ++it)
       opt_crops.push_back(ParseDate(*it));
   }
 

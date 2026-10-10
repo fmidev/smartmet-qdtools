@@ -463,7 +463,7 @@ NFmiHPlaceDescriptor create_hdesc(const CsvTable& csv, const Stations& stations)
   {
     for (const string& id : used)
     {
-      Stations::const_iterator it = stations.find(id);
+      auto it = stations.find(id);
       if (it == stations.end())
       {
         if (!options.quiet)
@@ -501,7 +501,7 @@ NFmiVPlaceDescriptor create_vdesc(const CsvTable& csv)
   // default is sufficient for point data
 
   if (options.levelcolumn < 0)
-    return NFmiVPlaceDescriptor();
+    return {};
 
   // List all unique levels
 
@@ -524,7 +524,7 @@ NFmiVPlaceDescriptor create_vdesc(const CsvTable& csv)
 
   // Build LevelBag
 
-  FmiLevelType ltype = static_cast<FmiLevelType>(options.leveltype);
+  auto ltype = static_cast<FmiLevelType>(options.leveltype);
   NFmiLevelBag lbag;
   for (int value : used)
   {
@@ -547,7 +547,7 @@ NFmiParamDescriptor create_pdesc(const Params& params)
 
   for (int id : options.params)
   {
-    Params::const_iterator it = params.find(id);
+    auto it = params.find(id);
     if (it == params.end())
       throw runtime_error("Unknown parameter number " + boost::lexical_cast<string>(id) +
                           ", add definition to '" + options.paramsfile + "'");
@@ -655,7 +655,7 @@ LocationIndex make_location_index(NFmiFastQueryInfo& info,
 {
   LocationIndex index;
 
-  Stations::const_iterator station = stations.end();
+  auto station = stations.end();
 
   for (const CsvTable::value_type& row : csv)
   {

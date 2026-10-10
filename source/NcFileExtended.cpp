@@ -2017,8 +2017,7 @@ void nctools::NcFileExtended::copy_values_wind(NFmiFastQueryInfo& info,
     GDALClose(yds);
 
     const auto src_tlist = timeList();
-    const std::size_t nsrctimes =
-        static_cast<std::size_t>(src_tlist.NumberOfItems());
+    const auto nsrctimes = static_cast<std::size_t>(src_tlist.NumberOfItems());
     const std::size_t n_per_time =
         (nsrctimes > 0 && xvals.size() >= nsrctimes) ? xvals.size() / nsrctimes
                                                       : xvals.size();
@@ -2046,8 +2045,8 @@ void nctools::NcFileExtended::copy_values_wind(NFmiFastQueryInfo& info,
         // Use the same y-flip traversal as copy_values_var.
         if (xinverted())
           throw Fmi::Exception(BCP, "Inverted x-axis not implemented in wind copy");
-        const std::size_t nx = static_cast<std::size_t>(_xsize);
-        const std::size_t ny = static_cast<std::size_t>(_ysize);
+        const auto nx = static_cast<std::size_t>(_xsize);
+        const auto ny = static_cast<std::size_t>(_ysize);
         const std::size_t t_offset = static_cast<std::size_t>(sourcetimeindex) * n_per_time;
         std::size_t zstart = 0;
         for (info.ResetLevel(); info.NextLevel();)

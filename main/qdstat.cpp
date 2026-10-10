@@ -109,7 +109,7 @@ std::set<FmiParameterName> parse_params(const std::string& str)
 
   for (const auto& param : parts)
   {
-    FmiParameterName p = FmiParameterName(converter.ToEnum(param));
+    auto p = FmiParameterName(converter.ToEnum(param));
     if (p == kFmiBadParameter)
       throw std::runtime_error("Bad parameter name: '" + param + "'");
     ret.insert(p);

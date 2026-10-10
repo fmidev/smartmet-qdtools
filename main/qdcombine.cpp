@@ -302,7 +302,7 @@ static NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
 
   // Tehdään kaikkia datoja yhdistävä tdescriptor
   NFmiTimeList timeList;
-  for (set<NFmiMetTime>::iterator it1 = allTimes.begin(); it1 != allTimes.end(); ++it1)
+  for (auto it1 = allTimes.begin(); it1 != allTimes.end(); ++it1)
     timeList.Add(new NFmiMetTime(*it1));
   NFmiTimeDescriptor tdesc(originTime, timeList);
 
@@ -312,9 +312,9 @@ static NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
     paramBag = firstParaBag;
   else
   {
-    for (set<NFmiParam>::iterator it2 = allParams.begin(); it2 != allParams.end(); ++it2)
+    for (auto it2 = allParams.begin(); it2 != allParams.end(); ++it2)
     {
-      FmiParameterName parId = static_cast<FmiParameterName>((*it2).GetIdent());
+      auto parId = static_cast<FmiParameterName>((*it2).GetIdent());
       if (parId == kFmiTotalWindMS ||
           parId == kFmiWeatherAndCloudiness)  // HUOM! yhdistelmä parametrit totalWind ja
                                               // weatherAndCloudiness ovat erikois tapauksia!!!
@@ -335,8 +335,7 @@ static NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
 
   // Tehdään kaikkia datoja yhdistävä vPlaceDescriptor
   NFmiLevelBag levelBag;
-  for (set<NFmiLevel, LevelLessThan>::iterator it3 = allLevels.begin(); it3 != allLevels.end();
-       ++it3)
+  for (auto it3 = allLevels.begin(); it3 != allLevels.end(); ++it3)
     levelBag.AddLevel(*it3);
   NFmiVPlaceDescriptor vdesc(levelBag);
 
@@ -396,8 +395,7 @@ int Run(int argc, const char *argv[])
     if (optionsList.size() != 2)
       throw runtime_error(std::string("Level option invalid must be levelType,levelValue."));
 
-    FmiLevelType forcedLevelType =
-        static_cast<FmiLevelType>(NFmiStringTools::Convert<int>(optionsList[0]));
+    auto forcedLevelType = static_cast<FmiLevelType>(NFmiStringTools::Convert<int>(optionsList[0]));
     int forcedLevelValue = NFmiStringTools::Convert<int>(optionsList[1]);
     forcedLevel = new NFmiLevel(forcedLevelType, forcedLevelValue);
   }
@@ -409,7 +407,7 @@ int Run(int argc, const char *argv[])
     if (strVector.size() != 2)
       throw runtime_error(
           "Error: with p-option 2 comma separated parameters expected (e.g. 240,ecmwf)");
-    unsigned long prodId = NFmiStringTools::Convert<unsigned long>(strVector[0]);
+    auto prodId = NFmiStringTools::Convert<unsigned long>(strVector[0]);
     wantedProducer = new NFmiProducer(prodId, strVector[1]);
   }
   unique_ptr<NFmiProducer> wantedProducerPtr(
@@ -437,8 +435,7 @@ int Run(int argc, const char *argv[])
           std::string("Given data directory '" + dataDirectory + "' doesn't exist, exiting...\n"));
 
     list<string> dataFileNamesTmp = NFmiFileSystem::DirectoryFiles(dataDirectory);
-    for (list<string>::const_iterator ft = dataFileNamesTmp.begin(); ft != dataFileNamesTmp.end();
-         ++ft)
+    for (auto ft = dataFileNamesTmp.begin(); ft != dataFileNamesTmp.end(); ++ft)
     {
       string fullname = dataDirectory + "/" + *ft;
       dataFileNames.push_back(fullname);

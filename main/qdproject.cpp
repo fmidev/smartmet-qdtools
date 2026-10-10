@@ -189,7 +189,7 @@ void project_coordinates(bool verbose,
     for (unsigned int i = 1; i <= n; i++)
     {
       string opt = theParameters.Parameter(i);
-      vector<double> nums = NFmiStringTools::Split<vector<double> >(opt);
+      auto nums = NFmiStringTools::Split<vector<double> >(opt);
       if (nums.size() != 2)
         throw runtime_error("Could not convert '" + opt + "' to a coordinate");
       coords.push_back(NFmiPoint(nums[0], nums[1]));
@@ -207,7 +207,7 @@ void project_coordinates(bool verbose,
   // Now project the coordinates and print them
 
   NFmiPoint result;
-  for (vector<NFmiPoint>::const_iterator it = coords.begin(); it != coords.end(); ++it)
+  for (auto it = coords.begin(); it != coords.end(); ++it)
   {
     switch (theOption)
     {

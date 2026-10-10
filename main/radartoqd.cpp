@@ -511,7 +511,7 @@ void byteswap64(unsigned char *buf, int n)
   unsigned char c;
 
   unsigned one = 1;
-  unsigned char *test = (unsigned char *)&one;
+  auto* test = (unsigned char*)&one;
 
   if (*test == 1)
     return;
@@ -930,7 +930,7 @@ NFmiParamDescriptor create_pdesc()
 
   if (!options.parameter.empty())
   {
-    FmiParameterName p = FmiParameterName(converter.ToEnum(options.parameter));
+    auto p = FmiParameterName(converter.ToEnum(options.parameter));
     if (p == kFmiBadParameter)
       throw std::runtime_error("Unknown parameter name: '" + options.parameter + "'");
 
@@ -975,7 +975,7 @@ NFmiVPlaceDescriptor create_vdesc()
   if (!radar_data.img.cappi_heights.empty())
     throw std::runtime_error("CAPPI heights list is not empty: this format is not supported yet");
 
-  return NFmiVPlaceDescriptor();
+  return {};
 }
 
 // ----------------------------------------------------------------------

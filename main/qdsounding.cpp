@@ -168,9 +168,9 @@ bool parse_command_line(int argc, const char *argv[])
   if (cmdline.isOption('P'))
   {
     const vector<string> args = NFmiStringTools::Split(cmdline.OptionValue('P'));
-    for (vector<string>::const_iterator it = args.begin(); it != args.end(); ++it)
+    for (auto it = args.begin(); it != args.end(); ++it)
     {
-      FmiParameterName param = FmiParameterName(converter.ToEnum(*it));
+      auto param = FmiParameterName(converter.ToEnum(*it));
       if (param == kFmiBadParameter)
         throw runtime_error(string("Parameter '" + *it + "' is not recognized"));
       options.parameters.push_back(param);
@@ -230,7 +230,7 @@ const string format_date(const NFmiTime &theTime)
 
 const vector<NFmiPoint> find_places(const vector<string> & /* theNames */)
 {
-  string coordpath = NFmiSettings::Optional<string>("qdpoint::coordinates_path", ".");
+  auto coordpath = NFmiSettings::Optional<string>("qdpoint::coordinates_path", ".");
   string coordfile = NFmiFileSystem::FileComplete(options.coordfile, coordpath);
 
   NFmiLocationFinder finder;
@@ -255,8 +255,8 @@ const vector<NFmiPoint> find_places(const vector<string> & /* theNames */)
     {
       try
       {
-        float lon = NFmiStringTools::Convert<float>(options.locations[i]);
-        float lat = NFmiStringTools::Convert<float>(options.locations[i + 1]);
+        auto lon = NFmiStringTools::Convert<float>(options.locations[i]);
+        auto lat = NFmiStringTools::Convert<float>(options.locations[i + 1]);
         options.locations[i] = options.locations[i] + "," + options.locations[i + 1];
         coords.push_back(NFmiPoint(lon, lat));
         options.locations.erase(options.locations.begin() + i + 1);
@@ -304,9 +304,7 @@ void print_locations(NFmiFastQueryInfo &theQ)
 
         bool foundvalid = false;
 
-        for (vector<FmiParameterName>::const_iterator it = options.parameters.begin();
-             it != options.parameters.end();
-             ++it)
+        for (auto it = options.parameters.begin(); it != options.parameters.end(); ++it)
         {
           if (!theQ.Param(*it))
             throw runtime_error("Parameter '" + converter.ToString(*it) +
@@ -338,8 +336,7 @@ void print_stations(NFmiFastQueryInfo &theQ)
   if (theQ.IsGrid())
     throw runtime_error("Cannot use option -w for grid data");
 
-  for (vector<int>::const_iterator wt = options.stations.begin(); wt != options.stations.end();
-       ++wt)
+  for (auto wt = options.stations.begin(); wt != options.stations.end(); ++wt)
   {
     if (!theQ.Location(*wt))
       throw runtime_error("Station '" + NFmiStringTools::Convert(*wt) +
@@ -357,9 +354,7 @@ void print_stations(NFmiFastQueryInfo &theQ)
 
         bool foundvalid = false;
 
-        for (vector<FmiParameterName>::const_iterator it = options.parameters.begin();
-             it != options.parameters.end();
-             ++it)
+        for (auto it = options.parameters.begin(); it != options.parameters.end(); ++it)
         {
           if (!theQ.Param(*it))
             throw runtime_error("Parameter '" + converter.ToString(*it) +
@@ -404,9 +399,7 @@ void print_all_stations(NFmiFastQueryInfo &theQ)
 
         bool foundvalid = false;
 
-        for (vector<FmiParameterName>::const_iterator it = options.parameters.begin();
-             it != options.parameters.end();
-             ++it)
+        for (auto it = options.parameters.begin(); it != options.parameters.end(); ++it)
         {
           if (!theQ.Param(*it))
             throw runtime_error("Parameter '" + converter.ToString(*it) +

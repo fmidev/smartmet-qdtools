@@ -355,7 +355,7 @@ void extract_times(NFmiFastQueryInfo& theQ, unsigned long index1, unsigned long 
       qd = NFmiQueryDataUtil::CreateEmptyData(tmpinfo, names.second, false);
     }
 
-    NFmiFastQueryInfo* info = new NFmiFastQueryInfo(qd);
+    auto* info = new NFmiFastQueryInfo(qd);
 
     datas.push_back(qd);
     infos.push_back(info);

@@ -199,7 +199,7 @@ int main(int argc, const char *argv[])
 
   // Check arguments
 
-  for (list<string>::const_iterator it = datapaths.begin(); it != datapaths.end(); ++it)
+  for (auto it = datapaths.begin(); it != datapaths.end(); ++it)
   {
     if (!NFmiFileSystem::DirectoryExists(*it) && !NFmiFileSystem::FileReadable(*it))
     {
@@ -230,7 +230,7 @@ int main(int argc, const char *argv[])
 
   list<string> files;
 
-  for (list<string>::const_iterator dir = datapaths.begin(); dir != datapaths.end(); ++dir)
+  for (auto dir = datapaths.begin(); dir != datapaths.end(); ++dir)
   {
     if (NFmiFileSystem::FileReadable(*dir))
       files.push_back(*dir);
@@ -258,7 +258,7 @@ int main(int argc, const char *argv[])
       dirfiles.sort();
       dirfiles.reverse();
 
-      for (list<string>::const_iterator fit = dirfiles.begin(); fit != dirfiles.end(); ++fit)
+      for (auto fit = dirfiles.begin(); fit != dirfiles.end(); ++fit)
       {
         files.push_back(*dir + '/' + *fit);
       }
@@ -277,7 +277,7 @@ int main(int argc, const char *argv[])
 
   NFmiParamBag pbag;
 
-  for (list<string>::const_iterator it = files.begin(); it != files.end(); ++it)
+  for (auto it = files.begin(); it != files.end(); ++it)
   {
     const string filename = *it;
 

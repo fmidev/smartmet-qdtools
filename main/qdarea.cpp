@@ -453,7 +453,7 @@ void parse_parameter_option(const string& theRequest)
   const vector<string> requests = NFmiStringTools::Split(theRequest);
 
   // Parse the individual requests
-  for (vector<string>::const_iterator it = requests.begin(); it != requests.end(); ++it)
+  for (auto it = requests.begin(); it != requests.end(); ++it)
   {
     options.parameters.push_back(ParameterRequest(*it));
   }
@@ -501,7 +501,7 @@ void parse_php_names_option(const string& theRequest)
 void parse_area_option(const string& theRequest)
 {
   vector<string> areas = NFmiStringTools::Split(theRequest, "::");
-  for (vector<string>::const_iterator it = areas.begin(); it != areas.end(); ++it)
+  for (auto it = areas.begin(); it != areas.end(); ++it)
   {
     WeatherArea area(*it);
     options.areas.insert(make_pair(*it, area));
@@ -604,7 +604,7 @@ void parse_interval_option(const string& theRequest)
         break;
       }
 
-      list<string> words2 = NFmiStringTools::Split<list<string> >(words.front(), ":");
+      auto words2 = NFmiStringTools::Split<list<string> >(words.front(), ":");
       if (words2.size() > 3)
         throw runtime_error("Invalid period definition '" + theRequest + "'");
       int starthour = 0;
@@ -715,8 +715,7 @@ void parse_command_line(int argc, const char* argv[])
 
   options.sources.resize(options.querydata.size());
 
-  for (vector<AnalysisSources>::iterator it = options.sources.begin(); it != options.sources.end();
-       ++it)
+  for (auto it = options.sources.begin(); it != options.sources.end(); ++it)
   {
     std::shared_ptr<WeatherSource> weathersource(new LatestWeatherSource());
     std::shared_ptr<MaskSource> masksource(new RegularMaskSource());
@@ -766,8 +765,7 @@ void parse_command_line(int argc, const char* argv[])
   if (options.coordinatefile.empty())
     throw runtime_error("The specified coordinatefile string is empty");
 
-  for (vector<string>::const_iterator qt = options.querydata.begin(); qt != options.querydata.end();
-       ++qt)
+  for (auto qt = options.querydata.begin(); qt != options.querydata.end(); ++qt)
   {
     if (!NFmiFileSystem::FileExists(*qt) && !NFmiFileSystem::DirectoryExists(*qt))
       throw runtime_error("The querydata '" + *qt + "' does not exist");
@@ -830,7 +828,7 @@ AnalysisSources find_source(const WeatherArea& theArea)
     {
       const NFmiSvgPath& p = theArea.path();
       bool inside = true;
-      for (NFmiSvgPath::const_iterator it = p.begin(); inside && it != p.end(); ++it)
+      for (auto it = p.begin(); inside && it != p.end(); ++it)
       {
         switch (it->itsType)
         {
@@ -886,9 +884,7 @@ void calculate_results()
 
   const WeatherPeriodGenerator::size_type n = options.generator->size();
 
-  for (map<string, WeatherArea>::const_iterator at = options.areas.begin();
-       at != options.areas.end();
-       ++at)
+  for (auto at = options.areas.begin(); at != options.areas.end(); ++at)
   {
     TimedResults timedresults;
 
@@ -901,9 +897,7 @@ void calculate_results()
       const WeatherPeriod period = options.generator->period(i);
       Results newresults;
 
-      for (list<ParameterRequest>::const_iterator it = options.parameters.begin();
-           it != options.parameters.end();
-           ++it)
+      for (auto it = options.parameters.begin(); it != options.parameters.end(); ++it)
       {
         WeatherResult result = forecaster.analyze(sources,
                                                   it->parameter,
@@ -978,12 +972,12 @@ string format_value(double theValue, const string& theMissing)
 
 void print_results()
 {
-  for (AreaResults::const_iterator at = results.begin(); at != results.end(); ++at)
+  for (auto at = results.begin(); at != results.end(); ++at)
   {
-    for (TimedResults::const_iterator it = at->second.begin(); it != at->second.end(); ++it)
+    for (auto it = at->second.begin(); it != at->second.end(); ++it)
     {
       cout << at->first << ' ' << format_time_period(it->first, ' ');
-      for (Results::const_iterator jt = it->second.begin(); jt != it->second.end(); ++jt)
+      for (auto jt = it->second.begin(); jt != it->second.end(); ++jt)
       {
         cout << ' ' << format_value(jt->value(), "-");
       }
@@ -1003,18 +997,18 @@ void print_php_results()
   const bool print_names = !(options.php_names.empty());
 
   cout << "array(" << endl;
-  for (AreaResults::const_iterator at = results.begin(); at != results.end();)
+  for (auto at = results.begin(); at != results.end();)
   {
     cout << " \"" << at->first << "\" => array(" << endl;
 
     // Print the values themselves
     cout << "  \"values\" => array(" << endl;
-    for (TimedResults::const_iterator it = at->second.begin(); it != at->second.end();)
+    for (auto it = at->second.begin(); it != at->second.end();)
     {
       cout << "   \"" << format_time_period(it->first, '-') << "\" => array(";
 
       unsigned int j = 0;
-      for (Results::const_iterator jt = it->second.begin(); jt != it->second.end();)
+      for (auto jt = it->second.begin(); jt != it->second.end();)
       {
         if (print_names)
           cout << '"' << options.php_names[j++] << "\"=>";
@@ -1037,7 +1031,7 @@ void print_php_results()
     for (unsigned int i = 0; i < options.parameters.size(); i++)
     {
       MaximumCalculator calculator;
-      for (TimedResults::const_iterator it = at->second.begin(); it != at->second.end(); ++it)
+      for (auto it = at->second.begin(); it != at->second.end(); ++it)
         calculator(it->second[i].value());
 
       if (i > 0)
@@ -1054,7 +1048,7 @@ void print_php_results()
     for (unsigned int i = 0; i < options.parameters.size(); i++)
     {
       MinimumCalculator calculator;
-      for (TimedResults::const_iterator it = at->second.begin(); it != at->second.end(); ++it)
+      for (auto it = at->second.begin(); it != at->second.end(); ++it)
         calculator(it->second[i].value());
 
       if (i > 0)

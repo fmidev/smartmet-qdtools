@@ -140,7 +140,7 @@ static NFmiQueryInfo MakeCombinedInnerInfo(vector<NFmiQueryData *> &theDataList,
 
   // Tehdään kaikkia datoja yhdistävä timeDescriptor
   NFmiTimeList timeList;
-  for (set<NFmiMetTime>::iterator it1 = allTimes.begin(); it1 != allTimes.end(); ++it1)
+  for (auto it1 = allTimes.begin(); it1 != allTimes.end(); ++it1)
     timeList.Add(new NFmiMetTime(*it1));
   NFmiTimeDescriptor timeDesc(originTime, timeList);
 
@@ -150,7 +150,7 @@ static NFmiQueryInfo MakeCombinedInnerInfo(vector<NFmiQueryData *> &theDataList,
   paramDesc.SetProducer(theWantedProducer);
 
   NFmiLocationBag locationBag;
-  for (set<NFmiStation>::iterator it2 = allStations.begin(); it2 != allStations.end(); ++it2)
+  for (auto it2 = allStations.begin(); it2 != allStations.end(); ++it2)
     locationBag.AddLocation(*it2, false);
   NFmiHPlaceDescriptor hplaceDesc(locationBag);
 
@@ -213,7 +213,7 @@ void Domain(int argc, const char *argv[])
       throw runtime_error(
           "Error: with p-option 2 comma separated parameters expected (e.g. 1005,UAIR)");
 
-    unsigned long prodId = NFmiStringTools::Convert<unsigned long>(strVector[0]);
+    auto prodId = NFmiStringTools::Convert<unsigned long>(strVector[0]);
     wantedProducer = NFmiProducer(prodId, strVector[1]);
   }
 
@@ -238,7 +238,7 @@ void Domain(int argc, const char *argv[])
     std::string filePatternStr = fileFilterList[j];
     std::string usedPath = NFmiFileSystem::PathFromPattern(filePatternStr);
     list<string> fileList = NFmiFileSystem::PatternFiles(filePatternStr);
-    for (list<string>::iterator it = fileList.begin(); it != fileList.end(); ++it)
+    for (auto it = fileList.begin(); it != fileList.end(); ++it)
     {
       //	3. Lue listan tiedostot vuorollaan sisään ja tulkitse siitä mahdolliset TEMPit
       // querydataksi

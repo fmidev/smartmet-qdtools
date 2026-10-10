@@ -317,7 +317,7 @@ static void AddDimensionData(WRFData::TotalDimensionDataSet &dimDataSet,
     if (dimData.HasGoodDimensions())
     {
       std::string paramName = var.getName();
-      WRFData::TotalDimensionDataSet::iterator it = dimDataSet.find(dimData);
+      auto it = dimDataSet.find(dimData);
       if (it != dimDataSet.end())
       {  // lisätään olemassa olevaan listaan uusi parametri
         it->second.push_back(paramName);
@@ -371,7 +371,7 @@ static bool GetGlobalAttributeValue(const std::string &attributeName,
 {
   try
   {
-    nctools::AttributesMap::iterator it = globalAttributes.find(attributeName);
+    auto it = globalAttributes.find(attributeName);
     if (it != globalAttributes.end())
     {
       try
@@ -598,7 +598,7 @@ static NFmiGrid GetGridFromProjectionStr(const std::string &theProjectionStr)
       // muuttaa ','-merkiksi
 
       std::shared_ptr<NFmiArea> area = NFmiAreaFactory::Create(areaStr);
-      std::vector<double> values = NFmiStringTools::Split<std::vector<double> >(gridStr, ",");
+      auto values = NFmiStringTools::Split<std::vector<double> >(gridStr, ",");
       if (values.size() != 2)
         throw Fmi::Exception(BCP,
                              std::string("Projection string contains GridSize that was invalid, "
@@ -860,7 +860,7 @@ static netCDF::NcVar GetWRFVariable(const netCDF::NcFile &ncFile, const std::str
       if (boost::iequals(varName, var.getName()))
         return var;
     }
-    return netCDF::NcVar();
+    return {};
   }
   catch (...)
   {
@@ -967,13 +967,13 @@ static NFmiTimeDescriptor CreateWRFTimeDescriptor(const netCDF::NcFile &ncFile)
                 std::remove_if(
                     timeStr.begin(), timeStr.end(), [](char c) { return !::vcfix_isdigit(c); }),
                 timeStr.end());
-            NFmiMetTime *aTime = new NFmiMetTime(1);
+            auto* aTime = new NFmiMetTime(1);
             aTime->FromStr(timeStr);
             timeList.Add(aTime, false, false);
           }
           else
           {
-            NFmiMetTime *aTime = new NFmiMetTime(startingTime);
+            auto* aTime = new NFmiMetTime(startingTime);
             int offsetInSeconds = NFmiStringTools::Convert<int>(timeStr);
             aTime->ChangeBySeconds(offsetInSeconds);
             timeList.Add(aTime, false, false);
@@ -988,7 +988,7 @@ static NFmiTimeDescriptor CreateWRFTimeDescriptor(const netCDF::NcFile &ncFile)
       }
     }
 
-    return NFmiTimeDescriptor();
+    return {};
   }
   catch (...)
   {
@@ -1036,7 +1036,7 @@ static netCDF::NcVar GetWantedLevelVariable(const netCDF::NcFile &ncFile,
       }
     }
 
-    return netCDF::NcVar();
+    return {};
   }
   catch (...)
   {
@@ -1092,7 +1092,7 @@ static NFmiVPlaceDescriptor CreateWRFVplaceDescriptor(
           std::cerr << std::endl;
 
         NFmiLevelBag levelBag;
-        for (std::vector<float>::iterator it = pLevels.begin(); it != pLevels.end(); ++it)
+        for (auto it = pLevels.begin(); it != pLevels.end(); ++it)
         {
           levelBag.AddLevel(NFmiLevel(usedLevelType, NFmiStringTools::Convert(*it), *it));
         }
@@ -1103,10 +1103,10 @@ static NFmiVPlaceDescriptor CreateWRFVplaceDescriptor(
         return vplaceDesc;
       }
 
-      return NFmiVPlaceDescriptor();
+      return {};
     }
     else
-      return NFmiVPlaceDescriptor();
+      return {};
   }
   catch (...)
   {
@@ -1260,7 +1260,7 @@ static std::shared_ptr<NFmiQueryData> MakeLevelStaggeredDataFix(
                   // logaritmisesta interpolaatiosta hyätyä?)
                   float lowerValue = lowerLevel.FloatValue();
                   float upperValue = upperLevel.FloatValue();
-                  float interpolatedValue =
+                  auto interpolatedValue =
                       static_cast<float>(NFmiInterpolation::Linear(factor, lowerValue, upperValue));
                   newInfo.FloatValue(interpolatedValue);
                 }
@@ -1338,7 +1338,7 @@ static bool AreDataCombinable(const std::shared_ptr<NFmiQueryData> &data1,
 
 static bool DataIndexUsed(size_t index, const std::set<size_t> &usedDataIndexies)
 {
-  std::set<size_t>::iterator it = usedDataIndexies.find(index);
+  auto it = usedDataIndexies.find(index);
   if (it != usedDataIndexies.end())
     return true;
   else
@@ -1512,8 +1512,7 @@ static int DoWrfData(nctools::Options &options,
     ::PrintWRFGlobalAttributes(options, nc_raw);
     BaseGridAreaData areaData = GetBaseAreaData(options, nc_raw);
     std::vector<std::shared_ptr<NFmiQueryData> > dataVector;
-    for (WRFData::TotalDimensionDataSet::iterator it = dimDataSet.begin(); it != dimDataSet.end();
-         ++it)
+    for (auto it = dimDataSet.begin(); it != dimDataSet.end(); ++it)
     {
       std::shared_ptr<NFmiQueryInfo> qInfo(
           ::CreateNewInnerInfo(options, *it, areaData, nc_raw, paramconvs));

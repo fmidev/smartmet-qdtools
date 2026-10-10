@@ -283,8 +283,7 @@ Fmi::DateTime select_model_run_time(const std::list<Fmi::DateTime>& times)
   }
   else
   {
-    std::list<Fmi::DateTime>::const_iterator pos =
-        find(times.begin(), times.end(), options.origintime);
+    auto pos = find(times.begin(), times.end(), options.origintime);
     if (pos == times.end())
       throw std::runtime_error("The selected origintime " + to_simple_string(options.origintime) +
                                " is not available in directory '" + options.indir + "'");
@@ -436,7 +435,7 @@ NFmiVPlaceDescriptor create_vdesc(const std::list<fs::path>& files)
     NFmiLevelBag lbag;
     for (const std::string& levelname : levels)
     {
-      double levelvalue = boost::lexical_cast<double>(levelname.substr(6, 3));
+      auto levelvalue = boost::lexical_cast<double>(levelname.substr(6, 3));
       NFmiLevel l(leveltype, levelname, levelvalue);
       lbag.AddLevel(l);
     }
@@ -712,7 +711,7 @@ void copy_ash_concentration_file(NFmiFastQueryInfo& info, const fs::path& file)
   // The level from FLaaa-bbb
 
   std::string levelname = file.filename().string().substr(level_position_in_filename, 9);
-  double levelvalue = boost::lexical_cast<double>(levelname.substr(6, 3));
+  auto levelvalue = boost::lexical_cast<double>(levelname.substr(6, 3));
 
   if (!info.Level(NFmiLevel(kFmiFlightLevel, levelname, levelvalue)))
     throw std::runtime_error("Internal error in setting level " + levelname);
@@ -748,7 +747,7 @@ void copy_ash_concentration_file(NFmiFastQueryInfo& info, const fs::path& file)
 
   NFmiIndexMask mask = NFmiIndexMaskTools::MaskInside(*info.Grid(), path);
 
-  for (NFmiIndexMask::const_iterator it = mask.begin(); it != mask.end(); ++it)
+  for (auto it = mask.begin(); it != mask.end(); ++it)
   {
     info.LocationIndex(*it);
     if (concentration > info.FloatValue())
@@ -804,7 +803,7 @@ void copy_ash_boundary_file(NFmiFastQueryInfo& info, const fs::path& file)
 
     NFmiIndexMask mask = NFmiIndexMaskTools::MaskInside(*info.Grid(), path);
 
-    for (NFmiIndexMask::const_iterator it = mask.begin(); it != mask.end(); ++it)
+    for (auto it = mask.begin(); it != mask.end(); ++it)
     {
       info.LocationIndex(*it);
       info.FloatValue(1);

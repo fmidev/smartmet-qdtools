@@ -237,14 +237,14 @@ void print_change_analysis(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
             // The output data may contain the same parameter as a standalone
             // parameter and as a subparameter. We ignore the second test,
             // it is the first parameter only that matters
-            FmiParameterName p = FmiParameterName(theQ2.Param().GetParam()->GetIdent());
+            auto p = FmiParameterName(theQ2.Param().GetParam()->GetIdent());
             if (param_checked[p] == true)
               continue;
 
             param_checked[p] = true;
 
             // Do not compare producers, only parameter numbers
-            FmiParameterName param = FmiParameterName(theQ2.Param().GetParamIdent());
+            auto param = FmiParameterName(theQ2.Param().GetParamIdent());
 
             if (!theQ1.Param(param))
             {
@@ -285,7 +285,7 @@ void print_change_analysis(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
 
   cout << endl;
 
-  for (ParamStatus::const_iterator it = param_status.begin(); it != param_status.end(); ++it)
+  for (auto it = param_status.begin(); it != param_status.end(); ++it)
   {
     cout << (it->second ? "CHANGED " : "unchanged ") << converter.ToString(it->first);
     if (it->second)
@@ -322,7 +322,7 @@ const NFmiTimeList extract_all(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ
         {
           for (theQ2.ResetParam(); !different && theQ2.NextParam();)
           {
-            FmiParameterName p = FmiParameterName(theQ2.Param().GetParam()->GetIdent());
+            auto p = FmiParameterName(theQ2.Param().GetParam()->GetIdent());
             if (param_checked[p] == true)
               continue;
             param_checked[p] = true;
@@ -397,7 +397,7 @@ const NFmiTimeList extract_params(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& t
         {
           for (theQ2.ResetParam(); !different && theQ2.NextParam();)
           {
-            FmiParameterName p = FmiParameterName(theQ2.Param().GetParam()->GetIdent());
+            auto p = FmiParameterName(theQ2.Param().GetParam()->GetIdent());
             if (param_checked[p] == true)
               continue;
             param_checked[p] = true;
@@ -558,14 +558,14 @@ void find_inputfiles()
   typedef multimap<time_t, string> StampedFiles;
 
   StampedFiles stampedfiles;
-  for (list<string>::const_iterator it = files.begin(); it != files.end(); ++it)
+  for (auto it = files.begin(); it != files.end(); ++it)
   {
     const string filename = options.inputdir + '/' + *it;
     const time_t modtime = NFmiFileSystem::FileModificationTime(filename);
     stampedfiles.insert(StampedFiles::value_type(modtime, filename));
   }
 
-  StampedFiles::const_iterator jt = stampedfiles.end();
+  auto jt = stampedfiles.end();
   options.inputfile2 = (--jt)->second;
   options.inputfile1 = (--jt)->second;
 }

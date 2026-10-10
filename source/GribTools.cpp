@@ -300,8 +300,7 @@ bool GetParamChangeItemFromString(const std::string &buffer,
   {
     if (!strVector[7].empty())
     {
-      FmiInterpolationMethod interpMethod =
-          static_cast<FmiInterpolationMethod>(Fmi::stoi(strVector[7]));
+      auto interpMethod = static_cast<FmiInterpolationMethod>(Fmi::stoi(strVector[7]));
       theParamChangeItemOut.itsWantedParam.InterpolationMethod(interpMethod);
     }
   }

@@ -320,8 +320,8 @@ int count_datas(const Fmi::HDF5::Hdf5File& file, int i)
 
 Fmi::DateTime extract_origin_time(const Fmi::HDF5::Hdf5File& file)
 {
-  std::string strdate = file.get_attribute<std::string>("/what", "date");
-  std::string strtime = file.get_attribute<std::string>("/what", "time");
+  auto strdate = file.get_attribute<std::string>("/what", "date");
+  auto strtime = file.get_attribute<std::string>("/what", "time");
   std::string stamp = (strdate + strtime).substr(0, 12);
 
   Fmi::DateTime t = Fmi::TimeParser::parse(stamp);
@@ -342,8 +342,8 @@ Fmi::DateTime extract_valid_time(const Fmi::HDF5::Hdf5File& file, int i)
     std::string name = dataset(i) + "/how";
     try
     {
-      double epochs = file.get_attribute<double>(name, "startepochs");
-      std::time_t t = static_cast<std::time_t>(epochs);
+      auto epochs = file.get_attribute<double>(name, "startepochs");
+      auto t = static_cast<std::time_t>(epochs);
       return Fmi::date_time::from_time_t(t);
     }
     catch (...)
@@ -753,7 +753,7 @@ NFmiVPlaceDescriptor collect_levels(const Fmi::HDF5::Hdf5File& file)
 
   for (int i = 1; i <= n; i++)
   {
-    std::string product = file.get_attribute<std::string>(dataset(i) + "/what", "product");
+    auto product = file.get_attribute<std::string>(dataset(i) + "/what", "product");
 
     bool islevel = is_level_parameter(product);
 
@@ -775,7 +775,7 @@ NFmiVPlaceDescriptor collect_levels(const Fmi::HDF5::Hdf5File& file)
     throw std::runtime_error("Cannot mix non-level type parameters with level type parameters");
 
   if (hasnonlevels)
-    return NFmiVPlaceDescriptor();
+    return {};
 
   // Now we need to collect the unique level values
 
@@ -837,7 +837,7 @@ NFmiVPlaceDescriptor collect_pvol_levels(const Fmi::HDF5::Hdf5File& file)
 
   for (int i = 1; i <= n; i++)
   {
-    double angle = file.get_attribute<double>(dataset(i) + "/where", "elangle");
+    auto angle = file.get_attribute<double>(dataset(i) + "/where", "elangle");
     if (options.verbose)
       std::cout << "  " << i << ": " << angle << std::endl;
     angles.insert(angle);
@@ -880,7 +880,7 @@ NFmiVPlaceDescriptor collect_pvol_levels(const Fmi::HDF5::Hdf5File& file)
 
 NFmiVPlaceDescriptor create_vdesc(const Fmi::HDF5::Hdf5File& file)
 {
-  std::string object = file.get_attribute<std::string>("/what", "object");
+  auto object = file.get_attribute<std::string>("/what", "object");
 
   if (object == "COMP")
   {
@@ -952,10 +952,10 @@ double calculate_pvol_range(const Fmi::HDF5::Hdf5File& file)
   {
     std::string prefix = dataset(i) + "/where";
 
-    double elangle = file.get_attribute<double>(prefix, "elangle");
-    double nbins = file.get_attribute<double>(prefix, "nbins");
-    double rstart = file.get_attribute<double>(prefix, "rstart");
-    double rscale = file.get_attribute<double>(prefix, "rscale");
+    auto elangle = file.get_attribute<double>(prefix, "elangle");
+    auto nbins = file.get_attribute<double>(prefix, "nbins");
+    auto rstart = file.get_attribute<double>(prefix, "rstart");
+    auto rscale = file.get_attribute<double>(prefix, "rscale");
 
     double range = 1000 * rstart + nbins * rscale * cos(elangle * pi / 180);
     maxrange = std::max(maxrange, range);
@@ -996,14 +996,14 @@ int calculate_nbins(const Fmi::HDF5::Hdf5File& file)
 
 NFmiHPlaceDescriptor create_hdesc(const Fmi::HDF5::Hdf5File& file)
 {
-  std::string object = file.get_attribute<std::string>("/what", "object");
+  auto object = file.get_attribute<std::string>("/what", "object");
 
   const NFmiPoint xy0(0, 0);
   const NFmiPoint xy1(1, 1);
 
   if (object == "COMP" || object == "IMAGE" || object == "CVOL")
   {
-    std::string projdef = file.get_attribute<std::string>("/where", "projdef");
+    auto projdef = file.get_attribute<std::string>("/where", "projdef");
 
     // Remove unwanted origo settings
     Fmi::ProjInfo proj(projdef);
@@ -1019,10 +1019,10 @@ NFmiHPlaceDescriptor create_hdesc(const Fmi::HDF5::Hdf5File& file)
     // Latvian style corners
     if (!(file.is_attribute<double>("/where"s, "LL_lon"s)))
     {
-      double LR_lon = file.get_attribute<double>("/where", "LR_lon");
-      double LR_lat = file.get_attribute<double>("/where", "LR_lat");
-      double UL_lon = file.get_attribute<double>("/where", "UL_lon");
-      double UL_lat = file.get_attribute<double>("/where", "UL_lat");
+      auto LR_lon = file.get_attribute<double>("/where", "LR_lon");
+      auto LR_lat = file.get_attribute<double>("/where", "LR_lat");
+      auto UL_lon = file.get_attribute<double>("/where", "UL_lon");
+      auto UL_lat = file.get_attribute<double>("/where", "UL_lat");
       std::shared_ptr<NFmiArea> area(NFmiArea::CreateFromReverseCorners(
           projdef, sphere, NFmiPoint(UL_lon, UL_lat), NFmiPoint(LR_lon, LR_lat)));
       std::cout << "A: area=" << *area << std::endl;
@@ -1033,10 +1033,10 @@ NFmiHPlaceDescriptor create_hdesc(const Fmi::HDF5::Hdf5File& file)
     // FMI style corners
     else
     {
-      double LL_lon = file.get_attribute<double>("/where", "LL_lon");
-      double LL_lat = file.get_attribute<double>("/where", "LL_lat");
-      double UR_lon = file.get_attribute<double>("/where", "UR_lon");
-      double UR_lat = file.get_attribute<double>("/where", "UR_lat");
+      auto LL_lon = file.get_attribute<double>("/where", "LL_lon");
+      auto LL_lat = file.get_attribute<double>("/where", "LL_lat");
+      auto UR_lon = file.get_attribute<double>("/where", "UR_lon");
+      auto UR_lat = file.get_attribute<double>("/where", "UR_lat");
 
       std::shared_ptr<NFmiArea> area(NFmiArea::CreateFromCorners(
           projdef, sphere, NFmiPoint(LL_lon, LL_lat), NFmiPoint(UR_lon, UR_lat)));
@@ -1049,8 +1049,8 @@ NFmiHPlaceDescriptor create_hdesc(const Fmi::HDF5::Hdf5File& file)
 
   else if (object == "PVOL")
   {
-    const double lon = file.get_attribute<double>("/where", "lon");
-    const double lat = file.get_attribute<double>("/where", "lat");
+    const auto lon = file.get_attribute<double>("/where", "lon");
+    const auto lat = file.get_attribute<double>("/where", "lat");
     // const double height = get_attribute<double>(file,"/where","height");
 
     // Max range in meters and then rounded up to kilometers
@@ -1196,8 +1196,8 @@ void copy_dataset(const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo& info, int 
       std::string iprefix = ("/" + prefix + "/data" + Fmi::to_string(i));
 
       // Establish product details
-      std::string product = file.get_attribute_recursive<std::string>(iprefix, "what", "product");
-      std::string quantity = file.get_attribute_recursive<std::string>(iprefix, "what", "quantity");
+      auto product = file.get_attribute_recursive<std::string>(iprefix, "what", "product");
+      auto quantity = file.get_attribute_recursive<std::string>(iprefix, "what", "quantity");
 
       if (is_level_parameter(product))
       {
@@ -1270,8 +1270,8 @@ void copy_dataset(const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo& info, int 
     // Unnumbered data used in Latvia
 
     // Establish product details
-    std::string product = file.get_attribute_recursive<std::string>(prefix, "what", "product");
-    std::string quantity = file.get_attribute_recursive<std::string>(prefix, "what", "quantity");
+    auto product = file.get_attribute_recursive<std::string>(prefix, "what", "product");
+    auto quantity = file.get_attribute_recursive<std::string>(prefix, "what", "quantity");
 
     if (is_level_parameter(product))
     {
@@ -1371,8 +1371,8 @@ void copy_dataset_pvol(const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo& info,
 
   // Set parameter
 
-  std::string product = file.get_attribute<std::string>(prefix + "/what", "product");
-  std::string quantity = file.get_attribute<std::string>(prefix + "/data1/what", "quantity");
+  auto product = file.get_attribute<std::string>(prefix + "/what", "product");
+  auto quantity = file.get_attribute<std::string>(prefix + "/data1/what", "quantity");
 
   FmiParameterName id = opera_name_to_newbase(product, quantity, file, prefix);
 
@@ -1394,15 +1394,15 @@ void copy_dataset_pvol(const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo& info,
 
   // Establish measurement details
 
-  double lat = file.get_attribute<double>("/where", "lat");
-  double lon = file.get_attribute<double>("/where", "lon");
+  auto lat = file.get_attribute<double>("/where", "lat");
+  auto lon = file.get_attribute<double>("/where", "lon");
 
   // int a1gate     = get_attribute<int>(file,prefix+"/where","a1gate");
-  double elangle = file.get_attribute<double>(prefix + "/where", "elangle");
+  auto elangle = file.get_attribute<double>(prefix + "/where", "elangle");
   int nbins = file.get_attribute<int>(prefix + "/where", "nbins");
   int nrays = file.get_attribute<int>(prefix + "/where", "nrays");
-  double rscale = file.get_attribute<double>(prefix + "/where", "rscale");
-  double rstart = file.get_attribute<double>(prefix + "/where", "rstart");
+  auto rscale = file.get_attribute<double>(prefix + "/where", "rscale");
+  auto rstart = file.get_attribute<double>(prefix + "/where", "rstart");
 
   // Copy the values
 
@@ -1470,7 +1470,7 @@ void copy_dataset_pvol(const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo& info,
 
 void copy_datasets(const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo& info)
 {
-  std::string obj = file.get_attribute<std::string>("/what", "object");
+  auto obj = file.get_attribute<std::string>("/what", "object");
 
   const int n = count_datasets(file);
   for (int i = 1; i <= n; i++)

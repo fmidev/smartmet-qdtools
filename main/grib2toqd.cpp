@@ -266,7 +266,7 @@ static string GetFileNameAreaStr(const NFmiArea *theArea)
 static NFmiRect GetLatlonCropRect(const string &theBoundsStr)
 {
   vector<string> boundStrList = NFmiStringTools::Split(theBoundsStr, ",");
-  vector<double> coords = NFmiStringTools::Split<vector<double> >(theBoundsStr);
+  auto coords = NFmiStringTools::Split<vector<double> >(theBoundsStr);
   if (coords.size() != 4)
     throw runtime_error(
         "-G option must have exactly 4 comma separated numbers (like -G lat1,lon1,lat2,lon2)");
@@ -363,7 +363,7 @@ static std::shared_ptr<NFmiGrid> GetGridFromProjectionStr(string &theProjectionS
     }
 
     std::shared_ptr<NFmiArea> area = NFmiAreaFactory::Create(areaStr);
-    std::vector<double> values = NFmiStringTools::Split<std::vector<double> >(gridStr, ",");
+    auto values = NFmiStringTools::Split<std::vector<double> >(gridStr, ",");
     if (values.size() != 2)
       throw runtime_error("Given GridSize was invlid, has to be two numbers (e.g. x,y).");
     NFmiPoint gridSize(values[0], values[1]);
@@ -379,7 +379,7 @@ static std::shared_ptr<NFmiGrid> CreateDeepGribCopy(std::shared_ptr<NFmiGrid> &t
   if (theGrid)
     return std::shared_ptr<NFmiGrid>(new NFmiGrid(*theGrid));
   else
-    return std::shared_ptr<NFmiGrid>();
+    return {};
 }
 
 static void HandleSeparateProjections(vector<string> &theSeparateProjectionsStr,
@@ -432,7 +432,7 @@ static void HandleProjectionString(const string &theProjStr, GridSettingsPackage
     string gridSizeStr = "50,50";  // tämä on defaultti hila koko jos sitä ei ole annettu
     if (projParts.size() >= 3)
       gridSizeStr = projParts[2];
-    vector<int> gridSizes = NFmiStringTools::Split<vector<int> >(gridSizeStr, ",");
+    auto gridSizes = NFmiStringTools::Split<vector<int> >(gridSizeStr, ",");
     if (gridSizes.size() < 2)
       throw std::runtime_error(
           "Error with -P option, the projection string with incomplete grid size given.");
@@ -775,7 +775,7 @@ static std::vector<std::string> MakeFullPathFileList(list<string> &theFileNameLi
                                                      const std::string &theDirectory)
 {
   vector<string> fullFileNameVector;
-  for (list<string>::iterator it = theFileNameList.begin(); it != theFileNameList.end(); ++it)
+  for (auto it = theFileNameList.begin(); it != theFileNameList.end(); ++it)
   {
     std::string fullFileName = theDirectory;
     if (fullFileName.size() && fullFileName[fullFileName.size() - 1] != kFmiDirectorySeparator)
@@ -830,7 +830,7 @@ class CombineDataStructureSearcher
 
   void AddTimes(const NFmiTimeDescriptor &theTimeDesc)
   {
-    NFmiTimeDescriptor &timeDesc = const_cast<NFmiTimeDescriptor &>(
+    auto& timeDesc = const_cast<NFmiTimeDescriptor&>(
         theTimeDesc);  // rumaa mutta pitää kikkailla const:ien kanssa
     for (timeDesc.Reset(); timeDesc.Next();)
       itsValidTimes.insert(timeDesc.Time());
@@ -839,7 +839,7 @@ class CombineDataStructureSearcher
 
   void AddLevels(const NFmiVPlaceDescriptor &theVPlaceDesc)
   {
-    NFmiVPlaceDescriptor &vplaceDesc = const_cast<NFmiVPlaceDescriptor &>(
+    auto& vplaceDesc = const_cast<NFmiVPlaceDescriptor&>(
         theVPlaceDesc);  // rumaa mutta pitää kikkailla const:ien kanssa
     for (vplaceDesc.Reset(); vplaceDesc.Next();)
       itsLevels.insert(*(vplaceDesc.Level()));
@@ -847,7 +847,7 @@ class CombineDataStructureSearcher
 
   void AddParams(const NFmiParamDescriptor &theParamDesc)
   {
-    NFmiParamDescriptor &paramDesc = const_cast<NFmiParamDescriptor &>(
+    auto& paramDesc = const_cast<NFmiParamDescriptor&>(
         theParamDesc);  // rumaa mutta pitää kikkailla const:ien kanssa
     for (paramDesc.Reset(); paramDesc.Next();)
     {
@@ -860,7 +860,7 @@ class CombineDataStructureSearcher
   {
     int maxCount = -1;
     MyGrid mostPopularGrid;  // tähä etsitään 'suosituin' hila, ja sitä käytetään datan pohjana
-    for (map<MyGrid, int>::iterator it = itsGridCounts.begin(); it != itsGridCounts.end(); ++it)
+    for (auto it = itsGridCounts.begin(); it != itsGridCounts.end(); ++it)
     {
       if ((*it).second > maxCount)
       {
@@ -875,20 +875,19 @@ class CombineDataStructureSearcher
   NFmiTimeDescriptor GetTimes(void)
   {
     NFmiTimeList times;
-    for (set<NFmiMetTime>::iterator it = itsValidTimes.begin(); it != itsValidTimes.end(); ++it)
+    for (auto it = itsValidTimes.begin(); it != itsValidTimes.end(); ++it)
     {
       times.Add(new NFmiMetTime(*it));
     }
-    set<NFmiMetTime>::iterator origTimeIt =
-        itsOrigTimes.begin();  // otetaan vain 1. origtime, en jaksa nyt miettiä mikä voisi olla
-                               // sopivin, jos on useita vaihtoehtoja
+    auto origTimeIt = itsOrigTimes.begin();  // otetaan vain 1. origtime, en jaksa nyt miettiä mikä
+                                             // voisi olla sopivin, jos on useita vaihtoehtoja
     return NFmiTimeDescriptor(*origTimeIt, times);
   }
 
   NFmiVPlaceDescriptor GetLevels(void)
   {
     NFmiLevelBag levels;
-    for (set<NFmiLevel>::iterator it = itsLevels.begin(); it != itsLevels.end(); ++it)
+    for (auto it = itsLevels.begin(); it != itsLevels.end(); ++it)
     {
       levels.AddLevel(*it);
     }
@@ -897,11 +896,11 @@ class CombineDataStructureSearcher
 
   NFmiParamDescriptor GetParams(void)
   {
-    set<NFmiProducer>::iterator prodIt =
+    auto prodIt =
         itsWantedProducers.begin();  // otetaan vain 1. producer, en jaksa nyt miettiä mikä voisi
                                      // olla sopivin, jos on useita vaihtoehtoja
     NFmiParamBag params;
-    for (set<NFmiParam>::iterator it = itsParams.begin(); it != itsParams.end(); ++it)
+    for (auto it = itsParams.begin(); it != itsParams.end(); ++it)
     {
       params.Add(NFmiDataIdent(*it, *prodIt));
     }
@@ -922,7 +921,7 @@ static set<long> FindAllLevelTypes(TotalQDataCollector &theTotalQDataCollector)
 {
   set<long> levelTypes;
   TotalQDataCollector::Container &qDatas = theTotalQDataCollector.TotalGeneratedQDatas();
-  for (TotalQDataCollector::Container::iterator it = qDatas.begin(); it != qDatas.end(); ++it)
+  for (auto it = qDatas.begin(); it != qDatas.end(); ++it)
   {
     vector<std::shared_ptr<NFmiQueryData> > &qDataVector = *it;
     for (size_t i = 0; i < qDataVector.size(); i++)
@@ -946,14 +945,13 @@ static void SearchForDataStructures(TotalQDataCollector &theTotalQDataCollector,
                                     map<long, CombineDataStructureSearcher> &theLevelTypeStructures)
 {
   TotalQDataCollector::Container &qDatas = theTotalQDataCollector.TotalGeneratedQDatas();
-  for (TotalQDataCollector::Container::iterator it = qDatas.begin(); it != qDatas.end(); ++it)
+  for (auto it = qDatas.begin(); it != qDatas.end(); ++it)
   {
     vector<std::shared_ptr<NFmiQueryData> > &qDataVector = *it;
     for (size_t i = 0; i < qDataVector.size(); i++)
     {
       long levelType = ::GetLevelType(qDataVector[i]);
-      map<long, CombineDataStructureSearcher>::iterator it2 =
-          theLevelTypeStructures.find(levelType);
+      auto it2 = theLevelTypeStructures.find(levelType);
       if (it2 != theLevelTypeStructures.end())
       {
         ::FillStructureData((*it2).second, qDataVector[i]);
@@ -966,9 +964,7 @@ static vector<std::shared_ptr<NFmiQueryData> > CreateEmptyQDataVector(
     map<long, CombineDataStructureSearcher> &theLevelTypeStructures)
 {
   vector<std::shared_ptr<NFmiQueryData> > generatedQDatas;
-  for (map<long, CombineDataStructureSearcher>::iterator it = theLevelTypeStructures.begin();
-       it != theLevelTypeStructures.end();
-       ++it)
+  for (auto it = theLevelTypeStructures.begin(); it != theLevelTypeStructures.end(); ++it)
   {
     NFmiQueryInfo info((*it).second.GetParams(),
                        (*it).second.GetTimes(),
@@ -998,7 +994,7 @@ static void FillQData(std::shared_ptr<NFmiQueryData> &theQData,
     NFmiFastQueryInfo destInfo(theQData.get());
 
     TotalQDataCollector::Container &qDatas = theTotalQDataCollector.TotalGeneratedQDatas();
-    for (TotalQDataCollector::Container::iterator it = qDatas.begin(); it != qDatas.end(); ++it)
+    for (auto it = qDatas.begin(); it != qDatas.end(); ++it)
     {
       vector<std::shared_ptr<NFmiQueryData> > &qDataVector = *it;
       for (size_t i = 0; i < qDataVector.size(); i++)
@@ -1054,8 +1050,7 @@ static void MakeTotalCombineQDatas(TotalQDataCollector &theTotalQDataCollector,
     throw runtime_error("Error unable to create any data.");
   else if (theTotalQDataCollector.AddCount() == 1)
   {
-    TotalQDataCollector::Container::iterator it =
-        theTotalQDataCollector.TotalGeneratedQDatas().begin();
+    auto it = theTotalQDataCollector.TotalGeneratedQDatas().begin();
     theGribFilterOptionsOut.itsGeneratedDatas =
         *it;  // Jos vain yhdestä grib-tiedostosta dataa, laitetaan ne sellaisenaan output-datoiksi
   }
@@ -1067,7 +1062,7 @@ static void MakeTotalCombineQDatas(TotalQDataCollector &theTotalQDataCollector,
     set<long> levelTypes = ::FindAllLevelTypes(theTotalQDataCollector);
     // 0.1 Tee levelType pohjainen struktuuri pohjadatoille
     map<long, CombineDataStructureSearcher> levelTypeStructures;
-    for (set<long>::iterator it = levelTypes.begin(); it != levelTypes.end(); ++it)
+    for (auto it = levelTypes.begin(); it != levelTypes.end(); ++it)
       levelTypeStructures.insert(make_pair(*it, CombineDataStructureSearcher()));
     // 1. Käy läpi datat ja etsi pohjat (hila+alue, parametrit, levelit, ajat) kaikille eri
     // level-tyypeille (esim. pinta, painepinta ja mallipinta).
@@ -1318,8 +1313,8 @@ static bool IgnoreThisLevel(GridRecordData *data, NFmiLevelBag &theIgnoredLevelL
 
 static void FreeDatas(vector<GridRecordData *> &theGribRecordDatas)
 {
-  vector<GridRecordData *>::iterator it = theGribRecordDatas.begin();
-  vector<GridRecordData *>::iterator endIter = theGribRecordDatas.end();
+  auto it = theGribRecordDatas.begin();
+  auto endIter = theGribRecordDatas.end();
   for (; it != endIter; ++it)
     delete *it;
 }
@@ -1608,7 +1603,7 @@ static void GetLevelVerticalCoordinates(grib_handle *theGribHandle,
   {
     // 2. Onko tälle levelille jo olemassa kertoimia?
     int level = static_cast<int>(::round(theGridRecordData.itsLevel.LevelValue()));
-    map<int, pair<double, double> >::iterator it = theVerticalCoordinateMap.find(level);
+    auto it = theVerticalCoordinateMap.find(level);
     if (it == theVerticalCoordinateMap.end())
     {
       // 3. Jos ei, hae koordinaatti taulu (jos löytyy siis)
@@ -1740,11 +1735,11 @@ static NFmiMetTime GetValidTime(grib_handle *theGribHandle)
 
   if (!err1 && !err2)
   {
-    short year = static_cast<short>(validityDate / 10000);
-    short month = static_cast<short>((validityDate / 100) % 100);
-    short day = static_cast<short>(validityDate % 100);
-    short hour = static_cast<short>((validityTime / 100) % 100);
-    short min = static_cast<short>(validityTime % 100);
+    auto year = static_cast<short>(validityDate / 10000);
+    auto month = static_cast<short>((validityDate / 100) % 100);
+    auto day = static_cast<short>(validityDate % 100);
+    auto hour = static_cast<short>((validityTime / 100) % 100);
+    auto min = static_cast<short>(validityTime % 100);
 
     return NFmiMetTime(year, month, day, hour, min, 0, 1);
   }
@@ -2068,8 +2063,7 @@ static void ProjectData(GridRecordData *theGridRecordData,
   std::string sourceStr = ::MakeGridStr(sourceGrid);
 
   std::string mapKeyStr = targetStr + "+" + sourceStr;
-  std::map<std::string, NFmiDataMatrix<NFmiLocationCache> >::iterator it =
-      locationCacheMap.find(mapKeyStr);
+  auto it = locationCacheMap.find(mapKeyStr);
   NFmiDataMatrix<NFmiLocationCache> locationCacheMatrix;
   if (it == locationCacheMap.end())
   {
@@ -2084,7 +2078,7 @@ static void ProjectData(GridRecordData *theGridRecordData,
   NFmiRect relativeRect(0, 0, sourceGrid.XNumber() - 1, sourceGrid.YNumber() - 1);
   theGridRecordData->itsGridData.Resize(targetXSize, targetYSize);
   int counter = 0;
-  FmiParameterName param = FmiParameterName(theGridRecordData->itsParam.GetParam()->GetIdent());
+  auto param = FmiParameterName(theGridRecordData->itsParam.GetParam()->GetIdent());
   for (targetGrid.Reset(); targetGrid.Next(); counter++)
   {
     NFmiLocationCache &locCache =
@@ -2291,7 +2285,7 @@ static void DoParamChecking(GridRecordData &theData,
     theChangedParams.insert(
         make_pair(keyValue, make_pair(*theData.itsParam.GetParam(), theData.itsOrigParam)));
 
-    map<unsigned long, NFmiParam>::iterator it = theUnchangedParams.find(keyValue);
+    auto it = theUnchangedParams.find(keyValue);
     if (it != theUnchangedParams.end())
     {
       fExecutionStoppingError = true;
@@ -2302,7 +2296,7 @@ static void DoParamChecking(GridRecordData &theData,
   {
     theUnchangedParams.insert(make_pair(keyValue, *(theData.itsParam.GetParam())));
 
-    map<unsigned long, pair<NFmiParam, NFmiParam> >::iterator it = theChangedParams.find(keyValue);
+    auto it = theChangedParams.find(keyValue);
     if (it != theChangedParams.end())
     {
       fExecutionStoppingError = true;
@@ -2339,7 +2333,7 @@ void ConvertGrib2QData(GribFilterOptions &theGribFilterOptions)
       counter++;
       if (theGribFilterOptions.fVerbose)
         cerr << counter << " ";
-      GridRecordData *tmpData = new GridRecordData;
+      auto* tmpData = new GridRecordData;
       tmpData->itsLatlonCropRect = theGribFilterOptions.itsLatlonCropRect;
       try
       {
@@ -2457,8 +2451,8 @@ struct LevelLessThan
 
 map<int, int>::iterator FindHighesLevelType(map<int, int> levelTypeCounter)
 {
-  map<int, int>::iterator it = levelTypeCounter.begin();
-  map<int, int>::iterator highestIt = levelTypeCounter.end();
+  auto it = levelTypeCounter.begin();
+  auto highestIt = levelTypeCounter.end();
   for (; it != levelTypeCounter.end(); ++it)
   {
     if (highestIt == levelTypeCounter.end())
@@ -2483,7 +2477,7 @@ NFmiVPlaceDescriptor MakeVPlaceDescriptor(vector<GridRecordData *> &theGribRecor
     }
   }
   NFmiLevelBag levelBag;
-  set<NFmiLevel, LevelLessThan>::iterator it = levelSet.begin();
+  auto it = levelSet.begin();
   for (; it != levelSet.end(); ++it)
     levelBag.AddLevel(*it);
   return NFmiVPlaceDescriptor(levelBag);
@@ -2497,8 +2491,8 @@ vector<NFmiVPlaceDescriptor> GetAllVPlaceDescriptors(vector<GridRecordData *> &t
   set<NFmiLevel, LevelLessThan> levelSet;
   map<int, int> levelTypeCounter;
 
-  vector<GridRecordData *>::iterator it = theGribRecordDatas.begin();
-  vector<GridRecordData *>::iterator endIter = theGribRecordDatas.end();
+  auto it = theGribRecordDatas.begin();
+  auto endIter = theGribRecordDatas.end();
   for (; it != endIter; ++it)
   {
     GridRecordData *bs = *it;
@@ -2511,7 +2505,7 @@ vector<NFmiVPlaceDescriptor> GetAllVPlaceDescriptors(vector<GridRecordData *> &t
 
   if (theGribFilterOptions.fUseOutputFile)
   {
-    map<int, int>::iterator lt = levelTypeCounter.begin();
+    auto lt = levelTypeCounter.begin();
     for (; lt != levelTypeCounter.end(); ++lt)
     {
       NFmiVPlaceDescriptor vDesc = ::MakeVPlaceDescriptor(theGribRecordDatas, lt->first);
@@ -2522,7 +2516,7 @@ vector<NFmiVPlaceDescriptor> GetAllVPlaceDescriptors(vector<GridRecordData *> &t
   else
   {  // tulostus tehdään cout:iin, ja tehdään vain yksi data, toivottavasti se on se merkitsevin,
      // eli otetaan se minkä tyyppisiä esiintyi eniten
-    map<int, int>::iterator lt = FindHighesLevelType(levelTypeCounter);
+    auto lt = FindHighesLevelType(levelTypeCounter);
     if (lt != levelTypeCounter.end())
     {
       NFmiVPlaceDescriptor vDesc = ::MakeVPlaceDescriptor(theGribRecordDatas, lt->first);
@@ -2548,7 +2542,7 @@ vector<NFmiHPlaceDescriptor> GetAllHPlaceDescriptors(vector<GridRecordData *> &t
 
   if (useOutputFile)
   {
-    set<MyGrid>::iterator it2 = gribDataSet.begin();
+    auto it2 = gribDataSet.begin();
     for (; it2 != gribDataSet.end(); ++it2)
     {
       NFmiGrid grid((*it2).itsArea, (*it2).itsNX, (*it2).itsNY);
@@ -2632,7 +2626,7 @@ static void CalcHybridPressureData(vector<std::shared_ptr<NFmiQueryData> > &theQ
   {
     // 1. lasketaan hybridi-dataan paine parametri jos löytyy pinta hybridi data listasta
     FmiParameterName pressureAtStationParId = theHybridPressureInfo.itsHelpParamId;
-    FmiParameterName hybridPressureId =
+    auto hybridPressureId =
         static_cast<FmiParameterName>(theHybridPressureInfo.itsGeneratedHybridParam.GetIdent());
     std::shared_ptr<NFmiQueryData> surfaceData =
         ::GetSurfaceData(theQdatas, pressureAtStationParId);
@@ -2651,7 +2645,7 @@ static void CalcHybridPressureData(vector<std::shared_ptr<NFmiQueryData> > &theQ
             for (hybridInfo.ResetLevel(); hybridInfo.NextLevel();)
             {
               int level = static_cast<int>(::round(hybridInfo.Level()->LevelValue()));
-              map<int, pair<double, double> >::iterator it = theVerticalCoordinateMap.find(level);
+              auto it = theVerticalCoordinateMap.find(level);
               if (it != theVerticalCoordinateMap.end())
               {
                 double a = (*it).second.first;
@@ -2733,10 +2727,10 @@ static void CalcHybridRelativeHumidityData(
   {
     // 1. lasketaan hybridi-dataan RH parametri jos löytyy ominaiskosteus parametri datasta
     FmiParameterName T_id = kFmiTemperature;
-    FmiParameterName P_id =
+    auto P_id =
         static_cast<FmiParameterName>(theHybridPressureInfo.itsGeneratedHybridParam.GetIdent());
     FmiParameterName SH_id = theHybridRelativeHumidityInfo.itsHelpParamId;
-    FmiParameterName RH_id = static_cast<FmiParameterName>(
+    auto RH_id = static_cast<FmiParameterName>(
         theHybridRelativeHumidityInfo.itsGeneratedHybridParam.GetIdent());
     std::shared_ptr<NFmiQueryData> hybridData = ::GethybridData(theQdatas, RH_id);
     if (hybridData)
@@ -2986,7 +2980,7 @@ NFmiTimeDescriptor GetTimeDesc(vector<GridRecordData *> &theGribRecordDatas,
   // Tehdaan aluksi timelist, koska se on helpompi,
   // myohemmin voi miettia saisiko aikaan timebagin.
   NFmiTimeList timeList;
-  set<NFmiMetTime>::iterator it = timesSet.begin();
+  auto it = timesSet.begin();
   NFmiMetTime dummyTime(1950, 1, 1);  // laitoin tälläisen dummytime rajoittimen, koska Pekon
                                       // antamassa datassa oli aika 1919 vuodelta ja se ja
                                       // nykyaikainen aika sekoitti mm. metkun editorin pahasti
@@ -3050,7 +3044,7 @@ NFmiParamDescriptor GetParamDesc(vector<GridRecordData *> &theGribRecordDatas,
   }
 
   NFmiParamBag parBag;
-  set<int>::iterator it = parIds.begin();
+  auto it = parIds.begin();
   for (; it != parIds.end(); ++it)
     parBag.Add(FindFirstParam(*it, theGribRecordDatas));
 
@@ -3096,7 +3090,7 @@ void InterpolateRowData(vector<float> &theSourceValues, vector<float> &theDestVa
     for (unsigned int i = 0; i < theDestValues.size() - 1; i++)
     {
       float relativePos = ratio * i;
-      unsigned int lowerIndex = static_cast<unsigned int>(relativePos);
+      auto lowerIndex = static_cast<unsigned int>(relativePos);
       float relativePosRemains =
           relativePos -
           ::floor(ratio *

@@ -120,7 +120,7 @@ void run(int argc, const char* argv[])
   bool paramFound = false || cmdline.isOption('w') || cmdline.isOption('W');
   string paramIdOrName(cmdline.Parameter(2));
   NFmiEnumConverter eConv;
-  FmiParameterName parNameId = static_cast<FmiParameterName>(eConv.ToEnum(paramIdOrName));
+  auto parNameId = static_cast<FmiParameterName>(eConv.ToEnum(paramIdOrName));
   if (parNameId != kFmiBadParameter && info->Param(parNameId))
     paramFound = true;
   if (!paramFound)
@@ -203,7 +203,7 @@ void run(int argc, const char* argv[])
 
   if (cmdline.isOption('Z'))
   {
-    double newlevel = NFmiStringTools::Convert<double>(cmdline.OptionValue('Z'));
+    auto newlevel = NFmiStringTools::Convert<double>(cmdline.OptionValue('Z'));
     info->First();
     info->EditLevel().LevelValue(newlevel);
   }

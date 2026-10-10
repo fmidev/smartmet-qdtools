@@ -192,7 +192,7 @@ static void ReplaceChar(string &theFileName, char replaceThis, char toThis)
 static NFmiRect GetLatlonCropRect(const string &theBoundsStr)
 {
   vector<string> boundStrList = NFmiStringTools::Split(theBoundsStr, ",");
-  vector<double> coords = NFmiStringTools::Split<vector<double> >(theBoundsStr);
+  auto coords = NFmiStringTools::Split<vector<double> >(theBoundsStr);
   if (coords.size() != 4)
     throw runtime_error(
         "-G option must have exactly 4 comma separated numbers (like -G lat1,lon1,lat2,lon2)");
@@ -222,9 +222,9 @@ static NFmiGrid *CreateWantedGrid(const std::string &theWantedGridStr)
     {
       area->SetXYArea(NFmiRect(0, 0, 1, 1));
     }
-    NFmiGrid *aGrid = new NFmiGrid(area->Clone(),
-                                   static_cast<unsigned long>(gridSize.X()),
-                                   static_cast<unsigned long>(gridSize.Y()));
+    auto* aGrid = new NFmiGrid(area->Clone(),
+                               static_cast<unsigned long>(gridSize.X()),
+                               static_cast<unsigned long>(gridSize.Y()));
     return aGrid;
   }
   throw runtime_error(
@@ -262,7 +262,7 @@ static void HandleProjectionString(const string &theProjStr,
       // nyt pitää tutkia, onko annettu useita hilakokoja eli onko annettu myös
       // painepinta ja mallipintadatoille omat hila koot.
       string gridSizesStr(theProjStr.begin() + pos + 1, theProjStr.end());
-      vector<double> gridSizesList = NFmiStringTools::Split<vector<double> >(gridSizesStr, ",");
+      auto gridSizesList = NFmiStringTools::Split<vector<double> >(gridSizesStr, ",");
       if (gridSizesList.size() < 2)
         throw std::runtime_error(
             "Error with -P option, the grid size options were not correct, minimum one x and y "
@@ -566,8 +566,8 @@ static bool IgnoreThisLevel(GridRecordData *data, NFmiLevelBag &theIgnoredLevelL
 
 static void FreeDatas(vector<GridRecordData *> &theGribRecordDatas)
 {
-  vector<GridRecordData *>::iterator it = theGribRecordDatas.begin();
-  vector<GridRecordData *>::iterator endIter = theGribRecordDatas.end();
+  auto it = theGribRecordDatas.begin();
+  auto endIter = theGribRecordDatas.end();
   for (; it != endIter; ++it)
     delete *it;
 }
@@ -1082,7 +1082,7 @@ static void FillGridData(grib_handle *theGribHandle,
                         theGridRecordData->itsGrid.itsNY);
       int counter = 0;
 
-      FmiParameterName param = FmiParameterName(theGridRecordData->itsParam.GetParam()->GetIdent());
+      auto param = FmiParameterName(theGridRecordData->itsParam.GetParam()->GetIdent());
       for (destGrid.Reset(); destGrid.Next(); counter++)
       {
         int destX = counter % theGridRecordData->itsGrid.itsNX;
@@ -1289,7 +1289,7 @@ vector<NFmiQueryData *> ConvertGrib2QData(FILE *theInput,
       // VAIN max 10 kenttää!!!!  *******
       //			if(counter % 30 != 0)
       //				continue;
-      GridRecordData *tmpData = new GridRecordData;
+      auto* tmpData = new GridRecordData;
       tmpData->itsLatlonCropRect = theLatlonCropRect;
       try
       {
@@ -1436,8 +1436,8 @@ struct LevelLessThan
 
 map<int, int>::iterator FindHighesLevelType(map<int, int> levelTypeCounter)
 {
-  map<int, int>::iterator it = levelTypeCounter.begin();
-  map<int, int>::iterator highestIt = levelTypeCounter.end();
+  auto it = levelTypeCounter.begin();
+  auto highestIt = levelTypeCounter.end();
   for (; it != levelTypeCounter.end(); ++it)
   {
     if (highestIt == levelTypeCounter.end())
@@ -1462,7 +1462,7 @@ NFmiVPlaceDescriptor MakeVPlaceDescriptor(vector<GridRecordData *> &theGribRecor
     }
   }
   NFmiLevelBag levelBag;
-  set<NFmiLevel, LevelLessThan>::iterator it = levelSet.begin();
+  auto it = levelSet.begin();
   for (; it != levelSet.end(); ++it)
     levelBag.AddLevel(*it);
   return NFmiVPlaceDescriptor(levelBag);
@@ -1476,8 +1476,8 @@ vector<NFmiVPlaceDescriptor> GetAllVPlaceDescriptors(vector<GridRecordData *> &t
   set<NFmiLevel, LevelLessThan> levelSet;
   map<int, int> levelTypeCounter;
 
-  vector<GridRecordData *>::iterator it = theGribRecordDatas.begin();
-  vector<GridRecordData *>::iterator endIter = theGribRecordDatas.end();
+  auto it = theGribRecordDatas.begin();
+  auto endIter = theGribRecordDatas.end();
   for (; it != endIter; ++it)
   {
     GridRecordData *bs = *it;
@@ -1490,7 +1490,7 @@ vector<NFmiVPlaceDescriptor> GetAllVPlaceDescriptors(vector<GridRecordData *> &t
 
   if (useOutputFile)
   {
-    map<int, int>::iterator lt = levelTypeCounter.begin();
+    auto lt = levelTypeCounter.begin();
     for (; lt != levelTypeCounter.end(); ++lt)
     {
       NFmiVPlaceDescriptor vDesc = ::MakeVPlaceDescriptor(theGribRecordDatas, lt->first);
@@ -1501,7 +1501,7 @@ vector<NFmiVPlaceDescriptor> GetAllVPlaceDescriptors(vector<GridRecordData *> &t
   else
   {  // tulostus tehdään cout:iin, ja tehdään vain yksi data, toivottavasti se on se merkitsevin,
      // eli otetaan se minkä tyyppisiä esiintyi eniten
-    map<int, int>::iterator lt = FindHighesLevelType(levelTypeCounter);
+    auto lt = FindHighesLevelType(levelTypeCounter);
     if (lt != levelTypeCounter.end())
     {
       NFmiVPlaceDescriptor vDesc = ::MakeVPlaceDescriptor(theGribRecordDatas, lt->first);
@@ -1517,8 +1517,8 @@ vector<NFmiHPlaceDescriptor> GetAllHPlaceDescriptors(vector<GridRecordData *> &t
 {
   set<MyGrid> gribDataSet;
 
-  vector<GridRecordData *>::iterator it = theGribRecordDatas.begin();
-  vector<GridRecordData *>::iterator endIter = theGribRecordDatas.end();
+  auto it = theGribRecordDatas.begin();
+  auto endIter = theGribRecordDatas.end();
   for (; it != endIter; ++it)
   {
     GridRecordData *bs = *it;
@@ -1529,7 +1529,7 @@ vector<NFmiHPlaceDescriptor> GetAllHPlaceDescriptors(vector<GridRecordData *> &t
 
   if (useOutputFile)
   {
-    set<MyGrid>::iterator it2 = gribDataSet.begin();
+    auto it2 = gribDataSet.begin();
     for (; it2 != gribDataSet.end(); ++it2)
     {
       NFmiGrid grid((*it2).itsArea, (*it2).itsNX, (*it2).itsNY);
@@ -1720,7 +1720,7 @@ bool FillQDataWithGribRecords(vector<GridRecordData *> &theGribRecordDatas)
     jpeg_start_compress(&cinfo, TRUE);
 
     // Allocate RGB buffer for single RGB8 row
-    JSAMPLE *image_buffer = reinterpret_cast<JSAMPLE *>(malloc(3 * gridValues.NX()));
+    auto* image_buffer = reinterpret_cast<JSAMPLE*>(malloc(3 * gridValues.NX()));
     JSAMPLE luminance;
     unsigned int byte_offset;
 
@@ -1799,7 +1799,7 @@ NFmiTimeDescriptor GetTimeDesc(vector<GridRecordData *> &theGribRecordDatas,
   // Tehdaan aluksi timelist, koska se on helpompi,
   // myohemmin voi miettia saisiko aikaan timebagin.
   NFmiTimeList timeList;
-  set<NFmiMetTime>::iterator it = timesSet.begin();
+  auto it = timesSet.begin();
   NFmiMetTime dummyTime(1950, 1, 1);  // laitoin tälläisen dummytime rajoittimen, koska Pekon
                                       // antamassa datassa oli aika 1919 vuodelta ja se ja
                                       // nykyaikainen aika sekoitti mm. metkun editorin pahasti
@@ -1850,7 +1850,7 @@ NFmiParamDescriptor GetParamDesc(vector<GridRecordData *> &theGribRecordDatas,
   }
 
   NFmiParamBag parBag;
-  set<int>::iterator it = parIds.begin();
+  auto it = parIds.begin();
   for (; it != parIds.end(); ++it)
     parBag.Add(FindFirstParam(*it, theGribRecordDatas));
 
@@ -1885,7 +1885,7 @@ void InterpolateRowData(vector<float> &theSourceValues, vector<float> &theDestVa
     for (unsigned int i = 0; i < theDestValues.size() - 1; i++)
     {
       float relativePos = ratio * i;
-      unsigned int lowerIndex = static_cast<unsigned int>(relativePos);
+      auto lowerIndex = static_cast<unsigned int>(relativePos);
       float relativePosRemains =
           relativePos -
           ::floor(ratio *

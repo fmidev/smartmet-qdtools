@@ -87,9 +87,7 @@ std::set<std::string> ProjectionStore::names(void) const
 {
   std::set<std::string> result;
 
-  for (NamedProjections::const_iterator it = itsPimple->itsStore.begin();
-       it != itsPimple->itsStore.end();
-       ++it)
+  for (auto it = itsPimple->itsStore.begin(); it != itsPimple->itsStore.end(); ++it)
     result.insert(it->first);
 
   return result;
@@ -107,7 +105,7 @@ std::set<std::string> ProjectionStore::names(void) const
 
 const Projection& ProjectionStore::projection(const std::string& theName) const
 {
-  NamedProjections::const_iterator pos = itsPimple->itsStore.find(theName);
+  auto pos = itsPimple->itsStore.find(theName);
   if (pos == itsPimple->itsStore.end())
   {
     std::string msg = "Accessing Projection ";

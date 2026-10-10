@@ -234,7 +234,7 @@ class NFmiSynopCode
         ::isdigit(static_cast<unsigned char>(theTfieldStr[3])) &&
         (theTfieldStr[4] == '/' || ::tolower(theTfieldStr[4]) == 'x'))
     {
-      float T = ::GetValue<float>(theTfieldStr, 2, 3, theSynopStr);
+      auto T = ::GetValue<float>(theTfieldStr, 2, 3, theSynopStr);
       if (T != kFloatMissing)
         return sign ? -T : T;
       else
@@ -242,7 +242,7 @@ class NFmiSynopCode
     }
     else
     {
-      float T = ::GetValue<float>(theTfieldStr, 2, 4, theSynopStr);
+      auto T = ::GetValue<float>(theTfieldStr, 2, 4, theSynopStr);
       if (T != kFloatMissing)
         return sign ? -T / 10.f : T / 10.f;
       else
@@ -328,7 +328,7 @@ class NFmiSynopCode
     if (_99LaLaLa_Str.size() == 5 && _99LaLaLa_Str[0] == '9' && _99LaLaLa_Str[1] == '9')
     {
       int latCode = ::GetValue<int>(_99LaLaLa_Str, 2, 4, theSynopStr);
-      float lat = static_cast<float>(latCode / 10);
+      auto lat = static_cast<float>(latCode / 10);
       int tenthsPart = latCode % 10;
       lat += tenthsPart / 6.f;
       return lat;
@@ -346,7 +346,7 @@ class NFmiSynopCode
     {
       theQuadrantOfGlobe = ::GetValue<int>(QcLoLoLoLo_Str, 0, 0, theSynopStr);
       int lonCode = ::GetValue<int>(QcLoLoLoLo_Str, 1, 4, theSynopStr);
-      float lon = static_cast<float>(lonCode / 10);
+      auto lon = static_cast<float>(lonCode / 10);
       int tenthsPart = lonCode % 10;
       lon += tenthsPart / 6.f;
       return lon;
@@ -369,8 +369,8 @@ class NFmiSynopCode
     float P = kFloatMissing;
     if (currentSynopField[1] == '0' || currentSynopField[1] == '9')
     {
-      float PPP41 = ::GetValue<float>(currentSynopField, 1, 3, theSynopStr);
-      float PPP42 = ::GetValue<float>(currentSynopField, 4, 4, theSynopStr);
+      auto PPP41 = ::GetValue<float>(currentSynopField, 1, 3, theSynopStr);
+      auto PPP42 = ::GetValue<float>(currentSynopField, 4, 4, theSynopStr);
       if (PPP41 != kFloatMissing && PPP42 != kFloatMissing)
         P = (PPP41 < 500.f) ? (1000 + PPP41 + PPP42 / 10.f) : (PPP41 + PPP42 / 10.f);
       else if (PPP41 != kFloatMissing && PPP42 == kFloatMissing)
@@ -429,10 +429,10 @@ class NFmiSynopCode
         ReadNextField(ssin, currentSynopField, "0ddff", theSynopStr, true);
         if (currentSynopField.size() == 5 && currentSynopField[0] == '0')
         {
-          float dd = ::GetValue<float>(currentSynopField, 1, 2, theSynopStr);
+          auto dd = ::GetValue<float>(currentSynopField, 1, 2, theSynopStr);
           if (dd != kFloatMissing)
             itsWD = dd * 10.f;
-          float ff = ::GetValue<float>(currentSynopField, 3, 4, theSynopStr);
+          auto ff = ::GetValue<float>(currentSynopField, 3, 4, theSynopStr);
 
           // if speed is 99, there is an extra 00fff group coming up
           if (ff == 99)
@@ -505,10 +505,10 @@ class NFmiSynopCode
 
         if (currentSynopField.size() == 5 && currentSynopField[0] == '5')
         {  // puretaan 5appp-kenttä
-          float a = ::GetValue<float>(currentSynopField, 1, 1, theSynopStr);
+          auto a = ::GetValue<float>(currentSynopField, 1, 1, theSynopStr);
           if (a != kFloatMissing)
             itsPressureTendency = a;
-          float ppp = ::GetValue<float>(currentSynopField, 2, 4, theSynopStr);
+          auto ppp = ::GetValue<float>(currentSynopField, 2, 4, theSynopStr);
           if (ppp != kFloatMissing)
             itsPressureChange = ppp / 10.f;
 
@@ -551,7 +551,7 @@ class NFmiSynopCode
       if (out)
       {
         out << endl << "Here is list of all unknown ICAO ids:" << endl;
-        StationErrorStrings::iterator it = begin();
+        auto it = begin();
         for (; it != end(); ++it)
           out << *it << ", ";
         out << endl << endl;
@@ -617,7 +617,7 @@ class NFmiSynopCode
 
         if (itsKnownStations)
         {
-          unsigned long wmoID = ::GetValue<unsigned long>(IIiii_Str, 0, 4, theSynopStr);
+          auto wmoID = ::GetValue<unsigned long>(IIiii_Str, 0, 4, theSynopStr);
           NFmiAviationStation *aviationStation = itsKnownStations->FindStation(wmoID);
           if (aviationStation)
           {
@@ -665,10 +665,10 @@ class NFmiSynopCode
                                     " instead");
 
       itsN = ::GetValue<float>(Nddff_Str, 0, 0, theSynopStr);
-      float dd = ::GetValue<float>(Nddff_Str, 1, 2, theSynopStr);
+      auto dd = ::GetValue<float>(Nddff_Str, 1, 2, theSynopStr);
       if (dd != kFloatMissing)
         itsWD = dd * 10.f;
-      float ff = ::GetValue<float>(Nddff_Str, 3, 4, theSynopStr);
+      auto ff = ::GetValue<float>(Nddff_Str, 3, 4, theSynopStr);
 
       // if speed is 99, there is an extra 00fff group coming up
       if (ff == 99)
@@ -756,10 +756,10 @@ class NFmiSynopCode
 
       if (currentSynopField.size() == 5 && currentSynopField[0] == '5')
       {  // puretaan 5appp-kenttä
-        float a = ::GetValue<float>(currentSynopField, 1, 1, theSynopStr);
+        auto a = ::GetValue<float>(currentSynopField, 1, 1, theSynopStr);
         if (a != kFloatMissing)
           itsPressureTendency = a;
-        float ppp = ::GetValue<float>(currentSynopField, 2, 4, theSynopStr);
+        auto ppp = ::GetValue<float>(currentSynopField, 2, 4, theSynopStr);
         if (ppp != kFloatMissing)
           itsPressureChange = ppp / 10.f;
 
@@ -770,7 +770,7 @@ class NFmiSynopCode
 
       if (currentSynopField.size() == 5 && currentSynopField[0] == '6')
       {  // puretaan 6RRRt-kenttä
-        float RRR = ::GetValue<float>(currentSynopField, 1, 3, theSynopStr);
+        auto RRR = ::GetValue<float>(currentSynopField, 1, 3, theSynopStr);
         if (RRR != kFloatMissing)
         {
           itsPrecipitation = RRR;
@@ -998,7 +998,7 @@ struct PointerDestroyer
 static NFmiTimeList MakeTimeList(std::set<NFmiMetTime> &theTimes)
 {
   NFmiTimeList times;
-  std::set<NFmiMetTime>::iterator it = theTimes.begin();
+  auto it = theTimes.begin();
   for (; it != theTimes.end(); ++it)
     times.Add(new NFmiMetTime(*it));
   return times;
@@ -1034,17 +1034,17 @@ static NFmiLocationBag MakeLocationBag(std::set<NFmiStation> &theStations, bool 
       122000;  // tämä on vain jokin alkuid arvo jota kasvatetaan jokaiselle eri laivalle
   NFmiLocationBag locations;
   //	std::set<T>::iterator it = theStations.begin();
-  std::set<NFmiStation>::iterator it = theStations.begin();
+  auto it = theStations.begin();
   unsigned long ind = 0;
   std::set<NFmiPoint> points;
   std::vector<unsigned long> equalLocationIndexies;
   for (int index = 0; it != theStations.end(); ++it, index++)
   {
-    NFmiStation &station = const_cast<NFmiStation &>(
+    auto& station = const_cast<NFmiStation&>(
         *it);  // g++ kääntäjän takia pitää tehdä tälläisiä const_cast kikkkailuja
-    unsigned long s1 = static_cast<unsigned long>(points.size());
+    auto s1 = static_cast<unsigned long>(points.size());
     points.insert(station.GetLocation());
-    unsigned long s2 = static_cast<unsigned long>(points.size());
+    auto s2 = static_cast<unsigned long>(points.size());
     if (s1 == s2)
     {
       // tämä on pikaviritys. Jos arvottu luotaus-asemat, niillä on samat
@@ -1189,8 +1189,8 @@ static NFmiMetTime GetTimeFromSynopHeader(const string &theTimeStr,
   // NFmiMetTime currentTime(timeStep);
   NFmiMetTime currentTime(referenceTime);
   NFmiMetTime aTime(currentTime);
-  short day = NFmiStringTools::Convert<short>(string(theTimeStr.begin(), theTimeStr.begin() + 2));
-  short hour =
+  auto day = NFmiStringTools::Convert<short>(string(theTimeStr.begin(), theTimeStr.begin() + 2));
+  auto hour =
       NFmiStringTools::Convert<short>(string(theTimeStr.begin() + 2, theTimeStr.begin() + 4));
   ::CheckDayValue(day, theTimeStr, __FUNCTION__);
   ::CheckHourValue(hour, theTimeStr, __FUNCTION__);
@@ -1209,10 +1209,10 @@ static NFmiMetTime GetTimeFromBuoyHeader(const string &theTimeStr, const string 
     throw runtime_error(
         string("Error in GetTimeFromSynopHeader: TimeString was not 5 characters long: '") +
         theTimeStr + "'");
-  short day = NFmiStringTools::Convert<short>(string(theDateStr.begin(), theDateStr.begin() + 2));
-  short month =
+  auto day = NFmiStringTools::Convert<short>(string(theDateStr.begin(), theDateStr.begin() + 2));
+  auto month =
       NFmiStringTools::Convert<short>(string(theDateStr.begin() + 2, theDateStr.begin() + 4));
-  short yearReminder =
+  auto yearReminder =
       NFmiStringTools::Convert<short>(string(theDateStr.begin() + 4, theDateStr.begin() + 5));
   short timeStep = 60;
   NFmiMetTime currentTime(timeStep);
@@ -1222,7 +1222,7 @@ static NFmiMetTime GetTimeFromBuoyHeader(const string &theTimeStr, const string 
   year *= 10;
   year = year + yearReminder;
 
-  short hour = NFmiStringTools::Convert<short>(string(theTimeStr.begin(), theTimeStr.begin() + 2));
+  auto hour = NFmiStringTools::Convert<short>(string(theTimeStr.begin(), theTimeStr.begin() + 2));
 
   ::CheckDayValue(day, theDateStr, __FUNCTION__);
   ::CheckHourValue(hour, theTimeStr, __FUNCTION__);
@@ -1530,7 +1530,7 @@ static std::pair<std::string, std::string> GetLastTwoWords(const std::string &st
         return std::pair<std::string, std::string>("", lastWordStr);
     }
   }
-  return std::pair<std::string, std::string>();
+  return {};
 }
 
 static bool GetPossibleSynopTime(const std::string &timeStr, NFmiMetTime &theSynopTime)
@@ -1542,9 +1542,9 @@ static bool GetPossibleSynopTime(const std::string &timeStr, NFmiMetTime &theSyn
       string dayStr(timeStr.begin(), timeStr.begin() + 2);
       string hourStr(timeStr.begin() + 2, timeStr.begin() + 4);
       string minuteStr(timeStr.begin() + 4, timeStr.begin() + 6);
-      short day = NFmiStringTools::Convert<short>(dayStr);
-      short hour = NFmiStringTools::Convert<short>(hourStr);
-      short minute = NFmiStringTools::Convert<short>(minuteStr);
+      auto day = NFmiStringTools::Convert<short>(dayStr);
+      auto hour = NFmiStringTools::Convert<short>(hourStr);
+      auto minute = NFmiStringTools::Convert<short>(minuteStr);
       if (day > 0 && day <= 31 && hour >= 0 && hour < 24 && minute >= 0 && minute < 60)
       {
         short timeStep = 60;
@@ -1919,7 +1919,7 @@ void Domain(int argc, const char *argv[])
       throw runtime_error(
           "Error: with p-option 2 comma separated parameters expected (e.g. 1001,SYNOP)");
 
-    unsigned long prodId = NFmiStringTools::Convert<unsigned long>(strVector[0]);
+    auto prodId = NFmiStringTools::Convert<unsigned long>(strVector[0]);
     wantedProducer = NFmiProducer(prodId, strVector[1]);
   }
 
@@ -1943,7 +1943,7 @@ void Domain(int argc, const char *argv[])
     std::string filePatternStr = fileFilterList[j];
     std::string usedPath = NFmiFileSystem::PathFromPattern(filePatternStr);
     list<string> fileList = NFmiFileSystem::PatternFiles(filePatternStr);
-    for (list<string>::iterator it = fileList.begin(); it != fileList.end(); ++it)
+    for (auto it = fileList.begin(); it != fileList.end(); ++it)
     {
       //	3. Lue listan tiedostot vuorollaan sisään ja tulkitse siitä sanomat
       // synopCode-vektoriin
@@ -1977,9 +1977,7 @@ void Domain(int argc, const char *argv[])
   {
     cerr << "Warning, there were messages from unknown stations (" << unknownWmoIdsInOut.size()
          << ") that were ignored." << endl;
-    for (std::set<unsigned long>::iterator it = unknownWmoIdsInOut.begin();
-         it != unknownWmoIdsInOut.end();
-         ++it)
+    for (auto it = unknownWmoIdsInOut.begin(); it != unknownWmoIdsInOut.end(); ++it)
       cerr << *it << " ";
     cerr << endl;
   }

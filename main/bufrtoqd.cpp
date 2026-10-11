@@ -642,13 +642,13 @@ using TimeIdentMessageMap = std::map<std::string, IdentMessageMap>;
 using IdentTimeMap = std::map<std::string, NFmiMetTime>;
 using TimeIdentList = std::list<std::string>;
 using StationTimeSet = std::map<long, std::set<std::string>>;
-typedef enum
+enum Phase
 {
   None = 0,
   Flying = 3,
   Takeoff = 5,
   Landing = 6
-} Phase;
+};
 
 // ----------------------------------------------------------------------
 /*!

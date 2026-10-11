@@ -10,7 +10,7 @@ static NFmiEnumConverter converter;
 
 #include <vector>
 
-typedef struct NFmiParamCheckData__
+struct NFmiParamCheckData__
 {
   NFmiParamCheckData__()
       : itsParamId(0),
@@ -42,7 +42,8 @@ typedef struct NFmiParamCheckData__
                                         // virhe/fatal-virhe raja rikki
   float itsCheckedParamMinValue;        // tänne haetaan parametri kohtainen minimi
   float itsCheckedParamMaxValue;        // tänne haetaan parametri kohtainen maksimi
-} NFmiParamCheckData;
+};
+using NFmiParamCheckData = NFmiParamCheckData__;
 
 inline std::ostream& operator<<(std::ostream& os, NFmiParamCheckData& item)
 {

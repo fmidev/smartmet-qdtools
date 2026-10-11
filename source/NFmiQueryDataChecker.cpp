@@ -420,11 +420,13 @@ void NFmiQueryDataChecker::MakeRandomLocationIndexies()
     else
     {
       // muista set avuksi!!
+      // NOLINTNEXTLINE(cert-msc32-c,cert-msc51-cpp): the seed is not used for security
       srand(static_cast<unsigned>(time(nullptr)));
       std::set<int> helpSet;
       int index = 0;
       for (; static_cast<int>(helpSet.size()) < itsRandomlyCheckedLocationCount;)
       {
+        // NOLINTNEXTLINE(cert-msc50-cpp): rand() is not used for security here
         index = rand() % (locationCount - 1);
         helpSet.insert(index);
       }

@@ -44,11 +44,11 @@ BuildRequires: netcdf-cxx4-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
 BuildRequires: smartmet-library-calculator-devel >= 26.4.13
-BuildRequires: smartmet-library-gis-devel >= 26.9.26
-BuildRequires: smartmet-library-imagine-devel >= 26.4.13
-BuildRequires: smartmet-library-macgyver-devel >= 26.6.26
-BuildRequires: smartmet-library-newbase-devel >= 26.6.26
-BuildRequires: smartmet-library-smarttools-devel >= 26.6.26
+BuildRequires: smartmet-library-gis-devel >= 26.10.11
+BuildRequires: smartmet-library-imagine-devel >= 26.10.11
+BuildRequires: smartmet-library-macgyver-devel >= 26.10.11
+BuildRequires: smartmet-library-newbase-devel >= 26.10.11
+BuildRequires: smartmet-library-smarttools-devel >= 26.10.11
 BuildRequires: smartmet-timezones >= 26.9.26
 BuildRequires: zlib-devel
 Requires: %{smartmet_boost}-filesystem
@@ -72,16 +72,16 @@ Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
 Requires: netcdf-cxx4
 Requires: smartmet-library-calculator >= 26.4.13
-Requires: smartmet-library-gis >= 26.9.26
-Requires: smartmet-library-imagine >= 26.4.13
-Requires: smartmet-library-macgyver >= 26.6.26
-Requires: smartmet-library-newbase >= 26.6.26
-Requires: smartmet-library-smarttools >= 26.6.26
+Requires: smartmet-library-gis >= 26.10.11
+Requires: smartmet-library-imagine >= 26.10.11
+Requires: smartmet-library-macgyver >= 26.10.11
+Requires: smartmet-library-newbase >= 26.10.11
+Requires: smartmet-library-smarttools >= 26.10.11
 Requires: smartmet-timezones >= 26.9.26
 Requires: zlib
-#TestRequires: smartmet-library-macgyver-devel >= 26.6.26
+#TestRequires: smartmet-library-macgyver-devel >= 26.10.11
 #TestRequires: gcc-c++
-#TestRequires: smartmet-library-newbase-devel >= 26.10.8
+#TestRequires: smartmet-library-newbase-devel >= 26.10.11
 #TestRequires: smartmet-qdtools-test-data >= 26.10.9
 #TestRequires: libbufr
 
@@ -213,8 +213,6 @@ make %{_smp_mflags}
 * Sun Oct 11 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.11-1.fmi
 - Invalid numbers are now detected instead of silently becoming 0 or a numeric prefix
 - Failed file writes, closes and seeks are now reported instead of being ignored
-
-* Sat Oct 10 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.10-1.fmi
 - Fixed gribtoqd and grib2toqd -D leaving GRIB_DEFINITION_PATH pointing to freed memory
 - Use setenv for TZ in qdinfo and qdsounding
 - qdinfo: report missing -q for -M and -m instead of crashing

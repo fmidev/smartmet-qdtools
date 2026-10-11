@@ -11,7 +11,7 @@ class NFmiDataModifierDataChecking : public NFmiDataModifier
 {
  public:
   NFmiDataModifierDataChecking() : itsCheckedDataCount(0), itsFoundDataCount(0) {};
-  ~NFmiDataModifierDataChecking() override {};
+  ~NFmiDataModifierDataChecking() override = default;
   void Clear() override
   {
     itsCheckedDataCount = 0;
@@ -36,7 +36,7 @@ class NFmiDataModifierDataMissing : public NFmiDataModifierDataChecking
 {
  public:
   NFmiDataModifierDataMissing() : NFmiDataModifierDataChecking() {};
-  ~NFmiDataModifierDataMissing() override {};
+  ~NFmiDataModifierDataMissing() override = default;
   using NFmiDataModifierDataChecking::Calculate;
   void Calculate(float theValue) override
   {
@@ -49,7 +49,7 @@ class NFmiDataModifierDataStraight : public NFmiDataModifierDataChecking
 {
  public:
   NFmiDataModifierDataStraight() : NFmiDataModifierDataChecking(), itsLastValue(kFloatMissing) {};
-  ~NFmiDataModifierDataStraight() override {};
+  ~NFmiDataModifierDataStraight() override = default;
   void Clear() override
   {
     NFmiDataModifierDataChecking::Clear();

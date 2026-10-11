@@ -60,7 +60,6 @@
 #include <newbase/NFmiTimeList.h>
 
 #include <fstream>
-#include <ranges>
 
 using namespace std;
 
@@ -364,9 +363,9 @@ int main(int argc, const char *argv[])
   // This will contain all times that have already been handled
   set<NFmiMetTime> handled_times;
 
-  for (auto& accepted_file : std::ranges::reverse_view(accepted_files))
+  for (auto it = accepted_files.rbegin(); it != accepted_files.rend(); ++it)
   {
-    const string& filename = accepted_file.second;
+    const string &filename = it->second;
     if (verbose)
       cerr << "Reading " << filename << endl;
 

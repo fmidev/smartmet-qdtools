@@ -232,7 +232,7 @@ void Domain(int argc, const char *argv[])
   bool foundAnyFiles = false;
   bool couldDecodeSoundings = false;
   vector<NFmiQueryData *> qDataList;
-  for (auto filePatternStr : fileFilterList)
+  for (const auto& filePatternStr : fileFilterList)
   {
     //	2. Hae jokaista filefilteriä vastaavat tiedostonimet omaan listaan
     std::string usedPath = NFmiFileSystem::PathFromPattern(filePatternStr);

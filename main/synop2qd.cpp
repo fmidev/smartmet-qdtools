@@ -1937,7 +1937,7 @@ void Domain(int argc, const char *argv[])
   std::set<unsigned long> unknownWmoIdsInOut;
   bool foundAnyFiles = false;
   std::vector<NFmiSynopCode> synopCodeVector;
-  for (auto filePatternStr : fileFilterList)
+  for (const auto& filePatternStr : fileFilterList)
   {
     //	2. Hae jokaista filefilteriä vastaavat tiedostonimet omaan listaan
     std::string usedPath = NFmiFileSystem::PathFromPattern(filePatternStr);

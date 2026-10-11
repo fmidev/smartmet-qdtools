@@ -277,7 +277,7 @@ int main(int argc, const char *argv[])
 
   NFmiParamBag pbag;
 
-  for (auto filename : files)
+  for (const auto& filename : files)
   {
     if (verbose)
       cerr << "Reading " << filename << " header" << endl;

@@ -1,7 +1,46 @@
 
 #include "wgrib_functions.h"
 #include <algorithm>
+#include <cerrno>
+#include <climits>
+#include <cstdlib>
 
+namespace
+{
+// Parses the integer at the start of str (as atoi did, the rest of the line is
+// ignored) and stores the position after it in *end. Fails if there is no
+// number or it does not fit in an int.
+bool leading_int(const char *str, int &value, const char **end = nullptr)
+{
+  char *stop = nullptr;
+  errno = 0;
+  const long result = std::strtol(str, &stop, 10);
+  if (stop == str || errno == ERANGE || result < INT_MIN || result > INT_MAX)
+    return false;
+  value = static_cast<int>(result);
+  if (end != nullptr)
+    *end = stop;
+  return true;
+}
+
+// Parses "a:b:c:d" at the start of str, like sscanf(str, "%d:%d:%d:%d") == 4
+bool four_ints(const char *str, int &a, int &b, int &c, int &d)
+{
+  int *values[] = {&a, &b, &c, &d};
+  for (int n = 0; n < 4; n++)
+  {
+    if (n > 0)
+    {
+      if (*str != ':')
+        return false;
+      ++str;
+    }
+    if (!leading_int(str, *values[n], &str))
+      return false;
+  }
+  return true;
+}
+}  // namespace
 void print_pds(unsigned char *pds, int print_PDS, int print_PDS10, int verbose)
 {
   int i, j;
@@ -5428,10 +5467,10 @@ int setup_user_table(int center, int subcenter, int ptable)
       status = not_found;
       return 0;
     }
-    if (atoi(line) != START)
+    int first = 0;
+    if (!leading_int(line, first) || first != START)
       continue;
-    i = sscanf(line, "%d:%d:%d:%d", &j, &center, &subcenter, &ptable);
-    if (i != 4)
+    if (!four_ints(line, j, center, subcenter, ptable))
     {
       fprintf(stderr, "illegal gribtab center/subcenter/ptable line: %s\n", line);
       continue;
@@ -5445,8 +5484,8 @@ int setup_user_table(int center, int subcenter, int ptable)
   user_subcenter = subcenter;
   user_ptable = ptable;
 
-  /* free any used memory */
-  if (parm_table_user[i].name != nullptr)
+  /* free any used memory (entry 4: i used to hold the sscanf result 4 here) */
+  if (parm_table_user[4].name != nullptr)
   {
     for (i = 0; i < 256; i++)
     {
@@ -5461,7 +5500,9 @@ int setup_user_table(int center, int subcenter, int ptable)
   {
     if (fgets(line, 299, input) == nullptr)
       break;
-    if ((i = atoi(line)) == START)
+    if (!leading_int(line, i))
+      i = 0;  // as atoi did
+    if (i == START)
       break;
     line[299] = 0;
 

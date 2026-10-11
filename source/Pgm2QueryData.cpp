@@ -12,6 +12,7 @@
 #include "ProjectionParser.h"
 #include "ProjectionStore.h"
 
+#include <macgyver/StringConversion.h>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileSystem.h>
@@ -143,11 +144,11 @@ static void ReadPgmHeader(std::istream &input,
 
 NFmiMetTime str2time(const std::string &theStamp)
 {
-  short yy = atoi(theStamp.substr(0, 4).c_str());
-  short mm = atoi(theStamp.substr(4, 2).c_str());
-  short dd = atoi(theStamp.substr(6, 2).c_str());
-  short hh = atoi(theStamp.substr(8, 2).c_str());
-  short mi = atoi(theStamp.substr(10, 2).c_str());
+  short yy = Fmi::stoi(theStamp.substr(0, 4));
+  short mm = Fmi::stoi(theStamp.substr(4, 2));
+  short dd = Fmi::stoi(theStamp.substr(6, 2));
+  short hh = Fmi::stoi(theStamp.substr(8, 2));
+  short mi = Fmi::stoi(theStamp.substr(10, 2));
   NFmiMetTime ret(yy, mm, dd, hh, mi, 0, 1);
   return ret;
 }

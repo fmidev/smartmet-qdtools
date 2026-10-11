@@ -22,6 +22,7 @@
 
 #ifdef UNIX
 #include <sys/ioctl.h>
+#include <stdexcept>
 #endif
 
 #ifdef _MSC_VER
@@ -946,7 +947,8 @@ void write_grib(FILE *out, grib_handle *gribHandle)
   const void *mesg;
   size_t mesg_len;
   grib_get_message(gribHandle, &mesg, &mesg_len);
-  fwrite(mesg, 1, mesg_len, out);
+  if (fwrite(mesg, 1, mesg_len, out) != mesg_len)
+    throw std::runtime_error("Failed to write the output file");
 }
 
 // ----------------------------------------------------------------------
@@ -974,8 +976,9 @@ void write_grib(NFmiFastQueryInfo &theInfo, grib_handle *gribHandle, const std::
   const void *mesg;
   size_t mesg_len;
   grib_get_message(gribHandle, &mesg, &mesg_len);
-  fwrite(mesg, 1, mesg_len, out);
-  fclose(out);
+  const bool written = (fwrite(mesg, 1, mesg_len, out) == mesg_len);
+  if (fclose(out) != 0 || !written)
+    throw std::runtime_error("Failed to write the GRIB output");
 }
 
 // ----------------------------------------------------------------------
@@ -1070,11 +1073,11 @@ int run(const int argc, char *argv[])
   catch (...)
   {
     if (out)
-      fclose(out);  // suljetaan outputfile myös virhe tilanteessa
+      (void)fclose(out);  // suljetaan outputfile myös virhe tilanteessa
     throw;          // paiskataan kiinniotettu poikkeus edelleen matkaan
   }
-  if (out)
-    fclose(out);  // lopuksi suljetaan outputfile
+  if (out && fclose(out) != 0)  // lopuksi suljetaan outputfile
+    throw std::runtime_error("Failed to close the GRIB output file");
 
   return 0;
 }

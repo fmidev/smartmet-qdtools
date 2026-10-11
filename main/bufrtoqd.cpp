@@ -1231,7 +1231,7 @@ void read_message(const std::string& filename,
     codes_handle_delete(h);
   }
 
-  fclose(bufr);
+  (void)fclose(bufr);
 
   if (err != CODES_SUCCESS)
     throw std::runtime_error("Error reading BUFR file '" + filename +

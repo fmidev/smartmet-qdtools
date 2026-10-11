@@ -128,7 +128,7 @@ struct GribFilterOptions
   ~GribFilterOptions()
   {
     if (itsInputFile)
-      ::fclose(itsInputFile);  // suljetaan tiedosto, josta gribi luettu
+      (void)::fclose(itsInputFile);  // suljetaan tiedosto, josta gribi luettu
   }
 
   bool DoGlobalFix() const

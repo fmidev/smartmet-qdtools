@@ -509,7 +509,7 @@ int main(int argc, const char **argv)
     returnStatus = 1;
   }
   if (input)
-    fclose(input);  // suljetaan tiedosto, josta gribi luettu
+    (void)fclose(input);  // suljetaan tiedosto, josta gribi luettu
 
   std::for_each(
       datas.begin(), datas.end(), PointerDestroyer());  // tuhotaan dynaamisesti luodut datat
@@ -1684,7 +1684,7 @@ bool FillQDataWithGribRecords(vector<GridRecordData *> &theGribRecordDatas)
     struct tm *time_table;
     const time_t itsValidTime = tmp->itsValidTime.EpochTime();
     time_table = gmtime(&itsValidTime);
-    strftime(pattern, 254, globalFilenamePattern.c_str(), time_table);
+    (void)strftime(pattern, 254, globalFilenamePattern.c_str(), time_table);
     snprintf(jpegFilename, 299, "%s%s.jpg", globalFilenamePrefix.c_str(), pattern);
 
     // Initialize data matrix
@@ -1744,7 +1744,8 @@ bool FillQDataWithGribRecords(vector<GridRecordData *> &theGribRecordDatas)
     }
     jpeg_finish_compress(&cinfo);
     jpeg_destroy_compress(&cinfo);
-    fclose(jpeg);
+    if (fclose(jpeg) != 0)
+      throw std::runtime_error("Failed to close the JPEG output file");
 
     // Grid exported
     filledGridCount++;

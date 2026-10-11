@@ -146,7 +146,7 @@ struct GribFilterOptions
   ~GribFilterOptions()
   {
     if (itsInputFile)
-      ::fclose(itsInputFile);  // suljetaan tiedosto, josta gribi luettu
+      (void)::fclose(itsInputFile);  // suljetaan tiedosto, josta gribi luettu
   }
 
   string itsOutputFileName;  // -o optio tai sitten tulostetann cout:iin

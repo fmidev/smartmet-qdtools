@@ -4,6 +4,7 @@
 #include <cerrno>
 #include <climits>
 #include <cstdlib>
+#include <stdexcept>
 
 namespace
 {
@@ -746,7 +747,8 @@ int wrtieee(float *array, int n, int header, FILE *output)
   {
     if (nbuf >= BSIZ)
     {
-      fwrite(buff, 1, BSIZ, output);
+      if (fwrite(buff, 1, BSIZ, output) != BSIZ)
+        throw std::runtime_error("Failed to write the GRIB output");
       nbuf = 0;
     }
     flt2ieee(array[i], buff + nbuf);
@@ -756,7 +758,8 @@ int wrtieee(float *array, int n, int header, FILE *output)
   {
     if (nbuf == BSIZ)
     {
-      fwrite(buff, 1, BSIZ, output);
+      if (fwrite(buff, 1, BSIZ, output) != BSIZ)
+        throw std::runtime_error("Failed to write the GRIB output");
       nbuf = 0;
     }
     buff[nbuf++] = h4[3];
@@ -765,7 +768,8 @@ int wrtieee(float *array, int n, int header, FILE *output)
     buff[nbuf++] = h4[0];
   }
   if (nbuf)
-    fwrite(buff, 1, nbuf, output);
+    if (fwrite(buff, 1, nbuf, output) != static_cast<size_t>(nbuf))
+      throw std::runtime_error("Failed to write the GRIB output");
   return 0;
 }
 

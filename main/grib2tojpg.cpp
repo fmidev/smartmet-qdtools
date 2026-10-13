@@ -8,6 +8,7 @@
 #endif
 
 #include <fmt/format.h>
+#include <cmath>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiAreaTools.h>
 #include <newbase/NFmiCmdLine.h>
@@ -1645,7 +1646,7 @@ static void buildPowGamma(unsigned char table[],
     /* sample value normalized to 0..1 */
 
     double const v = pow(normalized, oneOverGamma);
-    table[i] = std::min(static_cast<unsigned char>(v * newMaxval + 0.5), newMaxval);
+    table[i] = std::min(static_cast<unsigned char>(std::lround(v * newMaxval)), newMaxval);
     /* denormalize, round and clip */
   }
 }

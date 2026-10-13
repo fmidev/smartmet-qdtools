@@ -2208,7 +2208,7 @@ std::string GetProjString(grib_handle *theHandle)
 
   if (proj_name == "mercator")
   {
-    double lon1, lon2;
+    double lon1 = 0, lon2 = 0;
     bool ok = true;
     ok &= GetGribDoubleValue(theHandle, "longitudeOfFirstGridPointInDegrees", lon1);
     ok &= GetGribDoubleValue(theHandle, "longitudeOfLastGridPointInDegrees", lon2);
@@ -2231,7 +2231,7 @@ std::string GetProjString(grib_handle *theHandle)
 
   if (proj_name == "polar_stereographic")
   {
-    double lat_ts, lon_0;
+    double lat_ts = 0, lon_0 = 0;
     long proj_centre = 0;  // north pole by default
     if (!GetGribDoubleValue(theHandle, "latitudeWhereDxAndDyAreSpecifiedInDegrees", lat_ts) ||
         !GetGribDoubleValue(theHandle, "orientationOfTheGridInDegrees", lon_0) ||
@@ -2247,7 +2247,7 @@ std::string GetProjString(grib_handle *theHandle)
 
   if (proj_name == "lambert")
   {
-    double lon_0, lat_0, lat_1, lat_2, pole_lon, pole_lat;
+    double lon_0 = 0, lat_0 = 0, lat_1 = 0, lat_2 = 0, pole_lon = 0, pole_lat = 0;
     if (!GetGribDoubleValue(theHandle, "LoVInDegrees", lon_0) ||
         !GetGribDoubleValue(theHandle, "LaDInDegrees", lat_0) ||
         !GetGribDoubleValue(theHandle, "Latin1InDegrees", lat_1) ||
@@ -2272,7 +2272,7 @@ std::string GetProjString(grib_handle *theHandle)
 
   if (proj_name == "albers")
   {
-    double lon_0, lat_0, lat_1, lat_2;
+    double lon_0 = 0, lat_0 = 0, lat_1 = 0, lat_2 = 0;
     if (!GetGribDoubleValue(theHandle, "LoVInDegrees", lon_0) ||
         !GetGribDoubleValue(theHandle, "LaDInDegrees", lat_0) ||
         !GetGribDoubleValue(theHandle, "Latin1InDegrees", lat_1) ||
@@ -2297,7 +2297,7 @@ std::string GetProjString(grib_handle *theHandle)
 
   if (proj_name == "space_view")
   {
-    double lon_0, lat_0, Nr;
+    double lon_0 = 0, lat_0 = 0, Nr = 0;
     if (!GetGribDoubleValue(theHandle, "longitudeOfSubSatellitePointInDegrees", lon_0) ||
         !GetGribDoubleValue(theHandle, "latitudeOfSubSatellitePointInDegrees", lat_0) ||
         !GetGribDoubleValue(theHandle, "Nr", Nr))
@@ -2317,7 +2317,7 @@ std::string GetProjString(grib_handle *theHandle)
 
   if (proj_name == "equatorial_azimuthal_equidistant")
   {
-    double lon_0, lat_0;
+    double lon_0 = 0, lat_0 = 0;
     if (!GetGribDoubleValue(theHandle, "standardParallel", lat_0) ||
         !GetGribDoubleValue(theHandle, "centralLongitude", lon_0))
       throw std::runtime_error("Failed to extract equatorial_azimuthal_equidistant parameters");
@@ -2328,7 +2328,7 @@ std::string GetProjString(grib_handle *theHandle)
 
   if (proj_name == "lambert_azimuthal_equal_area")
   {
-    double lon_0, lat_0;
+    double lon_0 = 0, lat_0 = 0;
     if (!GetGribDoubleValue(theHandle, "standardParallel", lat_0) ||
         !GetGribDoubleValue(theHandle, "centralLongitude", lon_0))
       throw std::runtime_error("Failed to extract lambert_azimuthal_equal_area parameters");
@@ -2372,14 +2372,14 @@ NFmiArea *GetGribArea(grib_handle *theHandle, GribFilterOptions &theGribFilterOp
 
   if (proj_name == "rotated_ll" || proj_name == "rotated_gg")
   {
-    double lon1, lat1, lon2, lat2;
+    double lon1 = 0, lat1 = 0, lon2 = 0, lat2 = 0;
     if (!GetGribDoubleValue(theHandle, "longitudeOfFirstGridPointInDegrees", lon1) ||
         !GetGribDoubleValue(theHandle, "latitudeOfFirstGridPointInDegrees", lat1) ||
         !GetGribDoubleValue(theHandle, "longitudeOfLastGridPointInDegrees", lon2) ||
         !GetGribDoubleValue(theHandle, "latitudeOfLastGridPointInDegrees", lat2))
       throw std::runtime_error(fmt::format(fmt::runtime(err), "latlon bounding box", proj_name));
 
-    double pole_lon, pole_lat, rotation;
+    double pole_lon = 0, pole_lat = 0, rotation = 0;
     if (!GetGribDoubleValue(theHandle, "longitudeOfSouthernPoleInDegrees", pole_lon) ||
         !GetGribDoubleValue(theHandle, "latitudeOfSouthernPoleInDegrees", pole_lat) ||
         !GetGribDoubleValue(theHandle, "angleOfRotationInDegrees", rotation))
@@ -2400,7 +2400,7 @@ NFmiArea *GetGribArea(grib_handle *theHandle, GribFilterOptions &theGribFilterOp
 
   if (proj_name == "mercator")
   {
-    double lon1, lat1, lon2, lat2;
+    double lon1 = 0, lat1 = 0, lon2 = 0, lat2 = 0;
     if (!GetGribDoubleValue(theHandle, "longitudeOfFirstGridPointInDegrees", lon1) ||
         !GetGribDoubleValue(theHandle, "latitudeOfFirstGridPointInDegrees", lat1) ||
         !GetGribDoubleValue(theHandle, "longitudeOfLastGridPointInDegrees", lon2) ||

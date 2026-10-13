@@ -55,6 +55,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <fmt/format.h>
+#include <cmath>
 #include <newbase/NFmiAreaTools.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiEnumConverter.h>
@@ -445,8 +446,8 @@ const NFmiHPlaceDescriptor make_hdesc(const KrigingData& theData)
 
   // The grid size is then
 
-  const int width = static_cast<int>((xmax - xmin) / dx + 0.5) + 1;
-  const int height = static_cast<int>((ymax - ymin) / dy + 0.5) + 1;
+  const int width = static_cast<int>(std::lround((xmax - xmin) / dx)) + 1;
+  const int height = static_cast<int>(std::lround((ymax - ymin) / dy)) + 1;
 
   // Now we can create the projection
 

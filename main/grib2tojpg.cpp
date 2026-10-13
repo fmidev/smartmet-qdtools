@@ -134,10 +134,10 @@ vector<NFmiQueryData *> ConvertGrib2QData(FILE *theInput,
                                           int wantedGridInfoPrintCount,
                                           const NFmiProducer &theWantedProducer,
                                           bool doGlobeFix,
-                                          vector<FmiLevelType> &theAcceptOnlyLevelTypes,
+                                         const vector<FmiLevelType>& theAcceptOnlyLevelTypes,
                                           int &theDifferentAreaCount,
                                           const NFmiRect &theLatlonCropRect,
-                                          vector<ParamChangeItem> &theParamChangeTable,
+                                         const vector<ParamChangeItem>& theParamChangeTable,
                                           bool fCropParamsNotMensionedInTable,
                                           bool verbose,
                                           NFmiGrid *theWantedGrid,
@@ -152,13 +152,13 @@ NFmiQueryData *CreateQueryData(vector<GridRecordData *> &theGribRecordDatas,
                                NFmiVPlaceDescriptor &theVplace,
                                int theMaxQDataSizeInBytes);
 NFmiParamDescriptor GetParamDesc(vector<GridRecordData *> &theGribRecordDatas,
-                                 NFmiHPlaceDescriptor &theHplace,
-                                 NFmiVPlaceDescriptor &theVplace);
+                                 const NFmiHPlaceDescriptor& theHplace,
+                                 const NFmiVPlaceDescriptor& theVplace);
 const NFmiDataIdent &FindFirstParam(int theParId, vector<GridRecordData *> &theGribRecordDatas);
 NFmiVPlaceDescriptor GetVPlaceDesc(vector<GridRecordData *> &theGribRecordDatas);
 const NFmiLevel &FindFirstLevel(int theLevelValue, vector<GridRecordData *> &theGribRecordDatas);
 NFmiTimeDescriptor GetTimeDesc(vector<GridRecordData *> &theGribRecordDatas,
-                               NFmiHPlaceDescriptor &theHplace,
+                               const NFmiHPlaceDescriptor& theHplace,
                                NFmiVPlaceDescriptor &theVplace);
 bool FillQDataWithGribRecords(vector<GridRecordData *> &theGribRecordDatas);
 int GetIntegerOptionValue(const NFmiCmdLine &theCmdline, char theOption);
@@ -534,11 +534,12 @@ void Usage()
        << endl;
 }
 
-static bool AcceptThisLevelType(GridRecordData *data, vector<FmiLevelType> &theAcceptOnlyLevelTypes)
+static bool AcceptThisLevelType(GridRecordData* data,
+                                const vector<FmiLevelType>& theAcceptOnlyLevelTypes)
 {
   if (theAcceptOnlyLevelTypes.size() > 0)
   {
-    for (auto& theAcceptOnlyLevelType : theAcceptOnlyLevelTypes)
+    for (const auto& theAcceptOnlyLevelType : theAcceptOnlyLevelTypes)
     {
       if (theAcceptOnlyLevelType == data->itsLevel.LevelType())
         return true;  // skipataan jokerin valuen yhteydessä kaikki kyseisen level tyypin kentät
@@ -965,11 +966,11 @@ static double GetMissingValue(grib_handle *theGribHandle)
 }
 
 static void MakeParameterConversions(GridRecordData *theGridRecordData,
-                                     vector<ParamChangeItem> &theParamChangeTable)
+                                     const vector<ParamChangeItem>& theParamChangeTable)
 {
   if (theParamChangeTable.size() > 0)
   {  // tehdään tarvittaessa parametrille base+scale muunnos
-    for (auto& paramChangeItem : theParamChangeTable)
+    for (const auto& paramChangeItem : theParamChangeTable)
     {
       if (paramChangeItem.itsWantedParam.GetIdent() ==
           static_cast<long>(theGridRecordData->itsParam.GetParamIdent()))  // parametri on jo
@@ -998,7 +999,7 @@ static void MakeParameterConversions(GridRecordData *theGridRecordData,
 static void FillGridData(grib_handle *theGribHandle,
                          GridRecordData *theGridRecordData,
                          bool doGlobeFix,
-                         vector<ParamChangeItem> &theParamChangeTable)
+                         const vector<ParamChangeItem>& theParamChangeTable)
 {
   // 1. Täytetään ensin origGridin kokoinen matriisi, koska pitää pystyä tekemään mm. global fix
   size_t values_length = 0;
@@ -1178,13 +1179,13 @@ puoliskolla olevat laitetaan oikealle
 }
 */
 
-static void ChangeParamSettingsIfNeeded(vector<ParamChangeItem> &theParamChangeTable,
+static void ChangeParamSettingsIfNeeded(const vector<ParamChangeItem>& theParamChangeTable,
                                         GridRecordData *theGribData,
                                         bool verbose)
 {
   if (theParamChangeTable.size() > 0)
   {  // muutetaan tarvittaessa parametrin nimeä ja id:tä
-    for (auto& paramChangeItem : theParamChangeTable)
+    for (const auto& paramChangeItem : theParamChangeTable)
     {
       if (paramChangeItem.itsOriginalParamId == theGribData->itsParam.GetParamIdent() &&
           paramChangeItem.itsLevel && (*paramChangeItem.itsLevel) == theGribData->itsLevel)
@@ -1219,11 +1220,11 @@ static void ChangeParamSettingsIfNeeded(vector<ParamChangeItem> &theParamChangeT
 
 static bool CropParam(GridRecordData *gribData,
                       bool fCropParamsNotMensionedInTable,
-                      vector<ParamChangeItem> &theParamChangeTable)
+                      const vector<ParamChangeItem>& theParamChangeTable)
 {
   if (fCropParamsNotMensionedInTable && theParamChangeTable.size())
   {
-    for (auto& paramChangeItem : theParamChangeTable)
+    for (const auto& paramChangeItem : theParamChangeTable)
     {
       if (static_cast<long>(gribData->itsParam.GetParamIdent()) ==
           paramChangeItem.itsWantedParam.GetIdent())
@@ -1251,10 +1252,10 @@ vector<NFmiQueryData *> ConvertGrib2QData(FILE *theInput,
                                           int /* wantedGridInfoPrintCount */,
                                           const NFmiProducer &theWantedProducer,
                                           bool doGlobeFix,
-                                          vector<FmiLevelType> &theAcceptOnlyLevelTypes,
+                                         const vector<FmiLevelType>& theAcceptOnlyLevelTypes,
                                           int &theDifferentAreaCount,
                                           const NFmiRect &theLatlonCropRect,
-                                          vector<ParamChangeItem> &theParamChangeTable,
+                                         const vector<ParamChangeItem>& theParamChangeTable,
                                           bool fCropParamsNotMensionedInTable,
                                           bool verbose,
                                           NFmiGrid *theWantedGrid,
@@ -1779,7 +1780,7 @@ bool ConvertTimeList2TimeBag(NFmiTimeList &theTimeList, NFmiTimeBag &theTimeBag)
 // kontrolli grideihin (2x2 hila ja muuta outoa). Tälläiset hilat jätetään huomiotta.
 // Timebagin rakentelussa tarkastellaan myös että hila ja level-type ovat halutunlaiset.
 NFmiTimeDescriptor GetTimeDesc(vector<GridRecordData *> &theGribRecordDatas,
-                               NFmiHPlaceDescriptor &theHplace,
+                               const NFmiHPlaceDescriptor& theHplace,
                                NFmiVPlaceDescriptor &theVplace)
 {
   MyGrid grid(*theHplace.Grid());
@@ -1830,8 +1831,8 @@ NFmiVPlaceDescriptor GetVPlaceDesc(vector<GridRecordData *> &theGribRecordDatas)
 // olla
 // sama kuin vplaceDescriptorissa.
 NFmiParamDescriptor GetParamDesc(vector<GridRecordData *> &theGribRecordDatas,
-                                 NFmiHPlaceDescriptor &theHplace,
-                                 NFmiVPlaceDescriptor &theVplace)
+                                 const NFmiHPlaceDescriptor& theHplace,
+                                 const NFmiVPlaceDescriptor& theVplace)
 {
   // Ensin pitää saada 1. levelin level-type talteen vplaceDescriptorista, sillä otamme vain
   // parametreja, mitä löytyy sellaisista hila kentistä missä on tälläinen level id.
@@ -1898,7 +1899,7 @@ void InterpolateRowData(vector<float> &theSourceValues, vector<float> &theDestVa
 }
 
 // TODO ei osaa vielä hanskata scanmodeja
-void FillGridDataWithVariableLengthData(float *theArray,
+void FillGridDataWithVariableLengthData(const float* theArray,
                                         GridRecordData *theGribData,
                                         int /* scanIModePos */,
                                         int /* scanJModePos */,

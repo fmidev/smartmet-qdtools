@@ -134,7 +134,7 @@ FmiNcMetaData::~FmiNcMetaData()
 {
   delete itsMetaInfo;
 }
-void FmiNcMetaData::MakeMetaInfo(FmiTDimVarInfo &theTimeInfo, NFmiGrid &theGrid)
+void FmiNcMetaData::MakeMetaInfo(const FmiTDimVarInfo& theTimeInfo, const NFmiGrid& theGrid)
 {
   delete itsMetaInfo;
   itsMetaInfo = nullptr;
@@ -164,7 +164,7 @@ void FmiNcMetaData::MakeMetaInfo(FmiTDimVarInfo &theTimeInfo, NFmiGrid &theGrid)
   }
 }
 
-std::string FmiNcMetaData::GetLevelDimName()
+std::string FmiNcMetaData::GetLevelDimName() const
 {
   if (fUseSurfaceInfo)
     return itsSurfaceLevelInfo.itsDimName;
@@ -172,7 +172,7 @@ std::string FmiNcMetaData::GetLevelDimName()
     return itsMultiLevelInfo.itsDimName;
 }
 
-FmiNcLevelType FmiNcMetaData::GetLevelType()
+FmiNcLevelType FmiNcMetaData::GetLevelType() const
 {
   if (fUseSurfaceInfo)
     return itsSurfaceLevelInfo.itsNcLevelType;
@@ -198,13 +198,13 @@ FmiNetCdfQueryData::FmiNetCdfQueryData()
 
 FmiNetCdfQueryData::~FmiNetCdfQueryData(void) = default;
 static NFmiQueryData *MakeQueryData(const netCDF::NcFile &theNcFile,
-                                    NFmiQueryInfo &theMetaInfo,
-                                    std::vector<FmiVarInfo> &theVarInfos)
+                                    const NFmiQueryInfo& theMetaInfo,
+                                    const std::vector<FmiVarInfo>& theVarInfos)
 {
   NFmiQueryData *qData = NFmiQueryDataUtil::CreateEmptyData(theMetaInfo);
   NFmiFastQueryInfo fInfo(qData);
 
-  for (auto& theVarInfo : theVarInfos)
+  for (const auto& theVarInfo : theVarInfos)
   {
     if (fInfo.Param(static_cast<FmiParameterName>(theVarInfo.itsParId)))  // theVarInfos:issa on
                                                                           // kaikki parametrit
@@ -647,7 +647,7 @@ static bool CheckDimName(const netCDF::NcVar &theVar, const std::string &theDimN
 }
 
 // Tarkistaa että muuttujalla on kolme dimensiota, ja ne ovat x, y ja time
-bool FmiNetCdfQueryData::IsSurfaceVariable(const netCDF::NcVar &theVar)
+bool FmiNetCdfQueryData::IsSurfaceVariable(const netCDF::NcVar& theVar) const
 {
   if (theVar.getDimCount() == 3)
   {

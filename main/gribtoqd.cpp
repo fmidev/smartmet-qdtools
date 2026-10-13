@@ -1119,7 +1119,8 @@ struct ConnectionEdgeInfo
   // 5. Alueilla pitää olla sama leveys longitudeissa
   // 6. Alueilla pitää olla sama korkeus latitudeissa
 
-  ConnectionEdgeInfo(std::shared_ptr<NFmiQueryData> &data1, std::shared_ptr<NFmiQueryData> &data2)
+  ConnectionEdgeInfo(const std::shared_ptr<NFmiQueryData>& data1,
+                     const std::shared_ptr<NFmiQueryData>& data2)
       : connectionDirection(kNoDirection), levelType(kFmiNoLevelType)
   {
     NFmiFastQueryInfo finfo1(data1.get());
@@ -3806,7 +3807,7 @@ void ConvertOneGribFile(const GribFilterOptions &theGribFilterOptionsIn,
 
 namespace wgrib2qd
 {
-NFmiLevel GetLevel(unsigned char *pds)
+NFmiLevel GetLevel(const unsigned char* pds)
 {
   int levelType = PDS_L_TYPE(pds);
   int highLevValue = PDS_LEVEL1(pds);
@@ -4109,7 +4110,7 @@ string GetGridInfoStr(unsigned char *gds, unsigned char *bds)
   return str;
 }
 
-NFmiArea *CreateLatlonArea(unsigned char *gds,
+NFmiArea* CreateLatlonArea(const unsigned char* gds,
                            unsigned char * /* bds */,
                            int scanIModePos,
                            int scanJModePos,
@@ -4166,7 +4167,9 @@ NFmiArea *CreateStereographicArea(unsigned char *gds, unsigned char *bds)
   return NFmiArea::CreateFromCornerAndSize(proj, "FMI", bl, widthInMeters, heightInMeters);
 }
 
-NFmiArea *CreateRotatedLatlonArea(unsigned char *gds, unsigned char * /* bds */, bool fDoYAxisFlip)
+NFmiArea* CreateRotatedLatlonArea(const unsigned char* gds,
+                                  unsigned char* /* bds */,
+                                  bool fDoYAxisFlip)
 {
   double lo1 = 0.001 * GDS_RotLL_Lo1(gds);
   double lo2 = 0.001 * GDS_RotLL_Lo2(gds);
@@ -4188,7 +4191,7 @@ NFmiArea *CreateRotatedLatlonArea(unsigned char *gds, unsigned char * /* bds */,
   return NFmiArea::CreateFromBBox(proj, bl, tr);
 }
 
-NFmiArea *CreateMercatorArea(unsigned char *gds, unsigned char * /* bds */, bool fDoYAxisFlip)
+NFmiArea* CreateMercatorArea(const unsigned char* gds, unsigned char* /* bds */, bool fDoYAxisFlip)
 {
   double lo1 = 0.001 * GDS_Merc_Lo1(gds);
   double lo2 = 0.001 * GDS_Merc_Lo2(gds);

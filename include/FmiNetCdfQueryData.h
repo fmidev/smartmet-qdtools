@@ -54,7 +54,7 @@ class FmiXYDimVarInfo
 {
  public:
   FmiXYDimVarInfo() : itsVarName(), itsIndex(-1), itsValues() {}
-  bool IsEmpty() { return (itsIndex == -1); }
+  bool IsEmpty() const { return (itsIndex == -1); }
   // private:
   std::string itsVarName;
   int itsIndex;  // muuttujan (var) indeksi NC-tiedostossa
@@ -165,9 +165,9 @@ class FmiNcMetaData
   FmiNcMetaData(bool useSurfaceInfo);
   ~FmiNcMetaData();
 
-  void MakeMetaInfo(FmiTDimVarInfo &theTimeInfo, NFmiGrid &theGrid);
-  std::string GetLevelDimName();
-  FmiNcLevelType GetLevelType();
+  void MakeMetaInfo(const FmiTDimVarInfo& theTimeInfo, const NFmiGrid& theGrid);
+  std::string GetLevelDimName() const;
+  FmiNcLevelType GetLevelType() const;
 
   // private:
   bool fUseSurfaceInfo;
@@ -206,7 +206,7 @@ class FmiNetCdfQueryData
   void SeekProjectionInfo(const netCDF::NcFile &theNcFile);
   void InitializeStreographicGrid();
   FmiZDimVarInfo &GetLevelInfo(const FmiNcLevelType theLevelType);
-  bool IsSurfaceVariable(const netCDF::NcVar &theVar);
+  bool IsSurfaceVariable(const netCDF::NcVar& theVar) const;
   void MakesureSurfaceMetaDataIsInitialized();
 
   bool fDataOk;                         // onko tämä initialisoitu ja onko annettu NcFile ollut ok.

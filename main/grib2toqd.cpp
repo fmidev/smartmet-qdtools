@@ -189,7 +189,7 @@ class TotalQDataCollector
   using Container = list<vector<std::shared_ptr<NFmiQueryData> > >;
 
   TotalQDataCollector() : itsAddCount(0), itsTotalGeneratedQDatas() {}
-  void AddData(vector<std::shared_ptr<NFmiQueryData> > &theDataList)
+  void AddData(const vector<std::shared_ptr<NFmiQueryData> >& theDataList)
   {
     if (theDataList.size())
     {
@@ -219,20 +219,20 @@ void CreateQueryDatas(vector<GridRecordData *> &theGribRecordDatas,
                       GribFilterOptions &theGribFilterOptions,
                       map<int, pair<double, double> > &theVerticalCoordinateMap);
 std::shared_ptr<NFmiQueryData> CreateQueryData(vector<GridRecordData *> &theGribRecordDatas,
-                                               NFmiHPlaceDescriptor &theHplace,
+                                               const NFmiHPlaceDescriptor& theHplace,
                                                NFmiVPlaceDescriptor &theVplace,
-                                               GribFilterOptions &theGribFilterOptions);
+                                               const GribFilterOptions& theGribFilterOptions);
 NFmiParamDescriptor GetParamDesc(vector<GridRecordData *> &theGribRecordDatas,
-                                 NFmiHPlaceDescriptor &theHplace,
-                                 NFmiVPlaceDescriptor &theVplace,
+                                 const NFmiHPlaceDescriptor& theHplace,
+                                 const NFmiVPlaceDescriptor& theVplace,
                                  const GribFilterOptions &theGribFilterOptions);
 const NFmiDataIdent &FindFirstParam(int theParId, vector<GridRecordData *> &theGribRecordDatas);
 NFmiVPlaceDescriptor GetVPlaceDesc(vector<GridRecordData *> &theGribRecordDatas);
 const NFmiLevel &FindFirstLevel(int theLevelValue, vector<GridRecordData *> &theGribRecordDatas);
 NFmiTimeDescriptor GetTimeDesc(vector<GridRecordData *> &theGribRecordDatas,
-                               NFmiHPlaceDescriptor &theHplace,
+                               const NFmiHPlaceDescriptor& theHplace,
                                NFmiVPlaceDescriptor &theVplace);
-bool FillQDataWithGribRecords(std::shared_ptr<NFmiQueryData> &theQData,
+bool FillQDataWithGribRecords(const std::shared_ptr<NFmiQueryData>& theQData,
                               vector<GridRecordData *> &theGribRecordDatas,
                               bool verbose);
 int GetIntegerOptionValue(const NFmiCmdLine &theCmdline, char theOption);
@@ -332,7 +332,7 @@ static void InitParamChangeTable(const string &theParamChangeTableFileName,
 
 const NFmiPoint gMissingGridSize(kFloatMissing, kFloatMissing);
 
-static std::shared_ptr<NFmiGrid> GetGridFromProjectionStr(string &theProjectionStr,
+static std::shared_ptr<NFmiGrid> GetGridFromProjectionStr(const string& theProjectionStr,
                                                           int gridSizeX = -1,
                                                           int gridSizeY = -1)
 {
@@ -374,7 +374,7 @@ static std::shared_ptr<NFmiGrid> GetGridFromProjectionStr(string &theProjectionS
   }
 }
 
-static std::shared_ptr<NFmiGrid> CreateDeepGribCopy(std::shared_ptr<NFmiGrid> &theGrid)
+static std::shared_ptr<NFmiGrid> CreateDeepGribCopy(const std::shared_ptr<NFmiGrid>& theGrid)
 {
   if (theGrid)
     return std::make_shared<NFmiGrid>(*theGrid);
@@ -467,7 +467,8 @@ static bool IsDifferentGridFileNamesUsed(vector<std::shared_ptr<NFmiQueryData> >
   return false;
 }
 
-static bool DoCommandLineCheck(NFmiCmdLine &theCmdLine, std::string &theFilePatternOrDirectoryOut)
+static bool DoCommandLineCheck(const NFmiCmdLine& theCmdLine,
+                               std::string& theFilePatternOrDirectoryOut)
 {
   if (theCmdLine.Status().IsError())
   {
@@ -489,7 +490,7 @@ static bool DoCommandLineCheck(NFmiCmdLine &theCmdLine, std::string &theFilePatt
   return true;
 }
 
-static bool GetIgnoreLevelList(NFmiCmdLine &theCmdLine, NFmiLevelBag &theIgnoredLevelListOut)
+static bool GetIgnoreLevelList(const NFmiCmdLine& theCmdLine, NFmiLevelBag& theIgnoredLevelListOut)
 {
   if (theCmdLine.isOption('l'))
   {
@@ -519,7 +520,7 @@ static bool GetIgnoreLevelList(NFmiCmdLine &theCmdLine, NFmiLevelBag &theIgnored
   return true;
 }
 
-static bool GetProducer(NFmiCmdLine &theCmdLine, GribFilterOptions &theGribFilterOptions)
+static bool GetProducer(const NFmiCmdLine& theCmdLine, GribFilterOptions& theGribFilterOptions)
 {
   if (theCmdLine.isOption('p'))
   {
@@ -543,7 +544,7 @@ static bool GetProducer(NFmiCmdLine &theCmdLine, GribFilterOptions &theGribFilte
   return true;
 }
 
-static bool GribDefinitionPath(NFmiCmdLine &theCmdLine)
+static bool GribDefinitionPath(const NFmiCmdLine& theCmdLine)
 {
   if (theCmdLine.isOption('D'))
   {
@@ -554,7 +555,7 @@ static bool GribDefinitionPath(NFmiCmdLine &theCmdLine)
   return true;
 }
 
-static vector<FmiLevelType> GetAcceptedLevelTypes(NFmiCmdLine &theCmdLine)
+static vector<FmiLevelType> GetAcceptedLevelTypes(const NFmiCmdLine& theCmdLine)
 {
   vector<FmiLevelType> acceptOnlyLevelTypes;
   if (theCmdLine.isOption('L'))
@@ -571,7 +572,7 @@ static vector<FmiLevelType> GetAcceptedLevelTypes(NFmiCmdLine &theCmdLine)
   return acceptOnlyLevelTypes;
 }
 
-static GeneratedHybridParamInfo GetGeneratedHybridParamInfo(NFmiCmdLine &theCmdLine,
+static GeneratedHybridParamInfo GetGeneratedHybridParamInfo(const NFmiCmdLine& theCmdLine,
                                                             char theOptionLetter,
                                                             unsigned long theDefaultParamId,
                                                             const std::string &theDefaultParamName)
@@ -604,7 +605,7 @@ static GeneratedHybridParamInfo GetGeneratedHybridParamInfo(NFmiCmdLine &theCmdL
   return hybridParamInfo;
 }
 
-static long GetLevelType(std::shared_ptr<NFmiQueryData> &theQData)
+static long GetLevelType(const std::shared_ptr<NFmiQueryData>& theQData)
 {
   if (theQData)
   {
@@ -684,7 +685,7 @@ static void StoreQueryDatas(GribFilterOptions &theGribFilterOptions)
   theGribFilterOptions.itsReturnStatus = returnStatus;
 }
 
-static bool GetGridOptions(NFmiCmdLine &theCmdLine, GridSettingsPackage &theGridSettings)
+static bool GetGridOptions(const NFmiCmdLine& theCmdLine, GridSettingsPackage& theGridSettings)
 {
   if (theCmdLine.isOption('P'))
   {
@@ -702,7 +703,7 @@ static bool GetGridOptions(NFmiCmdLine &theCmdLine, GridSettingsPackage &theGrid
   return true;
 }
 
-static int GetOptions(NFmiCmdLine &theCmdLine, GribFilterOptions &theGribFilterOptions)
+static int GetOptions(const NFmiCmdLine& theCmdLine, GribFilterOptions& theGribFilterOptions)
 {
   if (theCmdLine.isOption('o'))
   {
@@ -770,11 +771,11 @@ static std::string GetDirectory(const std::string &theFileFilter)
   return static_cast<char *>(str);
 }
 
-static std::vector<std::string> MakeFullPathFileList(list<string> &theFileNameList,
+static std::vector<std::string> MakeFullPathFileList(const list<string>& theFileNameList,
                                                      const std::string &theDirectory)
 {
   vector<string> fullFileNameVector;
-  for (auto& it : theFileNameList)
+  for (const auto& it : theFileNameList)
   {
     std::string fullFileName = theDirectory;
     if (fullFileName.size() && fullFileName[fullFileName.size() - 1] != kFmiDirectorySeparator)
@@ -931,7 +932,7 @@ static set<long> FindAllLevelTypes(TotalQDataCollector &theTotalQDataCollector)
 }
 
 static void FillStructureData(CombineDataStructureSearcher &theStructureSearcher,
-                              std::shared_ptr<NFmiQueryData> &theQData)
+                              const std::shared_ptr<NFmiQueryData>& theQData)
 {
   theStructureSearcher.AddGrid(theQData->Info()->HPlaceDescriptor());
   theStructureSearcher.AddTimes(theQData->Info()->TimeDescriptor());
@@ -982,7 +983,7 @@ static bool HasValidData(const NFmiDataMatrix<float> &theValues)
   return false;
 }
 
-static void FillQData(std::shared_ptr<NFmiQueryData> &theQData,
+static void FillQData(const std::shared_ptr<NFmiQueryData>& theQData,
                       TotalQDataCollector &theTotalQDataCollector)
 {
   if (theQData)
@@ -1277,11 +1278,12 @@ void Usage()
        << endl;
 }
 
-static bool AcceptThisLevelType(GridRecordData *data, vector<FmiLevelType> &theAcceptOnlyLevelTypes)
+static bool AcceptThisLevelType(GridRecordData* data,
+                                const vector<FmiLevelType>& theAcceptOnlyLevelTypes)
 {
   if (theAcceptOnlyLevelTypes.size() > 0)
   {
-    for (auto& theAcceptOnlyLevelType : theAcceptOnlyLevelTypes)
+    for (const auto& theAcceptOnlyLevelType : theAcceptOnlyLevelTypes)
     {
       if (theAcceptOnlyLevelType == data->itsLevel.LevelType())
         return true;  // skipataan jokerin valuen yhteydessä kaikki kyseisen level tyypin kentät
@@ -1504,7 +1506,7 @@ static void CalcCroppedGrid(GridRecordData *theGridRecordData)
 static void FillGridInfoFromGribHandle(grib_handle *theGribHandle,
                                        GridRecordData *theGridRecordData,
                                        bool &doGlobeFix,
-                                       GridSettingsPackage &theGridSettings)
+                                       const GridSettingsPackage& theGridSettings)
 {
   long gridDefinitionTemplateNumber =
       0;  // tähän tulee projektio tyyppi, ks. qooglesta (grib2 Table 3.1)
@@ -1591,7 +1593,7 @@ static void FillGridInfoFromGribHandle(grib_handle *theGribHandle,
 }
 
 static void GetLevelVerticalCoordinates(grib_handle *theGribHandle,
-                                        GridRecordData &theGridRecordData,
+                                        const GridRecordData& theGridRecordData,
                                         map<int, pair<double, double> > &theVerticalCoordinateMap)
 {
   // 1. Onko data hybrid-dataa?
@@ -1948,11 +1950,11 @@ static double GetMissingValue(grib_handle *theGribHandle)
 }
 
 static void MakeParameterConversions(GridRecordData *theGridRecordData,
-                                     vector<ParamChangeItem> &theParamChangeTable)
+                                     const vector<ParamChangeItem>& theParamChangeTable)
 {
   if (theParamChangeTable.size() > 0)
   {  // tehdään tarvittaessa parametrille base+scale muunnos
-    for (auto& paramChangeItem : theParamChangeTable)
+    for (const auto& paramChangeItem : theParamChangeTable)
     {
       if (paramChangeItem.itsWantedParam.GetIdent() ==
           static_cast<long>(theGridRecordData->itsParam.GetParamIdent()))  // parametri on jo
@@ -2040,7 +2042,7 @@ static std::string MakeGridStr(const NFmiGrid &theGrid)
 }
 
 static void ProjectData(GridRecordData *theGridRecordData,
-                        NFmiDataMatrix<float> &theOrigValues,
+                        const NFmiDataMatrix<float>& theOrigValues,
                         bool verbose)
 {
   static std::map<std::string, NFmiDataMatrix<NFmiLocationCache> > locationCacheMap;
@@ -2103,7 +2105,7 @@ static void DoAreaManipulations(GridRecordData *theGridRecordData,
 static void FillGridData(grib_handle *theGribHandle,
                          GridRecordData *theGridRecordData,
                          bool doGlobeFix,
-                         vector<ParamChangeItem> &theParamChangeTable,
+                         const vector<ParamChangeItem>& theParamChangeTable,
                          bool verbose)
 {
   // 1. Täytetään ensin origGridin kokoinen matriisi, koska pitää pystyä tekemään mm. global fix
@@ -2169,13 +2171,13 @@ static void FillGridData(grib_handle *theGribHandle,
   ::MakeParameterConversions(theGridRecordData, theParamChangeTable);
 }
 
-static void ChangeParamSettingsIfNeeded(vector<ParamChangeItem> &theParamChangeTable,
+static void ChangeParamSettingsIfNeeded(const vector<ParamChangeItem>& theParamChangeTable,
                                         GridRecordData *theGribData,
                                         bool verbose)
 {
   if (theParamChangeTable.size() > 0)
   {  // muutetaan tarvittaessa parametrin nimeä ja id:tä
-    for (auto& paramChangeItem : theParamChangeTable)
+    for (const auto& paramChangeItem : theParamChangeTable)
     {
       if (paramChangeItem.itsOriginalParamId ==
               static_cast<long>(theGribData->itsParam.GetParamIdent()) &&
@@ -2214,11 +2216,11 @@ static void ChangeParamSettingsIfNeeded(vector<ParamChangeItem> &theParamChangeT
 
 static bool CropParam(GridRecordData *gribData,
                       bool fCropParamsNotMensionedInTable,
-                      vector<ParamChangeItem> &theParamChangeTable)
+                      const vector<ParamChangeItem>& theParamChangeTable)
 {
   if (fCropParamsNotMensionedInTable && theParamChangeTable.size())
   {
-    for (auto& paramChangeItem : theParamChangeTable)
+    for (const auto& paramChangeItem : theParamChangeTable)
     {
       if (static_cast<long>(gribData->itsParam.GetParamIdent()) ==
           paramChangeItem.itsWantedParam.GetIdent())
@@ -2266,7 +2268,7 @@ static void DoParamConflictError(const NFmiParam &theChangedParam,
   throw runtime_error(errorStr);
 }
 
-static void DoParamChecking(GridRecordData &theData,
+static void DoParamChecking(const GridRecordData& theData,
                             map<unsigned long, pair<NFmiParam, NFmiParam> > &theChangedParams,
                             map<unsigned long, NFmiParam> &theUnchangedParams,
                             bool &fExecutionStoppingError)
@@ -2553,10 +2555,11 @@ vector<NFmiHPlaceDescriptor> GetAllHPlaceDescriptors(vector<GridRecordData *> &t
 }
 
 static std::shared_ptr<NFmiQueryData> GetSurfaceData(
-    vector<std::shared_ptr<NFmiQueryData> > &theQdatas, FmiParameterName thePressureAtStationParId)
+    const vector<std::shared_ptr<NFmiQueryData> >& theQdatas,
+    FmiParameterName thePressureAtStationParId)
 {
   std::shared_ptr<NFmiQueryData> surfaceData;
-  for (auto& theQdata : theQdatas)
+  for (const auto& theQdata : theQdatas)
   {
     if (theQdata->Info()->SizeLevels() == 1)
     {
@@ -2571,10 +2574,10 @@ static std::shared_ptr<NFmiQueryData> GetSurfaceData(
 }
 
 static std::shared_ptr<NFmiQueryData> GethybridData(
-    vector<std::shared_ptr<NFmiQueryData> > &theQdatas, FmiParameterName pressureId)
+    const vector<std::shared_ptr<NFmiQueryData> >& theQdatas, FmiParameterName pressureId)
 {
   std::shared_ptr<NFmiQueryData> hybridData;
-  for (auto& theQdata : theQdatas)
+  for (const auto& theQdata : theQdatas)
   {
     if (theQdata->Info()->SizeLevels() > 1)  // pitää olla useita leveleitä
     {
@@ -2609,7 +2612,7 @@ static float CalcHybridPressure(double a, double b, float surfacePressure)
   }
 }
 
-static void CalcHybridPressureData(vector<std::shared_ptr<NFmiQueryData> > &theQdatas,
+static void CalcHybridPressureData(const vector<std::shared_ptr<NFmiQueryData> >& theQdatas,
                                    map<int, pair<double, double> > &theVerticalCoordinateMap,
                                    const GeneratedHybridParamInfo &theHybridPressureInfo)
 {
@@ -2710,7 +2713,7 @@ static float CalcRH(float P, float T, float Q)
 
 // HUOM! Tämä pitää ajaa vasta jos ensin on laskettu paine parametri hybridi dataan!!!
 static void CalcHybridRelativeHumidityData(
-    vector<std::shared_ptr<NFmiQueryData> > &theQdatas,
+    const vector<std::shared_ptr<NFmiQueryData> >& theQdatas,
     const GeneratedHybridParamInfo &theHybridRelativeHumidityInfo,
     const GeneratedHybridParamInfo &theHybridPressureInfo)
 {
@@ -2776,11 +2779,11 @@ static void CalcHybridRelativeHumidityData(
   }
 }
 
-static void ForceLevelToSurfaceType(vector<GridRecordData *> &theGribRecordDatas,
+static void ForceLevelToSurfaceType(const vector<GridRecordData*>& theGribRecordDatas,
                                     const NFmiLevel &theSurfaceLevel,
                                     const NFmiLevel &theChangedLevel)
 {
-  for (auto& theGribRecordData : theGribRecordDatas)
+  for (const auto& theGribRecordData : theGribRecordDatas)
   {
     if (theGribRecordData->itsLevel == theChangedLevel)
       theGribRecordData->itsLevel = theSurfaceLevel;
@@ -2849,9 +2852,9 @@ void CreateQueryDatas(vector<GridRecordData *> &theGribRecordDatas,
 }
 
 std::shared_ptr<NFmiQueryData> CreateQueryData(vector<GridRecordData *> &theGribRecordDatas,
-                                               NFmiHPlaceDescriptor &theHplace,
+                                               const NFmiHPlaceDescriptor& theHplace,
                                                NFmiVPlaceDescriptor &theVplace,
-                                               GribFilterOptions &theGribFilterOptions)
+                                               const GribFilterOptions& theGribFilterOptions)
 {
   std::shared_ptr<NFmiQueryData> qdata;
   int gribCount = static_cast<int>(theGribRecordDatas.size());
@@ -2898,7 +2901,7 @@ void CheckInfoSize(const NFmiQueryInfo &theInfo, size_t theMaxQDataSizeInBytes)
   }
 }
 
-bool FillQDataWithGribRecords(std::shared_ptr<NFmiQueryData> &theQData,
+bool FillQDataWithGribRecords(const std::shared_ptr<NFmiQueryData>& theQData,
                               vector<GridRecordData *> &theGribRecordDatas,
                               bool verbose)
 {
@@ -2953,7 +2956,7 @@ bool ConvertTimeList2TimeBag(NFmiTimeList &theTimeList, NFmiTimeBag &theTimeBag)
 // kontrolli grideihin (2x2 hila ja muuta outoa). Tälläiset hilat jätetään huomiotta.
 // Timebagin rakentelussa tarkastellaan myös että hila ja level-type ovat halutunlaiset.
 NFmiTimeDescriptor GetTimeDesc(vector<GridRecordData *> &theGribRecordDatas,
-                               NFmiHPlaceDescriptor &theHplace,
+                               const NFmiHPlaceDescriptor& theHplace,
                                NFmiVPlaceDescriptor &theVplace)
 {
   MyGrid grid(*theHplace.Grid());
@@ -3016,8 +3019,8 @@ static void AddGeneratedHybridParam(NFmiParamBag &theGeneratedParamBag,
 // olla
 // sama kuin vplaceDescriptorissa.
 NFmiParamDescriptor GetParamDesc(vector<GridRecordData *> &theGribRecordDatas,
-                                 NFmiHPlaceDescriptor &theHplace,
-                                 NFmiVPlaceDescriptor &theVplace,
+                                 const NFmiHPlaceDescriptor& theHplace,
+                                 const NFmiVPlaceDescriptor& theVplace,
                                  const GribFilterOptions &theGribFilterOptions)
 {
   // Ensin pitää saada 1. levelin level-type talteen vplaceDescriptorista, sillä otamme vain
@@ -3096,7 +3099,7 @@ void InterpolateRowData(vector<float> &theSourceValues, vector<float> &theDestVa
 }
 
 // TODO ei osaa vielä hanskata scanmodeja
-void FillGridDataWithVariableLengthData(float *theArray,
+void FillGridDataWithVariableLengthData(const float* theArray,
                                         GridRecordData *theGribData,
                                         int /* scanIModePos */,
                                         int /* scanJModePos */,

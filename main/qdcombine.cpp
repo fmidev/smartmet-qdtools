@@ -62,7 +62,7 @@ struct PointerDestroyer
   }
 };
 
-static void ReadGridData(vector<string> &theDataFileNames, MyGrid &theUsedGrid)
+static void ReadGridData(const vector<string>& theDataFileNames, MyGrid& theUsedGrid)
 {
   for (const auto& theDataFileName : theDataFileNames)
   {
@@ -228,7 +228,7 @@ struct LevelLessThan
 
 static NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
                                            bool use_point_data,
-                                           MyGrid &theUsedGrid,
+                                           const MyGrid& theUsedGrid,
                                            NFmiLevel *theForcedLevel,
                                            NFmiProducer *theWantedProducer)
 {

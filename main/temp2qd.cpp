@@ -70,10 +70,10 @@ struct PointerDestroyer
   }
 };
 
-static void FillCombinedSoundingData(vector<NFmiQueryData *> &theDataList,
+static void FillCombinedSoundingData(const vector<NFmiQueryData*>& theDataList,
                                      NFmiFastQueryInfo &theInfo)
 {
-  for (auto& i : theDataList)
+  for (const auto& i : theDataList)
   {
     NFmiFastQueryInfo sourceInfo(i);
     for (sourceInfo.ResetTime(); sourceInfo.NextTime();)

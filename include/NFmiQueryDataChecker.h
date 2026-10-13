@@ -85,7 +85,7 @@ class NFmiQueryDataChecker
       const std::vector<int>& value);  // jos arvonta ei kelpaa, aseta itse indeksit
   const std::vector<int>& RandomLocationIndexies() const { return itsRandomLocationIndexies; }
   void DoIndexRandomizing(bool value) { fDoIndexRandomizing = value; }
-  bool DoIndexRandomizing() { return fDoIndexRandomizing; }
+  bool DoIndexRandomizing() const { return fDoIndexRandomizing; }
 
  private:
   bool DoMissingDataCheck();

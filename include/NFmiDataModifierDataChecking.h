@@ -17,8 +17,8 @@ class NFmiDataModifierDataChecking : public NFmiDataModifier
     itsCheckedDataCount = 0;
     itsFoundDataCount = 0;
   };
-  int CheckedDataCount() { return itsCheckedDataCount; }
-  int FoundDataCount() { return itsFoundDataCount; }
+  int CheckedDataCount() const { return itsCheckedDataCount; }
+  int FoundDataCount() const { return itsFoundDataCount; }
   using NFmiDataModifier::CalculationResult;
   float CalculationResult() override
   {

@@ -90,7 +90,7 @@ static void ThrowLatLonProblemException(const std::string &theFunctionNameStr,
 
 static void MakeParamThings(unsigned long parId,
                             const string &name,
-                            NFmiDataIdent &dataIdent,
+                            const NFmiDataIdent& dataIdent,
                             NFmiParamBag &parBag)
 {
   NFmiParam *param = dataIdent.GetParam();
@@ -288,7 +288,7 @@ static NFmiMetTime GetTime(const std::string &timeStr,
  */
 // ----------------------------------------------------------------------
 
-static bool ConvertTimeList2TimeBag(NFmiTimeList &theTimeList, NFmiTimeBag &theTimeBag)
+static bool ConvertTimeList2TimeBag(const NFmiTimeList& theTimeList, NFmiTimeBag& theTimeBag)
 {
   // tutkitaan onko mahdollista tehda listasta bagi
   // eli ajat ovat peräkkäisiä ja tasavälisiä
@@ -468,7 +468,7 @@ static void FillInfoFromMetarData(NFmiFastQueryInfo &info, const vector<MetarDat
  */
 // ----------------------------------------------------------------------
 
-static NFmiQueryInfo MakeQueryInfo(NFmiParamDescriptor &params,
+static NFmiQueryInfo MakeQueryInfo(const NFmiParamDescriptor& params,
                                    NFmiAviationStationInfoSystem &theStationInfoSystem,
                                    const vector<MetarData> &dataBlocks)
 {
@@ -484,7 +484,7 @@ static NFmiQueryInfo MakeQueryInfo(NFmiParamDescriptor &params,
  */
 // ----------------------------------------------------------------------
 
-static NFmiQueryData *MakeQueryDataFromBlocks(NFmiParamDescriptor &params,
+static NFmiQueryData* MakeQueryDataFromBlocks(const NFmiParamDescriptor& params,
                                               NFmiAviationStationInfoSystem &theStationInfoSystem,
                                               const vector<MetarData> &dataBlocks)
 {

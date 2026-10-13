@@ -223,7 +223,7 @@ unsigned char *seek_grib(
  *
  */
 
-double ibm2flt(unsigned char *ibm)
+double ibm2flt(const unsigned char* ibm)
 {
   int positive, power;
   unsigned int abspower;
@@ -364,7 +364,7 @@ enum Def_NCEP_Table def_ncep_table = DEF_T62_NCEP_TABLE;
  * returns pointer to the parameter table
  */
 
-static struct ParmTable *Parm_Table(unsigned char *pds)
+static struct ParmTable* Parm_Table(const unsigned char* pds)
 {
   int i, center, subcenter, ptable, process;
   static int missing_count = 0, reanal_opn_count = 0;
@@ -5182,7 +5182,7 @@ struct ParmTable parm_table_omb[256] = {
  * prefix and suffix are only printed if EC_ext has text
  */
 
-void EC_ext(unsigned char *pds, char *prefix, char *suffix)
+void EC_ext(const unsigned char* pds, char* prefix, char* suffix)
 {
   /* int i;
   printf("\n");
@@ -5218,8 +5218,8 @@ void EC_ext(unsigned char *pds, char *prefix, char *suffix)
  * 7/25/03 wind fix Dusan Jovic
  */
 
-int GDS_grid(unsigned char *gds,
-             unsigned char *bds,
+int GDS_grid(const unsigned char* gds,
+             const unsigned char* bds,
              int *nx,
              int *ny,
              long int *nxny,
@@ -5325,7 +5325,7 @@ static const char *scan_mode[8] = {"EW/NS",
                                    "WE/SN",
                                    "SN/WE"};
 
-void GDS_winds(unsigned char *gds, int verbose)
+void GDS_winds(const unsigned char* gds, int verbose)
 {
   int scan = -1, mode = -1;
 
@@ -5758,7 +5758,7 @@ int add_time(int *year, int *month, int *day, int *hour, int dtime, int unit)
  *
  */
 
-int verf_time(unsigned char *pds, int *year, int *month, int *day, int *hour)
+int verf_time(const unsigned char* pds, int* year, int* month, int* day, int* hour)
 {
   int tr, dtime, unit;
 

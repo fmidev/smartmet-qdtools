@@ -13,7 +13,8 @@ void Usage(const std::string &theExecutableName);
 void Run(int argc, const char *argv[]);
 NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo &qi,
                                         const std::vector<NFmiDataIdent> &addedParameters);
-std::vector<NFmiDataIdent> GetAddedParameters(NFmiCmdLine &cmdline, NFmiQueryData *baseQueryData);
+std::vector<NFmiDataIdent> GetAddedParameters(const NFmiCmdLine& cmdline,
+                                              NFmiQueryData* baseQueryData);
 std::unique_ptr<NFmiQueryData> CreateNewBaseData(NFmiQueryData &originalData,
                                                  const std::vector<NFmiDataIdent> &addedParameters);
 
@@ -248,7 +249,8 @@ void AddNonExistingParamToVector(FmiParameterName paramId,
 }
 
 // Oletus: baseQueryData ei ole nullptr
-std::vector<NFmiDataIdent> GetAddedParameters(NFmiCmdLine &cmdline, NFmiQueryData *baseQueryData)
+std::vector<NFmiDataIdent> GetAddedParameters(const NFmiCmdLine& cmdline,
+                                              NFmiQueryData* baseQueryData)
 {
   NFmiFastQueryInfo fastInfo(baseQueryData);
   std::vector<NFmiDataIdent> possibleAddedParameters;

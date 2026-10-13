@@ -100,7 +100,7 @@ static float convertOctaToProcent(float octas)
     return kFloatMissing;
 }
 
-static void ConvertNfromOctasToProcent(std::unique_ptr<NFmiQueryData> &data,
+static void ConvertNfromOctasToProcent(const std::unique_ptr<NFmiQueryData>& data,
                                        NFmiFastQueryInfo &sourceInfo)
 {
   NFmiFastQueryInfo info(data.get());

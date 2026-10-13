@@ -216,7 +216,8 @@ static void PrintNcDimension(const netCDF::NcDim& dim, int indexZeroBased)
 }
 
 // Haetaan kaikki dimensiot erilliseen map:iin.
-static WRFData::DimensionMap GetNCDimensionMap(nctools::Options &options, const netCDF::NcFile &ncFile)
+static WRFData::DimensionMap GetNCDimensionMap(const nctools::Options& options,
+                                               const netCDF::NcFile& ncFile)
 {
   try
   {
@@ -240,7 +241,7 @@ static WRFData::DimensionMap GetNCDimensionMap(nctools::Options &options, const 
   }
 }
 
-static WRFData::TotalDimensionData GetTotalDimensionDataFromParam(nctools::Options &options,
+static WRFData::TotalDimensionData GetTotalDimensionDataFromParam(const nctools::Options& options,
                                                                   const netCDF::NcVar& var)
 {
   try
@@ -341,7 +342,7 @@ static void AddDimensionData(WRFData::TotalDimensionDataSet &dimDataSet,
 // Lisäksi liitetään kaikki dimensioPaketteihin niihin liittyvät parametrit.
 // Näistä dimensiopaketeista ja niihin liittyvistä parametreista voidaan tehdä myöhemmin
 // erillisiä queryInfoja eri tulos datoille.
-static WRFData::TotalDimensionDataSet GetNCTotalDimensionDataSet(nctools::Options &options,
+static WRFData::TotalDimensionDataSet GetNCTotalDimensionDataSet(const nctools::Options& options,
                                                                  const netCDF::NcFile &ncFile)
 {
   try
@@ -470,7 +471,7 @@ static std::string GetWRFGlobalAttributeString(const netCDF::NcFile &ncFile,
   }
 }
 
-static void PrintWRFGlobalAttributes(nctools::Options &options, const netCDF::NcFile &ncFile)
+static void PrintWRFGlobalAttributes(const nctools::Options& options, const netCDF::NcFile& ncFile)
 {
   try
   {
@@ -644,7 +645,7 @@ static std::string MakeAreaCornersString(const NFmiPoint &bottomLeft, const NFmi
   return str;
 }
 
-static void SetFinalDataAreaInfo(nctools::Options &options, BaseGridAreaData &areaData)
+static void SetFinalDataAreaInfo(const nctools::Options& options, BaseGridAreaData& areaData)
 {
   try
   {
@@ -996,7 +997,7 @@ static NFmiTimeDescriptor CreateWRFTimeDescriptor(const netCDF::NcFile &ncFile)
 }
 
 static NFmiHPlaceDescriptor CreateWRFHplaceDescriptor(
-    WRFData::TotalDimensionDataSet::value_type &totalDiemnsionData,
+    const WRFData::TotalDimensionDataSet::value_type& totalDiemnsionData,
     const BaseGridAreaData &areaData)
 {
   NFmiAreaFactory::return_type areaPtr =
@@ -1043,8 +1044,9 @@ static netCDF::NcVar GetWantedLevelVariable(const netCDF::NcFile &ncFile,
   }
 }
 
-static bool IsBaseHybridLevelType(WRFData::TotalDimensionDataSet::value_type &totalDiemnsionData,
-                                  FmiLevelType usedLevelType)
+static bool IsBaseHybridLevelType(
+    const WRFData::TotalDimensionDataSet::value_type& totalDiemnsionData,
+    FmiLevelType usedLevelType)
 {
   // usedLevelType pitääolla hybrid tyyppiä
   if (usedLevelType == kFmiHybridLevel)
@@ -1059,8 +1061,8 @@ static bool IsBaseHybridLevelType(WRFData::TotalDimensionDataSet::value_type &to
 }
 
 static NFmiVPlaceDescriptor CreateWRFVplaceDescriptor(
-    nctools::Options &options,
-    WRFData::TotalDimensionDataSet::value_type &totalDiemnsionData,
+    const nctools::Options& options,
+    const WRFData::TotalDimensionDataSet::value_type& totalDiemnsionData,
     const netCDF::NcFile &ncFile,
     BaseGridAreaData &areaData)
 {
@@ -1141,7 +1143,7 @@ static NFmiQueryInfo *CreateNewInnerInfo(
   }
 }
 
-static std::string GetParamNamesListString(std::shared_ptr<NFmiQueryData> &data)
+static std::string GetParamNamesListString(const std::shared_ptr<NFmiQueryData>& data)
 {
   std::string namesStr;
   const NFmiParamDescriptor &parDesc = data->Info()->ParamDescriptor();
@@ -1286,7 +1288,7 @@ static std::shared_ptr<NFmiQueryData> MakeLevelStaggeredDataFix(
 }
 
 static std::shared_ptr<NFmiQueryData> MakeStaggeredDataFix(
-    nctools::Options &options,
+    const nctools::Options& options,
     const std::shared_ptr<NFmiQueryData> &data,
     const WRFData::TotalDimensionDataSet::value_type &totalDimensionData,
     const BaseGridAreaData &areaData)
@@ -1345,7 +1347,7 @@ static bool DataIndexUsed(size_t index, const std::set<size_t> &usedDataIndexies
 }
 
 static std::vector<std::shared_ptr<NFmiQueryData> > CombineFixedStaggeredData(
-    nctools::Options &options, const std::vector<std::shared_ptr<NFmiQueryData> > &dataVector)
+    const nctools::Options& options, const std::vector<std::shared_ptr<NFmiQueryData> >& dataVector)
 {
   try
   {
@@ -1405,7 +1407,7 @@ static std::vector<std::shared_ptr<NFmiQueryData> > CombineFixedStaggeredData(
 }
 
 static std::vector<std::shared_ptr<NFmiQueryData> > DoFinalProjisionToData(
-    nctools::Options &options,
+    const nctools::Options& options,
     const BaseGridAreaData &areaData,
     std::vector<std::shared_ptr<NFmiQueryData> > &dataVector)
 {
@@ -1485,7 +1487,7 @@ static std::string MakeFinalProducerName(
   }
 }
 
-static std::string GetProducerNamePostFix(std::shared_ptr<NFmiQueryData> &data)
+static std::string GetProducerNamePostFix(const std::shared_ptr<NFmiQueryData>& data)
 {
   std::string producerName = data->Info()->Producer()->GetName().CharPtr();
   std::string::size_type pos = producerName.find_last_of('_');

@@ -996,7 +996,7 @@ struct PointerDestroyer
   }
 };
 
-static NFmiTimeList MakeTimeList(std::set<NFmiMetTime> &theTimes)
+static NFmiTimeList MakeTimeList(const std::set<NFmiMetTime>& theTimes)
 {
   NFmiTimeList times;
   auto it = theTimes.begin();
@@ -1029,7 +1029,8 @@ static NFmiTimeList MakeTimeListForSynop(const std::vector<NFmiSynopCode> &theSy
   return MakeTimeList(collector.itsTimes);
 }
 
-static NFmiLocationBag MakeLocationBag(std::set<NFmiStation> &theStations, bool fDoShipMessages)
+static NFmiLocationBag MakeLocationBag(const std::set<NFmiStation>& theStations,
+                                       bool fDoShipMessages)
 {
   unsigned long shipMessageStationId =
       122000;  // tämä on vain jokin alkuid arvo jota kasvatetaan jokaiselle eri laivalle

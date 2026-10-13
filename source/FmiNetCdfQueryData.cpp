@@ -197,11 +197,15 @@ FmiNetCdfQueryData::FmiNetCdfQueryData()
 }
 
 FmiNetCdfQueryData::~FmiNetCdfQueryData(void) = default;
-static NFmiQueryData *MakeQueryData(const netCDF::NcFile &theNcFile,
-                                    const NFmiQueryInfo& theMetaInfo,
+static NFmiQueryData* MakeQueryData(const netCDF::NcFile& theNcFile,
+                                    const NFmiQueryInfo* theMetaInfo,
                                     const std::vector<FmiVarInfo>& theVarInfos)
 {
-  NFmiQueryData *qData = NFmiQueryDataUtil::CreateEmptyData(theMetaInfo);
+  // There is no meta info for level types without parameters
+  if (theMetaInfo == nullptr)
+    return nullptr;
+
+  NFmiQueryData* qData = NFmiQueryDataUtil::CreateEmptyData(*theMetaInfo);
   NFmiFastQueryInfo fInfo(qData);
 
   for (const auto& theVarInfo : theVarInfos)
@@ -258,17 +262,15 @@ std::vector<NFmiQueryData *> FmiNetCdfQueryData::CreateQueryDatas(const std::str
     {
       fDataOk = true;
       InitMetaInfo(ncFile);
+      ::AddToVector(qDatas,
+                    ::MakeQueryData(ncFile, itsSurfaceMetaData.itsMetaInfo, itsNormalParameters));
       ::AddToVector(
-          qDatas, ::MakeQueryData(ncFile, *(itsSurfaceMetaData.itsMetaInfo), itsNormalParameters));
-      ::AddToVector(
-          qDatas,
-          ::MakeQueryData(ncFile, *(itsHeightLevelMetaData.itsMetaInfo), itsNormalParameters));
-      ::AddToVector(
-          qDatas,
-          ::MakeQueryData(ncFile, *(itsPressureLevelMetaData.itsMetaInfo), itsNormalParameters));
+          qDatas, ::MakeQueryData(ncFile, itsHeightLevelMetaData.itsMetaInfo, itsNormalParameters));
       ::AddToVector(
           qDatas,
-          ::MakeQueryData(ncFile, *(itsHybridLevelMetaData.itsMetaInfo), itsNormalParameters));
+          ::MakeQueryData(ncFile, itsPressureLevelMetaData.itsMetaInfo, itsNormalParameters));
+      ::AddToVector(
+          qDatas, ::MakeQueryData(ncFile, itsHybridLevelMetaData.itsMetaInfo, itsNormalParameters));
     }
     else
       throw std::runtime_error(std::string("Error nc-file is not valid netCdf: ") + theNcFileName);

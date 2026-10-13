@@ -719,6 +719,8 @@ void ReportMetadata(NFmiFastQueryInfo *q, const string &theKey)
 {
   NFmiString key(theKey);
 
+  // codechecker_false_positive [core.CallAndMessage] domain() rejects -M and -m without -q, so q is
+  // never null here
   if (q->FindFirstKey(key))
   {
     do

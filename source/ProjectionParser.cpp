@@ -77,7 +77,7 @@ void ProjectionParser::parse(std::istream& is,
 
     if (token == "}")
       break;
-    else if (token == "type")
+    if (token == "type")
     {
       is >> token;
       projection.type(token);
@@ -107,21 +107,24 @@ void ProjectionParser::parse(std::istream& is,
     }
     else if (token == "bottomleft")
     {
-      float lon = NAN, lat = NAN;
+      float lon = NAN;
+      float lat = NAN;
       is >> lon >> lat;
       projection.bottomLeft(lon, lat);
       got_bottomleft = true;
     }
     else if (token == "topright")
     {
-      float lon = NAN, lat = NAN;
+      float lon = NAN;
+      float lat = NAN;
       is >> lon >> lat;
       projection.topRight(lon, lat);
       got_topright = true;
     }
     else if (token == "center")
     {
-      float lon = NAN, lat = NAN;
+      float lon = NAN;
+      float lat = NAN;
       is >> lon >> lat;
       projection.center(lon, lat);
       got_center = true;

@@ -277,8 +277,7 @@ std::string projection_type(int type)
     {
       if (type >= 6 && type <= 30)
         return "reserved";
-      else
-        return "invalid";
+      return "invalid";
     }
   }
 }
@@ -287,8 +286,7 @@ std::string projection_type(const std::optional<int> type)
 {
   if (!type)
     return "-";
-  else
-    return projection_type(*type);
+  return projection_type(*type);
 }
 
 // ----------------------------------------------------------------------
@@ -514,35 +512,6 @@ bool parse_options(int argc, char *argv[], Options &options)
  * \param[in]     n    number of 64 bit values in buffer
  */
 // ----------------------------------------------------------------------
-
-void byteswap64(unsigned char *buf, int n)
-{
-  int i = 0;
-  unsigned char c = 0;
-
-  unsigned one = 1;
-  auto* test = (unsigned char*)&one;
-
-  if (*test == 1)
-    return;
-
-  for (i = 0; i < n; i += 8)
-  {
-    c = buf[0];
-    buf[0] = buf[7];
-    buf[7] = c;
-    c = buf[1];
-    buf[1] = buf[6];
-    buf[6] = c;
-    c = buf[2];
-    buf[2] = buf[5];
-    buf[5] = c;
-    c = buf[3];
-    buf[3] = buf[4];
-    buf[4] = c;
-    buf += 8;
-  }
-}
 
 // ----------------------------------------------------------------------
 /*!
@@ -801,7 +770,9 @@ int bufr_callback(varfl val, int ind)
       }
 
       // Decode vals to our output array
-      int nvals = 0, nrows = 0, ncols = 0;
+      int nvals = 0;
+      int nrows = 0;
+      int ncols = 0;
 
       if (!rldec_to_mem(vals->vals, &(radar_data.img.data), &nvals, &nrows, &ncols))
       {
@@ -819,13 +790,10 @@ int bufr_callback(varfl val, int ind)
       return 1;
     }
 
-    else
-    {
 #if 0
 		  if(options.debug)
 			fprintf (stderr, "Expanding sequence descriptor %d %d %d\n", d->f, d->x, d->y);
 #endif
-    }
 
     /* normal sequence descriptor - just call bufr_parse_out and
            remember that we are in a sequence */

@@ -98,11 +98,10 @@ std::vector<int> GetOptionalParamIdList(const NFmiCmdLine &cmdline, char option)
 float convertOctaToProcent(float octas)
 {
   if (octas >= 0 && octas <= 8)
-    return octas * 12.5f;
-  else if (octas == 9)
-    return 100.f;
-  else
-    return kFloatMissing;
+    return octas * 12.5F;
+  if (octas == 9)
+    return 100.F;
+  return kFloatMissing;
 }
 
 void ConvertNfromOctasToProcent(const std::unique_ptr<NFmiQueryData>& data,

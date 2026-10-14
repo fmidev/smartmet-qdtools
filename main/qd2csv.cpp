@@ -97,7 +97,7 @@ int domain(int argc, const char* argv[])
     cout << "Usage: qd2csv [-latlon] <querydata>" << endl;
     return 0;
   }
-  else if ((argc > 3) || ((argc == 3) && (strcmp(argv[1], "-latlon") != 0)))
+  if ((argc > 3) || ((argc == 3) && (strcmp(argv[1], "-latlon") != 0)))
     throw runtime_error("Expecting optional -latlon and one querydata argument");
 
   // Read the querydata

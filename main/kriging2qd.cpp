@@ -164,7 +164,11 @@ const NFmiTime parse_stamp(const string& theStamp)
   if (theStamp.size() != 12)
     throw runtime_error("The length of the stamp is not 12");
 
-  int year = 0, month = 0, day = 0, hour = 0, minute = 0;
+  int year = 0;
+  int month = 0;
+  int day = 0;
+  int hour = 0;
+  int minute = 0;
   try
   {
     year = NFmiStringTools::Convert<int>(theStamp.substr(0, 4));

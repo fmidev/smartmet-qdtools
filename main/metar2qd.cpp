@@ -268,9 +268,8 @@ NFmiMetTime GetTime(const std::string &timeStr,
       // tulevaisuudessa
       return aTime;
     }
-    else
-      ::ThrowLatLonProblemException(
-          "GetTime", "Time string didn't have ending 'Z'", timeStr, theMetarStr, theMetarFileName);
+    ::ThrowLatLonProblemException(
+        "GetTime", "Time string didn't have ending 'Z'", timeStr, theMetarStr, theMetarFileName);
   }
   else
     ::ThrowLatLonProblemException(
@@ -351,11 +350,8 @@ NFmiTimeDescriptor MakeTimeDesc(const vector<MetarData> &dataBlocks)
     // Oletus kaikki origintimet ovat samoja, en tutki niita nyt yhtaan.
     if (fUseTimeBag)
       return NFmiTimeDescriptor(origTime, timeBag);
-    else
-    {
-      cerr << "Warning: Cannot make timelist from data, continuing..." << endl;
-      return NFmiTimeDescriptor(origTime, timeList);
-    }
+    cerr << "Warning: Cannot make timelist from data, continuing..." << endl;
+    return NFmiTimeDescriptor(origTime, timeList);
   }
   throw runtime_error("Error: MakeTimeDesc-function - No times were found, stopping program...");
 }
@@ -544,12 +540,11 @@ std::string GetStringAndAdvance(boost::sregex_token_iterator &it, bool mustExist
   if (it != end)
   {
     std::string str;
-    do
+    for (bool more = true; more; more = str.empty() && it != end)
     {
       str = *it;
       ++it;  // advance iterator
-    } while (str.empty() &&
-             it != end);  // joskus tulee tyhjiä stringejä ennen loppua, jotka pitää ohittaa
+    }  // joskus tulee tyhjiä stringejä ennen loppua, jotka pitää ohittaa
     return str;
   }
   if (mustExist)
@@ -608,13 +603,10 @@ bool IsMetarNilOrEmptyReport(const string &str)
   {
     if (i > 3)  // jos ollaan menossa jo 4 sanaan, voidaan tarkastelu lopettaa
       break;
-    else
-    {
-      string aWord = *it;
-      NFmiStringTools::UpperCase(aWord);
-      if (aWord == "NIL")
-        return true;
-    }
+    string aWord = *it;
+    NFmiStringTools::UpperCase(aWord);
+    if (aWord == "NIL")
+      return true;
   }
   return it == end;
 }
@@ -688,342 +680,342 @@ void InitWWSymbols(map<string, float> &ww_symbols)
   // Nämä METAR ww konversiot -> synop code on saatu Viljo Kangasniemen dokumentista:
   // "METAReiden purkamisen kuvaus lyhyt versio.doc"
 
-  ww_symbols.insert(make_pair(string("BCFG"), 11.f));
-  ww_symbols.insert(make_pair(string("PRFG"), 41.f));
-  ww_symbols.insert(make_pair(string("VCFG"), 40.f));
-  ww_symbols.insert(make_pair(string("FG"), 45.f));
-  ww_symbols.insert(make_pair(string("+FG"), 45.f));
-  ww_symbols.insert(make_pair(string("FZFG"), 49.f));
-  ww_symbols.insert(make_pair(string("-DRRASN"), 68.f));
-  ww_symbols.insert(make_pair(string("DRRASN"), 68.f));
-  ww_symbols.insert(make_pair(string("+DRRASN"), 68.f));
+  ww_symbols.insert(make_pair(string("BCFG"), 11.F));
+  ww_symbols.insert(make_pair(string("PRFG"), 41.F));
+  ww_symbols.insert(make_pair(string("VCFG"), 40.F));
+  ww_symbols.insert(make_pair(string("FG"), 45.F));
+  ww_symbols.insert(make_pair(string("+FG"), 45.F));
+  ww_symbols.insert(make_pair(string("FZFG"), 49.F));
+  ww_symbols.insert(make_pair(string("-DRRASN"), 68.F));
+  ww_symbols.insert(make_pair(string("DRRASN"), 68.F));
+  ww_symbols.insert(make_pair(string("+DRRASN"), 68.F));
 
-  ww_symbols.insert(make_pair(string("+SHRA"), 82.f));
-  ww_symbols.insert(make_pair(string("SHGS"), 87.f));
-  ww_symbols.insert(make_pair(string("SHPL"), 87.f));
-  ww_symbols.insert(make_pair(string("+TSRA"), 97.f));
-  ww_symbols.insert(make_pair(string("+TSGR"), 97.f));
+  ww_symbols.insert(make_pair(string("+SHRA"), 82.F));
+  ww_symbols.insert(make_pair(string("SHGS"), 87.F));
+  ww_symbols.insert(make_pair(string("SHPL"), 87.F));
+  ww_symbols.insert(make_pair(string("+TSRA"), 97.F));
+  ww_symbols.insert(make_pair(string("+TSGR"), 97.F));
 
-  ww_symbols.insert(make_pair(string("FU"), 4.f));
-  ww_symbols.insert(make_pair(string("HZ"), 5.f));
-  ww_symbols.insert(make_pair(string("+HZ"), 5.f));
-  ww_symbols.insert(make_pair(string("DU"), 6.f));
-  ww_symbols.insert(make_pair(string("+DU"), 6.f));
-  ww_symbols.insert(make_pair(string("VA"), 6.f));
+  ww_symbols.insert(make_pair(string("FU"), 4.F));
+  ww_symbols.insert(make_pair(string("HZ"), 5.F));
+  ww_symbols.insert(make_pair(string("+HZ"), 5.F));
+  ww_symbols.insert(make_pair(string("DU"), 6.F));
+  ww_symbols.insert(make_pair(string("+DU"), 6.F));
+  ww_symbols.insert(make_pair(string("VA"), 6.F));
 
-  ww_symbols.insert(make_pair(string("SA"), 7.f));
-  ww_symbols.insert(make_pair(string("DRSA"), 7.f));
-  ww_symbols.insert(make_pair(string("DRDU"), 7.f));
-  ww_symbols.insert(make_pair(string("BLSA"), 7.f));
-  ww_symbols.insert(make_pair(string("BLDU"), 7.f));
-  ww_symbols.insert(make_pair(string("PO"), 8.f));
-  ww_symbols.insert(make_pair(string("VCPO"), 8.f));
-  ww_symbols.insert(make_pair(string("VCDS"), 9.f));
-  ww_symbols.insert(make_pair(string("VCSS"), 9.f));
+  ww_symbols.insert(make_pair(string("SA"), 7.F));
+  ww_symbols.insert(make_pair(string("DRSA"), 7.F));
+  ww_symbols.insert(make_pair(string("DRDU"), 7.F));
+  ww_symbols.insert(make_pair(string("BLSA"), 7.F));
+  ww_symbols.insert(make_pair(string("BLDU"), 7.F));
+  ww_symbols.insert(make_pair(string("PO"), 8.F));
+  ww_symbols.insert(make_pair(string("VCPO"), 8.F));
+  ww_symbols.insert(make_pair(string("VCDS"), 9.F));
+  ww_symbols.insert(make_pair(string("VCSS"), 9.F));
 
-  ww_symbols.insert(make_pair(string("BR"), 10.f));
-  ww_symbols.insert(make_pair(string("BCFG"), 11.f));
-  ww_symbols.insert(make_pair(string("MIFG"), 12.f));
-  ww_symbols.insert(make_pair(string("VCTS"), 13.f));
-  ww_symbols.insert(make_pair(string("TS"), 17.f));
-  ww_symbols.insert(make_pair(string("-TS"), 17.f));
-  ww_symbols.insert(make_pair(string("+TS"), 17.f));
+  ww_symbols.insert(make_pair(string("BR"), 10.F));
+  ww_symbols.insert(make_pair(string("BCFG"), 11.F));
+  ww_symbols.insert(make_pair(string("MIFG"), 12.F));
+  ww_symbols.insert(make_pair(string("VCTS"), 13.F));
+  ww_symbols.insert(make_pair(string("TS"), 17.F));
+  ww_symbols.insert(make_pair(string("-TS"), 17.F));
+  ww_symbols.insert(make_pair(string("+TS"), 17.F));
 
-  ww_symbols.insert(make_pair(string("SQ"), 18.f));
-  ww_symbols.insert(make_pair(string("FC"), 19.f));
-  ww_symbols.insert(make_pair(string("VCFC"), 19.f));
+  ww_symbols.insert(make_pair(string("SQ"), 18.F));
+  ww_symbols.insert(make_pair(string("FC"), 19.F));
+  ww_symbols.insert(make_pair(string("VCFC"), 19.F));
 
-  ww_symbols.insert(make_pair(string("DS"), 31.f));
-  ww_symbols.insert(make_pair(string("SS"), 31.f));
+  ww_symbols.insert(make_pair(string("DS"), 31.F));
+  ww_symbols.insert(make_pair(string("SS"), 31.F));
 
-  ww_symbols.insert(make_pair(string("-DRSN"), 36.f));
-  ww_symbols.insert(make_pair(string("DRSN"), 36.f));
-  ww_symbols.insert(make_pair(string("+DRSN"), 37.f));
+  ww_symbols.insert(make_pair(string("-DRSN"), 36.F));
+  ww_symbols.insert(make_pair(string("DRSN"), 36.F));
+  ww_symbols.insert(make_pair(string("+DRSN"), 37.F));
 
-  ww_symbols.insert(make_pair(string("BLSN"), 38.f));
-  ww_symbols.insert(make_pair(string("-BLSN"), 38.f));
-  ww_symbols.insert(make_pair(string("+BLSN"), 39.f));
+  ww_symbols.insert(make_pair(string("BLSN"), 38.F));
+  ww_symbols.insert(make_pair(string("-BLSN"), 38.F));
+  ww_symbols.insert(make_pair(string("+BLSN"), 39.F));
 
-  ww_symbols.insert(make_pair(string("-DZ"), 51.f));
-  ww_symbols.insert(make_pair(string("DZ"), 53.f));
-  ww_symbols.insert(make_pair(string("+DZ"), 55.f));
+  ww_symbols.insert(make_pair(string("-DZ"), 51.F));
+  ww_symbols.insert(make_pair(string("DZ"), 53.F));
+  ww_symbols.insert(make_pair(string("+DZ"), 55.F));
 
-  ww_symbols.insert(make_pair(string("-FZDZ"), 56.f));
-  ww_symbols.insert(make_pair(string("FZDZ"), 57.f));
-  ww_symbols.insert(make_pair(string("+FZDZ"), 57.f));
+  ww_symbols.insert(make_pair(string("-FZDZ"), 56.F));
+  ww_symbols.insert(make_pair(string("FZDZ"), 57.F));
+  ww_symbols.insert(make_pair(string("+FZDZ"), 57.F));
 
-  ww_symbols.insert(make_pair(string("-RADZ"), 58.f));
-  ww_symbols.insert(make_pair(string("-DZRA"), 58.f));
+  ww_symbols.insert(make_pair(string("-RADZ"), 58.F));
+  ww_symbols.insert(make_pair(string("-DZRA"), 58.F));
 
-  ww_symbols.insert(make_pair(string("RADZ"), 59.f));
-  ww_symbols.insert(make_pair(string("DZRA"), 59.f));
-  ww_symbols.insert(make_pair(string("+RADZ"), 59.f));
-  ww_symbols.insert(make_pair(string("+DZRA"), 59.f));
+  ww_symbols.insert(make_pair(string("RADZ"), 59.F));
+  ww_symbols.insert(make_pair(string("DZRA"), 59.F));
+  ww_symbols.insert(make_pair(string("+RADZ"), 59.F));
+  ww_symbols.insert(make_pair(string("+DZRA"), 59.F));
 
-  ww_symbols.insert(make_pair(string("-RA"), 61.f));
-  ww_symbols.insert(make_pair(string("RA"), 63.f));
-  ww_symbols.insert(make_pair(string("+RA"), 63.f));
+  ww_symbols.insert(make_pair(string("-RA"), 61.F));
+  ww_symbols.insert(make_pair(string("RA"), 63.F));
+  ww_symbols.insert(make_pair(string("+RA"), 63.F));
 
-  ww_symbols.insert(make_pair(string("-FZRA"), 66.f));
-  ww_symbols.insert(make_pair(string("FZRA"), 67.f));
-  ww_symbols.insert(make_pair(string("+FZRA"), 67.f));
+  ww_symbols.insert(make_pair(string("-FZRA"), 66.F));
+  ww_symbols.insert(make_pair(string("FZRA"), 67.F));
+  ww_symbols.insert(make_pair(string("+FZRA"), 67.F));
 
-  ww_symbols.insert(make_pair(string("-RASN"), 68.f));
-  ww_symbols.insert(make_pair(string("-SNRA"), 68.f));
-  ww_symbols.insert(make_pair(string("-DZSN"), 68.f));
-  ww_symbols.insert(make_pair(string("-SNDZ"), 68.f));
-  ww_symbols.insert(make_pair(string("-DZSN"), 68.f));
-  ww_symbols.insert(make_pair(string("-RADZSN"), 68.f));
-  ww_symbols.insert(make_pair(string("-RASNDZ"), 68.f));
-  ww_symbols.insert(make_pair(string("-DZRASN"), 68.f));
-  ww_symbols.insert(make_pair(string("-DZSNRA"), 68.f));
-  ww_symbols.insert(make_pair(string("-SNDZRA"), 68.f));
+  ww_symbols.insert(make_pair(string("-RASN"), 68.F));
+  ww_symbols.insert(make_pair(string("-SNRA"), 68.F));
+  ww_symbols.insert(make_pair(string("-DZSN"), 68.F));
+  ww_symbols.insert(make_pair(string("-SNDZ"), 68.F));
+  ww_symbols.insert(make_pair(string("-DZSN"), 68.F));
+  ww_symbols.insert(make_pair(string("-RADZSN"), 68.F));
+  ww_symbols.insert(make_pair(string("-RASNDZ"), 68.F));
+  ww_symbols.insert(make_pair(string("-DZRASN"), 68.F));
+  ww_symbols.insert(make_pair(string("-DZSNRA"), 68.F));
+  ww_symbols.insert(make_pair(string("-SNDZRA"), 68.F));
 
-  ww_symbols.insert(make_pair(string("RASN"), 69.f));
-  ww_symbols.insert(make_pair(string("SNRA"), 69.f));
-  ww_symbols.insert(make_pair(string("DZSN"), 69.f));
-  ww_symbols.insert(make_pair(string("SNDZ"), 69.f));
-  ww_symbols.insert(make_pair(string("DZSN"), 69.f));
-  ww_symbols.insert(make_pair(string("RADZSN"), 69.f));
-  ww_symbols.insert(make_pair(string("RASNDZ"), 69.f));
-  ww_symbols.insert(make_pair(string("DZRASN"), 69.f));
-  ww_symbols.insert(make_pair(string("DZSNRA"), 69.f));
-  ww_symbols.insert(make_pair(string("SNDZRA"), 69.f));
+  ww_symbols.insert(make_pair(string("RASN"), 69.F));
+  ww_symbols.insert(make_pair(string("SNRA"), 69.F));
+  ww_symbols.insert(make_pair(string("DZSN"), 69.F));
+  ww_symbols.insert(make_pair(string("SNDZ"), 69.F));
+  ww_symbols.insert(make_pair(string("DZSN"), 69.F));
+  ww_symbols.insert(make_pair(string("RADZSN"), 69.F));
+  ww_symbols.insert(make_pair(string("RASNDZ"), 69.F));
+  ww_symbols.insert(make_pair(string("DZRASN"), 69.F));
+  ww_symbols.insert(make_pair(string("DZSNRA"), 69.F));
+  ww_symbols.insert(make_pair(string("SNDZRA"), 69.F));
 
-  ww_symbols.insert(make_pair(string("+RASN"), 69.f));
-  ww_symbols.insert(make_pair(string("+SNRA"), 69.f));
-  ww_symbols.insert(make_pair(string("+DZSN"), 69.f));
-  ww_symbols.insert(make_pair(string("+SNDZ"), 69.f));
-  ww_symbols.insert(make_pair(string("+DZSN"), 69.f));
-  ww_symbols.insert(make_pair(string("+RADZSN"), 69.f));
-  ww_symbols.insert(make_pair(string("+RASNDZ"), 69.f));
-  ww_symbols.insert(make_pair(string("+DZRASN"), 69.f));
-  ww_symbols.insert(make_pair(string("+DZSNRA"), 69.f));
-  ww_symbols.insert(make_pair(string("+SNDZRA"), 69.f));
+  ww_symbols.insert(make_pair(string("+RASN"), 69.F));
+  ww_symbols.insert(make_pair(string("+SNRA"), 69.F));
+  ww_symbols.insert(make_pair(string("+DZSN"), 69.F));
+  ww_symbols.insert(make_pair(string("+SNDZ"), 69.F));
+  ww_symbols.insert(make_pair(string("+DZSN"), 69.F));
+  ww_symbols.insert(make_pair(string("+RADZSN"), 69.F));
+  ww_symbols.insert(make_pair(string("+RASNDZ"), 69.F));
+  ww_symbols.insert(make_pair(string("+DZRASN"), 69.F));
+  ww_symbols.insert(make_pair(string("+DZSNRA"), 69.F));
+  ww_symbols.insert(make_pair(string("+SNDZRA"), 69.F));
 
-  ww_symbols.insert(make_pair(string("-SN"), 71.f));
-  ww_symbols.insert(make_pair(string("SN"), 73.f));
-  ww_symbols.insert(make_pair(string("+SN"), 75.f));
+  ww_symbols.insert(make_pair(string("-SN"), 71.F));
+  ww_symbols.insert(make_pair(string("SN"), 73.F));
+  ww_symbols.insert(make_pair(string("+SN"), 75.F));
 
-  ww_symbols.insert(make_pair(string("IC"), 76.f));
-  ww_symbols.insert(make_pair(string("-IC"), 76.f));
-  ww_symbols.insert(make_pair(string("+IC"), 76.f));
+  ww_symbols.insert(make_pair(string("IC"), 76.F));
+  ww_symbols.insert(make_pair(string("-IC"), 76.F));
+  ww_symbols.insert(make_pair(string("+IC"), 76.F));
 
-  ww_symbols.insert(make_pair(string("-SG"), 77.f));
-  ww_symbols.insert(make_pair(string("SG"), 77.f));
-  ww_symbols.insert(make_pair(string("+SG"), 77.f));
+  ww_symbols.insert(make_pair(string("-SG"), 77.F));
+  ww_symbols.insert(make_pair(string("SG"), 77.F));
+  ww_symbols.insert(make_pair(string("+SG"), 77.F));
 
-  ww_symbols.insert(make_pair(string("-PL"), 79.f));
-  ww_symbols.insert(make_pair(string("PL"), 79.f));
-  ww_symbols.insert(make_pair(string("+PL"), 79.f));
-  ww_symbols.insert(make_pair(string("-PE"), 79.f));
-  ww_symbols.insert(make_pair(string("PE"), 79.f));
-  ww_symbols.insert(make_pair(string("+PE"), 79.f));
+  ww_symbols.insert(make_pair(string("-PL"), 79.F));
+  ww_symbols.insert(make_pair(string("PL"), 79.F));
+  ww_symbols.insert(make_pair(string("+PL"), 79.F));
+  ww_symbols.insert(make_pair(string("-PE"), 79.F));
+  ww_symbols.insert(make_pair(string("PE"), 79.F));
+  ww_symbols.insert(make_pair(string("+PE"), 79.F));
 
-  ww_symbols.insert(make_pair(string("-SHRA"), 80.f));
-  ww_symbols.insert(make_pair(string("SHRA"), 81.f));
-  ww_symbols.insert(make_pair(string("+SHRA"), 81.f));
+  ww_symbols.insert(make_pair(string("-SHRA"), 80.F));
+  ww_symbols.insert(make_pair(string("SHRA"), 81.F));
+  ww_symbols.insert(make_pair(string("+SHRA"), 81.F));
 
-  ww_symbols.insert(make_pair(string("-SHRASN"), 83.f));
-  ww_symbols.insert(make_pair(string("-SHSNRA"), 83.f));
+  ww_symbols.insert(make_pair(string("-SHRASN"), 83.F));
+  ww_symbols.insert(make_pair(string("-SHSNRA"), 83.F));
 
-  ww_symbols.insert(make_pair(string("SHRASN"), 84.f));
-  ww_symbols.insert(make_pair(string("SHSNRA"), 84.f));
-  ww_symbols.insert(make_pair(string("+SHRASN"), 84.f));
-  ww_symbols.insert(make_pair(string("+SHSNRA"), 84.f));
+  ww_symbols.insert(make_pair(string("SHRASN"), 84.F));
+  ww_symbols.insert(make_pair(string("SHSNRA"), 84.F));
+  ww_symbols.insert(make_pair(string("+SHRASN"), 84.F));
+  ww_symbols.insert(make_pair(string("+SHSNRA"), 84.F));
 
-  ww_symbols.insert(make_pair(string("-SHSN"), 85.f));
-  ww_symbols.insert(make_pair(string("SHSN"), 86.f));
-  ww_symbols.insert(make_pair(string("+SHSN"), 86.f));
+  ww_symbols.insert(make_pair(string("-SHSN"), 85.F));
+  ww_symbols.insert(make_pair(string("SHSN"), 86.F));
+  ww_symbols.insert(make_pair(string("+SHSN"), 86.F));
 
-  ww_symbols.insert(make_pair(string("-SHGS"), 87.f));
-  ww_symbols.insert(make_pair(string("-SHGSRA"), 87.f));
-  ww_symbols.insert(make_pair(string("-SHRAGS"), 87.f));
-  ww_symbols.insert(make_pair(string("-SHGSRASN"), 87.f));
-  ww_symbols.insert(make_pair(string("-SHGSSNRA"), 87.f));
-  ww_symbols.insert(make_pair(string("-SHRASNGS"), 87.f));
-  ww_symbols.insert(make_pair(string("-SHSNRAGS"), 87.f));
-  ww_symbols.insert(make_pair(string("-SHRAGSSN"), 87.f));
-  ww_symbols.insert(make_pair(string("-SHSNGSRA"), 87.f));
+  ww_symbols.insert(make_pair(string("-SHGS"), 87.F));
+  ww_symbols.insert(make_pair(string("-SHGSRA"), 87.F));
+  ww_symbols.insert(make_pair(string("-SHRAGS"), 87.F));
+  ww_symbols.insert(make_pair(string("-SHGSRASN"), 87.F));
+  ww_symbols.insert(make_pair(string("-SHGSSNRA"), 87.F));
+  ww_symbols.insert(make_pair(string("-SHRASNGS"), 87.F));
+  ww_symbols.insert(make_pair(string("-SHSNRAGS"), 87.F));
+  ww_symbols.insert(make_pair(string("-SHRAGSSN"), 87.F));
+  ww_symbols.insert(make_pair(string("-SHSNGSRA"), 87.F));
 
-  ww_symbols.insert(make_pair(string("SHGS"), 88.f));
-  ww_symbols.insert(make_pair(string("SHGSRA"), 88.f));
-  ww_symbols.insert(make_pair(string("SHRAGS"), 88.f));
-  ww_symbols.insert(make_pair(string("SHGSRASN"), 88.f));
-  ww_symbols.insert(make_pair(string("SHGSSNRA"), 88.f));
-  ww_symbols.insert(make_pair(string("SHRASNGS"), 88.f));
-  ww_symbols.insert(make_pair(string("SHSNRAGS"), 88.f));
-  ww_symbols.insert(make_pair(string("SHRAGSSN"), 88.f));
-  ww_symbols.insert(make_pair(string("SHSNGSRA"), 88.f));
+  ww_symbols.insert(make_pair(string("SHGS"), 88.F));
+  ww_symbols.insert(make_pair(string("SHGSRA"), 88.F));
+  ww_symbols.insert(make_pair(string("SHRAGS"), 88.F));
+  ww_symbols.insert(make_pair(string("SHGSRASN"), 88.F));
+  ww_symbols.insert(make_pair(string("SHGSSNRA"), 88.F));
+  ww_symbols.insert(make_pair(string("SHRASNGS"), 88.F));
+  ww_symbols.insert(make_pair(string("SHSNRAGS"), 88.F));
+  ww_symbols.insert(make_pair(string("SHRAGSSN"), 88.F));
+  ww_symbols.insert(make_pair(string("SHSNGSRA"), 88.F));
 
-  ww_symbols.insert(make_pair(string("+SHGS"), 88.f));
-  ww_symbols.insert(make_pair(string("+SHGSRA"), 88.f));
-  ww_symbols.insert(make_pair(string("+SHRAGS"), 88.f));
-  ww_symbols.insert(make_pair(string("+SHGSRASN"), 88.f));
-  ww_symbols.insert(make_pair(string("+SHGSSNRA"), 88.f));
-  ww_symbols.insert(make_pair(string("+SHRASNGS"), 88.f));
-  ww_symbols.insert(make_pair(string("+SHSNRAGS"), 88.f));
-  ww_symbols.insert(make_pair(string("+SHRAGSSN"), 88.f));
-  ww_symbols.insert(make_pair(string("+SHSNGSRA"), 88.f));
+  ww_symbols.insert(make_pair(string("+SHGS"), 88.F));
+  ww_symbols.insert(make_pair(string("+SHGSRA"), 88.F));
+  ww_symbols.insert(make_pair(string("+SHRAGS"), 88.F));
+  ww_symbols.insert(make_pair(string("+SHGSRASN"), 88.F));
+  ww_symbols.insert(make_pair(string("+SHGSSNRA"), 88.F));
+  ww_symbols.insert(make_pair(string("+SHRASNGS"), 88.F));
+  ww_symbols.insert(make_pair(string("+SHSNRAGS"), 88.F));
+  ww_symbols.insert(make_pair(string("+SHRAGSSN"), 88.F));
+  ww_symbols.insert(make_pair(string("+SHSNGSRA"), 88.F));
 
-  ww_symbols.insert(make_pair(string("-SHGR"), 89.f));
-  ww_symbols.insert(make_pair(string("-SHGRRA"), 89.f));
-  ww_symbols.insert(make_pair(string("-SHRAGR"), 89.f));
-  ww_symbols.insert(make_pair(string("-SHGRRASN"), 89.f));
-  ww_symbols.insert(make_pair(string("-SHGRSNRA"), 89.f));
-  ww_symbols.insert(make_pair(string("-SHRASNGR"), 89.f));
-  ww_symbols.insert(make_pair(string("-SHSNRAGR"), 89.f));
-  ww_symbols.insert(make_pair(string("-SHRAGRSN"), 89.f));
-  ww_symbols.insert(make_pair(string("-SHSNGRRA"), 89.f));
+  ww_symbols.insert(make_pair(string("-SHGR"), 89.F));
+  ww_symbols.insert(make_pair(string("-SHGRRA"), 89.F));
+  ww_symbols.insert(make_pair(string("-SHRAGR"), 89.F));
+  ww_symbols.insert(make_pair(string("-SHGRRASN"), 89.F));
+  ww_symbols.insert(make_pair(string("-SHGRSNRA"), 89.F));
+  ww_symbols.insert(make_pair(string("-SHRASNGR"), 89.F));
+  ww_symbols.insert(make_pair(string("-SHSNRAGR"), 89.F));
+  ww_symbols.insert(make_pair(string("-SHRAGRSN"), 89.F));
+  ww_symbols.insert(make_pair(string("-SHSNGRRA"), 89.F));
 
-  ww_symbols.insert(make_pair(string("SHGR"), 90.f));
-  ww_symbols.insert(make_pair(string("SHGRRA"), 90.f));
-  ww_symbols.insert(make_pair(string("SHRAGR"), 90.f));
-  ww_symbols.insert(make_pair(string("SHGRRASN"), 90.f));
-  ww_symbols.insert(make_pair(string("SHGRSNRA"), 90.f));
-  ww_symbols.insert(make_pair(string("SHRASNGR"), 90.f));
-  ww_symbols.insert(make_pair(string("SHSNRAGR"), 90.f));
-  ww_symbols.insert(make_pair(string("SHRAGRSN"), 90.f));
-  ww_symbols.insert(make_pair(string("SHSNGRRA"), 90.f));
+  ww_symbols.insert(make_pair(string("SHGR"), 90.F));
+  ww_symbols.insert(make_pair(string("SHGRRA"), 90.F));
+  ww_symbols.insert(make_pair(string("SHRAGR"), 90.F));
+  ww_symbols.insert(make_pair(string("SHGRRASN"), 90.F));
+  ww_symbols.insert(make_pair(string("SHGRSNRA"), 90.F));
+  ww_symbols.insert(make_pair(string("SHRASNGR"), 90.F));
+  ww_symbols.insert(make_pair(string("SHSNRAGR"), 90.F));
+  ww_symbols.insert(make_pair(string("SHRAGRSN"), 90.F));
+  ww_symbols.insert(make_pair(string("SHSNGRRA"), 90.F));
 
-  ww_symbols.insert(make_pair(string("+SHGR"), 90.f));
-  ww_symbols.insert(make_pair(string("+SHGRRA"), 90.f));
-  ww_symbols.insert(make_pair(string("+SHRAGR"), 90.f));
-  ww_symbols.insert(make_pair(string("+SHGRRASN"), 90.f));
-  ww_symbols.insert(make_pair(string("+SHGRSNRA"), 90.f));
-  ww_symbols.insert(make_pair(string("+SHRASNGR"), 90.f));
-  ww_symbols.insert(make_pair(string("+SHSNRAGR"), 90.f));
-  ww_symbols.insert(make_pair(string("+SHRAGRSN"), 90.f));
-  ww_symbols.insert(make_pair(string("+SHSNGRRA"), 90.f));
+  ww_symbols.insert(make_pair(string("+SHGR"), 90.F));
+  ww_symbols.insert(make_pair(string("+SHGRRA"), 90.F));
+  ww_symbols.insert(make_pair(string("+SHRAGR"), 90.F));
+  ww_symbols.insert(make_pair(string("+SHGRRASN"), 90.F));
+  ww_symbols.insert(make_pair(string("+SHGRSNRA"), 90.F));
+  ww_symbols.insert(make_pair(string("+SHRASNGR"), 90.F));
+  ww_symbols.insert(make_pair(string("+SHSNRAGR"), 90.F));
+  ww_symbols.insert(make_pair(string("+SHRAGRSN"), 90.F));
+  ww_symbols.insert(make_pair(string("+SHSNGRRA"), 90.F));
 
-  ww_symbols.insert(make_pair(string("-TSRA"), 95.f));
-  ww_symbols.insert(make_pair(string("-TSRASN"), 95.f));
-  ww_symbols.insert(make_pair(string("-TSSNRA"), 95.f));
-  ww_symbols.insert(make_pair(string("-TSSN"), 95.f));
-  ww_symbols.insert(make_pair(string("TSRA"), 95.f));
-  ww_symbols.insert(make_pair(string("TSRASN"), 95.f));
-  ww_symbols.insert(make_pair(string("TSSNRA"), 95.f));
-  ww_symbols.insert(make_pair(string("TSSN"), 95.f));
+  ww_symbols.insert(make_pair(string("-TSRA"), 95.F));
+  ww_symbols.insert(make_pair(string("-TSRASN"), 95.F));
+  ww_symbols.insert(make_pair(string("-TSSNRA"), 95.F));
+  ww_symbols.insert(make_pair(string("-TSSN"), 95.F));
+  ww_symbols.insert(make_pair(string("TSRA"), 95.F));
+  ww_symbols.insert(make_pair(string("TSRASN"), 95.F));
+  ww_symbols.insert(make_pair(string("TSSNRA"), 95.F));
+  ww_symbols.insert(make_pair(string("TSSN"), 95.F));
 
-  ww_symbols.insert(make_pair(string("-TSGR"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSGRRA"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSGRSN"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSRAGR"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSSNGR"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSGRRASN"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSGRSNRA"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSRASNGR"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSSNRAGR"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSRAGRSN"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSSNGRRA"), 96.f));
+  ww_symbols.insert(make_pair(string("-TSGR"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSGRRA"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSGRSN"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSRAGR"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSSNGR"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSGRRASN"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSGRSNRA"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSRASNGR"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSSNRAGR"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSRAGRSN"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSSNGRRA"), 96.F));
 
-  ww_symbols.insert(make_pair(string("TSGR"), 96.f));
-  ww_symbols.insert(make_pair(string("TSGRRA"), 96.f));
-  ww_symbols.insert(make_pair(string("TSGRSN"), 96.f));
-  ww_symbols.insert(make_pair(string("TSRAGR"), 96.f));
-  ww_symbols.insert(make_pair(string("TSSNGR"), 96.f));
-  ww_symbols.insert(make_pair(string("TSGRRASN"), 96.f));
-  ww_symbols.insert(make_pair(string("TSGRSNRA"), 96.f));
-  ww_symbols.insert(make_pair(string("TSRASNGR"), 96.f));
-  ww_symbols.insert(make_pair(string("TSSNRAGR"), 96.f));
-  ww_symbols.insert(make_pair(string("TSRAGRSN"), 96.f));
-  ww_symbols.insert(make_pair(string("TSSNGRRA"), 96.f));
+  ww_symbols.insert(make_pair(string("TSGR"), 96.F));
+  ww_symbols.insert(make_pair(string("TSGRRA"), 96.F));
+  ww_symbols.insert(make_pair(string("TSGRSN"), 96.F));
+  ww_symbols.insert(make_pair(string("TSRAGR"), 96.F));
+  ww_symbols.insert(make_pair(string("TSSNGR"), 96.F));
+  ww_symbols.insert(make_pair(string("TSGRRASN"), 96.F));
+  ww_symbols.insert(make_pair(string("TSGRSNRA"), 96.F));
+  ww_symbols.insert(make_pair(string("TSRASNGR"), 96.F));
+  ww_symbols.insert(make_pair(string("TSSNRAGR"), 96.F));
+  ww_symbols.insert(make_pair(string("TSRAGRSN"), 96.F));
+  ww_symbols.insert(make_pair(string("TSSNGRRA"), 96.F));
 
-  ww_symbols.insert(make_pair(string("-TSGS"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSGSRA"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSGSSN"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSRAGS"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSSNGS"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSGSRASN"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSGSSNRA"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSRASNGS"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSSNRAGS"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSRAGSSN"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSSNGSRA"), 96.f));
+  ww_symbols.insert(make_pair(string("-TSGS"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSGSRA"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSGSSN"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSRAGS"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSSNGS"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSGSRASN"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSGSSNRA"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSRASNGS"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSSNRAGS"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSRAGSSN"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSSNGSRA"), 96.F));
 
-  ww_symbols.insert(make_pair(string("TSGS"), 96.f));
-  ww_symbols.insert(make_pair(string("TSGSRA"), 96.f));
-  ww_symbols.insert(make_pair(string("TSGSSN"), 96.f));
-  ww_symbols.insert(make_pair(string("TSRAGS"), 96.f));
-  ww_symbols.insert(make_pair(string("TSSNGS"), 96.f));
-  ww_symbols.insert(make_pair(string("TSGSRASN"), 96.f));
-  ww_symbols.insert(make_pair(string("TSGSSNRA"), 96.f));
-  ww_symbols.insert(make_pair(string("TSRASNGS"), 96.f));
-  ww_symbols.insert(make_pair(string("TSSNRAGS"), 96.f));
-  ww_symbols.insert(make_pair(string("TSRAGSSN"), 96.f));
-  ww_symbols.insert(make_pair(string("TSSNGSRA"), 96.f));
+  ww_symbols.insert(make_pair(string("TSGS"), 96.F));
+  ww_symbols.insert(make_pair(string("TSGSRA"), 96.F));
+  ww_symbols.insert(make_pair(string("TSGSSN"), 96.F));
+  ww_symbols.insert(make_pair(string("TSRAGS"), 96.F));
+  ww_symbols.insert(make_pair(string("TSSNGS"), 96.F));
+  ww_symbols.insert(make_pair(string("TSGSRASN"), 96.F));
+  ww_symbols.insert(make_pair(string("TSGSSNRA"), 96.F));
+  ww_symbols.insert(make_pair(string("TSRASNGS"), 96.F));
+  ww_symbols.insert(make_pair(string("TSSNRAGS"), 96.F));
+  ww_symbols.insert(make_pair(string("TSRAGSSN"), 96.F));
+  ww_symbols.insert(make_pair(string("TSSNGSRA"), 96.F));
 
-  ww_symbols.insert(make_pair(string("-TSPL"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSPLRA"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSPLSN"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSRAPL"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSSNPL"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSPLRASN"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSPLSNRA"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSRASNPL"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSSNRAPL"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSRAPLSN"), 96.f));
-  ww_symbols.insert(make_pair(string("-TSSNPLRA"), 96.f));
+  ww_symbols.insert(make_pair(string("-TSPL"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSPLRA"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSPLSN"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSRAPL"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSSNPL"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSPLRASN"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSPLSNRA"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSRASNPL"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSSNRAPL"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSRAPLSN"), 96.F));
+  ww_symbols.insert(make_pair(string("-TSSNPLRA"), 96.F));
 
-  ww_symbols.insert(make_pair(string("TSPL"), 96.f));
-  ww_symbols.insert(make_pair(string("TSPLRA"), 96.f));
-  ww_symbols.insert(make_pair(string("TSPLSN"), 96.f));
-  ww_symbols.insert(make_pair(string("TSRAPL"), 96.f));
-  ww_symbols.insert(make_pair(string("TSSNPL"), 96.f));
-  ww_symbols.insert(make_pair(string("TSPLRASN"), 96.f));
-  ww_symbols.insert(make_pair(string("TSPLSNRA"), 96.f));
-  ww_symbols.insert(make_pair(string("TSRASNPL"), 96.f));
-  ww_symbols.insert(make_pair(string("TSSNRAPL"), 96.f));
-  ww_symbols.insert(make_pair(string("TSRAPLSN"), 96.f));
-  ww_symbols.insert(make_pair(string("TSSNPLRA"), 96.f));
+  ww_symbols.insert(make_pair(string("TSPL"), 96.F));
+  ww_symbols.insert(make_pair(string("TSPLRA"), 96.F));
+  ww_symbols.insert(make_pair(string("TSPLSN"), 96.F));
+  ww_symbols.insert(make_pair(string("TSRAPL"), 96.F));
+  ww_symbols.insert(make_pair(string("TSSNPL"), 96.F));
+  ww_symbols.insert(make_pair(string("TSPLRASN"), 96.F));
+  ww_symbols.insert(make_pair(string("TSPLSNRA"), 96.F));
+  ww_symbols.insert(make_pair(string("TSRASNPL"), 96.F));
+  ww_symbols.insert(make_pair(string("TSSNRAPL"), 96.F));
+  ww_symbols.insert(make_pair(string("TSRAPLSN"), 96.F));
+  ww_symbols.insert(make_pair(string("TSSNPLRA"), 96.F));
 
-  ww_symbols.insert(make_pair(string("+TSRA"), 97.f));
-  ww_symbols.insert(make_pair(string("+TSRASN"), 97.f));
-  ww_symbols.insert(make_pair(string("+TSSNRA"), 97.f));
-  ww_symbols.insert(make_pair(string("+TSSN"), 97.f));
+  ww_symbols.insert(make_pair(string("+TSRA"), 97.F));
+  ww_symbols.insert(make_pair(string("+TSRASN"), 97.F));
+  ww_symbols.insert(make_pair(string("+TSSNRA"), 97.F));
+  ww_symbols.insert(make_pair(string("+TSSN"), 97.F));
 
-  ww_symbols.insert(make_pair(string("+TSGR"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSGRRA"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSGRSN"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSRAGR"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSSNGR"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSGRRASN"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSGRSNRA"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSRASNGR"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSSNRAGR"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSRAGRSN"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSSNGRRA"), 99.f));
+  ww_symbols.insert(make_pair(string("+TSGR"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSGRRA"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSGRSN"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSRAGR"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSSNGR"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSGRRASN"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSGRSNRA"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSRASNGR"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSSNRAGR"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSRAGRSN"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSSNGRRA"), 99.F));
 
-  ww_symbols.insert(make_pair(string("+TSGS"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSGSRA"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSGSSN"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSRAGS"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSSNGS"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSGSRASN"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSGSSNRA"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSRASNGS"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSSNRAGS"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSRAGSSN"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSSNGSRA"), 99.f));
+  ww_symbols.insert(make_pair(string("+TSGS"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSGSRA"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSGSSN"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSRAGS"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSSNGS"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSGSRASN"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSGSSNRA"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSRASNGS"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSSNRAGS"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSRAGSSN"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSSNGSRA"), 99.F));
 
-  ww_symbols.insert(make_pair(string("+TSPL"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSPLRA"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSPLSN"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSRAPL"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSSNPL"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSPLRASN"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSPLSNRA"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSRASNPL"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSSNRAPL"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSRAPLSN"), 99.f));
-  ww_symbols.insert(make_pair(string("+TSSNPLRA"), 99.f));
+  ww_symbols.insert(make_pair(string("+TSPL"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSPLRA"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSPLSN"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSRAPL"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSSNPL"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSPLRASN"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSPLSNRA"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSRASNPL"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSSNRAPL"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSRAPLSN"), 99.F));
+  ww_symbols.insert(make_pair(string("+TSSNPLRA"), 99.F));
 
   // Markon lisäykset listaan
-  ww_symbols.insert(make_pair(string("VCSH"), 16.f));  // 16 = Precipitation within sight, reaching
+  ww_symbols.insert(make_pair(string("VCSH"), 16.F));  // 16 = Precipitation within sight, reaching
                                                        // the ground or the surface of the sea, near
                                                        // to, but not at the station
-  ww_symbols.insert(make_pair(string("-BR"), 10.f));   // 10 = Mist
-  ww_symbols.insert(make_pair(string("VCBLDU"), 7.f));
+  ww_symbols.insert(make_pair(string("-BR"), 10.F));   // 10 = Mist
+  ww_symbols.insert(make_pair(string("VCBLDU"), 7.F));
 }
 
 // ----------------------------------------------------------------------
@@ -1175,18 +1167,18 @@ void InitCloudSymbols(map<string, float> &cloudCover_symbols,
 
   // Nämä METAR cloudtype/cover konversiot on saatu Viljo Kangasniemen dokumentista:
   // "METAReiden purkamisen kuvaus lyhyt versio.doc"
-  cloudCover_symbols.insert(make_pair(string("SKC"), 0.f));
-  cloudCover_symbols.insert(make_pair(string("NCD"), 0.f));
-  cloudCover_symbols.insert(make_pair(string("NSC"), 0.f));
-  cloudCover_symbols.insert(make_pair(string("CLR"), 0.f));
-  cloudCover_symbols.insert(make_pair(string("FEW"), 1.f));
-  cloudCover_symbols.insert(make_pair(string("SCT"), 3.f));
-  cloudCover_symbols.insert(make_pair(string("BKN"), 6.f));
-  cloudCover_symbols.insert(make_pair(string("OVC"), 8.f));
+  cloudCover_symbols.insert(make_pair(string("SKC"), 0.F));
+  cloudCover_symbols.insert(make_pair(string("NCD"), 0.F));
+  cloudCover_symbols.insert(make_pair(string("NSC"), 0.F));
+  cloudCover_symbols.insert(make_pair(string("CLR"), 0.F));
+  cloudCover_symbols.insert(make_pair(string("FEW"), 1.F));
+  cloudCover_symbols.insert(make_pair(string("SCT"), 3.F));
+  cloudCover_symbols.insert(make_pair(string("BKN"), 6.F));
+  cloudCover_symbols.insert(make_pair(string("OVC"), 8.F));
 
   cloudType_symbols.insert(make_pair(string("///"), kFloatMissing));
-  cloudType_symbols.insert(make_pair(string("TCU"), 2.f));
-  cloudType_symbols.insert(make_pair(string("CB"), 3.f));
+  cloudType_symbols.insert(make_pair(string("TCU"), 2.F));
+  cloudType_symbols.insert(make_pair(string("CB"), 3.F));
 
   // lisätään listaan myös kaikki ei standardi metar pilvi tyypit ja laitetaan niissä pilvi tyyppi
   // puuttuvaksi
@@ -1379,13 +1371,13 @@ void DecodeMetar(NFmiAviationStationInfoSystem &theStationInfoSystem,
         data.itsValues[data.itsDewpointIndex] = static_cast<float>(intValue);
       intValue = metarStruct.winData.windSpeed;
       if (intValue != MDSP_missing_int)
-        data.itsValues[data.itsWSIndex] = 1852.f * intValue / 3600.0f;
+        data.itsValues[data.itsWSIndex] = 1852.F * intValue / 3600.0F;
       intValue = metarStruct.winData.windDir;
       if (intValue != MDSP_missing_int)
         data.itsValues[data.itsWDIndex] = static_cast<float>(intValue);
       intValue = metarStruct.winData.windGust;
       if (intValue != MDSP_missing_int)
-        data.itsValues[data.itsWGustIndex] = 1852.f * intValue / 3600.0f;
+        data.itsValues[data.itsWGustIndex] = 1852.F * intValue / 3600.0F;
       intValue = metarStruct.hectoPasc_altstng;
       if (intValue != MDSP_missing_int)
         data.itsValues[data.itsPressureIndex] = static_cast<float>(intValue);
@@ -1536,16 +1528,15 @@ NFmiMetTime GetNoaaTime(std::string &timeStr)
     auto minute = boost::lexical_cast<short>(to_vec[4]);
     return NFmiMetTime(year, month, day, hour, minute);
   }
-  else
-    throw std::runtime_error(
-        std::string("Error in GetNoaaTime, string was suppose to hold NOAA format time: ") +
-        timeStr);
+  throw std::runtime_error(
+      std::string("Error in GetNoaaTime, string was suppose to hold NOAA format time: ") +
+      timeStr);
 }
 
 NFmiMetTime GetNoaaFormatTimeLine(std::ifstream &input)
 {
   std::string line;
-  do
+  for (bool more = true; more; more = static_cast<bool>(input))
   {
     std::getline(input, line);
     if (boost::regex_match(line, gNoaaTimeLineReg))
@@ -1553,7 +1544,7 @@ NFmiMetTime GetNoaaFormatTimeLine(std::ifstream &input)
       return ::GetNoaaTime(line);
     }
 
-  } while (input);
+  }
   return NFmiMetTime::gMissingTime;
 }
 
@@ -1569,17 +1560,17 @@ bool DoNoaaFormatRead(NFmiAviationStationInfoSystem &theStationInfoSystem,
     size_t oldDataBlockSize = dataBlocks.size();
     input.seekg(std::ios_base::beg);  // aloitetaan tarkastelujen jälkeen luku taas alusta
     std::string metarLine;
-    do
+    for (bool more = true; more; more = static_cast<bool>(input))
     {
       NFmiMetTime fullTime = ::GetNoaaFormatTimeLine(input);
       if (input && fullTime != NFmiMetTime::gMissingTime)
       {
-        do
+        for (bool moreInner = true; moreInner; moreInner = metarLine.empty())
         {  // hetaan sellaista riviä, missä on muutakin kuin white spaceja, ja sen oletetaan olevan
            // metar stringi
           std::getline(input, metarLine);
           metarLine = NFmiStringTools::TrimAll(metarLine);
-        } while (metarLine.empty());
+        }
         ::DecodeMetar(theStationInfoSystem,
                       metarLine,
                       dataBlocks,
@@ -1588,7 +1579,7 @@ bool DoNoaaFormatRead(NFmiAviationStationInfoSystem &theStationInfoSystem,
                       theTimeRoundingResolution,
                       theIcaoIdUnknownSetOut);
       }
-    } while (input);
+    }
     return oldDataBlockSize < dataBlocks.size();  // jos löytyi ainakin yksi metar, palautetaan true
   }
   return false;
@@ -1652,7 +1643,7 @@ void MakeDataBlocks(NFmiAviationStationInfoSystem &theStationInfoSystem,
         string tmpStr;
 
         int headerWordCounter = 0;
-        do
+        for (bool more = true; more; more = it2 != end2)
         {
           tmpStr = *it2;
           ++it2;
@@ -1690,7 +1681,7 @@ void MakeDataBlocks(NFmiAviationStationInfoSystem &theStationInfoSystem,
             break;  // Jos NIL tulee ennen METAR/SPECI:ä, lopetetaan kanssa, kyseessä tyhjä
                     // sanomatiedosto
           }
-        } while (it2 != end2);
+        }
 
         if (it2 == end2)
           continue;  // joskus on virheellisiä sanoma tiedostoja, eikä METAR/SPECI/NIL sanoja löydy,
@@ -1700,12 +1691,12 @@ void MakeDataBlocks(NFmiAviationStationInfoSystem &theStationInfoSystem,
         // header osio
         // loput metarit tulevat splittauksesta sellaisenaan.
         string tmpMetarStr(tmpStr + (tmpStr.empty() ? "" : " "));
-        do
+        for (bool more = true; more; more = it2 != end2)
         {
           tmpMetarStr += *it2;
           tmpMetarStr += " ";
           ::GetStringAndAdvance(it2, false);
-        } while (it2 != end2);
+        }
 
         lineStr = tmpMetarStr;
       }

@@ -283,15 +283,13 @@ Fmi::DateTime select_model_run_time(const std::list<Fmi::DateTime>& times)
     // select newest run, which is assumed to be the last one in the list
     return *(--times.end());
   }
-  else
-  {
-    auto pos = find(times.begin(), times.end(), options.origintime);
-    if (pos == times.end())
-      throw std::runtime_error("The selected origintime " + to_simple_string(options.origintime) +
-                               " is not available in directory '" + options.indir + "'");
 
-    return options.origintime;
-  }
+  auto pos = find(times.begin(), times.end(), options.origintime);
+  if (pos == times.end())
+    throw std::runtime_error("The selected origintime " + to_simple_string(options.origintime) +
+                             " is not available in directory '" + options.indir + "'");
+
+  return options.origintime;
 }
 
 // ----------------------------------------------------------------------
@@ -444,15 +442,13 @@ NFmiVPlaceDescriptor create_vdesc(const std::list<fs::path>& files)
     return NFmiVPlaceDescriptor(lbag);
   }
 
-  else  // !!options.boundaries
-  {
-    FmiLevelType leveltype = kFmiFlightLevel;
-    NFmiLevelBag lbag;
-    lbag.AddLevel(NFmiLevel(leveltype, "SFC/FL200", 200));
-    lbag.AddLevel(NFmiLevel(leveltype, "FL200/FL350", 350));
-    lbag.AddLevel(NFmiLevel(leveltype, "FL350/FL550", 550));
-    return NFmiVPlaceDescriptor(lbag);
-  }
+  // !!options.boundaries
+  FmiLevelType leveltype = kFmiFlightLevel;
+  NFmiLevelBag lbag;
+  lbag.AddLevel(NFmiLevel(leveltype, "SFC/FL200", 200));
+  lbag.AddLevel(NFmiLevel(leveltype, "FL200/FL350", 350));
+  lbag.AddLevel(NFmiLevel(leveltype, "FL350/FL550", 550));
+  return NFmiVPlaceDescriptor(lbag);
 }
 
 // ----------------------------------------------------------------------
@@ -470,15 +466,14 @@ double convert_coordinate(const std::string& value)
     double seconds = Fmi::stod(value.substr(4));
     return degrees + (minutes + seconds / 60) / 60;
   }
-  else if (value.size() == 7)
+  if (value.size() == 7)
   {
     double degrees = Fmi::stod(value.substr(0, 3));
     double minutes = Fmi::stod(value.substr(3, 2));
     double seconds = Fmi::stod(value.substr(5));
     return degrees + (minutes + seconds / 60) / 60;
   }
-  else
-    throw std::runtime_error("Invalid coordinate value '" + value + "'");
+  throw std::runtime_error("Invalid coordinate value '" + value + "'");
 }
 
 // ----------------------------------------------------------------------
@@ -538,7 +533,7 @@ NFmiSvgPath read_ash_concentration_polygon(const fs::path& file)
 
     if (line.empty())
       continue;
-    else if (polygons_started)
+    if (polygons_started)
     {
       if (line.substr(0, 4) == "POLY")
       {
@@ -617,7 +612,7 @@ std::map<std::string, NFmiSvgPath> read_ash_boundary_polygons(const fs::path& fi
 
     if (line.empty())
       continue;
-    else if (polygons_started)
+    if (polygons_started)
     {
       if (line.substr(0, 4) == "POLY")
       {

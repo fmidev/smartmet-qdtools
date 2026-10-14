@@ -1114,7 +1114,9 @@ std::string Stats::report() const
     }
     else
     {
-      double binmin = NAN, binmax = NAN, tick = NAN;
+      double binmin = NAN;
+      double binmax = NAN;
+      double tick = NAN;
       int precision = 0;
       autoscale(itsMin, itsMax, options.bins, binmin, binmax, tick, precision);
 

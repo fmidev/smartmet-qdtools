@@ -232,16 +232,6 @@ bool parse_command_line(int argc, const char* argv[])
  */
 // ----------------------------------------------------------------------
 
-const string make_output_name(const string& theInfile, const string& theOutpath)
-{
-  if (!NFmiFileSystem::DirectoryExists(theOutpath))
-    return theOutpath;
-
-  string outfile = theOutpath + '/' + NFmiFileSystem::BaseName(theInfile);
-
-  return outfile;
-}
-
 // ----------------------------------------------------------------------
 /*!
  * \brief Create a parameter descriptor from the configuration settings

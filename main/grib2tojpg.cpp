@@ -113,16 +113,16 @@ struct ParamChangeItem
                                "%.1f",
                                kLinearly);  // laitetaan lineaarinen interpolointi päälle
     itsConversionBase = 0;
-    itsConversionScale = 1.f;
+    itsConversionScale = 1.F;
 
-      delete itsLevel;
+    delete itsLevel;
     itsLevel = nullptr;
   }
 
   unsigned long itsOriginalParamId = 0;
   NFmiParam itsWantedParam;
   float itsConversionBase = 0;  // jos ei 0 ja scale ei 1, tehdään parametrille muunnos konversio
-  float itsConversionScale = 1.f;
+  float itsConversionScale = 1.F;
   NFmiLevel* itsLevel = nullptr;  // jos ei 0-pointer, tehdään tästä levelistä pintaparametri
 };
 
@@ -153,18 +153,7 @@ NFmiQueryData *CreateQueryData(vector<GridRecordData *> &theGribRecordDatas,
                                NFmiHPlaceDescriptor &theHplace,
                                NFmiVPlaceDescriptor &theVplace,
                                int theMaxQDataSizeInBytes);
-NFmiParamDescriptor GetParamDesc(vector<GridRecordData *> &theGribRecordDatas,
-                                 const NFmiHPlaceDescriptor& theHplace,
-                                 const NFmiVPlaceDescriptor& theVplace);
-const NFmiDataIdent &FindFirstParam(int theParId, vector<GridRecordData *> &theGribRecordDatas);
-NFmiVPlaceDescriptor GetVPlaceDesc(vector<GridRecordData *> &theGribRecordDatas);
-const NFmiLevel &FindFirstLevel(int theLevelValue, vector<GridRecordData *> &theGribRecordDatas);
-NFmiTimeDescriptor GetTimeDesc(vector<GridRecordData *> &theGribRecordDatas,
-                               const NFmiHPlaceDescriptor& theHplace,
-                               NFmiVPlaceDescriptor &theVplace);
 bool FillQDataWithGribRecords(vector<GridRecordData *> &theGribRecordDatas);
-int GetIntegerOptionValue(const NFmiCmdLine &theCmdline, char theOption);
-void CheckInfoSize(const NFmiQueryInfo &theInfo, int theMaxQDataSizeInBytes);
 vector<NFmiHPlaceDescriptor> GetAllHPlaceDescriptors(vector<GridRecordData *> &theGribRecordDatas,
                                                      bool useOutputFile);
 vector<NFmiVPlaceDescriptor> GetAllVPlaceDescriptors(vector<GridRecordData *> &theGribRecordDatas,
@@ -363,8 +352,7 @@ int main(int argc, const char **argv)
       Usage();
       return 1;
     }
-    else
-      inputFileName = cmdline.Parameter(1);
+    inputFileName = cmdline.Parameter(1);
 
     if (cmdline.isOption('O'))
     {
@@ -630,8 +618,7 @@ NFmiArea *CreateLatlonArea(grib_handle *theGribHandle, bool &doGlobeFix)
 
     return NFmiAreaTools::CreateLegacyLatLonArea(NFmiPoint(Lo1, La1), NFmiPoint(Lo2, La2));
   }
-  else
-    throw runtime_error("Error: Unable to retrieve latlon-projection information from grib.");
+  throw runtime_error("Error: Unable to retrieve latlon-projection information from grib.");
 }
 
 NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
@@ -656,7 +643,7 @@ NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
 
     return NFmiAreaTools::CreateLegacyMercatorArea(NFmiPoint(Lo1, La1), NFmiPoint(Lo2, La2));
   }
-  else if (status1 == 0 && status2 == 0 && status5 == 0)
+  if (status1 == 0 && status2 == 0 && status5 == 0)
   {
     La1 /= grib1divider;
     Lo1 /= grib1divider;
@@ -870,8 +857,7 @@ NFmiMetTime GetOrigTime(grib_handle *theGribHandle)
                          1 /* timestep round in mins */);
     return origTime;
   }
-  else
-    throw runtime_error("Error: Couldn't get origTime from given grib_handle.");
+  throw runtime_error("Error: Couldn't get origTime from given grib_handle.");
 }
 
 NFmiMetTime GetValidTime(grib_handle *theGribHandle)
@@ -884,8 +870,7 @@ NFmiMetTime GetValidTime(grib_handle *theGribHandle)
     validTime.ChangeByHours(forecastTime);
     return validTime;
   }
-  else
-    throw runtime_error("Error: Couldn't get validTime from given grib_handle.");
+  throw runtime_error("Error: Couldn't get validTime from given grib_handle.");
 }
 
 NFmiDataIdent GetParam(grib_handle *theGribHandle, const NFmiProducer &theWantedProducer)
@@ -928,26 +913,23 @@ NFmiDataIdent GetParam(grib_handle *theGribHandle, const NFmiProducer &theWanted
                                      kLinearly),
                            theWantedProducer);
     }
-    else
+
+    long parameter = 0;
+    int status1 = grib_get_long(theGribHandle, "parameter", &parameter);
+    if (status1 == 0 || status1 == -4)
     {
-      long parameter = 0;
-      int status1 = grib_get_long(theGribHandle, "parameter", &parameter);
-      if (status1 == 0 || status1 == -4)
-      {
-        string name = NFmiStringTools::Convert(parameter);
-        return NFmiDataIdent(NFmiParam(parameter,
-                                       name,
-                                       kFloatMissing,
-                                       kFloatMissing,
-                                       kFloatMissing,
-                                       kFloatMissing,
-                                       "%.1f",
-                                       kLinearly),
-                             theWantedProducer);
-      }
-      else
-        throw runtime_error("Error: Couldn't get parameter from given grib_handle.");
+      string name = NFmiStringTools::Convert(parameter);
+      return NFmiDataIdent(NFmiParam(parameter,
+                                     name,
+                                     kFloatMissing,
+                                     kFloatMissing,
+                                     kFloatMissing,
+                                     kFloatMissing,
+                                     "%.1f",
+                                     kLinearly),
+                           theWantedProducer);
     }
+    throw runtime_error("Error: Couldn't get parameter from given grib_handle.");
   }
 }
 
@@ -962,8 +944,7 @@ NFmiLevel GetLevel(grib_handle *theGribHandle)
 
   if ((status1a == 0 || status1b == 0) && status2 == 0)
     return NFmiLevel(typeOfFirstFixedSurface, NFmiStringTools::Convert(level), level);
-  else
-    throw runtime_error("Error: Couldn't get level from given grib_handle.");
+  throw runtime_error("Error: Couldn't get level from given grib_handle.");
 }
 
 double GetMissingValue(grib_handle *theGribHandle)
@@ -972,8 +953,7 @@ double GetMissingValue(grib_handle *theGribHandle)
   int status = grib_get_double(theGribHandle, "missingValue", &missingValue);
   if (status == 0)
     return missingValue;
-  else
-    throw runtime_error("Error: Couldn't get missingValue from given grib_handle.");
+  throw runtime_error("Error: Couldn't get missingValue from given grib_handle.");
 }
 
 void MakeParameterConversions(GridRecordData *theGridRecordData,
@@ -1214,8 +1194,8 @@ void ChangeParamSettingsIfNeeded(const vector<ParamChangeItem>& theParamChangeTa
           cerr << " level -> sfc";
         break;
       }
-      else if (paramChangeItem.itsOriginalParamId == theGribData->itsParam.GetParamIdent() &&
-               paramChangeItem.itsLevel == nullptr)
+      if (paramChangeItem.itsOriginalParamId == theGribData->itsParam.GetParamIdent() &&
+          paramChangeItem.itsLevel == nullptr)
       {
         theGribData->itsParam.SetParam(paramChangeItem.itsWantedParam);
         if (verbose)
@@ -1434,7 +1414,7 @@ struct LevelLessThan
   {
     if (l1.LevelType() < l2.LevelType())
       return true;
-    else if (l1.LevelType() == l2.LevelType())
+    if (l1.LevelType() == l2.LevelType())
     {
       if (l1.LevelValue() < l2.LevelValue())
         return true;
@@ -1610,29 +1590,6 @@ NFmiQueryData* CreateQueryData(vector<GridRecordData*>& theGribRecordDatas,
   return nullptr;
 }
 
-void CheckInfoSize(const NFmiQueryInfo &theInfo, int theMaxQDataSizeInBytes)
-{
-  unsigned long infoSize = theInfo.Size();
-  unsigned long infoSizeInBytes = infoSize * sizeof(float);
-  if (theMaxQDataSizeInBytes < static_cast<int>(infoSizeInBytes))
-  {
-    stringstream ss;
-    ss << "Datasta tulisi liian iso:" << endl;
-    ss << "QDatan kooksi tulisi nyt " << infoSizeInBytes << " tavua." << endl;
-    ss << "Rajaksi on asetettu " << theMaxQDataSizeInBytes << " tavua." << endl;
-
-    unsigned long paramSize = theInfo.SizeParams();
-    ss << "Parametreja on " << paramSize << " kpl." << endl;
-    unsigned long timeSize = theInfo.SizeTimes();
-    ss << "Aikoja on " << timeSize << " kpl." << endl;
-    unsigned long locSize = theInfo.SizeLocations();
-    ss << "Hilapisteitä/asemia on " << locSize << " kpl." << endl;
-    unsigned long levelSize = theInfo.SizeLevels();
-    ss << "Leveleitä on " << levelSize << " kpl." << endl;
-    throw runtime_error(ss.str());
-  }
-}
-
 /* The following code taken from pnmgamma and editor to support our needs */
 
 void buildPowGamma(unsigned char table[],
@@ -1694,7 +1651,8 @@ bool FillQDataWithGribRecords(vector<GridRecordData *> &theGribRecordDatas)
     tmp = theGribRecordDatas[k];
 
     // Generate filename based on pattern
-    char pattern[255], jpegFilename[300];
+    char pattern[255];
+    char jpegFilename[300];
     struct tm* time_table = nullptr;
     const time_t itsValidTime = tmp->itsValidTime.EpochTime();
     time_table = gmtime(&itsValidTime);
@@ -1768,193 +1726,4 @@ bool FillQDataWithGribRecords(vector<GridRecordData *> &theGribRecordDatas)
   return filledGridCount > 0;
 }
 
-bool ConvertTimeList2TimeBag(NFmiTimeList &theTimeList, NFmiTimeBag &theTimeBag)
-{  // tutkitaan onko mahdollista tehda listasta bagi
-   // eli ajat ovat peräkkäisiä ja tasavälisiä
-  if (theTimeList.NumberOfItems() >
-      2)  // ei  tehdä yhdestä tai kahdesta ajasta bagiä vaikka se on mahdollista
-  {
-    theTimeList.First();
-    theTimeList.Next();
-    int resolution = theTimeList.CurrentResolution();
-    for (; theTimeList.Next();)
-    {
-      if (resolution != theTimeList.CurrentResolution())
-        return false;  // jos yhdenkin aikavälin resoluutio poikkeaa, ei voida tehdä bagia
-    }
-    theTimeBag = NFmiTimeBag(theTimeList.FirstTime(), theTimeList.LastTime(), resolution);
-    return true;
-  }
-  return false;
-}
-
-// HUOM! jos datassa on 'outoja' valid-aikoja esim. 1919 jne., joita näyttää tulevan esim.
-// hirlamista liittyen johonkin
-// kontrolli grideihin (2x2 hila ja muuta outoa). Tälläiset hilat jätetään huomiotta.
-// Timebagin rakentelussa tarkastellaan myös että hila ja level-type ovat halutunlaiset.
-NFmiTimeDescriptor GetTimeDesc(vector<GridRecordData *> &theGribRecordDatas,
-                               const NFmiHPlaceDescriptor& theHplace,
-                               NFmiVPlaceDescriptor &theVplace)
-{
-  MyGrid grid(*theHplace.Grid());
-  theVplace.Reset();
-  theVplace.Next();
-  FmiLevelType levelType = theVplace.Level()->LevelType();
-  // set:in avulla selvitetaan kuinka monta erilaista timea loytyy.
-  set<NFmiMetTime> timesSet;
-  int gribCount = static_cast<int>(theGribRecordDatas.size());
-  for (int i = 0; i < gribCount; i++)
-    if (theGribRecordDatas[i]->itsLevel.LevelType() == levelType)
-      if (theGribRecordDatas[i]->itsGrid == grid)
-        timesSet.insert(theGribRecordDatas[i]->itsValidTime);
-
-  // Tehdaan aluksi timelist, koska se on helpompi,
-  // myohemmin voi miettia saisiko aikaan timebagin.
-  NFmiTimeList timeList;
-  auto it = timesSet.begin();
-  NFmiMetTime dummyTime(1950, 1, 1);  // laitoin tälläisen dummytime rajoittimen, koska Pekon
-                                      // antamassa datassa oli aika 1919 vuodelta ja se ja
-                                      // nykyaikainen aika sekoitti mm. metkun editorin pahasti
-  for (; it != timesSet.end(); ++it)
-    if (*it > dummyTime)
-      timeList.Add(new NFmiMetTime(*it));
-
-  NFmiTimeBag timeBag;
-  bool fUseTimeBag = ConvertTimeList2TimeBag(timeList, timeBag);  // jos mahd.
-
-  // Oletus kaikki origintimet ovat samoja, en tutki niita nyt yhtaan.
-  if (fUseTimeBag)
-    return NFmiTimeDescriptor(theGribRecordDatas[0]->itsOrigTime, timeBag);
-  else
-    return NFmiTimeDescriptor(theGribRecordDatas[0]->itsOrigTime, timeList);
-}
-
-NFmiVPlaceDescriptor GetVPlaceDesc(vector<GridRecordData *> &theGribRecordDatas)
-{
-  NFmiLevelBag levelBag;
-  int gribCount = static_cast<int>(theGribRecordDatas.size());
-  for (int i = 0; i < gribCount; i++)
-    levelBag.AddLevel(theGribRecordDatas[i]->itsLevel);  // AddLevel poistaa duplikaatit
-
-  return NFmiVPlaceDescriptor(levelBag);
-}
-
-// Etsitään ne parametrit mitkä löytyvät data-setistä.
-// Lisäksi hilan ja arean pitää olla sama kuin annetussa hplaceDescriptorissa ja level-tyypin pitää
-// olla
-// sama kuin vplaceDescriptorissa.
-NFmiParamDescriptor GetParamDesc(vector<GridRecordData *> &theGribRecordDatas,
-                                 const NFmiHPlaceDescriptor& theHplace,
-                                 const NFmiVPlaceDescriptor& theVplace)
-{
-  // Ensin pitää saada 1. levelin level-type talteen vplaceDescriptorista, sillä otamme vain
-  // parametreja, mitä löytyy sellaisista hila kentistä missä on tälläinen level id.
-  FmiLevelType wantedLevelType = theVplace.Levels()->Level(0)->LevelType();
-  set<int> parIds;  // set:in avulla selvitetaan kuinka monta erilaista identtia loytyy
-  int gribCount = static_cast<int>(theGribRecordDatas.size());
-  for (int i = 0; i < gribCount; i++)
-  {
-    if (theGribRecordDatas[i]->itsGrid == *(theHplace.Grid()))
-    {
-      if (theGribRecordDatas[i]->itsLevel.LevelType() == wantedLevelType)
-        parIds.insert(theGribRecordDatas[i]->itsParam.GetParamIdent());
-    }
-  }
-
-  NFmiParamBag parBag;
-  auto it = parIds.begin();
-  for (; it != parIds.end(); ++it)
-    parBag.Add(FindFirstParam(*it, theGribRecordDatas));
-
-  return NFmiParamDescriptor(parBag);
-}
-
-const NFmiLevel &FindFirstLevel(int theLevelValue, vector<GridRecordData *> &theGribRecordDatas)
-{
-  int gribCount = static_cast<int>(theGribRecordDatas.size());
-  for (int i = 0; i < gribCount; i++)
-    if (theLevelValue == static_cast<int>(theGribRecordDatas[i]->itsLevel.LevelValue()))
-      return theGribRecordDatas[i]->itsLevel;
-  throw runtime_error("Error in program in FindFirstLevel-funktion.");
-}
-
-const NFmiDataIdent &FindFirstParam(int theParId, vector<GridRecordData *> &theGribRecordDatas)
-{
-  int gribCount = static_cast<int>(theGribRecordDatas.size());
-  for (int i = 0; i < gribCount; i++)
-    if (theParId == static_cast<int>(theGribRecordDatas[i]->itsParam.GetParamIdent()))
-      return theGribRecordDatas[i]->itsParam;
-  throw runtime_error("Error in program in FindFirstParam-function.");
-}
-
-void InterpolateRowData(vector<float> &theSourceValues, vector<float> &theDestValues)
-{
-  float ratio = (theSourceValues.size() - 1) / static_cast<float>(theDestValues.size() - 1);
-  if (ratio == 1)
-    theDestValues = theSourceValues;
-  else
-  {
-    for (unsigned int i = 0; i < theDestValues.size() - 1; i++)
-    {
-      float relativePos = ratio * i;
-      auto lowerIndex = static_cast<unsigned int>(relativePos);
-      float relativePosRemains =
-          relativePos -
-          ::floor(ratio *
-                  i);  // otetaan desimaali osa irti sijainnista niin saadaan interpolointi kerroin
-      float value1 = theSourceValues[lowerIndex];
-      float value2 = theSourceValues[lowerIndex + 1];
-      double interpolatedValue = NFmiInterpolation::Linear(relativePosRemains, value1, value2);
-      theDestValues[i] = static_cast<float>(interpolatedValue);
-    }
-    theDestValues[theDestValues.size() - 1] = theSourceValues[theSourceValues.size() - 1];
-  }
-}
-
-// TODO ei osaa vielä hanskata scanmodeja
-void FillGridDataWithVariableLengthData(const float* theArray,
-                                        GridRecordData *theGribData,
-                                        int /* scanIModePos */,
-                                        int /* scanJModePos */,
-                                        int /* adjacentIMode */,
-                                        vector<long> &theVariableLengthRows)
-{
-  NFmiDataMatrix<float> &gridData = theGribData->itsGridData;
-  NFmiArea *area = theGribData->itsGrid.itsArea;
-  NFmiRect rect(area->XYArea());
-
-  vector<float> rowValues;                       // vaihtuva rivisen datan yhden rivin arvot
-  vector<float> matrixRowValues(gridData.NX());  // normaalin datamatriisiin laskettavat arvot
-                                                 // (lasketaan siis vaihtuvan pituisien rivien datan
-                                                 // avulla)
-  long totalArrayCounter = 0;
-  for (unsigned int row = 0; row < theVariableLengthRows.size(); row++)
-  {
-    // Täytetään ensin vaihtuva pituisen rivin data ja niiden suhteelliset sijainnit.
-    long rowLength = theVariableLengthRows[row];
-    if (rowLength == 0)
-      throw runtime_error("Zero division in FillGridDataWithVariableLengthData-function.");
-
-    rowValues.resize(rowLength);
-    for (long i = 0; i < rowLength; i++)
-    {
-      rowValues[i] = theArray[totalArrayCounter];
-      totalArrayCounter++;
-    }
-    // laske eri pituisen datan rivista matriisiin rivi
-    InterpolateRowData(rowValues, matrixRowValues);
-    // talleta rivi tulos matriisiin.
-    for (unsigned int j = 0; j < matrixRowValues.size(); j++)
-      gridData[j][row] = matrixRowValues[j];
-  }
-}
-
-int GetIntegerOptionValue(const NFmiCmdLine &theCmdline, char theOption)
-{
-  NFmiValueString valStr(theCmdline.OptionValue(theOption));
-  if (valStr.IsInt())
-    return static_cast<int>(valStr);
-  throw runtime_error(string("Error: '") + theOption +
-                      "' option value must be integer, exiting...");
-}
 }  // namespace

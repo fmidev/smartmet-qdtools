@@ -31,15 +31,15 @@ double multiplier(const std::string& theParam)
 {
   if (theParam == "Precipitation1h")
     return 0.01;
-  else if (theParam == "PrecipitationRate")
+  if (theParam == "PrecipitationRate")
     return 0.01;
-  else if (theParam == "CorrectedReflectivity")
+  if (theParam == "CorrectedReflectivity")
     return 0.5;
-  else if (theParam == "SurfaceWaterPhase")  // from 0-255 to 0-100
+  if (theParam == "SurfaceWaterPhase")  // from 0-255 to 0-100
     return 100.0 / 255.0;
-  else if (theParam == "EchoTop")
+  if (theParam == "EchoTop")
     return 0.1;
-  else if (theParam == "Detectability")
+  if (theParam == "Detectability")
     return -100.0 / 255;
   else if (theParam == "Precipitation3hF0")
     return 0.01;
@@ -178,12 +178,11 @@ double offset(const std::string& theParam)
 {
   if (theParam == "CorrectedReflectivity")
     return -32;
-  else if (theParam == "EchoTop")
+  if (theParam == "EchoTop")
     return -0.1;
-  else if (theParam == "Detectability")
+  if (theParam == "Detectability")
     return 100;
-  else
-    return 0.0;
+  return 0.0;
 }
 }  // namespace DataTransform
 }  // namespace RadContour

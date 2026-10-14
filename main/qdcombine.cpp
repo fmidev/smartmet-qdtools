@@ -98,7 +98,9 @@ void FillCombinedData(const vector<string> &theDataFileNames,
     {
       using IndexPair = std::pair<unsigned int, unsigned int>;
       using Indexes = std::vector<IndexPair>;
-      Indexes params, times, levels;
+      Indexes params;
+      Indexes times;
+      Indexes levels;
 
       // Collect indexes for common parameters, times and levels
       for (sourceInfo.ResetParam(); sourceInfo.NextParam();)
@@ -164,7 +166,10 @@ void FillCombinedData(const vector<string> &theDataFileNames,
       {
         using IndexPair = std::pair<unsigned int, unsigned int>;
         using Indexes = std::vector<IndexPair>;
-        Indexes params, times, levels, locations;
+        Indexes params;
+        Indexes times;
+        Indexes levels;
+        Indexes locations;
 
         // Collect indexes for common parameters, times, levels and locations
         for (sourceInfo.ResetParam(); sourceInfo.NextParam();)
@@ -356,13 +361,11 @@ NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
     NFmiQueryInfo info(pdesc, tdesc, hdesc, vdesc);
     return info;
   }
-  else
-  {
-    NFmiGrid grid(theUsedGrid.itsArea, theUsedGrid.itsNX, theUsedGrid.itsNY);
-    NFmiHPlaceDescriptor hdesc(grid);
-    NFmiQueryInfo info(pdesc, tdesc, hdesc, vdesc);
-    return info;
-  }
+
+  NFmiGrid grid(theUsedGrid.itsArea, theUsedGrid.itsNX, theUsedGrid.itsNY);
+  NFmiHPlaceDescriptor hdesc(grid);
+  NFmiQueryInfo info(pdesc, tdesc, hdesc, vdesc);
+  return info;
 }
 
 // ----------------------------------------------------------------------

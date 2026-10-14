@@ -666,17 +666,17 @@ void ReportMetadata(NFmiFastQueryInfo *q)
 
   if (allkeys.Reset())
   {
-    do
+    for (bool more = true; more; more = allkeys.Next())
     {
       NFmiString key = *allkeys.Current();
       if (q->FindFirstKey(key))
       {
-        do
+        for (bool moreInner = true; moreInner; moreInner = q->FindNextKey(key))
         {
           cout << key.CharPtr() << "\t" << q->GetCurrentKeyValue().CharPtr() << endl;
-        } while (q->FindNextKey(key));
+        }
       }
-    } while (allkeys.Next());
+    }
   }
 }
 
@@ -725,10 +725,10 @@ void ReportMetadata(NFmiFastQueryInfo *q, const string &theKey)
   // never null here
   if (q->FindFirstKey(key))
   {
-    do
+    for (bool more = true; more; more = q->FindNextKey(key))
     {
       cout << q->GetCurrentKeyValue().CharPtr() << endl;
-    } while (q->FindNextKey(key));
+    }
   }
   else
     throw runtime_error("Key " + theKey + " has no value");

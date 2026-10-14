@@ -464,7 +464,10 @@ NFmiHPlaceDescriptor MakeHPlaceDescriptor(NFmiFastQueryInfo& theQ,
   int nx = theQ.Grid()->XNumber();
   int ny = theQ.Grid()->YNumber();
 
-  int width = 0, height = 0, xoff = 0, yoff = 0;
+  int width = 0;
+  int height = 0;
+  int xoff = 0;
+  int yoff = 0;
 
   if (!theGeometry.empty())
   {
@@ -727,7 +730,9 @@ NFmiTimeDescriptor MakeTimeDescriptor(NFmiFastQueryInfo& theQ,
   if (theTimes.size() > 3)
     throw runtime_error("Cannot extract timeinterval containing more than 3 values");
 
-  int dt1 = 0, dt2 = 0, dt = 0;
+  int dt1 = 0;
+  int dt2 = 0;
+  int dt = 0;
   if (theTimes.empty())
   {
     dt1 = -24 * 365 * 100;  // 100 years should be enough for any use
@@ -1370,7 +1375,10 @@ int run(int argc, const char* argv[])
 
   // create new descriptors for the new data
 
-  int x1 = 0, y1 = 0, dx = 0, dy = 0;
+  int x1 = 0;
+  int y1 = 0;
+  int dx = 0;
+  int dy = 0;
   NFmiHPlaceDescriptor hdesc(MakeHPlaceDescriptor(*srcinfo,
                                                   opt_stations,
                                                   opt_nostations,

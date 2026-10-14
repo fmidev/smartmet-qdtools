@@ -294,15 +294,13 @@ int analyze_given_parameters(NFmiFastQueryInfo& theQ)
   {
     if (options.checknan || options.printcount)
       return 0;
-    else
-      return 100;
+    return 100;
   }
 
   float sum = accumulate(percentages.begin(), percentages.end(), 0.0);
   if (options.checknan || options.printcount)
     return static_cast<int>(sum);
-  else
-    return static_cast<int>(sum / percentages.size());
+  return static_cast<int>(sum / percentages.size());
 }
 
 // ----------------------------------------------------------------------
@@ -402,8 +400,7 @@ int analyze_given_station_parameters(NFmiFastQueryInfo& theQ)
   float sum = accumulate(percentages.begin(), percentages.end(), 0.0);
   if (options.checknan || options.printcount)
     return static_cast<int>(sum);
-  else
-    return static_cast<int>(sum / percentages.size());
+  return static_cast<int>(sum / percentages.size());
 }
 
 // ----------------------------------------------------------------------
@@ -503,8 +500,7 @@ int analyze_given_parameters_now(NFmiFastQueryInfo& theQ)
   float sum = accumulate(percentages.begin(), percentages.end(), 0.0);
   if (options.checknan || options.printcount)
     return static_cast<int>(sum);
-  else
-    return static_cast<int>(sum / percentages.size());
+  return static_cast<int>(sum / percentages.size());
 }
 
 // ----------------------------------------------------------------------

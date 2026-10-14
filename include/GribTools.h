@@ -44,7 +44,7 @@ struct ParamChangeItem
   long itsOriginalParamId = 0;
   NFmiParam itsWantedParam;
   float itsConversionBase = 0;  // jos ei 0 ja scale ei 1, tehdään parametrille muunnos konversio
-  float itsConversionScale = 1.f;
+  float itsConversionScale = 1.F;
   NFmiLevel* itsLevel = nullptr;  // jos ei 0-pointer, tehdään tästä levelistä pintaparametri
 };
 

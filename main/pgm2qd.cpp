@@ -37,8 +37,7 @@ std::string changesuffix(const std::string &theName, const std::string &theSuffi
   string::size_type pos = theName.rfind('.');
   if (pos == string::npos)
     return theName + '.' + theSuffix;
-  else
-    return theName.substr(0, pos + 1) + theSuffix;
+  return theName.substr(0, pos + 1) + theSuffix;
 }
 
 // ----------------------------------------------------------------------

@@ -322,7 +322,7 @@ int main(int argc, const char *argv[])
     int accepted_count = 0;
 
     qi.FirstTime();
-    do
+    for (bool more = true; more; more = qi.NextTime() && qi.ValidTime() <= lasttime)
     {
       if (qi.ValidTime() >= firsttime && qi.ValidTime() <= lasttime)
       {
@@ -341,7 +341,7 @@ int main(int argc, const char *argv[])
           cerr << "\tnot accepted " << qi.ValidTime().ToStr(kYYYYMMDDHHMM).CharPtr() << " ("
                << qi.ValidTime().DifferenceInHours(now) << "h)" << endl;
       }
-    } while (qi.NextTime() && qi.ValidTime() <= lasttime);
+    }
 
     if (accepted_count > 0)
     {

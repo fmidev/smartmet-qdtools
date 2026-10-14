@@ -177,8 +177,7 @@ NFmiTimeDescriptor make_timedescriptor(const NFmiFastQueryInfo theQ)
 
   if (options.setorigintime)
     return NFmiTimeDescriptor(theQ.ValidTime(), times);
-  else
-    return NFmiTimeDescriptor(theQ.OriginTime(), times);
+  return NFmiTimeDescriptor(theQ.OriginTime(), times);
 }
 
 // ----------------------------------------------------------------------
@@ -253,65 +252,6 @@ pair<string, string> make_outnames(NFmiFastQueryInfo& info)
  * \brief Extract the active time from the querydata
  */
 // ----------------------------------------------------------------------
-
-void extract_time(NFmiFastQueryInfo& theQ)
-{
-  // create new data container
-
-  NFmiTimeDescriptor tdesc = make_timedescriptor(theQ);
-
-  NFmiFastQueryInfo info(
-      theQ.ParamDescriptor(), tdesc, theQ.HPlaceDescriptor(), theQ.VPlaceDescriptor());
-
-  unique_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
-  NFmiFastQueryInfo dstinfo(data.get());
-
-  if (data.get() == nullptr)
-    throw runtime_error("Could not allocate memory for result data");
-
-  // copy the data for time selected time
-
-  for (dstinfo.ResetParam(), theQ.ResetParam(); dstinfo.NextParam() && theQ.NextParam();)
-  {
-    for (dstinfo.ResetLocation(), theQ.ResetLocation();
-         dstinfo.NextLocation() && theQ.NextLocation();)
-    {
-      for (dstinfo.ResetLevel(), theQ.ResetLevel(); dstinfo.NextLevel() && theQ.NextLevel();)
-      {
-        float value = theQ.FloatValue();
-        dstinfo.FloatValue(value);
-      }
-    }
-  }
-
-  // Count the amount of missing values if needed
-
-  float misses = calc_missing(dstinfo);
-
-  pair<string, string> names = make_outnames(dstinfo);
-  const string& outname = names.first;
-  const string& tmpname = names.second;
-
-  if (options.missinglimit < 100 && misses > options.missinglimit)
-  {
-    if (options.verbose)
-      cout << "Skipping " << outname << " since missing percentage is " << misses << endl;
-  }
-  else
-  {
-    // write the data out
-
-    if (options.verbose)
-      cout << "Writing '" << outname << " (missing " << misses << "%)" << endl;
-
-    // Use dotfile to prevent for example roadmodel crashes
-
-    data->Write(tmpname);
-    if (std::filesystem::exists(outname))
-      std::filesystem::remove(outname);
-    std::filesystem::rename(tmpname, outname);
-  }
-}
 
 // ----------------------------------------------------------------------
 /*!

@@ -460,7 +460,7 @@ int add_to_pbag(const nctools::NcFileExtended& ncfile,
         std::cout << "  Skipping unknown variable '" << paramname << "'\n";
       continue;
     }
-    else if (options.verbose)
+    if (options.verbose)
     {
       std::cout << "  Variable " << paramname << " has id " << pinfo.id << " and name "
                 << (nctools::get_enumconverter().ToString(pinfo.id).empty()
@@ -638,7 +638,7 @@ int run(int argc, char* argv[])
     info.SetProducer(NFmiProducer(options.producernumber, options.producername));
 
     // Copy data from input files
-    for (auto i = 0ul; i < options.infiles.size(); i++)
+    for (auto i = 0UL; i < options.infiles.size(); i++)
     {
       try
       {

@@ -257,7 +257,10 @@ void draw_map(Imagine::NFmiImage& theImage, NFmiArea* theProj, char theResolutio
 {
   const string gshhsfile = string("gshhs_") + theResolution + ".b";
 
-  double minlon = NAN, minlat = NAN, maxlon = NAN, maxlat = NAN;
+  double minlon = NAN;
+  double minlat = NAN;
+  double maxlon = NAN;
+  double maxlat = NAN;
 
   FindBBox(*theProj, minlon, minlat, maxlon, maxlat);
 

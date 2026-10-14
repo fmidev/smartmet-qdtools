@@ -89,8 +89,7 @@ void Domain(int argc, const char *argv[])
     throw runtime_error("");  // tässä piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
   }
-  else
-    flashFileName = cmdline.Parameter(1);
+  flashFileName = cmdline.Parameter(1);
 
   if (cmdline.isOption('s'))
     skipLines = GetIntegerOptionValue(cmdline, 's');
@@ -147,8 +146,7 @@ bool ParseFlashDataLine(const std::string &theLineStr, FlashData &theData)
       theData.accuracy = NFmiStringTools::Convert<float>(words[5]);
       return true;
     }
-    else
-      throw runtime_error(std::string("Data rivillä oli väärä määrä arvoja: \n") + theLineStr);
+    throw runtime_error(std::string("Data rivillä oli väärä määrä arvoja: \n") + theLineStr);
   }
   return false;
 }

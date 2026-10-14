@@ -468,15 +468,15 @@ FmiParameterName opera_name_to_newbase(const std::string& product,
   {
     if (quantity == "TH")
       return kFmiReflectivity;
-    else if (quantity == "DBZ")
+    if (quantity == "DBZ")
       return kFmiReflectivity;
-    else if (quantity == "DBZH")
+    if (quantity == "DBZH")
       return kFmiCorrectedReflectivity;
-    else if (quantity == "VRAD")
+    if (quantity == "VRAD")
       return kFmiRadialVelocity;
-    else if (quantity == "WRAD" || quantity == "W")  // W is used by Latvians
+    if (quantity == "WRAD" || quantity == "W")  // W is used by Latvians
       return kFmiSpectralWidth;
-    else if (quantity == "RATE")
+    if (quantity == "RATE")
       return kFmiPrecipitationRate;
   }
   else if (product == "ETOP")
@@ -488,7 +488,7 @@ FmiParameterName opera_name_to_newbase(const std::string& product,
   {
     if (quantity == "TH")
       return kFmiReflectivity;
-    else if (quantity == "DBZH")
+    if (quantity == "DBZH")
       return kFmiCorrectedReflectivity;
   }
   else if (product == "RR")
@@ -507,15 +507,15 @@ FmiParameterName opera_name_to_newbase(const std::string& product,
   {
     if (quantity == "TH")
       return kFmiReflectivity;
-    else if (quantity == "DBZH")
+    if (quantity == "DBZH")
       return kFmiCorrectedReflectivity;
-    else if (quantity == "VRAD")
+    if (quantity == "VRAD")
       return kFmiRadialVelocity;
-    else if (quantity == "WRAD" || quantity == "W")  // W is used by Latvians
+    if (quantity == "WRAD" || quantity == "W")  // W is used by Latvians
       return kFmiSpectralWidth;
-    else if (quantity == "ZDR")
+    if (quantity == "ZDR")
       return kFmiDifferentialReflectivity;
-    else if (quantity == "KDP")
+    if (quantity == "KDP")
       return kFmiSpecificDifferentialPhase;
     else if (quantity == "PHIDP")
       return kFmiDifferentialPhase;
@@ -528,15 +528,15 @@ FmiParameterName opera_name_to_newbase(const std::string& product,
   {
     if (quantity == "RATE")
       return kFmiPrecipitationRate;
-    else if (quantity == "BRDR")
+    if (quantity == "BRDR")
       return kFmiRadarBorder;
-    else if (quantity == "TH")
+    if (quantity == "TH")
       return kFmiReflectivity;
-    else if (quantity == "DBZH")
+    if (quantity == "DBZH")
       return kFmiCorrectedReflectivity;
-    else if (quantity == "ACRR")
+    if (quantity == "ACRR")
       return kFmiPrecipitationAmount;
-    else if (quantity == "QIND")
+    if (quantity == "QIND")
       return kFmiSignalQualityIndex;
     else if (quantity == "PROB")
     {
@@ -613,7 +613,8 @@ NFmiParamDescriptor create_pdesc(const Fmi::HDF5::Hdf5File& file)
   // First collect the names
 
   std::set<FmiParameterName> params;
-  std::string product, quantity;
+  std::string product;
+  std::string quantity;
 
   const int n = count_datasets(file);
 
@@ -891,23 +892,23 @@ NFmiVPlaceDescriptor create_vdesc(const Fmi::HDF5::Hdf5File& file)
   {
     return collect_levels(file);
   }
-  else if (object == "PVOL")
+  if (object == "PVOL")
   {
     return collect_pvol_levels(file);
   }
-  else if (object == "CVOL")
+  if (object == "CVOL")
   {
     return collect_levels(file);
   }
-  else if (object == "SCAN")
+  if (object == "SCAN")
   {
     return collect_levels(file);
   }
-  else if (object == "RAY")
+  if (object == "RAY")
   {
     throw std::runtime_error("This program cannot handle single polar rays (RAY)  data");
   }
-  else if (object == "AZIM")
+  if (object == "AZIM")
   {
     throw std::runtime_error("This program cannot handle azimuthal objects (AZIM)  data");
   }
@@ -1036,23 +1037,21 @@ NFmiHPlaceDescriptor create_hdesc(const Fmi::HDF5::Hdf5File& file)
     }
 
     // FMI style corners
-    else
-    {
-      auto LL_lon = file.get_attribute<double>("/where", "LL_lon");
-      auto LL_lat = file.get_attribute<double>("/where", "LL_lat");
-      auto UR_lon = file.get_attribute<double>("/where", "UR_lon");
-      auto UR_lat = file.get_attribute<double>("/where", "UR_lat");
 
-      std::shared_ptr<NFmiArea> area(NFmiArea::CreateFromCorners(
-          projdef, sphere, NFmiPoint(LL_lon, LL_lat), NFmiPoint(UR_lon, UR_lat)));
-      // std::cout << "B: area=" << *area << std::endl;
+    auto LL_lon = file.get_attribute<double>("/where", "LL_lon");
+    auto LL_lat = file.get_attribute<double>("/where", "LL_lat");
+    auto UR_lon = file.get_attribute<double>("/where", "UR_lon");
+    auto UR_lat = file.get_attribute<double>("/where", "UR_lat");
 
-      NFmiGrid grid(area->Clone(), xsize, ysize);
-      return NFmiHPlaceDescriptor(grid);
-    }
+    std::shared_ptr<NFmiArea> area(NFmiArea::CreateFromCorners(
+        projdef, sphere, NFmiPoint(LL_lon, LL_lat), NFmiPoint(UR_lon, UR_lat)));
+    // std::cout << "B: area=" << *area << std::endl;
+
+    NFmiGrid grid(area->Clone(), xsize, ysize);
+    return NFmiHPlaceDescriptor(grid);
   }
 
-  else if (object == "PVOL")
+  if (object == "PVOL")
   {
     const auto lon = file.get_attribute<double>("/where", "lon");
     const auto lat = file.get_attribute<double>("/where", "lat");
@@ -1081,7 +1080,7 @@ NFmiHPlaceDescriptor create_hdesc(const Fmi::HDF5::Hdf5File& file)
 
     return NFmiHPlaceDescriptor(grid);
   }
-  else if (object == "SCAN")
+  if (object == "SCAN")
   {
 #if 0
 	  const double lon    = file.get_attribute<double>("/where","lon");
@@ -1091,14 +1090,12 @@ NFmiHPlaceDescriptor create_hdesc(const Fmi::HDF5::Hdf5File& file)
 
     throw std::runtime_error("This program cannot handle " + object + " data");
   }
-  else if (object == "RAY" || object == "AZIM" || object == "XSEC" || object == "VP" ||
-           object == "PIC")
+  if (object == "RAY" || object == "AZIM" || object == "XSEC" || object == "VP" || object == "PIC")
   {
     throw std::runtime_error("This program cannot handle where-information of " + object + " data");
   }
-  else
-    throw std::runtime_error("Unknown data object: '" + object +
-                             "' is not listed in the Opera specs followed by this implementation");
+  throw std::runtime_error("Unknown data object: '" + object +
+                           "' is not listed in the Opera specs followed by this implementation");
 }
 
 // ----------------------------------------------------------------------

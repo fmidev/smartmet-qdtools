@@ -294,8 +294,10 @@ void parse_option_remap(const std::string& remapdef)
     remapstr += ";";
 
     MessageReMap::iterator rit;
-    std::string token, name;
-    size_t pos0 = 0, pos = 0;
+    std::string token;
+    std::string name;
+    size_t pos0 = 0;
+    size_t pos = 0;
 
     while ((pos = remapstr.find(";", pos0)) != std::string::npos)
     {
@@ -305,7 +307,8 @@ void parse_option_remap(const std::string& remapdef)
         fprintf(stderr, "  remap = %s\n", remap.c_str());
 
       pos0 = pos + 1;
-      size_t pos1 = 0, pos2 = 0;
+      size_t pos1 = 0;
+      size_t pos2 = 0;
 
       while ((pos2 = remap.find(",", pos1)) != std::string::npos)
       {
@@ -1730,7 +1733,8 @@ NFmiHPlaceDescriptor create_hdesc_buoy_ship(const Messages& messages)
     {
       const std::string name = p_id->second.svalue;
 
-      float lon = kFloatMissing, lat = kFloatMissing;
+      float lon = kFloatMissing;
+      float lat = kFloatMissing;
 
       p_id = msg.find(5001);
       if (p_id == msg.end())
@@ -2011,7 +2015,12 @@ NFmiMetTime get_validtime_amdar(std::set<NFmiMetTime>& used_times,
 
   // We permit the seconds to be missing, since that seems
   // to be the case in actual messages
-  short year = -1, month = -1, day = -1, hour = -1, minute = -1, second = 0;
+  short year = -1;
+  short month = -1;
+  short day = -1;
+  short hour = -1;
+  short minute = -1;
+  short second = 0;
 
   for (const Message::value_type& values : message)
   {
@@ -2172,7 +2181,7 @@ NFmiTimeDescriptor create_tdesc(const Messages& messages,
 
   if (options.requireident && ((category == kBufrUpperAirLevel) || (category == kBufrSounding)))
     return create_tdesc_ident(messages, timeidentlist, identtimemap);
-  else if (category == kBufrUpperAirLevel)
+  if (category == kBufrUpperAirLevel)
     return create_tdesc_amdar(messages);
 
   // Normal cases
@@ -2230,7 +2239,7 @@ float normal_value(int code, const record& rec)
 
     if (floor(rec.value + 0.5) == 508)
       return 0;
-    else if (rec.value < 0 || floor(rec.value + 0.5) >= 200)
+    if (rec.value < 0 || floor(rec.value + 0.5) >= 200)
       return kFloatMissing;
   }
 
@@ -2294,7 +2303,8 @@ void copy_records_sounding(NFmiFastQueryInfo &info,
 
   NFmiStation laststation;
   NFmiMetTime t;
-  std::string ident, lastident;
+  std::string ident;
+  std::string lastident;
 
   // Select the station's location only when its ident changes. Location() is a
   // linear scan over all stations, and consecutive sounding levels share the
@@ -2406,7 +2416,8 @@ void copy_records_amdar(NFmiFastQueryInfo &info,
   // Valid times used so far. Algorithm must match create_tdesc at this point.
 
   std::set<NFmiMetTime> validtimes;
-  std::string ident, lastident;
+  std::string ident;
+  std::string lastident;
 
   for (const Message& msg : messages)
   {
@@ -2455,7 +2466,8 @@ void copy_records_amdar(NFmiFastQueryInfo &info,
 
     // Copy the extra lon/lat parameters we added in create_pdesc
 
-    float lon = kFloatMissing, lat = kFloatMissing;
+    float lon = kFloatMissing;
+    float lat = kFloatMissing;
 
     Message::const_iterator it;
 
@@ -2550,7 +2562,8 @@ void copy_records_buoy_ship(NFmiFastQueryInfo &info,
 
     // Then copy the extra lon/lat parameters we added in create_pdesc
 
-    float lon = kFloatMissing, lat = kFloatMissing;
+    float lon = kFloatMissing;
+    float lat = kFloatMissing;
 
     p_id = msg.find(5001);
     if (p_id == msg.end())
@@ -2709,8 +2722,11 @@ Message::const_iterator get_phase_amdar(const Message& msg)
   {
     auto it = msg.find(code);
 
-    if ((it != msg.end()) && ((it->second.value == Flying) || (it->second.value == Takeoff) ||
-                              (it->second.value == Landing)))
+    if (it == msg.end())
+      continue;
+    const double phase = it->second.value;
+    if (phase == static_cast<double>(Flying) || phase == static_cast<double>(Takeoff) ||
+        phase == static_cast<double>(Landing))
       return it;
   }
 
@@ -2735,7 +2751,8 @@ Phase get_phase_amdar(Message& msg, bool remap, int& code)
     return (Phase)pit->second.value;
 
   auto codes = options.messageremap.find(REMAP_PHASE);
-  const int msgcode = pit->first, primarycode = codes->second.front();
+  const int msgcode = pit->first;
+  const int primarycode = codes->second.front();
 
   for (const auto code : codes->second)
   {
@@ -2808,7 +2825,8 @@ double get_altitude(Message& msg, bool remap)
     return height;
 
   auto codes = options.messageremap.find(REMAP_ALTITUDE);
-  const int msgcode = hit->first, primarycode = codes->second.front();
+  const int msgcode = hit->first;
+  const int primarycode = codes->second.front();
 
   for (auto const code : codes->second)
   {
@@ -2993,7 +3011,8 @@ int get_obscount(const NameMap& namemap, const Message& msg)
 
 void remove_duplicate_messages_amdar(const NameMap& namemap, Phase phase, Messages& phasemessages)
 {
-  auto mit = phasemessages.begin(), mit0 = phasemessages.end();
+  auto mit = phasemessages.begin();
+  auto mit0 = phasemessages.end();
   std::set<NFmiMetTime> dummytimes;
   std::string ident;
   double lastaltitude = 0.0;
@@ -3079,9 +3098,11 @@ void limit_duration_amdar(const NameMap& namemap,
   Fmi::TimeDuration maxduration(Fmi::Hours(options.maxdurationhours));
   Fmi::TimeDuration td;
 
-  Messages::iterator mit = phasemessages.begin(), mit0;
+  Messages::iterator mit = phasemessages.begin();
+  Messages::iterator mit0;
   std::set<NFmiMetTime> dummytimes;
-  NFmiMetTime t, t0;
+  NFmiMetTime t;
+  NFmiMetTime t0;
   std::string ident;
 
   for (; (mit != phasemessages.end()); mit++)
@@ -3210,7 +3231,8 @@ void remap_message_amdar(Message& msg)
         break;
     }
 
-    const int msgcode = ((mit != msg.end()) ? mit->first : 0), primarycode = codes.second.front();
+    const int msgcode = ((mit != msg.end()) ? mit->first : 0);
+    const int primarycode = codes.second.front();
 
     for (const auto code : codes.second)
     {
@@ -3486,15 +3508,21 @@ void organize_messages_amdar(const Messages& origmessages,
 
   // Collect/group data by ident, phase of flight and time
 
-  Phase curphase = None, lastphase = None, lastmsgphase = None;
+  Phase curphase = None;
+  Phase lastphase = None;
+  Phase lastmsgphase = None;
   TimeIdentMessageMap timeidentmessages;
   Messages phasemessages;
   Message lasttakeoffmsg;
-  std::string lastident, lastorigident;
+  std::string lastident;
+  std::string lastorigident;
   Fmi::DateTime lasttime;
-  std::string msgident, state;
+  std::string msgident;
+  std::string state;
   double lastaltitude = 0.0;
-  bool phasechange = false, phaserestart = false, phasereset = false;
+  bool phasechange = false;
+  bool phaserestart = false;
+  bool phasereset = false;
   int counter = 0;
 
   levelcount = 0;
@@ -3667,7 +3695,8 @@ void remove_duplicate_messages_sounding(const NameMap& namemap,
                                         const std::string& ident,
                                         Messages& soundingmessages)
 {
-  auto mit = soundingmessages.begin(), mit0 = soundingmessages.end();
+  auto mit = soundingmessages.begin();
+  auto mit0 = soundingmessages.end();
   double lastaltitude = 0.0;
   int obscount0 = -1;
 
@@ -3742,10 +3771,12 @@ void limit_duration_sounding(const NameMap& namemap,
   // Test data seems to have the same timestamp for all messages for given sounding,
   // but checking the duration anyway
 
-  Fmi::TimeDuration maxduration(Fmi::Hours(options.maxdurationhours)), td;
+  Fmi::TimeDuration maxduration(Fmi::Hours(options.maxdurationhours));
+  Fmi::TimeDuration td;
 
   auto mit = soundingmessages.begin();
-  NFmiMetTime t, t0;
+  NFmiMetTime t;
+  NFmiMetTime t0;
 
   for (; (mit != soundingmessages.end()); mit++)
   {
@@ -3893,7 +3924,9 @@ void store_messages_sounding(const NameMap& namemap,
     {
       // Sounding with most observations
 
-      int obscount1 = 0, obscount2 = 0, obscount = 0;
+      int obscount1 = 0;
+      int obscount2 = 0;
+      int obscount = 0;
 
       for (auto const& msg1 : tii->second)
         if ((obscount = get_obscount(namemap, msg1)) > obscount1)

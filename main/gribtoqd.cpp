@@ -167,7 +167,7 @@ struct LevelLessThan
   {
     if (l1.LevelType() < l2.LevelType())
       return true;
-    else if (l1.LevelType() == l2.LevelType())
+    if (l1.LevelType() == l2.LevelType())
     {
       if (l1.LevelValue() < l2.LevelValue())
         return true;
@@ -206,7 +206,7 @@ tai yli yhden
 // Oletus T ei ole puuttuvaa ja on celsiuksina.
 float CalcESWater(float T)
 {
-  float es = 6.107f * pow(10.f, (7.5f * T / (237.0f + T)));
+  float es = 6.107F * pow(10.F, (7.5F * T / (237.0F + T)));
   return es;
 }
 
@@ -214,7 +214,7 @@ float CalcESWater(float T)
 // Oletus T ei ole puuttuvaa ja on celsiuksina.
 float CalcESIce(float T)
 {
-  float es = 6.107f * pow(10.f, (9.5f * T / (265.5f + T)));
+  float es = 6.107F * pow(10.F, (9.5F * T / (265.5F + T)));
   return es;
 }
 
@@ -223,14 +223,12 @@ float CalcRH(float P, float T, float Q)
 {
   if (P == kFloatMissing || T == kFloatMissing || Q == kFloatMissing)
     return kFloatMissing;
-  else
-  {
-    float ES = (T >= -5) ? CalcESWater(T) : CalcESIce(T);
-    float RH = (P * Q / 0.622f / ES) * (P - ES) / (P - Q * P / 0.622f);
-    RH = std::min(RH, 1.f);
-    RH = std::max(RH, 0.f);
-    return RH * 100;
-  }
+
+  float ES = (T >= -5) ? CalcESWater(T) : CalcESIce(T);
+  float RH = (P * Q / 0.622F / ES) * (P - ES) / (P - Q * P / 0.622F);
+  RH = std::min(RH, 1.F);
+  RH = std::max(RH, 0.F);
+  return RH * 100;
 }
 
 bool GetGribLongValue(grib_handle *theHandle,
@@ -354,16 +352,14 @@ long GetUsedLevelType(grib_handle *theHandle)
     {
       return kFmiNoLevelType;
     }
-    else
+
+    try
     {
-      try
-      {
-        return NFmiStringTools::Convert<long>(name);
-      }
-      catch (...)
-      {
-        return kFmiNoLevelType;
-      }
+      return NFmiStringTools::Convert<long>(name);
+    }
+    catch (...)
+    {
+      return kFmiNoLevelType;
     }
   }
 
@@ -1661,7 +1657,8 @@ void DoErrorReporting(const std::string& theBaseString,
 
 std::string GetParamName(grib_handle *theHandle)
 {
-  std::string name, units;
+  std::string name;
+  std::string units;
   bool ok1 = GetGribStringValue(theHandle, "parameter.name", name);
   bool ok2 = GetGribStringValue(theHandle, "parameter.units", units);
 
@@ -1849,7 +1846,10 @@ void DoPossibleGlobalLongitudeFixes(double &Lo1,
 
 NFmiArea *CreateLatlonArea(grib_handle *theHandle, GribFilterOptions &theGribFilterOptions)
 {
-  double La1 = 0, Lo1 = 0, La2 = 0, Lo2 = 0;
+  double La1 = 0;
+  double Lo1 = 0;
+  double La2 = 0;
+  double Lo2 = 0;
   int status1 = grib_get_double(theHandle, "latitudeOfFirstGridPointInDegrees", &La1);
   int status2 = grib_get_double(theHandle, "longitudeOfFirstGridPointInDegrees", &Lo1);
   int status3 = grib_get_double(theHandle, "latitudeOfLastGridPointInDegrees", &La2);
@@ -2142,7 +2142,9 @@ std::string GetProjString(grib_handle *theHandle)
 
   if (proj_name == "rotated_ll" || proj_name == "rotated_gg")
   {
-    double pole_lon = 666, pole_lat = 666, rotation = 666;
+    double pole_lon = 666;
+    double pole_lat = 666;
+    double rotation = 666;
     if (!GetGribDoubleValue(theHandle, "longitudeOfSouthernPoleInDegrees", pole_lon) ||
         !GetGribDoubleValue(theHandle, "latitudeOfSouthernPoleInDegrees", pole_lat) ||
         !GetGribDoubleValue(theHandle, "angleOfRotationInDegrees", rotation))
@@ -2163,7 +2165,8 @@ std::string GetProjString(grib_handle *theHandle)
 
   if (proj_name == "mercator")
   {
-    double lon1 = 0, lon2 = 0;
+    double lon1 = 0;
+    double lon2 = 0;
     bool ok = true;
     ok &= GetGribDoubleValue(theHandle, "longitudeOfFirstGridPointInDegrees", lon1);
     ok &= GetGribDoubleValue(theHandle, "longitudeOfLastGridPointInDegrees", lon2);
@@ -2186,7 +2189,8 @@ std::string GetProjString(grib_handle *theHandle)
 
   if (proj_name == "polar_stereographic")
   {
-    double lat_ts = 0, lon_0 = 0;
+    double lat_ts = 0;
+    double lon_0 = 0;
     long proj_centre = 0;  // north pole by default
     if (!GetGribDoubleValue(theHandle, "latitudeWhereDxAndDyAreSpecifiedInDegrees", lat_ts) ||
         !GetGribDoubleValue(theHandle, "orientationOfTheGridInDegrees", lon_0) ||
@@ -2202,7 +2206,12 @@ std::string GetProjString(grib_handle *theHandle)
 
   if (proj_name == "lambert")
   {
-    double lon_0 = 0, lat_0 = 0, lat_1 = 0, lat_2 = 0, pole_lon = 0, pole_lat = 0;
+    double lon_0 = 0;
+    double lat_0 = 0;
+    double lat_1 = 0;
+    double lat_2 = 0;
+    double pole_lon = 0;
+    double pole_lat = 0;
     if (!GetGribDoubleValue(theHandle, "LoVInDegrees", lon_0) ||
         !GetGribDoubleValue(theHandle, "LaDInDegrees", lat_0) ||
         !GetGribDoubleValue(theHandle, "Latin1InDegrees", lat_1) ||
@@ -2227,7 +2236,10 @@ std::string GetProjString(grib_handle *theHandle)
 
   if (proj_name == "albers")
   {
-    double lon_0 = 0, lat_0 = 0, lat_1 = 0, lat_2 = 0;
+    double lon_0 = 0;
+    double lat_0 = 0;
+    double lat_1 = 0;
+    double lat_2 = 0;
     if (!GetGribDoubleValue(theHandle, "LoVInDegrees", lon_0) ||
         !GetGribDoubleValue(theHandle, "LaDInDegrees", lat_0) ||
         !GetGribDoubleValue(theHandle, "Latin1InDegrees", lat_1) ||
@@ -2252,7 +2264,9 @@ std::string GetProjString(grib_handle *theHandle)
 
   if (proj_name == "space_view")
   {
-    double lon_0 = 0, lat_0 = 0, Nr = 0;
+    double lon_0 = 0;
+    double lat_0 = 0;
+    double Nr = 0;
     if (!GetGribDoubleValue(theHandle, "longitudeOfSubSatellitePointInDegrees", lon_0) ||
         !GetGribDoubleValue(theHandle, "latitudeOfSubSatellitePointInDegrees", lat_0) ||
         !GetGribDoubleValue(theHandle, "Nr", Nr))
@@ -2272,7 +2286,8 @@ std::string GetProjString(grib_handle *theHandle)
 
   if (proj_name == "equatorial_azimuthal_equidistant")
   {
-    double lon_0 = 0, lat_0 = 0;
+    double lon_0 = 0;
+    double lat_0 = 0;
     if (!GetGribDoubleValue(theHandle, "standardParallel", lat_0) ||
         !GetGribDoubleValue(theHandle, "centralLongitude", lon_0))
       throw std::runtime_error("Failed to extract equatorial_azimuthal_equidistant parameters");
@@ -2283,7 +2298,8 @@ std::string GetProjString(grib_handle *theHandle)
 
   if (proj_name == "lambert_azimuthal_equal_area")
   {
-    double lon_0 = 0, lat_0 = 0;
+    double lon_0 = 0;
+    double lat_0 = 0;
     if (!GetGribDoubleValue(theHandle, "standardParallel", lat_0) ||
         !GetGribDoubleValue(theHandle, "centralLongitude", lon_0))
       throw std::runtime_error("Failed to extract lambert_azimuthal_equal_area parameters");
@@ -2320,21 +2336,27 @@ NFmiArea *GetGribArea(grib_handle *theHandle, GribFilterOptions &theGribFilterOp
   GetGribLongValue(theHandle, "truncateDegrees", truncateDegrees);
 
   // Grid sizes are Ni,Nj or Nx,Ny
-  long ni = 0, nj = 0;
+  long ni = 0;
+  long nj = 0;
   if (!(GetGribLongValue(theHandle, "Nx", ni) && GetGribLongValue(theHandle, "Ny", nj)) &&
       !(GetGribLongValue(theHandle, "Ni", ni) && GetGribLongValue(theHandle, "Nj", nj)))
     throw std::runtime_error(fmt::format(fmt::runtime(err), "grid size", proj_name));
 
   if (proj_name == "rotated_ll" || proj_name == "rotated_gg")
   {
-    double lon1 = 0, lat1 = 0, lon2 = 0, lat2 = 0;
+    double lon1 = 0;
+    double lat1 = 0;
+    double lon2 = 0;
+    double lat2 = 0;
     if (!GetGribDoubleValue(theHandle, "longitudeOfFirstGridPointInDegrees", lon1) ||
         !GetGribDoubleValue(theHandle, "latitudeOfFirstGridPointInDegrees", lat1) ||
         !GetGribDoubleValue(theHandle, "longitudeOfLastGridPointInDegrees", lon2) ||
         !GetGribDoubleValue(theHandle, "latitudeOfLastGridPointInDegrees", lat2))
       throw std::runtime_error(fmt::format(fmt::runtime(err), "latlon bounding box", proj_name));
 
-    double pole_lon = 0, pole_lat = 0, rotation = 0;
+    double pole_lon = 0;
+    double pole_lat = 0;
+    double rotation = 0;
     if (!GetGribDoubleValue(theHandle, "longitudeOfSouthernPoleInDegrees", pole_lon) ||
         !GetGribDoubleValue(theHandle, "latitudeOfSouthernPoleInDegrees", pole_lat) ||
         !GetGribDoubleValue(theHandle, "angleOfRotationInDegrees", rotation))
@@ -2355,7 +2377,10 @@ NFmiArea *GetGribArea(grib_handle *theHandle, GribFilterOptions &theGribFilterOp
 
   if (proj_name == "mercator")
   {
-    double lon1 = 0, lat1 = 0, lon2 = 0, lat2 = 0;
+    double lon1 = 0;
+    double lat1 = 0;
+    double lon2 = 0;
+    double lat2 = 0;
     if (!GetGribDoubleValue(theHandle, "longitudeOfFirstGridPointInDegrees", lon1) ||
         !GetGribDoubleValue(theHandle, "latitudeOfFirstGridPointInDegrees", lat1) ||
         !GetGribDoubleValue(theHandle, "longitudeOfLastGridPointInDegrees", lon2) ||
@@ -3312,15 +3337,13 @@ float CalcHybridPressure(double a, double b, float surfacePressure)
 {
   if (surfacePressure == kFloatMissing)
     return kFloatMissing;
-  else
-  {
-    double pressureScale = 1.;
-    if (surfacePressure < 1500)  // Tämä on karkea arvio, onko pintapaine hPa vai Pa yksikössä, jos
-                                 // pintapaine oli hPa-yksikössä, pitää tehdä muunnoksia
-      pressureScale = 100.;
-    double value = a + b * surfacePressure * pressureScale;
-    return static_cast<float>(value / 100.);  // paluu aina hPa:na
-  }
+
+  double pressureScale = 1.;
+  if (surfacePressure < 1500)  // Tämä on karkea arvio, onko pintapaine hPa vai Pa yksikössä, jos
+                               // pintapaine oli hPa-yksikössä, pitää tehdä muunnoksia
+    pressureScale = 100.;
+  double value = a + b * surfacePressure * pressureScale;
+  return static_cast<float>(value / 100.);  // paluu aina hPa:na
 }
 
 void CalcHybridPressureData(vector<std::shared_ptr<NFmiQueryData> > &theQdatas,
@@ -3668,25 +3691,22 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
         delete tmpData;
         if (theGribFilterOptions.fIgnoreReducedLLData)
           continue;
-        else
-          throw;
+        throw;
       }
       catch (exception &e)
       {
         delete tmpData;
         if (executionStoppingError)
           throw;
-        else
-          cerr << "\nProblem with grib field " << NFmiStringTools::Convert(counter) << ":"
-               << e.what() << endl;
+        cerr << "\nProblem with grib field " << NFmiStringTools::Convert(counter) << ":" << e.what()
+             << endl;
       }
       catch (...)
       {
         delete tmpData;
         if (executionStoppingError)
           throw;
-        else
-          cerr << "\nUnknown problem with grib field " << NFmiStringTools::Convert(counter) << endl;
+        cerr << "\nUnknown problem with grib field " << NFmiStringTools::Convert(counter) << endl;
       }
       grib_handle_delete(gribHandle);
     }  // while-loop
@@ -3790,7 +3810,10 @@ NFmiDataIdent GetParam(unsigned char *pds, NFmiProducer theWantedProducer)
 
 NFmiMetTime GetGribTime(unsigned char *pds, bool fOrigTime)
 {
-  int year = 0, month = 0, day = 0, hour = 0;
+  int year = 0;
+  int month = 0;
+  int day = 0;
+  int hour = 0;
 
   if (fOrigTime)
   {
@@ -3820,7 +3843,8 @@ string GetGridInfoStr(unsigned char *gds, unsigned char *bds)
   if (gds)
   {
     long int nxny = 0;
-    int nx = 0, ny = 0;
+    int nx = 0;
+    int ny = 0;
     vector<long> variableLengthRows;
     long usedOutputGridRowLength =
         0;  // jos reduced grid (vaihtuva rivi leveys), tehdää tämän levyinen loppu hila
@@ -4097,7 +4121,8 @@ NFmiArea* CreateLatlonArea(const unsigned char* gds,
 
 NFmiArea *CreateStereographicArea(unsigned char *gds, unsigned char *bds)
 {
-  int nx = 0, ny = 0;
+  int nx = 0;
+  int ny = 0;
   long int nxny = 0;
   vector<long> variableLengthRows;
   long usedOutputGridRowLength =
@@ -4227,7 +4252,8 @@ void FillGridInfo(unsigned char *gds,
   adjacentIMode = (GDSscanMode & scan_mode_ij_adjacent_order_bit) == 0;
   NFmiArea *area = wgrib2qd::CreateArea(
       gds, bds, scanIModePos, scanJModePos, theGribFilterOptions, fDoYAxisFlip);
-  int nx = 0, ny = 0;
+  int nx = 0;
+  int ny = 0;
   long int nxny = 0;
   vector<long> variableLengthRows;
   long usedOutputGridRowLength =
@@ -4243,8 +4269,7 @@ float CheckAndFixMissingValues(float value)
                                                       // arvolle haarukka, koska ilmeisesti
                                                       // laskuissa tulee pientä epätarkkuutta)
     return kFloatMissing;
-  else
-    return value;
+  return value;
 }
 
 void InterpolateRowData(vector<float> &theSourceValues, vector<float> &theDestValues)
@@ -4682,10 +4707,21 @@ void FreeDatas(vector<GridRecordData *> &theGribRecordDatas, float *array, unsig
 void ConvertGrib(GribFilterOptions &theGribFilterOptions)
 {
   vector<std::shared_ptr<NFmiQueryData> > datas;
-  unsigned char *buffer = nullptr, *msg = nullptr, *pds = nullptr, *gds = nullptr, *bms = nullptr,
-                *bds = nullptr, *pointer = nullptr;
-  long int len_grib = 0, pos = 0, nxny = 0, last_nxny = 0, buffer_size = 0, count = 1;
-  int nx = 0, ny = 0;
+  unsigned char* buffer = nullptr;
+  unsigned char* msg = nullptr;
+  unsigned char* pds = nullptr;
+  unsigned char* gds = nullptr;
+  unsigned char* bms = nullptr;
+  unsigned char* bds = nullptr;
+  unsigned char* pointer = nullptr;
+  long int len_grib = 0;
+  long int pos = 0;
+  long int nxny = 0;
+  long int last_nxny = 0;
+  long int buffer_size = 0;
+  long int count = 1;
+  int nx = 0;
+  int ny = 0;
   double temp = NAN;
   float* array = nullptr;
   vector<long> variableLengthRows;
@@ -4955,7 +4991,7 @@ void MakeTotalCombineQDatas(vector<std::shared_ptr<NFmiQueryData> > &theTotalQDa
 {
   if (theTotalQDataCollector.empty())
     throw runtime_error("Unable to create any data.");
-  else if (theTotalQDataCollector.size() == 1)
+  if (theTotalQDataCollector.size() == 1)
   {
     theGribFilterOptionsOut.itsGeneratedDatas =
         theTotalQDataCollector;  // Jos vain yhdestä grib-tiedostosta dataa, laitetaan ne

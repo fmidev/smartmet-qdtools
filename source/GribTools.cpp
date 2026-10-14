@@ -209,9 +209,9 @@ void ParamChangeItem::Reset()
                              "%.1f",
                              kLinearly);  // laitetaan lineaarinen interpolointi päälle
   itsConversionBase = 0;
-  itsConversionScale = 1.f;
+  itsConversionScale = 1.F;
 
-    delete itsLevel;
+  delete itsLevel;
   itsLevel = nullptr;
 }
 
@@ -333,7 +333,7 @@ std::vector<ParamChangeItem> ReadGribConf(const std::string &theParamChangeTable
     ParamChangeItem paramChangeItem;
     int i = 0;
     int counter = 0;
-    do
+    for (bool more = true; more; more = in.good())
     {
       buffer.resize(maxBufferSize);
       in.getline(&buffer[0], maxBufferSize);
@@ -346,7 +346,7 @@ std::vector<ParamChangeItem> ReadGribConf(const std::string &theParamChangeTable
         paramChangeTable.push_back(paramChangeItem);
       }
       i++;
-    } while (in.good());
+    }
   }
   else
     throw std::runtime_error(std::string("InitParamChangeTable: trouble reading file: ") +

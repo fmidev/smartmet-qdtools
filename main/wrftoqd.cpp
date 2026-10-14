@@ -61,8 +61,7 @@ int ci_find_substr(const T &str1, const T &str2, const std::locale &loc = std::l
       str1.begin(), str1.end(), str2.begin(), str2.end(), my_equal<typename T::value_type>(loc));
   if (it != str1.end())
     return static_cast<int>(it - str1.begin());
-  else
-    return -1;  // not found
+  return -1;  // not found
 }
 }  // namespace
 
@@ -164,15 +163,15 @@ struct TotalDimensionData
   {
     if (timeDimName != other.timeDimName)
       return timeDimName < other.timeDimName;
-    else if (timeDimSize != other.timeDimSize)
+    if (timeDimSize != other.timeDimSize)
       return timeDimSize < other.timeDimSize;
-    else if (levDimName != other.levDimName)
+    if (levDimName != other.levDimName)
       return levDimName < other.levDimName;
-    else if (levDimSize != other.levDimSize)
+    if (levDimSize != other.levDimSize)
       return levDimSize < other.levDimSize;
-    else if (xDimName != other.xDimName)
+    if (xDimName != other.xDimName)
       return xDimName < other.xDimName;
-    else if (xDimSize != other.xDimSize)
+    if (xDimSize != other.xDimSize)
       return xDimSize < other.xDimSize;
     else if (yDimName != other.yDimName)
       return yDimName < other.yDimName;
@@ -568,29 +567,27 @@ NFmiGrid GetGridFromProjectionStr(const std::string &theProjectionStr)
           BCP,
           std::string("Unable to create area and grid from given projection string: ") +
               theProjectionStr);
-    else
-    {
-      std::string areaStr = projectionPartsStr[0] + ":" + projectionPartsStr[1];
-      ;
-      std::string gridStr = projectionPartsStr[2];
-      gridStr = NFmiStringTools::ReplaceChars(gridStr, 'x', ',');  // on mahdollista että optiona
-                                                                   // annettu hilakoko sisältää
-      // x-merkin erottimena ja se pitää
-      // muuttaa ','-merkiksi
 
-      std::shared_ptr<NFmiArea> area = NFmiAreaFactory::Create(areaStr);
-      auto values = NFmiStringTools::Split<std::vector<double> >(gridStr, ",");
-      if (values.size() != 2)
-        throw Fmi::Exception(BCP,
-                             std::string("Projection string contains GridSize that was invalid, "
-                                         "has to be two numbers (e.g. x,y):\n'") +
-                                 gridStr + "' in string: " + theProjectionStr);
-      NFmiPoint gridSize(values[0], values[1]);
-      NFmiGrid grid(area->Clone(),
-                    static_cast<unsigned int>(gridSize.X()),
-                    static_cast<unsigned int>(gridSize.Y()));
-      return grid;
-    }
+    std::string areaStr = projectionPartsStr[0] + ":" + projectionPartsStr[1];
+    ;
+    std::string gridStr = projectionPartsStr[2];
+    gridStr = NFmiStringTools::ReplaceChars(gridStr, 'x', ',');  // on mahdollista että optiona
+                                                                 // annettu hilakoko sisältää
+    // x-merkin erottimena ja se pitää
+    // muuttaa ','-merkiksi
+
+    std::shared_ptr<NFmiArea> area = NFmiAreaFactory::Create(areaStr);
+    auto values = NFmiStringTools::Split<std::vector<double> >(gridStr, ",");
+    if (values.size() != 2)
+      throw Fmi::Exception(BCP,
+                           std::string("Projection string contains GridSize that was invalid, "
+                                       "has to be two numbers (e.g. x,y):\n'") +
+                               gridStr + "' in string: " + theProjectionStr);
+    NFmiPoint gridSize(values[0], values[1]);
+    NFmiGrid grid(area->Clone(),
+                  static_cast<unsigned int>(gridSize.X()),
+                  static_cast<unsigned int>(gridSize.Y()));
+    return grid;
   }
   catch (...)
   {
@@ -1086,8 +1083,7 @@ NFmiVPlaceDescriptor CreateWRFVplaceDescriptor(
 
       return {};
     }
-    else
-      return {};
+    return {};
   }
   catch (...)
   {
@@ -1166,12 +1162,10 @@ bool FindClosestLevelIndexies(float searchedLevelValue,
             upperLevelIndex = lowerLevelIndex - 1;
             return true;
           }
-          else
-          {
-            upperLevelIndex = staggeredInfo.LevelIndex();
-            lowerLevelIndex = lowerLevelIndex - 1;
-            return true;
-          }
+
+          upperLevelIndex = staggeredInfo.LevelIndex();
+          lowerLevelIndex = lowerLevelIndex - 1;
+          return true;
         }
       }
       previousLevelValue = levelValue;
@@ -1249,11 +1243,10 @@ std::shared_ptr<NFmiQueryData> MakeLevelStaggeredDataFix(
         // 4. Palauta uusi data
         return newData;
       }
-      else
-        std::cerr << "Error in " << __FUNCTION__
-                  << ": created fixed data was zero pointer (error in "
-                     "program or data), continuing with staggered data"
-                  << std::endl;
+      std::cerr << "Error in " << __FUNCTION__
+                << ": created fixed data was zero pointer (error in "
+                   "program or data), continuing with staggered data"
+                << std::endl;
     }
 
     return data;

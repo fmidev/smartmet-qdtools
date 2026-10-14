@@ -342,7 +342,9 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
   }
 
   // Read the P5 specs
-  int width = 0, height = 0, bytes = 0;
+  int width = 0;
+  int height = 0;
+  int bytes = 0;
   infile >> width >> height >> bytes;
   if (!infile.good())
   {

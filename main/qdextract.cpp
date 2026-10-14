@@ -177,7 +177,8 @@ NFmiLocationBag ReadLocationsFromFile(const std::string& locationfile, NFmiFastQ
       strippedControlFile >> locId;
       strippedControlFile.getline(buffer, 511);
       strippedControlFile.getline(locName, 511);
-      double lat = NAN, lon = NAN;
+      double lat = NAN;
+      double lon = NAN;
       strippedControlFile >> lon >> lat;
       if (!strippedControlFile.fail())
       {
@@ -203,7 +204,8 @@ NFmiLocationBag ReadLocationsFromFile(const std::string& locationfile, NFmiFastQ
     NFmiProducer producer(*qi.Producer());
     int locId = 0;
     string locName;
-    double lat = NAN, lon = NAN;
+    double lat = NAN;
+    double lon = NAN;
     while (strippedControlFile >> locId >> locName >> lon >> lat)
     {
       if (qi.Location(locId))

@@ -106,7 +106,7 @@ void run(int argc, const char* argv[])
     Usage();
     throw runtime_error("");
   }
-  else if (!producerChange && !levelChange && !originChange && cmdline.NumberofParameters() != 2)
+  if (!producerChange && !levelChange && !originChange && cmdline.NumberofParameters() != 2)
   {
     cerr << "Error: 2 parameters expected, dataFile 'parameter-id/name or station id'\n\n";
     Usage();

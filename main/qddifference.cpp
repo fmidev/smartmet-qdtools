@@ -190,7 +190,8 @@ namespace
   {
     try
     {
-      std::vector<std::string> l1, l2;
+      std::vector<std::string> l1;
+      std::vector<std::string> l2;
       boost::algorithm::split(l1, str1, boost::algorithm::is_any_of("\n"));
       boost::algorithm::split(l2, str2, boost::algorithm::is_any_of("\n"));
       dtl::Diff<std::string> d(l1, l2);
@@ -303,70 +304,7 @@ try
 
   if (options.percentage)
     return std::make_pair(100.0 * differentpoints / points, num_one_missing);
-  else
-    return std::make_pair(maxdiff, num_one_missing);
-}
-catch (...)
-{
-  // Catch any exceptions and rethrow them with additional context
-  throw Fmi::Exception::Trace(BCP, "Operation failed")
-      .addParameter("File1", options.inputfile1)
-      .addParameter("File2", options.inputfile2);
-}
-
-// ----------------------------------------------------------------------
-/*!
- * \brief Calculate difference of specified parameters
- */
-// ----------------------------------------------------------------------
-
-std::pair<double, std::size_t>
-analyze_given_parameters(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
-try
-{
-  double maxdiff = 0.0;
-  int points = 0;
-  int differentpoints = 0;
-  std::size_t num_one_missing = 0;
-
-  for (auto& parameter : options.parameters)
-  {
-    if (!theQ1.Param(parameter) || !theQ2.Param(parameter))
-      throw runtime_error("The files must contain the parameters given with -P");
-
-    bool iswinddir = (theQ1.Param().GetParam()->GetIdent() == kFmiWindDirection);
-
-    for (theQ1.ResetLocation(), theQ2.ResetLocation();
-         theQ1.NextLocation() && theQ2.NextLocation();)
-      for (theQ1.ResetTime(), theQ2.ResetTime(); theQ1.NextTime() && theQ2.NextTime();)
-        for (theQ1.ResetLevel(), theQ2.ResetLevel(); theQ1.NextLevel() && theQ2.NextLevel();)
-        {
-          const double value1 = theQ1.FloatValue();
-          const double value2 = theQ2.FloatValue();
-
-          if (value1 != kFloatMissing && value2 != kFloatMissing)
-          {
-            double diff = abs(value2 - value1);
-
-            if (iswinddir)
-              diff = min(diff, abs(abs(value2 - value1) - 360));
-
-            maxdiff = max(diff, maxdiff);
-            ++points;
-            if (diff != 0.0)
-              ++differentpoints;
-          }
-          else if ((value1 == kFloatMissing) ^ (value2 == kFloatMissing))
-          {
-            ++num_one_missing;
-          }
-        }
-  }
-
-  if (options.percentage)
-    return std::make_pair(100.0 * differentpoints / points, num_one_missing);
-  else
-    return std::make_pair(maxdiff, num_one_missing);
+  return std::make_pair(maxdiff, num_one_missing);
 }
 catch (...)
 {
@@ -420,8 +358,7 @@ try
 
   if (options.percentage)
     return std::make_pair(100.0 * differentpoints / points, num_one_missing);
-  else
-    return std::make_pair(maxdiff, num_one_missing);
+  return std::make_pair(maxdiff, num_one_missing);
 }
 catch (...)
 {
@@ -490,8 +427,7 @@ try
 
   if (options.percentage)
     return std::make_pair(100.0 * differentpoints / points, num_one_missing);
-  else
-    return std::make_pair(maxdiff, num_one_missing);
+  return std::make_pair(maxdiff, num_one_missing);
 }
 catch (...)
 {
@@ -551,8 +487,7 @@ try
 
   if (options.percentage)
     return std::make_pair(100.0 * differentpoints / points, num_one_missing);
-  else
-    return std::make_pair(maxdiff, num_one_missing);
+  return std::make_pair(maxdiff, num_one_missing);
 }
 catch (...)
 {
@@ -612,7 +547,9 @@ try
 
   if (q1.GridHashValue() != q2.GridHashValue())
   {
-    std::ostringstream s1, s2, out;
+    std::ostringstream s1;
+    std::ostringstream s2;
+    std::ostringstream out;
     s1 << q1.HPlaceDescriptor();
     s2 << q2.HPlaceDescriptor();
     const std::string diff = get_diff(s1.str(), s2.str());

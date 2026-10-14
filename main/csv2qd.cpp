@@ -820,7 +820,9 @@ int run(int argc, char* argv[])
   if (!parse_options(argc, argv, options))
     return 0;
 
-  Csv csv, csvparams, csvstations;
+  Csv csv;
+  Csv csvparams;
+  Csv csvstations;
   Fmi::CsvReader::read(options.paramsfile, std::bind(&Csv::addrow, &csvparams, p::_1));
   Fmi::CsvReader::read(options.stationsfile, std::bind(&Csv::addrow, &csvstations, p::_1));
   for (const string& infile : options.files)

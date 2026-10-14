@@ -74,14 +74,15 @@ std::vector<std::string> parse_brace_list(const std::string& s)
 
 bool IsMissingValue(float value, float ncMissingValue)
 {
-  const float extraMissingValueLimit = 9.99e034f;
+  const float extraMissingValueLimit = 9.99e034F;
   return value == ncMissingValue || value >= extraMissingValueLimit;
 }
 
 // Compare version strings like "1.6" vs "1.5"
 int compare_versions(const std::string& v1, const std::string& v2)
 {
-  std::size_t v1pos = 0, v2pos = 0;
+  std::size_t v1pos = 0;
+  std::size_t v2pos = 0;
   while (v1pos < v1.size())
   {
     std::size_t v1pe = v1.find('.', v1pos);
@@ -90,7 +91,8 @@ int compare_versions(const std::string& v1, const std::string& v2)
       v1pe = v1.size();
     if (v2pe == std::string::npos)
       v2pe = v2.size();
-    int p1 = 0, p2 = 0;
+    int p1 = 0;
+    int p2 = 0;
     try
     {
       p1 = Fmi::stoi(v1.substr(v1pos, v1pe - v1pos));
@@ -1195,9 +1197,11 @@ void nctools::NcFileExtended::find_axis_bounds_gdal(const std::string& coordname
 
     std::vector<double> values(total);
     GDALRasterBandH band = GDALGetRasterBand(ds, 1);
-    GDALRasterIO(
+    const CPLErr err = GDALRasterIO(
         band, GF_Read, 0, 0, xsz, ysz, values.data(), xsz, ysz, GDT_Float64, 0, 0);
     GDALClose(ds);
+    if (err != CE_None)
+      throw Fmi::Exception(BCP, "Failed to read raster data");
 
     if (values.empty())
       return;
@@ -1272,7 +1276,8 @@ void nctools::NcFileExtended::find_lonlat_bounds(double& lon1,
     load_first_var_meta();
 
     // Find lat/lon variable names from first-var metadata
-    std::string lat_var, lon_var;
+    std::string lat_var;
+    std::string lon_var;
     for (const auto& [key, val] : first_var_meta_)
     {
       const auto hash = key.find('#');
@@ -1308,11 +1313,16 @@ void nctools::NcFileExtended::find_lonlat_bounds(double& lon1,
       GDALRasterBandH band = GDALGetRasterBand(ds, 1);
       if (band && xsz > 0 && ysz > 0)
       {
-        double bl = 0, tr = 0;
-        GDALRasterIO(band, GF_Read, 0, ysz - 1, 1, 1, &bl, 1, 1, GDT_Float64, 0, 0);
-        GDALRasterIO(band, GF_Read, xsz - 1, 0, 1, 1, &tr, 1, 1, GDT_Float64, 0, 0);
-        c1 = bl;
-        c2 = tr;
+        double bl = 0;
+        double tr = 0;
+        if (GDALRasterIO(band, GF_Read, 0, ysz - 1, 1, 1, &bl, 1, 1, GDT_Float64, 0, 0) ==
+                CE_None &&
+            GDALRasterIO(band, GF_Read, xsz - 1, 0, 1, 1, &tr, 1, 1, GDT_Float64, 0, 0) ==
+                CE_None)
+        {
+          c1 = bl;
+          c2 = tr;
+        }
       }
       GDALClose(ds);
     };
@@ -1556,9 +1566,11 @@ NFmiTimeList nctools::NcFileExtended::timeList(std::string varName, std::string 
         const int nrows = GDALGetRasterYSize(times_ds);  // time count
         std::vector<char> ncvals(static_cast<std::size_t>(ncols) * nrows);
         GDALRasterBandH band = GDALGetRasterBand(times_ds, 1);
-        GDALRasterIO(
+        const CPLErr err = GDALRasterIO(
             band, GF_Read, 0, 0, ncols, nrows, ncvals.data(), ncols, nrows, GDT_Byte, 0, 0);
         GDALClose(times_ds);
+        if (err != CE_None)
+          throw Fmi::Exception(BCP, "Failed to read raster data");
         for (int row = 0; row < nrows; row++)
         {
           std::string stamp;
@@ -1625,9 +1637,11 @@ NFmiTimeList nctools::NcFileExtended::timeList(std::string varName, std::string 
           const int ysz = GDALGetRasterYSize(tds);
           std::vector<double> tvals(static_cast<std::size_t>(xsz) * ysz);
           GDALRasterBandH band = GDALGetRasterBand(tds, 1);
-          GDALRasterIO(band, GF_Read, 0, 0, xsz, ysz, tvals.data(), xsz, ysz,
-                       GDT_Float64, 0, 0);
+          const CPLErr err = GDALRasterIO(
+              band, GF_Read, 0, 0, xsz, ysz, tvals.data(), xsz, ysz, GDT_Float64, 0, 0);
           GDALClose(tds);
+          if (err != CE_None)
+            throw Fmi::Exception(BCP, "Failed to read raster data");
           raw_values = tvals;
         }
       }
@@ -1785,8 +1799,8 @@ void nctools::NcFileExtended::copy_values_var(const Options& opts,
     }
 
     // scale_factor and add_offset
-    float scale = 1.0f;
-    float offset = 0.0f;
+    float scale = 1.0F;
+    float offset = 0.0F;
     {
       const std::string sf_str = get_meta("scale_factor");
       if (!sf_str.empty())
@@ -1816,11 +1830,11 @@ void nctools::NcFileExtended::copy_values_var(const Options& opts,
     if (!ignoreUnitChange)
     {
       if (units == "K")
-        offset -= 273.15f;
+        offset -= 273.15F;
       else if (units == "Pa")
-        scale *= 0.01f;
+        scale *= 0.01F;
       else if (units == "fraction")
-        scale *= 100.0f;
+        scale *= 100.0F;
     }
 
     // Read all bands into a flat array
@@ -1838,18 +1852,22 @@ void nctools::NcFileExtended::copy_values_var(const Options& opts,
     for (int b = 1; b <= nbands; b++)
     {
       GDALRasterBandH band = GDALGetRasterBand(ds, b);
-      GDALRasterIO(band,
-                   GF_Read,
-                   0,
-                   0,
-                   nx,
-                   ny,
-                   vals.data() + static_cast<std::size_t>(b - 1) * nx * ny,
-                   nx,
-                   ny,
-                   GDT_Float32,
-                   0,
-                   0);
+      if (GDALRasterIO(band,
+                       GF_Read,
+                       0,
+                       0,
+                       nx,
+                       ny,
+                       vals.data() + static_cast<std::size_t>(b - 1) * nx * ny,
+                       nx,
+                       ny,
+                       GDT_Float32,
+                       0,
+                       0) != CE_None)
+      {
+        GDALClose(ds);
+        throw Fmi::Exception(BCP, "Failed to read raster data");
+      }
     }
     GDALClose(ds);
 
@@ -1926,7 +1944,7 @@ void nctools::NcFileExtended::copy_values_wind(NFmiFastQueryInfo& info,
 {
   try
   {
-    const float pi = 3.14159265358979326f;
+    const float pi = 3.14159265358979326F;
 
     // Read X component
     GDALDatasetH xds = open_var_dataset(pinfo.x_component);
@@ -1959,18 +1977,18 @@ void nctools::NcFileExtended::copy_values_wind(NFmiFastQueryInfo& info,
     const float xmissingvalue = get_float_meta(xds, pinfo.x_component, "_FillValue");
     float xscale = get_float_meta(xds, pinfo.x_component, "scale_factor");
     if (std::isnan(xscale))
-      xscale = 1.0f;
+      xscale = 1.0F;
     float xoffset = get_float_meta(xds, pinfo.x_component, "add_offset");
     if (std::isnan(xoffset))
-      xoffset = 0.0f;
+      xoffset = 0.0F;
 
     const float ymissingvalue = get_float_meta(yds, pinfo.y_component, "_FillValue");
     float yscale = get_float_meta(yds, pinfo.y_component, "scale_factor");
     if (std::isnan(yscale))
-      yscale = 1.0f;
+      yscale = 1.0F;
     float yoffset = get_float_meta(yds, pinfo.y_component, "add_offset");
     if (std::isnan(yoffset))
-      yoffset = 0.0f;
+      yoffset = 0.0F;
 
     const int xnx = GDALGetRasterXSize(xds);
     const int xny = GDALGetRasterYSize(xds);
@@ -1979,18 +1997,23 @@ void nctools::NcFileExtended::copy_values_wind(NFmiFastQueryInfo& info,
     for (int b = 1; b <= xnb; b++)
     {
       GDALRasterBandH band = GDALGetRasterBand(xds, b);
-      GDALRasterIO(band,
-                   GF_Read,
-                   0,
-                   0,
-                   xnx,
-                   xny,
-                   xvals.data() + static_cast<std::size_t>(b - 1) * xnx * xny,
-                   xnx,
-                   xny,
-                   GDT_Float32,
-                   0,
-                   0);
+      if (GDALRasterIO(band,
+                       GF_Read,
+                       0,
+                       0,
+                       xnx,
+                       xny,
+                       xvals.data() + static_cast<std::size_t>(b - 1) * xnx * xny,
+                       xnx,
+                       xny,
+                       GDT_Float32,
+                       0,
+                       0) != CE_None)
+      {
+        GDALClose(xds);
+        GDALClose(yds);
+        throw Fmi::Exception(BCP, "Failed to read raster data");
+      }
     }
     GDALClose(xds);
 
@@ -2001,18 +2024,22 @@ void nctools::NcFileExtended::copy_values_wind(NFmiFastQueryInfo& info,
     for (int b = 1; b <= ynb; b++)
     {
       GDALRasterBandH band = GDALGetRasterBand(yds, b);
-      GDALRasterIO(band,
-                   GF_Read,
-                   0,
-                   0,
-                   ynx,
-                   yny,
-                   yvals.data() + static_cast<std::size_t>(b - 1) * ynx * yny,
-                   ynx,
-                   yny,
-                   GDT_Float32,
-                   0,
-                   0);
+      if (GDALRasterIO(band,
+                       GF_Read,
+                       0,
+                       0,
+                       ynx,
+                       yny,
+                       yvals.data() + static_cast<std::size_t>(b - 1) * ynx * yny,
+                       ynx,
+                       yny,
+                       GDT_Float32,
+                       0,
+                       0) != CE_None)
+      {
+        GDALClose(yds);
+        throw Fmi::Exception(BCP, "Failed to read raster data");
+      }
     }
     GDALClose(yds);
 
@@ -2065,7 +2092,7 @@ void nctools::NcFileExtended::copy_values_wind(NFmiFastQueryInfo& info,
               if (pinfo.isspeed)
                 info.FloatValue(std::sqrt(x * x + y * y));
               else
-                info.FloatValue(180.0f * std::atan2(x, y) / pi);
+                info.FloatValue(180.0F * std::atan2(x, y) / pi);
             }
             if (xcounter == nx - 1)
             {

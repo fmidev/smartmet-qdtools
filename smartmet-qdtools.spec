@@ -216,6 +216,8 @@ make %{_smp_mflags}
 - Initialize GRIB projection parameters and round with std::lround
 - nctoqd: skip level types without parameters instead of dereferencing their missing meta info
 - Fixed mechanical clang-tidy findings (internal linkage, unused parameters, initialization, redundant code), no functional changes
+- Fixed clang-tidy style findings (loops, nested conditionals, dead code)
+- NetCDF raster read errors are now reported instead of using unread data
 
 * Sun Oct 11 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.11-1.fmi
 - Invalid numbers are now detected instead of silently becoming 0 or a numeric prefix

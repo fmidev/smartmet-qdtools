@@ -65,27 +65,6 @@ void usage()
           "\n";
 }
 
-void get_grid_size(const string &theGridSizeString, int &theXSize, int &theYSize)
-{
-  if (theGridSizeString.empty())
-    throw runtime_error("Grid size option (-s) was empty.");
-  else
-  {
-    string::size_type pos = theGridSizeString.find('x');
-    if (pos != string::npos)
-    {
-      string wantedXSizeStr(theGridSizeString.begin(), theGridSizeString.begin() + pos);
-      string wantedYSizeStr(theGridSizeString.begin() + pos + 1, theGridSizeString.end());
-      theXSize = NFmiStringTools::Convert<int>(wantedXSizeStr);
-      theYSize = NFmiStringTools::Convert<int>(wantedYSizeStr);
-      if (theXSize < 0 || theXSize < 0)
-        throw runtime_error("Grid size option (-s) had negative values.");
-      return;  // pakko palauttaa onnistumisen merkiksi
-    }
-  }
-  throw runtime_error("Grid size option (-s) was bad.");
-}
-
 void run(int argc, const char *argv[])
 {
   NFmiCmdLine cmdline(argc, argv, "p!s!i!o!t!");
@@ -131,7 +110,7 @@ void run(int argc, const char *argv[])
       auto n = Fmi::stoi(str.substr(0, str.size() - 1));
       auto max_hardware = boost::thread::hardware_concurrency();
       maxthreads = n * max_hardware / 100;
-      maxthreads = std::max(1u, maxthreads);
+      maxthreads = std::max(1U, maxthreads);
     }
     else
       maxthreads = Fmi::stoi(str);

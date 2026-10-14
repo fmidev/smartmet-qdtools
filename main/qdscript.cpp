@@ -153,7 +153,8 @@ bool ReadScriptFile(const std::string &theFileName, std::string *theScript)
     ifstream in(theFileName.c_str());
     if (in)
     {
-      string rowbuffer, bigstring;
+      string rowbuffer;
+      string bigstring;
 
       // luetaan tiedostoa rivi kerrallaan ja testataan läytyykä yhden rivin kommentteja
 

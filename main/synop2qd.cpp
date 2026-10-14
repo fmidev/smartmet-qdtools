@@ -99,17 +99,16 @@ T GetValue(const std::string &theValueStr,
     }
     return value;
   }
-  else
-    return static_cast<T>(kFloatMissing);
+  return static_cast<T>(kFloatMissing);
 }
 
 float SynopVisCode2Metres(float theVisibility)
 {
   if (theVisibility == kFloatMissing)
     return kFloatMissing;
-  else if (theVisibility == 0)
+  if (theVisibility == 0)
     return 75;  // 75 metriä on arvaus, 00-koodi on alle 100 m
-  else if (theVisibility > 0 && theVisibility <= 50)
+  if (theVisibility > 0 && theVisibility <= 50)
     return theVisibility * 100;
   else if (theVisibility >= 56 && theVisibility <= 80)
     return (theVisibility - 50) * 1000;
@@ -217,8 +216,7 @@ class NFmiSynopCode
       if (fMustBeFound)
         throw runtime_error(string("Error in NFmiSynopCode::ReadNextField with string: ") +
                             theCommentStr + " in synop:\n" + theSynopStr);
-      else
-        throw ExceptionSynopEndOk(1);
+      throw ExceptionSynopEndOk(1);
     }
     in >> theStr;
   }
@@ -233,17 +231,13 @@ class NFmiSynopCode
       auto T = ::GetValue<float>(theTfieldStr, 2, 3, theSynopStr);
       if (T != kFloatMissing)
         return sign ? -T : T;
-      else
-        return kFloatMissing;
+      return kFloatMissing;
     }
-    else
-    {
-      auto T = ::GetValue<float>(theTfieldStr, 2, 4, theSynopStr);
-      if (T != kFloatMissing)
-        return sign ? -T / 10.f : T / 10.f;
-      else
-        return kFloatMissing;
-    }
+
+    auto T = ::GetValue<float>(theTfieldStr, 2, 4, theSynopStr);
+    if (T != kFloatMissing)
+      return sign ? -T / 10.F : T / 10.F;
+    return kFloatMissing;
   }
 
   float GetBuoyLatitude(const std::string &QcLaLaLaLaLa_Str,
@@ -253,14 +247,14 @@ class NFmiSynopCode
     if (QcLaLaLaLaLa_Str.size() == 6)
     {
       theQuadrantOfGlobe = ::GetValue<int>(QcLaLaLaLaLa_Str, 0, 0, theSynopStr);
-      float lat = 0.f;
+      float lat = 0.F;
       if (::isdigit(static_cast<unsigned char>(QcLaLaLaLaLa_Str[1])) &&
           ::isdigit(static_cast<unsigned char>(QcLaLaLaLaLa_Str[2])) &&
           ::isdigit(static_cast<unsigned char>(QcLaLaLaLaLa_Str[3])) &&
           ::isdigit(static_cast<unsigned char>(QcLaLaLaLaLa_Str[4])) && QcLaLaLaLaLa_Str[5] == '/')
       {
         lat = static_cast<float>(::GetValue<int>(QcLaLaLaLaLa_Str, 1, 4, theSynopStr));
-        lat /= 100.f;
+        lat /= 100.F;
       }
       else if (::isdigit(static_cast<unsigned char>(QcLaLaLaLaLa_Str[1])) &&
                ::isdigit(static_cast<unsigned char>(QcLaLaLaLaLa_Str[2])) &&
@@ -268,19 +262,18 @@ class NFmiSynopCode
                QcLaLaLaLaLa_Str[4] == '/' && QcLaLaLaLaLa_Str[5] == '/')
       {
         lat = static_cast<float>(::GetValue<int>(QcLaLaLaLaLa_Str, 1, 3, theSynopStr));
-        lat /= 10.f;
+        lat /= 10.F;
       }
       else
       {
         lat = static_cast<float>(::GetValue<int>(QcLaLaLaLaLa_Str, 1, 5, theSynopStr));
-        lat /= 1000.f;
+        lat /= 1000.F;
       }
 
       return lat;
     }
-    else
-      throw runtime_error(string("BUOY message didn't contain correct QcLaLaLaLaLa-field:\n") +
-                          theSynopStr);
+    throw runtime_error(string("BUOY message didn't contain correct QcLaLaLaLaLa-field:\n") +
+                        theSynopStr);
   }
 
   float GetBuoyLongitude(const std::string &LoLoLoLoLoLo_Str, const std::string &theSynopStr)
@@ -295,7 +288,7 @@ class NFmiSynopCode
           ::isdigit(static_cast<unsigned char>(LoLoLoLoLoLo_Str[4])) && LoLoLoLoLoLo_Str[5] == '/')
       {
         lon = static_cast<float>(::GetValue<int>(LoLoLoLoLoLo_Str, 0, 4, theSynopStr));
-        lon /= 100.f;
+        lon /= 100.F;
       }
       else if (::isdigit(static_cast<unsigned char>(LoLoLoLoLoLo_Str[0])) &&
                ::isdigit(static_cast<unsigned char>(LoLoLoLoLoLo_Str[1])) &&
@@ -304,19 +297,18 @@ class NFmiSynopCode
                LoLoLoLoLoLo_Str[4] == '/' && LoLoLoLoLoLo_Str[5] == '/')
       {
         lon = static_cast<float>(::GetValue<int>(LoLoLoLoLoLo_Str, 0, 3, theSynopStr));
-        lon /= 10.f;
+        lon /= 10.F;
       }
       else
       {
         lon = static_cast<float>(::GetValue<int>(LoLoLoLoLoLo_Str, 0, 5, theSynopStr));
-        lon /= 1000.f;
+        lon /= 1000.F;
       }
 
       return lon;
     }
-    else
-      throw runtime_error(string("BUOY message didn't contain correct LoLoLoLoLoLo-field:\n") +
-                          theSynopStr);
+    throw runtime_error(string("BUOY message didn't contain correct LoLoLoLoLoLo-field:\n") +
+                        theSynopStr);
   }
 
   float GetShipLatitude(const std::string &_99LaLaLa_Str, const std::string &theSynopStr)
@@ -326,12 +318,11 @@ class NFmiSynopCode
       int latCode = ::GetValue<int>(_99LaLaLa_Str, 2, 4, theSynopStr);
       auto lat = static_cast<float>(latCode / 10);
       int tenthsPart = latCode % 10;
-      lat += tenthsPart / 6.f;
+      lat += tenthsPart / 6.F;
       return lat;
     }
-    else
-      throw runtime_error(string("SHIP message didn't contain correct 99LaLaLa-field:\n") +
-                          theSynopStr);
+    throw runtime_error(string("SHIP message didn't contain correct 99LaLaLa-field:\n") +
+                        theSynopStr);
   }
 
   float GetShipLongitude(const std::string &QcLoLoLoLo_Str,
@@ -344,12 +335,11 @@ class NFmiSynopCode
       int lonCode = ::GetValue<int>(QcLoLoLoLo_Str, 1, 4, theSynopStr);
       auto lon = static_cast<float>(lonCode / 10);
       int tenthsPart = lonCode % 10;
-      lon += tenthsPart / 6.f;
+      lon += tenthsPart / 6.F;
       return lon;
     }
-    else
-      throw runtime_error(string("SHIP message didn't contain correct 99LaLaLa-field:\n") +
-                          theSynopStr);
+    throw runtime_error(string("SHIP message didn't contain correct 99LaLaLa-field:\n") +
+                        theSynopStr);
   }
 
   // puretaan 4PPPP-kenttä // tämä on meren pintaan redukoitu paine
@@ -368,9 +358,9 @@ class NFmiSynopCode
       auto PPP41 = ::GetValue<float>(currentSynopField, 1, 3, theSynopStr);
       auto PPP42 = ::GetValue<float>(currentSynopField, 4, 4, theSynopStr);
       if (PPP41 != kFloatMissing && PPP42 != kFloatMissing)
-        P = (PPP41 < 500.f) ? (1000 + PPP41 + PPP42 / 10.f) : (PPP41 + PPP42 / 10.f);
+        P = (PPP41 < 500.F) ? (1000 + PPP41 + PPP42 / 10.F) : (PPP41 + PPP42 / 10.F);
       else if (PPP41 != kFloatMissing && PPP42 == kFloatMissing)
-        P = (PPP41 < 500.f) ? (1000 + PPP41) : (PPP41);
+        P = (PPP41 < 500.F) ? (1000 + PPP41) : (PPP41);
     }
     return P;
   }
@@ -427,7 +417,7 @@ class NFmiSynopCode
         {
           auto dd = ::GetValue<float>(currentSynopField, 1, 2, theSynopStr);
           if (dd != kFloatMissing)
-            itsWD = dd * 10.f;
+            itsWD = dd * 10.F;
           auto ff = ::GetValue<float>(currentSynopField, 3, 4, theSynopStr);
 
           // if speed is 99, there is an extra 00fff group coming up
@@ -441,7 +431,7 @@ class NFmiSynopCode
           if (ff != kFloatMissing)
           {
             if (fWindSpeedInKnots)
-              itsWS = 1852 * ff / 3600.f;
+              itsWS = 1852 * ff / 3600.F;
             else
               itsWS = ff;
           }
@@ -506,7 +496,7 @@ class NFmiSynopCode
             itsPressureTendency = a;
           auto ppp = ::GetValue<float>(currentSynopField, 2, 4, theSynopStr);
           if (ppp != kFloatMissing)
-            itsPressureChange = ppp / 10.f;
+            itsPressureChange = ppp / 10.F;
 
           // luetaan lopuksi seuraava kenttä
           commentString = "next trying to read 6RRRt-field";
@@ -663,7 +653,7 @@ class NFmiSynopCode
       itsN = ::GetValue<float>(Nddff_Str, 0, 0, theSynopStr);
       auto dd = ::GetValue<float>(Nddff_Str, 1, 2, theSynopStr);
       if (dd != kFloatMissing)
-        itsWD = dd * 10.f;
+        itsWD = dd * 10.F;
       auto ff = ::GetValue<float>(Nddff_Str, 3, 4, theSynopStr);
 
       // if speed is 99, there is an extra 00fff group coming up
@@ -676,7 +666,7 @@ class NFmiSynopCode
       if (ff != kFloatMissing)
       {
         if (fWindSpeedInKnots)
-          itsWS = 1852 * ff / 3600.f;
+          itsWS = 1852 * ff / 3600.F;
         else
           itsWS = ff;
       }
@@ -757,7 +747,7 @@ class NFmiSynopCode
           itsPressureTendency = a;
         auto ppp = ::GetValue<float>(currentSynopField, 2, 4, theSynopStr);
         if (ppp != kFloatMissing)
-          itsPressureChange = ppp / 10.f;
+          itsPressureChange = ppp / 10.F;
 
         // luetaan lopuksi seuraava kenttä
         commentString = "next trying to read 6RRRt-field";
@@ -774,8 +764,8 @@ class NFmiSynopCode
             throw runtime_error(
                 string("Error in NFmiSynopCode::Decode, RRR-code was negative value in synop:\n") +
                 theSynopStr);
-          else if (itsPrecipitation >= 990)
-            itsPrecipitation = (static_cast<int>(itsPrecipitation) % 10) / 10.f;
+          if (itsPrecipitation >= 990)
+            itsPrecipitation = (static_cast<int>(itsPrecipitation) % 10) / 10.F;
         }
         //			double t = ::GetValue<double>(currentSynopField, 4, 4); // t(r) on
         // Duration of period of precip, ei käytetä
@@ -838,10 +828,10 @@ class NFmiSynopCode
       if (currentSynopField != string("333"))
       {
         commentString = "next trying to find 333-field";
-        do
+        for (bool more = true; more; more = currentSynopField != string("333"))
         {
           ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
-        } while (currentSynopField != string("333"));
+        }
       }
 
       // käydään tarvittaessa läpi 333-sectionin kohtia
@@ -879,14 +869,14 @@ class NFmiSynopCode
             // We'll use 910ff if it is available
             itsGust = ::GetValue<float>(currentSynopField, 3, 4, theSynopStr);
             if (itsGust != kFloatMissing && fWindSpeedInKnots)
-              itsGust = 1852 * itsGust / 3600.f;
+              itsGust = 1852 * itsGust / 3600.F;
           }
           else if (prefix == "911" && currentSynopField.size() == 5)
           {
             // We prefer 911ff over 910ff
             itsGust = ::GetValue<float>(currentSynopField, 3, 4, theSynopStr);
             if (itsGust != kFloatMissing && fWindSpeedInKnots)
-              itsGust = 1852 * itsGust / 3600.f;
+              itsGust = 1852 * itsGust / 3600.F;
           }
           ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
         }
@@ -1302,8 +1292,7 @@ std::string TakeAwayKnownErrorWordFromStart(const std::string &theStr)
   size_t pos = theStr.find(badWord);
   if (pos == 0)
     return string(theStr.begin() + badWord.size(), theStr.end());
-  else
-    return theStr;
+  return theStr;
 }
 
 void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
@@ -1605,7 +1594,7 @@ bool GetPossibleNextSynopBlockInfo(const std::string &synopFileBlockStr,
   std::pair<std::string, std::string> lastTwoWords = ::GetLastTwoWords(synopFileBlockStr);
   if (lastTwoWords.second.size() == 6)
     return ::GetPossibleSynopTime(lastTwoWords.second, theSynopTime);
-  else if (lastTwoWords.first.size() == 6 && lastTwoWords.second.size() == 3)
+  if (lastTwoWords.first.size() == 6 && lastTwoWords.second.size() == 3)
   {
     bool status1 = ::GetPossibleSynopTime(lastTwoWords.first, theSynopTime);
     bool status2 = ::GetPossibleSynopCorrectionField(lastTwoWords.second, theCorrectionField);
@@ -1997,8 +1986,7 @@ void Domain(int argc, const char *argv[])
     NFmiStreamQueryData sQOutData(data);
     if (!sQOutData.WriteCout())
       throw runtime_error("Error: Couldn't write combined qdata to stdout.");
-    else
-      cerr << "Completing the task, data was created and written to a file (stdout)." << endl;
+    cerr << "Completing the task, data was created and written to a file (stdout)." << endl;
   }
   else
     throw runtime_error("Error CombineQueryDatas: coudn't combine datas.");

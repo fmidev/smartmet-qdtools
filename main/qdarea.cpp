@@ -87,8 +87,7 @@ string ParameterRequest::extract_function(const string& theString) const
   string::size_type pos = theString.find('[');
   if (pos == string::npos)
     return theString;
-  else
-    return theString.substr(0, pos);
+  return theString.substr(0, pos);
 }
 
 // ----------------------------------------------------------------------

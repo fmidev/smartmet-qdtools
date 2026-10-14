@@ -68,10 +68,8 @@ std::string get_att_string_value(const netCDF::NcAtt& att)
       const std::string result = std::string(bytes.data(), bytes.size());
       return result;
     }
-    else
-    {
-      throw Fmi::Exception(BCP, "FIXME: implementation missing");
-    }
+
+    throw Fmi::Exception(BCP, "FIXME: implementation missing");
   }
   catch (...)
   {
@@ -161,16 +159,14 @@ std::string FmiNcMetaData::GetLevelDimName() const
 {
   if (fUseSurfaceInfo)
     return itsSurfaceLevelInfo.itsDimName;
-  else
-    return itsMultiLevelInfo.itsDimName;
+  return itsMultiLevelInfo.itsDimName;
 }
 
 FmiNcLevelType FmiNcMetaData::GetLevelType() const
 {
   if (fUseSurfaceInfo)
     return itsSurfaceLevelInfo.itsNcLevelType;
-  else
-    return itsMultiLevelInfo.itsNcLevelType;
+  return itsMultiLevelInfo.itsNcLevelType;
 }
 
 FmiNetCdfQueryData::FmiNetCdfQueryData()

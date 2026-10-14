@@ -200,7 +200,8 @@ void project_coordinates(bool verbose,
   }
   else
   {
-    double x = NAN, y = NAN;
+    double x = NAN;
+    double y = NAN;
     while (cin >> x >> y)
       coords.emplace_back(x, y);
     if (cin.bad())

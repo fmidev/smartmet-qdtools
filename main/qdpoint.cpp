@@ -350,8 +350,7 @@ std::map<std::string, NFmiPoint> FindPlaces(const std::vector<std::string>& theP
 
     if (locfinder.LastSearchFailed() && !theForceFlag)
       throw std::runtime_error("Location " + thePlace + " is not in the database");
-    else
-      ret.insert(ReturnType::value_type(thePlace, lonlat));
+    ret.insert(ReturnType::value_type(thePlace, lonlat));
   }
 
   return ret;
@@ -428,7 +427,8 @@ double ElevationAngle(const NFmiPoint& theLatLon, const NFmiTime& theTime)
 
 float WindChill(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 {
-  float temperature = NAN, windspeed = NAN;
+  float temperature = NAN;
+  float windspeed = NAN;
 
   if (!qd.Param(kFmiTemperature))
     return kFloatMissing;
@@ -458,7 +458,10 @@ float WindChill(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 
 float FeelsLike(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 {
-  float temperature = NAN, windspeed = NAN, humidity = NAN, radiation = NAN;
+  float temperature = NAN;
+  float windspeed = NAN;
+  float humidity = NAN;
+  float radiation = NAN;
 
   if (!qd.Param(kFmiTemperature))
     return kFloatMissing;
@@ -505,7 +508,8 @@ float FeelsLike(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 
 float SummerSimmer(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 {
-  float temperature = NAN, humidity = NAN;
+  float temperature = NAN;
+  float humidity = NAN;
 
   if (!qd.Param(kFmiTemperature))
     return kFloatMissing;
@@ -532,7 +536,9 @@ float SummerSimmer(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 
 float ThetaE(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 {
-  float temperature = NAN, pressure = NAN, humidity = NAN;
+  float temperature = NAN;
+  float pressure = NAN;
+  float humidity = NAN;
 
   if (!qd.Param(kFmiTemperature))
     return kFloatMissing;
@@ -754,15 +760,15 @@ float MetaFunction(NFmiFastQueryInfo& qd, const string& name, NFmiPoint lonlat)
 {
   if (name == "MetaIsDark")
     return IsDark(lonlat, qd.ValidTime());
-  else if (name == "MetaElevationAngle")
+  if (name == "MetaElevationAngle")
     return static_cast<float>(ElevationAngle(lonlat, qd.ValidTime()));
-  else if (name == "MetaRainProbability")
+  if (name == "MetaRainProbability")
     return RainProbability(qd, lonlat);
-  else if (name == "MetaWindChill")
+  if (name == "MetaWindChill")
     return WindChill(qd, lonlat);
-  else if (name == "MetaN")
+  if (name == "MetaN")
     return CloudinessN(qd, lonlat);
-  else if (name == "MetaNN")
+  if (name == "MetaNN")
     return CloudinessNN(qd, lonlat);
   else if (name == "MetaMoonIlluminatedFraction")
     return MoonIlluminatedFraction(qd.ValidTime());
@@ -792,15 +798,15 @@ const char* MetaPrecision(const string& name)
 {
   if (name == "MetaIsDark")
     return "%g";
-  else if (name == "MetaElevationAngle")
+  if (name == "MetaElevationAngle")
     return "%.3f";
-  else if (name == "MetaWindChill")
+  if (name == "MetaWindChill")
     return "%.1f";
-  else if (name == "MetaN")
+  if (name == "MetaN")
     return "%.0f";
-  else if (name == "MetaNN")
+  if (name == "MetaNN")
     return "%.0f";
-  else if (name == "MetaMoonIlluminatedFraction")
+  if (name == "MetaMoonIlluminatedFraction")
     return "%.1f";
   else if (name == "MetaSnowProb")
     return "%.1f";
@@ -1575,7 +1581,7 @@ int run(int argc, char* argv[])
         // qi->LastTime();
 
         int rows = options.rows;
-        do
+        for (bool more = true; more; more = rows > 0 && qi->PreviousTime())
         {
           if (options.max_missing_gap > 0 || ValidRow(*qi, ignoresubs))
           {
@@ -1583,7 +1589,7 @@ int run(int argc, char* argv[])
             PrintRow(*qi, ignoresubs, zones, lonlat);
             --rows;
           }
-        } while (rows > 0 && qi->PreviousTime());
+        }
         if (rows > 0 && options.verbose)
           cout << "# Warning: " << rows << " missing rows for WMO-number " << *iter
                << " due to insufficient data in the queryfile" << endl;
@@ -1624,7 +1630,7 @@ int run(int argc, char* argv[])
         qi->PreviousTime();
         // qi->LastTime()
         int rows = options.rows;
-        do
+        for (bool more = true; more; more = rows > 0 && qi->PreviousTime())
         {
           if (options.max_missing_gap > 0 || ValidRow(*qi, ignoresubs, lonlat))
           {
@@ -1632,7 +1638,7 @@ int run(int argc, char* argv[])
             PrintRow(*qi, ignoresubs, zones, lonlat);
             --rows;
           }
-        } while (rows > 0 && qi->PreviousTime());
+        }
         if (rows > 0 && options.verbose)
           cout << "# Warning: " << rows << " missing rows due to insufficient data in the queryfile"
                << endl;
@@ -1673,14 +1679,14 @@ int run(int argc, char* argv[])
         qi->PreviousTime();
         // qi->LastTime()
         int rows = options.rows;
-        do
+        for (bool more = true; more; more = rows > 0 && qi->PreviousTime())
         {
           if (options.max_missing_gap > 0 || ValidRow(*qi, ignoresubs, lonlat))
           {
             PrintRow(*qi, ignoresubs, zones, lonlat);
             --rows;
           }
-        } while (rows > 0 && qi->PreviousTime());
+        }
         if (rows > 0 && options.verbose)
           cout << "# Warning: " << rows << " missing rows due to insufficient data in the queryfile"
                << endl;

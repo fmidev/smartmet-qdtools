@@ -148,11 +148,9 @@ int domain(int argc, const char *argv[])
   if (!sQData.WriteData(options.outdata, data, static_cast<long>(data->InfoVersion())))
     throw std::runtime_error(std::string("Error, unable to store combined queryData to file:\n") +
                              options.outdata);
-  else
-  {
-    if (options.verbose)
-      cout << std::string("Writing to file: ") + options.outdata << endl;
-  }
+
+  if (options.verbose)
+    cout << std::string("Writing to file: ") + options.outdata << endl;
 
   return 0;
 }

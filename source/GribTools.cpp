@@ -7,6 +7,7 @@
 #include "GribTools.h"
 #include <macgyver/StringConversion.h>
 #include <newbase/NFmiCommentStripper.h>
+#include <cmath>
 
 #include <iostream>
 #include <stdexcept>
@@ -22,7 +23,7 @@ void DUMP(grib_handle *grib, const char *ns)
   else
     std::cout << "\nValues for namespace " << ns << ":" << std::endl << std::endl;
 
-  grib_keys_iterator *kiter;
+  grib_keys_iterator* kiter = nullptr;
   if (ns == nullptr)
     kiter = grib_keys_iterator_new(grib, GRIB_KEYS_ITERATOR_ALL_KEYS, nullptr);
   else
@@ -45,7 +46,7 @@ void DUMP(grib_handle *grib, const char *ns)
     }
     else
     {
-      int type;
+      int type = 0;
       grib_get_native_type(grib, name, &type);
       switch (type)
       {
@@ -58,14 +59,14 @@ void DUMP(grib_handle *grib, const char *ns)
         }
         case GRIB_TYPE_DOUBLE:
         {
-          double value;
+          double value = NAN;
           grib_get_double(grib, name, &value);
           std::cout << name << " = " << value << std::endl;
           break;
         }
         case GRIB_TYPE_LONG:
         {
-          long value;
+          long value = 0;
           grib_get_long(grib, name, &value);
           std::cout << name << " = " << value << std::endl;
           break;
@@ -97,7 +98,7 @@ void DUMP(grib_handle *grib)
 
 long get_long(grib_handle *g, const char *name)
 {
-  long value;
+  long value = 0;
   if (grib_get_long(g, name, &value))
     throw std::runtime_error(std::string("Failed to get long value for name ") + name);
   return value;
@@ -105,7 +106,7 @@ long get_long(grib_handle *g, const char *name)
 
 double get_double(grib_handle *g, const char *name)
 {
-  double value;
+  double value = NAN;
   if (grib_get_double(g, name, &value))
     throw std::runtime_error(std::string("Failed to get double value for name ") + name);
   return value;
@@ -158,8 +159,7 @@ void gset(grib_handle *g, const char *name, const std::string &value)
 // ----------------------------------------------------------------------
 
 ParamChangeItem::ParamChangeItem()
-    : itsOriginalParamId(0),
-      itsWantedParam(0,
+    : itsWantedParam(0,
                      "",
                      kFloatMissing,
                      kFloatMissing,
@@ -167,10 +167,7 @@ ParamChangeItem::ParamChangeItem()
                      kFloatMissing,
                      "%.1f",
                      kLinearly)  // laitetaan lineaarinen interpolointi päälle
-      ,
-      itsConversionBase(0),
-      itsConversionScale(1.f),
-      itsLevel(nullptr)
+
 {
 }
 
@@ -213,7 +210,7 @@ void ParamChangeItem::Reset()
                              kLinearly);  // laitetaan lineaarinen interpolointi päälle
   itsConversionBase = 0;
   itsConversionScale = 1.f;
-  if (itsLevel)
+
     delete itsLevel;
   itsLevel = nullptr;
 }

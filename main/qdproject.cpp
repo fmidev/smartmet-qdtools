@@ -55,6 +55,7 @@
 #include <newbase/NFmiStringTools.h>
 #include <iomanip>
 #include <iostream>
+#include <cmath>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
@@ -67,6 +68,8 @@ using namespace std;
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 void usage()
 {
   cout << "Usage: qdproject [options] x1,y1 x2,y2 x3,y3 ...\n"
@@ -197,7 +200,7 @@ void project_coordinates(bool verbose,
   }
   else
   {
-    double x, y;
+    double x = NAN, y = NAN;
     while (cin >> x >> y)
       coords.emplace_back(x, y);
     if (cin.bad())
@@ -314,6 +317,7 @@ int run(int argc, const char* argv[])
 
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

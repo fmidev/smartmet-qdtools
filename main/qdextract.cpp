@@ -10,6 +10,7 @@
 #include <newbase/NFmiLocationBag.h>
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
+#include <cmath>
 #include <stdexcept>
 #include <string>
 
@@ -32,7 +33,10 @@ struct Options
   std::string locationfile;
 };
 
+namespace
+{
 Options options;
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -40,7 +44,7 @@ Options options;
  */
 // ----------------------------------------------------------------------
 
-Options::Options() : infile("-"), outfile("-"), locationfile("") {}
+Options::Options() : infile("-"), outfile("-") {}
 // ----------------------------------------------------------------------
 /*!
  * \brief Parse command line options
@@ -48,6 +52,8 @@ Options::Options() : infile("-"), outfile("-"), locationfile("") {}
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 bool parse_options(int argc, char* argv[])
 {
   namespace po = boost::program_options;
@@ -171,7 +177,7 @@ NFmiLocationBag ReadLocationsFromFile(const std::string& locationfile, NFmiFastQ
       strippedControlFile >> locId;
       strippedControlFile.getline(buffer, 511);
       strippedControlFile.getline(locName, 511);
-      double lat, lon;
+      double lat = NAN, lon = NAN;
       strippedControlFile >> lon >> lat;
       if (!strippedControlFile.fail())
       {
@@ -195,9 +201,9 @@ NFmiLocationBag ReadLocationsFromFile(const std::string& locationfile, NFmiFastQ
     qi.First();
 
     NFmiProducer producer(*qi.Producer());
-    int locId;
+    int locId = 0;
     string locName;
-    double lat, lon;
+    double lat = NAN, lon = NAN;
     while (strippedControlFile >> locId >> locName >> lon >> lat)
     {
       if (qi.Location(locId))
@@ -244,6 +250,7 @@ int run(int argc, char* argv[])
 
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

@@ -69,6 +69,8 @@ using namespace std;
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 void Usage()
 {
   cout << "combineHistory [options] <directory> [<directory2> ...] > output" << endl
@@ -93,7 +95,7 @@ void Usage()
 // tutkitaan onko mahdollista tehda listasta bagi
 // eli ajat ovat peräkkäisiä ja tasavälisiä
 
-static bool ConvertTimeList2TimeBag(const NFmiTimeList& theTimeList, NFmiTimeBag& theTimeBag)
+bool ConvertTimeList2TimeBag(const NFmiTimeList& theTimeList, NFmiTimeBag& theTimeBag)
 {
   if (theTimeList.NumberOfItems() >
       2)  // ei  tehdä yhdestä tai kahdesta ajasta bagiä vaikka se on mahdollista
@@ -111,6 +113,7 @@ static bool ConvertTimeList2TimeBag(const NFmiTimeList& theTimeList, NFmiTimeBag
   }
   return false;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

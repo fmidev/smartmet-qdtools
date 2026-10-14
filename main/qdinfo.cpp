@@ -30,6 +30,8 @@ using namespace std;
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 std::string ToString(float theValue)
 {
   if (theValue == kFloatMissing)
@@ -172,7 +174,7 @@ void ReportParameters(NFmiFastQueryInfo *q, bool ignoresubs)
  */
 // ----------------------------------------------------------------------
 
-const string format_time(const NFmiMetTime &mtime, const string &dateFormat, bool theUtcFlag)
+const string format_time(const NFmiMetTime& mtime, const string& dateFormat, bool /*theUtcFlag*/)
 {
   // The UTC time
   struct ::tm utc;
@@ -744,7 +746,7 @@ void ReportMetadata(NFmiFastQueryInfo *q, const string &theKey)
 
 int domain(int argc, const char *argv[])
 {
-  string opt_queryfile = "";
+  string opt_queryfile;
 
   NFmiCmdLine cmdline(argc, argv, "hq!avAlpPt:rT:xXzm!M");
 
@@ -851,7 +853,7 @@ int domain(int argc, const char *argv[])
 
   // Option -t shows time information
 
-  string dateFormat = "";
+  string dateFormat;
 
   if (cmdline.isOption('t') || (opt_all && !cmdline.isOption('T')))
   {
@@ -900,6 +902,7 @@ int domain(int argc, const char *argv[])
 
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

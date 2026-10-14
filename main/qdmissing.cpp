@@ -69,27 +69,15 @@ struct Options
   string inputfile;
   string timezone;
   vector<FmiParameterName> parameters;
-  bool checknan;
-  bool printcount;
-  bool alltimesteps;
-  bool allstations;
-  bool checkErrorLimit;
-  bool printzero;
-  double errorLimit;
+  bool checknan = false;
+  bool printcount = false;
+  bool alltimesteps = false;
+  bool allstations = false;
+  bool checkErrorLimit = false;
+  bool printzero = true;
+  double errorLimit = 0.0;
 
-  Options()
-      : inputfile(),
-        timezone(NFmiSettings::Optional<string>("qdmissing::timezone", "Europe/Helsinki")),
-        parameters(),
-        checknan(false),
-        printcount(false),
-        alltimesteps(false),
-        allstations(false),
-        checkErrorLimit(false),
-        printzero(true),
-        errorLimit()
-  {
-  }
+  Options() : timezone(NFmiSettings::Optional<string>("qdmissing::timezone", "Europe/Helsinki")) {}
 };
 
 // ----------------------------------------------------------------------
@@ -98,6 +86,8 @@ struct Options
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 Options options;
 
 // ----------------------------------------------------------------------
@@ -300,7 +290,7 @@ int analyze_given_parameters(NFmiFastQueryInfo& theQ)
     }
   }
 
-  if (percentages.size() == 0)
+  if (percentages.empty())
   {
     if (options.checknan || options.printcount)
       return 0;
@@ -404,7 +394,7 @@ int analyze_given_station_parameters(NFmiFastQueryInfo& theQ)
     }
   }
 
-  if (percentages.size() == 0)
+  if (percentages.empty())
   {
     return (options.checknan || options.printcount ? 0 : 100);
   }
@@ -505,7 +495,7 @@ int analyze_given_parameters_now(NFmiFastQueryInfo& theQ)
     }
   }
 
-  if (percentages.size() == 0)
+  if (percentages.empty())
   {
     return (options.checknan || options.printcount ? 0 : 100);
   }
@@ -586,6 +576,7 @@ int run(int argc, const char* argv[])
 
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

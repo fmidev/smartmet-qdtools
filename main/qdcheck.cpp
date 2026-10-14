@@ -37,13 +37,16 @@ struct Options
 {
   Options();
 
-  bool check_tdew;      // --check-tdew
+  bool check_tdew = false;  // --check-tdew
   std::string config;   // arg 1
   std::string infile;   // arg 2
   std::string outfile;  // arg 3
 };
 
+namespace
+{
 Options options;
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -51,7 +54,7 @@ Options options;
  */
 // ----------------------------------------------------------------------
 
-Options::Options() : check_tdew(false), config(), infile(), outfile() {}
+Options::Options() {}
 // ----------------------------------------------------------------------
 /*!
  * \brief Parse the command line
@@ -60,6 +63,8 @@ Options::Options() : check_tdew(false), config(), infile(), outfile() {}
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 bool ParseOptions(int argc, char *argv[], Options &options)
 {
   namespace po = boost::program_options;
@@ -178,7 +183,7 @@ bool CheckErrorLevelAndProduceStatusTextAndUpdateErrorCode(const std::vector<flo
                                                            NFmiString &theText)
 {
   int size = theErrorLimits.size();
-  int i;
+  int i = 0;
   for (i = 0; i < size; i++)
   {
     if (theErrorLimits[i] < theCalculatedValue)
@@ -241,7 +246,7 @@ bool ReadOhjausTiedosto(const NFmiString &theFileName, NFmiOhjausData &theOhjaus
     int checkedParamCount = 0;
     strippedControlFile >> checkedParamCount;
     NFmiParamCheckData data;
-    int i;
+    int i = 0;
     for (i = 0; i < checkedParamCount; i++)
     {
       strippedControlFile >> data;
@@ -558,6 +563,7 @@ int run(int argc, char *argv[])
   out.close();
   return returnValue;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

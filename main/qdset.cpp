@@ -19,14 +19,18 @@
 #include <macgyver/TimeParser.h>
 
 #include <boost/filesystem/operations.hpp>
+#include <algorithm>
 
 #include <fstream>
 #include <stdexcept>
 
 using namespace std;  // tätä ei saa sitten laittaa headeriin, eikä ennen includeja!!!!
 
+namespace
+{
 void Usage();
 void run(int argc, const char* argv[]);
+}  // namespace
 
 int main(int argc, const char* argv[])
 {
@@ -46,6 +50,8 @@ int main(int argc, const char* argv[])
 // Kaytto-ohjeet
 // ----------------------------------------------------------------------
 
+namespace
+{
 void Usage()
 {
   cerr << "Usage: qdset [options] dataFile param(Id/name e.g. 4 or Temperature)" << endl
@@ -117,7 +123,7 @@ void run(int argc, const char* argv[])
 
   // Katsotaan ensin onko 2. parametrina annettu parametri-tunniste nimi (esim. Temperature), vai
   // identti (esim. 4)
-  bool paramFound = false || cmdline.isOption('w') || cmdline.isOption('W');
+  bool paramFound = static_cast<bool>(cmdline.isOption('w')) || cmdline.isOption('W');
   string paramIdOrName(cmdline.Parameter(2));
   NFmiEnumConverter eConv;
   auto parNameId = static_cast<FmiParameterName>(eConv.ToEnum(paramIdOrName));
@@ -226,7 +232,7 @@ void run(int argc, const char* argv[])
     if (info->IsGrid())
       throw runtime_error("Querydata is in grid format");
 
-    long oldId;
+    long oldId = 0;
 
     try
     {
@@ -255,8 +261,7 @@ void run(int argc, const char* argv[])
   // Copied from NFmiStreamQueryData::WriteData for backward compatibility
 
   auto version = static_cast<unsigned short>(qd.InfoVersion());
-  if (version < 6)
-    version = 6;
+  version = std::max<unsigned short>(version, 6);
   qd.InfoVersion(version);
 
   std::filesystem::path p = dataFile;
@@ -271,3 +276,4 @@ void run(int argc, const char* argv[])
   std::filesystem::remove(dataFile);
   std::filesystem::rename(tmp, dataFile);
 }
+}  // namespace

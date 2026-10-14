@@ -29,6 +29,8 @@ using namespace std;
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 void usage()
 {
   cout << "Usage: combinepgms2qd [options] inputfilepattern qdfileout" << endl
@@ -143,7 +145,7 @@ int domain(int argc, const char *argv[])
 
   std::unique_ptr<NFmiQueryData> dataPtr(data);  // tuhoaa automaattisesti datan lopuksi
   NFmiStreamQueryData sQData;
-  if (sQData.WriteData(options.outdata, data, static_cast<long>(data->InfoVersion())) == false)
+  if (!sQData.WriteData(options.outdata, data, static_cast<long>(data->InfoVersion())))
     throw std::runtime_error(std::string("Error, unable to store combined queryData to file:\n") +
                              options.outdata);
   else
@@ -154,6 +156,7 @@ int domain(int argc, const char *argv[])
 
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

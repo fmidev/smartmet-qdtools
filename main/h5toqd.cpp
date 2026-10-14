@@ -49,7 +49,10 @@ using namespace std::literals;
 
 // Global to get better error messages outside param descriptor builder
 
+namespace
+{
 NFmiEnumConverter converter;
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -79,6 +82,8 @@ struct Options
   std::string default_cty;              // --default-cty
 };
 
+namespace
+{
 Options options;
 
 // ----------------------------------------------------------------------
@@ -1690,7 +1695,7 @@ std::string expand_name_and_case(const std::string& theName,
 }
 
 // Filter out PROJ error messages
-static void MyProjErrorHandler(CPLErr cls, int code, const char* msg)
+void MyProjErrorHandler(CPLErr cls, int code, const char* msg)
 {
   // Drop lines that GDAL forwards from PROJ
   if (msg && std::string(msg).rfind("PROJ:", 0) == 0)
@@ -1779,6 +1784,7 @@ int run(int argc, char* argv[])
 
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

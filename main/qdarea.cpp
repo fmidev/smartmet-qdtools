@@ -377,6 +377,8 @@ ParameterRequest::ParameterRequest(const string& theRequest)
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 void usage()
 {
   cout << "Usage: qdarea [options]" << endl
@@ -401,6 +403,7 @@ void usage()
        << "qdarea -T 24 -p merialueet/B1 -P 'mean(max(wspd)),mean(wdir)'" << endl
        << endl;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -426,7 +429,9 @@ struct options_list
   std::shared_ptr<WeatherPeriod> period;
 };
 
-static options_list options;
+namespace
+{
+options_list options;
 
 // ----------------------------------------------------------------------
 /*!
@@ -611,12 +616,12 @@ void parse_interval_option(const string& theRequest)
       int interval = NFmiStringTools::Convert<int>(words2.back());
       int mininterval = interval;
       words2.pop_back();
-      if (words2.size() >= 1)
+      if (!words2.empty())
       {
         starthour = NFmiStringTools::Convert<int>(words2.front());
         words2.pop_front();
       }
-      if (words2.size() >= 1)
+      if (!words2.empty())
         interval = NFmiStringTools::Convert<int>(words2.front());
 
       options.generator = std::shared_ptr<WeatherPeriodGenerator>(
@@ -783,6 +788,7 @@ void parse_command_line(int argc, const char* argv[])
   else
     throw runtime_error("Option -p must be given");
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -794,7 +800,9 @@ using Results = vector<WeatherResult>;
 using TimedResults = map<WeatherPeriod, Results>;
 using AreaResults = map<string, TimedResults>;
 
-static AreaResults results;
+namespace
+{
+AreaResults results;
 
 // ----------------------------------------------------------------------
 /*!
@@ -1098,6 +1106,7 @@ int domain(int argc, const char* argv[])
 
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

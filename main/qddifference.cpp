@@ -61,23 +61,13 @@ struct Options
   string inputfile1;
   string inputfile2;
   vector<FmiParameterName> parameters;
-  bool allparams;
-  bool alltimesteps;
-  bool percentage;
-  bool debug;
-  double epsilon;
+  bool allparams = false;
+  bool alltimesteps = false;
+  bool percentage = false;
+  bool debug = false;
+  double epsilon = 0;
 
-  Options()
-      : inputfile1(),
-        inputfile2(),
-        parameters(),
-        allparams(false),
-        alltimesteps(false),
-        percentage(false),
-        debug(false),
-        epsilon(0)
-  {
-  }
+  Options() {}
 };
 
 // ----------------------------------------------------------------------
@@ -86,6 +76,8 @@ struct Options
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 Options options;
 
 // ----------------------------------------------------------------------
@@ -183,6 +175,7 @@ bool parse_command_line(int argc, const char* argv[])
 
   return true;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -253,6 +246,8 @@ namespace
   }
 }
 
+namespace
+{
 std::pair<double, std::size_t>
 analyze_all_parameters(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
 try
@@ -731,7 +726,7 @@ int domain(int argc, const char* argv[])
     }
   }
 
-  if (options.debug && param_diffs.size() > 0)
+  if (options.debug && !param_diffs.empty())
   {
     cout << "Max differences per parameter:" << endl;
     for (const auto& [paramName, diff] : param_diffs)
@@ -742,6 +737,7 @@ int domain(int argc, const char* argv[])
 
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -757,7 +753,7 @@ int main(int argc, const char* argv[])
   }
   catch (const Fmi::Exception& e)
   {
-    if (options.debug && param_diffs.size() > 0)
+    if (options.debug && !param_diffs.empty())
     {
       cout << "Max differences per parameter:" << endl;
       for (const auto& [paramName, diff] : param_diffs)

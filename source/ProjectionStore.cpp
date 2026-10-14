@@ -27,7 +27,7 @@ using NamedProjections = std::map<std::string, Projection>;
 //! Implementation hiding pimple for class ProjectionStore
 struct ProjectionStorePimple
 {
-  ProjectionStorePimple() : itsStore() {}
+  ProjectionStorePimple() {}
   NamedProjections itsStore;
 };
 

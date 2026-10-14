@@ -1,16 +1,17 @@
 #pragma once
 
-#include <gdal.h>
 #include <macgyver/Exception.h>
+#include <cstring>
 #include <filesystem>
+#include <gdal.h>
 #include <map>
+#include <cmath>
 #include <optional>
 #include <set>
 #include <sstream>
 #include <string>
 #include <type_traits>
 #include <vector>
-#include <cstring>
 
 // Forward declaration - full definition in gdal_priv.h (included in Hdf5File.cpp)
 class GDALDataset;
@@ -121,8 +122,8 @@ public:
             return true;
         else
         {
-            double dummy;
-            return try_parse_double(it->second, dummy);
+          double dummy = NAN;
+          return try_parse_double(it->second, dummy);
         }
     }
 

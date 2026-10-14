@@ -26,17 +26,23 @@
 #include <sys/ioctl.h>
 #endif
 
+namespace
+{
 // This is global so that we can not just parse but also print errors quickly
 NFmiEnumConverter converter;
+}  // namespace
 
 const int column_width = 12;
 
 const std::set<std::string> ignored_params{"WindVectorMS"};
 
+namespace
+{
 bool ignore_param(const std::string& p)
 {
   return (ignored_params.find(p) != ignored_params.end());
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -65,6 +71,8 @@ struct Options
   std::set<float> these_levels;
 };
 
+namespace
+{
 Options options;
 
 // ----------------------------------------------------------------------
@@ -269,6 +277,7 @@ bool parse_options(int argc, char* argv[])
 
   return true;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -288,13 +297,14 @@ class Stats
   const char* desc(double value) const;
 
  private:
-  FmiParameterName itsParam;                      // parameter name
-  FmiInterpolationMethod itsInterpolationMethod;  // interpolation method (NearestPoint/other)
-  std::size_t itsCount;                           // total count
-  std::size_t itsValidCount;                      // finite and not kFloatMissing
-  std::size_t itsMissingCount;                    // kFloatMissing
-  std::size_t itsInfCount;                        // -Inf or +Inf
-  std::size_t itsNaNCount;                        // NaN
+  FmiParameterName itsParam = kFmiBadParameter;  // parameter name
+  FmiInterpolationMethod itsInterpolationMethod =
+      kNearestPoint;                // interpolation method (NearestPoint/other)
+  std::size_t itsCount = 0;         // total count
+  std::size_t itsValidCount = 0;    // finite and not kFloatMissing
+  std::size_t itsMissingCount = 0;  // kFloatMissing
+  std::size_t itsInfCount = 0;      // -Inf or +Inf
+  std::size_t itsNaNCount = 0;      // NaN
   double itsSum;
   double itsMin;
   double itsMax;
@@ -302,14 +312,7 @@ class Stats
 };
 
 Stats::Stats()
-    : itsParam(kFmiBadParameter),
-      itsInterpolationMethod(kNearestPoint),
-      itsCount(0),
-      itsValidCount(0),
-      itsMissingCount(0),
-      itsInfCount(0),
-      itsNaNCount(0),
-      itsSum(std::numeric_limits<double>::quiet_NaN()),
+    : itsSum(std::numeric_limits<double>::quiet_NaN()),
       itsMin(std::numeric_limits<double>::quiet_NaN()),
       itsMax(std::numeric_limits<double>::quiet_NaN())
 {
@@ -915,6 +918,8 @@ const char* Stats::desc(double value) const
 
 // Select nice step size for binning
 
+namespace
+{
 void autotick(double theRange, std::size_t maxbins, double& tick, int& precision)
 {
   if (theRange == 0)
@@ -998,6 +1003,7 @@ int estimate_precision(const std::map<double, std::size_t>& theCounts)
 
   return precision;
 }
+}  // namespace
 
 std::string Stats::report() const
 {
@@ -1108,8 +1114,8 @@ std::string Stats::report() const
     }
     else
     {
-      double binmin, binmax, tick;
-      int precision;
+      double binmin = NAN, binmax = NAN, tick = NAN;
+      int precision = 0;
       autoscale(itsMin, itsMax, options.bins, binmin, binmax, tick, precision);
 
       for (std::size_t i = 0;; i++)
@@ -1154,6 +1160,8 @@ std::string Stats::report() const
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 std::string station_header(NFmiFastQueryInfo& qi)
 {
   const NFmiLocation* loc = qi.Location();
@@ -1511,6 +1519,7 @@ int run(int argc, char* argv[])
 
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

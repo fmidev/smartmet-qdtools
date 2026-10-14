@@ -39,8 +39,10 @@ class ExceptionSynopEndIgnoreMessage
 {
 };
 
+namespace
+{
 template <typename T>
-static T GetValue(const std::string &theValueStr,
+T GetValue(const std::string &theValueStr,
                   string::size_type startPos,
                   string::size_type endPos,
                   const std::string &theSynopStr)
@@ -101,7 +103,7 @@ static T GetValue(const std::string &theValueStr,
     return static_cast<T>(kFloatMissing);
 }
 
-static float SynopVisCode2Metres(float theVisibility)
+float SynopVisCode2Metres(float theVisibility)
 {
   if (theVisibility == kFloatMissing)
     return kFloatMissing;
@@ -154,22 +156,15 @@ static float SynopVisCode2Metres(float theVisibility)
     }
   }
 }
+}  // namespace
 
 class NFmiSynopCode
 {
  public:
-  NFmiSynopCode()
-      : itsCodeStr(), itsTime(), itsStation(), itsKnownStations(nullptr), fVerbose(false)
-  {
-    Clear();
-  }
+  NFmiSynopCode() : itsKnownStations(nullptr), fVerbose(false) { Clear(); }
 
-  NFmiSynopCode(NFmiAviationStationInfoSystem *theKnownStations, bool verbose)
-      : itsCodeStr(),
-        itsTime(),
-        itsStation(),
-        itsKnownStations(theKnownStations),
-        itsDriftingStationLocation(),
+  NFmiSynopCode(NFmiAviationStationInfoSystem* theKnownStations, bool verbose)
+      : itsKnownStations(theKnownStations),
         fVerbose(verbose)
   {
     Clear();
@@ -217,7 +212,7 @@ class NFmiSynopCode
                      const string &theSynopStr,
                      bool fMustBeFound)
   {
-    if (in.good() == false)
+    if (!in.good())
     {
       if (fMustBeFound)
         throw runtime_error(string("Error in NFmiSynopCode::ReadNextField with string: ") +
@@ -610,7 +605,7 @@ class NFmiSynopCode
           throw std::invalid_argument("Expecting section 0 string of form 'IIiii', got " +
                                       IIiii_Str + " instead");
 
-        if (::isdigit(static_cast<unsigned char>(IIiii_Str[0])) == false)
+        if (!static_cast<bool>(::isdigit(static_cast<unsigned char>(IIiii_Str[0]))))
           //			throw runtime_error(string("Ignoring this synop, starts with non
           // digit
           // value, might be header part: \n") + theSynopStr);
@@ -946,9 +941,11 @@ class NFmiSynopCode
                                    // korjauksen koodi esim. RRP
 };
 
-static void Usage();
+namespace
+{
+void Usage();
 
-static std::string GetMaxNCharsFromStart(const std::string &theStr, size_t kMaxCharsCount)
+std::string GetMaxNCharsFromStart(const std::string &theStr, size_t kMaxCharsCount)
 {
   return std::string(
       theStr.begin(),
@@ -986,6 +983,7 @@ void Usage()
        << "    /usr/share/smartmet/stations.csv" << endl
        << endl;
 }
+}  // namespace
 
 struct PointerDestroyer
 {
@@ -996,7 +994,9 @@ struct PointerDestroyer
   }
 };
 
-static NFmiTimeList MakeTimeList(const std::set<NFmiMetTime>& theTimes)
+namespace
+{
+NFmiTimeList MakeTimeList(const std::set<NFmiMetTime>& theTimes)
 {
   NFmiTimeList times;
   auto it = theTimes.begin();
@@ -1004,6 +1004,7 @@ static NFmiTimeList MakeTimeList(const std::set<NFmiMetTime>& theTimes)
     times.Add(new NFmiMetTime(*it));
   return times;
 }
+}  // namespace
 
 struct TimeCollector
 {
@@ -1021,7 +1022,9 @@ struct LocationCollector
   std::set<NFmiStation> itsLocations;
 };
 
-static NFmiTimeList MakeTimeListForSynop(const std::vector<NFmiSynopCode> &theSynops)
+namespace
+{
+NFmiTimeList MakeTimeListForSynop(const std::vector<NFmiSynopCode> &theSynops)
 {
   TimeCollector collector;
   collector = std::for_each(theSynops.begin(), theSynops.end(), TimeCollector());
@@ -1029,7 +1032,7 @@ static NFmiTimeList MakeTimeListForSynop(const std::vector<NFmiSynopCode> &theSy
   return MakeTimeList(collector.itsTimes);
 }
 
-static NFmiLocationBag MakeLocationBag(const std::set<NFmiStation>& theStations,
+NFmiLocationBag MakeLocationBag(const std::set<NFmiStation>& theStations,
                                        bool fDoShipMessages)
 {
   unsigned long shipMessageStationId =
@@ -1066,7 +1069,7 @@ static NFmiLocationBag MakeLocationBag(const std::set<NFmiStation>& theStations,
   return locations;
 }
 
-static NFmiLocationBag MakeLocationBagForSynop(const std::vector<NFmiSynopCode> &theSynops,
+NFmiLocationBag MakeLocationBagForSynop(const std::vector<NFmiSynopCode> &theSynops,
                                                bool fDoShipMessages)
 {
   LocationCollector collector;
@@ -1075,7 +1078,7 @@ static NFmiLocationBag MakeLocationBagForSynop(const std::vector<NFmiSynopCode> 
   return MakeLocationBag(collector.itsLocations, fDoShipMessages);
 }
 
-static NFmiParamBag MakeSynopParamBag(const NFmiProducer &theWantedProducer,
+NFmiParamBag MakeSynopParamBag(const NFmiProducer &theWantedProducer,
                                       bool fDoShipMessages,
                                       bool fDoBuoyMessages)
 {
@@ -1090,7 +1093,7 @@ static NFmiParamBag MakeSynopParamBag(const NFmiProducer &theWantedProducer,
   params.Add(*newDataIdent);
   params.Add(NFmiDataIdent(NFmiParam(kFmiPressureTendency, "a"), theWantedProducer));
   params.Add(NFmiDataIdent(NFmiParam(kFmiPressureChange, "ppp"), theWantedProducer));
-  if (fDoBuoyMessages == false)
+  if (!fDoBuoyMessages)
   {
     params.Add(NFmiDataIdent(NFmiParam(kFmiVisibility, "VV"), theWantedProducer));
     params.Add(NFmiDataIdent(NFmiParam(kFmiCloudHeight, "h"), theWantedProducer));
@@ -1116,13 +1119,13 @@ static NFmiParamBag MakeSynopParamBag(const NFmiProducer &theWantedProducer,
   return params;
 }
 
-static NFmiQueryInfo *MakeNewInnerInfoForSYNOP(const std::vector<NFmiSynopCode> &theSynops,
+NFmiQueryInfo *MakeNewInnerInfoForSYNOP(const std::vector<NFmiSynopCode> &theSynops,
                                                const NFmiProducer &theWantedProducer,
                                                bool fDoShipMessages,
                                                bool fDoBuoyMessages)
 {
   NFmiQueryInfo* info = nullptr;
-  if (theSynops.size() > 0)
+  if (!theSynops.empty())
   {
     NFmiTimeList times(MakeTimeListForSynop(theSynops));
     NFmiMetTime origTime;
@@ -1141,7 +1144,7 @@ static NFmiQueryInfo *MakeNewInnerInfoForSYNOP(const std::vector<NFmiSynopCode> 
   return info;
 }
 
-static void CheckTimeValue(short timeValue,
+void CheckTimeValue(short timeValue,
                            short minValue,
                            short maxValue,
                            const std::string &timeValueName,
@@ -1154,31 +1157,34 @@ static void CheckTimeValue(short timeValue,
                              NFmiStringTools::Convert(timeValue) + "' in time-string \"" +
                              origTimeStr + "\"");
 }
+}  // namespace
 
 static const std::string g_dayNameStr = "day";
 static const std::string g_hourNameStr = "hour";
 
-static void CheckDayValue(short dayValue,
+namespace
+{
+void CheckDayValue(short dayValue,
                           const std::string &origTimeStr,
                           const std::string &functionName)
 {
   ::CheckTimeValue(dayValue, 1, 31, g_dayNameStr, origTimeStr, functionName);
 }
 
-static void CheckHourValue(short hourValue,
+void CheckHourValue(short hourValue,
                            const std::string &origTimeStr,
                            const std::string &functionName)
 {
   ::CheckTimeValue(hourValue, 0, 23, g_hourNameStr, origTimeStr, functionName);
 }
 
-static NFmiMetTime GetTimeFromSynopHeader(const string &theTimeStr,
+NFmiMetTime GetTimeFromSynopHeader(const string &theTimeStr,
                                           const NFmiMetTime &referenceTime)
 {
   if (theTimeStr.size() != 5)
   {
-    if (!(theTimeStr.size() == 6 && ::isdigit(static_cast<unsigned char>(theTimeStr[4])) &&
-          ::isdigit(static_cast<unsigned char>(theTimeStr[5]))))  // antaa tietyissä tapauksissa
+    if (theTimeStr.size() != 6 || !::isdigit(static_cast<unsigned char>(theTimeStr[4])) ||
+        !::isdigit(static_cast<unsigned char>(theTimeStr[5])))  // antaa tietyissä tapauksissa
       // mennä vähän virheellinen aika
       // ruhmä läpi, eli jos on 5 merkin
       // sijasta 6, mutta lopun jutut on
@@ -1205,7 +1211,7 @@ static NFmiMetTime GetTimeFromSynopHeader(const string &theTimeStr,
   return aTime;
 }
 //                                                     HHmmw                       DDMMY
-static NFmiMetTime GetTimeFromBuoyHeader(const string &theTimeStr, const string &theDateStr)
+NFmiMetTime GetTimeFromBuoyHeader(const string &theTimeStr, const string &theDateStr)
 {
   if (theTimeStr.size() != 5)
     throw runtime_error(
@@ -1236,15 +1242,15 @@ static NFmiMetTime GetTimeFromBuoyHeader(const string &theTimeStr, const string 
   return aTime2;
 }
 
-static void FillMissingHumidityValues(NFmiFastQueryInfo &theInfo)
+void FillMissingHumidityValues(NFmiFastQueryInfo &theInfo)
 {
-  if (theInfo.Param(kFmiTemperature) == false)
+  if (!theInfo.Param(kFmiTemperature))
     return;
   unsigned long T_ind = theInfo.ParamIndex();
-  if (theInfo.Param(kFmiDewPoint) == false)
+  if (!theInfo.Param(kFmiDewPoint))
     return;
   unsigned long Td_ind = theInfo.ParamIndex();
-  if (theInfo.Param(kFmiHumidity) == false)
+  if (!theInfo.Param(kFmiHumidity))
     return;
   unsigned long RH_ind = theInfo.ParamIndex();
   float T = kFloatMissing;
@@ -1276,7 +1282,7 @@ static void FillMissingHumidityValues(NFmiFastQueryInfo &theInfo)
 }
 
 // poistaa alusta ja lopusta spacet, rivinvaihdot ja tabulaattorit
-static std::string TrimFromExtraSpaces(const std::string &theStr)
+std::string TrimFromExtraSpaces(const std::string &theStr)
 {
   std::string tmp(theStr);
 
@@ -1288,7 +1294,7 @@ static std::string TrimFromExtraSpaces(const std::string &theStr)
   return tmp;
 }
 
-static std::string TakeAwayKnownErrorWordFromStart(const std::string &theStr)
+std::string TakeAwayKnownErrorWordFromStart(const std::string &theStr)
 {
   // tiedetään että sanomiin voi päästä mm. 3D sana alkuun, joka pitää vain ottaa pois synop
   // sanomasta
@@ -1300,7 +1306,7 @@ static std::string TakeAwayKnownErrorWordFromStart(const std::string &theStr)
     return theStr;
 }
 
-static void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
+void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
                                           const string &theUsedSynopBlock,
                                           NFmiAviationStationInfoSystem &theAviStations,
                                           bool fRoundTimesToNearestSynopticTimes,
@@ -1494,7 +1500,7 @@ static void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
   }
 }
 
-static bool StringContainsOnlyDigits(const std::string &str)
+bool StringContainsOnlyDigits(const std::string &str)
 {
   for (char i : str)
   {
@@ -1508,7 +1514,7 @@ static bool StringContainsOnlyDigits(const std::string &str)
 // välillä on aina vain yksi space.
 // pair:in first:issa on toiseksi viimeinen sana ja second:issa on viimeinen sana (myös
 // mahdollisesti ainoa sana)
-static std::pair<std::string, std::string> GetLastTwoWords(const std::string &str)
+std::pair<std::string, std::string> GetLastTwoWords(const std::string &str)
 {
   if (!str.empty())
   {
@@ -1535,7 +1541,7 @@ static std::pair<std::string, std::string> GetLastTwoWords(const std::string &st
   return {};
 }
 
-static bool GetPossibleSynopTime(const std::string &timeStr, NFmiMetTime &theSynopTime)
+bool GetPossibleSynopTime(const std::string &timeStr, NFmiMetTime &theSynopTime)
 {
   if (timeStr.size() == 6)
   {
@@ -1568,7 +1574,7 @@ static bool GetPossibleSynopTime(const std::string &timeStr, NFmiMetTime &theSyn
   return false;
 }
 
-static bool GetPossibleSynopCorrectionField(const std::string &str, std::string &theCorrectionField)
+bool GetPossibleSynopCorrectionField(const std::string &str, std::string &theCorrectionField)
 {
   if (str.size() == 3)
   {
@@ -1592,7 +1598,7 @@ static bool GetPossibleSynopCorrectionField(const std::string &str, std::string 
 // Edellisen lohkon lopussa voi olla tietoa seuraavalle lohkolle. Kaksi viimeistä sanaa voi olla
 // seuraavan lohkon aika ja mahdollinen RRA (tai muu vastaava?) tieto.
 // Siksi kun yksi lohko on käyty läpi, pitää lopusta ottaa tiedot talteen seuraavalle lohkolle.
-static bool GetPossibleNextSynopBlockInfo(const std::string &synopFileBlockStr,
+bool GetPossibleNextSynopBlockInfo(const std::string &synopFileBlockStr,
                                           NFmiMetTime &theSynopTime,
                                           std::string &theCorrectionField)
 {
@@ -1703,7 +1709,7 @@ void FillSynopCodeDataVectorFromSYNOPStr(const NFmiMetTime &referenceTime,
   }
 }
 
-static void FillParamValues(NFmiFastQueryInfo &theInfo, FmiParameterName parId, float value)
+void FillParamValues(NFmiFastQueryInfo &theInfo, FmiParameterName parId, float value)
 {
   if (value != kFloatMissing)
   {
@@ -1712,7 +1718,7 @@ static void FillParamValues(NFmiFastQueryInfo &theInfo, FmiParameterName parId, 
   }
 }
 
-static void FillParamValues(NFmiFastQueryInfo &theInfo,
+void FillParamValues(NFmiFastQueryInfo &theInfo,
                             const NFmiSynopCode &theSynopCode,
                             bool fillSeaParams)
 {
@@ -1748,7 +1754,7 @@ static void FillParamValues(NFmiFastQueryInfo &theInfo,
   }
 }
 
-static std::map<std::string, unsigned long> MakeShipNameLocationCache(NFmiFastQueryInfo &info)
+std::map<std::string, unsigned long> MakeShipNameLocationCache(NFmiFastQueryInfo &info)
 {
   std::map<std::string, unsigned long> locationCache;
   for (info.ResetLocation(); info.NextLocation();)
@@ -1759,7 +1765,7 @@ static std::map<std::string, unsigned long> MakeShipNameLocationCache(NFmiFastQu
   return locationCache;
 }
 
-static std::map<unsigned long, unsigned long> MakeSynopStationIdLocationCache(
+std::map<unsigned long, unsigned long> MakeSynopStationIdLocationCache(
     NFmiFastQueryInfo &info)
 {
   std::map<unsigned long, unsigned long> locationCache;
@@ -1770,7 +1776,7 @@ static std::map<unsigned long, unsigned long> MakeSynopStationIdLocationCache(
   return locationCache;
 }
 
-static bool SetLocationWithCache(
+bool SetLocationWithCache(
     NFmiFastQueryInfo &info,
     const NFmiSynopCode &theSynopCode,
     bool fDoShipMessages,
@@ -1786,7 +1792,7 @@ static bool SetLocationWithCache(
   return info.LocationIndex(usedLocationIndex);
 }
 
-static void FillData(const std::vector<NFmiSynopCode> &theSynopCodeVector,
+void FillData(const std::vector<NFmiSynopCode> &theSynopCodeVector,
                      bool fDoShipMessages,
                      bool fDoBuoyMessages,
                      NFmiQueryData *theData)
@@ -1969,11 +1975,11 @@ void Domain(int argc, const char *argv[])
              << "', continuing to next file..." << endl;
     }
   }
-  if (foundAnyFiles == false)
+  if (!foundAnyFiles)
     throw runtime_error("Error: Didn't find any files to read.");
   if (synopCodeVector.empty())
     throw runtime_error("Error: Couldn't decode any synops from any files.");
-  if (verbose && unknownWmoIdsInOut.size() > 0)
+  if (verbose && !unknownWmoIdsInOut.empty())
   {
     cerr << "Warning, there were messages from unknown stations (" << unknownWmoIdsInOut.size()
          << ") that were ignored." << endl;
@@ -2000,6 +2006,7 @@ void Domain(int argc, const char *argv[])
   timer.StopTimer();
   std::cerr << "Elapsed time " << timer.EasyTimeDiffStr() << std::endl;
 }
+}  // namespace
 
 int main(int argc, const char *argv[])
 {

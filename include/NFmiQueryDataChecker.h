@@ -101,31 +101,31 @@ class NFmiQueryDataChecker
   // Tarkastettavat parametrit pit‰‰ olla aktiivisia.
   NFmiParamBag itsParamBag;
   // Jos true, tarkastetaan parambagin parametrit.
-  bool fCheckOnlyWantedParams;
+  bool fCheckOnlyWantedParams = false;
   // Sis‰lt‰‰ testattavan timebagin tai timelistan.
   NFmiTimeDescriptor itsCheckedTimeDescriptor;
   // Jos t‰m‰ on true tarkista vain halutu ajat, muuten kaikki ajat.
-  bool fCheckOnlyWantedTimes;
+  bool fCheckOnlyWantedTimes = false;
   // Haluttaessa voidaan testi rajata n‰ihin paikkoihin.
   NFmiLocationBag itsCheckedLocations;
   // Jos halutaan testata n kpl satunnaisia pisteit‰, annetaan t‰lle arvo.
-  int itsRandomlyCheckedLocationCount;
+  int itsRandomlyCheckedLocationCount = 0;
   // Miten tutkitaan paikkoja: 0=kaikki, 1=halutut locationit, 2=n kpl satunnaisia paikkoja
-  int itsLocationCheckType;
+  int itsLocationCheckType = 0;
   // Mit‰ juttuja tarkistetaan (bitti on/off):
   // 1=puuttuvaa dataa
   // 2=onko suoraa viivaa
   // 4=onko luvut j‰rkevi‰
   // eli esim. 7= tarkista kaikki
-  int itsCheckList;
+  int itsCheckList = 0;
   // Tarkistettava data (data omistetaan, tuhotaan).
-  NFmiQueryData* itsData;
+  NFmiQueryData* itsData = nullptr;
   // Datan info.
-  NFmiFastQueryInfo* itsInfo;
+  NFmiFastQueryInfo* itsInfo = nullptr;
   // Tarvittaessa t‰h‰n laitetaan sattumanvaraiset tarkistettavat paikkaindeksit.
   std::vector<int> itsRandomLocationIndexies;
-  bool fDoIndexRandomizing;  // jos false ja jos on jo olemassa indeksit, pid‰ ne kun tehd‰‰n
-                             // tarkistus ilman ett‰ arvotaan uudet indeksit
+  bool fDoIndexRandomizing = true;  // jos false ja jos on jo olemassa indeksit, pid‰ ne kun tehd‰‰n
+                                    // tarkistus ilman ett‰ arvotaan uudet indeksit
 
   NFmiOhjausData*
       itsOhjausData;  // (ei omista) t‰nne talletetaan parametrikohtaiset tiedost tarkastelusta

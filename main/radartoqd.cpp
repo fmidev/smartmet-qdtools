@@ -55,7 +55,10 @@ extern "C"
 // Default location of libbufr tables
 
 #ifdef UNIX
+namespace
+{
 std::string default_tabdir = "/usr/share/bufr";  // libbufr 3.2 default directory
+}  // namespace
 #else
 std::string default_tabdir = "C:/bufr";  // random guess until someone wants a fixed location
 #endif
@@ -66,7 +69,10 @@ std::string default_tabdir = "C:/bufr";  // random guess until someone wants a f
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 NFmiEnumConverter converter;
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -79,22 +85,22 @@ NFmiEnumConverter converter;
 
 struct point_t
 {
-  std::optional<varfl> lat{}; /* latitude */
-  std::optional<varfl> lon{}; /* longitude */
+  std::optional<varfl> lat; /* latitude */
+  std::optional<varfl> lon; /* longitude */
 };
 
 /* Meta information about image */
 
 struct meta_t
 {
-  std::optional<int> year{};
-  std::optional<int> month{};
-  std::optional<int> day{};
-  std::optional<int> hour{};
-  std::optional<int> min{};
+  std::optional<int> year;
+  std::optional<int> month;
+  std::optional<int> day;
+  std::optional<int> hour;
+  std::optional<int> min;
   point_t radar{};  // Radar position
-  std::optional<varfl> radar_height{};
-  std::optional<varfl> height_above_station{};
+  std::optional<varfl> radar_height;
+  std::optional<varfl> height_above_station;
 };
 
 /* Level slicing table */
@@ -102,53 +108,53 @@ struct meta_t
 struct scale_t
 {
   // dBZ quantization limits
-  std::vector<varfl> dbz_values{};
+  std::vector<varfl> dbz_values;
 
   // rainfall intensities
-  std::vector<varfl> intensity_values{};
-  std::optional<varfl> z_to_r_conversion{};
-  std::optional<varfl> z_to_r_conversion_factor{};
-  std::optional<varfl> z_to_r_conversion_exponent{};
+  std::vector<varfl> intensity_values;
+  std::optional<varfl> z_to_r_conversion;
+  std::optional<varfl> z_to_r_conversion_factor;
+  std::optional<varfl> z_to_r_conversion_exponent;
 
   /* another method: */
-  std::optional<varfl> offset{};    /* offset */
-  std::optional<varfl> increment{}; /* increment */
+  std::optional<varfl> offset;    /* offset */
+  std::optional<varfl> increment; /* increment */
 };
 
 /* Radar image */
 
 struct img_t
 {
-  std::optional<int> type{};            /* Image type */
-  std::optional<varfl> qual{};          /* quality indicator */
-  std::optional<int> grid{};            /* Co-ordinate grid type */
+  std::optional<int> type;              /* Image type */
+  std::optional<varfl> qual;            /* quality indicator */
+  std::optional<int> grid;              /* Co-ordinate grid type */
   point_t nw{};                         /* Northwest corner of the image */
   point_t ne{};                         /* NE corner */
   point_t se{};                         /* SE corner */
   point_t sw{};                         /* SW corner */
-  std::optional<int> nrows{};           /* Number of pixels per row */
-  std::optional<int> ncols{};           /* Number of pixels per column */
-  std::optional<varfl> psizex{};        /* Pixel size along x coordinate */
-  std::optional<varfl> psizey{};        /* Pixel size along y coordinate */
+  std::optional<int> nrows;             /* Number of pixels per row */
+  std::optional<int> ncols;             /* Number of pixels per column */
+  std::optional<varfl> psizex;          /* Pixel size along x coordinate */
+  std::optional<varfl> psizey;          /* Pixel size along y coordinate */
   scale_t scale{};                      /* Level slicing table */
-  std::optional<varfl> elevation{};     /* Antenna elevation angle */
-  std::optional<int> ns_organisation{}; /* North south view organisation */
-  std::optional<int> ew_organisation{}; /* East west view organisation */
-  std::vector<varfl> heights{};         /* Heights */
-  std::vector<varfl> cappi_heights{};   /* CAPPI heights */
+  std::optional<varfl> elevation;       /* Antenna elevation angle */
+  std::optional<int> ns_organisation;   /* North south view organisation */
+  std::optional<int> ew_organisation;   /* East west view organisation */
+  std::vector<varfl> heights;           /* Heights */
+  std::vector<varfl> cappi_heights;     /* CAPPI heights */
 
   // These are present in some input BUFRs. These serve no useful purpose,
   // but we parse the respective messages in order to prevent warnings
   // and in order to provide useful debugging output.
 
-  std::optional<int> calibration_method{};
-  std::optional<int> clutter_treatment{};
-  std::optional<varfl> ground_occultation_correction{};
-  std::optional<varfl> range_attenuation_correction{};
-  std::optional<varfl> bright_band_correction{};
-  std::optional<varfl> radome_attenuation_correction{};
-  std::optional<varfl> clear_air_attenuation_correction{};
-  std::optional<varfl> precipitation_attenuation_correction{};
+  std::optional<int> calibration_method;
+  std::optional<int> clutter_treatment;
+  std::optional<varfl> ground_occultation_correction;
+  std::optional<varfl> range_attenuation_correction;
+  std::optional<varfl> bright_band_correction;
+  std::optional<varfl> radome_attenuation_correction;
+  std::optional<varfl> clear_air_attenuation_correction;
+  std::optional<varfl> precipitation_attenuation_correction;
 
   // Parsed image data
   unsigned short *data{nullptr};
@@ -158,22 +164,22 @@ struct img_t
 
 struct proj_t
 {
-  std::optional<int> type{};      /* Projection type */
-  std::optional<varfl> majax{};   /* Semi-major axis or rotation ellipsoid */
-  std::optional<varfl> minax{};   /* Semi-minor axis or rotation ellipsoid */
+  std::optional<int> type;        /* Projection type */
+  std::optional<varfl> majax;     /* Semi-major axis or rotation ellipsoid */
+  std::optional<varfl> minax;     /* Semi-minor axis or rotation ellipsoid */
   point_t origin{};               /* Projection origin */
-  std::optional<int> xoff{};      /* False easting */
-  std::optional<int> yoff{};      /* False northing */
-  std::optional<varfl> stdpar1{}; /* 1st standard parallel */
-  std::optional<varfl> stdpar2{}; /* 2nd standard parallel */
+  std::optional<int> xoff;        /* False easting */
+  std::optional<int> yoff;        /* False northing */
+  std::optional<varfl> stdpar1;   /* 1st standard parallel */
+  std::optional<varfl> stdpar2;   /* 2nd standard parallel */
 };
 
 /* This is our internal data structure */
 
 struct radar_data_t
 {
-  std::optional<int> wmoblock{}; /* WMO block number */
-  std::optional<int> wmostat{};  /* WMO station number */
+  std::optional<int> wmoblock;   /* WMO block number */
+  std::optional<int> wmostat;    /* WMO station number */
   meta_t meta{};                 /* Meta information about the product */
   img_t img{};                   /* Radar reflectivity image */
   proj_t proj{};                 /* Projection information */
@@ -188,7 +194,10 @@ struct radar_data_t
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 radar_data_t radar_data;
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -244,6 +253,8 @@ std::ostream &operator<<(std::ostream &out, const point_t &pt)
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 std::string projection_type(int type)
 {
   switch (type)
@@ -358,6 +369,7 @@ void print_metadata()
             << "dbZ increment (beta)                  = " << i.scale.increment << std::endl
             << std::endl;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -369,20 +381,23 @@ struct Options
 {
   Options();
 
-  bool verbose;              // -v --verbose
-  bool quiet;                // -q --quiet
-  bool debug;                //    --debug
-  bool allow_overflow;       // --allow-overflow
+  bool verbose = false;         // -v --verbose
+  bool quiet = false;           // -q --quiet
+  bool debug = false;           //    --debug
+  bool allow_overflow = false;  // --allow-overflow
   std::string tabdir;        // -t --tables
   std::string infile;        // -i --infile
   std::string outfile;       // -o --outfile
   std::string parameter;     // -p --param
   std::string projection;    // -P --projection
   std::string producername;  //    --producername
-  long producernumber;       //    --producernumber
+  long producernumber = 1014;  //    --producernumber
 };
 
+namespace
+{
 Options options;
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -391,17 +406,10 @@ Options options;
 // ----------------------------------------------------------------------
 
 Options::Options()
-    : verbose(false),
-      quiet(false),
-      debug(false),
-      allow_overflow(false),
-      tabdir(default_tabdir),
+    : tabdir(default_tabdir),
       infile("-"),
       outfile("-"),
-      parameter(),
-      projection(),
-      producername("RADAR"),
-      producernumber(1014)
+      producername("RADAR")
 {
 }
 // ----------------------------------------------------------------------
@@ -412,6 +420,8 @@ Options::Options()
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 bool parse_options(int argc, char *argv[], Options &options)
 {
   namespace po = boost::program_options;
@@ -507,8 +517,8 @@ bool parse_options(int argc, char *argv[], Options &options)
 
 void byteswap64(unsigned char *buf, int n)
 {
-  int i;
-  unsigned char c;
+  int i = 0;
+  unsigned char c = 0;
 
   unsigned one = 1;
   auto* test = (unsigned char*)&one;
@@ -542,7 +552,7 @@ void byteswap64(unsigned char *buf, int n)
  */
 // ----------------------------------------------------------------------
 
-static int bufr_callback(varfl val, int ind)
+int bufr_callback(varfl val, int ind)
 {
   static int in_seq = 0;   /* flag to indicate sequences */
   static int first_in_seq; /* flag to indicate first element in sequence */
@@ -791,7 +801,7 @@ static int bufr_callback(varfl val, int ind)
       }
 
       // Decode vals to our output array
-      int nvals, nrows, ncols;
+      int nvals = 0, nrows = 0, ncols = 0;
 
       if (!rldec_to_mem(vals->vals, &(radar_data.img.data), &nvals, &nrows, &ncols))
       {
@@ -1337,6 +1347,7 @@ int run(int argc, char *argv[])
 
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

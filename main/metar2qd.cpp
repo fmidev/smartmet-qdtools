@@ -52,10 +52,12 @@ extern "C"
 
 using namespace std;
 
-static void run(int argc, const char *argv[]);
+namespace
+{
+void run(int argc, const char *argv[]);
 
-static bool fVerboseMode = false;
-static bool fIgnoreBadStations = false;
+bool fVerboseMode = false;
+bool fIgnoreBadStations = false;
 
 // ----------------------------------------------------------------------
 /*!
@@ -63,7 +65,7 @@ static bool fIgnoreBadStations = false;
  */
 // ----------------------------------------------------------------------
 
-static void ThrowLatLonProblemException(const std::string &theFunctionNameStr,
+void ThrowLatLonProblemException(const std::string &theFunctionNameStr,
                                         const std::string &theProblemStr,
                                         const std::string &theLatLonStr,
                                         const std::string &theLineStr,
@@ -88,7 +90,7 @@ static void ThrowLatLonProblemException(const std::string &theFunctionNameStr,
  */
 // ----------------------------------------------------------------------
 
-static void MakeParamThings(unsigned long parId,
+void MakeParamThings(unsigned long parId,
                             const string &name,
                             const NFmiDataIdent& dataIdent,
                             NFmiParamBag &parBag)
@@ -107,7 +109,7 @@ static void MakeParamThings(unsigned long parId,
  */
 // ----------------------------------------------------------------------
 
-static void MakeDefaultParamDesc(NFmiParamDescriptor &params)
+void MakeDefaultParamDesc(NFmiParamDescriptor &params)
 {
   NFmiProducer prod(kFmiMETAR, "METAR");
   NFmiParamBag parBag;
@@ -147,6 +149,7 @@ static void MakeDefaultParamDesc(NFmiParamDescriptor &params)
 
   params = NFmiParamDescriptor(parBag);
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -182,13 +185,8 @@ struct MetarData
   static const size_t itsParamVectorSize = 23;
 
   MetarData()
-      : itsValues(),
-        itsParamIds(),
-        itsIcaoName("xxxx"),
-        itsTime(),
-        itsOriginalStr("xxxxxxx"),
-        itsStationId(99999999),
-        fIsCorrected(false)
+      : itsIcaoName("xxxx"),
+        itsOriginalStr("xxxxxxx")
   {
     itsValues.resize(itsParamVectorSize, kFloatMissing);
     itsParamIds.resize(itsParamVectorSize, kFmiBadParameter);
@@ -225,9 +223,9 @@ struct MetarData
   string itsIcaoName;
   NFmiMetTime itsTime;
   string itsOriginalStr;
-  unsigned long itsStationId;  // t‰h‰n talletetaan lˆydetyn aseman wmoid, jota k‰ytet‰‰n kun
-                               // querydataa t‰ytet‰‰n n‰ill‰ otuksilla
-  bool fIsCorrected;
+  unsigned long itsStationId = 99999999;  // t‰h‰n talletetaan lˆydetyn aseman wmoid, jota k‰ytet‰‰n
+                                          // kun querydataa t‰ytet‰‰n n‰ill‰ otuksilla
+  bool fIsCorrected = false;
 };
 
 // ----------------------------------------------------------------------
@@ -240,7 +238,9 @@ struct MetarData
  */
 // ----------------------------------------------------------------------
 
-static NFmiMetTime GetTime(const std::string &timeStr,
+namespace
+{
+NFmiMetTime GetTime(const std::string &timeStr,
                            const string &theMetarStr,
                            const string &theMetarFileName,
                            bool no_Z_ending,
@@ -288,7 +288,7 @@ static NFmiMetTime GetTime(const std::string &timeStr,
  */
 // ----------------------------------------------------------------------
 
-static bool ConvertTimeList2TimeBag(const NFmiTimeList& theTimeList, NFmiTimeBag& theTimeBag)
+bool ConvertTimeList2TimeBag(const NFmiTimeList& theTimeList, NFmiTimeBag& theTimeBag)
 {
   // tutkitaan onko mahdollista tehda listasta bagi
   // eli ajat ovat per‰kk‰isi‰ ja tasav‰lisi‰
@@ -330,7 +330,7 @@ static bool ConvertTimeList2TimeBag(const NFmiTimeList& theTimeList, NFmiTimeBag
  */
 // ----------------------------------------------------------------------
 
-static NFmiTimeDescriptor MakeTimeDesc(const vector<MetarData> &dataBlocks)
+NFmiTimeDescriptor MakeTimeDesc(const vector<MetarData> &dataBlocks)
 {
   set<NFmiMetTime> times;  // ker‰‰ eri ajat settiin ensin, sitten tee timelist jne.
   for (const auto& dataBlock : dataBlocks)
@@ -366,7 +366,7 @@ static NFmiTimeDescriptor MakeTimeDesc(const vector<MetarData> &dataBlocks)
  */
 // ----------------------------------------------------------------------
 
-static NFmiHPlaceDescriptor MakeHPlaceDesc(NFmiAviationStationInfoSystem &theStationInfoSystem,
+NFmiHPlaceDescriptor MakeHPlaceDesc(NFmiAviationStationInfoSystem &theStationInfoSystem,
                                            const vector<MetarData> &dataBlocks)
 {
   set<string> icaoStrSet;  // ker‰‰ eri icao tunnukset settiin ensin, sitten tee locationbag jne.
@@ -380,7 +380,7 @@ static NFmiHPlaceDescriptor MakeHPlaceDesc(NFmiAviationStationInfoSystem &theSta
     if (aviationStation)
     {
       NFmiStation station(*aviationStation);
-      if (theStationInfoSystem.WmoStationsWanted() == false)
+      if (!theStationInfoSystem.WmoStationsWanted())
       {
         // Tehd‰‰n lopullisesta asema nimesta ICAO-id + oikea nimi suluissa
         string usedStationName(it);
@@ -407,7 +407,7 @@ static NFmiHPlaceDescriptor MakeHPlaceDesc(NFmiAviationStationInfoSystem &theSta
  */
 // ----------------------------------------------------------------------
 
-static void FillInfoFromMetarData(NFmiFastQueryInfo &info, const vector<MetarData> &datas)
+void FillInfoFromMetarData(NFmiFastQueryInfo &info, const vector<MetarData> &datas)
 {
   int timeErrorCount = 0;
   int paramErrorCount = 0;
@@ -468,7 +468,7 @@ static void FillInfoFromMetarData(NFmiFastQueryInfo &info, const vector<MetarDat
  */
 // ----------------------------------------------------------------------
 
-static NFmiQueryInfo MakeQueryInfo(const NFmiParamDescriptor& params,
+NFmiQueryInfo MakeQueryInfo(const NFmiParamDescriptor& params,
                                    NFmiAviationStationInfoSystem &theStationInfoSystem,
                                    const vector<MetarData> &dataBlocks)
 {
@@ -484,7 +484,7 @@ static NFmiQueryInfo MakeQueryInfo(const NFmiParamDescriptor& params,
  */
 // ----------------------------------------------------------------------
 
-static NFmiQueryData* MakeQueryDataFromBlocks(const NFmiParamDescriptor& params,
+NFmiQueryData* MakeQueryDataFromBlocks(const NFmiParamDescriptor& params,
                                               NFmiAviationStationInfoSystem &theStationInfoSystem,
                                               const vector<MetarData> &dataBlocks)
 {
@@ -538,7 +538,7 @@ void Usage(const std::string &theExecutableName)
  */
 // ----------------------------------------------------------------------
 
-static std::string GetStringAndAdvance(boost::sregex_token_iterator &it, bool mustExist)
+std::string GetStringAndAdvance(boost::sregex_token_iterator &it, bool mustExist)
 {
   boost::sregex_token_iterator end;
   if (it != end)
@@ -557,6 +557,7 @@ static std::string GetStringAndAdvance(boost::sregex_token_iterator &it, bool mu
         "Error: The header-section was incomplete in input data, stopping program...");
   return {};  // muutoin palauta tyhj‰ stringi
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -595,7 +596,9 @@ static const NFmiMetTime missingTime(1900, 1, 1, 0);
  */
 // ----------------------------------------------------------------------
 
-static bool IsMetarNilOrEmptyReport(const string &str)
+namespace
+{
+bool IsMetarNilOrEmptyReport(const string &str)
 {
   boost::regex reg(
       "\\s+");  // splittaa yksitt‰iset sanat, oli niiss‰ yksi tai useampia spaceja v‰liss‰
@@ -613,11 +616,9 @@ static bool IsMetarNilOrEmptyReport(const string &str)
         return true;
     }
   }
-  if (it != end)
-    return false;
-  else
-    return true;
+  return it == end;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -634,7 +635,9 @@ static const float MDSP_missing_float = static_cast<float>(MAXINT);
  */
 // ----------------------------------------------------------------------
 
-static NFmiMetTime GetTime2(const Decoded_METAR &theMetarStruct,
+namespace
+{
+NFmiMetTime GetTime2(const Decoded_METAR &theMetarStruct,
                             const NFmiMetTime &theHeaderTime,
                             int theTimeRoundingResolution)
 {
@@ -678,7 +681,7 @@ static NFmiMetTime GetTime2(const Decoded_METAR &theMetarStruct,
  */
 // ----------------------------------------------------------------------
 
-static void InitWWSymbols(map<string, float> &ww_symbols)
+void InitWWSymbols(map<string, float> &ww_symbols)
 {
   ww_symbols.clear();
 
@@ -1029,7 +1032,7 @@ static void InitWWSymbols(map<string, float> &ww_symbols)
  */
 // ----------------------------------------------------------------------
 
-static bool FindWeatherValue(const string &theWord,
+bool FindWeatherValue(const string &theWord,
                              map<string, float> &ww_symbols,
                              float &value,
                              bool fDoLowerBoundSearch)
@@ -1083,7 +1086,7 @@ static bool FindWeatherValue(const string &theWord,
  */
 // ----------------------------------------------------------------------
 
-static void FillMetarDataWeatherSection2(MetarData &data,
+void FillMetarDataWeatherSection2(MetarData &data,
                                          map<string, float> &ww_symbols,
                                          const string &theWWStr,
                                          size_t theParamVectorIndex,
@@ -1091,7 +1094,7 @@ static void FillMetarDataWeatherSection2(MetarData &data,
                                          const string &theMetarFileName,
                                          const string &theFieldName)
 {
-  if (theWWStr.empty() == false)
+  if (!theWWStr.empty())
   {
     float value = kFloatMissing;
     if (::FindWeatherValue(theWWStr, ww_symbols, value, true))
@@ -1117,7 +1120,7 @@ static void FillMetarDataWeatherSection2(MetarData &data,
  */
 // ----------------------------------------------------------------------
 
-static void FillMetarDataWeatherSection(MetarData &data,
+void FillMetarDataWeatherSection(MetarData &data,
                                         const Decoded_METAR &metarStruct,
                                         const string &theMetarStr,
                                         const string &theMetarFileName)
@@ -1129,7 +1132,7 @@ static void FillMetarDataWeatherSection(MetarData &data,
 
   static map<string, float> ww_symbols;
   static bool ww_symbols_initialized = false;
-  if (ww_symbols_initialized == false)
+  if (!ww_symbols_initialized)
   {
     ww_symbols_initialized = true;
     ::InitWWSymbols(ww_symbols);
@@ -1164,7 +1167,7 @@ static void FillMetarDataWeatherSection(MetarData &data,
  */
 // ----------------------------------------------------------------------
 
-static void InitCloudSymbols(map<string, float> &cloudCover_symbols,
+void InitCloudSymbols(map<string, float> &cloudCover_symbols,
                              map<string, float> &cloudType_symbols)
 {
   cloudCover_symbols.clear();
@@ -1204,7 +1207,7 @@ static void InitCloudSymbols(map<string, float> &cloudCover_symbols,
  */
 // ----------------------------------------------------------------------
 
-static void FillMetarDataCloudSection2(MetarData &data,
+void FillMetarDataCloudSection2(MetarData &data,
                                        map<string, float> &cloudCover_symbols,
                                        map<string, float> &cloudType_symbols,
                                        const Cloud_Conditions &cloud_Conditions,
@@ -1218,7 +1221,7 @@ static void FillMetarDataCloudSection2(MetarData &data,
   string cloudCoverStr(cloud_Conditions.cloud_type);  // cloud_type on oikeasti cloud cover
   NFmiStringTools::TrimAll(
       cloudCoverStr);  // joskus stringiss‰ on rivin vaihtoja tms, siivotaan se ensin
-  if (cloudCoverStr.empty() == false &&
+  if (!cloudCoverStr.empty() &&
       cloudCoverStr !=
           "VV")  // VV eli vertical visibilty ignoorataan t‰ss‰, koska se hoidetaan toisaalla
   {
@@ -1243,7 +1246,7 @@ static void FillMetarDataCloudSection2(MetarData &data,
       cloud_Conditions.other_cld_phenom);  // other_cld_phenom on oikeasti cloud type (CB tai TCU)
   NFmiStringTools::TrimAll(
       cloudTypeStr);  // joskus stringiss‰ on rivin vaihtoja tms, siivotaan se ensin
-  if (cloudTypeStr.empty() == false)
+  if (!cloudTypeStr.empty())
   {
     float value = kFloatMissing;
     if (::FindWeatherValue(cloudTypeStr, cloudType_symbols, value, true))
@@ -1272,7 +1275,7 @@ static void FillMetarDataCloudSection2(MetarData &data,
  */
 // ----------------------------------------------------------------------
 
-static void FillMetarDataCloudSection(MetarData &data,
+void FillMetarDataCloudSection(MetarData &data,
                                       const Decoded_METAR &metarStruct,
                                       const string &theMetarStr,
                                       const string &theMetarFileName)
@@ -1285,7 +1288,7 @@ static void FillMetarDataCloudSection(MetarData &data,
   static map<string, float> cloudCover_symbols;
   static map<string, float> cloudType_symbols;
   static bool cloud_symbols_initialized = false;
-  if (cloud_symbols_initialized == false)
+  if (!cloud_symbols_initialized)
   {
     cloud_symbols_initialized = true;
     ::InitCloudSymbols(cloudCover_symbols, cloudType_symbols);
@@ -1339,7 +1342,7 @@ static void FillMetarDataCloudSection(MetarData &data,
  */
 // ----------------------------------------------------------------------
 
-static void DecodeMetar(NFmiAviationStationInfoSystem &theStationInfoSystem,
+void DecodeMetar(NFmiAviationStationInfoSystem &theStationInfoSystem,
                         const string &theMetarStr,
                         vector<MetarData> &dataBlocks,
                         const string &theMetarFileName,
@@ -1431,7 +1434,7 @@ static void DecodeMetar(NFmiAviationStationInfoSystem &theStationInfoSystem,
  */
 // ----------------------------------------------------------------------
 
-static bool CheckIsOldMessageMachineStartWord(const string &theStr)
+bool CheckIsOldMessageMachineStartWord(const string &theStr)
 {
   bool retValue = false;
   try
@@ -1461,7 +1464,7 @@ static bool CheckIsOldMessageMachineStartWord(const string &theStr)
  */
 // ----------------------------------------------------------------------
 
-static bool DoNewHeaderStartHere(const string &theLineStr)
+bool DoNewHeaderStartHere(const string &theLineStr)
 {
   boost::regex reg(
       "\\s+");  // splittaa yksitt‰iset sanat, oli niiss‰ yksi tai useampia spaceja v‰liss‰
@@ -1479,7 +1482,7 @@ static bool DoNewHeaderStartHere(const string &theLineStr)
  */
 // ----------------------------------------------------------------------
 
-static std::string RemoveControlCharacters(const std::string &theOrigStr)
+std::string RemoveControlCharacters(const std::string &theOrigStr)
 {
   std::string strippedStr;
   for (char i : theOrigStr)
@@ -1490,6 +1493,7 @@ static std::string RemoveControlCharacters(const std::string &theOrigStr)
   }
   return strippedStr;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -1504,7 +1508,9 @@ const std::string gNilWord = "NIL";
 const boost::regex gNoaaTimeLineReg(
     R"(\d{4}/\d{2}/\d{2} \d{2}:\d{2})");  // esim.     2013/08/09 02:45
 
-static bool IsMetarFileInNoaaFormat(std::ifstream &input)
+namespace
+{
+bool IsMetarFileInNoaaFormat(std::ifstream &input)
 {
   const int maxLineCheckCount = 10;
   std::string line;
@@ -1517,7 +1523,7 @@ static bool IsMetarFileInNoaaFormat(std::ifstream &input)
   return false;
 }
 
-static NFmiMetTime GetNoaaTime(std::string &timeStr)
+NFmiMetTime GetNoaaTime(std::string &timeStr)
 {
   std::vector<std::string> to_vec;
   boost::split(to_vec, timeStr, boost::is_any_of("/ :"));
@@ -1536,7 +1542,7 @@ static NFmiMetTime GetNoaaTime(std::string &timeStr)
         timeStr);
 }
 
-static NFmiMetTime GetNoaaFormatTimeLine(std::ifstream &input)
+NFmiMetTime GetNoaaFormatTimeLine(std::ifstream &input)
 {
   std::string line;
   do
@@ -1551,7 +1557,7 @@ static NFmiMetTime GetNoaaFormatTimeLine(std::ifstream &input)
   return NFmiMetTime::gMissingTime;
 }
 
-static bool DoNoaaFormatRead(NFmiAviationStationInfoSystem &theStationInfoSystem,
+bool DoNoaaFormatRead(NFmiAviationStationInfoSystem &theStationInfoSystem,
                              vector<MetarData> &dataBlocks,
                              const string &theMetarFileName,
                              int theTimeRoundingResolution,
@@ -1573,7 +1579,7 @@ static bool DoNoaaFormatRead(NFmiAviationStationInfoSystem &theStationInfoSystem
            // metar stringi
           std::getline(input, metarLine);
           metarLine = NFmiStringTools::TrimAll(metarLine);
-        } while (metarLine.size() == 0);
+        } while (metarLine.empty());
         ::DecodeMetar(theStationInfoSystem,
                       metarLine,
                       dataBlocks,
@@ -1594,7 +1600,7 @@ static bool DoNoaaFormatRead(NFmiAviationStationInfoSystem &theStationInfoSystem
  */
 // ----------------------------------------------------------------------
 
-static void MakeDataBlocks(NFmiAviationStationInfoSystem &theStationInfoSystem,
+void MakeDataBlocks(NFmiAviationStationInfoSystem &theStationInfoSystem,
                            const string &theMetarFileStr,
                            vector<MetarData> &dataBlocks,
                            const string &theMetarFileName,
@@ -1620,7 +1626,7 @@ static void MakeDataBlocks(NFmiAviationStationInfoSystem &theStationInfoSystem,
         continue;
 
       bool newHeaderStarts = (counter == 1);
-      if (newHeaderStarts == false && ::DoNewHeaderStartHere(lineStr))
+      if (!newHeaderStarts && ::DoNewHeaderStartHere(lineStr))
         newHeaderStarts = true;
 
       if (newHeaderStarts)  // siis 1. ja jos useita metar sanomia samassa paketissa,
@@ -1806,7 +1812,7 @@ list<string> SortMetarFiles(const list<string> &metarfiles)
   return outfiles;
 }
 
-static void WriteMetarDataToCout(NFmiQueryData *metarData)
+void WriteMetarDataToCout(NFmiQueryData *metarData)
 {
   cerr << "\nStoring data to file." << endl;
   NFmiStreamQueryData sQOutData(metarData);  // t‰m‰ myˆs tuhoaa qdatan
@@ -1878,7 +1884,7 @@ void run(int argc, const char *argv[])
         "http://weather.noaa.gov/data/nsd_bbsss.txt), stopping program...");
 
   stationInfoSystem.InitFromMasterTableCsv(stationFile);
-  if (stationInfoSystem.InitLogMessage().empty() == false)
+  if (!stationInfoSystem.InitLogMessage().empty())
   {
     cerr << "\nFollowing warning came from initializing station info:" << endl;
     cerr << stationInfoSystem.InitLogMessage() << endl;
@@ -1927,7 +1933,7 @@ void run(int argc, const char *argv[])
                    // tiedostoon
     }
     string metarFileContent;
-    if (NFmiFileSystem::ReadFile2String(filename, metarFileContent) == false)
+    if (!NFmiFileSystem::ReadFile2String(filename, metarFileContent))
       cerr << "Failed to read file: " << filename.c_str() << endl
            << "Continuing with other files..." << endl;
     else
@@ -1963,7 +1969,7 @@ void run(int argc, const char *argv[])
   else
     ::WriteMetarDataToCout(newQData);
 
-  if (fVerboseMode && icaoIdUnknownSet.size())
+  if (fVerboseMode && !icaoIdUnknownSet.empty())
   {
     cerr << "\nWarning, there were " << icaoIdUnknownSet.size()
          << " unknown ICAO id's in given messages that were ignored:" << endl;
@@ -1976,6 +1982,7 @@ void run(int argc, const char *argv[])
 
   cerr << "Success, end of execution." << endl;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

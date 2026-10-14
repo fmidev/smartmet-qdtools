@@ -201,7 +201,7 @@ void nctools::parse_time_units_string(const std::string& units,
         timestr.empty() ? datestr : (datestr + " " + timestr);
     *origintime = Fmi::TimeParser::parse(datetime_str);
 
-    if (parts.size() == 5 && boost::iequals(parts[4], "UTC") == false)
+    if (parts.size() == 5 && !boost::iequals(parts[4], "UTC"))
       *origintime += Fmi::date_time::duration_from_string(parts[4]);
   }
   catch (...)

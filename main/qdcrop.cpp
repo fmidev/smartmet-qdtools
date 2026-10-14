@@ -144,6 +144,8 @@ using namespace boost;
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 void usage()
 {
   cout << "Usage: qdcrop [options] [inputquerydata] [outputquerydata]\n"
@@ -449,7 +451,7 @@ NFmiHPlaceDescriptor MakeHPlaceDescriptor(NFmiFastQueryInfo& theQ,
 
   if (!theSteps.empty())
   {
-    char ch;
+    char ch = 0;
     istringstream input(theSteps);
     input >> dx >> ch >> dy;
     if (input.bad() || ch != 'x')
@@ -462,11 +464,11 @@ NFmiHPlaceDescriptor MakeHPlaceDescriptor(NFmiFastQueryInfo& theQ,
   int nx = theQ.Grid()->XNumber();
   int ny = theQ.Grid()->YNumber();
 
-  int width, height, xoff, yoff;
+  int width = 0, height = 0, xoff = 0, yoff = 0;
 
   if (!theGeometry.empty())
   {
-    char ch;
+    char ch = 0;
     istringstream input(theGeometry);
     input >> width >> ch >> height >> xoff >> yoff;
     if (input.bad() || ch != 'x')
@@ -725,8 +727,8 @@ NFmiTimeDescriptor MakeTimeDescriptor(NFmiFastQueryInfo& theQ,
   if (theTimes.size() > 3)
     throw runtime_error("Cannot extract timeinterval containing more than 3 values");
 
-  int dt1, dt2, dt;
-  if (theTimes.size() == 0)
+  int dt1 = 0, dt2 = 0, dt = 0;
+  if (theTimes.empty())
   {
     dt1 = -24 * 365 * 100;  // 100 years should be enough for any use
     dt2 = 24 * 365 * 100;
@@ -1250,7 +1252,7 @@ int run(int argc, const char* argv[])
   {
     opt_utc = false;
     opt_times = NFmiStringTools::Split<list<int> >(cmdline.OptionValue('t'));
-    if (opt_times.size() == 0 || opt_times.size() > 3)
+    if (opt_times.empty() || opt_times.size() > 3)
       throw runtime_error("Option -t argument must have 1-3 values");
   }
 
@@ -1258,7 +1260,7 @@ int run(int argc, const char* argv[])
   {
     opt_utc = true;
     opt_times = NFmiStringTools::Split<list<int> >(cmdline.OptionValue('T'));
-    if (opt_times.size() == 0 || opt_times.size() > 3)
+    if (opt_times.empty() || opt_times.size() > 3)
       throw runtime_error("Option -t argument must have 1-3 values");
   }
 
@@ -1368,7 +1370,7 @@ int run(int argc, const char* argv[])
 
   // create new descriptors for the new data
 
-  int x1, y1, dx, dy;
+  int x1 = 0, y1 = 0, dx = 0, dy = 0;
   NFmiHPlaceDescriptor hdesc(MakeHPlaceDescriptor(*srcinfo,
                                                   opt_stations,
                                                   opt_nostations,
@@ -1497,6 +1499,7 @@ int run(int argc, const char* argv[])
 
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

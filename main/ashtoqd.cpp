@@ -82,17 +82,20 @@ struct Options
 {
   Options();
 
-  bool verbose;              // -v --verbose
-  bool boundaries;           // -b --boundary
+  bool verbose = false;      // -v --verbose
+  bool boundaries = false;   // -b --boundary
   Fmi::DateTime origintime;  // -t --time
   std::string projection;    // -P --projection
   std::string indir;         // -i --indir
   std::string outfile;       // -o --outfile
   std::string producername;  // --producername
-  long producernumber;       // --producernumber
+  long producernumber = 120;  // --producernumber
 };
 
+namespace
+{
 Options options;
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -101,15 +104,12 @@ Options options;
 // ----------------------------------------------------------------------
 
 Options::Options()
-    : verbose(false),
-      boundaries(false),
-      origintime(),
+    :
       projection("stereographic,10,90,60:-19.22,25,79.7,57:265,205")  // FMI Met Editor projection
       ,
       indir("."),
       outfile("-"),
-      producername("EGRR_VAAC"),
-      producernumber(120)
+      producername("EGRR_VAAC")
 {
 }
 // ----------------------------------------------------------------------
@@ -120,6 +120,8 @@ Options::Options()
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 bool parse_options(int argc, char* argv[], Options& options)
 {
   namespace po = boost::program_options;
@@ -900,6 +902,7 @@ int run(int argc, char* argv[])
 
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

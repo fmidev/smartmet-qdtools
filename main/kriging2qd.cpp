@@ -55,7 +55,6 @@
 
 #include <boost/algorithm/string.hpp>
 #include <fmt/format.h>
-#include <cmath>
 #include <newbase/NFmiAreaTools.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiEnumConverter.h>
@@ -67,6 +66,7 @@
 #include <newbase/NFmiQueryDataUtil.h>
 #include <newbase/NFmiStringTools.h>
 #include <newbase/NFmiTimeList.h>
+#include <cmath>
 #include <fstream>
 #include <iomanip>
 #include <map>
@@ -94,22 +94,18 @@ using KrigingData = map<NFmiPoint, Values>;
 
 struct Options
 {
-  bool verbose;
+  bool verbose = false;
   string inputfile;
   string outputfile;
   std::vector<FmiParameterName> parameters;
   NFmiTime validtime;
   NFmiTime origintime;
-  double missingvalue;
+  double missingvalue = 32700;
 
   Options()
-      : verbose(false),
-        inputfile(),
-        outputfile(),
+      :
         parameters({kFmiTemperature}),
-        validtime(),
-        origintime(validtime),
-        missingvalue(32700)
+        origintime(validtime)
   {
   }
 };
@@ -120,6 +116,8 @@ struct Options
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 Options options;
 
 // ----------------------------------------------------------------------
@@ -166,7 +164,7 @@ const NFmiTime parse_stamp(const string& theStamp)
   if (theStamp.size() != 12)
     throw runtime_error("The length of the stamp is not 12");
 
-  int year, month, day, hour, minute;
+  int year = 0, month = 0, day = 0, hour = 0, minute = 0;
   try
   {
     year = NFmiStringTools::Convert<int>(theStamp.substr(0, 4));
@@ -279,7 +277,7 @@ bool parse_command_line(int argc, const char* argv[])
   if (cmdline.isOption('m'))
   {
     const string mval = cmdline.OptionValue('m');
-    double missing;
+    double missing = NAN;
 
     stringstream ss(mval);
 
@@ -343,13 +341,13 @@ const KrigingData read_kriging_data()
 
     // Split to doubles
 
-    double x;
-    double y;
+    double x = NAN;
+    double y = NAN;
     vector<double> values;
 
     istringstream tokens(line);
     tokens >> x >> y;
-    double value;
+    double value = NAN;
     while (tokens >> value)
       values.push_back(value);
 
@@ -629,6 +627,7 @@ int domain(int argc, const char* argv[])
 
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

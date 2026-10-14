@@ -13,21 +13,15 @@ static NFmiEnumConverter converter;
 struct NFmiParamCheckData__
 {
   NFmiParamCheckData__()
-      : itsParamId(0),
-        itsParamMissingDataMaxProcent(),
-        itsParamStraightDataMaxProcent(),
-        itsParamLowerLimits(),
-        itsParamUpperLimits(),
+      :
         itsCheckedParamMissingDataMaxProcent(kFloatMissing),
         itsCheckedParamStraightDataMaxProcent(kFloatMissing),
-        itsCheckedParamOutOfLimitWarning(false),
-        itsCheckedParamOutOfLimitError(false),
         itsCheckedParamMinValue(kFloatMissing),
         itsCheckedParamMaxValue(kFloatMissing)
   {
   }
 
-  int itsParamId;
+  int itsParamId = 0;
   std::vector<float> itsParamMissingDataMaxProcent;
   std::vector<float> itsParamStraightDataMaxProcent;
   std::vector<float> itsParamLowerLimits;  // eri parametreille, jotta voidaan tarkistaa, että ei
@@ -36,10 +30,10 @@ struct NFmiParamCheckData__
 
   float itsCheckedParamMissingDataMaxProcent;   // tänne lasketaan parametri kohtaiset tulokset
   float itsCheckedParamStraightDataMaxProcent;  // tänne lasketaan parametri kohtaiset tulokset
-  bool itsCheckedParamOutOfLimitWarning;  // tänne laitetaan true, jos on mennyt upper tai lower
-                                          // rajan varoitus raja rikki
-  bool itsCheckedParamOutOfLimitError;  // tänne laitetaan true, jos on mennyt upper tai lower rajan
-                                        // virhe/fatal-virhe raja rikki
+  bool itsCheckedParamOutOfLimitWarning = false;  // tänne laitetaan true, jos on mennyt upper tai
+                                                  // lower rajan varoitus raja rikki
+  bool itsCheckedParamOutOfLimitError = false;  // tänne laitetaan true, jos on mennyt upper tai
+                                                // lower rajan virhe/fatal-virhe raja rikki
   float itsCheckedParamMinValue;        // tänne haetaan parametri kohtainen minimi
   float itsCheckedParamMaxValue;        // tänne haetaan parametri kohtainen maksimi
 };
@@ -51,7 +45,7 @@ inline std::ostream& operator<<(std::ostream& os, NFmiParamCheckData& item)
   int errLevelSize = item.itsParamMissingDataMaxProcent.size();
   os << errLevelSize << " ";
 
-  int i;
+  int i = 0;
   for (i = 0; i < errLevelSize; i++)
     os << item.itsParamMissingDataMaxProcent[i] << " ";
   for (i = 0; i < errLevelSize; i++)
@@ -89,7 +83,7 @@ inline std::istream& operator>>(std::istream& is, NFmiParamCheckData& item)
   item.itsParamLowerLimits.resize(errLevelSize);
   item.itsParamUpperLimits.resize(errLevelSize);
 
-  int i;
+  int i = 0;
   for (i = 0; i < errLevelSize; i++)
     is >> item.itsParamMissingDataMaxProcent[i];
   for (i = 0; i < errLevelSize; i++)

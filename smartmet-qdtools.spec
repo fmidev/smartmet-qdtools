@@ -215,6 +215,7 @@ make %{_smp_mflags}
 - Requires 26.10.13 versions of newbase, calculator, imagine, smarttools due to their ABI changes
 - Initialize GRIB projection parameters and round with std::lround
 - nctoqd: skip level types without parameters instead of dereferencing their missing meta info
+- Fixed mechanical clang-tidy findings (internal linkage, unused parameters, initialization, redundant code), no functional changes
 
 * Sun Oct 11 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.11-1.fmi
 - Invalid numbers are now detected instead of silently becoming 0 or a numeric prefix

@@ -58,7 +58,7 @@ bool locationvalid(NFmiFastQueryInfo& theQD)
  */
 // ----------------------------------------------------------------------
 
-QueryDataManager::QueryDataManager() : itsSearchPath(), itsData(), itsCurrentData()
+QueryDataManager::QueryDataManager()
 {
   itsCurrentData = itsData.end();
 }

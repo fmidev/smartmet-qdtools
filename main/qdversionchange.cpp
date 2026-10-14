@@ -42,9 +42,12 @@
 
 using namespace std;
 
+namespace
+{
 void Usage();
 void run(int argc, const char *argv[]);
 int GetIntegerOptionValue(const NFmiCmdLine &theCmdline, char theOption);
+}  // namespace
 
 int main(int argc, const char *argv[])
 {
@@ -60,7 +63,9 @@ int main(int argc, const char *argv[])
   return 0;  // homma meni putkeen palauta 0 onnistumisen merkiksi!!!!
 }
 
-static std::vector<int> GetOptionalParamIdList(const NFmiCmdLine &cmdline, char option)
+namespace
+{
+std::vector<int> GetOptionalParamIdList(const NFmiCmdLine &cmdline, char option)
 {
   std::vector<int> paramIdVector;
   if (cmdline.isOption(option))
@@ -90,7 +95,7 @@ static std::vector<int> GetOptionalParamIdList(const NFmiCmdLine &cmdline, char 
 //    E.g. 0 -> 0 %, 4 -> 50 %, 8 -> 100 %
 //    9 -> 100 % (9 = can't observe cloudines due e.g. fog, how should we really put this, missing?
 //    ) all other values -> missing
-static float convertOctaToProcent(float octas)
+float convertOctaToProcent(float octas)
 {
   if (octas >= 0 && octas <= 8)
     return octas * 12.5f;
@@ -100,7 +105,7 @@ static float convertOctaToProcent(float octas)
     return kFloatMissing;
 }
 
-static void ConvertNfromOctasToProcent(const std::unique_ptr<NFmiQueryData>& data,
+void ConvertNfromOctasToProcent(const std::unique_ptr<NFmiQueryData>& data,
                                        NFmiFastQueryInfo &sourceInfo)
 {
   NFmiFastQueryInfo info(data.get());
@@ -268,3 +273,4 @@ int GetIntegerOptionValue(const NFmiCmdLine &theCmdline, char theOption)
   throw runtime_error(string("Error: '") + theOption +
                       "' option value must be integer, exiting...");
 }
+}  // namespace

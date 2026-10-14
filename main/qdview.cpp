@@ -16,6 +16,7 @@
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileSystem.h>
 #include <newbase/NFmiQueryData.h>
+#include <cmath>
 #include <string>
 
 using namespace std;
@@ -256,7 +257,7 @@ void draw_map(Imagine::NFmiImage& theImage, NFmiArea* theProj, char theResolutio
 {
   const string gshhsfile = string("gshhs_") + theResolution + ".b";
 
-  double minlon, minlat, maxlon, maxlat;
+  double minlon = NAN, minlat = NAN, maxlon = NAN, maxlat = NAN;
 
   FindBBox(*theProj, minlon, minlat, maxlon, maxlat);
 

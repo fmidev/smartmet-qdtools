@@ -21,7 +21,9 @@
 #include <newbase/NFmiStreamQueryData.h>
 #include <newbase/NFmiStringTools.h>
 
-static void Usage(const std::string &theExecutableName)
+namespace
+{
+void Usage(const std::string &theExecutableName)
 {
   NFmiFileString fileNameStr(theExecutableName);
   std::string usedFileName(
@@ -35,7 +37,7 @@ static void Usage(const std::string &theExecutableName)
             << std::endl;
 }
 
-static NFmiProducer GetProducer(const std::string &theProdStr)
+NFmiProducer GetProducer(const std::string &theProdStr)
 {
   std::vector<std::string> prodParts = NFmiStringTools::Split(theProdStr);
   if (prodParts.size() == 2)
@@ -47,7 +49,7 @@ static NFmiProducer GetProducer(const std::string &theProdStr)
       "Error in GetProducer - check your -p option (e.g. \"-p 123,MyProducer\")");
 }
 
-static void Domain(int argc, const char *argv[])
+void Domain(int argc, const char *argv[])
 {
   NFmiCmdLine cmdLine(argc, argv, "p!");
   if (cmdLine.NumberofParameters() < 2)
@@ -70,7 +72,7 @@ static void Domain(int argc, const char *argv[])
   FmiNetCdfQueryData nc2QdFilter;
   nc2QdFilter.Producer(producer);
   std::vector<NFmiQueryData *> qDatas = nc2QdFilter.CreateQueryDatas(ncFileIn);
-  if (qDatas.size() == 0)
+  if (qDatas.empty())
     throw std::runtime_error(nc2QdFilter.ErrorMessage());
   debugTimer.StopTimer();
 
@@ -106,6 +108,7 @@ static void Domain(int argc, const char *argv[])
     }
   }
 }
+}  // namespace
 
 int main(int argc, const char *argv[])
 {

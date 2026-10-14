@@ -4,6 +4,8 @@
 
 using namespace std;
 
+namespace
+{
 double rad(double d)
 {
   return d * 0.017453292519943295;
@@ -35,6 +37,7 @@ double reduce(double d1)
     d1 += 6.2831853071795862;
   return d1;
 }
+}  // namespace
 
 double MoonFraction(const NFmiTime& theTime)
 {

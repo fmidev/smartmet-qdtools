@@ -56,31 +56,19 @@ using namespace std;
 
 struct Options
 {
-  bool verbose;
-  bool veryverbose;
-  bool debug;
-  bool extractall;
-  bool extracttimes;
-  bool extractparams;
+  bool verbose = false;
+  bool veryverbose = false;
+  bool debug = false;
+  bool extractall = true;
+  bool extracttimes = false;
+  bool extractparams = false;
 
   string inputdir;
   string inputfile1;
   string inputfile2;
   string outputfile;
 
-  Options()
-      : verbose(false),
-        veryverbose(false),
-        debug(false),
-        extractall(true),
-        extracttimes(false),
-        extractparams(false),
-        inputdir(),
-        inputfile1(),
-        inputfile2(),
-        outputfile()
-  {
-  }
+  Options() {}
 };
 
 // ----------------------------------------------------------------------
@@ -89,6 +77,8 @@ struct Options
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 Options options;
 
 // ----------------------------------------------------------------------
@@ -238,7 +228,7 @@ void print_change_analysis(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
             // parameter and as a subparameter. We ignore the second test,
             // it is the first parameter only that matters
             auto p = FmiParameterName(theQ2.Param().GetParam()->GetIdent());
-            if (param_checked[p] == true)
+            if (param_checked[p])
               continue;
 
             param_checked[p] = true;
@@ -324,7 +314,7 @@ const NFmiTimeList extract_all(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ
           for (theQ2.ResetParam(); !different && theQ2.NextParam();)
           {
             auto p = FmiParameterName(theQ2.Param().GetParam()->GetIdent());
-            if (param_checked[p] == true)
+            if (param_checked[p])
               continue;
             param_checked[p] = true;
 
@@ -399,7 +389,7 @@ const NFmiTimeList extract_params(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& t
           for (theQ2.ResetParam(); !different && theQ2.NextParam();)
           {
             auto p = FmiParameterName(theQ2.Param().GetParam()->GetIdent());
-            if (param_checked[p] == true)
+            if (param_checked[p])
               continue;
             param_checked[p] = true;
 
@@ -543,7 +533,7 @@ void find_inputfiles()
 
   // Handle easy special cases
 
-  if (files.size() == 0)
+  if (files.empty())
     throw runtime_error("Directory '" + options.inputdir + "' is empty");
 
   if (files.size() == 1)
@@ -618,6 +608,7 @@ int domain(int argc, const char* argv[])
 
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

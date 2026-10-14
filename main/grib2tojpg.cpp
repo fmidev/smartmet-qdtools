@@ -46,9 +46,12 @@ using namespace std;
 // joten siitä pitää ottaa ko. asiat huomioon
 
 float globalGamma = 0.75;
+namespace
+{
 bool globalInvert = true;
 std::string globalFilenamePattern = "%Y%m%d%H%M";  // e.g. 200812312359
 std::string globalFilenamePrefix = "GRIB_";
+}  // namespace
 
 // template<typename T>
 struct PointerDestroyer
@@ -63,8 +66,7 @@ struct PointerDestroyer
 struct ParamChangeItem
 {
   ParamChangeItem()
-      : itsOriginalParamId(0),
-        itsWantedParam(0,
+      : itsWantedParam(0,
                        "",
                        kFloatMissing,
                        kFloatMissing,
@@ -72,10 +74,7 @@ struct ParamChangeItem
                        kFloatMissing,
                        "%.1f",
                        kLinearly)  // laitetaan lineaarinen interpolointi päälle
-        ,
-        itsConversionBase(0),
-        itsConversionScale(1.f),
-        itsLevel(nullptr)
+
   {
   }
 
@@ -115,18 +114,20 @@ struct ParamChangeItem
                                kLinearly);  // laitetaan lineaarinen interpolointi päälle
     itsConversionBase = 0;
     itsConversionScale = 1.f;
-    if (itsLevel)
+
       delete itsLevel;
     itsLevel = nullptr;
   }
 
-  unsigned long itsOriginalParamId;
+  unsigned long itsOriginalParamId = 0;
   NFmiParam itsWantedParam;
-  float itsConversionBase;  // jos ei 0 ja scale ei 1, tehdään parametrille muunnos konversio
-  float itsConversionScale;
-  NFmiLevel *itsLevel;  // jos ei 0-pointer, tehdään tästä levelistä pintaparametri
+  float itsConversionBase = 0;  // jos ei 0 ja scale ei 1, tehdään parametrille muunnos konversio
+  float itsConversionScale = 1.f;
+  NFmiLevel* itsLevel = nullptr;  // jos ei 0-pointer, tehdään tästä levelistä pintaparametri
 };
 
+namespace
+{
 void Usage();
 vector<NFmiQueryData *> ConvertGrib2QData(FILE *theInput,
                                           int theMaxQDataSizeInBytes,
@@ -168,6 +169,7 @@ vector<NFmiHPlaceDescriptor> GetAllHPlaceDescriptors(vector<GridRecordData *> &t
                                                      bool useOutputFile);
 vector<NFmiVPlaceDescriptor> GetAllVPlaceDescriptors(vector<GridRecordData *> &theGribRecordDatas,
                                                      bool useOutputFile);
+}  // namespace
 
 static const unsigned long gMissLevelValue =
     9999999;  // tällä ignoorataan kaikki tietyn level tyypin hilat
@@ -190,7 +192,9 @@ static void ReplaceChar(string &theFileName, char replaceThis, char toThis)
 }
 #endif
 
-static NFmiRect GetLatlonCropRect(const string &theBoundsStr)
+namespace
+{
+NFmiRect GetLatlonCropRect(const string &theBoundsStr)
 {
   vector<string> boundStrList = NFmiStringTools::Split(theBoundsStr, ",");
   auto coords = NFmiStringTools::Split<vector<double> >(theBoundsStr);
@@ -208,9 +212,9 @@ static NFmiRect GetLatlonCropRect(const string &theBoundsStr)
   return NFmiRect(bottomleft, topright);
 }
 
-static NFmiGrid *CreateWantedGrid(const std::string &theWantedGridStr)
+NFmiGrid *CreateWantedGrid(const std::string &theWantedGridStr)
 {
-  if (theWantedGridStr.empty() == false)
+  if (!theWantedGridStr.empty())
   {
     std::shared_ptr<NFmiArea> area = NFmiAreaFactory::Create(theWantedGridStr);
     NFmiPoint gridSize = area->XYArea().Size();
@@ -232,9 +236,12 @@ static NFmiGrid *CreateWantedGrid(const std::string &theWantedGridStr)
       string("Error in CreateWantedGrid-function, projection conversion wanted, but empty "
              "projection string given, error in application?"));
 }
+}  // namespace
 
 const NFmiPoint gMissingGridSize(kFloatMissing, kFloatMissing);
 
+namespace
+{
 // Funktio tekee annetusta projektio stringistä halutun projektio gridin. Lisäksi siinä tarkistetaan
 // onko annettu
 // erilaisille datoille hilakokoja. Jos ei ole, kaikille datoille tulee koko 50x50.
@@ -245,7 +252,7 @@ const NFmiPoint gMissingGridSize(kFloatMissing, kFloatMissing);
 // stereographic,20,90,60:6,51.3,49,70.2:82,91
 // Jossa toisen kaksoispisteen jälkeen tulee hilakoot. Niitä voi siis olla pilkuilla eroteltuina 3
 // paria.
-static void HandleProjectionString(const string &theProjStr,
+void HandleProjectionString(const string &theProjStr,
                                    NFmiGrid &theWantedGrid,
                                    NFmiPoint &thePressureDataGridSize,
                                    NFmiPoint &theHybridDataGridSize)
@@ -315,6 +322,7 @@ static void HandleProjectionString(const string &theProjStr,
     theHybridDataGridSize = thePressureDataGridSize =
         NFmiPoint(theWantedGrid.XNumber(), theWantedGrid.YNumber());
 }
+}  // namespace
 
 int main(int argc, const char **argv)
 {
@@ -522,6 +530,8 @@ int main(int argc, const char **argv)
 // Kaytto-ohjeet
 // ----------------------------------------------------------------------
 
+namespace
+{
 void Usage()
 {
   cout << "Usage: grib2jpg [options] inputgribfile " << endl
@@ -535,10 +545,10 @@ void Usage()
        << endl;
 }
 
-static bool AcceptThisLevelType(GridRecordData* data,
+bool AcceptThisLevelType(GridRecordData* data,
                                 const vector<FmiLevelType>& theAcceptOnlyLevelTypes)
 {
-  if (theAcceptOnlyLevelTypes.size() > 0)
+  if (!theAcceptOnlyLevelTypes.empty())
   {
     for (const auto& theAcceptOnlyLevelType : theAcceptOnlyLevelTypes)
     {
@@ -550,7 +560,7 @@ static bool AcceptThisLevelType(GridRecordData* data,
   return true;
 }
 
-static bool IgnoreThisLevel(GridRecordData *data, NFmiLevelBag &theIgnoredLevelList)
+bool IgnoreThisLevel(GridRecordData *data, NFmiLevelBag &theIgnoredLevelList)
 {
   if (theIgnoredLevelList.GetSize() > 0)
   {
@@ -566,7 +576,7 @@ static bool IgnoreThisLevel(GridRecordData *data, NFmiLevelBag &theIgnoredLevelL
   return false;
 }
 
-static void FreeDatas(vector<GridRecordData *> &theGribRecordDatas)
+void FreeDatas(vector<GridRecordData *> &theGribRecordDatas)
 {
   auto it = theGribRecordDatas.begin();
   auto endIter = theGribRecordDatas.end();
@@ -587,7 +597,7 @@ static void printAccessorNames(grib_section* s)
 }
 */
 
-static NFmiArea *CreateLatlonArea(grib_handle *theGribHandle, bool &doGlobeFix)
+NFmiArea *CreateLatlonArea(grib_handle *theGribHandle, bool &doGlobeFix)
 {
   double La1 = 0;
   int status1 = grib_get_double(theGribHandle, "La1", &La1);
@@ -624,7 +634,7 @@ static NFmiArea *CreateLatlonArea(grib_handle *theGribHandle, bool &doGlobeFix)
     throw runtime_error("Error: Unable to retrieve latlon-projection information from grib.");
 }
 
-static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
+NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
 {
   double La1 = 0;
   int status1 = grib_get_double(theGribHandle, "La1", &La1);
@@ -684,7 +694,7 @@ static NFmiArea *CreateMercatorArea(grib_handle *theGribHandle)
 // jatkuisi
 // alueen ulkopuolelle. Seurauksena tulosdata, jossa on sitten orig alueen ulkopuolella puuttuvaa
 // dataa.
-static void CalcCroppedGrid(GridRecordData *theGridRecordData)
+void CalcCroppedGrid(GridRecordData *theGridRecordData)
 {
   NFmiGrid grid(theGridRecordData->itsOrigGrid.itsArea,
                 theGridRecordData->itsOrigGrid.itsNX,
@@ -717,7 +727,7 @@ static void CalcCroppedGrid(GridRecordData *theGridRecordData)
   theGridRecordData->fDoProjectionConversion = true;
 }
 
-static void FillGridInfoFromGribHandle(grib_handle *theGribHandle,
+void FillGridInfoFromGribHandle(grib_handle *theGribHandle,
                                        GridRecordData *theGridRecordData,
                                        bool &doGlobeFix,
                                        NFmiGrid *theWantedGrid,
@@ -834,7 +844,7 @@ grib_handle.");
 }
 */
 
-static NFmiMetTime GetOrigTime(grib_handle *theGribHandle)
+NFmiMetTime GetOrigTime(grib_handle *theGribHandle)
 {
   long year = 0;
   int status1 = grib_get_long(theGribHandle, "year", &year);
@@ -864,7 +874,7 @@ static NFmiMetTime GetOrigTime(grib_handle *theGribHandle)
     throw runtime_error("Error: Couldn't get origTime from given grib_handle.");
 }
 
-static NFmiMetTime GetValidTime(grib_handle *theGribHandle)
+NFmiMetTime GetValidTime(grib_handle *theGribHandle)
 {
   NFmiMetTime validTime = ::GetOrigTime(theGribHandle);
   long forecastTime = 0;
@@ -878,7 +888,7 @@ static NFmiMetTime GetValidTime(grib_handle *theGribHandle)
     throw runtime_error("Error: Couldn't get validTime from given grib_handle.");
 }
 
-static NFmiDataIdent GetParam(grib_handle *theGribHandle, const NFmiProducer &theWantedProducer)
+NFmiDataIdent GetParam(grib_handle *theGribHandle, const NFmiProducer &theWantedProducer)
 {
   /* // käytetäänkin aina ktegoria+paramnumber kikkaa
           long parameter = 0;
@@ -941,7 +951,7 @@ static NFmiDataIdent GetParam(grib_handle *theGribHandle, const NFmiProducer &th
   }
 }
 
-static NFmiLevel GetLevel(grib_handle *theGribHandle)
+NFmiLevel GetLevel(grib_handle *theGribHandle)
 {
   long indicatorOfTypeOfLevel = 0;
   int status1a = grib_get_long(theGribHandle, "indicatorOfTypeOfLevel", &indicatorOfTypeOfLevel);
@@ -956,7 +966,7 @@ static NFmiLevel GetLevel(grib_handle *theGribHandle)
     throw runtime_error("Error: Couldn't get level from given grib_handle.");
 }
 
-static double GetMissingValue(grib_handle *theGribHandle)
+double GetMissingValue(grib_handle *theGribHandle)
 {
   double missingValue = 0;
   int status = grib_get_double(theGribHandle, "missingValue", &missingValue);
@@ -966,10 +976,10 @@ static double GetMissingValue(grib_handle *theGribHandle)
     throw runtime_error("Error: Couldn't get missingValue from given grib_handle.");
 }
 
-static void MakeParameterConversions(GridRecordData *theGridRecordData,
+void MakeParameterConversions(GridRecordData *theGridRecordData,
                                      const vector<ParamChangeItem>& theParamChangeTable)
 {
-  if (theParamChangeTable.size() > 0)
+  if (!theParamChangeTable.empty())
   {  // tehdään tarvittaessa parametrille base+scale muunnos
     for (const auto& paramChangeItem : theParamChangeTable)
     {
@@ -997,7 +1007,7 @@ static void MakeParameterConversions(GridRecordData *theGridRecordData,
   }
 }
 
-static void FillGridData(grib_handle *theGribHandle,
+void FillGridData(grib_handle *theGribHandle,
                          GridRecordData *theGridRecordData,
                          bool doGlobeFix,
                          const vector<ParamChangeItem>& theParamChangeTable)
@@ -1070,9 +1080,9 @@ static void FillGridData(grib_handle *theGribHandle,
 
     // 2. Kun orig matriisi on saatu täytettyä, katsotaan pitääkö vielä täyttää cropattu alue, vai
     // käytetäänkö originaali dataa suoraan.
-    if (theGridRecordData->fDoProjectionConversion == false)
+    if (!theGridRecordData->fDoProjectionConversion)
       theGridRecordData->itsGridData = origValues;
-    else if (theGridRecordData->fDoProjectionConversion == true &&
+    else if (theGridRecordData->fDoProjectionConversion &&
              theGridRecordData->itsLatlonCropRect == gMissingCropRect)
     {  // tässä tehdään latlon projisointia
       int destSizeX = theGridRecordData->itsGrid.itsNX;
@@ -1180,11 +1190,11 @@ puoliskolla olevat laitetaan oikealle
 }
 */
 
-static void ChangeParamSettingsIfNeeded(const vector<ParamChangeItem>& theParamChangeTable,
+void ChangeParamSettingsIfNeeded(const vector<ParamChangeItem>& theParamChangeTable,
                                         GridRecordData *theGribData,
                                         bool verbose)
 {
-  if (theParamChangeTable.size() > 0)
+  if (!theParamChangeTable.empty())
   {  // muutetaan tarvittaessa parametrin nimeä ja id:tä
     for (const auto& paramChangeItem : theParamChangeTable)
     {
@@ -1219,11 +1229,11 @@ static void ChangeParamSettingsIfNeeded(const vector<ParamChangeItem>& theParamC
   }
 }
 
-static bool CropParam(GridRecordData *gribData,
+bool CropParam(GridRecordData *gribData,
                       bool fCropParamsNotMensionedInTable,
                       const vector<ParamChangeItem>& theParamChangeTable)
 {
-  if (fCropParamsNotMensionedInTable && theParamChangeTable.size())
+  if (fCropParamsNotMensionedInTable && !theParamChangeTable.empty())
   {
     for (const auto& paramChangeItem : theParamChangeTable)
     {
@@ -1352,14 +1362,13 @@ vector<NFmiQueryData *> ConvertGrib2QData(FILE *theInput,
         // muista poikkeava 2x2 hila latlon-area.
         // Aiheuttaisi turhia ongelmia jatkossa monessakin paikassa.
         bool gribFieldUsed = false;
-        if (!(tmpData->itsOrigGrid.itsNX <= 2 && tmpData->itsOrigGrid.itsNY <= 2))
+        if (tmpData->itsOrigGrid.itsNX > 2 || tmpData->itsOrigGrid.itsNY > 2)
         {
-          if (::IgnoreThisLevel(tmpData, theIgnoredLevelList) == false)
+          if (!::IgnoreThisLevel(tmpData, theIgnoredLevelList))
           {
             if (::AcceptThisLevelType(tmpData, theAcceptOnlyLevelTypes))
             {
-              if (::CropParam(tmpData, fCropParamsNotMensionedInTable, theParamChangeTable) ==
-                  false)
+              if (!::CropParam(tmpData, fCropParamsNotMensionedInTable, theParamChangeTable))
               {
                 //				::FillGridData(gribHandle, tmpData->itsGridData,
                 // tmpData->itsGrid, doGlobeFix);
@@ -1371,7 +1380,7 @@ vector<NFmiQueryData *> ConvertGrib2QData(FILE *theInput,
             }
           }
         }
-        if (gribFieldUsed == false)
+        if (!gribFieldUsed)
         {
           delete tmpData;
           if (verbose)
@@ -1417,6 +1426,7 @@ vector<NFmiQueryData *> ConvertGrib2QData(FILE *theInput,
 
   return datas;
 }
+}  // namespace
 
 struct LevelLessThan
 {
@@ -1433,6 +1443,8 @@ struct LevelLessThan
   }
 };
 
+namespace
+{
 map<int, int>::iterator FindHighesLevelType(map<int, int> levelTypeCounter)
 {
   auto it = levelTypeCounter.begin();
@@ -1585,10 +1597,10 @@ vector<NFmiQueryData *> CreateQueryDatas(vector<GridRecordData *> &theGribRecord
   return qdatas;
 }
 
-NFmiQueryData *CreateQueryData(vector<GridRecordData *> &theGribRecordDatas,
-                               NFmiHPlaceDescriptor &theHplace,
-                               NFmiVPlaceDescriptor &theVplace,
-                               int theMaxQDataSizeInBytes)
+NFmiQueryData* CreateQueryData(vector<GridRecordData*>& theGribRecordDatas,
+                               NFmiHPlaceDescriptor& /*theHplace*/,
+                               NFmiVPlaceDescriptor& /*theVplace*/,
+                               int /*theMaxQDataSizeInBytes*/)
 {
   int gribCount = static_cast<int>(theGribRecordDatas.size());
   if (gribCount > 0)
@@ -1623,7 +1635,7 @@ void CheckInfoSize(const NFmiQueryInfo &theInfo, int theMaxQDataSizeInBytes)
 
 /* The following code taken from pnmgamma and editor to support our needs */
 
-static void buildPowGamma(unsigned char table[],
+void buildPowGamma(unsigned char table[],
                           unsigned char const maxval,
                           unsigned char const newMaxval,
                           double const gamma)
@@ -1637,7 +1649,7 @@ static void buildPowGamma(unsigned char table[],
     function log(3m).  I can't believe I actually remembered my log
     identities.
     -----------------------------------------------------------------------------*/
-  unsigned int i;
+  unsigned int i = 0;
   double const oneOverGamma = 1.0 / gamma;
 
   for (i = 0; i <= maxval; ++i)
@@ -1661,7 +1673,7 @@ bool FillQDataWithGribRecords(vector<GridRecordData *> &theGribRecordDatas)
   cerr << "Exporting JPEGs ";
 
   // LUMINANCE XOR DEPENDS ON THE INVERT FLAG!
-  unsigned char luminance_xor = (globalInvert == true ? 255 : 0);
+  unsigned char luminance_xor = (globalInvert ? 255 : 0);
 
   // Create a luminance transformation table ==>
   cerr << "[Luminance transformation table: ";
@@ -1683,7 +1695,7 @@ bool FillQDataWithGribRecords(vector<GridRecordData *> &theGribRecordDatas)
 
     // Generate filename based on pattern
     char pattern[255], jpegFilename[300];
-    struct tm *time_table;
+    struct tm* time_table = nullptr;
     const time_t itsValidTime = tmp->itsValidTime.EpochTime();
     time_table = gmtime(&itsValidTime);
     (void)strftime(pattern, 254, globalFilenamePattern.c_str(), time_table);
@@ -1695,7 +1707,7 @@ bool FillQDataWithGribRecords(vector<GridRecordData *> &theGribRecordDatas)
     // Initialize JPEG creation
     struct jpeg_compress_struct cinfo;
     struct jpeg_error_mgr jerr;
-    FILE *jpeg;
+    FILE* jpeg = nullptr;
 
     cinfo.err = jpeg_std_error(&jerr);
     jpeg_create_compress(&cinfo);
@@ -1720,8 +1732,8 @@ bool FillQDataWithGribRecords(vector<GridRecordData *> &theGribRecordDatas)
 
     // Allocate RGB buffer for single RGB8 row
     auto* image_buffer = reinterpret_cast<JSAMPLE*>(malloc(3 * gridValues.NX()));
-    JSAMPLE luminance;
-    unsigned int byte_offset;
+    JSAMPLE luminance = 0;
+    unsigned int byte_offset = 0;
 
     for (int j = gridValues.NY() - 1; j >= 0; j--)
     {
@@ -1945,3 +1957,4 @@ int GetIntegerOptionValue(const NFmiCmdLine &theCmdline, char theOption)
   throw runtime_error(string("Error: '") + theOption +
                       "' option value must be integer, exiting...");
 }
+}  // namespace

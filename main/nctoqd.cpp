@@ -40,7 +40,10 @@
 #include <string>
 #include <utility>
 
+namespace
+{
 nctools::Options options;
+}  // namespace
 
 using Fmi::Exception;
 
@@ -50,6 +53,8 @@ using Fmi::Exception;
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 void check_xaxis_units(const std::string& units)
 {
   if (units.empty())
@@ -582,7 +587,7 @@ int run(int argc, char* argv[])
         {
           // Try to merge times and parameters from other files with the same grid and levels
           std::vector<std::string> failreasons;
-          if (ncfile->joinable(*first_ncfile, &failreasons) == false)
+          if (!ncfile->joinable(*first_ncfile, &failreasons))
           {
             std::cerr << "Unable to combine " << first_ncfile->path << " and " << infile << ":"
                       << std::endl;
@@ -661,6 +666,7 @@ int run(int argc, char* argv[])
   }
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

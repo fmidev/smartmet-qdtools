@@ -12,6 +12,7 @@
 
 #include <newbase/NFmiArea.h>
 #include <newbase/NFmiPoint.h>
+#include <cmath>
 
 #include <iostream>
 #include <stdexcept>
@@ -58,7 +59,7 @@ void ProjectionParser::parse(std::istream& is,
   Projection projection;
   projection.ellipsoid(theEllipsoid);
 
-  std::string proj_type = "";
+  std::string proj_type;
   bool got_type = false;
   bool got_bottomleft = false;
   bool got_topright = false;
@@ -85,49 +86,49 @@ void ProjectionParser::parse(std::istream& is,
     }
     else if (token == "centrallatitude")
     {
-      float lat;
+      float lat = NAN;
       is >> lat;
       projection.centralLatitude(lat);
       got_central_latitude = true;
     }
     else if (token == "centrallongitude")
     {
-      float lon;
+      float lon = NAN;
       is >> lon;
       projection.centralLongitude(lon);
       got_central_longitude = true;
     }
     else if (token == "truelatitude")
     {
-      float lat;
+      float lat = NAN;
       is >> lat;
       projection.trueLatitude(lat);
       got_true_latitude = true;
     }
     else if (token == "bottomleft")
     {
-      float lon, lat;
+      float lon = NAN, lat = NAN;
       is >> lon >> lat;
       projection.bottomLeft(lon, lat);
       got_bottomleft = true;
     }
     else if (token == "topright")
     {
-      float lon, lat;
+      float lon = NAN, lat = NAN;
       is >> lon >> lat;
       projection.topRight(lon, lat);
       got_topright = true;
     }
     else if (token == "center")
     {
-      float lon, lat;
+      float lon = NAN, lat = NAN;
       is >> lon >> lat;
       projection.center(lon, lat);
       got_center = true;
     }
     else if (token == "scale")
     {
-      float scale;
+      float scale = NAN;
       is >> scale;
       projection.scale(scale);
       got_scale = true;

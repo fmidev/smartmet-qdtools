@@ -31,6 +31,8 @@
 
 using namespace std;  // tätä ei saa sitten laittaa headeriin, eikä ennen includeja!!!!
 
+namespace
+{
 void usage()
 {
   cout << "Usage: qdinterpolatetime [options] timeResolutionInMinutes "
@@ -112,6 +114,7 @@ int run(int argc, const char* argv[])
 
   return 0;  // homma meni putkeen palauta 0 onnistumisen merkiksi!!!!
 }
+}  // namespace
 
 int main(int argc, const char* argv[])
 {

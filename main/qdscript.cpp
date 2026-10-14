@@ -8,6 +8,8 @@
 #include <smarttools/NFmiSmartToolUtil.h>
 #include <fstream>
 
+namespace
+{
 bool ReadScriptFile(const std::string &theFileName, std::string *theScript);
 void Usage(const std::string &theExecutableName);
 void Run(int argc, const char *argv[]);
@@ -17,6 +19,7 @@ std::vector<NFmiDataIdent> GetAddedParameters(const NFmiCmdLine& cmdline,
                                               NFmiQueryData* baseQueryData);
 std::unique_ptr<NFmiQueryData> CreateNewBaseData(NFmiQueryData &originalData,
                                                  const std::vector<NFmiDataIdent> &addedParameters);
+}  // namespace
 
 using namespace std;  // tätä ei saa sitten laittaa headeriin, eikä ennen includeja!!!!
 
@@ -34,6 +37,8 @@ int main(int argc, const char *argv[])
   return 0;  // homma meni putkeen palauta 0 onnistumisen merkiksi!!!!
 }
 
+namespace
+{
 void Run(int argc, const char *argv[])
 {
   NFmiCmdLine cmdline(argc, argv, "a!d!sli!o!A!");
@@ -79,7 +84,7 @@ void Run(int argc, const char *argv[])
   if (cmdline.isOption('l'))
     goThroughAllLevels = false;
 
-  if (NFmiSettings::Read(dictionaryFile) == false)
+  if (!NFmiSettings::Read(dictionaryFile))
     cerr << "Warning: dictionary string was not found, continuing..." << endl;
 
   string smartToolScript;
@@ -340,3 +345,4 @@ unique_ptr<NFmiQueryData> CreateNewBaseData(NFmiQueryData &originalData,
   }
   return qd2Ptr;
 }
+}  // namespace

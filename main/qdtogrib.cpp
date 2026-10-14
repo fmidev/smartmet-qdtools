@@ -44,7 +44,7 @@ struct Options
 
   std::string infile = "-";        // -i --infile
   std::string outfile = "-";       // -o --outfile
-  std::string packing = "";        // -p --packing, empty implies use ECCODES default
+  std::string packing;             // -p --packing, empty implies use ECCODES default
   bool grib1 = false;              // -1, --grib1
   bool grib2 = false;              // -2, --grib2
   bool split = false;              // -s --split
@@ -52,13 +52,15 @@ struct Options
   bool ignore_origintime = false;  // -I --ignore-origintime
   bool verbose = false;            // -v --verbose
   bool dump = false;               // -D --dump ; generate a grib_api dump
-  std::string centre = "";         // -C --centre
+  std::string centre;              // -C --centre
   int subcentre = 0;               // -S --subcentre
   bool list_centres = false;       // -L --list-centres
   NFmiLevel level;                 // -l --level
   ParamChangeTable ptable;         // -c --config
 };
 
+namespace
+{
 Options options;
 
 // ----------------------------------------------------------------------
@@ -573,7 +575,7 @@ void set_stereographic_geometry(NFmiFastQueryInfo &theInfo,
   gset(gribHandle, "jScansPositively", 1);
   gset(gribHandle, "iScansNegatively", 0);
 
-  auto *a = theInfo.Area();
+  const auto* a = theInfo.Area();
   const auto &pinfo = a->SpatialReference().projInfo();
 
   auto clon = pinfo.getDouble("lon_0");
@@ -668,7 +670,7 @@ void set_mercator_geometry(NFmiFastQueryInfo &theInfo,
  */
 // ----------------------------------------------------------------------
 
-static void set_producer(grib_handle *gribHandle)
+void set_producer(grib_handle *gribHandle)
 {
   if (options.centre.empty())
     return;
@@ -700,7 +702,7 @@ static void set_producer(grib_handle *gribHandle)
  */
 // ----------------------------------------------------------------------
 
-static void set_packing(grib_handle *gribHandle)
+void set_packing(grib_handle *gribHandle)
 {
   if (options.packing.empty())
     return;
@@ -714,7 +716,7 @@ static void set_packing(grib_handle *gribHandle)
  */
 // ----------------------------------------------------------------------
 
-static void set_geometry(NFmiFastQueryInfo &theInfo,
+void set_geometry(NFmiFastQueryInfo &theInfo,
                          grib_handle *gribHandle,
                          std::vector<double> &theValueArray)
 {
@@ -734,7 +736,7 @@ static void set_geometry(NFmiFastQueryInfo &theInfo,
 
 // ----------------------------------------------------------------------
 
-static NFmiMetTime get_origintime(NFmiFastQueryInfo &theInfo)
+NFmiMetTime get_origintime(NFmiFastQueryInfo &theInfo)
 {
   if (!options.ignore_origintime)
     return theInfo.OriginTime();
@@ -749,7 +751,7 @@ static NFmiMetTime get_origintime(NFmiFastQueryInfo &theInfo)
 
 // ----------------------------------------------------------------------
 
-static void set_times(NFmiFastQueryInfo &theInfo, grib_handle *gribHandle, bool use_minutes)
+void set_times(NFmiFastQueryInfo &theInfo, grib_handle *gribHandle, bool use_minutes)
 {
   NFmiMetTime orig_time = get_origintime(theInfo);
 
@@ -944,8 +946,8 @@ bool copy_values(NFmiFastQueryInfo &theInfo,
 
 void write_grib(FILE *out, grib_handle *gribHandle)
 {
-  const void *mesg;
-  size_t mesg_len;
+  const void* mesg = nullptr;
+  size_t mesg_len = 0;
   grib_get_message(gribHandle, &mesg, &mesg_len);
   if (fwrite(mesg, 1, mesg_len, out) != mesg_len)
     throw std::runtime_error("Failed to write the output file");
@@ -973,8 +975,8 @@ void write_grib(NFmiFastQueryInfo &theInfo, grib_handle *gribHandle, const std::
   if (!out)
     throw std::runtime_error("ERROR: cannot open file for writing: " + fullSplitFileName);
 
-  const void *mesg;
-  size_t mesg_len;
+  const void* mesg = nullptr;
+  size_t mesg_len = 0;
   grib_get_message(gribHandle, &mesg, &mesg_len);
   const bool written = (fwrite(mesg, 1, mesg_len, out) == mesg_len);
   if (fclose(out) != 0 || !written)
@@ -998,7 +1000,7 @@ int run(const int argc, char *argv[])
 
   grib_context *context = grib_context_get_default();
 
-  grib_handle *gribHandle;
+  grib_handle* gribHandle = nullptr;
   if (options.grib1)
     gribHandle = grib_handle_new_from_samples(context, "GRIB1");
   else if (options.grib2)
@@ -1016,7 +1018,7 @@ int run(const int argc, char *argv[])
   if (gribHandle == nullptr)
     throw std::runtime_error("ERROR: Unable to create grib handle\n");
 
-  if (qi.IsGrid() == false)
+  if (!qi.IsGrid())
     throw std::runtime_error("ERROR: data wasn't grid data, but station data.\n");
 
   FILE* out = nullptr;
@@ -1081,6 +1083,7 @@ int run(const int argc, char *argv[])
 
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 

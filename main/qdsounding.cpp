@@ -69,17 +69,13 @@ struct Options
   vector<string> locations;
   string timezone;
   string coordfile;
-  bool printlevelvalue;
+  bool printlevelvalue = false;
 
   Options()
-      : inputfile(),
-        parameters(),
-        stations(),
-        locations(),
-        timezone(NFmiSettings::Optional<string>("qdpoint::timezone", "Europe/Helsinki")),
+      : timezone(NFmiSettings::Optional<string>("qdpoint::timezone", "Europe/Helsinki")),
         coordfile(NFmiSettings::Optional<string>("qdpoint::coordinates",
-                                                 "/smartmet/share/coordinates/default.txt")),
-        printlevelvalue(false)
+                                                 "/smartmet/share/coordinates/default.txt"))
+
   {
   }
 };
@@ -90,6 +86,8 @@ struct Options
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 Options options;
 
 // ----------------------------------------------------------------------
@@ -467,6 +465,7 @@ int domain(int argc, const char *argv[])
 
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

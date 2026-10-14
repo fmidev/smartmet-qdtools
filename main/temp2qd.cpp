@@ -20,10 +20,13 @@
 
 using namespace std;
 
+namespace
+{
 const char *default_stations_file = "/usr/share/smartmet/stations.csv";
 
 void Domain(int argc, const char *argv[]);
 void Usage();
+}  // namespace
 
 int main(int argc, const char *argv[])
 {
@@ -43,6 +46,8 @@ int main(int argc, const char *argv[])
 // Kaytto-ohjeet
 // ----------------------------------------------------------------------
 
+namespace
+{
 void Usage()
 {
   //	cout << "Usage: temp2qd [options] fileFilter1[,fileFilter2,...] > output" << endl
@@ -60,6 +65,7 @@ void Usage()
        << "\t-t \tPut sounding times to nearest synoptic times." << endl
        << endl;
 }
+}  // namespace
 
 struct PointerDestroyer
 {
@@ -70,7 +76,9 @@ struct PointerDestroyer
   }
 };
 
-static void FillCombinedSoundingData(const vector<NFmiQueryData*>& theDataList,
+namespace
+{
+void FillCombinedSoundingData(const vector<NFmiQueryData*>& theDataList,
                                      NFmiFastQueryInfo &theInfo)
 {
   for (const auto& i : theDataList)
@@ -102,10 +110,10 @@ static void FillCombinedSoundingData(const vector<NFmiQueryData*>& theDataList,
   }
 }
 
-static NFmiQueryInfo MakeCombinedInnerInfo(vector<NFmiQueryData *> &theDataList,
+NFmiQueryInfo MakeCombinedInnerInfo(vector<NFmiQueryData *> &theDataList,
                                            const NFmiProducer &theWantedProducer)
 {
-  if (theDataList.size() == 0)
+  if (theDataList.empty())
     throw runtime_error("Error in MakeCombinedInnerInfo: no query datas in list.");
 
   if (theDataList.size() == 1)
@@ -158,7 +166,7 @@ static NFmiQueryInfo MakeCombinedInnerInfo(vector<NFmiQueryData *> &theDataList,
   return info;
 }
 
-static NFmiQueryData *CombineQueryDatas(vector<NFmiQueryData *> &theDataList,
+NFmiQueryData *CombineQueryDatas(vector<NFmiQueryData *> &theDataList,
                                         const NFmiProducer &theWantedProducer)
 {
   NFmiQueryInfo innerInfo(MakeCombinedInnerInfo(theDataList, theWantedProducer));
@@ -265,9 +273,9 @@ void Domain(int argc, const char *argv[])
       }
     }
   }
-  if (foundAnyFiles == false)
+  if (!foundAnyFiles)
     throw runtime_error("Error: Didn't find any files to read.");
-  if (couldDecodeSoundings == false)
+  if (!couldDecodeSoundings)
     throw runtime_error("Error: Couldn't decode any soundings from any files.");
   //	6. yhdistä lopuksi querydata yhdeksi kokonaisuudeksi
   NFmiQueryData *bigQData = ::CombineQueryDatas(qDataList, wantedProducer);
@@ -284,3 +292,4 @@ void Domain(int argc, const char *argv[])
   else
     throw runtime_error("Error CombineQueryDatas: coudn't combine datas.");
 }
+}  // namespace

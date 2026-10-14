@@ -26,6 +26,8 @@ static const int kDontUseForcedLevelValue = -9999999;
 // Kaytto-ohjeet
 // ----------------------------------------------------------------------
 
+namespace
+{
 void Usage()
 {
   cout << "Usage: qdcombine [options] directory [file2 file3...]> output" << endl
@@ -52,6 +54,7 @@ void Usage()
        << "   -p producer_id,name  Set producer id and name (for example 240,ecmwf)." << endl
        << endl;
 }
+}  // namespace
 
 struct PointerDestroyer
 {
@@ -62,7 +65,9 @@ struct PointerDestroyer
   }
 };
 
-static void ReadGridData(const vector<string>& theDataFileNames, MyGrid& theUsedGrid)
+namespace
+{
+void ReadGridData(const vector<string>& theDataFileNames, MyGrid& theUsedGrid)
 {
   for (const auto& theDataFileName : theDataFileNames)
   {
@@ -79,7 +84,7 @@ static void ReadGridData(const vector<string>& theDataFileNames, MyGrid& theUsed
   }
 }
 
-static void FillCombinedData(const vector<string> &theDataFileNames,
+void FillCombinedData(const vector<string> &theDataFileNames,
                              NFmiFastQueryInfo &theInfo,
                              NFmiLevel *theForcedLevel)
 {
@@ -141,7 +146,7 @@ static void FillCombinedData(const vector<string> &theDataFileNames,
   }              // for files
 }
 
-static void FillCombinedData(const vector<string> &theDataFileNames,
+void FillCombinedData(const vector<string> &theDataFileNames,
                              bool use_point_data,
                              NFmiFastQueryInfo &theInfo,
                              NFmiLevel *theForcedLevel)
@@ -213,6 +218,7 @@ static void FillCombinedData(const vector<string> &theDataFileNames,
     }              // for files
   }
 }
+}  // namespace
 
 struct LevelLessThan
 {
@@ -226,7 +232,9 @@ struct LevelLessThan
   }
 };
 
-static NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
+namespace
+{
+NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
                                            bool use_point_data,
                                            const MyGrid& theUsedGrid,
                                            NFmiLevel *theForcedLevel,
@@ -290,7 +298,7 @@ static NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
       {
         for (info.ResetLocation(); info.NextLocation();)
         {
-          auto *loc = info.Location();
+          const auto* loc = info.Location();
           // loc may by NFmiStation, NFmiLocation or NFmiRadarStation. We select NFmiStation
           NFmiStation station(
               loc->GetIdent(), loc->GetName(), loc->GetLongitude(), loc->GetLatitude());
@@ -486,6 +494,7 @@ int Run(int argc, const char *argv[])
 
   return 0;
 }
+}  // namespace
 
 int main(int argc, const char *argv[])
 try

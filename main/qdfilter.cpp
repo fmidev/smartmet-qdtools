@@ -93,6 +93,7 @@
 #include <newbase/NFmiTimeList.h>
 
 #include <boost/lexical_cast.hpp>
+#include <algorithm>
 #include <deque>
 #include <memory>
 #include <sstream>
@@ -108,6 +109,8 @@ using namespace boost;
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 void usage()
 {
   cout << "Usage: qdfilter [options] startoffset endoffset function querydata" << endl
@@ -255,7 +258,7 @@ NFmiTimeDescriptor MakeTimeDescriptor(NFmiFastQueryInfo& theQ,
   if (theTimes.size() > 3)
     throw runtime_error("Cannot extract timeinterval containing more than 3 values");
 
-  bool has_timestep = (theTimes.size() > 0);
+  bool has_timestep = (!theTimes.empty());
   bool all_timesteps = (!has_timestep && local_hours.empty() && utc_hours.empty());
 
   int dt1 = 0;
@@ -408,7 +411,7 @@ int run(int argc, const char* argv[])
 
   int opt_startoffset = 0;
   int opt_endoffset = 0;
-  string opt_function = "";
+  string opt_function;
   string opt_outfile = "-";
 
   // Read command line arguments
@@ -455,7 +458,7 @@ int run(int argc, const char* argv[])
   {
     opt_utc = false;
     opt_times = NFmiStringTools::Split<list<int> >(cmdline.OptionValue('t'));
-    if (opt_times.size() == 0 || opt_times.size() > 3)
+    if (opt_times.empty() || opt_times.size() > 3)
       throw runtime_error("Option -t argument must have 1-3 values");
   }
 
@@ -463,7 +466,7 @@ int run(int argc, const char* argv[])
   {
     opt_utc = true;
     opt_times = NFmiStringTools::Split<list<int> >(cmdline.OptionValue('T'));
-    if (opt_times.size() == 0 || opt_times.size() > 3)
+    if (opt_times.empty() || opt_times.size() > 3)
       throw runtime_error("Option -t argument must have 1-3 values");
   }
 
@@ -545,8 +548,7 @@ int run(int argc, const char* argv[])
     srcinfo->FirstTime();
     NFmiTime t1 = srcinfo->ValidTime();
     int minutes = t2.DifferenceInMinutes(t1);
-    if (opt_startoffset < -minutes)
-      opt_startoffset = -minutes;
+    opt_startoffset = std::max(opt_startoffset, -minutes);
   }
 
   // set the data modifier
@@ -585,6 +587,7 @@ int run(int argc, const char* argv[])
 
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

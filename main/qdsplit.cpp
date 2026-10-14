@@ -55,26 +55,16 @@ using namespace std;
 
 struct Options
 {
-  bool verbose;
-  bool shortnames;
-  bool setorigintime;
-  bool memorymapping;
-  int simultaneoustimes;
-  float missinglimit;
+  bool verbose = false;
+  bool shortnames = false;
+  bool setorigintime = false;
+  bool memorymapping = false;
+  int simultaneoustimes = 1;
+  float missinglimit = 100;
   string inputfile;
   string outputdir;
 
-  Options()
-      : verbose(false),
-        shortnames(false),
-        setorigintime(false),
-        memorymapping(false),
-        simultaneoustimes(1),
-        missinglimit(100),
-        inputfile(),
-        outputdir()
-  {
-  }
+  Options() {}
 };
 
 // ----------------------------------------------------------------------
@@ -83,6 +73,8 @@ struct Options
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 Options options;
 
 // ----------------------------------------------------------------------
@@ -464,6 +456,7 @@ int run(int argc, const char* argv[])
 
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

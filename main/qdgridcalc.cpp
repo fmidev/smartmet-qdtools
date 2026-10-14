@@ -18,6 +18,8 @@
 
 using namespace std;
 
+namespace
+{
 void Domain(int argc, const char *argv[]);
 
 // ----------------------------------------------------------------------
@@ -37,6 +39,7 @@ void Usage()
        << "\t\tother arguments (projectionstring x_km y_km)" << endl
        << endl;
 }
+}  // namespace
 
 int main(int argc, const char *argv[])
 {
@@ -52,7 +55,9 @@ int main(int argc, const char *argv[])
   return 0;  // homma meni putkeen palauta 0 onnistumisen merkiksi!!!!
 }
 
-static void PrintGridSizeInfo(const NFmiArea *area,
+namespace
+{
+void PrintGridSizeInfo(const NFmiArea *area,
                               unsigned long closestXGridSize,
                               unsigned long closestYGridSize,
                               bool fActualGridUsed)
@@ -107,7 +112,7 @@ static void PrintGridSizeInfo(const NFmiArea *area,
        << " km" << endl;
 }
 
-static void DoQdDataGridSizePrint(const string &theFileName)
+void DoQdDataGridSizePrint(const string &theFileName)
 {
   ifstream in(theFileName.c_str(), ios::binary);
   if (in)
@@ -149,7 +154,7 @@ void Domain(int argc, const char *argv[])
   }
 
   int numOfParams = cmdline.NumberofParameters();
-  if (doDataGridSizeCheck == false && numOfParams != 3)
+  if (!doDataGridSizeCheck && numOfParams != 3)
   {
     cout << "Error: Atleast 3 parameter expected, 'projectionstring x_km y_km'\n\n";
     ::Usage();
@@ -228,3 +233,4 @@ void Domain(int argc, const char *argv[])
     }
   }
 }
+}  // namespace

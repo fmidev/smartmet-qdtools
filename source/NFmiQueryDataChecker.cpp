@@ -38,19 +38,7 @@
 // Constructor/Destructor
 //--------------------------------------------------------
 NFmiQueryDataChecker::NFmiQueryDataChecker(NFmiOhjausData* theOhjausData)
-    : itsParamBag(),
-      fCheckOnlyWantedParams(false),
-      itsCheckedTimeDescriptor(),
-      fCheckOnlyWantedTimes(false),
-      itsCheckedLocations(),
-      itsRandomlyCheckedLocationCount(0),
-      itsLocationCheckType(0),
-      itsCheckList(0),
-      itsData(nullptr),
-      itsInfo(nullptr),
-      itsRandomLocationIndexies(),
-      fDoIndexRandomizing(true),
-      itsOhjausData(theOhjausData)
+    : itsOhjausData(theOhjausData)
 {
 }
 NFmiQueryDataChecker::~NFmiQueryDataChecker()

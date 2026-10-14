@@ -11,7 +11,9 @@
 #include <fstream>
 #include <iostream>
 
-static void Usage(const std::string& theExecutableName)
+namespace
+{
+void Usage(const std::string& theExecutableName)
 {
   NFmiFileString fileNameStr(theExecutableName);
   std::string usedFileName(
@@ -28,7 +30,7 @@ static void Usage(const std::string& theExecutableName)
       << std::endl;
 }
 
-static void run(int argc, const char* argv[])
+void run(int argc, const char* argv[])
 {
   NFmiCmdLine cmdLine(argc, argv, "n!t!");
   if (cmdLine.NumberofParameters() < 2)
@@ -66,6 +68,7 @@ static void run(int argc, const char* argv[])
   data->Write(fileOut);
   std::cerr << "stored data to file: " << fileOut << std::endl;
 }
+}  // namespace
 
 int main(int argc, const char* argv[])
 {

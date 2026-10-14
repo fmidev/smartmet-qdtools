@@ -51,7 +51,7 @@ using namespace std;
 
 const string default_paramsfile = "/usr/share/smartmet/parameters.csv";
 const string default_stationsfile = "/smartmet/share/csv/stations.csv";
-const string default_missingvalue = "";
+const string default_missingvalue;
 const int default_producer_number = kFmiSYNOP;
 const string default_producer_name = "SYNOP";
 
@@ -89,6 +89,8 @@ struct Options
   int leveltype = 5000;
 };
 
+namespace
+{
 Options options;
 
 // ----------------------------------------------------------------------
@@ -294,6 +296,7 @@ bool parse_options(int argc, char* argv[], Options& options)
 
   return true;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -338,6 +341,8 @@ using Params = map<int, ParamInfo>;
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 Params parse_params(const CsvTable& csv)
 {
   Params params;
@@ -371,6 +376,7 @@ Params parse_params(const CsvTable& csv)
 
   return params;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -395,6 +401,8 @@ using Stations = map<string, StationInfo>;
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 Stations parse_stations(const CsvTable& csv)
 {
   Stations stations;
@@ -442,7 +450,7 @@ NFmiHPlaceDescriptor create_hdesc(const CsvTable& csv, const Stations& stations)
   // List all stations
 
   set<string> used;
-  string last_id = "";
+  string last_id;
   for (const CsvTable::value_type& row : csv)
   {
     const string& id = row[options.stationcolumn];
@@ -608,7 +616,7 @@ NFmiTimeDescriptor create_tdesc(const CsvTable& csv, const Fmi::TimeZonePtr& tz)
   // List all times
 
   set<Fmi::DateTime> used;
-  string last_t = "";
+  string last_t;
   for (const CsvTable::value_type& row : csv)
   {
     const string& t = row[options.timecolumn];
@@ -640,6 +648,7 @@ NFmiTimeDescriptor create_tdesc(const CsvTable& csv, const Fmi::TimeZonePtr& tz)
 
   return NFmiTimeDescriptor(origintime, tlist);
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -649,6 +658,8 @@ NFmiTimeDescriptor create_tdesc(const CsvTable& csv, const Fmi::TimeZonePtr& tz)
 
 using LocationIndex = map<string, unsigned int>;
 
+namespace
+{
 LocationIndex make_location_index(NFmiFastQueryInfo& info,
                                   const CsvTable& csv,
                                   const Stations& stations)
@@ -824,6 +835,7 @@ int run(int argc, char* argv[])
 
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

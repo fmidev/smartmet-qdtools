@@ -30,6 +30,8 @@ using namespace std;
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 std::string changesuffix(const std::string &theName, const std::string &theSuffix)
 {
   string::size_type pos = theName.rfind('.');
@@ -210,6 +212,7 @@ int run(int argc, const char *argv[])
   }
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

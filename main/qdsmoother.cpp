@@ -132,6 +132,8 @@ using namespace std;
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 void usage()
 {
   cout << "Usage: qdsmoother [options] <conf> <input> <output>" << endl
@@ -151,6 +153,7 @@ void usage()
        << "\t\tBy default all data is smoothened" << endl
        << endl;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -160,13 +163,13 @@ void usage()
 
 struct Options
 {
-  bool verbose;
+  bool verbose = false;
 
   string config;
   string inputdata;
   string outputdata;
 
-  Options() : verbose(false) {}
+  Options() {}
 };
 
 // ----------------------------------------------------------------------
@@ -175,6 +178,8 @@ struct Options
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 Options options;
 
 // ----------------------------------------------------------------------
@@ -250,7 +255,7 @@ const NFmiParamDescriptor make_param_descriptor(NFmiFastQueryInfo& theQ)
   const string paramnames = NFmiSettings::Require<string>("parameters");
   const vector<string> params = NFmiStringTools::Split(paramnames);
 
-  if (params.size() == 0)
+  if (params.empty())
     throw runtime_error("The parameter list in variable 'parameters' is empty");
 
   NFmiEnumConverter converter;
@@ -492,6 +497,7 @@ int run(int argc, const char* argv[])
 
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

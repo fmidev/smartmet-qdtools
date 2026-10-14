@@ -28,7 +28,10 @@
 
 #include <functional>
 
+namespace
+{
 nctools::Options options;
+}  // namespace
 
 // case insensitive search of sub string from stackoverflow
 // http://stackoverflow.com/questions/3152241/case-insensitive-stdstring-find
@@ -48,6 +51,8 @@ struct my_equal
   const std::locale *loc_;
 };
 
+namespace
+{
 // find substring (case insensitive)
 template <typename T>
 int ci_find_substr(const T &str1, const T &str2, const std::locale &loc = std::locale())
@@ -59,6 +64,7 @@ int ci_find_substr(const T &str1, const T &str2, const std::locale &loc = std::l
   else
     return -1;  // not found
 }
+}  // namespace
 
 static const std::string staggeredKeyWord = "stag";
 static const std::string bottomTopKeyWord = "bottom_top";
@@ -68,20 +74,7 @@ namespace WRFData
 using DimensionMap = std::map<std::string, netCDF::NcDim>;
 struct TotalDimensionData
 {
-  TotalDimensionData()
-      : timeDimName(),
-        timeDimSize(0),
-        levDimName(),
-        levDimSize(0),
-        levDimStaggered(false),
-        xDimName(),
-        xDimSize(0),
-        xDimStaggered(false),
-        yDimName(),
-        yDimSize(0),
-        yDimStaggered(false)
-  {
-  }
+  TotalDimensionData() {}
 
   // Tarkistaa onko kyseessä staggered dimensio mukana ja laittaa tarvittaessa liput päälle.
   void CheckStaggered()
@@ -189,16 +182,16 @@ struct TotalDimensionData
   }
 
   std::string timeDimName;
-  int timeDimSize;
+  int timeDimSize = 0;
   std::string levDimName;
-  int levDimSize;
-  bool levDimStaggered;
+  int levDimSize = 0;
+  bool levDimStaggered = false;
   std::string xDimName;
-  int xDimSize;
-  bool xDimStaggered;
+  int xDimSize = 0;
+  bool xDimStaggered = false;
   std::string yDimName;
-  int yDimSize;
-  bool yDimStaggered;
+  int yDimSize = 0;
+  bool yDimStaggered = false;
 };
 
 // Erilaiset dimensiopaketit ja niihin liittyvien parametrien nimet.
@@ -208,7 +201,9 @@ const int MissingInt = -999999;
 const double MissingDouble = -999999.;
 }  // namespace WRFData
 
-static void PrintNcDimension(const netCDF::NcDim& dim, int indexZeroBased)
+namespace
+{
+void PrintNcDimension(const netCDF::NcDim& dim, int indexZeroBased)
 {
   std::cerr << "#" << indexZeroBased + 1 << " - ";
   std::cerr << "name: " << dim.getName() << " id: " << dim.getId() << " size: " << dim.getSize();
@@ -216,7 +211,7 @@ static void PrintNcDimension(const netCDF::NcDim& dim, int indexZeroBased)
 }
 
 // Haetaan kaikki dimensiot erilliseen map:iin.
-static WRFData::DimensionMap GetNCDimensionMap(const nctools::Options& options,
+WRFData::DimensionMap GetNCDimensionMap(const nctools::Options& options,
                                                const netCDF::NcFile& ncFile)
 {
   try
@@ -241,7 +236,7 @@ static WRFData::DimensionMap GetNCDimensionMap(const nctools::Options& options,
   }
 }
 
-static WRFData::TotalDimensionData GetTotalDimensionDataFromParam(const nctools::Options& options,
+WRFData::TotalDimensionData GetTotalDimensionDataFromParam(const nctools::Options& options,
                                                                   const netCDF::NcVar& var)
 {
   try
@@ -309,7 +304,7 @@ static WRFData::TotalDimensionData GetTotalDimensionDataFromParam(const nctools:
   }
 }
 
-static void AddDimensionData(WRFData::TotalDimensionDataSet &dimDataSet,
+void AddDimensionData(WRFData::TotalDimensionDataSet &dimDataSet,
                              const WRFData::TotalDimensionData &dimData,
                              const netCDF::NcVar& var)
 {
@@ -342,7 +337,7 @@ static void AddDimensionData(WRFData::TotalDimensionDataSet &dimDataSet,
 // Lisäksi liitetään kaikki dimensioPaketteihin niihin liittyvät parametrit.
 // Näistä dimensiopaketeista ja niihin liittyvistä parametreista voidaan tehdä myöhemmin
 // erillisiä queryInfoja eri tulos datoille.
-static WRFData::TotalDimensionDataSet GetNCTotalDimensionDataSet(const nctools::Options& options,
+WRFData::TotalDimensionDataSet GetNCTotalDimensionDataSet(const nctools::Options& options,
                                                                  const netCDF::NcFile &ncFile)
 {
   try
@@ -366,7 +361,7 @@ static WRFData::TotalDimensionDataSet GetNCTotalDimensionDataSet(const nctools::
 }
 
 template <typename T>
-static bool GetGlobalAttributeValue(const std::string &attributeName,
+bool GetGlobalAttributeValue(const std::string &attributeName,
                                     nctools::AttributesMap &globalAttributes,
                                     T &valueOut)
 {
@@ -396,7 +391,7 @@ static bool GetGlobalAttributeValue(const std::string &attributeName,
   }
 }
 
-static int GetWRFGlobalAttributeInteger(const netCDF::NcFile &ncFile,
+int GetWRFGlobalAttributeInteger(const netCDF::NcFile &ncFile,
                                         const std::string &attributeName,
                                         nctools::AttributesMap &globalAttributes)
 {
@@ -421,7 +416,7 @@ static int GetWRFGlobalAttributeInteger(const netCDF::NcFile &ncFile,
   }
 }
 
-static double GetWRFGlobalAttributeDouble(const netCDF::NcFile &ncFile,
+double GetWRFGlobalAttributeDouble(const netCDF::NcFile &ncFile,
                                           const std::string &attributeName,
                                           nctools::AttributesMap &globalAttributes)
 {
@@ -446,13 +441,13 @@ static double GetWRFGlobalAttributeDouble(const netCDF::NcFile &ncFile,
   }
 }
 
-static std::string GetWRFGlobalAttributeString(const netCDF::NcFile &ncFile,
+std::string GetWRFGlobalAttributeString(const netCDF::NcFile &ncFile,
                                                const std::string &attributeName,
                                                nctools::AttributesMap &globalAttributes)
 {
   try
   {
-    std::string returnValue = "";
+    std::string returnValue;
     if (!::GetGlobalAttributeValue(attributeName, globalAttributes, returnValue))
     {
       const std::multimap< std::string, netCDF::NcGroupAtt> attributes = ncFile.getAtts();
@@ -471,7 +466,7 @@ static std::string GetWRFGlobalAttributeString(const netCDF::NcFile &ncFile,
   }
 }
 
-static void PrintWRFGlobalAttributes(const nctools::Options& options, const netCDF::NcFile& ncFile)
+void PrintWRFGlobalAttributes(const nctools::Options& options, const netCDF::NcFile& ncFile)
 {
   try
   {
@@ -493,30 +488,13 @@ static void PrintWRFGlobalAttributes(const nctools::Options& options, const netC
     throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
+}  // namespace
 
 struct BaseGridAreaData
 {
-  BaseGridAreaData()
-      : baseAreaString(),
-        DX(0),
-        DY(0),
-        baseSizeX(0),
-        baseSizeY(0),
-        baseAreaPtr(),
-        baseGrid(),
-        baseHybridLevels(),
-        doFinalDataProjection(false),
-        finalDataGrid()
-  {
-  }
+  BaseGridAreaData() {}
 
-  bool isEmpty() const
-  {
-    if (!DX || !DY || !baseSizeX || !baseSizeY || baseAreaString.empty())
-      return true;
-    else
-      return false;
-  }
+  bool isEmpty() const { return !DX || !DY || !baseSizeX || !baseSizeY || baseAreaString.empty(); }
 
   void calcBaseGrid()
   {
@@ -563,22 +541,24 @@ struct BaseGridAreaData
 
   std::string baseAreaString;  // NFmiAreaFactory:lle menevän area-stringin perusosa, joka on
                                // koostettu netCdf:n metatiedoista
-  double DX;                   // hilakoko x-suunnassa metreissä
-  double DY;                   // hilakoko y-suunnassa metreissä
-  int baseSizeX;               // nc-tiedoston metadatoista otettu perus hilan koko (ei staggered)
-  int baseSizeY;
+  double DX = 0;               // hilakoko x-suunnassa metreissä
+  double DY = 0;               // hilakoko y-suunnassa metreissä
+  int baseSizeX = 0;           // nc-tiedoston metadatoista otettu perus hilan koko (ei staggered)
+  int baseSizeY = 0;
   NFmiAreaFactory::return_type baseAreaPtr;
   NFmiGrid baseGrid;
   NFmiVPlaceDescriptor baseHybridLevels;  // tähän talletetaan bottom_top-tyyppinen level-rakenne
-  bool doFinalDataProjection;  // jos optioilla on annettu aluemääritelyt, johon data lopullisesti
-                               // interpoloidaan, tämä on true
+  bool doFinalDataProjection = false;     // jos optioilla on annettu aluemääritelyt, johon data
+                                       // lopullisesti interpoloidaan, tämä on true
   NFmiGrid finalDataGrid;      // Tässä on lopullinen datan alue+hila, jos optioilla on sellainen
                                // haluttu tehdä
 };
 
+namespace
+{
 // Annetun stringin pitää sisältää kolme osiota eroteltuna ':' merkeillä:
 // Esim. latlon:x1,y1,x2,y2:xsize,ysize
-static NFmiGrid GetGridFromProjectionStr(const std::string &theProjectionStr)
+NFmiGrid GetGridFromProjectionStr(const std::string &theProjectionStr)
 {
   try
   {
@@ -618,7 +598,7 @@ static NFmiGrid GetGridFromProjectionStr(const std::string &theProjectionStr)
   }
 }
 
-static std::string MakeGridSizeString(int xSize, int ySize)
+std::string MakeGridSizeString(int xSize, int ySize)
 {
   std::string str;
   str += NFmiStringTools::Convert(xSize);
@@ -627,7 +607,7 @@ static std::string MakeGridSizeString(int xSize, int ySize)
   return str;
 }
 
-static std::string MakePointString(const NFmiPoint &p)
+std::string MakePointString(const NFmiPoint &p)
 {
   std::string str;
   str += NFmiStringTools::Convert(p.X());
@@ -636,7 +616,7 @@ static std::string MakePointString(const NFmiPoint &p)
   return str;
 }
 
-static std::string MakeAreaCornersString(const NFmiPoint &bottomLeft, const NFmiPoint &topRight)
+std::string MakeAreaCornersString(const NFmiPoint &bottomLeft, const NFmiPoint &topRight)
 {
   std::string str;
   str += MakePointString(bottomLeft);
@@ -645,7 +625,7 @@ static std::string MakeAreaCornersString(const NFmiPoint &bottomLeft, const NFmi
   return str;
 }
 
-static void SetFinalDataAreaInfo(const nctools::Options& options, BaseGridAreaData& areaData)
+void SetFinalDataAreaInfo(const nctools::Options& options, BaseGridAreaData& areaData)
 {
   try
   {
@@ -731,7 +711,7 @@ static void SetFinalDataAreaInfo(const nctools::Options& options, BaseGridAreaDa
 // Rakentaa metatietojen avulla pohja stringin, johon myöhemmin sitten voidaan
 // liittää hila koko -osio.
 // DXout ja DYout -parametreihin talletetaan hilapisteen koko metreissää
-static BaseGridAreaData GetBaseAreaData(nctools::Options &options, const netCDF::NcFile &ncFile)
+BaseGridAreaData GetBaseAreaData(nctools::Options &options, const netCDF::NcFile &ncFile)
 {
   try
   {
@@ -847,7 +827,7 @@ NFmiParamDescriptor CreateWRFParamDescriptor(
   }
 }
 
-static netCDF::NcVar GetWRFVariable(const netCDF::NcFile &ncFile, const std::string &varName)
+netCDF::NcVar GetWRFVariable(const netCDF::NcFile &ncFile, const std::string &varName)
 {
   try
   {
@@ -868,14 +848,14 @@ static netCDF::NcVar GetWRFVariable(const netCDF::NcFile &ncFile, const std::str
   }
 }
 
-static int vcfix_isdigit(int ch)
+int vcfix_isdigit(int ch)
 {
   return isdigit(static_cast<unsigned char>(ch));
 }
 // Jos wrf-datassa on useita aika-askelia, ei netCdf-api jostain syystäosaa erotella niitä
 // erilleen, joten minun piti
 // tehdäomaa koodia, joka osaa irroittaa tarvittaessa eri ajat.
-static std::string GetTimeStr(int index, const netCDF::NcVar& timeVar)
+std::string GetTimeStr(int index, const netCDF::NcVar& timeVar)
 {
   try
   {
@@ -920,7 +900,7 @@ static std::string GetTimeStr(int index, const netCDF::NcVar& timeVar)
   }
 }
 
-static bool IsInTimeStampFormat(const std::string &timeStr)
+bool IsInTimeStampFormat(const std::string &timeStr)
 {
   try
   {
@@ -937,7 +917,7 @@ static bool IsInTimeStampFormat(const std::string &timeStr)
   return true;  // oletetaan että kyse on time-stamp stringeistä  muotoa: 2013-09-24_00:00:00
 }
 
-static NFmiTimeDescriptor CreateWRFTimeDescriptor(const netCDF::NcFile &ncFile)
+NFmiTimeDescriptor CreateWRFTimeDescriptor(const netCDF::NcFile &ncFile)
 {
   try
   {
@@ -996,7 +976,7 @@ static NFmiTimeDescriptor CreateWRFTimeDescriptor(const netCDF::NcFile &ncFile)
   }
 }
 
-static NFmiHPlaceDescriptor CreateWRFHplaceDescriptor(
+NFmiHPlaceDescriptor CreateWRFHplaceDescriptor(
     const WRFData::TotalDimensionDataSet::value_type& totalDiemnsionData,
     const BaseGridAreaData &areaData)
 {
@@ -1007,7 +987,7 @@ static NFmiHPlaceDescriptor CreateWRFHplaceDescriptor(
   return NFmiHPlaceDescriptor(grid);
 }
 
-static netCDF::NcVar GetWantedLevelVariable(const netCDF::NcFile &ncFile,
+netCDF::NcVar GetWantedLevelVariable(const netCDF::NcFile &ncFile,
                                      const std::string &levelDimName,
                                      FmiLevelType &usedLevelTypeOut)
 {
@@ -1044,7 +1024,7 @@ static netCDF::NcVar GetWantedLevelVariable(const netCDF::NcFile &ncFile,
   }
 }
 
-static bool IsBaseHybridLevelType(
+bool IsBaseHybridLevelType(
     const WRFData::TotalDimensionDataSet::value_type& totalDiemnsionData,
     FmiLevelType usedLevelType)
 {
@@ -1060,7 +1040,7 @@ static bool IsBaseHybridLevelType(
   return false;
 }
 
-static NFmiVPlaceDescriptor CreateWRFVplaceDescriptor(
+NFmiVPlaceDescriptor CreateWRFVplaceDescriptor(
     const nctools::Options& options,
     const WRFData::TotalDimensionDataSet::value_type& totalDiemnsionData,
     const netCDF::NcFile &ncFile,
@@ -1115,7 +1095,7 @@ static NFmiVPlaceDescriptor CreateWRFVplaceDescriptor(
   }
 }
 
-static NFmiQueryInfo *CreateNewInnerInfo(
+NFmiQueryInfo *CreateNewInnerInfo(
     nctools::Options &options,
     WRFData::TotalDimensionDataSet::value_type &totalDimensionData,
     BaseGridAreaData &areaData,
@@ -1143,7 +1123,7 @@ static NFmiQueryInfo *CreateNewInnerInfo(
   }
 }
 
-static std::string GetParamNamesListString(const std::shared_ptr<NFmiQueryData>& data)
+std::string GetParamNamesListString(const std::shared_ptr<NFmiQueryData>& data)
 {
   std::string namesStr;
   const NFmiParamDescriptor &parDesc = data->Info()->ParamDescriptor();
@@ -1156,18 +1136,15 @@ static std::string GetParamNamesListString(const std::shared_ptr<NFmiQueryData>&
   return namesStr;
 }
 
-static bool IsBetweenLimits(float value, float limit1, float limit2)
+bool IsBetweenLimits(float value, float limit1, float limit2)
 {
   // laitetaan limitit aina nousevaan järjestykseen
   if (limit1 > limit2)
     std::swap(limit1, limit2);
-  if (limit1 <= value && value <= limit2)
-    return true;
-  else
-    return false;
+  return limit1 <= value && value <= limit2;
 }
 
-static bool FindClosestLevelIndexies(float searchedLevelValue,
+bool FindClosestLevelIndexies(float searchedLevelValue,
                                      NFmiFastQueryInfo &staggeredInfo,
                                      unsigned long &lowerLevelIndex,
                                      unsigned long &upperLevelIndex)
@@ -1207,7 +1184,7 @@ static bool FindClosestLevelIndexies(float searchedLevelValue,
   }
 }
 
-static std::shared_ptr<NFmiQueryData> MakeLevelStaggeredDataFix(
+std::shared_ptr<NFmiQueryData> MakeLevelStaggeredDataFix(
     const std::shared_ptr<NFmiQueryData> &data,
     const WRFData::TotalDimensionDataSet::value_type &totalDimensionData,
     const BaseGridAreaData &areaData)
@@ -1287,7 +1264,7 @@ static std::shared_ptr<NFmiQueryData> MakeLevelStaggeredDataFix(
   }
 }
 
-static std::shared_ptr<NFmiQueryData> MakeStaggeredDataFix(
+std::shared_ptr<NFmiQueryData> MakeStaggeredDataFix(
     const nctools::Options& options,
     const std::shared_ptr<NFmiQueryData> &data,
     const WRFData::TotalDimensionDataSet::value_type &totalDimensionData,
@@ -1326,27 +1303,21 @@ static std::shared_ptr<NFmiQueryData> MakeStaggeredDataFix(
   }
 }
 
-static bool AreDataCombinable(const std::shared_ptr<NFmiQueryData> &data1,
+bool AreDataCombinable(const std::shared_ptr<NFmiQueryData> &data1,
                               const std::shared_ptr<NFmiQueryData> &data2)
 {
   // riittää kun hila ja level tiedot on samoja, tällöin fiksatut datat voidaan yhdistää base-dataan
-  if (data1->Info()->HPlaceDescriptor() == data2->Info()->HPlaceDescriptor() &&
-      data1->Info()->VPlaceDescriptor() == data2->Info()->VPlaceDescriptor())
-    return true;
-  else
-    return false;
+  return data1->Info()->HPlaceDescriptor() == data2->Info()->HPlaceDescriptor() &&
+         data1->Info()->VPlaceDescriptor() == data2->Info()->VPlaceDescriptor();
 }
 
-static bool DataIndexUsed(size_t index, const std::set<size_t> &usedDataIndexies)
+bool DataIndexUsed(size_t index, const std::set<size_t> &usedDataIndexies)
 {
   auto it = usedDataIndexies.find(index);
-  if (it != usedDataIndexies.end())
-    return true;
-  else
-    return false;
+  return it != usedDataIndexies.end();
 }
 
-static std::vector<std::shared_ptr<NFmiQueryData> > CombineFixedStaggeredData(
+std::vector<std::shared_ptr<NFmiQueryData> > CombineFixedStaggeredData(
     const nctools::Options& options, const std::vector<std::shared_ptr<NFmiQueryData> >& dataVector)
 {
   try
@@ -1406,7 +1377,7 @@ static std::vector<std::shared_ptr<NFmiQueryData> > CombineFixedStaggeredData(
   }
 }
 
-static std::vector<std::shared_ptr<NFmiQueryData> > DoFinalProjisionToData(
+std::vector<std::shared_ptr<NFmiQueryData> > DoFinalProjisionToData(
     const nctools::Options& options,
     const BaseGridAreaData &areaData,
     std::vector<std::shared_ptr<NFmiQueryData> > &dataVector)
@@ -1452,7 +1423,7 @@ static std::vector<std::shared_ptr<NFmiQueryData> > DoFinalProjisionToData(
   }
 }
 
-static std::string MakeFinalProducerName(
+std::string MakeFinalProducerName(
     const std::string &producerName,
     const WRFData::TotalDimensionDataSet::value_type &totalDimensionData,
     const NFmiFastQueryInfo &info)
@@ -1487,7 +1458,7 @@ static std::string MakeFinalProducerName(
   }
 }
 
-static std::string GetProducerNamePostFix(const std::shared_ptr<NFmiQueryData>& data)
+std::string GetProducerNamePostFix(const std::shared_ptr<NFmiQueryData>& data)
 {
   std::string producerName = data->Info()->Producer()->GetName().CharPtr();
   std::string::size_type pos = producerName.find_last_of('_');
@@ -1501,7 +1472,7 @@ static std::string GetProducerNamePostFix(const std::shared_ptr<NFmiQueryData>& 
 // ei välitä CV käytännöistä vaan yrittää tulkita suoraan dataa,
 // sen dimensioita ja variable:ita.
 // Tämä on alustavasti tehty WRF-datojen pohjalta.
-static int DoWrfData(nctools::Options &options,
+int DoWrfData(nctools::Options &options,
                      nctools::NcFileExtended &ncFile,
                      const netCDF::NcFile &nc_raw,
                      const nctools::ParamConversions &paramconvs)
@@ -1537,7 +1508,7 @@ static int DoWrfData(nctools::Options &options,
       }
     }
 
-    if (dataVector.size())
+    if (!dataVector.empty())
     {
       dataVector = DoFinalProjisionToData(options, areaData, dataVector);
       dataVector = CombineFixedStaggeredData(options, dataVector);
@@ -1607,6 +1578,7 @@ int run(int argc, char *argv[])
     throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

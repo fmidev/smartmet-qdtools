@@ -129,7 +129,7 @@ bool parse_options(int argc, char *argv[], Options &options)
       "autoids,U",
       po::bool_switch(&options.autoid),
       ((std::string) "generate ids automatically for unknown parameters starting from id " +
-       std::to_string((int)nctools::unknownParIdCounterBegin))
+       std::to_string(nctools::unknownParIdCounterBegin))
           .c_str())("verbose,v", po::bool_switch(&options.verbose), "set verbose mode on")(
       "version,V", "display version number")(
       "excludeparams,x", po::value(&tmpExcludeParamsStr), "exclude params")(
@@ -298,11 +298,11 @@ ParamConversions read_netcdf_configs(const Options &options)
   //  Parameter list is read starting from beginning so put most important ones first
 
   // Command line
-  if (options.parameters.size() > 0)
+  if (!options.parameters.empty())
     for (auto line : options.parameters)
       try
       {
-        if (line.length() < 1)
+        if (line.empty())
           throw Fmi::Exception(BCP, "A parameter given on command line is of zero length");
         if (options.verbose)
           std::cout << "Adding parameter mapping " << line << std::endl;
@@ -322,7 +322,7 @@ ParamConversions read_netcdf_configs(const Options &options)
       }
 
   // Additional config files
-  if (options.configs.size() > 0)
+  if (!options.configs.empty())
     for (auto file : options.configs)
       try
       {
@@ -354,10 +354,10 @@ ParamConversions read_netcdf_configs(const Options &options)
   return csv.paramconvs;
 }
 
-CsvParams::CsvParams(const Options &optionsIn) : paramconvs(), options(optionsIn) {}
+CsvParams::CsvParams(const Options& optionsIn) : options(optionsIn) {}
 void CsvParams::add(const Fmi::CsvReader::row_type &row)
 {
-  if (row.size() == 0)
+  if (row.empty())
     return;
   if (row[0].substr(0, 1) == "#")
     return;
@@ -381,7 +381,9 @@ void CsvParams::add(const Fmi::CsvReader::row_type &row)
  */
 // ----------------------------------------------------------------------
 
-static FmiParameterName getIdFromString(NFmiEnumConverter &converter, const std::string &name)
+namespace
+{
+FmiParameterName getIdFromString(NFmiEnumConverter &converter, const std::string &name)
 {
   // Convert numbers directly to int, other through the converter
   if (name.empty())
@@ -394,6 +396,7 @@ static FmiParameterName getIdFromString(NFmiEnumConverter &converter, const std:
   // Fully numeric, just return the id
   return static_cast<FmiParameterName>(std::stoi(name));
 }
+}  // namespace
 
 ParamInfo parse_parameter(const std::string &name,
                           const ParamConversions &paramconvs,

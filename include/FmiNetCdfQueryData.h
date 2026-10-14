@@ -29,63 +29,45 @@ enum FmiNcLevelType
 class FmiVarInfo
 {
  public:
-  FmiVarInfo()
-      : itsVarName(),
-        itsDimName(),
-        itsParId(0),
-        itsIndex(-1),
-        itsFillValue(kFloatMissing),
-        itsNcLevelType(kFmiNcNoLevelType)
-  {
-  }
+  FmiVarInfo() : itsFillValue(kFloatMissing) {}
 
   // private:
   std::string itsVarName;
   std::string itsDimName;
-  int itsParId;        // tähän haluttu FMI par id
-  int itsIndex;        // muuttujan (var) indeksi NC-tiedostossa
+  int itsParId = 0;    // tähän haluttu FMI par id
+  int itsIndex = -1;   // muuttujan (var) indeksi NC-tiedostossa
   float itsFillValue;  // mikä arvo on nc:ssä puuttuva arvo (_FillValue -atribuutti), nämä pitää
                        // sitten korvata kFloatMissing:illä
-  FmiNcLevelType itsNcLevelType;  // tarkoittaa että tämä muuttuja kuuluu joko pinta dataan tai
-                                  // multi-level-dataan
+  FmiNcLevelType itsNcLevelType = kFmiNcNoLevelType;  // tarkoittaa että tämä muuttuja kuuluu joko
+                                                      // pinta dataan tai multi-level-dataan
 };
 
 class FmiXYDimVarInfo
 {
  public:
-  FmiXYDimVarInfo() : itsVarName(), itsIndex(-1), itsValues() {}
+  FmiXYDimVarInfo() {}
   bool IsEmpty() const { return (itsIndex == -1); }
   // private:
   std::string itsVarName;
-  int itsIndex;  // muuttujan (var) indeksi NC-tiedostossa
+  int itsIndex = -1;  // muuttujan (var) indeksi NC-tiedostossa
   std::vector<float> itsValues;
 };
 
 class FmiZDimVarInfo
 {
  public:
-  FmiZDimVarInfo()
-      : itsVarName(),
-        itsDimName(),
-        itsLevelUnitName(),
-        itsIndex(-1),
-        itsLevelType(0),
-        itsValues(),
-        itsLevels(),
-        itsNcLevelType(kFmiNcNoLevelType)
-  {
-  }
+  FmiZDimVarInfo() {}
 
   // private:
   std::string itsVarName;
   std::string itsDimName;
   std::string itsLevelUnitName;
-  int itsIndex;      // muuttujan (var) indeksi NC-tiedostossa
-  int itsLevelType;  // NC type vai FMI type?
+  int itsIndex = -1;     // muuttujan (var) indeksi NC-tiedostossa
+  int itsLevelType = 0;  // NC type vai FMI type?
   std::vector<float> itsValues;
   NFmiLevelBag itsLevels;
-  FmiNcLevelType itsNcLevelType;  // tarkoittaa että tämä muuttuja kuuluu joko pinta dataan tai
-                                  // multi-level-dataan
+  FmiNcLevelType itsNcLevelType = kFmiNcNoLevelType;  // tarkoittaa että tämä muuttuja kuuluu joko
+                                                      // pinta dataan tai multi-level-dataan
 };
 
 enum FmiNcTimeOffsetType
@@ -98,26 +80,17 @@ enum FmiNcTimeOffsetType
 class FmiTDimVarInfo
 {
  public:
-  FmiTDimVarInfo()
-      : itsVarName(),
-        itsIndex(-1),
-        itsOffsetValues(),
-        itsEpochTimeStr(),
-        itsEpochTime(),
-        itsTimeList(),
-        itsTimeOffsetType(kFmiNcNoTimeType)
-  {
-  }
+  FmiTDimVarInfo() {}
   void CalcTimeList();
 
   // private:
   std::string itsVarName;
-  int itsIndex;  // muuttujan (var) indeksi NC-tiedostossa
+  int itsIndex = -1;  // muuttujan (var) indeksi NC-tiedostossa
   std::vector<long> itsOffsetValues;
   std::string itsEpochTimeStr;
   NFmiMetTime itsEpochTime;
   NFmiTimeList itsTimeList;
-  FmiNcTimeOffsetType itsTimeOffsetType;
+  FmiNcTimeOffsetType itsTimeOffsetType = kFmiNcNoTimeType;
 };
 
 enum FmiNcProjectionType
@@ -130,11 +103,8 @@ class FmiProjectionInfo
 {
  public:
   FmiProjectionInfo()
-      : itsProjectionType(kFmiNcNoProjection),
-        La1(kFloatMissing),
+      : La1(kFloatMissing),
         Lo1(kFloatMissing),
-        Nx(-1),
-        Ny(-1),
         LoV(kFloatMissing),
         Latin1(kFloatMissing),
         Latin2(kFloatMissing),
@@ -144,14 +114,14 @@ class FmiProjectionInfo
   }
 
   // private:
-  FmiNcProjectionType itsProjectionType;
+  FmiNcProjectionType itsProjectionType = kFmiNcNoProjection;
 
   // Seuraavia arvoja tarvitaan ainakin LAPS-datassa stereograafisessa projektiossa
   // Muuttuja nimet tässä ovat samoja kuin nc-datassa.
   float La1;     // projektion 1. kulmapisteen lat-arvo (bottom-left?)
   float Lo1;     // projektion 1. kulmapisteen lon-arvo (bottom-left?)
-  long Nx;       // hilan x-koko
-  long Ny;       // hilan y-koko
+  long Nx = -1;  // hilan x-koko
+  long Ny = -1;  // hilan y-koko
   float LoV;     // orientation of grid (central-longitude)
   float Latin1;  // orientation of grid (true-latitude)
   float Latin2;  // orientation of grid (central-latitude)
@@ -174,7 +144,7 @@ class FmiNcMetaData
   FmiZDimVarInfo itsMultiLevelInfo;
   FmiVarInfo itsSurfaceLevelInfo;
   NFmiParamBag itsParams;
-  NFmiQueryInfo *itsMetaInfo;
+  NFmiQueryInfo* itsMetaInfo = nullptr;
 };
 
 class FmiNetCdfQueryData
@@ -209,7 +179,7 @@ class FmiNetCdfQueryData
   bool IsSurfaceVariable(const netCDF::NcVar& theVar) const;
   void MakesureSurfaceMetaDataIsInitialized();
 
-  bool fDataOk;                         // onko tämä initialisoitu ja onko annettu NcFile ollut ok.
+  bool fDataOk = false;                 // onko tämä initialisoitu ja onko annettu NcFile ollut ok.
   FmiTDimVarInfo itsTInfo;              // aika muuttujan tiedot tähän
   FmiXYDimVarInfo itsXInfo;             // X eli hilan longitude piste muuttujan tiedot tähän
   FmiXYDimVarInfo itsYInfo;             // Y eli hilan latitude piste muuttujan tiedot tähän

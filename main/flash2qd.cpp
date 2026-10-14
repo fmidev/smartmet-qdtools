@@ -34,6 +34,8 @@
 #include <fstream>
 #include <stdexcept>
 
+namespace
+{
 bool ReadFlashFile(const std::string &theFileName,
                    int theSkipLines,
                    std::vector<std::string> &theFlashStrings);
@@ -42,6 +44,7 @@ NFmiQueryData *CreateFlashQueryData(std::vector<std::string> &theFlashStrings,
 void Usage();
 void Domain(int argc, const char *argv[]);
 int GetIntegerOptionValue(const NFmiCmdLine &theCmdline, char theOption);
+}  // namespace
 
 using namespace std;  // tätä ei saa sitten laittaa headeriin, eikä ennen includeja!!!!
 
@@ -59,6 +62,8 @@ int main(int argc, const char *argv[])
   return 0;  // homma meni putkeen palauta 0 onnistumisen merkiksi!!!!
 }
 
+namespace
+{
 void Domain(int argc, const char *argv[])
 {
   string flashFileName;
@@ -109,6 +114,7 @@ void Domain(int argc, const char *argv[])
   else
     throw runtime_error("Salama QueryDataa ei saatu luotua.");
 }
+}  // namespace
 
 struct FlashData
 {
@@ -120,6 +126,8 @@ struct FlashData
   float accuracy;
 };
 
+namespace
+{
 // data stringi siis muotoa:
 // YYYYMMDDHHmmss lon lat power multiplicity accuracy
 // eli esim.
@@ -283,3 +291,4 @@ int GetIntegerOptionValue(const NFmiCmdLine &theCmdline, char theOption)
   throw runtime_error(string("Error: '") + theOption +
                       "' option value must be integer, exiting...");
 }
+}  // namespace

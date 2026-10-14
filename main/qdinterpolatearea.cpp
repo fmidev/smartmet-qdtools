@@ -37,6 +37,8 @@ using namespace std;  // tätä ei saa sitten laittaa headeriin, eikä ennen inc
 // Kaytto-ohjeet
 // ----------------------------------------------------------------------
 
+namespace
+{
 void usage()
 {
   cout << "Usage: qdinterpolatearea [options] controlGridFile < inputData > outputData\n"
@@ -65,7 +67,7 @@ void usage()
 
 void get_grid_size(const string &theGridSizeString, int &theXSize, int &theYSize)
 {
-  if (theGridSizeString == "")
+  if (theGridSizeString.empty())
     throw runtime_error("Grid size option (-s) was empty.");
   else
   {
@@ -179,6 +181,7 @@ void run(int argc, const char *argv[])
 
   newData->Write(outputfile);
 }
+}  // namespace
 
 int main(int argc, const char *argv[])
 {

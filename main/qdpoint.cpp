@@ -65,8 +65,11 @@
 
 using namespace std;
 
+namespace
+{
 //! Must be one single global instance for speed, constructing is expensive
-static NFmiEnumConverter converter;
+NFmiEnumConverter converter;
+}  // namespace
 
 // ----------------------------------------------------------------------
 // -l optiolla annetut sijainnit
@@ -86,6 +89,8 @@ using LocationList = list<Location>;
 // Lue LocationList annetusta tiedostosta
 // ----------------------------------------------------------------------
 
+namespace
+{
 LocationList read_locationlist(const string& theFile)
 {
   LocationList ret;
@@ -123,6 +128,7 @@ LocationList read_locationlist(const string& theFile)
   }
   return ret;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -154,12 +160,14 @@ struct Options
   bool multimode = false;
   double max_distance = 100;  // km
   int nearest_stations = 1;
-  string locationfile = "";
+  string locationfile;
   LocationList locations;
   string missingvalue = "-";
   string uid;
 };
 
+namespace
+{
 Options options;
 
 // ----------------------------------------------------------------------
@@ -420,7 +428,7 @@ double ElevationAngle(const NFmiPoint& theLatLon, const NFmiTime& theTime)
 
 float WindChill(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 {
-  float temperature, windspeed;
+  float temperature = NAN, windspeed = NAN;
 
   if (!qd.Param(kFmiTemperature))
     return kFloatMissing;
@@ -450,7 +458,7 @@ float WindChill(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 
 float FeelsLike(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 {
-  float temperature, windspeed, humidity, radiation;
+  float temperature = NAN, windspeed = NAN, humidity = NAN, radiation = NAN;
 
   if (!qd.Param(kFmiTemperature))
     return kFloatMissing;
@@ -497,7 +505,7 @@ float FeelsLike(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 
 float SummerSimmer(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 {
-  float temperature, humidity;
+  float temperature = NAN, humidity = NAN;
 
   if (!qd.Param(kFmiTemperature))
     return kFloatMissing;
@@ -524,7 +532,7 @@ float SummerSimmer(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 
 float ThetaE(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 {
-  float temperature, pressure, humidity;
+  float temperature = NAN, pressure = NAN, humidity = NAN;
 
   if (!qd.Param(kFmiTemperature))
     return kFloatMissing;
@@ -604,7 +612,7 @@ float RainProbability(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
   const float R3 = 100;
   const float R4 = 150;
 
-  float radius;
+  float radius = NAN;
   if (diff <= T1)
     radius = R1;
   else if (diff <= T2)
@@ -628,7 +636,7 @@ float RainProbability(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 
 float CloudinessN(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 {
-  float n;
+  float n = NAN;
 
   if (!qd.Param(kFmiTotalCloudCover))
     return kFloatMissing;
@@ -650,7 +658,7 @@ float CloudinessN(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 
 float CloudinessNN(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 {
-  float n;
+  float n = NAN;
 
   if (!qd.Param(kFmiMiddleAndLowCloudCover))
     return kFloatMissing;
@@ -712,7 +720,7 @@ float MoonIlluminatedFraction(const NFmiTime& theTime)
 
 float North(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
 {
-  auto area = qd.Area();
+  const auto* area = qd.Area();
   if (!area)
     return kFloatMissing;
 
@@ -877,7 +885,7 @@ bool ValidRow(NFmiFastQueryInfo& qd,
 
   while (!valid)
   {
-    float value;
+    float value = NAN;
 
     if (options.params.empty())
     {
@@ -1016,6 +1024,7 @@ float InterpolatedValue(NFmiFastQueryInfo& qd, int maxmissminutes)
 
   return qd.InterpolatedValue(qd.ValidTime(), maxmissminutes);
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -1128,6 +1137,8 @@ class LocalTimeZones
 // määrää, tulostetaanko wmo numero.
 // ----------------------------------------------------------------------
 
+namespace
+{
 void PrintRow(NFmiFastQueryInfo& qd,
               bool ignoresubs,
               LocalTimeZones& zones,
@@ -1177,7 +1188,7 @@ void PrintRow(NFmiFastQueryInfo& qd,
 
   while (true)
   {
-    float value;
+    float value = NAN;
     NFmiString precision;
 
     if (options.params.empty())
@@ -1264,7 +1275,7 @@ void PrintLocationInfo(QueryDataManager& theMgr,
   NFmiFastQueryInfo& qd = theMgr.info();
 
   const char separator = '\t';
-  string wmostr = NFmiValueString(static_cast<long>(qd.Location()->GetIdent()), "%05d").CharPtr();
+  string wmostr = NFmiValueString(qd.Location()->GetIdent(), "%05d").CharPtr();
   cout << "# StationName" << separator << wmostr << separator << qd.Location()->GetName().CharPtr()
        << endl;
   cout << "# StationLoc" << separator << wmostr << separator << qd.Location()->GetLongitude()
@@ -1376,7 +1387,7 @@ void ReportParams(QueryDataManager& theMgr,
     {
       string name = ParamName(*iter);
 
-      long ident;
+      long ident = 0;
       string name2;
 
       if (name.substr(0, 4) == "Meta")
@@ -1526,7 +1537,7 @@ int run(int argc, char* argv[])
 
   bool ignoresubs = false;
 
-  NFmiFastQueryInfo* qi;
+  NFmiFastQueryInfo* qi = nullptr;
 
   if (!options.stations.empty())
   {
@@ -1679,6 +1690,7 @@ int run(int argc, char* argv[])
 
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 // Paaohjelma

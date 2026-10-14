@@ -33,6 +33,8 @@ using namespace std;
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 bool goodcolumn(NFmiFastQueryInfo& theQ)
 {
   for (theQ.ResetLocation(); theQ.NextLocation();)
@@ -180,6 +182,7 @@ int domain(int argc, const char* argv[])
 
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

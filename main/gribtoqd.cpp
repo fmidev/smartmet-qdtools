@@ -25,9 +25,11 @@
 #include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiTotalWind.h>
 #include <newbase/NFmiValueString.h>
+#include <algorithm>
 #include <functional>
 #include <grib_api.h>
 #include <iomanip>
+#include <cmath>
 #include <memory>
 #include <set>
 #include <sstream>
@@ -66,14 +68,11 @@ struct PointerDestroyer
 
 struct GeneratedHybridParamInfo
 {
-  GeneratedHybridParamInfo()
-      : fCalcHybridParam(false), itsGeneratedHybridParam(), itsHelpParamId(kFmiBadParameter)
-  {
-  }
+  GeneratedHybridParamInfo() {}
 
-  bool fCalcHybridParam;
+  bool fCalcHybridParam = false;
   NFmiParam itsGeneratedHybridParam;
-  FmiParameterName itsHelpParamId;
+  FmiParameterName itsHelpParamId = kFmiBadParameter;
 };
 
 class GridSettingsPackage
@@ -94,34 +93,9 @@ class Reduced_ll_grib_exception
 struct GribFilterOptions
 {
   GribFilterOptions()
-      : itsOutputFileName(),
-        fUseOutputFile(false),
-        itsReturnStatus(0),
-        itsIgnoredLevelList(),
-        itsGeneratedDatas(),
-        itsAcceptOnlyLevelTypes(),
-        itsGridInfoPrintCount(0),
-        itsParamChangeTable(),
-        fCropParamsNotMensionedInTable(false),
-        fDoAtlanticFix(false),
-        fDoPacificFix(false),
-        fDoYAxisFlip(false),
-        fTryAreaCombination(false),
-        fDoLeftRightSwap(false),
-        fIgnoreReducedLLData(false),
-        fUseLevelTypeFileNaming(false),
-        itsWantedSurfaceProducer(),
-        itsWantedPressureProducer(),
-        itsWantedHybridProducer(),
-        itsHybridPressureInfo(),
-        itsGroundPressureInfo(),
+      :
         itsLatlonCropRect(gMissingCropRect),
-        itsGridSettings(),
-        fVerbose(false),
-        itsInputFileNameStr(),
-        itsInputFile(nullptr),
-        itsStepRangeCheckedParams(),
-        itsWantedStepRange(0)
+        itsGridSettings()
   {
   }
 
@@ -131,38 +105,32 @@ struct GribFilterOptions
       (void)::fclose(itsInputFile);  // suljetaan tiedosto, josta gribi luettu
   }
 
-  bool DoGlobalFix() const
-  {
-    if (fDoAtlanticFix || fDoPacificFix || fDoLeftRightSwap)
-      return true;
-    else
-      return false;
-  }
+  bool DoGlobalFix() const { return fDoAtlanticFix || fDoPacificFix || fDoLeftRightSwap; }
 
   string itsOutputFileName;  // -o optio tai sitten tulostetann cout:iin
-  bool fUseOutputFile;
-  int itsReturnStatus;               // 0 = ok
+  bool fUseOutputFile = false;
+  int itsReturnStatus = 0;           // 0 = ok
   NFmiLevelBag itsIgnoredLevelList;  // lista missä yksittäisiä leveleitä, mitkä halutaan jättää
                                      // pois laskuista
   vector<std::shared_ptr<NFmiQueryData> > itsGeneratedDatas;
   vector<FmiLevelType> itsAcceptOnlyLevelTypes;  // lista jossa ainoat hyväksyttävät level typet
-  int itsGridInfoPrintCount;
+  int itsGridInfoPrintCount = 0;
   vector<ParamChangeItem> itsParamChangeTable;
-  bool fCropParamsNotMensionedInTable;
-  bool fDoAtlanticFix;  // 0->360 global data ==> -180->180
-  bool fDoPacificFix;   // -180->180 global data ==> 0->360
-  bool fDoYAxisFlip;
-  bool fTryAreaCombination;  // tietyt datat koostuvat palasista, kokeillaan jos saa palasista saa
-                             // yhdistettyä isompia kokonaisuuksia
+  bool fCropParamsNotMensionedInTable = false;
+  bool fDoAtlanticFix = false;  // 0->360 global data ==> -180->180
+  bool fDoPacificFix = false;   // -180->180 global data ==> 0->360
+  bool fDoYAxisFlip = false;
+  bool fTryAreaCombination = false;  // tietyt datat koostuvat palasista, kokeillaan jos saa
+                                     // palasista saa yhdistettyä isompia kokonaisuuksia
   bool fDoZigzagMode;  // data luetaan rivi kerrallaan eri suuntiin, ensin vasemmalta oikealle ja
                        // sitten oikealta vasemmalle, sitten taas vasemmalta oikealle jne.
-  bool fDoLeftRightSwap;
-  bool fIgnoreReducedLLData;  // joskus kannattaa vain purkaa gribit käyttäen grib_api:a ja ohittaa
-                              // ns. reduced_ll datat,
+  bool fDoLeftRightSwap = false;
+  bool fIgnoreReducedLLData = false;  // joskus kannattaa vain purkaa gribit käyttäen grib_api:a ja
+                                      // ohittaa ns. reduced_ll datat,
   // koska niitä on niin vähän tai datoja ei voi purkaa wgrib:illä. Esim. Tyynenmeren ecmwf-data,
   // siinä on pieni osa reduced_ll dataa ja muista tulee moskaa wgrib:illä.
-  bool fUseLevelTypeFileNaming;  // n optiolla voidaan laittaa output tiedostojen nimen perään esim.
-                                 // _levelType_100
+  bool fUseLevelTypeFileNaming = false;  // n optiolla voidaan laittaa output tiedostojen nimen
+                                         // perään esim. _levelType_100
   NFmiProducer itsWantedSurfaceProducer;
   NFmiProducer itsWantedPressureProducer;
   NFmiProducer itsWantedHybridProducer;
@@ -171,9 +139,9 @@ struct GribFilterOptions
   GeneratedHybridParamInfo itsGroundPressureInfo;
   NFmiRect itsLatlonCropRect;
   GridSettingsPackage itsGridSettings;
-  bool fVerbose;
+  bool fVerbose = false;
   string itsInputFileNameStr;
-  FILE *itsInputFile;
+  FILE* itsInputFile = nullptr;
   // Joissain datoissa on sama parametri (yleensä kumulatiivinen) kahdesti, mutta eri aikajaksoilla.
   // Esim. NCEP:in NAM mallissa on APCP -parametri kahdesti, joista toinen on 3h sademäärä (3h
   // resoluutio datssa).
@@ -186,8 +154,8 @@ struct GribFilterOptions
   std::set<unsigned long> itsStepRangeCheckedParams;  // Tähä on listattu kaikki ne parametrit,
                                                       // joista halutaan tehdä valinta (jos niistä
                                                       // on kakksi eri jaksoista parametria datassa)
-  int itsWantedStepRange;  // Jos tämä on 3, valitaan NAM:in tapauksessa se 3h-sade, jos tämä on -3,
-                           // valitaan se toinen (hidden feature).
+  int itsWantedStepRange = 0;  // Jos tämä on 3, valitaan NAM:in tapauksessa se 3h-sade, jos tämä on
+                               // -3, valitaan se toinen (hidden feature).
 };
 
 // Poistin TotalQDataCollector -luokan, koska ainakaan grib_api ei tue multi-threaddausta näihin
@@ -259,10 +227,8 @@ float CalcRH(float P, float T, float Q)
   {
     float ES = (T >= -5) ? CalcESWater(T) : CalcESIce(T);
     float RH = (P * Q / 0.622f / ES) * (P - ES) / (P - Q * P / 0.622f);
-    if (RH > 1.f)
-      RH = 1.f;
-    if (RH < 0.f)
-      RH = 0.f;
+    RH = std::min(RH, 1.f);
+    RH = std::max(RH, 0.f);
     return RH * 100;
   }
 }
@@ -754,7 +720,7 @@ GeneratedHybridParamInfo GetGeneratedHybridParamInfo(NFmiCmdLine &theCmdLine,
   {
     vector<string> hybridInfoStrings =
         NFmiStringTools::Split(theCmdLine.OptionValue(theOptionLetter));
-    if (hybridInfoStrings.size() >= 1)
+    if (!hybridInfoStrings.empty())
       hybridParamInfo.itsHelpParamId =
           static_cast<FmiParameterName>(Fmi::stoi(hybridInfoStrings[0]));
     unsigned long hybridPressureId = theDefaultParamId;
@@ -891,7 +857,7 @@ std::vector<std::string> MakeFullPathFileList(list<string> &theFileNameList,
   for (auto& it : theFileNameList)
   {
     std::string fullFileName = theDirectory;
-    if (fullFileName.size() && fullFileName[fullFileName.size() - 1] != kFmiDirectorySeparator)
+    if (!fullFileName.empty() && fullFileName[fullFileName.size() - 1] != kFmiDirectorySeparator)
       fullFileName += kFmiDirectorySeparator;
     fullFileName += it;
     fullFileNameVector.push_back(fullFileName);
@@ -905,7 +871,7 @@ vector<string> GetDataFiles(const NFmiCmdLine &cmdline)
 
   for (int i = 1; i <= cmdline.NumberofParameters(); i++)
   {
-    auto path = cmdline.Parameter(i);
+    const auto* path = cmdline.Parameter(i);
 
     if (NFmiFileSystem::DirectoryExists(path))
     {
@@ -932,15 +898,7 @@ vector<string> GetDataFiles(const NFmiCmdLine &cmdline)
 class CombineDataStructureSearcher
 {
  public:
-  CombineDataStructureSearcher()
-      : itsGridCounts(),
-        itsValidTimes(),
-        itsOrigTimes(),
-        itsLevels(),
-        itsParams(),
-        itsWantedProducers()
-  {
-  }
+  CombineDataStructureSearcher() {}
 
   void AddGrid(const NFmiHPlaceDescriptor &theHPlaceDesc)
   {
@@ -949,7 +907,7 @@ class CombineDataStructureSearcher
       MyGrid tmpGrid(*(theHPlaceDesc.Grid()));
       pair<map<MyGrid, int>::iterator, bool> it =
           itsGridCounts.insert(make_pair(tmpGrid, 1));  // laitetaan hila ja counter arvo 1  mappiin
-      if (it.second == false)
+      if (!it.second)
         (*it.first)
             .second++;  // jos kyseinen hila oli jo mapissa, kasvatetaan counterin arvo yhdellä
     }
@@ -1121,7 +1079,7 @@ struct ConnectionEdgeInfo
 
   ConnectionEdgeInfo(const std::shared_ptr<NFmiQueryData>& data1,
                      const std::shared_ptr<NFmiQueryData>& data2)
-      : connectionDirection(kNoDirection), levelType(kFmiNoLevelType)
+
   {
     NFmiFastQueryInfo finfo1(data1.get());
     NFmiFastQueryInfo finfo2(data2.get());
@@ -1201,9 +1159,9 @@ struct ConnectionEdgeInfo
   NFmiGrid grid2;
   size_t data1Index;                 // 1. datan indeksi queryData vektorissa
   size_t data2Index;                 // 2. datan indeksi....
-  FmiDirection connectionDirection;  // mihin suuntaan grid1 on suhteessa grid2:een, arvo on
-                                     // kNoDirection jos ei ole yhteyttä
-  FmiLevelType levelType;
+  FmiDirection connectionDirection = kNoDirection;  // mihin suuntaan grid1 on suhteessa grid2:een,
+                                                    // arvo on kNoDirection jos ei ole yhteyttä
+  FmiLevelType levelType = kFmiNoLevelType;
   double longitudeDiff;
   double latitudeDiff;
 };
@@ -1227,10 +1185,7 @@ bool CalcConnectedDataIndexies(set<size_t> &connectionDataIndexies,
   if (it != connectionDataIndexies.end())
     return true;
   it = connectionDataIndexies.find(edgeInfo.data2Index);
-  if (it != connectionDataIndexies.end())
-    return true;
-
-  return false;
+  return it != connectionDataIndexies.end();
 }
 
 void CheckForConnectingDataIndexies(vector<ConnectionEdgeInfo> &connectionEdgeInfoVector,
@@ -1258,7 +1213,7 @@ vector<pair<set<size_t>, set<size_t> > > CalcConnectedDataIndexies(
   vector<pair<set<size_t>, set<size_t> > > connectedDataIndexiesVector;
   for (size_t i = 0; i < connectionEdgeInfoVector.size(); i++)
   {
-    if (IsConnectionEdgeIndexUsed(connectedDataIndexiesVector, i) == false)
+    if (!IsConnectionEdgeIndexUsed(connectedDataIndexiesVector, i))
     {
       set<size_t> connectionDataIndexies;
       connectionDataIndexies.insert(connectionEdgeInfoVector[i].data1Index);
@@ -1273,7 +1228,7 @@ vector<pair<set<size_t>, set<size_t> > > CalcConnectedDataIndexies(
       // ei ole hidastava juttu).
       CheckForConnectingDataIndexies(
           connectionEdgeInfoVector, connectionDataIndexies, connectionEdgeIndexies, i + 1);
-      if (connectionEdgeIndexies.size())
+      if (!connectionEdgeIndexies.empty())
         connectedDataIndexiesVector.emplace_back(connectionEdgeIndexies, connectionDataIndexies);
     }
   }
@@ -1576,7 +1531,7 @@ vector<std::shared_ptr<NFmiQueryData> > TryAreaCombination(
     //        PrintConnectionInfoVector_Debug(origDataVector, connectionEdgeInfoVector);
 
     vector<pair<NFmiGrid, FmiLevelType> > gridVector = CalcGrids2(connectionEdgeInfoVector);
-    if (gridVector.size())
+    if (!gridVector.empty())
     {
       for (auto& i : gridVector)
       {
@@ -1592,7 +1547,7 @@ vector<std::shared_ptr<NFmiQueryData> > TryAreaCombination(
       // säilytetään?
       // => connectionEdgeInfoVector:in sisällön perusteella voidaan päätellä mitkä data indeksit
       // eivät ole yhdistettynä mihinkään (data1Index ja data2Index)!!!!!
-      if (areaCombinedDataVector.size())
+      if (!areaCombinedDataVector.empty())
         AddNotCombinedDataToVector(
             areaCombinedDataVector, origDataVector, connectionEdgeInfoVector);
     }
@@ -1645,7 +1600,7 @@ std::shared_ptr<NFmiQueryData> CreateEmptyQData(
   for (auto& i : theTotalQDataCollector)
   {
     NFmiFastQueryInfo info(i.get());
-    if (levelType == static_cast<long>(info.Level()->GetIdent()))
+    if (levelType == info.Level()->GetIdent())
     {
       if (hplaceDescriptor == info.HPlaceDescriptor())
       {
@@ -1722,14 +1677,14 @@ std::string GetParamName(grib_handle *theHandle)
   std::string usedParameterName;
   if (shortNameOk)
     usedParameterName = shortName;
-  if (usedParameterName.empty() == false && cfNameOk)
+  if (!usedParameterName.empty() && cfNameOk)
     usedParameterName += " - ";
   if (cfNameOk)
     usedParameterName += cfName;
 
   if (ok2)
   {  // jos onnistui, liitetään yksikkö hakasuluissa parametrin nimen perään
-    if (usedParameterName.empty() == false)
+    if (!usedParameterName.empty())
       usedParameterName += " ";
     usedParameterName += "[" + units + "]";
   }
@@ -1740,7 +1695,7 @@ std::string GetParamName(grib_handle *theHandle)
 long GetUsedParamId(grib_handle *theHandle)
 {
   // 1. Kokeillaan löytyykö paramId -hakusanalla
-  long paramid;
+  long paramid = 0;
   bool ok = ::GetGribLongValue(theHandle, "paramId", paramid);
   if (ok && paramid != 0)
     return paramid;
@@ -2365,7 +2320,7 @@ NFmiArea *GetGribArea(grib_handle *theHandle, GribFilterOptions &theGribFilterOp
   GetGribLongValue(theHandle, "truncateDegrees", truncateDegrees);
 
   // Grid sizes are Ni,Nj or Nx,Ny
-  long ni, nj;
+  long ni = 0, nj = 0;
   if (!(GetGribLongValue(theHandle, "Nx", ni) && GetGribLongValue(theHandle, "Ny", nj)) &&
       !(GetGribLongValue(theHandle, "Ni", ni) && GetGribLongValue(theHandle, "Nj", nj)))
     throw std::runtime_error(fmt::format(fmt::runtime(err), "grid size", proj_name));
@@ -2562,7 +2517,7 @@ void ChangeParamSettingsIfNeeded(vector<ParamChangeItem> &theParamChangeTable,
                                  GridRecordData *theGribData,
                                  bool verbose)
 {
-  if (theParamChangeTable.size() > 0)
+  if (!theParamChangeTable.empty())
   {  // muutetaan tarvittaessa parametrin nimeä ja id:tä
     for (auto& paramChangeItem : theParamChangeTable)
     {
@@ -2681,7 +2636,7 @@ bool IgnoreThisLevel(GridRecordData *data, NFmiLevelBag &theIgnoredLevelList)
 
 bool AcceptThisLevelType(GridRecordData *data, vector<FmiLevelType> &theAcceptOnlyLevelTypes)
 {
-  if (theAcceptOnlyLevelTypes.size() > 0)
+  if (!theAcceptOnlyLevelTypes.empty())
   {
     for (auto& theAcceptOnlyLevelType : theAcceptOnlyLevelTypes)
     {
@@ -2697,7 +2652,7 @@ bool CropParam(GridRecordData *gribData,
                bool fCropParamsNotMensionedInTable,
                vector<ParamChangeItem> &theParamChangeTable)
 {
-  if (fCropParamsNotMensionedInTable && theParamChangeTable.size())
+  if (fCropParamsNotMensionedInTable && !theParamChangeTable.empty())
   {
     for (auto& paramChangeItem : theParamChangeTable)
     {
@@ -2829,9 +2784,9 @@ void DoAreaManipulations(GridRecordData *theGridRecordData,
 {
   // 2. Kun orig matriisi on saatu täytettyä, katsotaan pitääkö vielä täyttää cropattu alue, vai
   // käytetäänkö originaali dataa suoraan.
-  if (theGridRecordData->fDoProjectionConversion == false)
+  if (!theGridRecordData->fDoProjectionConversion)
     theGridRecordData->itsGridData = theOrigValues;
-  else if (theGridRecordData->fDoProjectionConversion == true &&
+  else if (theGridRecordData->fDoProjectionConversion &&
            theGridRecordData->itsLatlonCropRect == gMissingCropRect)
     ProjectData(theGridRecordData, theOrigValues, theOptions);
   else
@@ -2841,7 +2796,7 @@ void DoAreaManipulations(GridRecordData *theGridRecordData,
 void MakeParameterConversions(GridRecordData *theGridRecordData,
                               const vector<ParamChangeItem> &theParamChangeTable)
 {
-  if (theParamChangeTable.size() > 0)
+  if (!theParamChangeTable.empty())
   {  // tehdään tarvittaessa parametrille base+scale muunnos
     for (const auto& paramChangeItem : theParamChangeTable)
     {
@@ -3065,8 +3020,8 @@ void AddGeneratedHybridParam(NFmiParamBag &theGeneratedParamBag,
   if (theGeneratedHybridParamInfo.fCalcHybridParam)
   {
     // lisätään paine parametri hybridi dataan, jos sitä ei ole ja se lasketaan myöhemmin
-    if (theGeneratedParamBag.SetCurrent(static_cast<FmiParameterName>(
-            theGeneratedHybridParamInfo.itsGeneratedHybridParam.GetIdent())) == false)
+    if (!theGeneratedParamBag.SetCurrent(static_cast<FmiParameterName>(
+            theGeneratedHybridParamInfo.itsGeneratedHybridParam.GetIdent())))
       theGeneratedParamBag.Add(theGeneratedHybridParamInfo.itsGeneratedHybridParam);
   }
 }
@@ -3274,7 +3229,7 @@ std::shared_ptr<NFmiQueryData> CreateQueryData(vector<GridRecordData *> &theGrib
     bool anyDataFilled =
         FillQDataWithGribRecords(qdata, theGribRecordDatas, theGribFilterOptions.fVerbose);
 
-    if (anyDataFilled == false)
+    if (!anyDataFilled)
       qdata = std::shared_ptr<NFmiQueryData>();
   }
   return qdata;
@@ -3673,15 +3628,15 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
         // Aiheuttaisi turhia ongelmia jatkossa monessakin paikassa.
         bool gribFieldUsed = false;
 
-        if (!(tmpData->itsOrigGrid.itsNX <= 2 && tmpData->itsOrigGrid.itsNY <= 2))
+        if (tmpData->itsOrigGrid.itsNX > 2 || tmpData->itsOrigGrid.itsNY > 2)
         {
-          if (IgnoreThisLevel(tmpData, theGribFilterOptions.itsIgnoredLevelList) == false)
+          if (!IgnoreThisLevel(tmpData, theGribFilterOptions.itsIgnoredLevelList))
           {
             if (AcceptThisLevelType(tmpData, theGribFilterOptions.itsAcceptOnlyLevelTypes))
             {
-              if (CropParam(tmpData,
-                            theGribFilterOptions.fCropParamsNotMensionedInTable,
-                            theGribFilterOptions.itsParamChangeTable) == false)
+              if (!CropParam(tmpData,
+                             theGribFilterOptions.fCropParamsNotMensionedInTable,
+                             theGribFilterOptions.itsParamChangeTable))
               {
                 if (IsStepRangeCorrect(gribHandle,
                                        tmpData->itsParam,
@@ -3699,7 +3654,7 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
             }
           }
         }
-        if (gribFieldUsed == false)
+        if (!gribFieldUsed)
         {
           if (theGribFilterOptions.fVerbose)
             cerr << static_cast<long>(tmpData->itsParam.GetParamIdent()) << " (skipped)" << endl;
@@ -3835,7 +3790,7 @@ NFmiDataIdent GetParam(unsigned char *pds, NFmiProducer theWantedProducer)
 
 NFmiMetTime GetGribTime(unsigned char *pds, bool fOrigTime)
 {
-  int year, month, day, hour;
+  int year = 0, month = 0, day = 0, hour = 0;
 
   if (fOrigTime)
   {
@@ -3864,8 +3819,8 @@ string GetGridInfoStr(unsigned char *gds, unsigned char *bds)
   string variyngRowLengthStr;
   if (gds)
   {
-    long int nxny;
-    int nx, ny;
+    long int nxny = 0;
+    int nx = 0, ny = 0;
     vector<long> variableLengthRows;
     long usedOutputGridRowLength =
         0;  // jos reduced grid (vaihtuva rivi leveys), tehdää tämän levyinen loppu hila
@@ -4142,8 +4097,8 @@ NFmiArea* CreateLatlonArea(const unsigned char* gds,
 
 NFmiArea *CreateStereographicArea(unsigned char *gds, unsigned char *bds)
 {
-  int nx, ny;
-  long int nxny;
+  int nx = 0, ny = 0;
+  long int nxny = 0;
   vector<long> variableLengthRows;
   long usedOutputGridRowLength =
       0;  // jos reduced grid (vaihtuva rivi leveys), tehdää tämän levyinen loppu hila
@@ -4272,8 +4227,8 @@ void FillGridInfo(unsigned char *gds,
   adjacentIMode = (GDSscanMode & scan_mode_ij_adjacent_order_bit) == 0;
   NFmiArea *area = wgrib2qd::CreateArea(
       gds, bds, scanIModePos, scanJModePos, theGribFilterOptions, fDoYAxisFlip);
-  int nx, ny;
-  long int nxny;
+  int nx = 0, ny = 0;
+  long int nxny = 0;
   vector<long> variableLengthRows;
   long usedOutputGridRowLength =
       0;  // jos reduced grid (vaihtuva rivi leveys), tehdää tämän levyinen loppu hila
@@ -4357,7 +4312,7 @@ void FillGridDataWithVariableLengthData(float *theArray,
 void MakeParameterConversions(GridRecordData *theGridRecordData,
                               vector<ParamChangeItem> &theParamChangeTable)
 {
-  if (theParamChangeTable.size() > 0)
+  if (!theParamChangeTable.empty())
   {  // tehdään tarvittaessa parametrille base+scale muunnos
     for (auto& paramChangeItem : theParamChangeTable)
     {
@@ -4397,7 +4352,7 @@ void FillGridData(float *theArray,
 {
   NFmiDataMatrix<float> &gridData = theGribData->itsGridData;
 
-  if (theVariableLengthRows.size() > 0)
+  if (!theVariableLengthRows.empty())
     wgrib2qd::FillGridDataWithVariableLengthData(
         theArray, theGribData, scanIModePos, scanJModePos, adjacentIMode, theVariableLengthRows);
   else
@@ -4678,7 +4633,7 @@ std::shared_ptr<NFmiQueryData> CreateQueryData(vector<GridRecordData *> &theGrib
     NFmiQueryInfo innerInfo(params, times, theHplace, theVplace);
     qdata.reset(NFmiQueryDataUtil::CreateEmptyData(innerInfo));
     bool anyDataFilled = wgrib2qd::FillQDataWithGribRecords(*qdata, theGribRecordDatas);
-    if (anyDataFilled == false)
+    if (!anyDataFilled)
     {
       qdata.reset();
     }
@@ -4727,10 +4682,11 @@ void FreeDatas(vector<GridRecordData *> &theGribRecordDatas, float *array, unsig
 void ConvertGrib(GribFilterOptions &theGribFilterOptions)
 {
   vector<std::shared_ptr<NFmiQueryData> > datas;
-  unsigned char *buffer, *msg, *pds, *gds, *bms = nullptr, *bds, *pointer;
-  long int len_grib, pos = 0, nxny = 0, last_nxny = 0, buffer_size, count = 1;
-  int nx, ny;
-  double temp;
+  unsigned char *buffer = nullptr, *msg = nullptr, *pds = nullptr, *gds = nullptr, *bms = nullptr,
+                *bds = nullptr, *pointer = nullptr;
+  long int len_grib = 0, pos = 0, nxny = 0, last_nxny = 0, buffer_size = 0, count = 1;
+  int nx = 0, ny = 0;
+  double temp = NAN;
   float* array = nullptr;
   vector<long> variableLengthRows;
   long usedOutputGridRowLength =
@@ -4896,7 +4852,7 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
                              theGribFilterOptions,
                              theGribFilterOptions.fDoYAxisFlip);
       if (theGribFilterOptions.fDoYAxisFlip)
-        scanJModePos = scanJModePos == false;
+        scanJModePos = !static_cast<bool>(scanJModePos);
       tmpData->itsGridData.Resize(tmpData->itsGrid.itsNX, tmpData->itsGrid.itsNY);
 
       ChangeParamSettingsIfNeeded(
@@ -4908,15 +4864,15 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
       // muista poikkeava 2x2 hila latlon-area.
       // Aiheuttaisi turhia ongelmia jatkossa monessakin paikassa.
       bool gribFieldUsed = false;
-      if (!(tmpData->itsGrid.itsNX <= 2 && tmpData->itsGrid.itsNY <= 2))
+      if (tmpData->itsGrid.itsNX > 2 || tmpData->itsGrid.itsNY > 2)
       {
-        if (IgnoreThisLevel(tmpData, theGribFilterOptions.itsIgnoredLevelList) == false)
+        if (!IgnoreThisLevel(tmpData, theGribFilterOptions.itsIgnoredLevelList))
         {
           if (AcceptThisLevelType(tmpData, theGribFilterOptions.itsAcceptOnlyLevelTypes))
           {
-            if (CropParam(tmpData,
-                          theGribFilterOptions.fCropParamsNotMensionedInTable,
-                          theGribFilterOptions.itsParamChangeTable) == false)
+            if (!CropParam(tmpData,
+                           theGribFilterOptions.fCropParamsNotMensionedInTable,
+                           theGribFilterOptions.itsParamChangeTable))
             {
               wgrib2qd::FillGridData(array,
                                      tmpData,
@@ -4934,7 +4890,7 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
           }
         }
       }
-      if (gribFieldUsed == false)
+      if (!gribFieldUsed)
       {
         delete tmpData;
         if (theGribFilterOptions.fVerbose)
@@ -4997,7 +4953,7 @@ void ConvertOneGribFile(const GribFilterOptions &theGribFilterOptionsIn,
 void MakeTotalCombineQDatas(vector<std::shared_ptr<NFmiQueryData> > &theTotalQDataCollector,
                             GribFilterOptions &theGribFilterOptionsOut)
 {
-  if (theTotalQDataCollector.size() == 0)
+  if (theTotalQDataCollector.empty())
     throw runtime_error("Unable to create any data.");
   else if (theTotalQDataCollector.size() == 1)
   {
@@ -5039,7 +4995,7 @@ void MakeTotalCombineQDatas(vector<std::shared_ptr<NFmiQueryData> > &theTotalQDa
     {
       vector<std::shared_ptr<NFmiQueryData> > areaCombinedDataVector =
           TryAreaCombination(generatedFilledQDatas);
-      if (areaCombinedDataVector.size())
+      if (!areaCombinedDataVector.empty())
         generatedFilledQDatas = areaCombinedDataVector;  // jos jonkinlainen yhdistely onnistui,
                                                          // otetaan yhdistelmä datat käyttöön
                                                          // talletusta varten
@@ -5212,7 +5168,7 @@ void GetStepRangeOptions(const NFmiCmdLine &theCmdline, GribFilterOptions &theGr
         int wantedStepRange = NFmiStringTools::Convert<int>(stepRangeOptionsVector[0]);
         auto stepRangeParamsVector =
             NFmiStringTools::Split<std::vector<unsigned long> >(stepRangeOptionsVector[1], ",");
-        if (stepRangeParamsVector.size())
+        if (!stepRangeParamsVector.empty())
         {
           theGribFilterOptions.itsWantedStepRange = wantedStepRange;
           theGribFilterOptions.itsStepRangeCheckedParams =
@@ -5286,10 +5242,10 @@ int GetOptions(NFmiCmdLine &theCmdLine, GribFilterOptions &theGribFilterOptions)
   if (theCmdLine.isOption('n'))
     theGribFilterOptions.fUseLevelTypeFileNaming = true;
 
-  if (::GetProducer(theCmdLine, theGribFilterOptions) == false)
+  if (!::GetProducer(theCmdLine, theGribFilterOptions))
     return 1;
 
-  if (::GetIgnoreLevelList(theCmdLine, theGribFilterOptions.itsIgnoredLevelList) == false)
+  if (!::GetIgnoreLevelList(theCmdLine, theGribFilterOptions.itsIgnoredLevelList))
     return 8;
 
   theGribFilterOptions.itsAcceptOnlyLevelTypes = GetAcceptedLevelTypes(theCmdLine);
@@ -5310,7 +5266,7 @@ int GetOptions(NFmiCmdLine &theCmdLine, GribFilterOptions &theGribFilterOptions)
     theGribFilterOptions.itsLatlonCropRect = GetLatlonCropRect(opt_bounds);
   }
 
-  if (::GetGridOptions(theCmdLine, theGribFilterOptions.itsGridSettings) == false)
+  if (!::GetGridOptions(theCmdLine, theGribFilterOptions.itsGridSettings))
     return 9;
 
   if (theCmdLine.isOption('v'))
@@ -5329,12 +5285,12 @@ int Run(int argc, const char **argv, bool &fReportExecutionTime)
   NFmiCmdLine cmdline(argc, argv, "o!m!l!g!p!aASnL!G!c!dvP!D!tH!r!yzCiR!");
 
   // Jonkin näistä avulla muodostetaan lista, jossa voi olla 0-n kpl tiedoston nimiä.
-  if (::DoCommandLineCheck(cmdline) == false)
+  if (!::DoCommandLineCheck(cmdline))
     return 1;
 
   if (cmdline.isOption('t'))
     fReportExecutionTime = true;
-  if (::GribDefinitionPath(cmdline) == false)
+  if (!::GribDefinitionPath(cmdline))
     return 1;
   int status = ::GetOptions(cmdline, gribFilterOptions);
   if (status != 0)

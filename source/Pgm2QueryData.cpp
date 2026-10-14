@@ -44,7 +44,9 @@ class PgmHeaderInfo
   NFmiLevel level;  // ignored when uninitialized
 };
 
-static void ReadPgmHeader(std::istream &input,
+namespace
+{
+void ReadPgmHeader(std::istream &input,
                           PgmHeaderInfo &thePgmHeaderInfo,
                           const PgmReadOptions &theOptions,
                           std::ostream &theReportStream)
@@ -153,7 +155,7 @@ NFmiMetTime str2time(const std::string &theStamp)
   return ret;
 }
 
-static NFmiQueryInfo MakeQdInfo(const PgmHeaderInfo &thePgmHeaderInfo,
+NFmiQueryInfo MakeQdInfo(const PgmHeaderInfo &thePgmHeaderInfo,
                                 int width,
                                 int height,
                                 const PgmReadOptions &theOptions,
@@ -200,7 +202,7 @@ static NFmiQueryInfo MakeQdInfo(const PgmHeaderInfo &thePgmHeaderInfo,
   return NFmiQueryInfo(pdesc, tdesc, hdesc, vdesc);
 }
 
-static bool FillQueryData(NFmiQueryData &theData,
+bool FillQueryData(NFmiQueryData &theData,
                           const PgmHeaderInfo &thePgmHeaderInfo,
                           const std::string &theFileName,
                           const PgmReadOptions &theOptions,
@@ -217,7 +219,7 @@ static bool FillQueryData(NFmiQueryData &theData,
   bool xfirst = true;
   bool littleendian = false;  // pgm is always big endian!!!
   bool issigned = false;
-  string skipstring = "";
+  string skipstring;
 
   double beforemissing = bytes;  // = -1
   float aftermissing = kFloatMissing;
@@ -253,6 +255,7 @@ static bool FillQueryData(NFmiQueryData &theData,
   info.SetProducer(NFmiProducer(theOptions.producer_number, theOptions.producer_name));
   return true;
 }
+}  // namespace
 
 // Luetaan annetusta PGM-tiedostosta data ja muutetaan se queryDataksi.
 NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
@@ -339,7 +342,7 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
   }
 
   // Read the P5 specs
-  int width, height, bytes;
+  int width = 0, height = 0, bytes = 0;
   infile >> width >> height >> bytes;
   if (!infile.good())
   {
@@ -394,7 +397,7 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
   }
 
   // Establish the projection
-  if (pgmHeaderInfo.projections.names().size() == 0)
+  if (pgmHeaderInfo.projections.names().empty())
   {
     theReportStream << "Header does not contain projection in " << theFileName << endl;
     return nullptr;

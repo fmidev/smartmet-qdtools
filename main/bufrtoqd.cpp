@@ -41,6 +41,7 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <cmath>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -56,11 +57,11 @@
 namespace fs = std::filesystem;
 struct ParNameInfo
 {
-  ParNameInfo() : bufrId(), bufrName(), shortName(), parId(kFmiBadParameter) {}
+  ParNameInfo() {}
   std::string bufrId;
   std::string bufrName;
   std::string shortName;
-  FmiParameterName parId;
+  FmiParameterName parId = kFmiBadParameter;
 };
 
 using NameMap = std::map<std::string, ParNameInfo>;
@@ -86,7 +87,10 @@ using MessageReMap = std::map<std::string, std::list<int>>;
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 NFmiEnumConverter converter;
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -120,6 +124,8 @@ enum BufrDataCategory
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 std::string data_category_name(BufrDataCategory category)
 {
   switch (category)
@@ -212,6 +218,7 @@ BufrDataCategory data_category(const std::string& name)
 
   throw std::runtime_error("Unknown BUFR data category '" + name + "'");
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -250,6 +257,8 @@ struct Options
   bool forcepressurechangesign = false;                            // -f --forcepressurechangesign
 };
 
+namespace
+{
 Options options;
 
 // ----------------------------------------------------------------------
@@ -286,7 +295,7 @@ void parse_option_remap(const std::string& remapdef)
 
     MessageReMap::iterator rit;
     std::string token, name;
-    size_t pos0 = 0, pos;
+    size_t pos0 = 0, pos = 0;
 
     while ((pos = remapstr.find(";", pos0)) != std::string::npos)
     {
@@ -296,7 +305,7 @@ void parse_option_remap(const std::string& remapdef)
         fprintf(stderr, "  remap = %s\n", remap.c_str());
 
       pos0 = pos + 1;
-      size_t pos1 = 0, pos2;
+      size_t pos1 = 0, pos2 = 0;
 
       while ((pos2 = remap.find(",", pos1)) != std::string::npos)
       {
@@ -611,6 +620,7 @@ std::list<std::string> expand_input_files()
 
   return files;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -625,7 +635,7 @@ struct record
   double value;
   std::string svalue;
 
-  record() : name(), units(), value(std::numeric_limits<double>::quiet_NaN()), svalue() {}
+  record() : value(std::numeric_limits<double>::quiet_NaN()) {}
 };
 
 std::ostream& operator<<(std::ostream& out, const record& rec)
@@ -681,6 +691,8 @@ struct BufrElement
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 std::string strip_rank(const char* key)
 {
   if (key[0] == '#')
@@ -938,6 +950,7 @@ bool message_is_significant(const Message& msg)
   // Significant levels are marked with nonzero values
   return (sig->second.value > 0);
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -971,6 +984,8 @@ struct SubsetRange
   int index;  // array index into BufrElement::values / svalues
 };
 
+namespace
+{
 std::vector<SubsetRange> subset_ranges(const std::vector<BufrElement>& elements,
                                        long nsubsets,
                                        bool compressed)
@@ -1288,7 +1303,7 @@ std::pair<BufrDataCategory, Messages> read_messages(const std::list<std::string>
     }
   }
 
-  if (datacategories.size() == 0)
+  if (datacategories.empty())
   {
     if (!skipped_categories.empty())
     {
@@ -1422,6 +1437,7 @@ CodeIndex build_code_index(const NameMap &namemap)
   }
   return index;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -1438,7 +1454,7 @@ struct CsvConfig
 
   void add(const Fmi::CsvReader::row_type& row)
   {
-    if (row.size() == 0)
+    if (row.empty())
       return;
     if (row[0].substr(0, 1) == "#")
       return;
@@ -1470,6 +1486,8 @@ struct CsvConfig
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 NameMap read_bufr_config()
 {
   CsvConfig csv;
@@ -2071,7 +2089,7 @@ NFmiMetTime get_validtime_amdar(std::set<NFmiMetTime>& used_times,
  */
 // ----------------------------------------------------------------------
 
-NFmiTimeDescriptor create_tdesc_ident(const Messages& messages,
+NFmiTimeDescriptor create_tdesc_ident(const Messages& /*messages*/,
                                       const TimeIdentList& timeidentlist,
                                       const IdentTimeMap& identtimemap)
 {
@@ -2503,7 +2521,7 @@ void copy_records_buoy_ship(NFmiFastQueryInfo &info,
   // Remember last station since changing it while copying
   // is a bit expensive
 
-  std::string laststation = "";
+  std::string laststation;
 
   for (const Message& msg : messages)
   {
@@ -2839,7 +2857,7 @@ Phase get_phase_amdar(Message& msg,
                       bool& phasereset,
                       double& lastaltitude)
 {
-  int code;
+  int code = 0;
   Phase msgphase = get_phase_amdar(msg, true, code);
   double altitude = get_altitude(msg, true);
   bool altitudechange = (fabs(altitude - lastaltitude) > 1);
@@ -3300,7 +3318,7 @@ void debug_state_amdar(const std::string& ident,
 
 void set_phase_amdar(Phase phase, Messages& phasemessages)
 {
-  int code;
+  int code = 0;
 
   if (phase != Takeoff)
     phase = Landing;
@@ -3476,7 +3494,7 @@ void organize_messages_amdar(const Messages& origmessages,
   Fmi::DateTime lasttime;
   std::string msgident, state;
   double lastaltitude = 0.0;
-  bool phasechange, phaserestart, phasereset;
+  bool phasechange = false, phaserestart = false, phasereset = false;
   int counter = 0;
 
   levelcount = 0;
@@ -3875,7 +3893,7 @@ void store_messages_sounding(const NameMap& namemap,
     {
       // Sounding with most observations
 
-      int obscount1 = 0, obscount2 = 0, obscount;
+      int obscount1 = 0, obscount2 = 0, obscount = 0;
 
       for (auto const& msg1 : tii->second)
         if ((obscount = get_obscount(namemap, msg1)) > obscount1)
@@ -4046,7 +4064,7 @@ void organize_messages_sounding(const Messages& origmessages,
   std::string lastident;
   double lastaltitude = 0.0;
   long laststation = -1;
-  bool soundingrestart;
+  bool soundingrestart = false;
   int counter = 0;
 
   record identrec;       // Sounding ident is added to messages to identify station's
@@ -4422,7 +4440,7 @@ void set_totalcloud_octas_from_percentage(Messages& messages)
 
       if ((itp != msg.end()) && (itp->second.value != kFloatMissing))
       {
-        float octas;
+        float octas = NAN;
 
         if (itp->second.value < 0)
           octas = kFloatMissing;
@@ -4583,6 +4601,7 @@ int run(int argc, char* argv[])
 
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

@@ -225,7 +225,7 @@ void set_timezone(const string &theZone)
  */
 // ----------------------------------------------------------------------
 
-string TimeString(const NFmiMetTime& theTime, bool theUtcFlag, string dateFormat)
+string TimeString(const NFmiMetTime& theTime, bool theUtcFlag, const string& dateFormat)
 {
   if (theUtcFlag)
     set_timezone("UTC");
@@ -248,7 +248,7 @@ string TimeString(const NFmiMetTime& theTime, bool theUtcFlag, string dateFormat
  */
 // ----------------------------------------------------------------------
 
-void ReportTimes(NFmiFastQueryInfo *q, bool theUtcFlag, string dateFormat)
+void ReportTimes(NFmiFastQueryInfo* q, bool theUtcFlag, const string& dateFormat)
 {
   if (q == nullptr)
     throw runtime_error("Option -q is required for the given options");

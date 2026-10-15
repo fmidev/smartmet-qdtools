@@ -19,6 +19,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 using namespace std::literals;
@@ -143,7 +144,7 @@ NFmiMetTime nctools::tomettime(const Fmi::DateTime& t)
   }
 }
 
-unsigned long nctools::get_units_in_seconds(std::string unit_str)
+unsigned long nctools::get_units_in_seconds(const std::string& unit_str)
 {
   try
   {
@@ -217,7 +218,7 @@ void nctools::parse_time_units_string(const std::string& units,
 // ======================================================================
 
 nctools::NcFileExtended::NcFileExtended(std::string apath, long atimeshift)
-    : path(apath), timeshift(atimeshift)
+    : path(std::move(apath)), timeshift(atimeshift)
 {
   gdal_dataset = GDALOpen(path.c_str(), GA_ReadOnly);
 }
@@ -1545,7 +1546,8 @@ float nctools::NcFileExtended::get_missingvalue_for_var(const std::string& varna
 // timeList
 // ======================================================================
 
-NFmiTimeList nctools::NcFileExtended::timeList(std::string varName, std::string unitAttrName)
+NFmiTimeList nctools::NcFileExtended::timeList(const std::string& varName,
+                                               const std::string& unitAttrName)
 {
   try
   {
@@ -2272,7 +2274,7 @@ void nctools::NcFileExtended::printInfo() const
 // is_name_in_list (defined here as it was in the original)
 // ======================================================================
 
-bool nctools::is_name_in_list(const std::list<std::string>& nameList, const std::string name)
+bool nctools::is_name_in_list(const std::list<std::string>& nameList, const std::string& name)
 {
   try
   {

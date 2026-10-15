@@ -3813,7 +3813,7 @@ NFmiLevel GetLevel(const unsigned char* pds)
   return NFmiLevel(levelType, levelName, levelValue);
 }
 
-NFmiDataIdent GetParam(unsigned char *pds, NFmiProducer theWantedProducer)
+NFmiDataIdent GetParam(unsigned char* pds, const NFmiProducer& theWantedProducer)
 {
   const char *nam = k5toa(pds);
   static_cast<void>(k5_comments(pds));

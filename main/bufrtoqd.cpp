@@ -897,7 +897,7 @@ void get_ident(const Message& msg, const MessageReMap& remap, std::string& ident
   }
 }
 
-Message::iterator get_ident(Message& msg, const MessageReMap remap, std::string& ident)
+Message::iterator get_ident(Message& msg, const MessageReMap& remap, std::string& ident)
 {
   ident.clear();
 

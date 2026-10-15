@@ -391,7 +391,6 @@ void HandleSeparateProjections(vector<string> &theSeparateProjectionsStr,
     theGridSettings.itsBaseGrid = ::GetGridFromProjectionStr(theSeparateProjectionsStr[0]);
     theGridSettings.itsPressureGrid = ::GetGridFromProjectionStr(theSeparateProjectionsStr[1]);
     theGridSettings.itsHybridGrid = ::GetGridFromProjectionStr(theSeparateProjectionsStr[2]);
-    ;
   }
 }
 

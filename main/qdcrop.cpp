@@ -893,7 +893,7 @@ NFmiTime ParseDate(const string& theTime)
  */
 // ----------------------------------------------------------------------
 
-set<NFmiMetTime> FindBadTimes(NFmiFastQueryInfo& theQ, double theLimit, string theParam)
+set<NFmiMetTime> FindBadTimes(NFmiFastQueryInfo& theQ, double theLimit, const string& theParam)
 {
   // the parameter to be checked, if any
   FmiParameterName paramnum = kFmiBadParameter;

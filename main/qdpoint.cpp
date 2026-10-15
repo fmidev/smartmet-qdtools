@@ -772,7 +772,7 @@ float MetaFunction(NFmiFastQueryInfo& qd, const string& name, NFmiPoint lonlat)
     return CloudinessN(qd, lonlat);
   if (name == "MetaNN")
     return CloudinessNN(qd, lonlat);
-  else if (name == "MetaMoonIlluminatedFraction")
+  if (name == "MetaMoonIlluminatedFraction")
     return MoonIlluminatedFraction(qd.ValidTime());
   else if (name == "MetaSnowProb")
     return SnowProb(qd, lonlat);
@@ -810,7 +810,7 @@ const char* MetaPrecision(const string& name)
     return "%.0f";
   if (name == "MetaMoonIlluminatedFraction")
     return "%.1f";
-  else if (name == "MetaSnowProb")
+  if (name == "MetaSnowProb")
     return "%.1f";
   else if (name == "MetaSurfaceRadiation")
     return "%1.f";
@@ -1332,7 +1332,9 @@ void ReportTimes(QueryDataManager& theMgr)
 // Print location info for the user
 // ----------------------------------------------------------------------
 
-void ReportStations(QueryDataManager& theMgr, const vector<int> theWmos, const NFmiPoint& theLonLat)
+void ReportStations(QueryDataManager& theMgr,
+                    const vector<int>& theWmos,
+                    const NFmiPoint& theLonLat)
 {
   if (theWmos.empty())
     PrintLocationInfo(theMgr, !IsBad(theLonLat), theLonLat);

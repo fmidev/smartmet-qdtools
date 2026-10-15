@@ -10,13 +10,13 @@
 class NFmiDataModifierDataChecking : public NFmiDataModifier
 {
  public:
-  NFmiDataModifierDataChecking() {};
+  NFmiDataModifierDataChecking() {}
   ~NFmiDataModifierDataChecking() override = default;
   void Clear() override
   {
     itsCheckedDataCount = 0;
     itsFoundDataCount = 0;
-  };
+  }
   int CheckedDataCount() const { return itsCheckedDataCount; }
   int FoundDataCount() const { return itsFoundDataCount; }
   using NFmiDataModifier::CalculationResult;
@@ -25,7 +25,7 @@ class NFmiDataModifierDataChecking : public NFmiDataModifier
     float result =
         itsCheckedDataCount ? itsFoundDataCount / float(itsCheckedDataCount) * 100 : kFloatMissing;
     return result;
-  };
+  }
 
  protected:
   int itsCheckedDataCount = 0;
@@ -35,7 +35,7 @@ class NFmiDataModifierDataChecking : public NFmiDataModifier
 class NFmiDataModifierDataMissing : public NFmiDataModifierDataChecking
 {
  public:
-  NFmiDataModifierDataMissing() {};
+  NFmiDataModifierDataMissing() {}
   ~NFmiDataModifierDataMissing() override = default;
   using NFmiDataModifierDataChecking::Calculate;
   void Calculate(float theValue) override
@@ -43,18 +43,18 @@ class NFmiDataModifierDataMissing : public NFmiDataModifierDataChecking
     itsCheckedDataCount++;
     if (theValue == kFloatMissing)
       itsFoundDataCount++;
-  };
+  }
 };
 class NFmiDataModifierDataStraight : public NFmiDataModifierDataChecking
 {
  public:
-  NFmiDataModifierDataStraight() : itsLastValue(kFloatMissing) {};
+  NFmiDataModifierDataStraight() : itsLastValue(kFloatMissing) {}
   ~NFmiDataModifierDataStraight() override = default;
   void Clear() override
   {
     NFmiDataModifierDataChecking::Clear();
     itsLastValue = kFloatMissing;
-  };
+  }
   using NFmiDataModifierDataChecking::Calculate;
   void Calculate(float theValue) override
   {
@@ -62,7 +62,7 @@ class NFmiDataModifierDataStraight : public NFmiDataModifierDataChecking
     if (theValue == itsLastValue)
       itsFoundDataCount++;
     itsLastValue = theValue;
-  };
+  }
 
  protected:
   float itsLastValue;

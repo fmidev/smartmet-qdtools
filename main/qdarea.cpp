@@ -59,7 +59,7 @@ struct ParameterRequest
   std::shared_ptr<Acceptor> tester;
 
  private:
-  ParameterRequest();
+  ParameterRequest() = delete;
   WeatherParameter parse_parameter(const string& theParameter) const;
   WeatherFunction parse_function(const string& theString) const;
   std::shared_ptr<Acceptor> parse_acceptor(const string& theString) const;

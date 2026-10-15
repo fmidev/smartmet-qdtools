@@ -173,7 +173,7 @@ struct TotalDimensionData
       return xDimName < other.xDimName;
     if (xDimSize != other.xDimSize)
       return xDimSize < other.xDimSize;
-    else if (yDimName != other.yDimName)
+    if (yDimName != other.yDimName)
       return yDimName < other.yDimName;
     else if (yDimSize != other.yDimSize)
       return yDimSize < other.yDimSize;
@@ -258,7 +258,7 @@ WRFData::TotalDimensionData GetTotalDimensionDataFromParam(const nctools::Option
     }
     for (int i = 0; i < numOfDims; i++)
     {
-      const netCDF::NcDim dim = var.getDim(i);;
+      const netCDF::NcDim dim = var.getDim(i);
       if (options.verbose)
       {
         if (i > 0)
@@ -569,7 +569,7 @@ NFmiGrid GetGridFromProjectionStr(const std::string &theProjectionStr)
               theProjectionStr);
 
     std::string areaStr = projectionPartsStr[0] + ":" + projectionPartsStr[1];
-    ;
+
     std::string gridStr = projectionPartsStr[2];
     gridStr = NFmiStringTools::ReplaceChars(gridStr, 'x', ',');  // on mahdollista että optiona
                                                                  // annettu hilakoko sisältää

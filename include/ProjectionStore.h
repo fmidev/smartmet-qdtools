@@ -40,8 +40,8 @@ class ProjectionStore
   const Projection& projection(const std::string& theName) const;
 
  private:
-  ProjectionStore(const ProjectionStore& theStore);
-  ProjectionStore& operator=(const ProjectionStore& theStore);
+  ProjectionStore(const ProjectionStore& theStore) = delete;
+  ProjectionStore& operator=(const ProjectionStore& theStore) = delete;
 
   std::shared_ptr<ProjectionStorePimple> itsPimple;
 

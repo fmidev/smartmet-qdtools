@@ -170,7 +170,7 @@ bool parse_command_line(int argc, const char* argv[])
  */
 // ----------------------------------------------------------------------
 
-NFmiTimeDescriptor make_timedescriptor(const NFmiFastQueryInfo theQ)
+NFmiTimeDescriptor make_timedescriptor(const NFmiFastQueryInfo& theQ)
 {
   NFmiTimeList times;
   times.Add(new NFmiMetTime(theQ.ValidTime()));

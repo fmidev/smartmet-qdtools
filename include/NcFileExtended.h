@@ -86,7 +86,8 @@ class NcFileExtended
 
   bool joinable(NcFileExtended& ncfile, std::vector<std::string>* failreasons = nullptr);
 
-  NFmiTimeList timeList(std::string varName = "time", std::string unitAttrName = "units");
+  NFmiTimeList timeList(const std::string& varName = "time",
+                        const std::string& unitAttrName = "units");
 
   // Returns variable names in the order they appear in the file (GDAL subdataset order).
   // Only returns data variables, not coordinate variables (lat, lon, time, lev, etc.).
@@ -165,7 +166,7 @@ class NcFileExtended
 
 // Free functions
 NFmiMetTime tomettime(const Fmi::DateTime& t);
-unsigned long get_units_in_seconds(std::string unit_str);
+unsigned long get_units_in_seconds(const std::string& unit_str);
 void parse_time_units_string(const std::string& units_str,
                              Fmi::DateTime* origintime,
                              long* timeunit);

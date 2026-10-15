@@ -41,7 +41,7 @@ double multiplier(const std::string& theParam)
     return 0.1;
   if (theParam == "Detectability")
     return -100.0 / 255;
-  else if (theParam == "Precipitation3hF0")
+  if (theParam == "Precipitation3hF0")
     return 0.01;
   else if (theParam == "Precipitation3hF1")
     return 0.01;

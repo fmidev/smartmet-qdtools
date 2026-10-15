@@ -517,7 +517,7 @@ FmiParameterName opera_name_to_newbase(const std::string& product,
       return kFmiDifferentialReflectivity;
     if (quantity == "KDP")
       return kFmiSpecificDifferentialPhase;
-    else if (quantity == "PHIDP")
+    if (quantity == "PHIDP")
       return kFmiDifferentialPhase;
     else if (quantity == "SQI")
       return kFmiSignalQualityIndex;
@@ -538,7 +538,7 @@ FmiParameterName opera_name_to_newbase(const std::string& product,
       return kFmiPrecipitationAmount;
     if (quantity == "QIND")
       return kFmiSignalQualityIndex;
-    else if (quantity == "PROB")
+    if (quantity == "PROB")
     {
       // RaVaKe parameters
       int limit = file.get_attribute<int>(prefix, "threshold_id"s);
@@ -912,7 +912,7 @@ NFmiVPlaceDescriptor create_vdesc(const Fmi::HDF5::Hdf5File& file)
   {
     throw std::runtime_error("This program cannot handle azimuthal objects (AZIM)  data");
   }
-  else if (object == "IMAGE")
+  if (object == "IMAGE")
   {
     return collect_levels(file);
   }

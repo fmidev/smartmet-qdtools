@@ -34,6 +34,8 @@ using namespace boost;
  */
 // ----------------------------------------------------------------------
 
+namespace
+{
 void UpdateBBox(const NFmiPoint& thePoint,
                 double& theMinLon,
                 double& theMinLat,
@@ -509,6 +511,7 @@ int domain(int argc, const char* argv[])
 
   return 0;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!

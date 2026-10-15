@@ -37,6 +37,8 @@
 
 using namespace std;
 
+namespace
+{
 bool jscan_is_negative(grib_handle *theHandle)
 {
   long direction = 0;
@@ -55,6 +57,7 @@ void check_jscan_direction(grib_handle *theHandle)
   if (direction == 0)
     throw std::runtime_error("GRIBs with a negative j-scan direction are not supported");
 }
+}  // namespace
 
 // template<typename T>
 struct PointerDestroyer
@@ -222,6 +225,8 @@ RH saadaan 0...1, mutta on vielä tarkistettava ettei mene alle nollan
 tai yli yhden
 */
 
+namespace
+{
 // Lasketaan vesihöyryn osapaine ES veden suhteen.
 // Oletus T ei ole puuttuvaa ja on celsiuksina.
 float CalcESWater(float T)
@@ -508,9 +513,12 @@ NFmiRect GetLatlonCropRect(const string &theBoundsStr)
   const NFmiPoint topright(lon2, lat2);
   return NFmiRect(bottomleft, topright);
 }
+}  // namespace
 
 const NFmiPoint gMissingGridSize(kFloatMissing, kFloatMissing);
 
+namespace
+{
 std::shared_ptr<NFmiGrid> GetGridFromProjectionStr(string &theProjectionStr,
                                                    int gridSizeX = -1,
                                                    int gridSizeY = -1)
@@ -911,6 +919,7 @@ vector<string> GetDataFiles(const NFmiCmdLine &cmdline)
 
   return all_files;
 }
+}  // namespace
 
 class CombineDataStructureSearcher
 {
@@ -1031,6 +1040,8 @@ class CombineDataStructureSearcher
   set<NFmiProducer> itsWantedProducers;
 };
 
+namespace
+{
 set<long> FindAllLevelTypes(vector<std::shared_ptr<NFmiQueryData> > &theTotalQDataCollector)
 {
   set<long> levelTypes;
@@ -1084,6 +1095,7 @@ bool FillQData(std::shared_ptr<NFmiQueryData> &theQData,
   }
   return filledAnyData;
 }
+}  // namespace
 
 struct ConnectionEdgeInfo
 {
@@ -1183,6 +1195,8 @@ struct ConnectionEdgeInfo
   double latitudeDiff = 0.0;
 };
 
+namespace
+{
 bool IsConnectionEdgeIndexUsed(
     vector<pair<set<size_t>, set<size_t> > > &connectedDataIndexiesVector, size_t index)
 {
@@ -1504,6 +1518,7 @@ void AddNotCombinedDataToVector(vector<std::shared_ptr<NFmiQueryData> > &areaCom
       ++it;
   }
 }
+}  // namespace
 
 // ÄLÄ POISTA! Tämä funktio on jätetty mahdollisten alueellisiin yhdistelyihin
 // liittyvien ongelmien etsimiseen.
@@ -1524,6 +1539,8 @@ void PrintConnectionInfoVector_Debug(vector<std::shared_ptr<NFmiQueryData> > &or
 }
 #endif
 
+namespace
+{
 vector<std::shared_ptr<NFmiQueryData> > TryAreaCombination(
     vector<std::shared_ptr<NFmiQueryData> > &origDataVector)
 {
@@ -1742,6 +1759,7 @@ long GetUsedParamId(grib_handle *theHandle)
 
   throw runtime_error("Couldn't get paramId from given grib_handle.");
 }
+}  // namespace
 
 #if 0
 void PrintAllParamInfo_forDebugging(grib_handle *theHandle)
@@ -1785,6 +1803,8 @@ void PrintAllParamInfo_forDebugging(grib_handle *theHandle)
 }
 #endif
 
+namespace
+{
 NFmiDataIdent GetParam(grib_handle *theHandle, const NFmiProducer &theWantedProducer)
 {
   // TODO producerin voisi päätellä originating center numeroista
@@ -1812,10 +1832,13 @@ void FixPacificLongitude(NFmiPoint &lonLat)
     lonLat.X(lon.Value());
   }
 }
+}  // namespace
 
 const double g_AtlanticFixLongitudeLimit = 358;
 const double g_PacificFixLongitudeLimit = 178;
 
+namespace
+{
 void DoPossibleGlobalLongitudeFixes(double &Lo1,
                                     double &Lo2,
                                     GribFilterOptions &theGribFilterOptions)
@@ -1959,6 +1982,7 @@ void CalcCroppedGrid(GridRecordData *theGridRecordData)
   theGridRecordData->itsGrid = newGrid;
   theGridRecordData->fDoProjectionConversion = true;
 }
+}  // namespace
 
 // ----------------------------------------------------------------------
 /*!
@@ -1979,6 +2003,8 @@ struct EarthShape
  */
 //----------------------------------------------------------------------
 
+namespace
+{
 std::string GetEarthProj(const EarthShape &theShape)
 {
   if (!theShape.datum.empty())
@@ -2614,6 +2640,7 @@ string MakeParamString(const NFmiParam &theParam)
   str += theParam.GetName();
   return str;
 }
+}  // namespace
 
 [[noreturn]] void DoParamConflictError(const NFmiParam &theChangedParam,
                           const NFmiParam &theOrigChangedParam,
@@ -2633,6 +2660,8 @@ string MakeParamString(const NFmiParam &theParam)
   throw runtime_error(errorStr);
 }
 
+namespace
+{
 void DoParamChecking(GridRecordData &theData,
                      map<unsigned long, pair<NFmiParam, NFmiParam> > &theChangedParams,
                      map<unsigned long, NFmiParam> &theUnchangedParams,
@@ -3797,11 +3826,14 @@ void ConvertOneGribFile(const GribFilterOptions &theGribFilterOptionsIn,
     DoErrorReporting("Unknown error accured when converting grib-file:", "", theGribFileName);
   }
 }
+}  // namespace
 
 // **************************************************************************
 #include "wgrib_functions.h"
 
 namespace wgrib2qd
+{
+namespace
 {
 NFmiLevel GetLevel(const unsigned char* pds)
 {
@@ -4464,12 +4496,15 @@ void FillGridData(float *theArray,
   // Tarkista vielä, jos löytyy paramChangeTablesta parametrille muunnos kaavat jotka pitää tehdä
   wgrib2qd::MakeParameterConversions(theGribData, theParamChangeTable);
 }
+}  // namespace
 
 struct GridLessThan
 {
   bool operator()(const MyGrid &lhs, const MyGrid &rhs) const { return lhs < rhs; }
 };
 
+namespace
+{
 vector<NFmiHPlaceDescriptor> GetAllHPlaceDescriptors(vector<GridRecordData *> &theGribRecordDatas,
                                                      bool useOutputFile)
 {
@@ -5003,10 +5038,13 @@ void ConvertOneGribFile(const GribFilterOptions &theGribFilterOptionsIn,
     DoErrorReporting("Unknown error occured when converting grib-file:", "", theGribFileName);
   }
 }
+}  // namespace
 
 }  // namespace wgrib2qd
 // **************************************************************************
 
+namespace
+{
 void MakeTotalCombineQDatas(vector<std::shared_ptr<NFmiQueryData> > &theTotalQDataCollector,
                             GribFilterOptions &theGribFilterOptionsOut)
 {
@@ -5360,6 +5398,7 @@ int Run(int argc, const char **argv, bool &fReportExecutionTime)
 
   return BuildAndStoreAllDatas(fileList, gribFilterOptions);
 }
+}  // namespace
 
 /*
 Kari Niemelän antamaa koodia vertikaalikoordinaattien laskemista varten

@@ -843,6 +843,7 @@ AnalysisSources find_source(const WeatherArea& theArea)
           case NFmiSvgPath::kElementMoveto:
           case NFmiSvgPath::kElementLineto:
             inside = q.Area()->IsInside(NFmiPoint(it->itsX, it->itsY));
+            break;
           case NFmiSvgPath::kElementNotValid:
           case NFmiSvgPath::kElementClosePath:
             break;

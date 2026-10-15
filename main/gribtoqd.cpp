@@ -90,6 +90,30 @@ class Reduced_ll_grib_exception
   // kaikki gribit yritetään purkaa käyttäen NOAA:n wgrib:iä.
 };
 
+// The input file being converted, closed on destruction. Copies of the options
+// do not get it, so the file can never be closed twice.
+struct InputFileHandle
+{
+  FILE* fp = nullptr;
+
+  InputFileHandle() = default;
+  InputFileHandle(const InputFileHandle& /* theOther */) noexcept {}
+  InputFileHandle& operator=(const InputFileHandle& theOther) noexcept
+  {
+    if (this != &theOther)
+      reset();
+    return *this;
+  }
+  ~InputFileHandle() { reset(); }
+
+  void reset() noexcept
+  {
+    if (fp != nullptr)
+      (void)::fclose(fp);  // suljetaan tiedosto, josta gribi luettu
+    fp = nullptr;
+  }
+};
+
 struct GribFilterOptions
 {
   GribFilterOptions()
@@ -99,11 +123,6 @@ struct GribFilterOptions
   {
   }
 
-  ~GribFilterOptions()
-  {
-    if (itsInputFile)
-      (void)::fclose(itsInputFile);  // suljetaan tiedosto, josta gribi luettu
-  }
 
   bool DoGlobalFix() const { return fDoAtlanticFix || fDoPacificFix || fDoLeftRightSwap; }
 
@@ -122,8 +141,9 @@ struct GribFilterOptions
   bool fDoYAxisFlip = false;
   bool fTryAreaCombination = false;  // tietyt datat koostuvat palasista, kokeillaan jos saa
                                      // palasista saa yhdistettyä isompia kokonaisuuksia
-  bool fDoZigzagMode;  // data luetaan rivi kerrallaan eri suuntiin, ensin vasemmalta oikealle ja
-                       // sitten oikealta vasemmalle, sitten taas vasemmalta oikealle jne.
+  bool fDoZigzagMode =
+      false;  // data luetaan rivi kerrallaan eri suuntiin, ensin vasemmalta oikealle ja
+              // sitten oikealta vasemmalle, sitten taas vasemmalta oikealle jne.
   bool fDoLeftRightSwap = false;
   bool fIgnoreReducedLLData = false;  // joskus kannattaa vain purkaa gribit käyttäen grib_api:a ja
                                       // ohittaa ns. reduced_ll datat,
@@ -141,7 +161,7 @@ struct GribFilterOptions
   GridSettingsPackage itsGridSettings;
   bool fVerbose = false;
   string itsInputFileNameStr;
-  FILE* itsInputFile = nullptr;
+  InputFileHandle itsInputFile;
   // Joissain datoissa on sama parametri (yleensä kumulatiivinen) kahdesti, mutta eri aikajaksoilla.
   // Esim. NCEP:in NAM mallissa on APCP -parametri kahdesti, joista toinen on 3h sademäärä (3h
   // resoluutio datssa).
@@ -684,6 +704,7 @@ bool GribDefinitionPath(NFmiCmdLine &theCmdLine)
   {
     // setenv copies the value, putenv kept a pointer to this local string
     string definitionsPath = theCmdLine.OptionValue('D');
+    // NOLINTNEXTLINE(concurrency-mt-unsafe): single-threaded command line tool
     return setenv("GRIB_DEFINITION_PATH", definitionsPath.c_str(), 1) == 0;
   }
   return true;
@@ -1153,13 +1174,13 @@ struct ConnectionEdgeInfo
 
   NFmiGrid grid1;
   NFmiGrid grid2;
-  size_t data1Index;                 // 1. datan indeksi queryData vektorissa
-  size_t data2Index;                 // 2. datan indeksi....
+  size_t data1Index = 0;                 // 1. datan indeksi queryData vektorissa
+  size_t data2Index = 0;                 // 2. datan indeksi....
   FmiDirection connectionDirection = kNoDirection;  // mihin suuntaan grid1 on suhteessa grid2:een,
                                                     // arvo on kNoDirection jos ei ole yhteyttä
   FmiLevelType levelType = kFmiNoLevelType;
-  double longitudeDiff;
-  double latitudeDiff;
+  double longitudeDiff = 0.0;
+  double latitudeDiff = 0.0;
 };
 
 bool IsConnectionEdgeIndexUsed(
@@ -2594,7 +2615,7 @@ string MakeParamString(const NFmiParam &theParam)
   return str;
 }
 
-void DoParamConflictError(const NFmiParam &theChangedParam,
+[[noreturn]] void DoParamConflictError(const NFmiParam &theChangedParam,
                           const NFmiParam &theOrigChangedParam,
                           const NFmiParam &theUnChangedParam)
 {
@@ -3606,7 +3627,7 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
     NFmiMetTime firstValidTime;
 
     while ((gribHandle = grib_handle_new_from_file(
-                gribContext, theGribFilterOptions.itsInputFile, &err)) != nullptr)
+                gribContext, theGribFilterOptions.itsInputFile.fp, &err)) != nullptr)
     {
       if (err != GRIB_SUCCESS)
         throw runtime_error("Failed to open grib handle in file  " +
@@ -3729,7 +3750,7 @@ void ConvertOneGribFile(const GribFilterOptions &theGribFilterOptionsIn,
 {
   GribFilterOptions gribFilterOptionsLocal = theGribFilterOptionsIn;
   gribFilterOptionsLocal.itsInputFileNameStr = theGribFileName;
-  if ((gribFilterOptionsLocal.itsInputFile =
+  if ((gribFilterOptionsLocal.itsInputFile.fp =
            fopen(gribFilterOptionsLocal.itsInputFileNameStr.c_str(), "rb")) == nullptr)
   {
     cerr << "could not open input file: " << gribFilterOptionsLocal.itsInputFileNameStr << endl;
@@ -4745,7 +4766,7 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
     int bmsCounter = 0;
     for (;;)
     {
-      msg = seek_grib(theGribFilterOptions.itsInputFile, &pos, &len_grib, buffer, MSEEK);
+      msg = seek_grib(theGribFilterOptions.itsInputFile.fp, &pos, &len_grib, buffer, MSEEK);
       if (msg == nullptr)
         break;  // tultiin recordien loppuun
 
@@ -4761,7 +4782,7 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
         }
         buffer = new_buffer;
       }
-      read_grib(theGribFilterOptions.itsInputFile, pos, len_grib, buffer);
+      read_grib(theGribFilterOptions.itsInputFile.fp, pos, len_grib, buffer);
 
       // parse grib message
       msg = buffer;
@@ -4958,7 +4979,7 @@ void ConvertOneGribFile(const GribFilterOptions &theGribFilterOptionsIn,
 {
   GribFilterOptions gribFilterOptionsLocal = theGribFilterOptionsIn;
   gribFilterOptionsLocal.itsInputFileNameStr = theGribFileName;
-  if ((gribFilterOptionsLocal.itsInputFile =
+  if ((gribFilterOptionsLocal.itsInputFile.fp =
            fopen(gribFilterOptionsLocal.itsInputFileNameStr.c_str(), "rb")) == nullptr)
   {
     cerr << "could not open input file: " << gribFilterOptionsLocal.itsInputFileNameStr << endl;

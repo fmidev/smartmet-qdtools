@@ -24,7 +24,7 @@ namespace TimeTools
 const NFmiTime toLocalTime(const NFmiTime &theUtcTime)
 {
   // The UTC time
-  struct ::tm utc;
+  struct ::tm utc{};
   utc.tm_sec = theUtcTime.GetSec();
   utc.tm_min = theUtcTime.GetMin();
   utc.tm_hour = theUtcTime.GetHour();
@@ -37,7 +37,7 @@ const NFmiTime toLocalTime(const NFmiTime &theUtcTime)
 
   ::time_t epochtime = NFmiStaticTime::my_timegm(&utc);
 
-  struct ::tm local;
+  struct ::tm local{};
   ::localtime_r(&epochtime, &local);
 
   // And build a NFmiTime from the result
@@ -77,6 +77,7 @@ const NFmiTime timezone_time(const NFmiTime &theUTCTime, const string &theZone)
   static string current_zone;
   if (zone != current_zone)
   {
+    // NOLINTNEXTLINE(concurrency-mt-unsafe): single-threaded command line tool
     setenv("TZ", zone.c_str(), 1);
     tzset();
     current_zone = zone;

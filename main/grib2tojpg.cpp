@@ -1655,7 +1655,8 @@ bool FillQDataWithGribRecords(vector<GridRecordData *> &theGribRecordDatas)
     char jpegFilename[300];
     struct tm* time_table = nullptr;
     const time_t itsValidTime = tmp->itsValidTime.EpochTime();
-    time_table = gmtime(&itsValidTime);
+    struct ::tm time_tableBuffer{};  // gmtime_r is thread safe
+    time_table = gmtime_r(&itsValidTime, &time_tableBuffer);
     (void)strftime(pattern, 254, globalFilenamePattern.c_str(), time_table);
     snprintf(jpegFilename, 299, "%s%s.jpg", globalFilenamePrefix.c_str(), pattern);
 
@@ -1663,8 +1664,8 @@ bool FillQDataWithGribRecords(vector<GridRecordData *> &theGribRecordDatas)
     NFmiDataMatrix<float> gridValues = tmp->itsGridData;
 
     // Initialize JPEG creation
-    struct jpeg_compress_struct cinfo;
-    struct jpeg_error_mgr jerr;
+    struct jpeg_compress_struct cinfo{};
+    struct jpeg_error_mgr jerr{};
     FILE* jpeg = nullptr;
 
     cinfo.err = jpeg_std_error(&jerr);

@@ -238,7 +238,7 @@ void run(int argc, const char* argv[])
     {
       oldId = stol(paramIdOrName);
     }
-    catch (const invalid_argument& e)
+    catch (const invalid_argument&)
     {
       throw runtime_error("Station id must be all numbers");
     }

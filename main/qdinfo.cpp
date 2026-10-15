@@ -177,7 +177,7 @@ void ReportParameters(NFmiFastQueryInfo *q, bool ignoresubs)
 const string format_time(const NFmiMetTime& mtime, const string& dateFormat, bool /*theUtcFlag*/)
 {
   // The UTC time
-  struct ::tm utc;
+  struct ::tm utc{};
   utc.tm_year = mtime.GetYear() - 1900;
   utc.tm_mon = mtime.GetMonth() - 1;
   utc.tm_mday = mtime.GetDay();
@@ -190,7 +190,8 @@ const string format_time(const NFmiMetTime& mtime, const string& dateFormat, boo
   // As local time. Note that localtime owns the struct
   // that it will create statically
 
-  struct ::tm *local = ::localtime(&epochtime);
+  struct ::tm localBuffer{};  // localtime_r is thread safe
+  struct ::tm *local = ::localtime_r(&epochtime, &localBuffer);
 
   const ::size_t MAXLEN = 100;
   char buffer[MAXLEN];
@@ -209,6 +210,7 @@ const string format_time(const NFmiMetTime& mtime, const string& dateFormat, boo
 
 void set_timezone(const string &theZone)
 {
+  // NOLINTNEXTLINE(concurrency-mt-unsafe): single-threaded command line tool
   setenv("TZ", theZone.c_str(), 1);
   tzset();
 }
@@ -273,8 +275,10 @@ void ReportTimes(NFmiFastQueryInfo *q, bool theUtcFlag, string dateFormat)
   if (q->FirstTime() && q->NextTime())
   {
     q->FirstTime();
+    // NOLINTNEXTLINE(cppcoreguidelines-slicing): only the time is wanted, not the time step
     NFmiTime t1 = q->ValidTime();
     q->NextTime();
+    // NOLINTNEXTLINE(cppcoreguidelines-slicing): only the time is wanted, not the time step
     NFmiTime t2 = q->ValidTime();
     cout << t2.DifferenceInMinutes(t1) << " minutes";
   }

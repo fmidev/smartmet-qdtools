@@ -273,7 +273,7 @@ bool parse_options(int argc, char *argv[])
   std::string msg1 = "configuration file with conversion information (default='" + config + "')";
 
 #ifdef UNIX
-  struct winsize wsz;
+  struct winsize wsz{};
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &wsz);
   const int desc_width = (wsz.ws_col < 80 ? 80 : wsz.ws_col);
 #else
@@ -555,7 +555,6 @@ void set_stereographic_geometry(NFmiFastQueryInfo &theInfo,
   gset(gribHandle, "gridType", "polar_stereographic");
 
   NFmiPoint bl(theInfo.Area()->BottomLeftLatLon());
-  NFmiPoint tr(theInfo.Area()->TopRightLatLon());
 
   gset(gribHandle, "longitudeOfFirstGridPointInDegrees", fix_longitude(bl.X()));
   gset(gribHandle, "latitudeOfFirstGridPointInDegrees", bl.Y());

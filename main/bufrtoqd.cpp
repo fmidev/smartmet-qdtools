@@ -399,7 +399,7 @@ bool parse_options(int argc, char* argv[], Options& options)
                      Fmi::to_string(options.maxdurationhours) + "), exceeding data ignored";
 
 #ifdef UNIX
-  struct winsize wsz;
+  struct winsize wsz{};
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &wsz);
   const int desc_width = (wsz.ws_col < 80 ? 80 : wsz.ws_col);
 #else
@@ -2961,13 +2961,11 @@ Phase get_phase_amdar(Message& msg,
 
   if (phasechange)
   {
-    if (curphase == None)
-      altitudechange = true;
-
     // If landing starts higher than last takeoff phase altitude, they cannot be joined
 
-    else if (((msgphase == Landing) && ((!altitudechange) || (altitude > lastaltitude))) ||
-             (msgphase == Flying))
+    if (curphase != None &&
+        (((msgphase == Landing) && ((!altitudechange) || (altitude > lastaltitude))) ||
+         (msgphase == Flying)))
       lasttakeoffmsg.clear();
 
     curphase = msgphase;

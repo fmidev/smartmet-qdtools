@@ -430,7 +430,7 @@ bool parse_options(int argc, char *argv[], Options &options)
   std::string tab_msg = "BUFR tables directory (default=" + default_tabdir + ")";
 
 #ifdef UNIX
-  struct winsize wsz;
+  struct winsize wsz{};
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &wsz);
   const int desc_width = (wsz.ws_col < 80 ? 80 : wsz.ws_col);
 #else
@@ -878,9 +878,8 @@ void read_bufr()
 
   // Output data to our data structure
 
-  if (ok)
-    while (subsets--)
-      ok = bufr_parse_out(dds, 0, ndescs - 1, &bufr_callback, 1);
+  while (ok && subsets--)
+    ok = bufr_parse_out(dds, 0, ndescs - 1, &bufr_callback, 1);
 
   // Close bitstreams and free descriptor array
 
@@ -891,6 +890,9 @@ void read_bufr()
 
   bufr_free_data(&bufr_msg);
   free_descs();
+
+  if (!ok)
+    throw std::runtime_error("Failed to extract the BUFR data subsets");
 }
 
 // ----------------------------------------------------------------------

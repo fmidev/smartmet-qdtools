@@ -85,10 +85,12 @@ struct CsvParams
   const Options &options;
 
   CsvParams(const Options &optionsIn);
+  CsvParams(const CsvParams &) = default;
+  CsvParams &operator=(const CsvParams &) = delete;  // the options are a reference
+  ~CsvParams() = default;
   void add(const Fmi::CsvReader::row_type &row);
 
- private:
-  CsvParams &operator=(const CsvParams &);  // estet��n sijoitus opereraattori, est�� varoituksen
+ private:  // estet��n sijoitus opereraattori, est�� varoituksen
                                             // VC++ 2012 k��nt�j�ss�
 };
 

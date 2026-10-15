@@ -130,7 +130,7 @@ bool parse_options(int argc, char* argv[], Options& options)
   std::string timeinfo;
 
 #ifdef UNIX
-  struct winsize wsz;
+  struct winsize wsz{};
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &wsz);
   const int desc_width = (wsz.ws_col < 80 ? 80 : wsz.ws_col);
 #else

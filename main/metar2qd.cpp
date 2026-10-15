@@ -375,6 +375,7 @@ NFmiHPlaceDescriptor MakeHPlaceDesc(NFmiAviationStationInfoSystem &theStationInf
     NFmiAviationStation* aviationStation = theStationInfoSystem.FindStation(it);
     if (aviationStation)
     {
+      // NOLINTNEXTLINE(cppcoreguidelines-slicing): only the station is wanted
       NFmiStation station(*aviationStation);
       if (!theStationInfoSystem.WmoStationsWanted())
       {
@@ -575,6 +576,9 @@ class StationErrorStrings : public set<string>
       out << endl << endl;
     }
   }
+  StationErrorStrings() = default;
+  StationErrorStrings(const StationErrorStrings&) = default;
+  StationErrorStrings& operator=(const StationErrorStrings&) = default;
 };
 
 // ----------------------------------------------------------------------

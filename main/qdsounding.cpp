@@ -427,6 +427,7 @@ void print_all_stations(NFmiFastQueryInfo &theQ)
 
 void set_timezone(const string &theZone)
 {
+  // NOLINTNEXTLINE(concurrency-mt-unsafe): single-threaded command line tool
   setenv("TZ", theZone.c_str(), 1);
   tzset();
 }

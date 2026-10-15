@@ -102,6 +102,30 @@ class GridSettingsPackage
 
 static const size_t gMBsize = 1024 * 1024;
 
+// The input file being converted, closed on destruction. Copies of the options
+// do not get it, so the file can never be closed twice.
+struct InputFileHandle
+{
+  FILE* fp = nullptr;
+
+  InputFileHandle() = default;
+  InputFileHandle(const InputFileHandle& /* theOther */) noexcept {}
+  InputFileHandle& operator=(const InputFileHandle& theOther) noexcept
+  {
+    if (this != &theOther)
+      reset();
+    return *this;
+  }
+  ~InputFileHandle() { reset(); }
+
+  void reset() noexcept
+  {
+    if (fp != nullptr)
+      (void)::fclose(fp);  // suljetaan tiedosto, josta gribi luettu
+    fp = nullptr;
+  }
+};
+
 struct GribFilterOptions
 {
   GribFilterOptions()
@@ -111,11 +135,6 @@ struct GribFilterOptions
   {
   }
 
-  ~GribFilterOptions()
-  {
-    if (itsInputFile)
-      (void)::fclose(itsInputFile);  // suljetaan tiedosto, josta gribi luettu
-  }
 
   string itsOutputFileName;  // -o optio tai sitten tulostetann cout:iin
   bool fUseOutputFile = false;
@@ -143,7 +162,7 @@ struct GribFilterOptions
                                                  // level-datat, joissa on vain yksi erillinen
                                                  // leveli, yhteen ja samaan surface-dataan
   string itsInputFileNameStr;
-  FILE* itsInputFile = nullptr;
+  InputFileHandle itsInputFile;
 };
 
 class TotalQDataCollector
@@ -519,6 +538,7 @@ bool GribDefinitionPath(const NFmiCmdLine& theCmdLine)
   {
     // setenv copies the value, putenv kept a pointer to this local string
     string definitionsPath = theCmdLine.OptionValue('D');
+    // NOLINTNEXTLINE(concurrency-mt-unsafe): single-threaded command line tool
     return setenv("GRIB_DEFINITION_PATH", definitionsPath.c_str(), 1) == 0;
   }
   return true;
@@ -1062,7 +1082,7 @@ void ConvertSingleGribFile(const GribFilterOptions &theGribFilterOptionsIn,
   Fmi::set_thread_name(fmt::format("grib2qd-{}", ++gribWorkerCounter));
   GribFilterOptions gribFilterOptionsLocal = theGribFilterOptionsIn;
   gribFilterOptionsLocal.itsInputFileNameStr = theGribFileName;
-  if ((gribFilterOptionsLocal.itsInputFile =
+  if ((gribFilterOptionsLocal.itsInputFile.fp =
            ::fopen(gribFilterOptionsLocal.itsInputFileNameStr.c_str(), "rb")) == nullptr)
   {
     cerr << "could not open input file: " << gribFilterOptionsLocal.itsInputFileNameStr << endl;
@@ -2217,7 +2237,7 @@ string MakeParamString(const NFmiParam &theParam)
   return str;
 }
 
-void DoParamConflictError(const NFmiParam &theChangedParam,
+[[noreturn]] void DoParamConflictError(const NFmiParam &theChangedParam,
                                  const NFmiParam &theOrigChangedParam,
                                  const NFmiParam &theUnChangedParam)
 {
@@ -2285,7 +2305,7 @@ void ConvertGrib2QData(GribFilterOptions &theGribFilterOptions)
     NFmiMetTime firstValidTime;
 
     while ((gribHandle = grib_handle_new_from_file(
-                gribContext, theGribFilterOptions.itsInputFile, &err)) != nullptr)
+                gribContext, theGribFilterOptions.itsInputFile.fp, &err)) != nullptr)
     {
       if (err != GRIB_SUCCESS)
         throw runtime_error("Failed to open grib handle in file  " +

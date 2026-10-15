@@ -544,8 +544,10 @@ int run(int argc, const char* argv[])
   if (opt_lasttime)
   {
     srcinfo->LastTime();
+    // NOLINTNEXTLINE(cppcoreguidelines-slicing): only the time is wanted, not the time step
     NFmiTime t2 = srcinfo->ValidTime();
     srcinfo->FirstTime();
+    // NOLINTNEXTLINE(cppcoreguidelines-slicing): only the time is wanted, not the time step
     NFmiTime t1 = srcinfo->ValidTime();
     int minutes = t2.DifferenceInMinutes(t1);
     opt_startoffset = std::max(opt_startoffset, -minutes);

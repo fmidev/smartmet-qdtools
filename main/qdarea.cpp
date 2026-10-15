@@ -418,10 +418,10 @@ struct options_list
   string timezone;
   vector<string> querydata;
   string coordinatefile;
-  bool verbose;
-  bool quiet;
-  bool php;
-  bool epoch_time;
+  bool verbose = false;
+  bool quiet = false;
+  bool php = false;
+  bool epoch_time = false;
   vector<string> php_names;
 
   vector<AnalysisSources> sources;
@@ -694,6 +694,7 @@ void parse_command_line(int argc, const char* argv[])
   if (cmdline.isOption('h'))
   {
     usage();
+    // NOLINTNEXTLINE(concurrency-mt-unsafe): single-threaded command line tool
     exit(0);
   }
 

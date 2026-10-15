@@ -71,7 +71,7 @@ bool ParseOptions(int argc, char *argv[], Options &options)
   namespace fs = std::filesystem;
 
 #ifdef UNIX
-  struct winsize wsz;
+  struct winsize wsz{};
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &wsz);
   const int desc_width = (wsz.ws_col < 80 ? 80 : wsz.ws_col);
 #else
@@ -216,6 +216,8 @@ bool CheckErrorLevelAndProduceStatusTextAndUpdateErrorCode(const std::vector<flo
           theText += "%";
         }
         break;
+        default:
+          break;
       }
       break;
     }

@@ -515,7 +515,7 @@ int run(int argc, const char* argv[])
   if (!parse_command_line(argc, argv))
     return 0;
 
-  int percentage = (options.checknan || options.printcount ? 0 : 100);
+  int percentage = 0;
 
   // Read the querydata
 

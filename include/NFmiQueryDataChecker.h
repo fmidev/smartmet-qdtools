@@ -55,6 +55,8 @@ class NFmiQueryDataChecker
  public:
   NFmiQueryDataChecker(NFmiOhjausData* theOhjausData);
   ~NFmiQueryDataChecker();
+  NFmiQueryDataChecker(const NFmiQueryDataChecker&) = default;
+  NFmiQueryDataChecker& operator=(const NFmiQueryDataChecker&) = default;
   bool DoTotalCheck();
   void ParamBag(const NFmiParamBag& value);
   bool ParamBag(const NFmiString& theFileName);
@@ -129,8 +131,8 @@ class NFmiQueryDataChecker
 
   NFmiOhjausData*
       itsOhjausData;  // (ei omista) t‰nne talletetaan parametrikohtaiset tiedost tarkastelusta
-  int itsCheckOperationIndex;  // 1=missing, 2=straight, 4=out-of-limit. ohjausdata rakennetta
+  int itsCheckOperationIndex = 0;  // 1=missing, 2=straight, 4=out-of-limit. ohjausdata rakennetta
                                // p‰ivitet‰‰n operaation mukaan
-  int itsParamIdIndex;         // ohjausdata rakennetta p‰ivitet‰‰n parametrin mukaan
+  int itsParamIdIndex = 0;         // ohjausdata rakennetta p‰ivitet‰‰n parametrin mukaan
 };
 #endif

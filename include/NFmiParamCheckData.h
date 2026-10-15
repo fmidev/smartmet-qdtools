@@ -106,9 +106,9 @@ class NFmiOhjausData
         return i;
     return -1;  // ei löytynyt vastaavaa!!
   }
-  int itsLocationCheckingType;  // 0=kaikki pisteet, 1=haluttu locationbagi, 2=n kpl satunnaisia
+  int itsLocationCheckingType = 0;  // 0=kaikki pisteet, 1=haluttu locationbagi, 2=n kpl satunnaisia
                                 // pisteitä
-  int itsRandomPointCount;
+  int itsRandomPointCount = 0;
   std::vector<NFmiParamCheckData> itsParamIdCheckList;
   std::vector<int>
       itsMinDataLengthInHours;  // aikatarkasteluja: minimi tuntimäärä kuinka paljon dataa on oltava
@@ -122,7 +122,7 @@ class NFmiOhjausData
   // (eli data alkaa enintään esim. 1
   // tuntia jälkeen nykyhetken, -1=
   // ei välitetä)
-  int itsWantedTimeStepInMinutes;
+  int itsWantedTimeStepInMinutes = 0;
 };
 
 #endif

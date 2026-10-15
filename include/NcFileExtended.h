@@ -24,6 +24,8 @@ class NcFileExtended
 
   NcFileExtended(std::string path, long timeshift = 0);
   ~NcFileExtended();
+  NcFileExtended(const NcFileExtended&) = default;
+  NcFileExtended& operator=(const NcFileExtended&) = default;
 
   bool is_open() const { return gdal_dataset != nullptr; }
 

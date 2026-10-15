@@ -837,7 +837,7 @@ NFmiTimeDescriptor MakeTimeDescriptor(NFmiFastQueryInfo& theQ,
 
 const NFmiTime toUtcTime(const NFmiTime& theLocalTime)
 {
-  ::tm tlocal;
+  ::tm tlocal{};
   tlocal.tm_sec = theLocalTime.GetSec();
   tlocal.tm_min = theLocalTime.GetMin();
   tlocal.tm_hour = theLocalTime.GetHour();
@@ -850,7 +850,8 @@ const NFmiTime toUtcTime(const NFmiTime& theLocalTime)
 
   ::time_t tsec = mktime(&tlocal);
 
-  ::tm* tutc = ::gmtime(&tsec);
+  struct ::tm tutcBuffer{};  // gmtime_r is thread safe
+  ::tm* tutc = ::gmtime_r(&tsec, &tutcBuffer);
 
   NFmiTime out(tutc->tm_year + 1900,
                tutc->tm_mon + 1,

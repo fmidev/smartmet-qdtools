@@ -114,7 +114,7 @@ bool parse_options(int argc, char* argv[], Options& options)
   string prodnamedesc = "producer name (default=" + string(default_producer_name + ")");
 
 #ifdef UNIX
-  struct winsize wsz;
+  struct winsize wsz{};
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &wsz);
   const int desc_width = (wsz.ws_col < 80 ? 80 : wsz.ws_col);
 #else
@@ -326,10 +326,10 @@ struct Csv
 
 struct ParamInfo
 {
-  int id;
+  int id = 0;
   string name;
-  double minvalue;
-  double maxvalue;
+  double minvalue = 0.0;
+  double maxvalue = 0.0;
   string interpolation;
   string precision;
 };
@@ -387,9 +387,9 @@ Params parse_params(const CsvTable& csv)
 struct StationInfo
 {
   string id;
-  int number;
-  double lon;
-  double lat;
+  int number = 0;
+  double lon = 0.0;
+  double lat = 0.0;
   string name;
 };
 

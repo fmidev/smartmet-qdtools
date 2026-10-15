@@ -210,7 +210,7 @@ bool parse_options(int argc, char* argv[])
   string opt_params;
 
 #ifdef UNIX
-  struct winsize wsz;
+  struct winsize wsz{};
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &wsz);
   const int desc_width = (wsz.ws_col < 80 ? 80 : wsz.ws_col);
 #else
@@ -364,7 +364,7 @@ bool IsDst(NFmiFastQueryInfo& qd)
 {
   NFmiMetTime t = qd.ValidTime();
 
-  struct ::tm utc;
+  struct ::tm utc{};
   utc.tm_sec = t.GetSec();
   utc.tm_min = t.GetMin();
   utc.tm_hour = t.GetHour();
@@ -376,7 +376,7 @@ bool IsDst(NFmiFastQueryInfo& qd)
   utc.tm_isdst = -1;
 
   ::time_t epochtime = NFmiStaticTime::my_timegm(&utc);
-  struct ::tm tlocal;
+  struct ::tm tlocal{};
 
 #ifdef _MSC_VER
   // OBS! There are no thread safe localtime(_r) or gmtime(_r) functions in MSVC++ 2008 (or before).
@@ -603,7 +603,9 @@ float RainProbability(NFmiFastQueryInfo& qd, const NFmiPoint& theLatLon)
   if (!qd.Param(kFmiPrecipitation1h))
     return kFloatMissing;
 
+  // NOLINTNEXTLINE(cppcoreguidelines-slicing): only the time is wanted, not the time step
   const NFmiTime validTime = qd.ValidTime();
+  // NOLINTNEXTLINE(cppcoreguidelines-slicing): only the time is wanted, not the time step
   const NFmiTime originTime = qd.OriginTime();
 
   const long diff = validTime.DifferenceInHours(originTime);
@@ -1260,6 +1262,7 @@ void PrintRow(NFmiFastQueryInfo& qd,
     if (value == kFloatMissing)
       tmp = options.missingvalue;
     else
+      // NOLINTNEXTLINE(cppcoreguidelines-slicing): only the formatted text is wanted
       tmp = NFmiValueString(value, precision);
 
     cout << " " << tmp.CharPtr();

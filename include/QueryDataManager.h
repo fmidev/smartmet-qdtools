@@ -54,7 +54,7 @@ class QueryDataManager
   QueryDataManager &operator=(const QueryDataManager &theManager);
 
   std::string itsSearchPath;
-  bool itsMultiMode;
+  bool itsMultiMode = false;
 
   using value_type = boost::tuple<std::string, NFmiQueryData*, NFmiFastQueryInfo*>;
 

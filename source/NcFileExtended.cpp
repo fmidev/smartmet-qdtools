@@ -1882,6 +1882,7 @@ void nctools::NcFileExtended::copy_values_var(const Options& opts,
     for (info.ResetTime(); info.NextTime(); ++targettimeindex)
     {
       unsigned long level = 0;
+      // NOLINTNEXTLINE(cppcoreguidelines-slicing): only the time is wanted, not the time step
       const NFmiTime targettime = info.Time();
       auto tmp_tlist = timeList();
       const NFmiTime* sourcetimeptr = tmp_tlist.Time(sourcetimeindex);
@@ -2059,6 +2060,7 @@ void nctools::NcFileExtended::copy_values_wind(NFmiFastQueryInfo& info,
     int targettimeindex = 0;
     for (info.ResetTime(); info.NextTime(); ++targettimeindex)
     {
+      // NOLINTNEXTLINE(cppcoreguidelines-slicing): only the time is wanted, not the time step
       const NFmiTime targettime = info.Time();
       const NFmiTime* sourcetimeptr = src_tlist.Time(sourcetimeindex);
 

@@ -80,6 +80,8 @@ const string makename(const NFmiFastQueryInfo& theQ)
     case kFmi:
     case kFmiAnyLevelType:
       break;
+    default:
+      break;
   }
   return name.str();
 }

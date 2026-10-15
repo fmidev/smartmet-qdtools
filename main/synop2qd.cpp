@@ -543,6 +543,9 @@ class NFmiSynopCode
         out << endl << endl;
       }
     }
+    StationErrorStrings() = default;
+    StationErrorStrings(const StationErrorStrings&) = default;
+    StationErrorStrings& operator=(const StationErrorStrings&) = default;
   };
 
   void Decode(const std::string &theSynopStr,
@@ -607,6 +610,7 @@ class NFmiSynopCode
           NFmiAviationStation *aviationStation = itsKnownStations->FindStation(wmoID);
           if (aviationStation)
           {
+            // NOLINTNEXTLINE(cppcoreguidelines-slicing): only the station is wanted
             itsStation = NFmiStation(*aviationStation);
           }
           else
@@ -902,31 +906,31 @@ class NFmiSynopCode
                                          // ja lon parametrit)
   bool fVerbose;
 
-  float itsPressure;
-  float itsTemperature;
-  float itsDewPoint;
-  float itsRH;
-  float itsWS;
-  float itsWD;
-  float itsN;
-  float itsVisibility;
-  float itsCloudBaseHeight;
-  float itsPressureTendency;
-  float itsPressureChange;
-  float itsPrecipitation;       // in mm
-  float itsPresentWeatherCode;  // synop ww-code
-  float itsW1;                  // synop W1-code
-  float itsW2;                  // synop W2-code
-  float itsNh;
-  float itsCl;
-  float itsCm;
-  float itsCh;
-  float itsTmin;
-  float itsTmax;
-  float itsTwater;
-  float itsLon;                    // SHIP sanomien purussa tarvitaan sijaintia
-  float itsLat;                    // SHIP sanomien purussa tarvitaan sijaintia
-  float itsGust;                   // European region wind gust extension, code 910xx or 911xx
+  float itsPressure = 0.0F;
+  float itsTemperature = 0.0F;
+  float itsDewPoint = 0.0F;
+  float itsRH = 0.0F;
+  float itsWS = 0.0F;
+  float itsWD = 0.0F;
+  float itsN = 0.0F;
+  float itsVisibility = 0.0F;
+  float itsCloudBaseHeight = 0.0F;
+  float itsPressureTendency = 0.0F;
+  float itsPressureChange = 0.0F;
+  float itsPrecipitation = 0.0F;       // in mm
+  float itsPresentWeatherCode = 0.0F;  // synop ww-code
+  float itsW1 = 0.0F;                  // synop W1-code
+  float itsW2 = 0.0F;                  // synop W2-code
+  float itsNh = 0.0F;
+  float itsCl = 0.0F;
+  float itsCm = 0.0F;
+  float itsCh = 0.0F;
+  float itsTmin = 0.0F;
+  float itsTmax = 0.0F;
+  float itsTwater = 0.0F;
+  float itsLon = 0.0F;                    // SHIP sanomien purussa tarvitaan sijaintia
+  float itsLat = 0.0F;                    // SHIP sanomien purussa tarvitaan sijaintia
+  float itsGust = 0.0F;            // European region wind gust extension, code 910xx or 911xx
   std::string itsCorrectionField;  // Jos sanoma kuuluu johonkin korjaus blokkiin, tähän tulee
                                    // korjauksen koodi esim. RRP
 };

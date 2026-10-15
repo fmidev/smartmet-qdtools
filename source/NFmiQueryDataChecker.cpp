@@ -259,6 +259,8 @@ bool NFmiQueryDataChecker::GoThroughData(NFmiDataModifier* theModifier)
               case 2:  // random locationindex
                 GoThroughRandomLocationsDataInTime(theModifier);
                 break;
+              default:
+                break;
             }
 
             float result = theModifier->CalculationResult();
@@ -275,6 +277,8 @@ bool NFmiQueryDataChecker::GoThroughData(NFmiDataModifier* theModifier)
               case 4:  // out-of-limit
                 CheckOutOfLimitsTerms(itsOhjausData->itsParamIdCheckList[itsParamIdIndex],
                                       theModifier);
+                break;
+              default:
                 break;
             }
           }

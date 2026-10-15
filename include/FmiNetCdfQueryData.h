@@ -134,6 +134,8 @@ class FmiNcMetaData
  public:
   FmiNcMetaData(bool useSurfaceInfo);
   ~FmiNcMetaData();
+  FmiNcMetaData(const FmiNcMetaData&) = default;
+  FmiNcMetaData& operator=(const FmiNcMetaData&) = default;
 
   void MakeMetaInfo(const FmiTDimVarInfo& theTimeInfo, const NFmiGrid& theGrid);
   std::string GetLevelDimName() const;

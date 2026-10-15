@@ -118,11 +118,11 @@ void Domain(int argc, const char *argv[])
 struct FlashData
 {
   NFmiMetTime itsTime;
-  float lon;
-  float lat;
-  float power;
-  float multiplicity;
-  float accuracy;
+  float lon = 0.0F;
+  float lat = 0.0F;
+  float power = 0.0F;
+  float multiplicity = 0.0F;
+  float accuracy = 0.0F;
 };
 
 namespace

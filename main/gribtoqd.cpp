@@ -4481,7 +4481,6 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
   long int nxny = 0;
   long int last_nxny = 0;
   long int buffer_size = 0;
-  long int count = 1;
   int nx = 0;
   int ny = 0;
   double temp = NAN;
@@ -4503,8 +4502,6 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
   try
   {
     int gdsPrintCounter = 0;  // kuinkan monta on jo printattu
-    int gdsCounter = 0;
-    int bmsCounter = 0;
     for (;;)
     {
       msg = seek_grib(theGribFilterOptions.itsInputFile.fp, &pos, &len_grib, buffer, MSEEK);
@@ -4531,7 +4528,6 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
       pointer = pds + PDS_LEN(pds);
       if (PDS_HAS_GDS(pds))
       {
-        gdsCounter++;
         gds = pointer;
         pointer += GDS_LEN(gds);
       }
@@ -4542,7 +4538,6 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
 
       if (PDS_HAS_BMS(pds))
       {
-        bmsCounter++;
         //			throw runtime_error("gribissä oli bitmap tavaraa, jota tämä ohjelnma
         // ei
         // hoida, lopetetaan!");
@@ -4630,7 +4625,6 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
                    temp * int_power(2.0, BDS_BinScale(bds)));
 
       pos += len_grib;
-      count++;
 
       auto* tmpData = new GridRecordData;
 

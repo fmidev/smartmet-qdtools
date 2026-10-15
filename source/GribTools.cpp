@@ -331,8 +331,6 @@ std::vector<ParamChangeItem> ReadGribConf(const std::string &theParamChangeTable
     const int maxBufferSize = 1024 + 1;  // kuinka pitkä yhden rivin maksimissaan oletetaan olevan
     std::string buffer;
     ParamChangeItem paramChangeItem;
-    int i = 0;
-    int counter = 0;
     for (bool more = true; more; more = in.good())
     {
       buffer.resize(maxBufferSize);
@@ -342,10 +340,8 @@ std::vector<ParamChangeItem> ReadGribConf(const std::string &theParamChangeTable
       buffer.resize(realSize);
       if (::GetParamChangeItemFromString(buffer, theParamChangeTableFileName, paramChangeItem))
       {
-        counter++;
         paramChangeTable.push_back(paramChangeItem);
       }
-      i++;
     }
   }
   else

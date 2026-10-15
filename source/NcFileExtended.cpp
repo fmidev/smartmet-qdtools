@@ -1878,12 +1878,10 @@ void nctools::NcFileExtended::copy_values_var(const Options& opts,
     const std::size_t x_size = _xsize;
     const std::size_t y_size = _ysize;
     int sourcetimeindex = 0;
-    int targettimeindex = 0;
     unsigned long zstart = 0;
 
-    for (info.ResetTime(); info.NextTime(); ++targettimeindex)
+    for (info.ResetTime(); info.NextTime();)
     {
-      unsigned long level = 0;
       // NOLINTNEXTLINE(cppcoreguidelines-slicing): only the time is wanted, not the time step
       const NFmiTime targettime = info.Time();
       auto tmp_tlist = timeList();
@@ -1894,7 +1892,7 @@ void nctools::NcFileExtended::copy_values_var(const Options& opts,
 
       if (sourcetime == targettime)
       {
-        for (info.ResetLevel(); info.NextLevel(); ++level)
+        for (info.ResetLevel(); info.NextLevel();)
         {
           unsigned long xcounter = (xinverted() ? x_size - 1 : 0);
           // NFmiQueryInfo iterates y=0=southernmost.
@@ -2059,8 +2057,7 @@ void nctools::NcFileExtended::copy_values_wind(NFmiFastQueryInfo& info,
     }
 
     int sourcetimeindex = 0;
-    int targettimeindex = 0;
-    for (info.ResetTime(); info.NextTime(); ++targettimeindex)
+    for (info.ResetTime(); info.NextTime();)
     {
       // NOLINTNEXTLINE(cppcoreguidelines-slicing): only the time is wanted, not the time step
       const NFmiTime targettime = info.Time();

@@ -20,7 +20,6 @@
 
 using namespace std;
 
-static const int kDontUseForcedLevelValue = -9999999;
 
 // ----------------------------------------------------------------------
 // Kaytto-ohjeet

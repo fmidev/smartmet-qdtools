@@ -1436,10 +1436,8 @@ bool CheckIsOldMessageMachineStartWord(const string &theStr)
   {
     if (theStr.size() == 10)
     {
-      auto tmpValue = NFmiStringTools::Convert<double>(theStr);
-      tmpValue++;  // tämä poistaa varoituksen että muuttujaa ei käytetä (Convert:in ainoa käyttö
-                   // edellä oli tarkistaa
-      // että stringi muuttuu luvuksi)
+      // Convert throws if the string is not a number
+      static_cast<void>(NFmiStringTools::Convert<double>(theStr));
       retValue = true;
     }
   }
@@ -1645,7 +1643,6 @@ void MakeDataBlocks(NFmiAviationStationInfoSystem &theStationInfoSystem,
         boost::regex expression2("([0-9]{6});METAR");
         string tmpStr;
 
-        int headerWordCounter = 0;
         for (bool more = true; more; more = it2 != end2)
         {
           tmpStr = *it2;
@@ -1670,7 +1667,6 @@ void MakeDataBlocks(NFmiAviationStationInfoSystem &theStationInfoSystem,
               // ei tehdä mitään
             }
           }
-          headerWordCounter++;
           NFmiStringTools::UpperCase(tmpStr);
           if (tmpStr == gMetarWord)
             break;  // aloitetaan metar sanomien purkaminen, 1. metarissa on aina mukana myös

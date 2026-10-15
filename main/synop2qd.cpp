@@ -1375,8 +1375,6 @@ void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
 
   NFmiSynopCode synopCode(&theAviStations, verbose);
   synopCode.itsCorrectionField = theCorrectionField;
-  int errorCount = 0;
-  int decodeCount = 0;
   for (int i = 0; i < static_cast<int>(codeParcels.size()); i++)
   {
     try
@@ -1438,7 +1436,6 @@ void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
         synopCode.itsStation.SetName(shipName);
       if (fDoBuoyMessages)
         synopCode.itsStation.SetIdent(NFmiStringTools::Convert<unsigned long>(shipName));
-      decodeCount++;
       if (fRoundTimesToNearestSynopticTimes)
       {
         NFmiMetTime aTime(synopCode.Time());
@@ -1482,13 +1479,11 @@ void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
     }
     catch (std::exception &e)
     {
-      errorCount++;
       if (verbose)
         cerr << e.what() << endl;
     }
     catch (...)
     {
-      errorCount++;
     }
   }
 }

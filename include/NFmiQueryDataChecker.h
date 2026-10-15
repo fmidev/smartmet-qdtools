@@ -133,6 +133,5 @@ class NFmiQueryDataChecker
       itsOhjausData;  // (ei omista) t‰nne talletetaan parametrikohtaiset tiedost tarkastelusta
   int itsCheckOperationIndex = 0;  // 1=missing, 2=straight, 4=out-of-limit. ohjausdata rakennetta
                                // p‰ivitet‰‰n operaation mukaan
-  int itsParamIdIndex = 0;         // ohjausdata rakennetta p‰ivitet‰‰n parametrin mukaan
 };
 #endif

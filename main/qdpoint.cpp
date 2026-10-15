@@ -1374,7 +1374,6 @@ void ReportParams(QueryDataManager& theMgr,
   qd.FirstTime();
 
   qd.ResetParam();
-  int i = 2;
 
   bool ignoresubs = false;
 
@@ -1387,7 +1386,6 @@ void ReportParams(QueryDataManager& theMgr,
       string name2 = converter.ToString(ident);
       cout << "# Column " << sarake++ << ": " << name.CharPtr() << " ( kFmi" << name2.c_str()
            << " = " << ident << " )" << endl;
-      i++;
     }
   }
 
@@ -1418,7 +1416,6 @@ void ReportParams(QueryDataManager& theMgr,
       }
       cout << "# Column " << sarake++ << ": " << name << " ( " << name2 << " = " << ident << " )"
            << endl;
-      i++;
     }
   }
 }

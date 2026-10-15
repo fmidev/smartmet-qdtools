@@ -1189,7 +1189,7 @@ NFmiMetTime GetTimeFromSynopHeader(const string &theTimeStr,
   }
   short timeStep = 60;
   // NFmiMetTime currentTime(timeStep);
-  NFmiMetTime currentTime(referenceTime);
+  const NFmiMetTime& currentTime(referenceTime);
   NFmiMetTime aTime(currentTime);
   auto day = NFmiStringTools::Convert<short>(string(theTimeStr.begin(), theTimeStr.begin() + 2));
   auto hour =
@@ -1218,7 +1218,7 @@ NFmiMetTime GetTimeFromBuoyHeader(const string &theTimeStr, const string &theDat
       NFmiStringTools::Convert<short>(string(theDateStr.begin() + 4, theDateStr.begin() + 5));
   short timeStep = 60;
   NFmiMetTime currentTime(timeStep);
-  NFmiMetTime aTime(currentTime);
+  const NFmiMetTime& aTime(currentTime);
   short year = aTime.GetYear();
   year /= 10;
   year *= 10;

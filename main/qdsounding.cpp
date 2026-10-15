@@ -214,7 +214,7 @@ bool parse_command_line(int argc, const char *argv[])
  */
 // ----------------------------------------------------------------------
 
-const string format_date(const NFmiTime &theTime)
+string format_date(const NFmiTime& theTime)
 {
   NFmiTime localtime = TimeTools::toLocalTime(theTime);
   return localtime.ToStr(kYYYYMMDDHHMM).CharPtr();
@@ -226,7 +226,7 @@ const string format_date(const NFmiTime &theTime)
  */
 // ----------------------------------------------------------------------
 
-const vector<NFmiPoint> find_places(const vector<string> & /* theNames */)
+vector<NFmiPoint> find_places(const vector<string>& /* theNames */)
 {
   auto coordpath = NFmiSettings::Optional<string>("qdpoint::coordinates_path", ".");
   string coordfile = NFmiFileSystem::FileComplete(options.coordfile, coordpath);

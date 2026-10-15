@@ -169,7 +169,7 @@ NFmiQueryInfo MakeQdInfo(const PgmHeaderInfo &thePgmHeaderInfo,
 
   NFmiMetTime starttime =
       (thePgmHeaderInfo.fortime.empty() ? origtime : str2time(thePgmHeaderInfo.fortime));
-  NFmiMetTime endtime = starttime;
+  const NFmiMetTime& endtime = starttime;
 
   NFmiEnumConverter converter;
   auto paramnum = FmiParameterName(converter.ToEnum(thePgmHeaderInfo.param));

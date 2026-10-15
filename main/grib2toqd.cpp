@@ -783,8 +783,8 @@ vector<string> GetDataFiles(const string &theFileOrPatternOrDirectory)
     return ::MakeFullPathFileList(dirList, directory);
   }
 
-  string filePattern = theFileOrPatternOrDirectory;  // Huom! Myös yhden tiedoston tarkkaa nimeä
-                                                     // voidaan pitää patternina.
+  const string& filePattern = theFileOrPatternOrDirectory;  // Huom! Myös yhden tiedoston tarkkaa
+                                                     // nimeä voidaan pitää patternina.
   list<string> patternList = NFmiFileSystem::PatternFiles(filePattern);
   directory = ::GetDirectory(filePattern);
   return ::MakeFullPathFileList(patternList, directory);

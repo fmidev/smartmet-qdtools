@@ -851,7 +851,7 @@ FmiNcProjectionType GetProjectionType(const netCDF::NcVar &theVar)
 {
   //std::string projTypeStr = theVar.as_string(0);
   std::vector<std::string> projTypeStrVec = get_values<std::string>(theVar);
-  std::string projTypeStr = projTypeStrVec.at(0);
+  const std::string& projTypeStr = projTypeStrVec.at(0);
   size_t pos = projTypeStr.find("polar stereographic");
   if (pos != std::string::npos)
     return kFmiNcStreographic;

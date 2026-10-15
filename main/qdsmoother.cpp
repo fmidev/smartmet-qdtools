@@ -238,7 +238,7 @@ bool parse_command_line(int argc, const char* argv[])
  */
 // ----------------------------------------------------------------------
 
-const NFmiParamDescriptor make_param_descriptor(NFmiFastQueryInfo& theQ)
+NFmiParamDescriptor make_param_descriptor(NFmiFastQueryInfo& theQ)
 {
   NFmiParamBag bag;
 
@@ -318,7 +318,7 @@ void handle_times(const NFmiMetTime& theFirstTime,
  */
 // ----------------------------------------------------------------------
 
-const NFmiTimeDescriptor make_time_descriptor(NFmiFastQueryInfo& theQ)
+NFmiTimeDescriptor make_time_descriptor(NFmiFastQueryInfo& theQ)
 {
   // Build a set of available times
 
@@ -382,9 +382,9 @@ void smoothen_data(NFmiQueryData& theQD, NFmiFastQueryInfo& theQ)
     const string radiusvar = var + "::radius";
     const string factorvar = var + "::factor";
 
-    const auto method = NFmiSettings::Optional<string>(typevar.c_str(), "None");
-    const auto radius = NFmiSettings::Optional<double>(radiusvar.c_str(), 0);
-    const int factor = NFmiSettings::Optional<int>(factorvar.c_str(), 0);
+    const auto method = NFmiSettings::Optional<string>(typevar, "None");
+    const auto radius = NFmiSettings::Optional<double>(radiusvar, 0);
+    const int factor = NFmiSettings::Optional<int>(factorvar, 0);
 
     if (options.verbose)
       cout << "   " << paramname << " (" << paramnum << ") with method " << method << '(' << radius
@@ -428,7 +428,7 @@ std::shared_ptr<NFmiQueryData> create_data(NFmiFastQueryInfo& theQ)
   NFmiFastQueryInfo info(pdesc, tdesc, hdesc, vdesc);
   std::shared_ptr<NFmiQueryData> qd(NFmiQueryDataUtil::CreateEmptyData(info));
 
-  if (qd.get() == nullptr)
+  if (qd == nullptr)
     throw runtime_error("Insufficient memory for result data");
 
   // Fill the querydata with smoothened values
@@ -477,7 +477,7 @@ int run(int argc, const char* argv[])
     cout << "Smoothening data" << endl;
   std::shared_ptr<NFmiQueryData> outqd = create_data(q);
 
-  if (outqd.get() == nullptr)
+  if (outqd == nullptr)
     throw runtime_error("Failed to create a smoothened querydata object");
 
   if (options.verbose)

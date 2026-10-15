@@ -283,7 +283,7 @@ std::vector<NFmiDataIdent> GetAddedParameters(const NFmiCmdLine& cmdline,
         try
         {
           auto paramId = static_cast<FmiParameterName>(stoi(idNamePairs[index]));
-          auto name = idNamePairs[index + 1];
+          const auto& name = idNamePairs[index + 1];
           AddNonExistingParamToVector(paramId, name, fastInfo, possibleAddedParameters);
         }
         catch (exception &e)

@@ -1634,7 +1634,7 @@ std::string expand_name(const std::string& theName,
   auto name = theName;
   if (name.find("%ORIGINTIME") != std::string::npos)
   {
-    auto otime = info.OriginTime();
+    const auto& otime = info.OriginTime();
     std::string stime = otime.ToStr(kYYYYMMDDHHMM).CharPtr();
     boost::replace_all(name, "%ORIGINTIME", stime);
   }
@@ -1747,7 +1747,7 @@ int run(int argc, char* argv[])
   std::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(qi));
   NFmiFastQueryInfo info(data.get());
 
-  if (data.get() == nullptr)
+  if (data == nullptr)
     throw std::runtime_error("Could not allocate memory for result data");
 
   info.SetProducer(

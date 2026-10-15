@@ -143,7 +143,7 @@ void run(int argc, const char *argv[])
     else
     {
       string errStr("Hilatiedostoa ");
-      errStr += gridFileName.c_str();
+      errStr += gridFileName;
       errStr += " ei voitu avata!";
       throw runtime_error(errStr);
     }

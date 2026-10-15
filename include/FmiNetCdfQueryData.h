@@ -177,7 +177,7 @@ class FmiNetCdfQueryData
   FmiParameterName GetParameterName(const netCDF::NcVar &theVar, FmiParameterName theDefaultParName);
   void SeekProjectionInfo(const netCDF::NcFile &theNcFile);
   void InitializeStreographicGrid();
-  FmiZDimVarInfo &GetLevelInfo(const FmiNcLevelType theLevelType);
+  FmiZDimVarInfo& GetLevelInfo(FmiNcLevelType theLevelType);
   bool IsSurfaceVariable(const netCDF::NcVar& theVar) const;
   void MakesureSurfaceMetaDataIsInitialized();
 

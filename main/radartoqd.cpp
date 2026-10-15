@@ -528,8 +528,6 @@ int bufr_callback(varfl val, int ind)
 
   std::string imgfile = "bufr_image";
 
-  std::string fname = imgfile;
-
   /* element descriptor */
 
   if (des[ind]->id == ELDESC)
@@ -1273,7 +1271,7 @@ std::shared_ptr<NFmiQueryData> make_querydata()
 
   NFmiFastQueryInfo qi(pdesc, tdesc, hdesc, vdesc);
   std::shared_ptr<NFmiQueryData> qd(NFmiQueryDataUtil::CreateEmptyData(qi));
-  if (qd.get() == nullptr)
+  if (qd == nullptr)
     throw std::runtime_error("Failed to allocate memory for resulting querydata");
 
   NFmiFastQueryInfo info(qd.get());

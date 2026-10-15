@@ -299,7 +299,7 @@ NFmiTimeDescriptor MakeTimeDescriptor(NFmiFastQueryInfo& theQ,
   {
     bool ok = all_timesteps;
 
-    NFmiMetTime t = theQ.ValidTime();
+    const NFmiMetTime& t = theQ.ValidTime();
 
     if (has_timestep)
     {
@@ -525,7 +525,7 @@ int run(int argc, const char* argv[])
   std::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
   NFmiFastQueryInfo dstinfo(data.get());
 
-  if (data.get() == nullptr)
+  if (data == nullptr)
     throw runtime_error("Could not allocate memory for result data");
 
   // Check that the output does not contain composite parameters

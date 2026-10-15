@@ -1329,7 +1329,7 @@ std::vector<std::shared_ptr<NFmiQueryData> > CombineFixedStaggeredData(
           {
             if (!DataIndexUsed(j, usedDataIndexies))
             {
-              std::shared_ptr<NFmiQueryData> data2 = dataVector[j];
+              const std::shared_ptr<NFmiQueryData>& data2 = dataVector[j];
               if (AreDataCombinable(data1, data2))
               {
                 std::shared_ptr<NFmiQueryData> newData = std::shared_ptr<NFmiQueryData>(
@@ -1382,7 +1382,7 @@ std::vector<std::shared_ptr<NFmiQueryData> > DoFinalProjisionToData(
       std::vector<std::shared_ptr<NFmiQueryData> > newDataVector;
       for (size_t i = 0; i < dataVector.size(); i++)
       {
-        std::shared_ptr<NFmiQueryData> oldData = dataVector[i];
+        const std::shared_ptr<NFmiQueryData>& oldData = dataVector[i];
         if (*(oldData->Info()->Grid()) == areaData.finalDataGrid)
         {  // konversiota ei tarvita, data oli jo halutussa hilassa
           newDataVector.push_back(oldData);

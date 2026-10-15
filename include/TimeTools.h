@@ -14,9 +14,9 @@
 
 namespace TimeTools
 {
-const NFmiTime toLocalTime(const NFmiTime& theUtcTime);
+NFmiTime toLocalTime(const NFmiTime& theUtcTime);
 
-const NFmiTime timezone_time(const NFmiTime& theUTCTime, const std::string& theZone);
+NFmiTime timezone_time(const NFmiTime& theUTCTime, const std::string& theZone);
 }  // namespace TimeTools
 
 #endif  // TIMETOOLS_H

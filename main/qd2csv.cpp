@@ -50,7 +50,7 @@ bool goodcolumn(NFmiFastQueryInfo& theQ)
  */
 // ----------------------------------------------------------------------
 
-const string makename(const NFmiFastQueryInfo& theQ)
+string makename(const NFmiFastQueryInfo& theQ)
 {
   NFmiEnumConverter converter;
 

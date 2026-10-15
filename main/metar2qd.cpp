@@ -641,8 +641,7 @@ NFmiMetTime GetTime2(const Decoded_METAR &theMetarStruct,
 
   if (theHeaderTime != missingTime)
   {
-    NFmiMetTime aTime(theHeaderTime);  // otetaan pohjat tasta ja loput metarStructista.
-                                       // Periaatteessa headertimen pitaisi olla jo oikea aika
+                                          // Periaatteessa headertimen pitaisi olla jo oikea aika
   }
   else
   {

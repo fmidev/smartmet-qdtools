@@ -159,7 +159,7 @@ void usage()
  */
 // ----------------------------------------------------------------------
 
-const NFmiTime parse_stamp(const string& theStamp)
+NFmiTime parse_stamp(const string& theStamp)
 {
   if (theStamp.size() != 12)
     throw runtime_error("The length of the stamp is not 12");
@@ -322,7 +322,7 @@ void complete_inputname()
  */
 // ----------------------------------------------------------------------
 
-const KrigingData read_kriging_data()
+KrigingData read_kriging_data()
 {
   if (options.verbose)
     cout << "Reading '" << options.inputfile << "'" << endl;
@@ -411,7 +411,7 @@ typename T::value_type smallest_step(const T& theValues)
  */
 // ----------------------------------------------------------------------
 
-const NFmiHPlaceDescriptor make_hdesc(const KrigingData& theData)
+NFmiHPlaceDescriptor make_hdesc(const KrigingData& theData)
 {
   // Find the unique set of x/y coordinates
 
@@ -486,7 +486,7 @@ const NFmiHPlaceDescriptor make_hdesc(const KrigingData& theData)
  */
 // ----------------------------------------------------------------------
 
-const NFmiVPlaceDescriptor make_vdesc()
+NFmiVPlaceDescriptor make_vdesc()
 {
   NFmiLevelBag bag(kFmiAnyLevelType, 0, 0, 0);
   NFmiVPlaceDescriptor vdesc(bag);
@@ -499,7 +499,7 @@ const NFmiVPlaceDescriptor make_vdesc()
  */
 // ----------------------------------------------------------------------
 
-const NFmiParamDescriptor make_pdesc()
+NFmiParamDescriptor make_pdesc()
 {
   NFmiParamBag bag;
   for (const auto& p : options.parameters)
@@ -517,7 +517,7 @@ const NFmiParamDescriptor make_pdesc()
  */
 // ----------------------------------------------------------------------
 
-const NFmiTimeDescriptor make_tdesc()
+NFmiTimeDescriptor make_tdesc()
 {
   NFmiTimeList times;
   times.Add(new NFmiMetTime(options.validtime, 1));
@@ -546,7 +546,7 @@ std::shared_ptr<NFmiQueryData> create_querydata(const KrigingData& theData)
   NFmiFastQueryInfo info(pdesc, tdesc, hdesc, vdesc);
   std::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
 
-  if (data.get() == nullptr)
+  if (data == nullptr)
     throw runtime_error("Failed to allocate querydata");
 
   // And begin filling the data
@@ -604,7 +604,7 @@ int domain(int argc, const char* argv[])
 
   std::shared_ptr<NFmiQueryData> qd = create_querydata(kdata);
 
-  if (qd.get() == nullptr)
+  if (qd == nullptr)
     throw runtime_error("Failed to create the querydata");
 
   // Write the querydata

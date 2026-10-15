@@ -291,7 +291,7 @@ void print_change_analysis(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
  */
 // ----------------------------------------------------------------------
 
-const NFmiTimeList extract_all(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
+NFmiTimeList extract_all(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
 {
   NFmiTimeList times;
 
@@ -347,7 +347,7 @@ const NFmiTimeList extract_all(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ
  */
 // ----------------------------------------------------------------------
 
-const NFmiTimeList extract_times(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
+NFmiTimeList extract_times(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
 {
   NFmiTimeList times;
 
@@ -371,7 +371,7 @@ const NFmiTimeList extract_times(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& th
  */
 // ----------------------------------------------------------------------
 
-const NFmiTimeList extract_params(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
+NFmiTimeList extract_params(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
 {
   NFmiTimeList times;
 
@@ -484,7 +484,7 @@ void process_difference()
   unique_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
   NFmiFastQueryInfo q(data.get());
 
-  if (data.get() == nullptr)
+  if (data == nullptr)
     throw runtime_error("Could not allocate memory for result data");
 
   // Copy the values

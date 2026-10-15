@@ -249,11 +249,11 @@ void HandleProjectionString(const string &theProjStr,
   string projStringUsed = theProjStr;
   int gridSizeFunction = 0;  // 0 = error, 1 = proj. ok, ei hila kokoa, 2= proj+1-hilakoko annettu,
                              // 3= proj+2-hilakokoa, 4=proj+3-hilakokoa annettu
-  string::size_type pos = theProjStr.find(":");
+  string::size_type pos = theProjStr.find(':');
   if (pos != string::npos)
   {
     gridSizeFunction = 1;
-    pos = theProjStr.find(":", pos + 1);
+    pos = theProjStr.find(':', pos + 1);
     if (pos != string::npos)
     {  // eli löytyi 2. ':' -merkki, joka merkitsee että annetaan halutun hilan koko
       // nyt pitää tutkia, onko annettu useita hilakokoja eli onko annettu myös
@@ -270,10 +270,10 @@ void HandleProjectionString(const string &theProjStr,
       {  // nyt on annettu yksi ylimääräinen hila koko
         gridSizeFunction =
             0;  // laitetaan error koodi päälle ja korjataan se myöhemmin pois jos homma onnistui
-        string::size_type pos2 = theProjStr.find(",", pos + 1);
+        string::size_type pos2 = theProjStr.find(',', pos + 1);
         if (pos2 != string::npos)
         {
-          pos2 = theProjStr.find(",", pos2 + 1);
+          pos2 = theProjStr.find(',', pos2 + 1);
           if (pos2 != string::npos)
           {  // nyt löytyi toinen pilkku, josta alkaa ylimääräisten hilakokojen määritys. Tämä loppu
             // pitää saada

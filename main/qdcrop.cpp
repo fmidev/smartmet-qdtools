@@ -563,7 +563,7 @@ NFmiHPlaceDescriptor MakeHPlaceDescriptor(NFmiFastQueryInfo& theQ,
   std::shared_ptr<NFmiArea> area(
       NFmiArea::CreateFromBBox(theQ.Grid()->Area()->SpatialReference(), bl, tr));
 
-  if (area.get() == nullptr)
+  if (area == nullptr)
     throw runtime_error("Failed to create the new projection");
 
   NFmiGrid grid(area.get(), width, height);
@@ -716,7 +716,6 @@ NFmiTimeDescriptor MakeTimeDescriptor(NFmiFastQueryInfo& theQ,
   if (!theCrops.empty())
   {
     NFmiMetTime origintime = theQ.OriginTime();
-    NFmiMetTime reftime = origintime;
     NFmiTimeList datatimes;
     for (const auto& theCrop : theCrops)
     {
@@ -773,7 +772,7 @@ NFmiTimeDescriptor MakeTimeDescriptor(NFmiFastQueryInfo& theQ,
   NFmiTimeList datatimes;
   for (theQ.ResetTime(); theQ.NextTime();)
   {
-    NFmiMetTime t = theQ.ValidTime();
+    const NFmiMetTime& t = theQ.ValidTime();
     if (t.IsLessThan(starttime))
       continue;
     if (endtime.IsLessThan(t))
@@ -835,7 +834,7 @@ NFmiTimeDescriptor MakeTimeDescriptor(NFmiFastQueryInfo& theQ,
  */
 // ----------------------------------------------------------------------
 
-const NFmiTime toUtcTime(const NFmiTime& theLocalTime)
+NFmiTime toUtcTime(const NFmiTime& theLocalTime)
 {
   ::tm tlocal{};
   tlocal.tm_sec = theLocalTime.GetSec();
@@ -1409,7 +1408,7 @@ int run(int argc, const char* argv[])
   NFmiFastQueryInfo info(pdesc, tdesc, hdesc, vdesc, version);
 
   std::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(info));
-  if (data.get() == nullptr)
+  if (data == nullptr)
     throw runtime_error("Could not allocate memory for result data");
 
   NFmiFastQueryInfo dstinfo(data.get());
@@ -1488,7 +1487,7 @@ int run(int argc, const char* argv[])
     {
       FmiParameterName oldparam = parse_param(opt_renamedparameters[i]);
       FmiParameterName newparam = parse_param(opt_renamedparameters[i + 1]);
-      auto newname = opt_renamedparameters[i + 2];
+      const auto& newname = opt_renamedparameters[i + 2];
 
       if (!realinfo->Param(oldparam))
         throw runtime_error("No parameter " + opt_renamedparameters[i] + " to rename in the data");

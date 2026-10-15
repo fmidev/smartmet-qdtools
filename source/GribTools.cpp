@@ -248,7 +248,7 @@ bool GetParamChangeItemFromString(const std::string &buffer,
 
   theParamChangeItemOut.itsOriginalParamId = Fmi::stol(strVector[0]);
   long newParId = Fmi::stol(strVector[1]);
-  std::string newParName = strVector[2];
+  const std::string& newParName = strVector[2];
   theParamChangeItemOut.itsWantedParam.SetIdent(newParId);
   theParamChangeItemOut.itsWantedParam.SetName(newParName);
   if (strVector.size() >= 4)

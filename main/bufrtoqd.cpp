@@ -299,7 +299,7 @@ void parse_option_remap(const std::string& remapdef)
     size_t pos0 = 0;
     size_t pos = 0;
 
-    while ((pos = remapstr.find(";", pos0)) != std::string::npos)
+    while ((pos = remapstr.find(';', pos0)) != std::string::npos)
     {
       std::string remap = remapstr.substr(pos0, pos - pos0) + ",";
 
@@ -310,7 +310,7 @@ void parse_option_remap(const std::string& remapdef)
       size_t pos1 = 0;
       size_t pos2 = 0;
 
-      while ((pos2 = remap.find(",", pos1)) != std::string::npos)
+      while ((pos2 = remap.find(',', pos1)) != std::string::npos)
       {
         token = Fmi::trim_copy(remap.substr(pos1, pos2 - pos1));
 
@@ -4606,7 +4606,7 @@ int run(int argc, char* argv[])
 
   NFmiFastQueryInfo qi(pdesc, tdesc, hdesc, vdesc);
   std::shared_ptr<NFmiQueryData> data(NFmiQueryDataUtil::CreateEmptyData(qi));
-  if (data.get() == nullptr)
+  if (data == nullptr)
     throw std::runtime_error("Could not allocate memory for result data");
 
   NFmiFastQueryInfo info(data.get());

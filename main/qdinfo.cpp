@@ -174,7 +174,7 @@ void ReportParameters(NFmiFastQueryInfo *q, bool ignoresubs)
  */
 // ----------------------------------------------------------------------
 
-const string format_time(const NFmiMetTime& mtime, const string& dateFormat, bool /*theUtcFlag*/)
+string format_time(const NFmiMetTime& mtime, const string& dateFormat, bool /*theUtcFlag*/)
 {
   // The UTC time
   struct ::tm utc{};
@@ -225,7 +225,7 @@ void set_timezone(const string &theZone)
  */
 // ----------------------------------------------------------------------
 
-const string TimeString(const NFmiMetTime &theTime, bool theUtcFlag, string dateFormat)
+string TimeString(const NFmiMetTime& theTime, bool theUtcFlag, string dateFormat)
 {
   if (theUtcFlag)
     set_timezone("UTC");
@@ -822,7 +822,7 @@ int domain(int argc, const char *argv[])
     qi.reset(new NFmiQueryInfo(filename));
   }
 
-  NFmiFastQueryInfo* q = (qi.get() == nullptr ? nullptr : new NFmiFastQueryInfo(*qi));
+  NFmiFastQueryInfo* q = (qi == nullptr ? nullptr : new NFmiFastQueryInfo(*qi));
 
   if (!q && (cmdline.isOption('M') || cmdline.isOption('m')))
     throw runtime_error("Error: Options -M and -m require option -q");

@@ -362,7 +362,7 @@ std::map<std::string, NFmiPoint> FindPlaces(const std::vector<std::string>& theP
 
 bool IsDst(NFmiFastQueryInfo& qd)
 {
-  NFmiMetTime t = qd.ValidTime();
+  const NFmiMetTime& t = qd.ValidTime();
 
   struct ::tm utc{};
   utc.tm_sec = t.GetSec();
@@ -852,7 +852,7 @@ FmiParameterName ParamEnum(const string& theParam)
 // Irrottaa parametrinimen speksistä param:level
 // ----------------------------------------------------------------------
 
-const string ParamName(const string& theParam)
+string ParamName(const string& theParam)
 {
   if (theParam.empty())
     return theParam;

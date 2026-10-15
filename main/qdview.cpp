@@ -36,6 +36,10 @@ using namespace boost;
 
 namespace
 {
+// The 4-argument min and max below would otherwise hide the standard ones
+using std::max;
+using std::min;
+
 void UpdateBBox(const NFmiPoint& thePoint,
                 double& theMinLon,
                 double& theMinLat,

@@ -4998,7 +4998,7 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
 
     }  // for-loop
 
-    CreateQueryDatas(gribRecordDatas, theGribFilterOptions, nullptr);
+    ::CreateQueryDatas(gribRecordDatas, theGribFilterOptions, nullptr);
   }  // end of try
   catch (...)
   {

@@ -762,7 +762,6 @@ int domain(int argc, const char *argv[])
   if (cmdline.NumberofParameters() != 0 && !(cmdline.isOption('t') || cmdline.isOption('T')))
   {
     throw runtime_error("Error: No parameters are expected, only options.");
-    return 1;
   }
 
   // help information

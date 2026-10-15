@@ -48,15 +48,6 @@ bool jscan_is_negative(grib_handle *theHandle)
   return (direction == 0);
 }
 
-void check_jscan_direction(grib_handle *theHandle)
-{
-  long direction = 0;
-  int status = grib_get_long(theHandle, "jScansPositively", &direction);
-  if (status != 0)
-    return;
-  if (direction == 0)
-    throw std::runtime_error("GRIBs with a negative j-scan direction are not supported");
-}
 }  // namespace
 
 // template<typename T>
@@ -1911,7 +1902,6 @@ NFmiArea *CreateLatlonArea(grib_handle *theHandle, GribFilterOptions &theGribFil
     Lo2 = 360;
 
   // Not needed:
-  // check_jscan_direction(theHandle);
 
   long iScansNegatively = 0;
   int iScansNegativelyStatus = grib_get_long(theHandle, "iScansNegatively", &iScansNegatively);
@@ -3079,16 +3069,6 @@ vector<NFmiVPlaceDescriptor> GetAllVPlaceDescriptors(vector<GridRecordData *> &t
   return vPlaces;
 }
 
-NFmiVPlaceDescriptor GetVPlaceDesc(vector<GridRecordData *> &theGribRecordDatas)
-{
-  NFmiLevelBag levelBag;
-  int gribCount = static_cast<int>(theGribRecordDatas.size());
-  for (int i = 0; i < gribCount; i++)
-    levelBag.AddLevel(theGribRecordDatas[i]->itsLevel);  // AddLevel poistaa duplikaatit
-
-  return NFmiVPlaceDescriptor(levelBag);
-}
-
 void AddGeneratedHybridParam(NFmiParamBag &theGeneratedParamBag,
                              const GeneratedHybridParamInfo &theGeneratedHybridParamInfo)
 {
@@ -3101,15 +3081,6 @@ void AddGeneratedHybridParam(NFmiParamBag &theGeneratedParamBag,
   }
 }
 
-const NFmiLevel &FindFirstLevel(int theLevelValue, vector<GridRecordData *> &theGribRecordDatas)
-{
-  int gribCount = static_cast<int>(theGribRecordDatas.size());
-  for (int i = 0; i < gribCount; i++)
-    if (theLevelValue == static_cast<int>(theGribRecordDatas[i]->itsLevel.LevelValue()))
-      return theGribRecordDatas[i]->itsLevel;
-  throw runtime_error("Error in program in FindFirstLevel-funktion.");
-}
-
 const NFmiDataIdent &FindFirstParam(int theParId, vector<GridRecordData *> &theGribRecordDatas)
 {
   int gribCount = static_cast<int>(theGribRecordDatas.size());
@@ -3117,30 +3088,6 @@ const NFmiDataIdent &FindFirstParam(int theParId, vector<GridRecordData *> &theG
     if (theParId == static_cast<int>(theGribRecordDatas[i]->itsParam.GetParamIdent()))
       return theGribRecordDatas[i]->itsParam;
   throw runtime_error("Error in program in FindFirstParam-function.");
-}
-
-void InterpolateRowData(vector<float> &theSourceValues, vector<float> &theDestValues)
-{
-  float ratio = (theSourceValues.size() - 1) / static_cast<float>(theDestValues.size() - 1);
-  if (ratio == 1)
-    theDestValues = theSourceValues;
-  else
-  {
-    for (unsigned int i = 0; i < theDestValues.size() - 1; i++)
-    {
-      float relativePos = ratio * i;
-      auto lowerIndex = static_cast<unsigned int>(relativePos);
-      float relativePosRemains =
-          relativePos -
-          floor(ratio *
-                i);  // otetaan desimaali osa irti sijainnista niin saadaan interpolointi kerroin
-      float value1 = theSourceValues[lowerIndex];
-      float value2 = theSourceValues[lowerIndex + 1];
-      double interpolatedValue = NFmiInterpolation::Linear(relativePosRemains, value1, value2);
-      theDestValues[i] = static_cast<float>(interpolatedValue);
-    }
-    theDestValues[theDestValues.size() - 1] = theSourceValues[theSourceValues.size() - 1];
-  }
 }
 
 // Etsitään ne parametrit mitkä löytyvät data-setistä.
@@ -4505,247 +4452,6 @@ struct GridLessThan
 
 namespace
 {
-vector<NFmiHPlaceDescriptor> GetAllHPlaceDescriptors(vector<GridRecordData *> &theGribRecordDatas,
-                                                     bool useOutputFile)
-{
-  set<MyGrid, wgrib2qd::GridLessThan> gribDataSet;
-
-  auto it = theGribRecordDatas.begin();
-  auto endIter = theGribRecordDatas.end();
-  for (; it != endIter; ++it)
-  {
-    GridRecordData *bs = *it;
-    gribDataSet.insert(bs->itsGrid);
-  }
-
-  vector<NFmiHPlaceDescriptor> hPlaces;
-
-  if (useOutputFile)
-  {
-    auto it2 = gribDataSet.begin();
-    for (; it2 != gribDataSet.end(); ++it2)
-    {
-      NFmiGrid grid((*it2).itsArea, (*it2).itsNX, (*it2).itsNY);
-      hPlaces.emplace_back(grid);
-    }
-  }
-  else
-  {  // tulostus tehdään cout:iin, ja tehdään vain yksi data, toivottavasti se on se merkitsevin,
-     // tässä yritetään jättää huomiotta ainakin
-    // hirlam gribeissä esiintyvä 2x2 kokoinen yksi hila
-    MyGrid &tmpGrid = theGribRecordDatas[theGribRecordDatas.size() > 1 ? 1 : 0]->itsGrid;
-    NFmiGrid grid(tmpGrid.itsArea, tmpGrid.itsNX, tmpGrid.itsNY);
-    hPlaces.emplace_back(grid);
-  }
-  return hPlaces;
-}
-
-NFmiVPlaceDescriptor MakeVPlaceDescriptor(vector<GridRecordData *> &theGribRecordDatas,
-                                          int theLevelType)
-{
-  unsigned int i = 0;
-  set<NFmiLevel, LevelLessThan> levelSet;
-  for (i = 0; i < theGribRecordDatas.size(); i++)
-  {
-    if (theGribRecordDatas[i]->itsLevel.LevelType() == theLevelType)
-    {
-      const NFmiLevel &tmpLevel = theGribRecordDatas[i]->itsLevel;
-      levelSet.insert(tmpLevel);
-    }
-  }
-  NFmiLevelBag levelBag;
-  auto it = levelSet.begin();
-  for (; it != levelSet.end(); ++it)
-    levelBag.AddLevel(*it);
-  return NFmiVPlaceDescriptor(levelBag);
-}
-
-map<int, int>::iterator FindHighesLevelType(map<int, int> levelTypeCounter)
-{
-  auto it = levelTypeCounter.begin();
-  auto highestIt = levelTypeCounter.end();
-  for (; it != levelTypeCounter.end(); ++it)
-  {
-    if (highestIt == levelTypeCounter.end())
-      highestIt = it;
-    else if ((*highestIt).second < (*it).second)
-      highestIt = it;
-  }
-  return highestIt;
-}
-
-// tehdään levelbagi kaikista eri tyyppisistä leveleistä.
-vector<NFmiVPlaceDescriptor> GetAllVPlaceDescriptors(vector<GridRecordData *> &theGribRecordDatas,
-                                                     bool useOutputFile)
-{
-  // 1. etsitään kaikki erilaiset levelit set:in avulla
-  set<NFmiLevel, LevelLessThan> levelSet;
-  map<int, int> levelTypeCounter;
-
-  auto it = theGribRecordDatas.begin();
-  auto endIter = theGribRecordDatas.end();
-  for (; it != endIter; ++it)
-  {
-    GridRecordData *bs = *it;
-    levelSet.insert(bs->itsLevel);
-    levelTypeCounter[bs->itsLevel.LevelType()]++;  // kikka vitonen: tämä laskee erityyppiset
-                                                   // levelit
-  }
-
-  vector<NFmiVPlaceDescriptor> vPlaces;
-
-  if (useOutputFile)
-  {
-    auto it = levelTypeCounter.begin();
-    for (; it != levelTypeCounter.end(); ++it)
-    {
-      NFmiVPlaceDescriptor vDesc = wgrib2qd::MakeVPlaceDescriptor(theGribRecordDatas, (*it).first);
-      if (vDesc.Size() > 0)
-        vPlaces.push_back(vDesc);
-    }
-  }
-  else
-  {  // tulostus tehdään cout:iin, ja tehdään vain yksi data, toivottavasti se on se merkitsevin,
-     // eli otetaan se minkä tyyppisiä esiintyi eniten
-    auto it = wgrib2qd::FindHighesLevelType(levelTypeCounter);
-    if (it != levelTypeCounter.end())
-    {
-      NFmiVPlaceDescriptor vDesc = wgrib2qd::MakeVPlaceDescriptor(theGribRecordDatas, (*it).first);
-      if (vDesc.Size() > 0)
-        vPlaces.push_back(vDesc);
-    }
-  }
-  return vPlaces;
-}
-
-// Etsitään ne parametrit mitkä löytyvät data-setistä.
-// Lisäksi hilan ja arean pitää olla sama kuin annetussa hplaceDescriptorissa ja level-tyypin pitää
-// olla
-// sama kuin vplaceDescriptorissa.
-NFmiParamDescriptor GetParamDesc(vector<GridRecordData *> &theGribRecordDatas,
-                                 NFmiHPlaceDescriptor &theHplace,
-                                 NFmiVPlaceDescriptor &theVplace)
-{
-  // Ensin pitää saada 1. levelin level-type talteen vplaceDescriptorista, sillä otamme vain
-  // parametreja, mitä löytyy sellaisista hila kentistä missä on tälläinen level id.
-  FmiLevelType wantedLevelType = theVplace.Levels()->Level(0)->LevelType();
-  set<int> parIds;  // set:in avulla selvitetaan kuinka monta erilaista identtia loytyy
-  int gribCount = static_cast<int>(theGribRecordDatas.size());
-  for (int i = 0; i < gribCount; i++)
-  {
-    if (theGribRecordDatas[i]->itsGrid == *(theHplace.Grid()))
-    {
-      if (theGribRecordDatas[i]->itsLevel.LevelType() == wantedLevelType)
-        parIds.insert(theGribRecordDatas[i]->itsParam.GetParamIdent());
-    }
-  }
-
-  NFmiParamBag parBag;
-  auto it = parIds.begin();
-  for (; it != parIds.end(); ++it)
-    parBag.Add(FindFirstParam(*it, theGribRecordDatas));
-
-  return NFmiParamDescriptor(parBag);
-}
-
-bool FillQDataWithGribRecords(NFmiQueryData &theQData, vector<GridRecordData *> &theGribRecordDatas)
-{
-  NFmiFastQueryInfo info(&theQData);
-  int gribCount = static_cast<int>(theGribRecordDatas.size());
-  GridRecordData* tmp = nullptr;
-  int filledGridCount = 0;
-  for (int i = 0; i < gribCount; i++)
-  {
-    tmp = theGribRecordDatas[i];
-    if (tmp->itsGrid == *info.Grid())  // vain samanlaisia hiloja laitetaan samaan qdataan
-    {
-      if (info.Time(tmp->itsValidTime) && info.Level(tmp->itsLevel) && info.Param(tmp->itsParam))
-      {
-        if (!info.SetValues(tmp->itsGridData))
-          throw runtime_error("qdatan täyttö gribi datalla epäonnistui, lopetetaan...");
-        filledGridCount++;
-      }
-      //			else
-      //				throw runtime_error("qdatan täyttö ohjelma ei saanut
-      // asetettua aikaa/parametria/leveliä, lopetetaan...");
-    }
-  }
-  return filledGridCount > 0;
-}
-
-// HUOM! jos datassa on 'outoja' valid-aikoja esim. 1919 jne., joita näyttää tulevan esim.
-// hirlamista liittyen johonkin
-// kontrolli grideihin (2x2 hila ja muuta outoa). Tälläiset hilat jätetään huomiotta.
-NFmiTimeDescriptor GetTimeDesc(vector<GridRecordData *> &theGribRecordDatas)
-{
-  // set:in avulla selvitetaan kuinka monta erilaista timea loytyy.
-  set<NFmiMetTime> timesSet;
-  int gribCount = static_cast<int>(theGribRecordDatas.size());
-  for (int i = 0; i < gribCount; i++)
-    timesSet.insert(theGribRecordDatas[i]->itsValidTime);
-
-  // Tehdaan aluksi timelist, koska se on helpompi,
-  // myohemmin voi miettia saisiko aikaan timebagin.
-  NFmiTimeList timeList;
-  auto it = timesSet.begin();
-  NFmiMetTime dummyTime(1950, 1, 1);  // laitoin tälläisen dummytime rajoittimen, koska Pekon
-                                      // antamassa datassa oli aika 1919 vuodelta ja se ja
-                                      // nykyaikainen aika sekoitti mm. metkun editorin pahasti
-  for (; it != timesSet.end(); ++it)
-    if (*it > dummyTime)
-      timeList.Add(new NFmiMetTime(*it));
-
-  timeList.First();
-  return NFmiTimeDescriptor(*timeList.Current(), timeList);
-}
-
-std::shared_ptr<NFmiQueryData> CreateQueryData(vector<GridRecordData *> &theGribRecordDatas,
-                                               NFmiHPlaceDescriptor &theHplace,
-                                               NFmiVPlaceDescriptor &theVplace)
-{
-  std::shared_ptr<NFmiQueryData> qdata;
-  int gribCount = static_cast<int>(theGribRecordDatas.size());
-  if (gribCount > 0)
-  {
-    NFmiParamDescriptor params(wgrib2qd::GetParamDesc(theGribRecordDatas, theHplace, theVplace));
-    NFmiTimeDescriptor times(wgrib2qd::GetTimeDesc(theGribRecordDatas));
-    if (params.Size() == 0 || times.Size() == 0)
-      return qdata;  // turha jatkaa jos toinen näistä on tyhjä
-    NFmiQueryInfo innerInfo(params, times, theHplace, theVplace);
-    qdata.reset(NFmiQueryDataUtil::CreateEmptyData(innerInfo));
-    bool anyDataFilled = wgrib2qd::FillQDataWithGribRecords(*qdata, theGribRecordDatas);
-    if (!anyDataFilled)
-    {
-      qdata.reset();
-    }
-  }
-  return qdata;
-}
-
-vector<std::shared_ptr<NFmiQueryData> > CreateQueryDatas(
-    vector<GridRecordData *> &theGribRecordDatas, bool useOutputFile)
-{
-  vector<std::shared_ptr<NFmiQueryData> > qdatas;
-  int gribCount = static_cast<int>(theGribRecordDatas.size());
-  if (gribCount > 0)
-  {
-    vector<NFmiHPlaceDescriptor> hPlaceDescriptors =
-        wgrib2qd::GetAllHPlaceDescriptors(theGribRecordDatas, useOutputFile);
-    vector<NFmiVPlaceDescriptor> vPlaceDescriptors =
-        wgrib2qd::GetAllVPlaceDescriptors(theGribRecordDatas, useOutputFile);
-    for (auto& vPlaceDescriptor : vPlaceDescriptors)
-    {
-      for (auto& hPlaceDescriptor : hPlaceDescriptors)
-      {
-        std::shared_ptr<NFmiQueryData> qdata =
-            wgrib2qd::CreateQueryData(theGribRecordDatas, hPlaceDescriptor, vPlaceDescriptor);
-        if (qdata)
-          qdatas.push_back(qdata);
-      }
-    }
-  }
-  return qdatas;
-}
 
 void FreeDatas(vector<GridRecordData *> &theGribRecordDatas, float *array, unsigned char *buffer)
 {
@@ -5238,15 +4944,6 @@ bool GetProducer(NFmiCmdLine &theCmdLine, GribFilterOptions &theGribFilterOption
       theGribFilterOptions.itsWantedHybridProducer.SetName(strVector[3]);
   }
   return true;
-}
-
-int GetIntegerOptionValue(const NFmiCmdLine &theCmdline, char theOption)
-{
-  NFmiValueString valStr(theCmdline.OptionValue(theOption));
-  if (valStr.IsInt())
-    return static_cast<int>(valStr);
-  throw runtime_error(string("Error: '") + theOption +
-                      "' option value must be integer, exiting...");
 }
 
 void GetStepRangeOptions(const NFmiCmdLine &theCmdline, GribFilterOptions &theGribFilterOptions)

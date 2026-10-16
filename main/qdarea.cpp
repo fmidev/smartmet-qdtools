@@ -658,6 +658,33 @@ void parse_interval_option(const string& theRequest)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Check the timezone, querydata and coordinate file options
+ */
+// ----------------------------------------------------------------------
+
+void validate_options()
+{
+  if (options.timezone.empty())
+    throw runtime_error("The specified timezone string is empty");
+
+  if (options.querydata.empty())
+    throw runtime_error("The specified querydata string is empty");
+
+  if (options.coordinatefile.empty())
+    throw runtime_error("The specified coordinatefile string is empty");
+
+  for (auto& qt : options.querydata)
+  {
+    if (!NFmiFileSystem::FileExists(qt) && !NFmiFileSystem::DirectoryExists(qt))
+      throw runtime_error("The querydata '" + qt + "' does not exist");
+  }
+
+  if (!NFmiFileSystem::FileExists(options.coordinatefile))
+    throw runtime_error("The coordinatefile '" + options.coordinatefile + "' does not exist");
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Command line parser
  */
 // ----------------------------------------------------------------------
@@ -761,23 +788,7 @@ void parse_command_line(int argc, const char* argv[])
   if (cmdline.isOption('c'))
     options.coordinatefile = cmdline.OptionValue('c');
 
-  if (options.timezone.empty())
-    throw runtime_error("The specified timezone string is empty");
-
-  if (options.querydata.empty())
-    throw runtime_error("The specified querydata string is empty");
-
-  if (options.coordinatefile.empty())
-    throw runtime_error("The specified coordinatefile string is empty");
-
-  for (auto& qt : options.querydata)
-  {
-    if (!NFmiFileSystem::FileExists(qt) && !NFmiFileSystem::DirectoryExists(qt))
-      throw runtime_error("The querydata '" + qt + "' does not exist");
-  }
-
-  if (!NFmiFileSystem::FileExists(options.coordinatefile))
-    throw runtime_error("The coordinatefile '" + options.coordinatefile + "' does not exist");
+  validate_options();
 
   Settings::set("textgen::coordinates", options.coordinatefile);
 

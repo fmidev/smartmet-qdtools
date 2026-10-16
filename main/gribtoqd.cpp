@@ -1052,6 +1052,34 @@ bool HasValidData(const NFmiDataMatrix<float> &theValues)
   return false;
 }
 
+// Copy all the slices with valid data found from the destination, returns true if any were copied
+bool CopyValidSlices(NFmiFastQueryInfo &destInfo, NFmiFastQueryInfo &sourceInfo)
+{
+  bool filledAnyData = false;
+  for (sourceInfo.ResetParam(); sourceInfo.NextParam();)
+  {
+    if (!destInfo.Param(static_cast<FmiParameterName>(sourceInfo.Param().GetParamIdent())))
+      continue;
+    for (sourceInfo.ResetLevel(); sourceInfo.NextLevel();)
+    {
+      if (!destInfo.Level(*(sourceInfo.Level())))
+        continue;
+      for (sourceInfo.ResetTime(); sourceInfo.NextTime();)
+      {
+        if (!destInfo.Time(sourceInfo.Time()))
+          continue;
+        auto values = sourceInfo.Values();
+        if (HasValidData(values))
+        {
+          destInfo.SetValues(values);
+          filledAnyData = true;
+        }
+      }
+    }
+  }
+  return filledAnyData;
+}
+
 bool FillQData(std::shared_ptr<NFmiQueryData> &theQData,
                vector<std::shared_ptr<NFmiQueryData> > &theTotalQDataCollector)
 {
@@ -1067,21 +1095,9 @@ bool FillQData(std::shared_ptr<NFmiQueryData> &theQData,
     if (levelType == GetLevelType(i))
     {
       NFmiFastQueryInfo sourceInfo(i.get());
-      if (destInfo.HPlaceDescriptor() == sourceInfo.HPlaceDescriptor())
-        for (sourceInfo.ResetParam(); sourceInfo.NextParam();)
-          if (destInfo.Param(static_cast<FmiParameterName>(sourceInfo.Param().GetParamIdent())))
-            for (sourceInfo.ResetLevel(); sourceInfo.NextLevel();)
-              if (destInfo.Level(*(sourceInfo.Level())))
-                for (sourceInfo.ResetTime(); sourceInfo.NextTime();)
-                  if (destInfo.Time(sourceInfo.Time()))
-                  {
-                    auto values = sourceInfo.Values();
-                    if (HasValidData(values))
-                    {
-                      destInfo.SetValues(values);
-                      filledAnyData = true;
-                    }
-                  }
+      if (destInfo.HPlaceDescriptor() == sourceInfo.HPlaceDescriptor() &&
+          CopyValidSlices(destInfo, sourceInfo))
+        filledAnyData = true;
     }
   }
   return filledAnyData;
@@ -1271,132 +1287,98 @@ NFmiPoint CalcNewTopRightLatlon(const NFmiPoint &p1, const NFmiPoint &p2)
   return NFmiPoint(maxLon, maxLat);
 }
 
+// ----------------------------------------------------------------------
+/*!
+ * \brief Start or extend the combined area with horizontally connected grids
+ */
+// ----------------------------------------------------------------------
+
+void ConnectHorizontally(const NFmiGrid &leftGrid,
+                         const NFmiGrid &rightGrid,
+                         NFmiPoint &bottomLeft,
+                         NFmiPoint &topRight,
+                         unsigned long &xSize,
+                         unsigned long &ySize)
+{
+  if (bottomLeft == NFmiPoint::gMissingLatlon)
+  {  // aloitetaan alueen rakennus yhdistämällä liittyneet alueet
+    bottomLeft = leftGrid.Area()->BottomLeftLatLon();
+    topRight = rightGrid.Area()->TopRightLatLon();
+    xSize = leftGrid.XNumber() + rightGrid.XNumber() -
+            1;  // oletus, molemmissa alueissa on yhteinen reuna, siksi -1 yhteen lasketusta hila
+                // määrästä
+    ySize = FmiMax(leftGrid.YNumber(),
+                   rightGrid.YNumber());  // otetaan varmuuden vuoksi maksimi
+                                          // korkeus, pitäisi kait olla samoja
+                                          // molemmissa
+  }
+  // laajennetaan jo olemassa olevaa aluetta
+  else if (bottomLeft.X() > leftGrid.Area()->BottomLeftLatLon().X())
+  {  // lisätään yhdistelmän leveyttä vasemmalle
+    bottomLeft = CalcNewBottomLeftLatlon(bottomLeft, leftGrid.Area()->BottomLeftLatLon());
+    xSize += leftGrid.XNumber() - 1;
+  }
+  else if (topRight.X() < rightGrid.Area()->TopRightLatLon().X())
+  {  // lisätään yhdistelmän leveyttä oikealle
+    topRight = CalcNewTopRightLatlon(topRight, rightGrid.Area()->TopRightLatLon());
+    xSize += rightGrid.XNumber() - 1;
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Start or extend the combined area with vertically connected grids
+ */
+// ----------------------------------------------------------------------
+
+void ConnectVertically(const NFmiGrid &lowerGrid,
+                       const NFmiGrid &upperGrid,
+                       NFmiPoint &bottomLeft,
+                       NFmiPoint &topRight,
+                       unsigned long &xSize,
+                       unsigned long &ySize)
+{
+  if (bottomLeft == NFmiPoint::gMissingLatlon)
+  {  // aloitetaan alueen rakennus yhdistämällä liittyneet alueet
+    bottomLeft = lowerGrid.Area()->BottomLeftLatLon();
+    topRight = upperGrid.Area()->TopRightLatLon();
+    xSize = FmiMax(lowerGrid.XNumber(),
+                   upperGrid.XNumber());  // otetaan varmuuden vuoksi maksimi
+                                          // korkeus, pitäisi kait olla samoja
+                                          // molemmissa
+    ySize = lowerGrid.YNumber() + upperGrid.YNumber() -
+            1;  // oletus, molemmissa alueissa on yhteinen reuna, siksi -1 yhteen lasketusta hila
+                // määrästä
+  }
+  // laajennetaan jo olemassa olevaa aluetta
+  else if (bottomLeft.Y() > lowerGrid.Area()->BottomLeftLatLon().Y())
+  {  // lisätään yhdistelmän korkeutta alas
+    bottomLeft = CalcNewBottomLeftLatlon(bottomLeft, lowerGrid.Area()->BottomLeftLatLon());
+    ySize += lowerGrid.YNumber() - 1;
+  }
+  else if (topRight.Y() < upperGrid.Area()->TopRightLatLon().Y())
+  {  // lisätään yhdistelmän leveyttä oikealle
+    topRight = CalcNewTopRightLatlon(topRight, upperGrid.Area()->TopRightLatLon());
+    ySize += upperGrid.YNumber() - 1;
+  }
+}
+
 void CalcAreaConnection(const ConnectionEdgeInfo &connectionEdgeInfo,
                         NFmiPoint &bottomLeft,
                         NFmiPoint &topRight,
                         unsigned long &xSize,
                         unsigned long &ySize)
 {
+  const NFmiGrid &grid1 = connectionEdgeInfo.grid1;
+  const NFmiGrid &grid2 = connectionEdgeInfo.grid2;
   if (connectionEdgeInfo.connectionDirection == kRight)
-  {
-    if (bottomLeft == NFmiPoint::gMissingLatlon)
-    {  // aloitetaan alueen rakennus yhdistämällä liittyneet alueet
-      bottomLeft = connectionEdgeInfo.grid1.Area()->BottomLeftLatLon();
-      topRight = connectionEdgeInfo.grid2.Area()->TopRightLatLon();
-      xSize = connectionEdgeInfo.grid1.XNumber() + connectionEdgeInfo.grid2.XNumber() -
-              1;  // oletus, molemmissa alueissa on yhteinen reuna, siksi -1 yhteen lasketusta hila
-                  // määrästä
-      ySize = FmiMax(connectionEdgeInfo.grid1.YNumber(),
-                     connectionEdgeInfo.grid2.YNumber());  // otetaan varmuuden vuoksi maksimi
-                                                           // korkeus, pitäisi kait olla samoja
-                                                           // molemmissa
-    }
-    else
-    {  // laajennetaan jo olemassa olevaa aluetta
-      if (bottomLeft.X() > connectionEdgeInfo.grid1.Area()->BottomLeftLatLon().X())
-      {  // lisätään yhdistelmän leveyttä vasemmalle
-        bottomLeft = CalcNewBottomLeftLatlon(bottomLeft,
-                                             connectionEdgeInfo.grid1.Area()->BottomLeftLatLon());
-        xSize += connectionEdgeInfo.grid1.XNumber() - 1;
-      }
-      else if (topRight.X() < connectionEdgeInfo.grid2.Area()->TopRightLatLon().X())
-      {  // lisätään yhdistelmän leveyttä oikealle
-        topRight =
-            CalcNewTopRightLatlon(topRight, connectionEdgeInfo.grid2.Area()->TopRightLatLon());
-        xSize += connectionEdgeInfo.grid2.XNumber() - 1;
-      }
-    }
-  }
+    ConnectHorizontally(grid1, grid2, bottomLeft, topRight, xSize, ySize);
   else if (connectionEdgeInfo.connectionDirection == kLeft)
-  {
-    if (bottomLeft == NFmiPoint::gMissingLatlon)
-    {  // aloitetaan alueen rakennus yhdistämällä liittyneet alueet
-      bottomLeft = connectionEdgeInfo.grid2.Area()->BottomLeftLatLon();
-      topRight = connectionEdgeInfo.grid1.Area()->TopRightLatLon();
-      xSize = connectionEdgeInfo.grid1.XNumber() + connectionEdgeInfo.grid2.XNumber() -
-              1;  // oletus, molemmissa alueissa on yhteinen reuna, siksi -1 yhteen lasketusta hila
-                  // määrästä
-      ySize = FmiMax(connectionEdgeInfo.grid1.YNumber(),
-                     connectionEdgeInfo.grid2.YNumber());  // otetaan varmuuden vuoksi maksimi
-                                                           // korkeus, pitäisi kait olla samoja
-                                                           // molemmissa
-    }
-    else
-    {  // laajennetaan jo olemassa olevaa aluetta
-      if (bottomLeft.X() > connectionEdgeInfo.grid2.Area()->BottomLeftLatLon().X())
-      {  // lisätään yhdistelmän leveyttä vasemmalle
-        bottomLeft = CalcNewBottomLeftLatlon(bottomLeft,
-                                             connectionEdgeInfo.grid2.Area()->BottomLeftLatLon());
-        xSize += connectionEdgeInfo.grid2.XNumber() - 1;
-      }
-      else if (topRight.X() < connectionEdgeInfo.grid1.Area()->TopRightLatLon().X())
-      {  // lisätään yhdistelmän leveyttä oikealle
-        topRight =
-            CalcNewTopRightLatlon(topRight, connectionEdgeInfo.grid1.Area()->TopRightLatLon());
-        xSize += connectionEdgeInfo.grid1.XNumber() - 1;
-      }
-    }
-  }
+    ConnectHorizontally(grid2, grid1, bottomLeft, topRight, xSize, ySize);
   else if (connectionEdgeInfo.connectionDirection == kUp)
-  {
-    if (bottomLeft == NFmiPoint::gMissingLatlon)
-    {  // aloitetaan alueen rakennus yhdistämällä liittyneet alueet
-      bottomLeft = connectionEdgeInfo.grid1.Area()->BottomLeftLatLon();
-      topRight = connectionEdgeInfo.grid2.Area()->TopRightLatLon();
-      xSize = FmiMax(connectionEdgeInfo.grid1.XNumber(),
-                     connectionEdgeInfo.grid2.XNumber());  // otetaan varmuuden vuoksi maksimi
-                                                           // korkeus, pitäisi kait olla samoja
-                                                           // molemmissa
-      ySize = connectionEdgeInfo.grid1.YNumber() + connectionEdgeInfo.grid2.YNumber() -
-              1;  // oletus, molemmissa alueissa on yhteinen reuna, siksi -1 yhteen lasketusta hila
-                  // määrästä
-    }
-    else
-    {  // laajennetaan jo olemassa olevaa aluetta
-      if (bottomLeft.Y() > connectionEdgeInfo.grid1.Area()->BottomLeftLatLon().Y())
-      {  // lisätään yhdistelmän korkeutta alas
-        bottomLeft = CalcNewBottomLeftLatlon(bottomLeft,
-                                             connectionEdgeInfo.grid1.Area()->BottomLeftLatLon());
-        ySize += connectionEdgeInfo.grid1.YNumber() - 1;
-      }
-      else if (topRight.Y() < connectionEdgeInfo.grid2.Area()->TopRightLatLon().Y())
-      {  // lisätään yhdistelmän leveyttä oikealle
-        topRight =
-            CalcNewTopRightLatlon(topRight, connectionEdgeInfo.grid2.Area()->TopRightLatLon());
-        ySize += connectionEdgeInfo.grid2.YNumber() - 1;
-      }
-    }
-  }
+    ConnectVertically(grid1, grid2, bottomLeft, topRight, xSize, ySize);
   else if (connectionEdgeInfo.connectionDirection == kDown)
-  {
-    if (bottomLeft == NFmiPoint::gMissingLatlon)
-    {  // aloitetaan alueen rakennus yhdistämällä liittyneet alueet
-      bottomLeft = connectionEdgeInfo.grid2.Area()->BottomLeftLatLon();
-      topRight = connectionEdgeInfo.grid1.Area()->TopRightLatLon();
-      xSize = FmiMax(connectionEdgeInfo.grid1.XNumber(),
-                     connectionEdgeInfo.grid2.XNumber());  // otetaan varmuuden vuoksi maksimi
-                                                           // korkeus, pitäisi kait olla samoja
-                                                           // molemmissa
-      ySize = connectionEdgeInfo.grid1.YNumber() + connectionEdgeInfo.grid2.YNumber() -
-              1;  // oletus, molemmissa alueissa on yhteinen reuna, siksi -1 yhteen lasketusta hila
-                  // määrästä
-    }
-    else
-    {  // laajennetaan jo olemassa olevaa aluetta
-      if (bottomLeft.Y() > connectionEdgeInfo.grid2.Area()->BottomLeftLatLon().Y())
-      {  // lisätään yhdistelmän korkeutta alas
-        bottomLeft = CalcNewBottomLeftLatlon(bottomLeft,
-                                             connectionEdgeInfo.grid2.Area()->BottomLeftLatLon());
-        ySize += connectionEdgeInfo.grid2.YNumber() - 1;
-      }
-      else if (topRight.Y() < connectionEdgeInfo.grid1.Area()->TopRightLatLon().Y())
-      {  // lisätään yhdistelmän leveyttä oikealle
-        topRight =
-            CalcNewTopRightLatlon(topRight, connectionEdgeInfo.grid1.Area()->TopRightLatLon());
-        ySize += connectionEdgeInfo.grid1.YNumber() - 1;
-      }
-    }
-  }
+    ConnectVertically(grid2, grid1, bottomLeft, topRight, xSize, ySize);
 }
 
 // HUOM! tämä yhdistely algoritmi toimii vain latlon tyyppisille areoille.

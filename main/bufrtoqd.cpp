@@ -4115,6 +4115,87 @@ void limit_duration_sounding(const NameMap& namemap,
   limit_sounding_levels(ident, soundingmessages, identtimemap, levelcount);
 }
 
+// The max number of mapped observations in the messages
+int max_obscount(const NameMap& namemap, const Messages& messages)
+{
+  int maxcount = 0;
+  int obscount = 0;
+  for (auto const& msg : messages)
+    if ((obscount = get_obscount(namemap, msg)) > maxcount)
+      maxcount = obscount;
+  return maxcount;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Select the most comprehensive sounding from duplicates
+ *
+ * The sounding with most levels is selected, then the one with most observations, and
+ * finally the one with the widest vertical range.
+ *
+ * \return True if the already stored sounding is to be kept
+ */
+// ----------------------------------------------------------------------
+
+bool keep_stored_sounding(const NameMap& namemap,
+                          Messages& stored,
+                          const std::string& storedident,
+                          Messages& soundingmessages,
+                          const NFmiMetTime& t)
+{
+  // Sounding with most levels
+
+  if (stored.size() != soundingmessages.size())
+  {
+    if (options.debug)
+      fprintf(stderr,
+              "%s duplicate %s %s levels %lu/%lu\n",
+              (stored.size() > soundingmessages.size()) ? "Keep" : "Select",
+              storedident.c_str(),
+              to_iso_string(t.PosixTime()).c_str(),
+              std::max(stored.size(), soundingmessages.size()),
+              std::min(stored.size(), soundingmessages.size()));
+
+    return (stored.size() > soundingmessages.size());
+  }
+
+  // Sounding with most observations
+
+  int obscount1 = max_obscount(namemap, stored);
+  int obscount2 = max_obscount(namemap, soundingmessages);
+
+  if (obscount1 != obscount2)
+  {
+    if (options.debug)
+      fprintf(stderr,
+              "%s duplicate %s %s obscount %d/%d\n",
+              (obscount1 > obscount2) ? "Keep" : "Select",
+              storedident.c_str(),
+              to_iso_string(t.PosixTime()).c_str(),
+              std::max(obscount1, obscount2),
+              std::min(obscount1, obscount2));
+
+    return (obscount1 > obscount2);
+  }
+
+  // Sounding with widest vertical range
+
+  auto range1 = get_altitude(stored.back(), false) - get_altitude(stored.front(), false);
+  auto range2 =
+      get_altitude(soundingmessages.back(), false) - get_altitude(soundingmessages.front(), false);
+
+  if (options.debug)
+    fprintf(stderr,
+            "%s duplicate %s %s range %.0f/%.0f\n",
+            (range1 >= range2) ? "Keep" : "Select",
+            storedident.c_str(),
+            to_iso_string(t.PosixTime()).c_str(),
+            std::max(range1, range2),
+            std::min(range1, range2));
+
+  return (range1 >= range2);
+}
+
 // ----------------------------------------------------------------------
 /*!
  * \brief Store sounding i.e. station's successive messages with ascending altitude
@@ -4169,74 +4250,8 @@ void store_messages_sounding(const NameMap& namemap,
       throw std::runtime_error("Internal error, duplicate sounding for ident " + ident +
                                " not found");
 
-    // Sounding with most levels
-
-    if (tii->second.size() != soundingmessages.size())
-    {
-      if (options.debug)
-        fprintf(stderr,
-                "%s duplicate %s %s levels %lu/%lu\n",
-                (tii->second.size() > soundingmessages.size()) ? "Keep" : "Select",
-                tii->first.c_str(),
-                to_iso_string(t.PosixTime()).c_str(),
-                std::max(tii->second.size(), soundingmessages.size()),
-                std::min(tii->second.size(), soundingmessages.size()));
-
-      if (tii->second.size() > soundingmessages.size())
-        return;
-    }
-    else
-    {
-      // Sounding with most observations
-
-      int obscount1 = 0;
-      int obscount2 = 0;
-      int obscount = 0;
-
-      for (auto const& msg1 : tii->second)
-        if ((obscount = get_obscount(namemap, msg1)) > obscount1)
-          obscount1 = obscount;
-
-      for (auto const& msg2 : soundingmessages)
-        if ((obscount = get_obscount(namemap, msg2)) > obscount2)
-          obscount2 = obscount;
-
-      if (obscount1 != obscount2)
-      {
-        if (options.debug)
-          fprintf(stderr,
-                  "%s duplicate %s %s obscount %d/%d\n",
-                  (obscount1 > obscount2) ? "Keep" : "Select",
-                  tii->first.c_str(),
-                  to_iso_string(t.PosixTime()).c_str(),
-                  std::max(obscount1, obscount2),
-                  std::min(obscount1, obscount2));
-
-        if (obscount1 > obscount2)
-          return;
-      }
-      else
-      {
-        // Sounding with widest vertical range
-
-        auto range1 =
-            get_altitude(tii->second.back(), false) - get_altitude(tii->second.front(), false);
-        auto range2 = get_altitude(soundingmessages.back(), false) -
-                      get_altitude(soundingmessages.front(), false);
-
-        if (options.debug)
-          fprintf(stderr,
-                  "%s duplicate %s %s range %.0f/%.0f\n",
-                  (range1 >= range2) ? "Keep" : "Select",
-                  tii->first.c_str(),
-                  to_iso_string(t.PosixTime()).c_str(),
-                  std::max(range1, range2),
-                  std::min(range1, range2));
-
-        if (range1 >= range2)
-          return;
-      }
-    }
+    if (keep_stored_sounding(namemap, tii->second, tii->first, soundingmessages, t))
+      return;
 
     tit->second.erase(tii->first);
   }

@@ -400,6 +400,34 @@ NFmiHPlaceDescriptor MakeHPlaceDesc(NFmiAviationStationInfoSystem &theStationInf
  */
 // ----------------------------------------------------------------------
 
+// Copy the values of the METAR data to the current time and station, returns the number of
+// parameters not found
+int CopyMetarValues(NFmiFastQueryInfo &info, const MetarData &data)
+{
+  int paramErrorCount = 0;
+  bool correctedOverRide = data.fIsCorrected;
+  for (size_t j = 0; j < data.itsParamIds.size(); j++)
+  {
+    if (!info.Param(data.itsParamIds[j]))
+    {
+      paramErrorCount++;
+      continue;
+    }
+    if (correctedOverRide)
+    {
+      // corrected datan kanssa tutkitaan onko correctedin datan parametri ei puuttuvaa ja
+      // tällöin laitetaan päälle
+      if (data.itsValues[j] != kFloatMissing)
+        info.FloatValue(data.itsValues[j]);
+    }
+    // ei vedetä dataa päälle, jos siellä on jo jotain (samaan aikaan samalle asemalle voidaan
+    // saada useita sanomia, missä joissain on puuttuvaa)
+    else if (info.FloatValue() == kFloatMissing)
+      info.FloatValue(data.itsValues[j]);
+  }
+  return paramErrorCount;
+}
+
 void FillInfoFromMetarData(NFmiFastQueryInfo &info, const vector<MetarData> &datas)
 {
   int timeErrorCount = 0;
@@ -408,40 +436,12 @@ void FillInfoFromMetarData(NFmiFastQueryInfo &info, const vector<MetarData> &dat
   info.First();
   for (const auto& data : datas)
   {
-    bool correctedOverRide = data.fIsCorrected;
-    if (info.Time(data.itsTime))
-    {
-      if (info.Location(data.itsStationId))
-      {
-        for (size_t j = 0; j < data.itsParamIds.size(); j++)
-        {
-          if (info.Param(data.itsParamIds[j]))
-          {
-            if (correctedOverRide)
-            {
-              if (data.itsValues[j] != kFloatMissing)
-                info.FloatValue(data.itsValues[j]);  // corrected datan kanssa tutkitaan onko
-                                                     // correctedin datan parametri ei puuttuvaa ja
-                                                     // tällöin laitetaan päälle
-            }
-            else
-            {
-              if (info.FloatValue() == kFloatMissing)  // ei vedetä dataa päälle, jos siellä on jo
-                                                       // jotain (samaan aikaan samalle asemalle
-                                                       // voidaan saada useita sanomia, missä
-                                                       // joissain on puuttuvaa)
-                info.FloatValue(data.itsValues[j]);
-            }
-          }
-          else
-            paramErrorCount++;
-        }
-      }
-      else
-        stationErrorCount++;
-    }
-    else
+    if (!info.Time(data.itsTime))
       timeErrorCount++;
+    else if (!info.Location(data.itsStationId))
+      stationErrorCount++;
+    else
+      paramErrorCount += CopyMetarValues(info, data);
   }
 
   if (timeErrorCount || paramErrorCount ||
@@ -1329,6 +1329,46 @@ void FillMetarDataCloudSection(MetarData &data,
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Copy the basic non-missing values of the decoded METAR
+ */
+// ----------------------------------------------------------------------
+
+void FillMetarBasicValues(MetarData &data, Decoded_METAR &metarStruct)
+{
+  int intValue = MDSP_missing_int;
+  float floatValue = MDSP_missing_float;
+  intValue = metarStruct.temp;
+  if (intValue != MDSP_missing_int)
+    data.itsValues[data.itsTemperatureIndex] = static_cast<float>(intValue);
+  intValue = metarStruct.dew_pt_temp;
+  if (intValue != MDSP_missing_int)
+    data.itsValues[data.itsDewpointIndex] = static_cast<float>(intValue);
+  intValue = metarStruct.winData.windSpeed;
+  if (intValue != MDSP_missing_int)
+    data.itsValues[data.itsWSIndex] = 1852.F * intValue / 3600.0F;
+  intValue = metarStruct.winData.windDir;
+  if (intValue != MDSP_missing_int)
+    data.itsValues[data.itsWDIndex] = static_cast<float>(intValue);
+  intValue = metarStruct.winData.windGust;
+  if (intValue != MDSP_missing_int)
+    data.itsValues[data.itsWGustIndex] = 1852.F * intValue / 3600.0F;
+  intValue = metarStruct.hectoPasc_altstng;
+  if (intValue != MDSP_missing_int)
+    data.itsValues[data.itsPressureIndex] = static_cast<float>(intValue);
+
+  // https://jira.fmi.fi/browse/STU-21605; Set CAVOK visibility to 9999
+
+  floatValue = (metarStruct.CAVOK ? 9999.0 : metarStruct.prevail_vsbyM);
+  if (floatValue != MDSP_missing_float)
+    data.itsValues[data.itsVisibilityIndex] = floatValue;
+
+  intValue = metarStruct.VertVsby;
+  if (intValue != MDSP_missing_int)
+    data.itsValues[data.itsVerticalVisibilityIndex] = static_cast<float>(intValue);
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Decode a METAR
  */
 // ----------------------------------------------------------------------
@@ -1347,73 +1387,43 @@ void DecodeMetar(NFmiAviationStationInfoSystem &theStationInfoSystem,
     return;
 
   Decoded_METAR metarStruct;
-  if (decode_metar(const_cast<char *>(theMetarStr.c_str()), &metarStruct) ==
+  if (decode_metar(const_cast<char *>(theMetarStr.c_str()), &metarStruct) !=
       0)  // DcdMETAR palauttaa 0:n jos ok
   {
-    string icaoStr = metarStruct.stnid;
-    NFmiAviationStation *aviationStation = theStationInfoSystem.FindStation(icaoStr);
-    if (aviationStation)
-    {
-      int intValue = MDSP_missing_int;
-      float floatValue = MDSP_missing_float;
-      MetarData data;
-      data.itsStationId = aviationStation->GetIdent();  // laitetaan wmo-id talteen että löydetään
-                                                        // myöhemmin tämä asema querydatasta
-      data.itsIcaoName = icaoStr;
-      data.itsTime = ::GetTime2(metarStruct, theHeaderTime, theTimeRoundingResolution);
-
-      intValue = metarStruct.temp;
-      if (intValue != MDSP_missing_int)
-        data.itsValues[data.itsTemperatureIndex] = static_cast<float>(intValue);
-      intValue = metarStruct.dew_pt_temp;
-      if (intValue != MDSP_missing_int)
-        data.itsValues[data.itsDewpointIndex] = static_cast<float>(intValue);
-      intValue = metarStruct.winData.windSpeed;
-      if (intValue != MDSP_missing_int)
-        data.itsValues[data.itsWSIndex] = 1852.F * intValue / 3600.0F;
-      intValue = metarStruct.winData.windDir;
-      if (intValue != MDSP_missing_int)
-        data.itsValues[data.itsWDIndex] = static_cast<float>(intValue);
-      intValue = metarStruct.winData.windGust;
-      if (intValue != MDSP_missing_int)
-        data.itsValues[data.itsWGustIndex] = 1852.F * intValue / 3600.0F;
-      intValue = metarStruct.hectoPasc_altstng;
-      if (intValue != MDSP_missing_int)
-        data.itsValues[data.itsPressureIndex] = static_cast<float>(intValue);
-
-      // https://jira.fmi.fi/browse/STU-21605; Set CAVOK visibility to 9999
-
-      floatValue = (metarStruct.CAVOK ? 9999.0 : metarStruct.prevail_vsbyM);
-      if (floatValue != MDSP_missing_float)
-        data.itsValues[data.itsVisibilityIndex] = floatValue;
-
-      intValue = metarStruct.VertVsby;
-      if (intValue != MDSP_missing_int)
-        data.itsValues[data.itsVerticalVisibilityIndex] = static_cast<float>(intValue);
-
-      ::FillMetarDataWeatherSection(data, metarStruct, theMetarStr, theMetarFileName);
-      ::FillMetarDataCloudSection(data, metarStruct, theMetarStr, theMetarFileName);
-      data.fIsCorrected = metarStruct.COR == TRUE;
-
-      dataBlocks.push_back(data);  // lopuksi laitetaan datablokki listaan
-
-      bool debugLogCode = false;
-      NFmiMetTime atime;
-      //			if(debudLogCode && data.itsStationId == 40738)
-      if (debugLogCode && data.itsTime > atime)
-        cerr << "\"" << theMetarStr << "\" In file: " << theMetarFileName << endl;
-    }
-    else
-    {
-      theIcaoIdUnknownSetOut.insert(icaoStr);
-    }
-  }
-  else  // DcdMETAR-funktio failasi
-  {
+    // DcdMETAR-funktio failasi
     if (fVerboseMode)
       cerr << "Error in METAR: \"" << theMetarStr << "\" In file: " << theMetarFileName
            << ", Continuing execution..." << endl;
+    return;
   }
+
+  string icaoStr = metarStruct.stnid;
+  NFmiAviationStation *aviationStation = theStationInfoSystem.FindStation(icaoStr);
+  if (!aviationStation)
+  {
+    theIcaoIdUnknownSetOut.insert(icaoStr);
+    return;
+  }
+
+  MetarData data;
+  data.itsStationId = aviationStation->GetIdent();  // laitetaan wmo-id talteen että löydetään
+                                                    // myöhemmin tämä asema querydatasta
+  data.itsIcaoName = icaoStr;
+  data.itsTime = ::GetTime2(metarStruct, theHeaderTime, theTimeRoundingResolution);
+
+  ::FillMetarBasicValues(data, metarStruct);
+
+  ::FillMetarDataWeatherSection(data, metarStruct, theMetarStr, theMetarFileName);
+  ::FillMetarDataCloudSection(data, metarStruct, theMetarStr, theMetarFileName);
+  data.fIsCorrected = metarStruct.COR == TRUE;
+
+  dataBlocks.push_back(data);  // lopuksi laitetaan datablokki listaan
+
+  bool debugLogCode = false;
+  NFmiMetTime atime;
+  //			if(debudLogCode && data.itsStationId == 40738)
+  if (debugLogCode && data.itsTime > atime)
+    cerr << "\"" << theMetarStr << "\" In file: " << theMetarFileName << endl;
 }
 
 // ----------------------------------------------------------------------
@@ -1582,6 +1592,119 @@ bool DoNoaaFormatRead(NFmiAviationStationInfoSystem &theStationInfoSystem,
   return false;
 }
 
+// The result of skipping the message header
+enum class HeaderResult
+{
+  Ok,    // the first METAR is now in the line
+  Skip,  // no METAR, SPECI or NIL word was found
+  Stop   // a SPECI word was found, SPECI messages are not handled yet
+};
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Store the header time if the word is the time stamp of the header
+ *
+ * Some METARs do not have their own time stamp, hence the header time is needed.
+ */
+// ----------------------------------------------------------------------
+
+void ExtractHeaderTime(std::string &tmpStr,
+                       const std::string &lineStr,
+                       const string &theMetarFileName,
+                       int theTimeRoundingResolution,
+                       NFmiMetTime &headerTime)
+{
+  // etsitään 1. sana missä täsmälleen kuusi numeroa eli metar-sanomien aikaleima
+  static const boost::regex expression("([0-9]{6})");
+  static const boost::regex expression2("([0-9]{6});METAR");
+  boost::cmatch what;
+  if (boost::regex_match(tmpStr.c_str(), what, expression) ||
+      boost::regex_match(tmpStr.c_str(), what, expression2))
+  {  // otetaan headerissa oleva aikaleima talteen, koska jossain metareissa ei ole omaa
+     // aikaleimaa
+    try
+    {
+      headerTime = ::GetTime(what[1], lineStr, theMetarFileName, true, theTimeRoundingResolution);
+
+      // To match e.g. 290420;METAR to gMetarWord
+
+      if (what[0].length() > 6)
+        tmpStr = gMetarWord;
+    }
+    catch (...)
+    {
+      // ei tehdä mitään
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Skip the header of a message file, leaving the first METAR in the line
+ */
+// ----------------------------------------------------------------------
+
+HeaderResult SkipMessageHeader(std::string &lineStr,
+                               NFmiMetTime &headerTime,
+                               const string &theMetarFileName,
+                               int theTimeRoundingResolution)
+{
+  boost::regex reg2(
+      "\\s+");  // splittaa yksittäiset sanat, oli niissä yksi tai useampia spaceja välissä
+  boost::sregex_token_iterator it2(lineStr.begin(), lineStr.end(), reg2, -1);
+  boost::sregex_token_iterator end2;
+
+  // https://jira.fmi.fi/browse/STU-21605
+  //
+  // Example input data contains lines like
+  //
+  //     ESNZ;SASN33 ESWI 290420;METAR ESNZ 290420Z 29016KT CAVOK 03/M09 Q1010=
+  //
+  // so ";METAR" is (can be) part of the matching word. When (if) so, the first
+  // METAR has also been lost since there's been no match for gMetarWord
+
+  string tmpStr;
+
+  for (bool more = true; more; more = it2 != end2)
+  {
+    tmpStr = *it2;
+    ++it2;
+    ::ExtractHeaderTime(
+        tmpStr, lineStr, theMetarFileName, theTimeRoundingResolution, headerTime);
+    NFmiStringTools::UpperCase(tmpStr);
+    if (tmpStr == gMetarWord)
+      break;  // aloitetaan metar sanomien purkaminen, 1. metarissa on aina mukana myös
+              // headeri osa, joka loppuu METAR sanaan
+    if (tmpStr == gSpeciWord)
+      return HeaderResult::Stop;  // Mutta ei vielä toistaiseksi oteta huomioon SPECI sanomia
+    if (tmpStr == gNilWord)
+    {
+      tmpStr.clear();
+
+      break;  // Jos NIL tulee ennen METAR/SPECI:ä, lopetetaan kanssa, kyseessä tyhjä
+              // sanomatiedosto
+    }
+  }
+
+  if (it2 == end2)
+    return HeaderResult::Skip;  // joskus on virheellisiä sanoma tiedostoja, eikä
+                                // METAR/SPECI/NIL sanoja löydy, ja tässä pitää silloin breakata
+
+  // jokaisen tiedoston 1. metar pitää rakentaa tässä erikseen, koska alusta pitää skipata
+  // header osio
+  // loput metarit tulevat splittauksesta sellaisenaan.
+  string tmpMetarStr(tmpStr + (tmpStr.empty() ? "" : " "));
+  for (bool more = true; more; more = it2 != end2)
+  {
+    tmpMetarStr += *it2;
+    tmpMetarStr += " ";
+    ::GetStringAndAdvance(it2, false);
+  }
+
+  lineStr = tmpMetarStr;
+  return HeaderResult::Ok;
+}
+
 // ----------------------------------------------------------------------
 /*!
  * \brief Extract METAR messages into a vector
@@ -1620,80 +1743,12 @@ void MakeDataBlocks(NFmiAviationStationInfoSystem &theStationInfoSystem,
       if (newHeaderStarts)  // siis 1. ja jos useita metar sanomia samassa paketissa,
       // headerin alussa sanoman kohdalla pitää lukea ohi header osio
       {
-        boost::regex reg2(
-            "\\s+");  // splittaa yksittäiset sanat, oli niissä yksi tai useampia spaceja välissä
-        boost::sregex_token_iterator it2(lineStr.begin(), lineStr.end(), reg2, -1);
-        boost::sregex_token_iterator end2;
-
-        // https://jira.fmi.fi/browse/STU-21605
-        //
-        // Example input data contains lines like
-        //
-        //     ESNZ;SASN33 ESWI 290420;METAR ESNZ 290420Z 29016KT CAVOK 03/M09 Q1010=
-        //
-        // so ";METAR" is (can be) part of the matching word. When (if) so, the first
-        // METAR has also been lost since there's been no match for gMetarWord
-
-        boost::regex expression("([0-9]{6})");  // etsitään 1. sana missä täsmälleen kuusi numeroa
-                                                // eli metar-sanomien aikaleima
-        boost::regex expression2("([0-9]{6});METAR");
-        string tmpStr;
-
-        for (bool more = true; more; more = it2 != end2)
-        {
-          tmpStr = *it2;
-          ++it2;
-          boost::cmatch what;
-          if (boost::regex_match(tmpStr.c_str(), what, expression) ||
-              boost::regex_match(tmpStr.c_str(), what, expression2))
-          {  // otetaan headerissa oleva aikaleima talteen, koska jossain metareissa ei ole omaa
-             // aikaleimaa
-            try
-            {
-              headerTime =
-                  ::GetTime(what[1], lineStr, theMetarFileName, true, theTimeRoundingResolution);
-
-              // To match e.g. 290420;METAR to gMetarWord
-
-              if (what[0].length() > 6)
-                tmpStr = gMetarWord;
-            }
-            catch (...)
-            {
-              // ei tehdä mitään
-            }
-          }
-          NFmiStringTools::UpperCase(tmpStr);
-          if (tmpStr == gMetarWord)
-            break;  // aloitetaan metar sanomien purkaminen, 1. metarissa on aina mukana myös
-                    // headeri osa, joka loppuu METAR sanaan
-          if (tmpStr == gSpeciWord)
-            return;  // Mutta ei vielä toistaiseksi oteta huomioon SPECI sanomia
-          if (tmpStr == gNilWord)
-          {
-            tmpStr.clear();
-
-            break;  // Jos NIL tulee ennen METAR/SPECI:ä, lopetetaan kanssa, kyseessä tyhjä
-                    // sanomatiedosto
-          }
-        }
-
-        if (it2 == end2)
-          continue;  // joskus on virheellisiä sanoma tiedostoja, eikä METAR/SPECI/NIL sanoja löydy,
-                     // ja tässä pitää silloin breakata
-
-        // jokaisen tiedoston 1. metar pitää rakentaa tässä erikseen, koska alusta pitää skipata
-        // header osio
-        // loput metarit tulevat splittauksesta sellaisenaan.
-        string tmpMetarStr(tmpStr + (tmpStr.empty() ? "" : " "));
-        for (bool more = true; more; more = it2 != end2)
-        {
-          tmpMetarStr += *it2;
-          tmpMetarStr += " ";
-          ::GetStringAndAdvance(it2, false);
-        }
-
-        lineStr = tmpMetarStr;
+        auto result =
+            ::SkipMessageHeader(lineStr, headerTime, theMetarFileName, theTimeRoundingResolution);
+        if (result == HeaderResult::Stop)
+          return;
+        if (result == HeaderResult::Skip)
+          continue;
       }
       std::string::size_type pos = lineStr.find(gMetarWord);
       if (pos != std::string::npos)

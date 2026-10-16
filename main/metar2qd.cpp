@@ -1808,6 +1808,47 @@ void WriteMetarDataToCout(NFmiQueryData *metarData)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Read the METAR messages from the files into data blocks
+ */
+// ----------------------------------------------------------------------
+
+void ReadMetarFiles(const list<string> &metarfiles,
+                    NFmiAviationStationInfoSystem &stationInfoSystem,
+                    vector<MetarData> &dataBlocks,
+                    int timeRoundingResolution,
+                    std::set<std::string> &icaoIdUnknownSet,
+                    bool tryNoaaFileFormat)
+{
+  int debugCounter = 0;
+  for (const string &filename : metarfiles)
+  {
+    if (fVerboseMode)
+      std::cerr << "Processing file no: " << ++debugCounter << " (" << filename << ")" << std::endl;
+    if (tryNoaaFileFormat)
+    {
+      if (::DoNoaaFormatRead(
+              stationInfoSystem, dataBlocks, filename, timeRoundingResolution, icaoIdUnknownSet))
+        continue;  // jos tiedosto oli NOAA formaattia, se luettiin jo, mennään seuraavaan
+                   // tiedostoon
+    }
+    string metarFileContent;
+    if (!NFmiFileSystem::ReadFile2String(filename, metarFileContent))
+      cerr << "Failed to read file: " << filename.c_str() << endl
+           << "Continuing with other files..." << endl;
+    else
+    {
+      ::MakeDataBlocks(stationInfoSystem,
+                       metarFileContent,
+                       dataBlocks,
+                       filename,
+                       timeRoundingResolution,
+                       icaoIdUnknownSet);
+    }
+}
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Main program without error catching
  */
 // ----------------------------------------------------------------------
@@ -1906,32 +1947,12 @@ void run(int argc, const char *argv[])
                                            // ovat tulleet metar-sanomista
   vector<MetarData> dataBlocks;
 
-  int debugCounter = 0;
-  for (const string &filename : metarfiles)
-  {
-    if (fVerboseMode)
-      std::cerr << "Processing file no: " << ++debugCounter << " (" << filename << ")" << std::endl;
-    if (tryNoaaFileFormat)
-    {
-      if (::DoNoaaFormatRead(
-              stationInfoSystem, dataBlocks, filename, timeRoundingResolution, icaoIdUnknownSet))
-        continue;  // jos tiedosto oli NOAA formaattia, se luettiin jo, mennään seuraavaan
-                   // tiedostoon
-    }
-    string metarFileContent;
-    if (!NFmiFileSystem::ReadFile2String(filename, metarFileContent))
-      cerr << "Failed to read file: " << filename.c_str() << endl
-           << "Continuing with other files..." << endl;
-    else
-    {
-      ::MakeDataBlocks(stationInfoSystem,
-                       metarFileContent,
-                       dataBlocks,
-                       filename,
-                       timeRoundingResolution,
-                       icaoIdUnknownSet);
-    }
-  }
+  ReadMetarFiles(metarfiles,
+                 stationInfoSystem,
+                 dataBlocks,
+                 timeRoundingResolution,
+                 icaoIdUnknownSet,
+                 tryNoaaFileFormat);
 
   // Build querydata from the contents
 

@@ -889,6 +889,29 @@ NFmiTime ParseDate(const string& theTime)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Count all values and the missing values of the current parameter for each time
+ */
+// ----------------------------------------------------------------------
+
+void CountMissingValues(NFmiFastQueryInfo& theQ,
+                        vector<long>& missing_count,
+                        vector<long>& total_count)
+{
+  for (theQ.ResetLocation(); theQ.NextLocation();)
+    for (theQ.ResetLevel(); theQ.NextLevel();)
+    {
+      std::size_t i = 0;
+      for (theQ.ResetTime(); theQ.NextTime(); ++i)
+      {
+        ++total_count[i];
+        if (theQ.FloatValue() == kFloatMissing)
+          ++missing_count[i];
+      }
+    }
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Find time steps with too much missing data
  */
 // ----------------------------------------------------------------------
@@ -915,17 +938,7 @@ set<NFmiMetTime> FindBadTimes(NFmiFastQueryInfo& theQ, double theLimit, const st
   {
     if (paramnum == kFmiBadParameter || paramnum == theQ.Param().GetParamIdent())
     {
-      for (theQ.ResetLocation(); theQ.NextLocation();)
-        for (theQ.ResetLevel(); theQ.NextLevel();)
-        {
-          std::size_t i = 0;
-          for (theQ.ResetTime(); theQ.NextTime(); ++i)
-          {
-            ++total_count[i];
-            if (theQ.FloatValue() == kFloatMissing)
-              ++missing_count[i];
-          }
-        }
+      CountMissingValues(theQ, missing_count, total_count);
     }
   }
 

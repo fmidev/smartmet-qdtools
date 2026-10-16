@@ -505,6 +505,34 @@ std::pair<double, double> extract_coordinate(const std::string& line)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Append a coordinate line to the polygon path
+ *
+ * The first point starts a new subpath, a repeat of it closes the subpath.
+ */
+// ----------------------------------------------------------------------
+
+void append_coordinate(NFmiSvgPath& path,
+                       const std::string& line,
+                       bool& moveto,
+                       std::string& firstpoint)
+{
+  if (moveto)
+    firstpoint = line;
+
+  std::pair<double, double> p = extract_coordinate(line);
+
+  if (moveto)
+    path.push_back(NFmiSvgPath::Element(NFmiSvgPath::kElementMoveto, p.first, p.second));
+  else if (line == firstpoint)
+    path.push_back(NFmiSvgPath::Element(NFmiSvgPath::kElementClosePath));
+  else
+    path.push_back(NFmiSvgPath::Element(NFmiSvgPath::kElementLineto, p.first, p.second));
+
+  moveto = false;
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Extract the ash cloud polygon from the given file
  *
  * Polygons start with POLY. If there are none, there is a NO POLYS line
@@ -546,19 +574,7 @@ NFmiSvgPath read_ash_concentration_polygon(const fs::path& file)
       }
       else
       {
-        if (moveto)
-          firstpoint = line;
-
-        std::pair<double, double> p = extract_coordinate(line);
-
-        if (moveto)
-          path.push_back(NFmiSvgPath::Element(NFmiSvgPath::kElementMoveto, p.first, p.second));
-        else if (line == firstpoint)
-          path.push_back(NFmiSvgPath::Element(NFmiSvgPath::kElementClosePath));
-        else
-          path.push_back(NFmiSvgPath::Element(NFmiSvgPath::kElementLineto, p.first, p.second));
-
-        moveto = false;
+        append_coordinate(path, line, moveto, firstpoint);
       }
     }
     else if (line.substr(0, 8) == "NO POLYS")
@@ -628,19 +644,7 @@ std::map<std::string, NFmiSvgPath> read_ash_boundary_polygons(const fs::path& fi
       }
       else
       {
-        if (moveto)
-          firstpoint = line;
-
-        std::pair<double, double> p = extract_coordinate(line);
-
-        if (moveto)
-          path.push_back(NFmiSvgPath::Element(NFmiSvgPath::kElementMoveto, p.first, p.second));
-        else if (line == firstpoint)
-          path.push_back(NFmiSvgPath::Element(NFmiSvgPath::kElementClosePath));
-        else
-          path.push_back(NFmiSvgPath::Element(NFmiSvgPath::kElementLineto, p.first, p.second));
-
-        moveto = false;
+        append_coordinate(path, line, moveto, firstpoint);
       }
     }
     else if (line.substr(0, 8) == "NO POLYS")

@@ -369,6 +369,50 @@ NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief The files in the directory, or the newest files of the directories
+ */
+// ----------------------------------------------------------------------
+
+vector<string> input_files(const NFmiCmdLine &cmdline)
+{
+  vector<string> dataFileNames;
+
+  if (cmdline.NumberofParameters() == 1)
+  {
+    string dataDirectory = cmdline.Parameter(1);
+    if (!NFmiFileSystem::DirectoryExists(dataDirectory))
+      throw runtime_error(
+          std::string("Given data directory '" + dataDirectory + "' doesn't exist, exiting...\n"));
+
+    list<string> dataFileNamesTmp = NFmiFileSystem::DirectoryFiles(dataDirectory);
+    for (auto& ft : dataFileNamesTmp)
+    {
+      string fullname = dataDirectory + "/" + ft;
+      dataFileNames.push_back(fullname);
+    }
+  }
+  else
+  {
+    // Take newest file only from each directory
+    for (int param = 1; param <= cmdline.NumberofParameters(); ++param)
+    {
+      string p = cmdline.Parameter(param);
+      if (!NFmiFileSystem::DirectoryExists(p))
+        dataFileNames.push_back(p);
+      else
+      {
+        string tmp = NFmiFileSystem::NewestFile(p);
+        string fullname = p + "/" + tmp;
+        dataFileNames.push_back(fullname);
+      }
+    }
+  }
+
+  return dataFileNames;
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Main program minus exception catching
  */
 // ----------------------------------------------------------------------
@@ -435,38 +479,7 @@ int Run(int argc, const char *argv[])
     mmapped = true;
   }
 
-  vector<string> dataFileNames;
-
-  if (cmdline.NumberofParameters() == 1)
-  {
-    string dataDirectory = cmdline.Parameter(1);
-    if (!NFmiFileSystem::DirectoryExists(dataDirectory))
-      throw runtime_error(
-          std::string("Given data directory '" + dataDirectory + "' doesn't exist, exiting...\n"));
-
-    list<string> dataFileNamesTmp = NFmiFileSystem::DirectoryFiles(dataDirectory);
-    for (auto& ft : dataFileNamesTmp)
-    {
-      string fullname = dataDirectory + "/" + ft;
-      dataFileNames.push_back(fullname);
-    }
-  }
-  else
-  {
-    // Take newest file only from each directory
-    for (int param = 1; param <= cmdline.NumberofParameters(); ++param)
-    {
-      string p = cmdline.Parameter(param);
-      if (!NFmiFileSystem::DirectoryExists(p))
-        dataFileNames.push_back(p);
-      else
-      {
-        string tmp = NFmiFileSystem::NewestFile(p);
-        string fullname = p + "/" + tmp;
-        dataFileNames.push_back(fullname);
-      }
-    }
-  }
+  vector<string> dataFileNames = input_files(cmdline);
 
   MyGrid usedGrid;
   if (!use_point_data)

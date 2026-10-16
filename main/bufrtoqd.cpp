@@ -739,6 +739,63 @@ const std::string& element_svalue(const BufrElement& e, int subset)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Read the string values of the element
+ *
+ * \return False if the element has no values
+ */
+// ----------------------------------------------------------------------
+
+bool read_string_values(codes_handle* h, const char* name, BufrElement& e)
+{
+  e.type = GRIB_TYPE_STRING;
+  size_t size = 0;
+  codes_get_size(h, name, &size);
+  if (size == 0)
+    return false;
+  std::vector<char*> buf(size, nullptr);
+  size_t len = size;
+  if (codes_get_string_array(h, name, buf.data(), &len) == CODES_SUCCESS)
+  {
+    e.svalues.reserve(len);
+    for (size_t k = 0; k < len; k++)
+      e.svalues.emplace_back(buf[k] != nullptr ? buf[k] : "");
+  }
+  // eccodes owns the string storage; only the array itself is ours
+  return true;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Read the numeric values of the element using the stack buffer when possible
+ */
+// ----------------------------------------------------------------------
+
+void read_double_values(
+    codes_handle* h, const char* name, BufrElement& e, double* stackbuf, size_t stacksize)
+{
+  e.type = GRIB_TYPE_DOUBLE;
+  size_t len = stacksize;
+  int rc = codes_get_double_array(h, name, stackbuf, &len);
+  if (rc == CODES_SUCCESS)
+  {
+    e.values.assign(stackbuf, stackbuf + len);
+  }
+  else if (rc == GRIB_ARRAY_TOO_SMALL)
+  {
+    // Rare: more values than the stack buffer holds
+    size_t size = 0;
+    codes_get_size(h, name, &size);
+    e.values.resize(size);
+    len = size;
+    if (codes_get_double_array(h, name, e.values.data(), &len) == CODES_SUCCESS)
+      e.values.resize(len);
+    else
+      e.values.clear();
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Extract the expanded data elements of a decoded message
  *
  * The message must already have been unpacked. Only Table B data elements
@@ -794,43 +851,11 @@ std::vector<BufrElement> extract_elements(codes_handle* h)
 
     if (is_string)
     {
-      e.type = GRIB_TYPE_STRING;
-      size_t size = 0;
-      codes_get_size(h, name, &size);
-      if (size == 0)
+      if (!read_string_values(h, name, e))
         continue;
-      std::vector<char*> buf(size, nullptr);
-      size_t len = size;
-      if (codes_get_string_array(h, name, buf.data(), &len) == CODES_SUCCESS)
-      {
-        e.svalues.reserve(len);
-        for (size_t k = 0; k < len; k++)
-          e.svalues.emplace_back(buf[k] != nullptr ? buf[k] : "");
-      }
-      // eccodes owns the string storage; only the array itself is ours
     }
     else
-    {
-      e.type = GRIB_TYPE_DOUBLE;
-      size_t len = sizeof(stackbuf) / sizeof(stackbuf[0]);
-      int rc = codes_get_double_array(h, name, stackbuf, &len);
-      if (rc == CODES_SUCCESS)
-      {
-        e.values.assign(stackbuf, stackbuf + len);
-      }
-      else if (rc == GRIB_ARRAY_TOO_SMALL)
-      {
-        // Rare: more values than the stack buffer holds
-        size_t size = 0;
-        codes_get_size(h, name, &size);
-        e.values.resize(size);
-        len = size;
-        if (codes_get_double_array(h, name, e.values.data(), &len) == CODES_SUCCESS)
-          e.values.resize(len);
-        else
-          e.values.clear();
-      }
-    }
+      read_double_values(h, name, e, stackbuf, sizeof(stackbuf) / sizeof(stackbuf[0]));
 
     elements.push_back(std::move(e));
   }

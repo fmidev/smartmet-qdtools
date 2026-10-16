@@ -3094,28 +3094,67 @@ void remove_duplicate_messages_amdar(const NameMap& namemap, Phase phase, Messag
 
 // ----------------------------------------------------------------------
 /*!
- * \brief Remove duplicate amdar messages and amdars with too few observations/times, and limit
- *        amdar duration. Keep track of max number of levels (observations/times) per amdar
+ * \brief Erase the messages from mit0 onwards until the duration to t is short enough
  */
 // ----------------------------------------------------------------------
 
-void limit_duration_amdar(const NameMap& namemap,
-                          Phase phase,
-                          Messages& phasemessages,
-                          IdentTimeMap& identtimemap,
-                          size_t& levelcount)
+void erase_amdars_before_duration(Messages& phasemessages,
+                                  Messages::iterator& mit0,
+                                  Messages::iterator mit,
+                                  const NFmiMetTime& t,
+                                  NFmiMetTime& t0,
+                                  std::string& ident,
+                                  const Fmi::TimeDuration& maxduration,
+                                  std::set<NFmiMetTime>& dummytimes)
 {
-  remove_duplicate_messages_amdar(namemap, phase, phasemessages);
+  Fmi::TimeDuration td;
+  for (; (mit0 != mit);)
+  {
+    mit0 = phasemessages.erase(mit0);
 
+    if (mit0 != mit)
+    {
+      t0 = get_validtime_amdar(dummytimes, *mit0, ident, true);
+
+      td = t.PosixTime() - t0.PosixTime();
+
+      if (options.debug)
+        fprintf(stderr,
+                "    Duration %s %s %s %ld secs\n",
+                ident.c_str(),
+                to_iso_string(t.PosixTime()).c_str(),
+                to_iso_string(t0.PosixTime()).c_str(),
+                td.total_seconds());
+
+      if (td <= maxduration)
+        break;
+    }
+    else
+      t0 = t;
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Limit the duration of the phase messages
+ *
+ * For takeoff the messages after the maximum duration are removed, otherwise the
+ * messages before it.
+ */
+// ----------------------------------------------------------------------
+
+void truncate_amdar_duration(Phase phase,
+                             Messages& phasemessages,
+                             std::string& ident,
+                             std::set<NFmiMetTime>& dummytimes)
+{
   Fmi::TimeDuration maxduration(Fmi::Hours(options.maxdurationhours));
   Fmi::TimeDuration td;
 
   Messages::iterator mit = phasemessages.begin();
   Messages::iterator mit0;
-  std::set<NFmiMetTime> dummytimes;
   NFmiMetTime t;
   NFmiMetTime t0;
-  std::string ident;
 
   for (; (mit != phasemessages.end()); mit++)
   {
@@ -3141,30 +3180,8 @@ void limit_duration_amdar(const NameMap& namemap,
           break;
         }
 
-        for (; (mit0 != mit);)
-        {
-          mit0 = phasemessages.erase(mit0);
-
-          if (mit0 != mit)
-          {
-            t0 = get_validtime_amdar(dummytimes, *mit0, ident, true);
-
-            td = t.PosixTime() - t0.PosixTime();
-
-            if (options.debug)
-              fprintf(stderr,
-                      "    Duration %s %s %s %ld secs\n",
-                      ident.c_str(),
-                      to_iso_string(t.PosixTime()).c_str(),
-                      to_iso_string(t0.PosixTime()).c_str(),
-                      td.total_seconds());
-
-            if (td <= maxduration)
-              break;
-          }
-          else
-            t0 = t;
-        }
+        erase_amdars_before_duration(
+            phasemessages, mit0, mit, t, t0, ident, maxduration, dummytimes);
       }
     }
     else
@@ -3176,12 +3193,26 @@ void limit_duration_amdar(const NameMap& namemap,
       mit0 = mit;
     }
   }
+}
 
+// ----------------------------------------------------------------------
+/*!
+ * \brief Remove the amdar if it has too few levels, otherwise update the max level count
+ */
+// ----------------------------------------------------------------------
+
+void limit_amdar_levels(Messages& phasemessages,
+                        IdentTimeMap& identtimemap,
+                        size_t& levelcount,
+                        std::string& ident,
+                        std::set<NFmiMetTime>& dummytimes)
+{
   // Remove amdars having too few observations/times (levels) and keep track of max number of levels
 
   size_t lvlcnt = 0;
 
-  for (mit = phasemessages.begin();;)
+  NFmiMetTime t;
+  for (auto mit = phasemessages.begin();;)
   {
     if (mit != phasemessages.end())
     {
@@ -3215,6 +3246,31 @@ void limit_duration_amdar(const NameMap& namemap,
       break;
     }
   }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Remove duplicate amdar messages and amdars with too few observations/times, and limit
+ *        amdar duration. Keep track of max number of levels (observations/times) per amdar
+ */
+// ----------------------------------------------------------------------
+
+void limit_duration_amdar(const NameMap& namemap,
+                          Phase phase,
+                          Messages& phasemessages,
+                          IdentTimeMap& identtimemap,
+                          size_t& levelcount)
+{
+  remove_duplicate_messages_amdar(namemap, phase, phasemessages);
+
+  std::set<NFmiMetTime> dummytimes;
+  std::string ident;
+
+  truncate_amdar_duration(phase, phasemessages, ident, dummytimes);
+
+  // Remove amdars having too few observations/times (levels) and keep track of max number of levels
+
+  limit_amdar_levels(phasemessages, identtimemap, levelcount, ident, dummytimes);
 }
 
 // ----------------------------------------------------------------------

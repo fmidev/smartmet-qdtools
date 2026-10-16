@@ -15,6 +15,7 @@
 #include <fstream>
 #include <iostream>
 #include <list>
+#include <memory>
 #include <string>
 
 using namespace std;
@@ -214,7 +215,7 @@ int run(int argc, const char *argv[])
   std::list<std::string>::const_iterator it;
   for (it = infiles.begin(); it != infiles.end(); ++it)
   {
-    NFmiQueryData *data = FMI::RadContour::Pgm2QueryData(*it, options, cout);
+    std::unique_ptr<NFmiQueryData> data(FMI::RadContour::Pgm2QueryData(*it, options, cout));
     if (data)
       save_querydata(*data, *it);
   }

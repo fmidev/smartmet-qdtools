@@ -3670,6 +3670,108 @@ bool IsStepRangeCorrect(grib_handle *theHandle,
   return true;  // Jos tänne päästään, on parametri ok
 }
 
+// Read the metadata of the grib field
+void ReadGridRecordData(grib_handle *gribHandle,
+                        GridRecordData *tmpData,
+                        GribFilterOptions &theGribFilterOptions,
+                        map<int, pair<double, double> > &verticalCoordinateMap)
+{
+  // param ja level tiedot pitää hanskata ennen hilan koon määritystä
+  //                PrintAllParamInfo_forDebugging(gribHandle);
+  tmpData->itsParam = GetParam(gribHandle, theGribFilterOptions.itsWantedSurfaceProducer);
+  tmpData->itsLevel = GetLevel(gribHandle);
+  ExtractGridInfo(
+      gribHandle, tmpData, theGribFilterOptions, theGribFilterOptions.itsGridSettings);
+  tmpData->itsOrigTime = GetOrigTime(gribHandle);
+  tmpData->itsValidTime = GetValidTime(gribHandle);
+  tmpData->itsMissingValue = GetMissingValue(gribHandle);
+  GetLevelVerticalCoordinates(gribHandle, *tmpData, verticalCoordinateMap);
+
+  if (theGribFilterOptions.fVerbose)
+  {
+    cerr << tmpData->itsValidTime.ToStr("YYYYMMDDHHmm", kEnglish).CharPtr() << ";";
+    cerr << tmpData->itsParam.GetParamName().CharPtr() << ";";
+    cerr << tmpData->itsLevel.GetIdent() << ";";
+    cerr << tmpData->itsLevel.LevelValue() << ";";
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Test whether the grib field is to be used
+ *
+ * The filter ignores the so called control grid, which is a 2x2 latlon area differing from the
+ * other grids at least in hirlam data. It would cause needless problems later on.
+ */
+// ----------------------------------------------------------------------
+
+bool IsGribFieldUsed(grib_handle *gribHandle,
+                     GridRecordData *tmpData,
+                     GribFilterOptions &theGribFilterOptions)
+{
+  if (!(tmpData->itsOrigGrid.itsNX > 2 || tmpData->itsOrigGrid.itsNY > 2))
+    return false;
+  if (IgnoreThisLevel(tmpData, theGribFilterOptions.itsIgnoredLevelList))
+    return false;
+  if (!AcceptThisLevelType(tmpData, theGribFilterOptions.itsAcceptOnlyLevelTypes))
+    return false;
+  if (CropParam(tmpData,
+                theGribFilterOptions.fCropParamsNotMensionedInTable,
+                theGribFilterOptions.itsParamChangeTable))
+    return false;
+  if (IsStepRangeCorrect(gribHandle,
+                         tmpData->itsParam,
+                         theGribFilterOptions.itsStepRangeCheckedParams,
+                         theGribFilterOptions.itsWantedStepRange))
+    return true;
+  if (theGribFilterOptions.fVerbose)
+    cerr << "\nWarning: Parameter was discarded due stepRange check" << endl;
+  return false;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Read the grib field and store it if it is used, otherwise delete it
+ */
+// ----------------------------------------------------------------------
+
+void ProcessGribField(grib_handle *gribHandle,
+                      GridRecordData *tmpData,
+                      GribFilterOptions &theGribFilterOptions,
+                      map<int, pair<double, double> > &verticalCoordinateMap,
+                      map<unsigned long, pair<NFmiParam, NFmiParam> > &changedParams,
+                      map<unsigned long, NFmiParam> &unchangedParams,
+                      bool &executionStoppingError,
+                      vector<GridRecordData *> &gribRecordDatas)
+{
+  ReadGridRecordData(gribHandle, tmpData, theGribFilterOptions, verticalCoordinateMap);
+  ChangeParamSettingsIfNeeded(
+      theGribFilterOptions.itsParamChangeTable, tmpData, theGribFilterOptions.fVerbose);
+
+  DoParamChecking(*tmpData, changedParams, unchangedParams, executionStoppingError);
+
+  // filtteri jättää huomiotta ns. kontrolli hilan, joka on ainakin hirlam datassa 1.. se on
+  // muista poikkeava 2x2 hila latlon-area.
+  // Aiheuttaisi turhia ongelmia jatkossa monessakin paikassa.
+  bool gribFieldUsed = false;
+
+  if (IsGribFieldUsed(gribHandle, tmpData, theGribFilterOptions))
+  {
+    FillGridData(gribHandle, tmpData, theGribFilterOptions);
+    gribRecordDatas.push_back(tmpData);  // taman voisi optimoida, luomalla aluksi
+                                         // niin iso vektori kuin tarvitaan
+    gribFieldUsed = true;
+  }
+  if (!gribFieldUsed)
+  {
+    if (theGribFilterOptions.fVerbose)
+      cerr << static_cast<long>(tmpData->itsParam.GetParamIdent()) << " (skipped)" << endl;
+    delete tmpData;
+  }
+  else if (theGribFilterOptions.fVerbose)
+    cerr << endl;
+}
+
 void ConvertGrib(GribFilterOptions &theGribFilterOptions)
 {
   vector<GridRecordData *> gribRecordDatas;
@@ -3706,68 +3808,14 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
       tmpData->itsLatlonCropRect = theGribFilterOptions.itsLatlonCropRect;
       try
       {
-        // param ja level tiedot pitää hanskata ennen hilan koon määritystä
-        //                PrintAllParamInfo_forDebugging(gribHandle);
-        tmpData->itsParam = GetParam(gribHandle, theGribFilterOptions.itsWantedSurfaceProducer);
-        tmpData->itsLevel = GetLevel(gribHandle);
-        ExtractGridInfo(
-            gribHandle, tmpData, theGribFilterOptions, theGribFilterOptions.itsGridSettings);
-        tmpData->itsOrigTime = GetOrigTime(gribHandle);
-        tmpData->itsValidTime = GetValidTime(gribHandle);
-        tmpData->itsMissingValue = GetMissingValue(gribHandle);
-        GetLevelVerticalCoordinates(gribHandle, *tmpData, verticalCoordinateMap);
-
-        if (theGribFilterOptions.fVerbose)
-        {
-          cerr << tmpData->itsValidTime.ToStr("YYYYMMDDHHmm", kEnglish).CharPtr() << ";";
-          cerr << tmpData->itsParam.GetParamName().CharPtr() << ";";
-          cerr << tmpData->itsLevel.GetIdent() << ";";
-          cerr << tmpData->itsLevel.LevelValue() << ";";
-        }
-        ChangeParamSettingsIfNeeded(
-            theGribFilterOptions.itsParamChangeTable, tmpData, theGribFilterOptions.fVerbose);
-
-        DoParamChecking(*tmpData, changedParams, unchangedParams, executionStoppingError);
-
-        // filtteri jättää huomiotta ns. kontrolli hilan, joka on ainakin hirlam datassa 1.. se on
-        // muista poikkeava 2x2 hila latlon-area.
-        // Aiheuttaisi turhia ongelmia jatkossa monessakin paikassa.
-        bool gribFieldUsed = false;
-
-        if (tmpData->itsOrigGrid.itsNX > 2 || tmpData->itsOrigGrid.itsNY > 2)
-        {
-          if (!IgnoreThisLevel(tmpData, theGribFilterOptions.itsIgnoredLevelList))
-          {
-            if (AcceptThisLevelType(tmpData, theGribFilterOptions.itsAcceptOnlyLevelTypes))
-            {
-              if (!CropParam(tmpData,
-                             theGribFilterOptions.fCropParamsNotMensionedInTable,
-                             theGribFilterOptions.itsParamChangeTable))
-              {
-                if (IsStepRangeCorrect(gribHandle,
-                                       tmpData->itsParam,
-                                       theGribFilterOptions.itsStepRangeCheckedParams,
-                                       theGribFilterOptions.itsWantedStepRange))
-                {
-                  FillGridData(gribHandle, tmpData, theGribFilterOptions);
-                  gribRecordDatas.push_back(tmpData);  // taman voisi optimoida, luomalla aluksi
-                                                       // niin iso vektori kuin tarvitaan
-                  gribFieldUsed = true;
-                }
-                else if (theGribFilterOptions.fVerbose)
-                  cerr << "\nWarning: Parameter was discarded due stepRange check" << endl;
-              }
-            }
-          }
-        }
-        if (!gribFieldUsed)
-        {
-          if (theGribFilterOptions.fVerbose)
-            cerr << static_cast<long>(tmpData->itsParam.GetParamIdent()) << " (skipped)" << endl;
-          delete tmpData;
-        }
-        else if (theGribFilterOptions.fVerbose)
-          cerr << endl;
+        ProcessGribField(gribHandle,
+                         tmpData,
+                         theGribFilterOptions,
+                         verticalCoordinateMap,
+                         changedParams,
+                         unchangedParams,
+                         executionStoppingError,
+                         gribRecordDatas);
       }
       catch (Reduced_ll_grib_exception &)
       {

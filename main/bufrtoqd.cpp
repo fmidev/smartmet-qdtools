@@ -1138,6 +1138,76 @@ void append_message(Messages& messages,
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Decode one bufr message unless it is of an unwanted or unsupported category
+ */
+// ----------------------------------------------------------------------
+
+void process_message(codes_handle* h,
+                     int count,
+                     const std::string& filename,
+                     Messages& messages,
+                     std::set<int>& datacategories,
+                     std::set<int>& skipped_categories)
+{
+  // Data category lives in section 1 and can be read without unpacking
+
+  long msg_type = -1;
+  codes_get_long(h, "dataCategory", &msg_type);
+
+  // Skip messages of a non-requested category (when -C is used)
+
+  if (!options.category.empty() &&
+      static_cast<int>(msg_type) != data_category(options.category))
+  {
+    if (options.debug)
+      std::cout << "Message " << count << " in " << filename << " is not of desired category"
+                << std::endl;
+    return;
+  }
+
+  // Skip categories the tool cannot handle *before* the expensive decode.
+  // Doing this after unpacking would fully expand large multi-subset
+  // messages (e.g. satellite soundings) only to reject them later.
+
+  if (!supported_category(BufrDataCategory(msg_type)))
+  {
+    skipped_categories.insert(static_cast<int>(msg_type));
+    if (options.debug)
+      std::cout << "Message " << count << " in " << filename << " has unsupported category "
+                << msg_type << std::endl;
+    return;
+  }
+
+  datacategories.insert(static_cast<int>(msg_type));
+
+  long nsubsets = 1;
+  codes_get_long(h, "numberOfSubsets", &nsubsets);
+  long compressed = 0;
+  codes_get_long(h, "compressedData", &compressed);
+
+  if (options.verbose)
+  {
+    long version = -1;
+    codes_get_long(h, "masterTablesVersionNumber", &version);
+    std::cout << "MESSAGE NUMBER " << count << " (data category " << msg_type << ", "
+              << nsubsets << " subsets, " << (compressed ? "compressed" : "uncompressed")
+              << ", master table version " << version << ")" << std::endl;
+  }
+
+  // Decode (expand and unpack) the message
+
+  int rc = codes_set_long(h, "unpack", 1);
+  if (rc != CODES_SUCCESS)
+    throw std::runtime_error("Message number " + Fmi::to_string(count) +
+                             " could not be decoded: " + codes_get_error_message(rc));
+
+  std::vector<BufrElement> elements = extract_elements(h);
+
+  append_message(messages, elements, nsubsets, compressed != 0);
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Read one bufr message
  */
 // ----------------------------------------------------------------------
@@ -1182,63 +1252,7 @@ void read_message(const std::string& filename,
 
     try
     {
-      // Data category lives in section 1 and can be read without unpacking
-
-      long msg_type = -1;
-      codes_get_long(h, "dataCategory", &msg_type);
-
-      // Skip messages of a non-requested category (when -C is used)
-
-      if (!options.category.empty() &&
-          static_cast<int>(msg_type) != data_category(options.category))
-      {
-        codes_handle_delete(h);
-        if (options.debug)
-          std::cout << "Message " << count << " in " << filename << " is not of desired category"
-                    << std::endl;
-        continue;
-      }
-
-      // Skip categories the tool cannot handle *before* the expensive decode.
-      // Doing this after unpacking would fully expand large multi-subset
-      // messages (e.g. satellite soundings) only to reject them later.
-
-      if (!supported_category(BufrDataCategory(msg_type)))
-      {
-        skipped_categories.insert(static_cast<int>(msg_type));
-        codes_handle_delete(h);
-        if (options.debug)
-          std::cout << "Message " << count << " in " << filename << " has unsupported category "
-                    << msg_type << std::endl;
-        continue;
-      }
-
-      datacategories.insert(static_cast<int>(msg_type));
-
-      long nsubsets = 1;
-      codes_get_long(h, "numberOfSubsets", &nsubsets);
-      long compressed = 0;
-      codes_get_long(h, "compressedData", &compressed);
-
-      if (options.verbose)
-      {
-        long version = -1;
-        codes_get_long(h, "masterTablesVersionNumber", &version);
-        std::cout << "MESSAGE NUMBER " << count << " (data category " << msg_type << ", "
-                  << nsubsets << " subsets, " << (compressed ? "compressed" : "uncompressed")
-                  << ", master table version " << version << ")" << std::endl;
-      }
-
-      // Decode (expand and unpack) the message
-
-      int rc = codes_set_long(h, "unpack", 1);
-      if (rc != CODES_SUCCESS)
-        throw std::runtime_error("Message number " + Fmi::to_string(count) +
-                                 " could not be decoded: " + codes_get_error_message(rc));
-
-      std::vector<BufrElement> elements = extract_elements(h);
-
-      append_message(messages, elements, nsubsets, compressed != 0);
+      process_message(h, count, filename, messages, datacategories, skipped_categories);
     }
     catch (std::exception& e)
     {

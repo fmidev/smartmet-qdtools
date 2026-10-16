@@ -3810,20 +3810,12 @@ void remove_duplicate_messages_sounding(const NameMap& namemap,
 
 // ----------------------------------------------------------------------
 /*!
- * \brief Remove duplicate sounding messages and soundungs with too few observations/times, and
- *        limit sounding duration. Keep track of max number of levels (observations/times) per
- *        sounding
+ * \brief Remove the messages of the sounding after the maximum duration
  */
 // ----------------------------------------------------------------------
 
-void limit_duration_sounding(const NameMap& namemap,
-                             const std::string& ident,
-                             Messages& soundingmessages,
-                             IdentTimeMap& identtimemap,
-                             size_t& levelcount)
+void truncate_sounding_duration(const std::string& ident, Messages& soundingmessages)
 {
-  remove_duplicate_messages_sounding(namemap, ident, soundingmessages);
-
   // Test data seems to have the same timestamp for all messages for given sounding,
   // but checking the duration anyway
 
@@ -3864,13 +3856,26 @@ void limit_duration_sounding(const NameMap& namemap,
       t0 = t;
     }
   }
+}
 
+// ----------------------------------------------------------------------
+/*!
+ * \brief Remove the sounding if it has too few levels, otherwise update the max level count
+ */
+// ----------------------------------------------------------------------
+
+void limit_sounding_levels(const std::string& ident,
+                           Messages& soundingmessages,
+                           IdentTimeMap& identtimemap,
+                           size_t& levelcount)
+{
   // Remove soundings having too few observations/times (levels) and keep track of max number of
   // levels
 
   size_t lvlcnt = 0;
 
-  for (mit = soundingmessages.begin();;)
+  NFmiMetTime t;
+  for (auto mit = soundingmessages.begin();;)
   {
     if (mit != soundingmessages.end())
     {
@@ -3904,6 +3909,30 @@ void limit_duration_sounding(const NameMap& namemap,
       break;
     }
   }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Remove duplicate sounding messages and soundungs with too few observations/times, and
+ *        limit sounding duration. Keep track of max number of levels (observations/times) per
+ *        sounding
+ */
+// ----------------------------------------------------------------------
+
+void limit_duration_sounding(const NameMap& namemap,
+                             const std::string& ident,
+                             Messages& soundingmessages,
+                             IdentTimeMap& identtimemap,
+                             size_t& levelcount)
+{
+  remove_duplicate_messages_sounding(namemap, ident, soundingmessages);
+
+  truncate_sounding_duration(ident, soundingmessages);
+
+  // Remove soundings having too few observations/times (levels) and keep track of max number of
+  // levels
+
+  limit_sounding_levels(ident, soundingmessages, identtimemap, levelcount);
 }
 
 // ----------------------------------------------------------------------

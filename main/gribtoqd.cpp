@@ -30,6 +30,7 @@
 #include <grib_api.h>
 #include <iomanip>
 #include <cmath>
+#include <map>
 #include <memory>
 #include <set>
 #include <sstream>
@@ -381,74 +382,48 @@ long GetUsedLevelType(grib_handle *theHandle)
 
   // See: http://www.ecmwf.int/publications/manuals/d/gribapi/fm92/grib1/detail/ctables/3/
 
-  if (name == "surface")
-    return kFmiGroundSurface;
-  if (name == "cloudBase")
-    return 2;
-  if (name == "cloudTop")
-    return 3;
-  if (name == "isothermZero")
-    return 4;
-  if (name == "adiabaticCondensation")
-    return 5;
-  if (name == "maxWind")
-    return 6;
-  if (name == "tropopause")
-    return 7;
-  if (name == "nominalTop")
-    return 8;
-  if (name == "seaBottom")
-    return 9;
-  if (name == "mostUnstableParcel")
-    return 17;
-  if (name == "isothermal")
-    return 20;
-  if (name == "isobaricInhPa")
-    return kFmiPressureLevel;
-  if (name == "isobaricInPa")
-    return kFmiPressureLevel;
-  if (name == "isobaricLayer")
-    return 101;
-  if (name == "meanSea")
-    return kFmiMeanSeaLevel;
-  if (name == "heightAboveSea")
-    return kFmiAltitude;
-  if (name == "heightAboveSeaLayer")
-    return 104;
-  if (name == "heightAboveGround")
-    return kFmiHeight;
-  if (name == "heightAboveGroundLayer")
-    return 106;
-  if (name == "sigma")
-    return 107;
-  if (name == "sigmaLayer")
-    return 108;
-  if (name == "hybrid")
-    return kFmiHybridLevel;
-  if (name == "hybridLayer")
-    return 110;
-  if (name == "depthBelowLand")
-    return 111;
-  if (name == "depthBelowLandLayer")
-    return 112;
-  if (name == "theta")
-    return 113;
-  if (name == "thetaLayer")
-    return 114;
-  if (name == "pressureFromGround")
-    return 115;
-  if (name == "pressureFromGroundLayer")
-    return 116;
-  if (name == "potentialVorticity")
-    return 117;
-  if (name == "eta")
-    return 119;
-  if (name == "depthBelowSea")
-    return 160;
-  if (name == "entireAtmosphere" || name == "atmosphere" || name == "atmosphereSingleLayer")
-    return 200;
-  if (name == "entireOcean")
-    return 201;
+  static const std::map<std::string, long> level_types = {
+      {"surface", kFmiGroundSurface},
+      {"cloudBase", 2},
+      {"cloudTop", 3},
+      {"isothermZero", 4},
+      {"adiabaticCondensation", 5},
+      {"maxWind", 6},
+      {"tropopause", 7},
+      {"nominalTop", 8},
+      {"seaBottom", 9},
+      {"mostUnstableParcel", 17},
+      {"isothermal", 20},
+      {"isobaricInhPa", kFmiPressureLevel},
+      {"isobaricInPa", kFmiPressureLevel},
+      {"isobaricLayer", 101},
+      {"meanSea", kFmiMeanSeaLevel},
+      {"heightAboveSea", kFmiAltitude},
+      {"heightAboveSeaLayer", 104},
+      {"heightAboveGround", kFmiHeight},
+      {"heightAboveGroundLayer", 106},
+      {"sigma", 107},
+      {"sigmaLayer", 108},
+      {"hybrid", kFmiHybridLevel},
+      {"hybridLayer", 110},
+      {"depthBelowLand", 111},
+      {"depthBelowLandLayer", 112},
+      {"theta", 113},
+      {"thetaLayer", 114},
+      {"pressureFromGround", 115},
+      {"pressureFromGroundLayer", 116},
+      {"potentialVorticity", 117},
+      {"eta", 119},
+      {"depthBelowSea", 160},
+      {"entireAtmosphere", 200},
+      {"atmosphere", 200},
+      {"atmosphereSingleLayer", 200},
+      {"entireOcean", 201},
+  };
+
+  auto it = level_types.find(name);
+  if (it != level_types.end())
+    return it->second;
 
   return kFmiNoLevelType;
 }

@@ -804,6 +804,29 @@ namespace
 {
 AreaResults results;
 
+namespace
+{
+// True if all the points of the path are inside the querydata area
+bool path_is_inside(NFmiFastQueryInfo& q, const NFmiSvgPath& p)
+{
+  bool inside = true;
+  for (auto it = p.begin(); inside && it != p.end(); ++it)
+  {
+    switch (it->itsType)
+    {
+      case NFmiSvgPath::kElementMoveto:
+      case NFmiSvgPath::kElementLineto:
+        inside = q.Area()->IsInside(NFmiPoint(it->itsX, it->itsY));
+        break;
+      case NFmiSvgPath::kElementNotValid:
+      case NFmiSvgPath::kElementClosePath:
+        break;
+    }
+  }
+  return inside;
+}
+}  // namespace
+
 // ----------------------------------------------------------------------
 /*!
  * \brief Establish the data source for the given area
@@ -834,22 +857,7 @@ AnalysisSources find_source(const WeatherArea& theArea)
     }
     else
     {
-      const NFmiSvgPath& p = theArea.path();
-      bool inside = true;
-      for (auto it = p.begin(); inside && it != p.end(); ++it)
-      {
-        switch (it->itsType)
-        {
-          case NFmiSvgPath::kElementMoveto:
-          case NFmiSvgPath::kElementLineto:
-            inside = q.Area()->IsInside(NFmiPoint(it->itsX, it->itsY));
-            break;
-          case NFmiSvgPath::kElementNotValid:
-          case NFmiSvgPath::kElementClosePath:
-            break;
-        }
-      }
-      if (inside)
+      if (path_is_inside(q, theArea.path()))
         break;
     }
   }

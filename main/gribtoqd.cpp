@@ -3970,6 +3970,253 @@ NFmiMetTime GetGribTime(unsigned char *pds, bool fOrigTime)
 }
 
 // Tämä laittaa kaiken tiedon hilasta ja projektiosta stringiin.
+// Format the latlon and gaussian grid information, returns false for other grids
+bool FormatLatLonGridInfo(char *buffer,
+                          unsigned char *gds,
+                          unsigned char *bds,
+                          int nx,
+                          int ny,
+                          long int nxny,
+                          const vector<long> &variableLengthRows,
+                          string &variyngRowLengthStr)
+{
+  if (GDS_LatLon(gds) && nx != -1)
+  {
+    sprintf(buffer,
+            "  latlon: lat  %f to %f by %f  nxny %ld\n"
+            "          long %f to %f by %f, (%d x %d) scan %d "
+            "mode %d bdsgrid %d\n",
+            0.001 * GDS_LatLon_La1(gds),
+            0.001 * GDS_LatLon_La2(gds),
+            0.001 * GDS_LatLon_dy(gds),
+            nxny,
+            0.001 * GDS_LatLon_Lo1(gds),
+            0.001 * GDS_LatLon_Lo2(gds),
+            0.001 * GDS_LatLon_dx(gds),
+            nx,
+            ny,
+            GDS_LatLon_scan(gds),
+            GDS_LatLon_mode(gds),
+            BDS_Grid(bds));
+  }
+  else if (GDS_LatLon(gds) && nx == -1)
+  {
+    sprintf(buffer,
+            "  thinned latlon: lat  %f to %f by %f  nxny %ld\n"
+            "          long %f to %f, %ld grid pts   (%d x %d) scan %d"
+            " mode %d bdsgrid %d\n",
+            0.001 * GDS_LatLon_La1(gds),
+            0.001 * GDS_LatLon_La2(gds),
+            0.001 * GDS_LatLon_dy(gds),
+            nxny,
+            0.001 * GDS_LatLon_Lo1(gds),
+            0.001 * GDS_LatLon_Lo2(gds),
+            nxny,
+            nx,
+            ny,
+            GDS_LatLon_scan(gds),
+            GDS_LatLon_mode(gds),
+            BDS_Grid(bds));
+    //		  GDS_prt_thin_lon(gds);
+    variyngRowLengthStr = "Variable row lengths are here: ";
+    for (unsigned int i = 0; i < variableLengthRows.size(); i++)
+    {
+      variyngRowLengthStr += NFmiStringTools::Convert(variableLengthRows[i]);
+      if (i < variableLengthRows.size() - 1)
+        variyngRowLengthStr += ",";
+    }
+    variyngRowLengthStr += "\n";
+  }
+  else if (GDS_Gaussian(gds) && nx != -1)
+  {
+    sprintf(buffer,
+            "  gaussian: lat  %f to %f\n"
+            "            long %f to %f by %f, (%d x %d) scan %d"
+            " mode %d bdsgrid %d\n",
+            0.001 * GDS_LatLon_La1(gds),
+            0.001 * GDS_LatLon_La2(gds),
+            0.001 * GDS_LatLon_Lo1(gds),
+            0.001 * GDS_LatLon_Lo2(gds),
+            0.001 * GDS_LatLon_dx(gds),
+            nx,
+            ny,
+            GDS_LatLon_scan(gds),
+            GDS_LatLon_mode(gds),
+            BDS_Grid(bds));
+  }
+  else if (GDS_Gaussian(gds) && nx == -1)
+  {
+    sprintf(buffer,
+            "  thinned gaussian: lat  %f to %f\n"
+            "     lon %f   %ld grid pts   (%d x %d) scan %d"
+            " mode %d bdsgrid %d  nlat:\n",
+            0.001 * GDS_LatLon_La1(gds),
+            0.001 * GDS_LatLon_La2(gds),
+            0.001 * GDS_LatLon_Lo1(gds),
+            nxny,
+            nx,
+            ny,
+            GDS_LatLon_scan(gds),
+            GDS_LatLon_mode(gds),
+            BDS_Grid(bds));
+    //		  GDS_prt_thin_lon(gds);
+  }
+  else
+    return false;
+  return true;
+}
+
+// Format the projected and E-grid information, returns false for other grids
+bool FormatProjectedGridInfo(
+    char *buffer, unsigned char *gds, unsigned char *bds, int nx, int ny, long int nxny)
+{
+  if (GDS_Polar(gds))
+  {
+    sprintf(buffer,
+            "  polar stereo: Lat1 %f Long1 %f Orient %f\n"
+            "     %s pole (%d x %d) Dx %d Dy %d scan %d mode %d\n",
+            0.001 * GDS_Polar_La1(gds),
+            0.001 * GDS_Polar_Lo1(gds),
+            0.001 * GDS_Polar_Lov(gds),
+            GDS_Polar_pole(gds) == 0 ? "north" : "south",
+            nx,
+            ny,
+            GDS_Polar_Dx(gds),
+            GDS_Polar_Dy(gds),
+            GDS_Polar_scan(gds),
+            GDS_Polar_mode(gds));
+  }
+  else if (GDS_Lambert(gds))
+  {
+    sprintf(buffer,
+            "  Lambert Conf: Lat1 %f Lon1 %f Lov %f\n"
+            "      Latin1 %f Latin2 %f LatSP %f LonSP %f\n"
+            "      %s (%d x %d) Dx %f Dy %f scan %d mode %d\n",
+            0.001 * GDS_Lambert_La1(gds),
+            0.001 * GDS_Lambert_Lo1(gds),
+            0.001 * GDS_Lambert_Lov(gds),
+            0.001 * GDS_Lambert_Latin1(gds),
+            0.001 * GDS_Lambert_Latin2(gds),
+            0.001 * GDS_Lambert_LatSP(gds),
+            0.001 * GDS_Lambert_LonSP(gds),
+            GDS_Lambert_NP(gds) ? "North Pole" : "South Pole",
+            GDS_Lambert_nx(gds),
+            GDS_Lambert_ny(gds),
+            0.001 * GDS_Lambert_dx(gds),
+            0.001 * GDS_Lambert_dy(gds),
+            GDS_Lambert_scan(gds),
+            GDS_Lambert_mode(gds));
+  }
+  else if (GDS_Mercator(gds))
+  {
+    sprintf(buffer,
+            "  Mercator: lat  %f to %f by %f km  nxny %ld\n"
+            "          long %f to %f by %f km, (%d x %d) scan %d"
+            " mode %d Latin %f bdsgrid %d\n",
+            0.001 * GDS_Merc_La1(gds),
+            0.001 * GDS_Merc_La2(gds),
+            0.001 * GDS_Merc_dy(gds),
+            nxny,
+            0.001 * GDS_Merc_Lo1(gds),
+            0.001 * GDS_Merc_Lo2(gds),
+            0.001 * GDS_Merc_dx(gds),
+            nx,
+            ny,
+            GDS_Merc_scan(gds),
+            GDS_Merc_mode(gds),
+            0.001 * GDS_Merc_Latin(gds),
+            BDS_Grid(bds));
+  }
+  else
+    return false;
+  return true;
+}
+
+// Format the information of the other grids
+void FormatOtherGridInfo(char *buffer, unsigned char *gds, unsigned char *bds, long int nxny)
+{
+  if (GDS_ssEgrid(gds))
+  {
+    sprintf(buffer,
+            "  Semi-staggered Arakawa E-Grid: lat0 %f lon0 %f nxny %d\n"
+            "    dLat %f dLon %f (%d x %d) scan %d mode %d\n",
+            0.001 * GDS_ssEgrid_La1(gds),
+            0.001 * GDS_ssEgrid_Lo1(gds),
+            GDS_ssEgrid_n(gds) * GDS_ssEgrid_n_dum(gds),
+            0.001 * GDS_ssEgrid_dj(gds),
+            0.001 * GDS_ssEgrid_di(gds),
+            GDS_ssEgrid_Lo2(gds),
+            GDS_ssEgrid_La2(gds),
+            GDS_ssEgrid_scan(gds),
+            GDS_ssEgrid_mode(gds));
+  }
+  else if (GDS_ss2dEgrid(gds))
+  {
+    sprintf(buffer,
+            "  Semi-staggered Arakawa E-Grid (2D): lat0 %f lon0 %f nxny %d\n"
+            "    dLat %f dLon %f (tlm0d %f tph0d %f) scan %d mode %d\n",
+            0.001 * GDS_ss2dEgrid_La1(gds),
+            0.001 * GDS_ss2dEgrid_Lo1(gds),
+            GDS_ss2dEgrid_nx(gds) * GDS_ss2dEgrid_ny(gds),
+            0.001 * GDS_ss2dEgrid_dj(gds),
+            0.001 * GDS_ss2dEgrid_di(gds),
+            0.001 * GDS_ss2dEgrid_Lo2(gds),
+            0.001 * GDS_ss2dEgrid_La2(gds),
+            GDS_ss2dEgrid_scan(gds),
+            GDS_ss2dEgrid_mode(gds));
+  }
+  else if (GDS_fEgrid(gds))
+  {
+    sprintf(buffer,
+            "  filled Arakawa E-Grid: lat0 %f lon0 %f nxny %d\n"
+            "    dLat %f dLon %f (%d x %d) scan %d mode %d\n",
+            0.001 * GDS_fEgrid_La1(gds),
+            0.001 * GDS_fEgrid_Lo1(gds),
+            GDS_fEgrid_n(gds) * GDS_fEgrid_n_dum(gds),
+            0.001 * GDS_fEgrid_dj(gds),
+            0.001 * GDS_fEgrid_di(gds),
+            GDS_fEgrid_Lo2(gds),
+            GDS_fEgrid_La2(gds),
+            GDS_fEgrid_scan(gds),
+            GDS_fEgrid_mode(gds));
+  }
+  else if (GDS_RotLL(gds))
+  {
+    sprintf(buffer,
+            "  rotated LatLon grid  lat %f to %f  lon %f to %f\n"
+            "    nxny %ld  (%d x %d)  dx %d dy %d  scan %d  mode %d\n"
+            "    transform: south pole lat %f lon %f  rot angle %f\n",
+            0.001 * GDS_RotLL_La1(gds),
+            0.001 * GDS_RotLL_La2(gds),
+            0.001 * GDS_RotLL_Lo1(gds),
+            0.001 * GDS_RotLL_Lo2(gds),
+            nxny,
+            GDS_RotLL_nx(gds),
+            GDS_RotLL_ny(gds),
+            GDS_RotLL_dx(gds),
+            GDS_RotLL_dy(gds),
+            GDS_RotLL_scan(gds),
+            GDS_RotLL_mode(gds),
+            0.001 * GDS_RotLL_LaSP(gds),
+            0.001 * GDS_RotLL_LoSP(gds),
+            GDS_RotLL_RotAng(gds));
+  }
+  else if (GDS_Gnomonic(gds))
+  {
+    sprintf(buffer, "  Gnomonic grid\n");
+  }
+  else if (GDS_Harmonic(gds))
+  {
+    sprintf(buffer,
+            "  Harmonic (spectral):  pentagonal spectral truncation: nj %d nk %d nm %d\n",
+            GDS_Harmonic_nj(gds),
+            GDS_Harmonic_nk(gds),
+            GDS_Harmonic_nm(gds));
+  }
+  else
+    sprintf(buffer, "  Tuntematon projektio.\n");
+}
+
 string GetGridInfoStr(unsigned char *gds, unsigned char *bds)
 {
   string str;
@@ -3985,224 +4232,10 @@ string GetGridInfoStr(unsigned char *gds, unsigned char *bds)
     GDS_grid(gds, bds, &nx, &ny, &nxny, variableLengthRows, &usedOutputGridRowLength);
     char buffer[1500] = "";
 
-    if (GDS_LatLon(gds) && nx != -1)
-    {
-      sprintf(buffer,
-              "  latlon: lat  %f to %f by %f  nxny %ld\n"
-              "          long %f to %f by %f, (%d x %d) scan %d "
-              "mode %d bdsgrid %d\n",
-              0.001 * GDS_LatLon_La1(gds),
-              0.001 * GDS_LatLon_La2(gds),
-              0.001 * GDS_LatLon_dy(gds),
-              nxny,
-              0.001 * GDS_LatLon_Lo1(gds),
-              0.001 * GDS_LatLon_Lo2(gds),
-              0.001 * GDS_LatLon_dx(gds),
-              nx,
-              ny,
-              GDS_LatLon_scan(gds),
-              GDS_LatLon_mode(gds),
-              BDS_Grid(bds));
-    }
-    else if (GDS_LatLon(gds) && nx == -1)
-    {
-      sprintf(buffer,
-              "  thinned latlon: lat  %f to %f by %f  nxny %ld\n"
-              "          long %f to %f, %ld grid pts   (%d x %d) scan %d"
-              " mode %d bdsgrid %d\n",
-              0.001 * GDS_LatLon_La1(gds),
-              0.001 * GDS_LatLon_La2(gds),
-              0.001 * GDS_LatLon_dy(gds),
-              nxny,
-              0.001 * GDS_LatLon_Lo1(gds),
-              0.001 * GDS_LatLon_Lo2(gds),
-              nxny,
-              nx,
-              ny,
-              GDS_LatLon_scan(gds),
-              GDS_LatLon_mode(gds),
-              BDS_Grid(bds));
-      //		  GDS_prt_thin_lon(gds);
-      variyngRowLengthStr = "Variable row lengths are here: ";
-      for (unsigned int i = 0; i < variableLengthRows.size(); i++)
-      {
-        variyngRowLengthStr += NFmiStringTools::Convert(variableLengthRows[i]);
-        if (i < variableLengthRows.size() - 1)
-          variyngRowLengthStr += ",";
-      }
-      variyngRowLengthStr += "\n";
-    }
-    else if (GDS_Gaussian(gds) && nx != -1)
-    {
-      sprintf(buffer,
-              "  gaussian: lat  %f to %f\n"
-              "            long %f to %f by %f, (%d x %d) scan %d"
-              " mode %d bdsgrid %d\n",
-              0.001 * GDS_LatLon_La1(gds),
-              0.001 * GDS_LatLon_La2(gds),
-              0.001 * GDS_LatLon_Lo1(gds),
-              0.001 * GDS_LatLon_Lo2(gds),
-              0.001 * GDS_LatLon_dx(gds),
-              nx,
-              ny,
-              GDS_LatLon_scan(gds),
-              GDS_LatLon_mode(gds),
-              BDS_Grid(bds));
-    }
-    else if (GDS_Gaussian(gds) && nx == -1)
-    {
-      sprintf(buffer,
-              "  thinned gaussian: lat  %f to %f\n"
-              "     lon %f   %ld grid pts   (%d x %d) scan %d"
-              " mode %d bdsgrid %d  nlat:\n",
-              0.001 * GDS_LatLon_La1(gds),
-              0.001 * GDS_LatLon_La2(gds),
-              0.001 * GDS_LatLon_Lo1(gds),
-              nxny,
-              nx,
-              ny,
-              GDS_LatLon_scan(gds),
-              GDS_LatLon_mode(gds),
-              BDS_Grid(bds));
-      //		  GDS_prt_thin_lon(gds);
-    }
-    else if (GDS_Polar(gds))
-    {
-      sprintf(buffer,
-              "  polar stereo: Lat1 %f Long1 %f Orient %f\n"
-              "     %s pole (%d x %d) Dx %d Dy %d scan %d mode %d\n",
-              0.001 * GDS_Polar_La1(gds),
-              0.001 * GDS_Polar_Lo1(gds),
-              0.001 * GDS_Polar_Lov(gds),
-              GDS_Polar_pole(gds) == 0 ? "north" : "south",
-              nx,
-              ny,
-              GDS_Polar_Dx(gds),
-              GDS_Polar_Dy(gds),
-              GDS_Polar_scan(gds),
-              GDS_Polar_mode(gds));
-    }
-    else if (GDS_Lambert(gds))
-    {
-      sprintf(buffer,
-              "  Lambert Conf: Lat1 %f Lon1 %f Lov %f\n"
-              "      Latin1 %f Latin2 %f LatSP %f LonSP %f\n"
-              "      %s (%d x %d) Dx %f Dy %f scan %d mode %d\n",
-              0.001 * GDS_Lambert_La1(gds),
-              0.001 * GDS_Lambert_Lo1(gds),
-              0.001 * GDS_Lambert_Lov(gds),
-              0.001 * GDS_Lambert_Latin1(gds),
-              0.001 * GDS_Lambert_Latin2(gds),
-              0.001 * GDS_Lambert_LatSP(gds),
-              0.001 * GDS_Lambert_LonSP(gds),
-              GDS_Lambert_NP(gds) ? "North Pole" : "South Pole",
-              GDS_Lambert_nx(gds),
-              GDS_Lambert_ny(gds),
-              0.001 * GDS_Lambert_dx(gds),
-              0.001 * GDS_Lambert_dy(gds),
-              GDS_Lambert_scan(gds),
-              GDS_Lambert_mode(gds));
-    }
-    else if (GDS_Mercator(gds))
-    {
-      sprintf(buffer,
-              "  Mercator: lat  %f to %f by %f km  nxny %ld\n"
-              "          long %f to %f by %f km, (%d x %d) scan %d"
-              " mode %d Latin %f bdsgrid %d\n",
-              0.001 * GDS_Merc_La1(gds),
-              0.001 * GDS_Merc_La2(gds),
-              0.001 * GDS_Merc_dy(gds),
-              nxny,
-              0.001 * GDS_Merc_Lo1(gds),
-              0.001 * GDS_Merc_Lo2(gds),
-              0.001 * GDS_Merc_dx(gds),
-              nx,
-              ny,
-              GDS_Merc_scan(gds),
-              GDS_Merc_mode(gds),
-              0.001 * GDS_Merc_Latin(gds),
-              BDS_Grid(bds));
-    }
-    else if (GDS_ssEgrid(gds))
-    {
-      sprintf(buffer,
-              "  Semi-staggered Arakawa E-Grid: lat0 %f lon0 %f nxny %d\n"
-              "    dLat %f dLon %f (%d x %d) scan %d mode %d\n",
-              0.001 * GDS_ssEgrid_La1(gds),
-              0.001 * GDS_ssEgrid_Lo1(gds),
-              GDS_ssEgrid_n(gds) * GDS_ssEgrid_n_dum(gds),
-              0.001 * GDS_ssEgrid_dj(gds),
-              0.001 * GDS_ssEgrid_di(gds),
-              GDS_ssEgrid_Lo2(gds),
-              GDS_ssEgrid_La2(gds),
-              GDS_ssEgrid_scan(gds),
-              GDS_ssEgrid_mode(gds));
-    }
-    else if (GDS_ss2dEgrid(gds))
-    {
-      sprintf(buffer,
-              "  Semi-staggered Arakawa E-Grid (2D): lat0 %f lon0 %f nxny %d\n"
-              "    dLat %f dLon %f (tlm0d %f tph0d %f) scan %d mode %d\n",
-              0.001 * GDS_ss2dEgrid_La1(gds),
-              0.001 * GDS_ss2dEgrid_Lo1(gds),
-              GDS_ss2dEgrid_nx(gds) * GDS_ss2dEgrid_ny(gds),
-              0.001 * GDS_ss2dEgrid_dj(gds),
-              0.001 * GDS_ss2dEgrid_di(gds),
-              0.001 * GDS_ss2dEgrid_Lo2(gds),
-              0.001 * GDS_ss2dEgrid_La2(gds),
-              GDS_ss2dEgrid_scan(gds),
-              GDS_ss2dEgrid_mode(gds));
-    }
-    else if (GDS_fEgrid(gds))
-    {
-      sprintf(buffer,
-              "  filled Arakawa E-Grid: lat0 %f lon0 %f nxny %d\n"
-              "    dLat %f dLon %f (%d x %d) scan %d mode %d\n",
-              0.001 * GDS_fEgrid_La1(gds),
-              0.001 * GDS_fEgrid_Lo1(gds),
-              GDS_fEgrid_n(gds) * GDS_fEgrid_n_dum(gds),
-              0.001 * GDS_fEgrid_dj(gds),
-              0.001 * GDS_fEgrid_di(gds),
-              GDS_fEgrid_Lo2(gds),
-              GDS_fEgrid_La2(gds),
-              GDS_fEgrid_scan(gds),
-              GDS_fEgrid_mode(gds));
-    }
-    else if (GDS_RotLL(gds))
-    {
-      sprintf(buffer,
-              "  rotated LatLon grid  lat %f to %f  lon %f to %f\n"
-              "    nxny %ld  (%d x %d)  dx %d dy %d  scan %d  mode %d\n"
-              "    transform: south pole lat %f lon %f  rot angle %f\n",
-              0.001 * GDS_RotLL_La1(gds),
-              0.001 * GDS_RotLL_La2(gds),
-              0.001 * GDS_RotLL_Lo1(gds),
-              0.001 * GDS_RotLL_Lo2(gds),
-              nxny,
-              GDS_RotLL_nx(gds),
-              GDS_RotLL_ny(gds),
-              GDS_RotLL_dx(gds),
-              GDS_RotLL_dy(gds),
-              GDS_RotLL_scan(gds),
-              GDS_RotLL_mode(gds),
-              0.001 * GDS_RotLL_LaSP(gds),
-              0.001 * GDS_RotLL_LoSP(gds),
-              GDS_RotLL_RotAng(gds));
-    }
-    else if (GDS_Gnomonic(gds))
-    {
-      sprintf(buffer, "  Gnomonic grid\n");
-    }
-    else if (GDS_Harmonic(gds))
-    {
-      sprintf(buffer,
-              "  Harmonic (spectral):  pentagonal spectral truncation: nj %d nk %d nm %d\n",
-              GDS_Harmonic_nj(gds),
-              GDS_Harmonic_nk(gds),
-              GDS_Harmonic_nm(gds));
-    }
-    else
-      sprintf(buffer, "  Tuntematon projektio.\n");
+    if (!FormatLatLonGridInfo(
+            buffer, gds, bds, nx, ny, nxny, variableLengthRows, variyngRowLengthStr) &&
+        !FormatProjectedGridInfo(buffer, gds, bds, nx, ny, nxny))
+      FormatOtherGridInfo(buffer, gds, bds, nxny);
     /*
                     if (GDS_Harmonic_type(gds) == 1)
                     {

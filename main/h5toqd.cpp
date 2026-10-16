@@ -1443,20 +1443,19 @@ void copy_dataset_pvol(const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo& info,
       // And latlon
       NFmiPoint latlon = info.Area()->WorldXYToLatLon(p);
 
-      if (info.NearestPoint(latlon))
-      {
-        // And copy the value
-        int value = values[ray * nbins + bin];
+      // Bins outside the target grid are skipped
+      if (!info.NearestPoint(latlon))
+        continue;
 
-        if (nodata && value == *nodata)
-          info.FloatValue(kFloatMissing);
-        else if (undetect && value == *undetect)
-          info.FloatValue(apply_gain_offset(0, gain, offset));
-        else
-          info.FloatValue(apply_gain_offset(value, gain, offset));
-      }
+      // And copy the value
+      int value = values[ray * nbins + bin];
+
+      if (nodata && value == *nodata)
+        info.FloatValue(kFloatMissing);
+      else if (undetect && value == *undetect)
+        info.FloatValue(apply_gain_offset(0, gain, offset));
       else
-        throw std::runtime_error("Internal error when projecting PVOL data to cartesian coordinates");
+        info.FloatValue(apply_gain_offset(value, gain, offset));
     }
   }
 }

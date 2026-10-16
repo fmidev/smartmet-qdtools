@@ -182,6 +182,32 @@ FmiNetCdfQueryData::FmiNetCdfQueryData()
 FmiNetCdfQueryData::~FmiNetCdfQueryData(void) = default;
 namespace
 {
+// Copy the non-fill values of the variable to the current parameter of the info
+void FillVariableValues(NFmiFastQueryInfo& fInfo,
+                        const netCDF::NcVar& var,
+                        const FmiVarInfo& theVarInfo)
+{
+  // NetCDF conventioiden mukaan juoksu järjestys on:
+  // aika, level, y-dim, x-dim
+  for (fInfo.ResetTime(); fInfo.NextTime(); )  // juoksutetaan aika dimensiota
+  {
+    std::vector<float> values = get_values<float>(var);
+    long counter = 0;
+    for (fInfo.ResetLevel(); fInfo.NextLevel();)  // juoksutetaan level dimensiota
+    {
+      for (fInfo.ResetLocation(); fInfo.NextLocation();)
+      {
+        float value = values.at(counter);
+        // jos ei ole fill-value, laitetaan arvo queryDataan, jos oli, jätetään qDatan missing
+        // arvo voimaan (data luodan alustettuna puuttuvilla arvoilla)
+        if (value != theVarInfo.itsFillValue)
+          fInfo.FloatValue(value);
+        counter++;
+      }
+    }
+  }
+}
+
 NFmiQueryData* MakeQueryData(const netCDF::NcFile& theNcFile,
                                     const NFmiQueryInfo* theMetaInfo,
                                     const std::vector<FmiVarInfo>& theVarInfos)
@@ -206,25 +232,7 @@ NFmiQueryData* MakeQueryData(const netCDF::NcFile& theNcFile,
       const netCDF::NcVar var = theNcFile.getVar(theVarInfo.itsVarName);
       if (!var.isNull())  // Pitäisi löytyä!!
       {
-        // NetCDF conventioiden mukaan juoksu järjestys on:
-        // aika, level, y-dim, x-dim
-        for (fInfo.ResetTime(); fInfo.NextTime(); )  // juoksutetaan aika dimensiota
-        {
-          std::vector<float> values = get_values<float>(var);
-          long counter = 0;
-          for (fInfo.ResetLevel(); fInfo.NextLevel();)  // juoksutetaan level dimensiota
-          {
-            for (fInfo.ResetLocation(); fInfo.NextLocation();)
-            {
-              float value = values.at(counter);
-              // jos ei ole fill-value, laitetaan arvo queryDataan, jos oli, jätetään qDatan missing
-              // arvo voimaan (data luodan alustettuna puuttuvilla arvoilla)
-              if (value != theVarInfo.itsFillValue)
-                fInfo.FloatValue(value);
-              counter++;
-            }
-          }
-        }
+        FillVariableValues(fInfo, var, theVarInfo);
       }
     }
   }

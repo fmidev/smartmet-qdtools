@@ -1036,6 +1036,28 @@ bool IsBaseHybridLevelType(
   return false;
 }
 
+// Read the values of the level variable, at most levDimSize of them
+std::vector<float> read_level_values(const netCDF::NcVar& levelVar, int levDimSize, bool verbose)
+{
+  if (verbose)
+    std::cerr << "level values:" << std::endl;
+  std::vector<float> pLevels;
+  int i = 0;
+  const std::vector<float> values = nctools::get_values<float>(levelVar);
+  for (float value : values)
+  {
+    if (i++ >= levDimSize)
+      break;  // joskus level variableen on liitetty myäs aika dimensio, joten lopetamme
+              // loopin kun jokainen eri leveli on käyty kerran läpi
+    if (verbose)
+      std::cerr << Fmi::to_string(value) << ", ";
+    pLevels.push_back(value);
+  }
+  if (verbose)
+    std::cerr << std::endl;
+  return pLevels;
+}
+
 NFmiVPlaceDescriptor CreateWRFVplaceDescriptor(
     const nctools::Options& options,
     const WRFData::TotalDimensionDataSet::value_type& totalDiemnsionData,
@@ -1051,25 +1073,11 @@ NFmiVPlaceDescriptor CreateWRFVplaceDescriptor(
           GetWantedLevelVariable(ncFile, totalDiemnsionData.first.levDimName, usedLevelType);
       if (not levelVar.isNull())
       {
-        if (options.verbose)
-          std::cerr << "level values:" << std::endl;
-        std::vector<float> pLevels;
-        int i = 0;
-        const std::vector<float> values = nctools::get_values<float>(levelVar);
-        for (float value : values)
-        {
-          if (i++ >= totalDiemnsionData.first.levDimSize)
-            break;  // joskus level variableen on liitetty myäs aika dimensio, joten lopetamme
-                    // loopin kun jokainen eri leveli on käyty kerran läpi
-          if (options.verbose)
-            std::cerr << Fmi::to_string(value) << ", ";
-          pLevels.push_back(value);
-        }
-        if (options.verbose)
-          std::cerr << std::endl;
+        const std::vector<float> pLevels =
+            read_level_values(levelVar, totalDiemnsionData.first.levDimSize, options.verbose);
 
         NFmiLevelBag levelBag;
-        for (float& pLevel : pLevels)
+        for (const float& pLevel : pLevels)
         {
           levelBag.AddLevel(NFmiLevel(usedLevelType, NFmiStringTools::Convert(pLevel), pLevel));
         }

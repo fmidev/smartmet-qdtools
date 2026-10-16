@@ -2299,6 +2299,59 @@ void copy_params(NFmiFastQueryInfo &info,
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Select the time of the sounding identified by a generated ident, and restart the
+ *        levels when the ident changes
+ */
+// ----------------------------------------------------------------------
+
+void select_sounding_ident(NFmiFastQueryInfo &info,
+                           const Message &msg,
+                           std::string &ident,
+                           std::string &lastident,
+                           NFmiMetTime &t)
+{
+  // Messages have generated ident to identify soundings
+
+  get_ident(msg, options.messageremap, ident);
+
+  bool identchange = (ident != lastident);
+
+  if (identchange || options.debug)
+  {
+    // Time rounded to nearest hour as when stored to tdesc
+
+    t = get_validtime(msg);
+    t.NearestMetTime(60);
+  }
+
+  if (identchange)
+  {
+    info.ResetLevel();
+
+    if (!info.Time(t))
+      throw std::runtime_error("Internal error in copying soundings");
+
+    if (options.debug)
+      fprintf(stderr,
+              "%s %s reset %s %lu\n",
+              ident.c_str(),
+              to_iso_string(t.PosixTime()).c_str(),
+              lastident.c_str(),
+              info.TimeIndex());
+
+    lastident = ident;
+  }
+  else if (options.debug)
+    fprintf(stderr,
+            "%s %s next %lu %lu\n",
+            ident.c_str(),
+            to_iso_string(t.PosixTime()).c_str(),
+            info.TimeIndex(),
+            info.LevelIndex());
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Copy values from the records
  */
 // ----------------------------------------------------------------------
@@ -2344,46 +2397,7 @@ void copy_records_sounding(NFmiFastQueryInfo &info,
         continue;
 
       if (options.requireident)
-      {
-        // Messages have generated ident to identify soundings
-
-        get_ident(msg, options.messageremap, ident);
-
-        bool identchange = (ident != lastident);
-
-        if (identchange || options.debug)
-        {
-          // Time rounded to nearest hour as when stored to tdesc
-
-          t = get_validtime(msg);
-          t.NearestMetTime(60);
-        }
-
-        if (identchange)
-        {
-          info.ResetLevel();
-
-          if (!info.Time(t))
-            throw std::runtime_error("Internal error in copying soundings");
-
-          if (options.debug)
-            fprintf(stderr,
-                    "%s %s reset %s %lu\n",
-                    ident.c_str(),
-                    to_iso_string(t.PosixTime()).c_str(),
-                    lastident.c_str(),
-                    info.TimeIndex());
-
-          lastident = ident;
-        }
-        else if (options.debug)
-          fprintf(stderr,
-                  "%s %s next %lu %lu\n",
-                  ident.c_str(),
-                  to_iso_string(t.PosixTime()).c_str(),
-                  info.TimeIndex(),
-                  info.LevelIndex());
-      }
+        select_sounding_ident(info, msg, ident, lastident, t);
       else
       {
         if (!info.Time(get_validtime(msg)))
@@ -2404,6 +2418,101 @@ void copy_records_sounding(NFmiFastQueryInfo &info,
     catch (...)
     {
     }
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Advance to the next time when the amdar ident changes, and restart the levels
+ */
+// ----------------------------------------------------------------------
+
+void select_amdar_ident(NFmiFastQueryInfo &info,
+                        const NFmiMetTime &t,
+                        const std::string &ident,
+                        std::string &lastident)
+{
+  if (ident != lastident)
+  {
+    info.ResetLevel();
+
+    if (!info.NextTime())
+      throw std::runtime_error("Changing to next time failed");
+
+    if (options.debug)
+      fprintf(stderr,
+              "%s %s reset %s %lu\n",
+              ident.c_str(),
+              to_iso_string(t.PosixTime()).c_str(),
+              lastident.c_str(),
+              info.TimeIndex());
+
+    lastident = ident;
+  }
+  else if (options.debug)
+    fprintf(stderr,
+            "%s %s next %lu %lu\n",
+            ident.c_str(),
+            to_iso_string(t.PosixTime()).c_str(),
+            info.TimeIndex(),
+            info.LevelIndex());
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Copy the amdar message values unless the coordinates are out of bounds
+ *
+ * 5001 LATITUDE(HIGH ACCURACY)
+ * 6001 LONGITUDE(HIGH ACCURACY)
+ */
+// ----------------------------------------------------------------------
+
+void copy_amdar_values(NFmiFastQueryInfo &info,
+                       const Message &msg,
+                       const NameMap &namemap,
+                       const CodeIndex &codeindex)
+{
+  // Copy the extra lon/lat parameters we added in create_pdesc
+
+  float lon = kFloatMissing;
+  float lat = kFloatMissing;
+
+  Message::const_iterator it;
+
+  it = msg.find(5001);
+  if (it != msg.end())
+    lat = static_cast<float>(it->second.value);
+
+  it = msg.find(6001);
+  if (it != msg.end())
+    lon = static_cast<float>(it->second.value);
+
+  if (lon != kFloatMissing && (lon < -180 || lon > 180))
+  {
+    if (options.debug)
+      std::cerr << "Warning: BUFR message contains a station with longitude out of bounds "
+                   "[-180,180]: "
+                << lon << std::endl;
+  }
+  else if (lat != kFloatMissing && (lat < -90 || lat > 90))
+  {
+    if (options.debug)
+      std::cerr
+          << "Warning: BUFR message contains a station with latitude out of bounds [-90,90]: "
+          << lat << std::endl;
+  }
+  else
+  {
+    if (options.requireident && (!info.NextLevel()))
+      throw std::runtime_error("Changing to next level failed");
+
+    info.Param(kFmiLongitude);
+    info.FloatValue(lon);
+
+    info.Param(kFmiLatitude);
+    info.FloatValue(lat);
+
+    copy_params(info, msg, namemap, codeindex);
   }
 }
 
@@ -2449,78 +2558,54 @@ void copy_records_amdar(NFmiFastQueryInfo &info,
         validtimes, msg, ident, options.requireident, options.requireident, identtimemap);
 
     if (options.requireident)
-    {
-      if (ident != lastident)
-      {
-        info.ResetLevel();
-
-        if (!info.NextTime())
-          throw std::runtime_error("Changing to next time failed");
-
-        if (options.debug)
-          fprintf(stderr,
-                  "%s %s reset %s %lu\n",
-                  ident.c_str(),
-                  to_iso_string(t.PosixTime()).c_str(),
-                  lastident.c_str(),
-                  info.TimeIndex());
-
-        lastident = ident;
-      }
-      else if (options.debug)
-        fprintf(stderr,
-                "%s %s next %lu %lu\n",
-                ident.c_str(),
-                to_iso_string(t.PosixTime()).c_str(),
-                info.TimeIndex(),
-                info.LevelIndex());
-    }
+      select_amdar_ident(info, t, ident, lastident);
     else if (!info.Time(t))
       throw std::runtime_error("Internal error in handling valid times of AMDAR message");
 
-    // Copy the extra lon/lat parameters we added in create_pdesc
-
-    float lon = kFloatMissing;
-    float lat = kFloatMissing;
-
-    Message::const_iterator it;
-
-    it = msg.find(5001);
-    if (it != msg.end())
-      lat = static_cast<float>(it->second.value);
-
-    it = msg.find(6001);
-    if (it != msg.end())
-      lon = static_cast<float>(it->second.value);
-
-    if (lon != kFloatMissing && (lon < -180 || lon > 180))
-    {
-      if (options.debug)
-        std::cerr << "Warning: BUFR message contains a station with longitude out of bounds "
-                     "[-180,180]: "
-                  << lon << std::endl;
-    }
-    else if (lat != kFloatMissing && (lat < -90 || lat > 90))
-    {
-      if (options.debug)
-        std::cerr
-            << "Warning: BUFR message contains a station with latitude out of bounds [-90,90]: "
-            << lat << std::endl;
-    }
-    else
-    {
-      if (options.requireident && (!info.NextLevel()))
-        throw std::runtime_error("Changing to next level failed");
-
-      info.Param(kFmiLongitude);
-      info.FloatValue(lon);
-
-      info.Param(kFmiLatitude);
-      info.FloatValue(lat);
-
-      copy_params(info, msg, namemap, codeindex);
-    }
+    copy_amdar_values(info, msg, namemap, codeindex);
   }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief The value of the first found of the two coordinate codes, or missing
+ */
+// ----------------------------------------------------------------------
+
+float first_coordinate_value(const Message &msg, int code1, int code2)
+{
+  auto p_id = msg.find(code1);
+  if (p_id == msg.end())
+    p_id = msg.find(code2);
+  if (p_id != msg.end())
+    return static_cast<float>(p_id->second.value);
+  return kFloatMissing;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Test the coordinates are missing or in bounds, warn of invalid coordinates in debug mode
+ */
+// ----------------------------------------------------------------------
+
+bool coordinates_in_bounds(float lon, float lat)
+{
+  if (lon != kFloatMissing && (lon < -180 || lon > 180))
+  {
+    if (options.debug)
+      std::cerr << "Warning: BUFR message contains a station with longitude out of bounds "
+                   "[-180,180]: "
+                << lon << std::endl;
+    return false;
+  }
+  if (lat != kFloatMissing && (lat < -90 || lat > 90))
+  {
+    if (options.debug)
+      std::cerr << "Warning: BUFR message contains a station with latitude out of bounds [-90,90]: "
+                << lat << std::endl;
+    return false;
+  }
+  return true;
 }
 
 // ----------------------------------------------------------------------
@@ -2576,46 +2661,20 @@ void copy_records_buoy_ship(NFmiFastQueryInfo &info,
 
     // Then copy the extra lon/lat parameters we added in create_pdesc
 
-    float lon = kFloatMissing;
-    float lat = kFloatMissing;
+    float lat = first_coordinate_value(msg, 5001, 5002);
+    float lon = first_coordinate_value(msg, 6001, 6002);
 
-    p_id = msg.find(5001);
-    if (p_id == msg.end())
-      p_id = msg.find(5002);
-    if (p_id != msg.end())
-      lat = static_cast<float>(p_id->second.value);
-
-    p_id = msg.find(6001);
-    if (p_id == msg.end())
-      p_id = msg.find(6002);
-    if (p_id != msg.end())
-      lon = static_cast<float>(p_id->second.value);
-
-    if (lon != kFloatMissing && (lon < -180 || lon > 180))
+    if (coordinates_in_bounds(lon, lat))
     {
-      if (options.debug)
-        std::cerr << "Warning: BUFR message contains a station with longitude out of bounds "
-                     "[-180,180]: "
-                  << lon << std::endl;
-    }
-    else if (lat != kFloatMissing && (lat < -90 || lat > 90))
-    {
-      if (options.debug)
-        std::cerr
-            << "Warning: BUFR message contains a station with latitude out of bounds [-90,90]: "
-            << lat << std::endl;
-    }
-    else
-    {
-      laststation = name;
+    laststation = name;
 
-      copy_params(info, msg, namemap, codeindex);
+    copy_params(info, msg, namemap, codeindex);
 
-      info.Param(kFmiLongitude);
-      info.FloatValue(lon);
+    info.Param(kFmiLongitude);
+    info.FloatValue(lon);
 
-      info.Param(kFmiLatitude);
-      info.FloatValue(lat);
+    info.Param(kFmiLatitude);
+    info.FloatValue(lat);
     }
   }
 }

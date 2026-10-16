@@ -2625,6 +2625,26 @@ float CalcHybridPressure(double a, double b, float surfacePressure)
   }
 }
 
+// Fill the pressures of the current hybrid level from the surface pressures, if the level
+// has vertical coordinates
+void FillHybridLevelPressures(NFmiFastQueryInfo &surfaceInfo,
+                              NFmiFastQueryInfo &hybridInfo,
+                              const map<int, pair<double, double> > &theVerticalCoordinateMap)
+{
+  int level = static_cast<int>(::round(hybridInfo.Level()->LevelValue()));
+  auto it = theVerticalCoordinateMap.find(level);
+  if (it == theVerticalCoordinateMap.end())
+    return;
+  double a = (*it).second.first;
+  double b = (*it).second.second;
+  for (hybridInfo.ResetLocation(); hybridInfo.NextLocation();)
+  {
+    float surfacePressure = surfaceInfo.InterpolatedValue(hybridInfo.LatLon());
+    if (surfacePressure != kFloatMissing)
+      hybridInfo.FloatValue(::CalcHybridPressure(a, b, surfacePressure));
+  }
+}
+
 void CalcHybridPressureData(const vector<std::shared_ptr<NFmiQueryData> >& theQdatas,
                                    map<int, pair<double, double> > &theVerticalCoordinateMap,
                                    const GeneratedHybridParamInfo &theHybridPressureInfo)
@@ -2650,21 +2670,7 @@ void CalcHybridPressureData(const vector<std::shared_ptr<NFmiQueryData> >& theQd
           if (surfaceInfo.Time(hybridInfo.Time()))
           {
             for (hybridInfo.ResetLevel(); hybridInfo.NextLevel();)
-            {
-              int level = static_cast<int>(::round(hybridInfo.Level()->LevelValue()));
-              auto it = theVerticalCoordinateMap.find(level);
-              if (it != theVerticalCoordinateMap.end())
-              {
-                double a = (*it).second.first;
-                double b = (*it).second.second;
-                for (hybridInfo.ResetLocation(); hybridInfo.NextLocation();)
-                {
-                  float surfacePressure = surfaceInfo.InterpolatedValue(hybridInfo.LatLon());
-                  if (surfacePressure != kFloatMissing)
-                    hybridInfo.FloatValue(::CalcHybridPressure(a, b, surfacePressure));
-                }
-              }
-            }
+              FillHybridLevelPressures(surfaceInfo, hybridInfo, theVerticalCoordinateMap);
           }
         }
       }
@@ -2720,6 +2726,28 @@ float CalcRH(float P, float T, float Q)
   return RH * 100;
 }
 
+// Calculate the relative humidities of the current time and level
+void CalcLevelRelativeHumidities(NFmiFastQueryInfo &RH_info,
+                                 NFmiFastQueryInfo &P_info,
+                                 NFmiFastQueryInfo &SH_info,
+                                 NFmiFastQueryInfo &T_info)
+{
+  for (RH_info.ResetLocation(); RH_info.NextLocation();)
+  {
+    P_info.LocationIndex(RH_info.LocationIndex());
+    SH_info.LocationIndex(RH_info.LocationIndex());
+    T_info.LocationIndex(RH_info.LocationIndex());
+
+    float P = P_info.FloatValue();
+    float T = T_info.FloatValue();
+    float SH = SH_info.FloatValue();
+
+    float RH = ::CalcRH(P, T, SH);
+    if (RH != kFloatMissing)
+      RH_info.FloatValue(RH);
+  }
+}
+
 // HUOM! Tämä pitää ajaa vasta jos ensin on laskettu paine parametri hybridi dataan!!!
 void CalcHybridRelativeHumidityData(
     const vector<std::shared_ptr<NFmiQueryData> >& theQdatas,
@@ -2764,20 +2792,7 @@ void CalcHybridRelativeHumidityData(
             SH_info.LevelIndex(RH_info.LevelIndex());
             T_info.LevelIndex(RH_info.LevelIndex());
 
-            for (RH_info.ResetLocation(); RH_info.NextLocation();)
-            {
-              P_info.LocationIndex(RH_info.LocationIndex());
-              SH_info.LocationIndex(RH_info.LocationIndex());
-              T_info.LocationIndex(RH_info.LocationIndex());
-
-              float P = P_info.FloatValue();
-              float T = T_info.FloatValue();
-              float SH = SH_info.FloatValue();
-
-              float RH = ::CalcRH(P, T, SH);
-              if (RH != kFloatMissing)
-                RH_info.FloatValue(RH);
-            }
+            CalcLevelRelativeHumidities(RH_info, P_info, SH_info, T_info);
           }
         }
       }

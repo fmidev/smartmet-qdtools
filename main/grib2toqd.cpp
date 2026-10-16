@@ -599,6 +599,38 @@ long GetLevelType(const std::shared_ptr<NFmiQueryData>& theQData)
   return -1;
 }
 
+// Make the name of the output file for the i:th generated data
+string MakeOutputFileName(const GribFilterOptions &theGribFilterOptions,
+                          std::shared_ptr<NFmiQueryData> theData,
+                          int i,
+                          bool useDifferentFileNamesOnDifferentGrids)
+{
+  string usedFileName(theGribFilterOptions.itsOutputFileName);
+  if (theGribFilterOptions.fUseLevelTypeFileNaming)
+  {
+    usedFileName += "_levelType_";
+    usedFileName +=
+        NFmiStringTools::Convert(::GetLevelType(theData));
+    // TÄMÄ PITÄÄ vielä korjata, jos saman level tyypillä on erilaisia hila/area määrityksiä,
+    // pitää ne nimetä!!!
+    if (useDifferentFileNamesOnDifferentGrids)
+    {
+      string areaStr =
+          GetFileNameAreaStr(theData->Info()->Area());
+      usedFileName += areaStr;
+    }
+  }
+  else
+  {
+    if (i > 0)
+    {
+      usedFileName += "_";
+      usedFileName += NFmiStringTools::Convert(i);
+    }
+  }
+  return usedFileName;
+}
+
 void StoreQueryDatas(GribFilterOptions &theGribFilterOptions)
 {
   int returnStatus = 0;  // 0 = ok
@@ -612,29 +644,10 @@ void StoreQueryDatas(GribFilterOptions &theGribFilterOptions)
       NFmiStreamQueryData streamData;
       if (theGribFilterOptions.fUseOutputFile)
       {
-        string usedFileName(theGribFilterOptions.itsOutputFileName);
-        if (theGribFilterOptions.fUseLevelTypeFileNaming)
-        {
-          usedFileName += "_levelType_";
-          usedFileName +=
-              NFmiStringTools::Convert(::GetLevelType(theGribFilterOptions.itsGeneratedDatas[i]));
-          // TÄMÄ PITÄÄ vielä korjata, jos saman level tyypillä on erilaisia hila/area määrityksiä,
-          // pitää ne nimetä!!!
-          if (useDifferentFileNamesOnDifferentGrids)
-          {
-            string areaStr =
-                GetFileNameAreaStr(theGribFilterOptions.itsGeneratedDatas[i]->Info()->Area());
-            usedFileName += areaStr;
-          }
-        }
-        else
-        {
-          if (i > 0)
-          {
-            usedFileName += "_";
-            usedFileName += NFmiStringTools::Convert(i);
-          }
-        }
+        string usedFileName = MakeOutputFileName(theGribFilterOptions,
+                                                 theGribFilterOptions.itsGeneratedDatas[i],
+                                                 i,
+                                                 useDifferentFileNamesOnDifferentGrids);
         if (!streamData.WriteData(usedFileName, theGribFilterOptions.itsGeneratedDatas[i].get()))
         {
           cerr << "could not open qd-file to write: " << theGribFilterOptions.itsOutputFileName
@@ -2085,6 +2098,43 @@ void DoAreaManipulations(GridRecordData *theGridRecordData,
     ::CropData(theGridRecordData, theOrigValues, verbose);
 }
 
+// Fill the original grid values from the grib values according to the scanning mode
+void FillOrigValues(const vector<double> &doubleValues,
+                    size_t values_length,
+                    double theMissingValue,
+                    long scanningMode,
+                    NFmiDataMatrix<float> &origValues)
+{
+  auto gridXSize = static_cast<int>(origValues.NX());
+  auto gridYSize = static_cast<int>(origValues.NY());
+  if (scanningMode == 0)
+  {
+    for (size_t i = 0; i < values_length; i++)
+    {
+      if (doubleValues[i] == theMissingValue)
+        origValues[i % gridXSize][gridYSize - (i / gridXSize) - 1] = kFloatMissing;
+      else
+        origValues[i % gridXSize][gridYSize - (i / gridXSize) - 1] =
+            static_cast<float>(doubleValues[i]);
+    }
+  }
+  else if (scanningMode == 64)
+  {
+    for (size_t i = 0; i < values_length; i++)
+    {
+      if (doubleValues[i] == theMissingValue)
+        origValues[i % gridXSize][i / gridXSize] = kFloatMissing;
+      else
+        origValues[i % gridXSize][i / gridXSize] = static_cast<float>(doubleValues[i]);
+    }
+  }
+  else  // sitten kun tulee lisää ceissejä, lisätään eri täyttö variaatioita
+  {
+    throw runtime_error("Error: Scanning mode " + boost::lexical_cast<string>(scanningMode) +
+                        " not yet implemented.");
+  }
+}
+
 void FillGridData(grib_handle *theGribHandle,
                          GridRecordData *theGridRecordData,
                          bool doGlobeFix,
@@ -2116,32 +2166,11 @@ void FillGridData(grib_handle *theGribHandle,
 
     if (status4 == 0)
     {
-      if (scanningMode == 0)
-      {
-        for (size_t i = 0; i < values_length; i++)
-        {
-          if (doubleValues[i] == theGridRecordData->itsMissingValue)
-            origValues[i % gridXSize][gridYSize - (i / gridXSize) - 1] = kFloatMissing;
-          else
-            origValues[i % gridXSize][gridYSize - (i / gridXSize) - 1] =
-                static_cast<float>(doubleValues[i]);
-        }
-      }
-      else if (scanningMode == 64)
-      {
-        for (size_t i = 0; i < values_length; i++)
-        {
-          if (doubleValues[i] == theGridRecordData->itsMissingValue)
-            origValues[i % gridXSize][i / gridXSize] = kFloatMissing;
-          else
-            origValues[i % gridXSize][i / gridXSize] = static_cast<float>(doubleValues[i]);
-        }
-      }
-      else  // sitten kun tulee lisää ceissejä, lisätään eri täyttö variaatioita
-      {
-        throw runtime_error("Error: Scanning mode " + boost::lexical_cast<string>(scanningMode) +
-                            " not yet implemented.");
-      }
+      FillOrigValues(doubleValues,
+                     values_length,
+                     theGridRecordData->itsMissingValue,
+                     scanningMode,
+                     origValues);
     }
 
     ::DoGlobalFix(origValues, doGlobeFix, verbose);

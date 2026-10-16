@@ -768,6 +768,38 @@ long GetLevelType(std::shared_ptr<NFmiQueryData> &theQData)
   return theQData->Info()->Level()->LevelType();
 }
 
+// Make the name of the output file for the i:th generated data
+string MakeOutputFileName(const GribFilterOptions &theGribFilterOptions,
+                          std::shared_ptr<NFmiQueryData> theData,
+                          int i,
+                          bool useDifferentFileNamesOnDifferentGrids)
+{
+  string usedFileName(theGribFilterOptions.itsOutputFileName);
+  if (theGribFilterOptions.fUseLevelTypeFileNaming)
+  {
+    usedFileName += "_levelType_";
+    usedFileName +=
+        NFmiStringTools::Convert(GetLevelType(theData));
+    // TÄMÄ PITÄÄ vielä korjata, jos saman level tyypillä on erilaisia hila/area määrityksiä,
+    // pitää ne nimetä!!!
+    if (useDifferentFileNamesOnDifferentGrids)
+    {
+      string areaStr =
+          GetFileNameAreaStr(theData->Info()->Area());
+      usedFileName += areaStr;
+    }
+  }
+  else
+  {
+    if (i > 0)
+    {
+      usedFileName += "_";
+      usedFileName += NFmiStringTools::Convert(i);
+    }
+  }
+  return usedFileName;
+}
+
 void StoreQueryDatas(GribFilterOptions &theGribFilterOptions)
 {
   int returnStatus = 0;  // 0 = ok
@@ -787,29 +819,10 @@ void StoreQueryDatas(GribFilterOptions &theGribFilterOptions)
       NFmiStreamQueryData streamData;
       if (theGribFilterOptions.fUseOutputFile)
       {
-        string usedFileName(theGribFilterOptions.itsOutputFileName);
-        if (theGribFilterOptions.fUseLevelTypeFileNaming)
-        {
-          usedFileName += "_levelType_";
-          usedFileName +=
-              NFmiStringTools::Convert(GetLevelType(theGribFilterOptions.itsGeneratedDatas[i]));
-          // TÄMÄ PITÄÄ vielä korjata, jos saman level tyypillä on erilaisia hila/area määrityksiä,
-          // pitää ne nimetä!!!
-          if (useDifferentFileNamesOnDifferentGrids)
-          {
-            string areaStr =
-                GetFileNameAreaStr(theGribFilterOptions.itsGeneratedDatas[i]->Info()->Area());
-            usedFileName += areaStr;
-          }
-        }
-        else
-        {
-          if (i > 0)
-          {
-            usedFileName += "_";
-            usedFileName += NFmiStringTools::Convert(i);
-          }
-        }
+        string usedFileName = MakeOutputFileName(theGribFilterOptions,
+                                                 theGribFilterOptions.itsGeneratedDatas[i],
+                                                 i,
+                                                 useDifferentFileNamesOnDifferentGrids);
         if (!streamData.WriteData(usedFileName, theGribFilterOptions.itsGeneratedDatas[i].get()))
         {
           cerr << "could not open qd-file to write: " << theGribFilterOptions.itsOutputFileName
@@ -4348,6 +4361,57 @@ void MakeParameterConversions(GridRecordData *theGridRecordData,
   }
 }
 
+// Fill the grid from the array according to the grib scanning mode
+void FillGridDataByScanMode(float *theArray,
+                            NFmiDataMatrix<float> &gridData,
+                            int scanIModePos,
+                            int scanJModePos,
+                            int adjacentIMode,
+                            bool zigzagMode)
+{
+  int nx = static_cast<int>(gridData.NX());
+  int ny = static_cast<int>(gridData.NY());
+  int nxny = nx * ny;
+
+  if (zigzagMode)  // pika viritys lapps-dataa varten (en tiedä mistä tämän voisi tulkita)
+  {
+    // vasemmalta oikealle ja oikealta vasemmalle täyttö. Rivit alhaalta ylös.
+    int xInd = 0;
+    int yInd = 0;
+    for (int i = 0; i < nxny; i++)
+    {
+      if ((i / nx) % 2 == 0)
+      {
+        xInd = i % nx;
+        yInd = i / nx;
+      }
+      else
+      {
+        xInd = nx - (i % nx) - 1;
+        yInd = i / nx;
+      }
+      gridData[xInd][yInd] = wgrib2qd::CheckAndFixMissingValues(theArray[i]);
+    }
+  }
+  else if (scanIModePos && scanJModePos && adjacentIMode)
+  {
+    // normaali i ja j suunnat positiivisia ja i peräkkäin
+    // eli ts. vasen alakulma alkaa rivi kerralaan ylöspäin.
+    for (int i = 0; i < nxny; i++)
+      gridData[i % nx][i / nx] = wgrib2qd::CheckAndFixMissingValues(theArray[i]);
+  }
+  else if (scanIModePos && (!scanJModePos) && adjacentIMode)
+  {
+    // käänteinen y-akseli eli i positiivinen ja j negatiivinen ja i peräkkäin
+    // eli ts. vasen yläkulma alkaa rivi kerralaan alaspäin.
+    for (int i = 0; i < nxny; i++)
+      gridData[i % nx][ny - (i / nx) - 1] = wgrib2qd::CheckAndFixMissingValues(theArray[i]);
+  }
+  else
+    throw runtime_error(
+        "Unsupported scanmode in FillGridData-function, someone should implement it...");
+}
+
 void FillGridData(float *theArray,
                   GridRecordData *theGribData,
                   int scanIModePos,
@@ -4364,49 +4428,8 @@ void FillGridData(float *theArray,
     wgrib2qd::FillGridDataWithVariableLengthData(
         theArray, theGribData, scanIModePos, scanJModePos, adjacentIMode, theVariableLengthRows);
   else
-  {
-    int nx = static_cast<int>(gridData.NX());
-    int ny = static_cast<int>(gridData.NY());
-    int nxny = nx * ny;
-
-    if (zigzagMode)  // pika viritys lapps-dataa varten (en tiedä mistä tämän voisi tulkita)
-    {
-      // vasemmalta oikealle ja oikealta vasemmalle täyttö. Rivit alhaalta ylös.
-      int xInd = 0;
-      int yInd = 0;
-      for (int i = 0; i < nxny; i++)
-      {
-        if ((i / nx) % 2 == 0)
-        {
-          xInd = i % nx;
-          yInd = i / nx;
-        }
-        else
-        {
-          xInd = nx - (i % nx) - 1;
-          yInd = i / nx;
-        }
-        gridData[xInd][yInd] = wgrib2qd::CheckAndFixMissingValues(theArray[i]);
-      }
-    }
-    else if (scanIModePos && scanJModePos && adjacentIMode)
-    {
-      // normaali i ja j suunnat positiivisia ja i peräkkäin
-      // eli ts. vasen alakulma alkaa rivi kerralaan ylöspäin.
-      for (int i = 0; i < nxny; i++)
-        gridData[i % nx][i / nx] = wgrib2qd::CheckAndFixMissingValues(theArray[i]);
-    }
-    else if (scanIModePos && (!scanJModePos) && adjacentIMode)
-    {
-      // käänteinen y-akseli eli i positiivinen ja j negatiivinen ja i peräkkäin
-      // eli ts. vasen yläkulma alkaa rivi kerralaan alaspäin.
-      for (int i = 0; i < nxny; i++)
-        gridData[i % nx][ny - (i / nx) - 1] = wgrib2qd::CheckAndFixMissingValues(theArray[i]);
-    }
-    else
-      throw runtime_error(
-          "Unsupported scanmode in FillGridData-function, someone should implement it...");
-  }
+    FillGridDataByScanMode(
+        theArray, gridData, scanIModePos, scanJModePos, adjacentIMode, zigzagMode);
 
   if (theGribFilterOptions.DoGlobalFix())
   {

@@ -2376,6 +2376,117 @@ std::string GetProjString(grib_handle *theHandle)
                            " found from grib is not implemented");
 }
 
+// Read the latlon bounding box of the grib
+void ReadLatLonBoundingBox(grib_handle *theHandle,
+                           const std::string &err,
+                           const std::string &proj_name,
+                           double &lon1,
+                           double &lat1,
+                           double &lon2,
+                           double &lat2)
+{
+  if (!GetGribDoubleValue(theHandle, "longitudeOfFirstGridPointInDegrees", lon1) ||
+      !GetGribDoubleValue(theHandle, "latitudeOfFirstGridPointInDegrees", lat1) ||
+      !GetGribDoubleValue(theHandle, "longitudeOfLastGridPointInDegrees", lon2) ||
+      !GetGribDoubleValue(theHandle, "latitudeOfLastGridPointInDegrees", lat2))
+    throw std::runtime_error(fmt::format(fmt::runtime(err), "latlon bounding box", proj_name));
+}
+
+// Create the legacy rotated latlon area of the grib
+NFmiArea *CreateRotatedLatLonGribArea(grib_handle *theHandle,
+                                      const EarthShape &earth_shape,
+                                      const std::string &err,
+                                      const std::string &proj_name)
+{
+  double lon1 = 0;
+  double lat1 = 0;
+  double lon2 = 0;
+  double lat2 = 0;
+  ReadLatLonBoundingBox(theHandle, err, proj_name, lon1, lat1, lon2, lat2);
+
+  double pole_lon = 0;
+  double pole_lat = 0;
+  double rotation = 0;
+  if (!GetGribDoubleValue(theHandle, "longitudeOfSouthernPoleInDegrees", pole_lon) ||
+      !GetGribDoubleValue(theHandle, "latitudeOfSouthernPoleInDegrees", pole_lat) ||
+      !GetGribDoubleValue(theHandle, "angleOfRotationInDegrees", rotation))
+    throw std::runtime_error(fmt::format(fmt::runtime(err), "rotation", proj_name));
+
+  // TODO
+  if (rotation != 0)
+    throw std::runtime_error("Rotated latlon rotation parameter nonzero, what to do???");
+
+  if (earth_shape.a != earth_shape.b)
+    throw std::runtime_error("Nonspherical rotated latlon not supported");
+
+  // the legacy corners are in rotated spherical latlon coordinate.
+
+  return NFmiAreaTools::CreateLegacyRotatedLatLonArea(
+      NFmiPoint(lon1, lat1), NFmiPoint(lon2, lat2), NFmiPoint(pole_lon, pole_lat));
+}
+
+// Create the mercator area of the grib
+NFmiArea *CreateMercatorGribArea(grib_handle *theHandle,
+                                 const std::string &proj,
+                                 const std::string &earth_proj,
+                                 long truncateDegrees,
+                                 const std::string &err,
+                                 const std::string &proj_name)
+{
+  double lon1 = 0;
+  double lat1 = 0;
+  double lon2 = 0;
+  double lat2 = 0;
+  ReadLatLonBoundingBox(theHandle, err, proj_name, lon1, lat1, lon2, lat2);
+
+  if (truncateDegrees)
+  {
+    lon1 = static_cast<int>(lon1);
+    lat1 = static_cast<int>(lat1);
+    lon2 = static_cast<int>(lon2);
+    lat2 = static_cast<int>(lat2);
+  }
+
+  return NFmiArea::CreateFromCorners(
+      proj, earth_proj, NFmiPoint(lon1, lat1), NFmiPoint(lon2, lat2));
+}
+
+// Create the area of the grib from the first grid point and the grid step size
+NFmiArea *CreateCornerAndSizeGribArea(grib_handle *theHandle,
+                                      const std::string &proj,
+                                      const std::string &earth_proj,
+                                      long ni,
+                                      long nj,
+                                      const std::string &err,
+                                      const std::string &proj_name)
+{
+  double lon1 = 0;
+  double lat1 = 0;
+  double dx = 0;
+  double dy = 0;
+
+  if (!GetGribDoubleValue(theHandle, "longitudeOfFirstGridPointInDegrees", lon1) ||
+      !GetGribDoubleValue(theHandle, "latitudeOfFirstGridPointInDegrees", lat1))
+    throw std::runtime_error(fmt::format(fmt::runtime(err), "latlon corner", proj_name));
+
+  if (proj_name == "polar_stereographic" || proj_name == "lambert")
+  {
+    if (!GetGribDoubleValue(theHandle, "DxInMetres", dx) ||
+        !GetGribDoubleValue(theHandle, "DyInMetres", dy))
+      throw std::runtime_error(fmt::format(fmt::runtime(err), "grid step size", proj_name));
+  }
+  else
+  {
+    if (!GetGribDoubleValue(theHandle, "Dx", dx) || !GetGribDoubleValue(theHandle, "Dy", dy))
+      throw std::runtime_error(fmt::format(fmt::runtime(err), "grid step size", proj_name));
+    dx *= 1000;
+    dy *= 1000;
+  }
+
+  return NFmiArea::CreateFromCornerAndSize(
+      proj, earth_proj, NFmiPoint(lon1, lat1), dx * (ni - 1), dy * (nj - 1));
+}
+
 NFmiArea *GetGribArea(grib_handle *theHandle, GribFilterOptions &theGribFilterOptions)
 {
   // Establish projection variant
@@ -2407,92 +2518,15 @@ NFmiArea *GetGribArea(grib_handle *theHandle, GribFilterOptions &theGribFilterOp
     throw std::runtime_error(fmt::format(fmt::runtime(err), "grid size", proj_name));
 
   if (proj_name == "rotated_ll" || proj_name == "rotated_gg")
-  {
-    double lon1 = 0;
-    double lat1 = 0;
-    double lon2 = 0;
-    double lat2 = 0;
-    if (!GetGribDoubleValue(theHandle, "longitudeOfFirstGridPointInDegrees", lon1) ||
-        !GetGribDoubleValue(theHandle, "latitudeOfFirstGridPointInDegrees", lat1) ||
-        !GetGribDoubleValue(theHandle, "longitudeOfLastGridPointInDegrees", lon2) ||
-        !GetGribDoubleValue(theHandle, "latitudeOfLastGridPointInDegrees", lat2))
-      throw std::runtime_error(fmt::format(fmt::runtime(err), "latlon bounding box", proj_name));
-
-    double pole_lon = 0;
-    double pole_lat = 0;
-    double rotation = 0;
-    if (!GetGribDoubleValue(theHandle, "longitudeOfSouthernPoleInDegrees", pole_lon) ||
-        !GetGribDoubleValue(theHandle, "latitudeOfSouthernPoleInDegrees", pole_lat) ||
-        !GetGribDoubleValue(theHandle, "angleOfRotationInDegrees", rotation))
-      throw std::runtime_error(fmt::format(fmt::runtime(err), "rotation", proj_name));
-
-    // TODO
-    if (rotation != 0)
-      throw std::runtime_error("Rotated latlon rotation parameter nonzero, what to do???");
-
-    if (earth_shape.a != earth_shape.b)
-      throw std::runtime_error("Nonspherical rotated latlon not supported");
-
-    // the legacy corners are in rotated spherical latlon coordinate.
-
-    return NFmiAreaTools::CreateLegacyRotatedLatLonArea(
-        NFmiPoint(lon1, lat1), NFmiPoint(lon2, lat2), NFmiPoint(pole_lon, pole_lat));
-  }
+    return CreateRotatedLatLonGribArea(theHandle, earth_shape, err, proj_name);
 
   if (proj_name == "mercator")
-  {
-    double lon1 = 0;
-    double lat1 = 0;
-    double lon2 = 0;
-    double lat2 = 0;
-    if (!GetGribDoubleValue(theHandle, "longitudeOfFirstGridPointInDegrees", lon1) ||
-        !GetGribDoubleValue(theHandle, "latitudeOfFirstGridPointInDegrees", lat1) ||
-        !GetGribDoubleValue(theHandle, "longitudeOfLastGridPointInDegrees", lon2) ||
-        !GetGribDoubleValue(theHandle, "latitudeOfLastGridPointInDegrees", lat2))
-      throw std::runtime_error(fmt::format(fmt::runtime(err), "latlon bounding box", proj_name));
-
-    if (truncateDegrees)
-    {
-      lon1 = static_cast<int>(lon1);
-      lat1 = static_cast<int>(lat1);
-      lon2 = static_cast<int>(lon2);
-      lat2 = static_cast<int>(lat2);
-    }
-
-    return NFmiArea::CreateFromCorners(
-        proj, earth_proj, NFmiPoint(lon1, lat1), NFmiPoint(lon2, lat2));
-  }
+    return CreateMercatorGribArea(theHandle, proj, earth_proj, truncateDegrees, err, proj_name);
 
   if (proj_name == "polar_stereographic" || proj_name == "lambert" || proj_name == "albers" ||
       proj_name == "equatorial_azimuthal_equidistant" ||
       proj_name == "lambert_azimuthal_equal_area")
-  {
-    double lon1 = 0;
-    double lat1 = 0;
-    double dx = 0;
-    double dy = 0;
-
-    if (!GetGribDoubleValue(theHandle, "longitudeOfFirstGridPointInDegrees", lon1) ||
-        !GetGribDoubleValue(theHandle, "latitudeOfFirstGridPointInDegrees", lat1))
-      throw std::runtime_error(fmt::format(fmt::runtime(err), "latlon corner", proj_name));
-
-    if (proj_name == "polar_stereographic" || proj_name == "lambert")
-    {
-      if (!GetGribDoubleValue(theHandle, "DxInMetres", dx) ||
-          !GetGribDoubleValue(theHandle, "DyInMetres", dy))
-        throw std::runtime_error(fmt::format(fmt::runtime(err), "grid step size", proj_name));
-    }
-    else
-    {
-      if (!GetGribDoubleValue(theHandle, "Dx", dx) || !GetGribDoubleValue(theHandle, "Dy", dy))
-        throw std::runtime_error(fmt::format(fmt::runtime(err), "grid step size", proj_name));
-      dx *= 1000;
-      dy *= 1000;
-    }
-
-    return NFmiArea::CreateFromCornerAndSize(
-        proj, earth_proj, NFmiPoint(lon1, lat1), dx * (ni - 1), dy * (nj - 1));
-  }
+    return CreateCornerAndSizeGribArea(theHandle, proj, earth_proj, ni, nj, err, proj_name);
 
   if (proj_name == "space_view")
   {

@@ -529,7 +529,7 @@ int run(int argc, char* argv[])
 
     // Loop through the files once to check and to prepare the descriptors first
 
-    for (std::string infile : options.infiles)
+    for (const std::string& infile : options.infiles)
     {
       ++file_counter;
 
@@ -591,7 +591,7 @@ int run(int argc, char* argv[])
           {
             std::cerr << "Unable to combine " << first_ncfile->path << " and " << infile << ":"
                       << std::endl;
-            for (auto error : failreasons)
+            for (const auto& error : failreasons)
               std::cerr << "  " << error << std::endl;
 
             throw Exception(BCP, "Files not joinable", nullptr);

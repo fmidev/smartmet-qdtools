@@ -164,7 +164,6 @@ void ReportParameters(NFmiFastQueryInfo *q, bool ignoresubs)
     cout << item.second << std::endl;
   }
   cout << endl << "There are " << count << " stored parameters in total" << endl;
-  return;
 }
 
 // ----------------------------------------------------------------------
@@ -287,8 +286,6 @@ void ReportTimes(NFmiFastQueryInfo* q, bool theUtcFlag, const string& dateFormat
   cout << endl;
 
   cout << "Timesteps\t= " << q->SizeTimes() << endl;
-
-  return;
 }
 
 // ----------------------------------------------------------------------
@@ -423,8 +420,6 @@ void ReportLevels(NFmiFastQueryInfo *q)
   }
 
   cout << endl << "There are " << q->SizeLevels() << " levels in total" << endl;
-
-  return;
 }
 
 // ----------------------------------------------------------------------
@@ -451,8 +446,6 @@ void ReportProducer(NFmiFastQueryInfo *q)
   cout << "name\t= " << prod.GetName().CharPtr() << endl;
 
   cout << endl;
-
-  return;
 }
 
 // ----------------------------------------------------------------------
@@ -649,8 +642,6 @@ void ReportLocations(NFmiFastQueryInfo *q)
   }
 
   cout << endl << "There are " << q->SizeLocations() << " locations in total" << endl;
-
-  return;
 }
 
 // ----------------------------------------------------------------------

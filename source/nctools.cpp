@@ -228,7 +228,7 @@ bool parse_options(int argc, char *argv[], Options &options)
       }
     }
 
-    for (auto infile : options.infiles)
+    for (const auto& infile : options.infiles)
     {
       if (!fs::exists(infile))
         throw std::runtime_error("Input file '" + infile + "' does not exist");
@@ -299,7 +299,7 @@ ParamConversions read_netcdf_configs(const Options &options)
 
   // Command line
   if (!options.parameters.empty())
-    for (auto line : options.parameters)
+    for (const auto& line : options.parameters)
       try
       {
         if (line.empty())
@@ -323,7 +323,7 @@ ParamConversions read_netcdf_configs(const Options &options)
 
   // Additional config files
   if (!options.configs.empty())
-    for (auto file : options.configs)
+    for (const auto& file : options.configs)
       try
       {
         if (options.verbose)

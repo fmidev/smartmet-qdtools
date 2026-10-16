@@ -45,7 +45,7 @@ class FmiVarInfo
 class FmiXYDimVarInfo
 {
  public:
-  FmiXYDimVarInfo() {}
+  FmiXYDimVarInfo() = default;
   bool IsEmpty() const { return (itsIndex == -1); }
   // private:
   std::string itsVarName;
@@ -56,7 +56,7 @@ class FmiXYDimVarInfo
 class FmiZDimVarInfo
 {
  public:
-  FmiZDimVarInfo() {}
+  FmiZDimVarInfo() = default;
 
   // private:
   std::string itsVarName;
@@ -80,7 +80,7 @@ enum FmiNcTimeOffsetType
 class FmiTDimVarInfo
 {
  public:
-  FmiTDimVarInfo() {}
+  FmiTDimVarInfo() = default;
   void CalcTimeList();
 
   // private:

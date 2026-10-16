@@ -64,7 +64,7 @@ struct Options
   string inputfile;
   string outputdir;
 
-  Options() {}
+  Options() = default;
 };
 
 // ----------------------------------------------------------------------

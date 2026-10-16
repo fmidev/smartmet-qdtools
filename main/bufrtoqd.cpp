@@ -57,7 +57,7 @@
 namespace fs = std::filesystem;
 struct ParNameInfo
 {
-  ParNameInfo() {}
+  ParNameInfo() = default;
   std::string bufrId;
   std::string bufrName;
   std::string shortName;

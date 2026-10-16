@@ -67,7 +67,7 @@ struct Options
   bool debug = false;
   double epsilon = 0;
 
-  Options() {}
+  Options() = default;
 };
 
 // ----------------------------------------------------------------------

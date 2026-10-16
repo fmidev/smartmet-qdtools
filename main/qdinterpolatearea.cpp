@@ -30,6 +30,7 @@
 #include <newbase/NFmiWindFix.h>
 #include <algorithm>
 #include <fstream>
+#include <memory>
 
 using namespace std;  // tätä ei saa sitten laittaa headeriin, eikä ennen includeja!!!!
 
@@ -116,7 +117,7 @@ void run(int argc, const char *argv[])
       maxthreads = Fmi::stoi(str);
   }
 
-  NFmiGrid* wantedGrid = nullptr;
+  std::unique_ptr<NFmiGrid> wantedGrid;
   if (projectionFromOptions)
   {
     string projectionString = cmdline.OptionValue('p');
@@ -127,13 +128,13 @@ void run(int argc, const char *argv[])
     }
 
     std::shared_ptr<NFmiArea> outputArea = NFmiAreaFactory::Create(projectionString);
-    wantedGrid = new NFmiGrid(outputArea.get(), outputArea->Width(), outputArea->Height());
+    wantedGrid = std::make_unique<NFmiGrid>(outputArea.get(), outputArea->Width(), outputArea->Height());
   }
   else
   {
     string gridFileName = cmdline.Parameter(1);
 
-    wantedGrid = new NFmiGrid();
+    wantedGrid = std::make_unique<NFmiGrid>();
     ifstream inGrid(gridFileName.c_str(), ios::binary);
     if (inGrid)
     {
@@ -153,7 +154,7 @@ void run(int argc, const char *argv[])
   NFmiQueryData qd(inputfile);
 
   std::shared_ptr<NFmiQueryData> newData(
-      NFmiQueryDataUtil::Interpolate2OtherGrid(&qd, wantedGrid, nullptr, maxthreads));
+      NFmiQueryDataUtil::Interpolate2OtherGrid(&qd, wantedGrid.get(), nullptr, maxthreads));
 
   // Temporary fix until newbase interpolation has been corrected
   NFmiWindFix::FixWinds(*newData);

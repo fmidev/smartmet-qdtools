@@ -62,6 +62,8 @@ class ProjectionParser
  private:
   ~ProjectionParser() = delete;
   ProjectionParser() = delete;
+  ProjectionParser(const ProjectionParser&) = delete;
+  ProjectionParser& operator=(const ProjectionParser&) = delete;
 
 };  // class ProjectionParser
 }  // namespace RadContour

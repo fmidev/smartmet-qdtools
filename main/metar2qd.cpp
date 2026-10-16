@@ -274,9 +274,6 @@ NFmiMetTime GetTime(const std::string &timeStr,
   else
     ::ThrowLatLonProblemException(
         "GetTime", "Time string was illegal", timeStr, theMetarStr, theMetarFileName);
-
-  return NFmiMetTime();  // ei mene tähän, koska edellä olevat ThrowLatLonProblemException-funktiot
-                         // heittävät poikkeuksen
 }
 
 // ----------------------------------------------------------------------

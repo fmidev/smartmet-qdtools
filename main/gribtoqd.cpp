@@ -62,7 +62,7 @@ struct PointerDestroyer
 
 struct GeneratedHybridParamInfo
 {
-  GeneratedHybridParamInfo() {}
+  GeneratedHybridParamInfo() = default;
 
   bool fCalcHybridParam = false;
   NFmiParam itsGeneratedHybridParam;
@@ -915,7 +915,7 @@ vector<string> GetDataFiles(const NFmiCmdLine &cmdline)
 class CombineDataStructureSearcher
 {
  public:
-  CombineDataStructureSearcher() {}
+  CombineDataStructureSearcher() = default;
 
   void AddGrid(const NFmiHPlaceDescriptor &theHPlaceDesc)
   {

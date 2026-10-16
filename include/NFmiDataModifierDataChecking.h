@@ -10,7 +10,7 @@
 class NFmiDataModifierDataChecking : public NFmiDataModifier
 {
  public:
-  NFmiDataModifierDataChecking() {}
+  NFmiDataModifierDataChecking() = default;
   ~NFmiDataModifierDataChecking() override = default;
   void Clear() override
   {
@@ -35,7 +35,7 @@ class NFmiDataModifierDataChecking : public NFmiDataModifier
 class NFmiDataModifierDataMissing : public NFmiDataModifierDataChecking
 {
  public:
-  NFmiDataModifierDataMissing() {}
+  NFmiDataModifierDataMissing() = default;
   ~NFmiDataModifierDataMissing() override = default;
   using NFmiDataModifierDataChecking::Calculate;
   void Calculate(float theValue) override

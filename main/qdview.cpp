@@ -164,34 +164,6 @@ void usage()
 
 // ----------------------------------------------------------------------
 /*!
- * \brief Minimum function for 4 arguments
- *
- * \return The minimum of the 4 arguments
- */
-// ----------------------------------------------------------------------
-
-template <typename T>
-const T& min(const T& arg1, const T& arg2, const T& arg3, const T& arg4)
-{
-  return min(min(arg1, arg2), min(arg3, arg4));
-}
-
-// ----------------------------------------------------------------------
-/*!
- * \brief Maximum function for 4 arguments
- *
- * \return The maximum of the 4 arguments
- */
-// ----------------------------------------------------------------------
-
-template <typename T>
-const T& max(const T& arg1, const T& arg2, const T& arg3, const T& arg4)
-{
-  return max(min(arg1, arg2), max(arg3, arg4));
-}
-
-// ----------------------------------------------------------------------
-/*!
  * \brief Calculate a bounding latlon area for point data
  *
  * \param q The query info

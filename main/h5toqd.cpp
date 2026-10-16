@@ -1456,7 +1456,7 @@ void copy_dataset_pvol(const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo& info,
           info.FloatValue(apply_gain_offset(value, gain, offset));
       }
       else
-        std::runtime_error("Internal error when projecting PVOL data to cartesian coordinates");
+        throw std::runtime_error("Internal error when projecting PVOL data to cartesian coordinates");
     }
   }
 }

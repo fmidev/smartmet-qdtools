@@ -57,6 +57,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #ifdef UNIX
@@ -80,7 +81,9 @@ struct Location
   string name;
   NFmiPoint latlon;
 
-  Location(const string& theName, const NFmiPoint& theLatLon) : name(theName), latlon(theLatLon) {}
+  Location(string theName, const NFmiPoint& theLatLon) : name(std::move(theName)), latlon(theLatLon)
+  {
+  }
 };
 
 using LocationList = list<Location>;

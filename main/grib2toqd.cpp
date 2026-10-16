@@ -85,7 +85,7 @@ struct PointerDestroyer
 
 struct GeneratedHybridParamInfo
 {
-  GeneratedHybridParamInfo() {}
+  GeneratedHybridParamInfo() = default;
 
   bool fCalcHybridParam = false;
   NFmiParam itsGeneratedHybridParam;
@@ -175,7 +175,7 @@ class TotalQDataCollector
  public:
   using Container = list<vector<std::shared_ptr<NFmiQueryData> > >;
 
-  TotalQDataCollector() {}
+  TotalQDataCollector() = default;
   void AddData(const vector<std::shared_ptr<NFmiQueryData> >& theDataList)
   {
     if (!theDataList.empty())
@@ -789,7 +789,7 @@ vector<string> GetDataFiles(const string &theFileOrPatternOrDirectory)
 class CombineDataStructureSearcher
 {
  public:
-  CombineDataStructureSearcher() {}
+  CombineDataStructureSearcher() = default;
 
   void AddGrid(const NFmiHPlaceDescriptor &theHPlaceDesc)
   {

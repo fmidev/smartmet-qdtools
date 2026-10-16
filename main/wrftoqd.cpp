@@ -73,7 +73,7 @@ namespace WRFData
 using DimensionMap = std::map<std::string, netCDF::NcDim>;
 struct TotalDimensionData
 {
-  TotalDimensionData() {}
+  TotalDimensionData() = default;
 
   // Tarkistaa onko kyseessä staggered dimensio mukana ja laittaa tarvittaessa liput päälle.
   void CheckStaggered()
@@ -491,7 +491,7 @@ void PrintWRFGlobalAttributes(const nctools::Options& options, const netCDF::NcF
 
 struct BaseGridAreaData
 {
-  BaseGridAreaData() {}
+  BaseGridAreaData() = default;
 
   bool isEmpty() const { return !DX || !DY || !baseSizeX || !baseSizeY || baseAreaString.empty(); }
 

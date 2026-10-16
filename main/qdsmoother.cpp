@@ -169,7 +169,7 @@ struct Options
   string inputdata;
   string outputdata;
 
-  Options() {}
+  Options() = default;
 };
 
 // ----------------------------------------------------------------------

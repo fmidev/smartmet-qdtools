@@ -249,6 +249,42 @@ namespace
 
 namespace
 {
+// ----------------------------------------------------------------------
+/*!
+ * \brief Update the difference statistics with a pair of values
+ *
+ * Returns the difference, or zero if either value is missing.
+ */
+// ----------------------------------------------------------------------
+
+double add_difference(double value1,
+                      double value2,
+                      bool iswinddir,
+                      double& maxdiff,
+                      int& points,
+                      int& differentpoints,
+                      std::size_t& num_one_missing)
+{
+  if (value1 != kFloatMissing && value2 != kFloatMissing)
+  {
+    double diff = abs(value2 - value1);
+
+    if (iswinddir)
+      diff = min(diff, abs(abs(value2 - value1) - 360));
+
+    maxdiff = max(diff, maxdiff);
+    ++points;
+    if (diff != 0.0)
+      ++differentpoints;
+    return diff;
+  }
+  if ((value1 == kFloatMissing) ^ (value2 == kFloatMissing))
+  {
+    ++num_one_missing;
+  }
+  return 0.0;
+}
+
 std::pair<double, std::size_t>
 analyze_all_parameters(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
 try
@@ -281,24 +317,10 @@ try
           const double value1 = theQ1.FloatValue();
           const double value2 = theQ2.FloatValue();
 
-          if (value1 != kFloatMissing && value2 != kFloatMissing)
-          {
-            double diff = abs(value2 - value1);
-            if (iswinddir)
-              diff = min(diff, abs(abs(value2 - value1) - 360));
-
-            maxdiff = max(diff, maxdiff);
-            ++points;
-            if (diff != 0.0)
-            {
-              ++differentpoints;
-              param_diffs[paramName] = std::max(param_diffs[paramName], diff);
-            }
-          }
-          else if ((value1 == kFloatMissing) ^ (value2 == kFloatMissing))
-          {
-            ++num_one_missing;
-          }
+          const double diff = add_difference(
+              value1, value2, iswinddir, maxdiff, points, differentpoints, num_one_missing);
+          if (diff != 0.0)
+            param_diffs[paramName] = std::max(param_diffs[paramName], diff);
         }
   }
 
@@ -337,23 +359,8 @@ try
       {
         const double value1 = theQ1.FloatValue();
         const double value2 = theQ2.FloatValue();
-
-        if (value1 != kFloatMissing && value2 != kFloatMissing)
-        {
-          double diff = abs(value2 - value1);
-
-          if (iswinddir)
-            diff = min(diff, abs(abs(value2 - value1) - 360));
-
-          maxdiff = max(diff, maxdiff);
-          ++points;
-          if (diff != 0.0)
-            ++differentpoints;
-        }
-        else if ((value1 == kFloatMissing) ^ (value2 == kFloatMissing))
-        {
-          ++num_one_missing;
-        }
+        add_difference(
+            value1, value2, iswinddir, maxdiff, points, differentpoints, num_one_missing);
       }
 
   if (options.percentage)
@@ -406,21 +413,8 @@ try
         {
           const double value1 = theQ1.FloatValue();
           const double value2 = theQ2.FloatValue();
-          if (value1 != kFloatMissing && value2 != kFloatMissing)
-          {
-            double diff = abs(value2 - value1);
-            if (iswinddir)
-              diff = min(diff, abs(abs(value2 - value1) - 360));
-
-            maxdiff = max(diff, maxdiff);
-            ++points;
-            if (diff != 0.0)
-              ++differentpoints;
-          }
-          else if ((value1 == kFloatMissing) ^ (value2 == kFloatMissing))
-          {
-            ++num_one_missing;
-          }
+          add_difference(
+              value1, value2, iswinddir, maxdiff, points, differentpoints, num_one_missing);
       }
 
   }
@@ -466,22 +460,8 @@ try
         const double value1 = theQ1.FloatValue();
         const double value2 = theQ2.FloatValue();
 
-        if (value1 != kFloatMissing && value2 != kFloatMissing)
-        {
-          double diff = abs(value2 - value1);
-
-          if (iswinddir)
-            diff = min(diff, abs(abs(value2 - value1) - 360));
-
-          maxdiff = max(diff, maxdiff);
-          ++points;
-          if (diff != 0.0)
-            ++differentpoints;
-        }
-        else if ((value1 == kFloatMissing) ^ (value2 == kFloatMissing))
-        {
-          ++num_one_missing;
-        }
+        add_difference(
+            value1, value2, iswinddir, maxdiff, points, differentpoints, num_one_missing);
     }
   }
 

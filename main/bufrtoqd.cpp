@@ -2968,6 +2968,84 @@ double get_altitude(Message& msg, bool remap)
   return height;
 }
 
+// Print the phase of flight debugging information
+void print_phase_debug(
+    const Message& msg, double altitude, double lastaltitude, Phase curphase, Phase msgphase)
+{
+  std::set<NFmiMetTime> dummytimes;
+  std::string ident;
+  NFmiMetTime t = get_validtime_amdar(dummytimes, msg, ident, true);
+
+  fprintf(stderr,
+          "%s %s height=%.0f last=%.0f curphase=%d msgphase=%d\n",
+          ident.c_str(),
+          Fmi::to_iso_string(t).c_str(),
+          altitude,
+          lastaltitude,
+          (int)curphase,
+          (int)msgphase);
+}
+
+// Set the phase change flags during takeoff
+void takeoff_phase_flags(Phase msgphase,
+                         Phase lastmsgphase,
+                         bool altitudechange,
+                         double altitude,
+                         double lastaltitude,
+                         bool& phasechange,
+                         bool& phaserestart)
+{
+  // Takeoff can be joined with ascending level flight
+
+  if (msgphase == Landing)
+    phasechange = true;
+
+  // Takeoff - LevelFlight - Takeoff ?
+
+  else if ((msgphase == Takeoff) && (lastmsgphase == Flying))
+    phaserestart = true;
+
+  // If takeoff or level flight continues lower, start a new phase
+
+  else if (altitudechange && (altitude < lastaltitude))
+  {
+    if (msgphase == Takeoff)
+      phaserestart = true;
+    else
+      phasechange = true;
+  }
+}
+
+// Set the phase change flags during level flight
+void flying_phase_flags(Phase msgphase,
+                        Phase lastmsgphase,
+                        bool altitudechange,
+                        double altitude,
+                        double lastaltitude,
+                        bool& phasechange,
+                        bool& phasereset)
+{
+  // Descending level flight can be joined with landing phase
+
+  if (msgphase == Takeoff)
+  {
+    phasechange = true;
+
+    if (lastmsgphase != Landing)
+      phasereset = true;
+  }
+
+  // If level flight or landing continues higher, start a new phase
+
+  else if (altitudechange && (altitude > lastaltitude))
+  {
+    if ((msgphase == Flying) || (lastmsgphase != Landing))
+      phasereset = true;
+    else
+      phasechange = true;
+  }
+}
+
 // ----------------------------------------------------------------------
 /*!
  * \brief Get current phase of flight from amdar message and set flags indicating phase change.
@@ -2994,65 +3072,14 @@ Phase get_phase_amdar(Message& msg,
   phasechange = phaserestart = phasereset = false;
 
   if (options.debug)
-  {
-    std::set<NFmiMetTime> dummytimes;
-    std::string ident;
-    NFmiMetTime t = get_validtime_amdar(dummytimes, msg, ident, true);
-
-    fprintf(stderr,
-            "%s %s height=%.0f last=%.0f curphase=%d msgphase=%d\n",
-            ident.c_str(),
-            Fmi::to_iso_string(t).c_str(),
-            altitude,
-            lastaltitude,
-            (int)curphase,
-            (int)msgphase);
-  }
+    print_phase_debug(msg, altitude, lastaltitude, curphase, msgphase);
 
   if (curphase == Takeoff)
-  {
-    // Takeoff can be joined with ascending level flight
-
-    if (msgphase == Landing)
-      phasechange = true;
-
-    // Takeoff - LevelFlight - Takeoff ?
-
-    else if ((msgphase == Takeoff) && (lastmsgphase == Flying))
-      phaserestart = true;
-
-    // If takeoff or level flight continues lower, start a new phase
-
-    else if (altitudechange && (altitude < lastaltitude))
-    {
-      if (msgphase == Takeoff)
-        phaserestart = true;
-      else
-        phasechange = true;
-    }
-  }
+    takeoff_phase_flags(
+        msgphase, lastmsgphase, altitudechange, altitude, lastaltitude, phasechange, phaserestart);
   else if (curphase == Flying)
-  {
-    // Descending level flight can be joined with landing phase
-
-    if (msgphase == Takeoff)
-    {
-      phasechange = true;
-
-      if (lastmsgphase != Landing)
-        phasereset = true;
-    }
-
-    // If level flight or landing continues higher, start a new phase
-
-    else if (altitudechange && (altitude > lastaltitude))
-    {
-      if ((msgphase == Flying) || (lastmsgphase != Landing))
-        phasereset = true;
-      else
-        phasechange = true;
-    }
-  }
+    flying_phase_flags(
+        msgphase, lastmsgphase, altitudechange, altitude, lastaltitude, phasechange, phasereset);
   else if (curphase == Landing)
   {
     // If landing continues higher, start new phase

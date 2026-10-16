@@ -3205,6 +3205,65 @@ void limit_duration_amdar(const NameMap& namemap,
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Find the first of the codes with a non-missing value in the message
+ */
+// ----------------------------------------------------------------------
+
+Message::iterator find_first_valid(Message& msg, const std::list<int>& codes)
+{
+  auto mit = msg.end();
+
+  for (const auto code : codes)
+  {
+    mit = msg.find(code);
+
+    if ((mit != msg.end()) && (mit->second.value != kFloatMissing))
+      break;
+  }
+  return mit;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Move the found row under the primary code and erase the rows of the other codes
+ */
+// ----------------------------------------------------------------------
+
+void remap_to_primary(Message& msg,
+                      const std::list<int>& codes,
+                      Message::iterator mit,
+                      int msgcode,
+                      int primarycode)
+{
+  for (const auto code : codes)
+  {
+    auto it = msg.find(code);
+
+    if (code == primarycode)
+    {
+      // Primary/first code, no need to remap ?
+
+      if ((mit == msg.end()) || (code == msgcode))
+        continue;
+
+      // Erase old row with primary code if it exists
+
+      if (it != msg.end())
+        msg.erase(it);
+
+      // Insert new row with primary code
+
+      msg.insert(std::make_pair(code, mit->second));
+
+      msg.erase(mit);
+    }
+    else if (it != msg.end())
+      msg.erase(it);
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Remap amdar message bufr codes
  */
 // ----------------------------------------------------------------------
@@ -3219,44 +3278,78 @@ void remap_message_amdar(Message& msg)
         (codes.first == REMAP_ALTITUDE))
       continue;
 
-    auto mit = msg.end();
-
-    for (const auto code : codes.second)
-    {
-      mit = msg.find(code);
-
-      if ((mit != msg.end()) && (mit->second.value != kFloatMissing))
-        break;
-    }
+    auto mit = find_first_valid(msg, codes.second);
 
     const int msgcode = ((mit != msg.end()) ? mit->first : 0);
     const int primarycode = codes.second.front();
 
-    for (const auto code : codes.second)
+    remap_to_primary(msg, codes.second, mit, msgcode, primarycode);
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Debug name of the flight phase
+ */
+// ----------------------------------------------------------------------
+
+const char* phase_name(Phase curphase)
+{
+  if (curphase == Flying)
+    return "fly";
+  if (curphase == Takeoff)
+    return "takeoff";
+  return "landing";
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Debug name of the flight phase change
+ */
+// ----------------------------------------------------------------------
+
+const char* phase_transition_name(Phase curphase, Phase lastphase)
+{
+  if (curphase == Flying)
+  {
+    if (lastphase == Landing)
     {
-      auto it = msg.find(code);
-
-      if (code == primarycode)
-      {
-        // Primary/first code, no need to remap ?
-
-        if ((mit == msg.end()) || (code == msgcode))
-          continue;
-
-        // Erase old row with primary code if it exists
-
-        if (it != msg.end())
-          msg.erase(it);
-
-        // Insert new row with primary code
-
-        msg.insert(std::make_pair(code, mit->second));
-
-        msg.erase(mit);
-      }
-      else if (it != msg.end())
-        msg.erase(it);
+      return "landing_fly !";
     }
+    else if (lastphase == Takeoff)
+    {
+      return "takeoff_fly";
+    }
+    else
+    {
+      return "fly";
+    }
+  }
+  else if (curphase == Takeoff)
+  {
+    if (lastphase == Flying)
+    {
+      return "fly_takeoff !";
+    }
+    else if (lastphase == Landing)
+    {
+      return "landing_takeoff";
+    }
+    else
+      return "takeoff";
+  }
+  else
+  {
+    if (lastphase == Flying)
+    {
+      return "fly_landing";
+    }
+    else if (lastphase == Takeoff)
+    {
+      return "takeoff_landing";
+    }
+    else
+      return "landing";
   }
 }
 
@@ -3275,58 +3368,9 @@ void debug_state_amdar(const std::string& ident,
   state = (ident != lastorigident) ? "new " : "";
 
   if ((ident == lastorigident) && (curphase != Flying) && (lastphase != Flying))
-  {
-    if (curphase == Flying)
-    {
-      if (lastphase == Landing)
-      {
-        state += "landing_fly !";
-      }
-      else if (lastphase == Takeoff)
-      {
-        state += "takeoff_fly";
-      }
-      else
-      {
-        state += "fly";
-      }
-    }
-    else if (curphase == Takeoff)
-    {
-      if (lastphase == Flying)
-      {
-        state += "fly_takeoff !";
-      }
-      else if (lastphase == Landing)
-      {
-        state += "landing_takeoff";
-      }
-      else
-        state += "takeoff";
-    }
-    else
-    {
-      if (lastphase == Flying)
-      {
-        state += "fly_landing";
-      }
-      else if (lastphase == Takeoff)
-      {
-        state += "takeoff_landing";
-      }
-      else
-        state += "landing";
-    }
-  }
+    state += phase_transition_name(curphase, lastphase);
   else
-  {
-    if (curphase == Flying)
-      state += "fly";
-    else if (curphase == Takeoff)
-      state += "takeoff";
-    else
-      state += "landing";
-  }
+    state += phase_name(curphase);
 }
 
 // ----------------------------------------------------------------------

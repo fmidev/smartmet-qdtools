@@ -277,6 +277,42 @@ vector<NFmiPoint> find_places(const vector<string>& /* theNames */)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Print the parameter values of the current time and level if any of them is valid
+ */
+// ----------------------------------------------------------------------
+
+template <typename Prefix, typename ValueGetter>
+void print_level_row(NFmiFastQueryInfo &theQ, const Prefix &thePrefix, ValueGetter getValue)
+{
+  ostringstream out;
+  out << thePrefix << ' ' << format_date(theQ.ValidTime()) << ' ' << theQ.LevelIndex();
+
+  if (options.printlevelvalue)
+    out << ' ' << theQ.Level()->LevelValue();
+
+  bool foundvalid = false;
+
+  for (auto& parameter : options.parameters)
+  {
+    if (!theQ.Param(parameter))
+      throw runtime_error("Parameter '" + converter.ToString(parameter) +
+                          "' is not available in the query data");
+
+    float value = getValue();
+    if (value == kFloatMissing)
+      out << " -";
+    else
+    {
+      out << ' ' << value;
+      foundvalid = true;
+    }
+  }
+  if (foundvalid)
+    cout << out.str() << endl;
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Print named locations from gridded data
  */
 // ----------------------------------------------------------------------
@@ -292,34 +328,8 @@ void print_locations(NFmiFastQueryInfo &theQ)
   {
     for (theQ.ResetTime(); theQ.NextTime();)
       for (theQ.ResetLevel(); theQ.NextLevel();)
-      {
-        ostringstream out;
-        out << options.locations[i] << ' ' << format_date(theQ.ValidTime()) << ' '
-            << theQ.LevelIndex();
-
-        if (options.printlevelvalue)
-          out << ' ' << theQ.Level()->LevelValue();
-
-        bool foundvalid = false;
-
-        for (auto& parameter : options.parameters)
-        {
-          if (!theQ.Param(parameter))
-            throw runtime_error("Parameter '" + converter.ToString(parameter) +
-                                "' is not available in the query data");
-
-          float value = theQ.InterpolatedValue(coords[i]);
-          if (value == kFloatMissing)
-            out << " -";
-          else
-          {
-            out << ' ' << value;
-            foundvalid = true;
-          }
-        }
-        if (foundvalid)
-          cout << out.str() << endl;
-      }
+        print_level_row(
+            theQ, options.locations[i], [&]() { return theQ.InterpolatedValue(coords[i]); });
   }
 }
 
@@ -342,34 +352,7 @@ void print_stations(NFmiFastQueryInfo &theQ)
 
     for (theQ.ResetTime(); theQ.NextTime();)
       for (theQ.ResetLevel(); theQ.NextLevel();)
-      {
-        ostringstream out;
-        out << theQ.Location()->GetIdent() << ' ' << format_date(theQ.ValidTime()) << ' '
-            << theQ.LevelIndex();
-
-        if (options.printlevelvalue)
-          out << ' ' << theQ.Level()->LevelValue();
-
-        bool foundvalid = false;
-
-        for (auto& parameter : options.parameters)
-        {
-          if (!theQ.Param(parameter))
-            throw runtime_error("Parameter '" + converter.ToString(parameter) +
-                                "' is not available in the query data");
-
-          float value = theQ.FloatValue();
-          if (value == kFloatMissing)
-            out << " -";
-          else
-          {
-            out << ' ' << value;
-            foundvalid = true;
-          }
-        }
-        if (foundvalid)
-          cout << out.str() << endl;
-      }
+        print_level_row(theQ, theQ.Location()->GetIdent(), [&]() { return theQ.FloatValue(); });
   }
 }
 
@@ -387,34 +370,7 @@ void print_all_stations(NFmiFastQueryInfo &theQ)
   for (theQ.ResetLocation(); theQ.NextLocation();)
     for (theQ.ResetTime(); theQ.NextTime();)
       for (theQ.ResetLevel(); theQ.NextLevel();)
-      {
-        ostringstream out;
-        out << theQ.Location()->GetIdent() << ' ' << format_date(theQ.ValidTime()) << ' '
-            << theQ.LevelIndex();
-
-        if (options.printlevelvalue)
-          out << ' ' << theQ.Level()->LevelValue();
-
-        bool foundvalid = false;
-
-        for (auto& parameter : options.parameters)
-        {
-          if (!theQ.Param(parameter))
-            throw runtime_error("Parameter '" + converter.ToString(parameter) +
-                                "' is not available in the query data");
-
-          float value = theQ.FloatValue();
-          if (value == kFloatMissing)
-            out << " -";
-          else
-          {
-            out << ' ' << value;
-            foundvalid = true;
-          }
-        }
-        if (foundvalid)
-          cout << out.str() << endl;
-      }
+        print_level_row(theQ, theQ.Location()->GetIdent(), [&]() { return theQ.FloatValue(); });
 }
 
 // ----------------------------------------------------------------------

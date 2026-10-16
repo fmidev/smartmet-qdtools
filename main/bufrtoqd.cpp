@@ -263,6 +263,74 @@ Options options;
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Parse one remapping definition name,code1,code2,...,
+ *
+ * \param pos0 Position of the next definition, used as the name if the name is empty
+ */
+// ----------------------------------------------------------------------
+
+void parse_remap_definition(const std::string& remap, size_t pos0)
+{
+  MessageReMap::iterator rit;
+  std::string token;
+  std::string name;
+  size_t pos1 = 0;
+  size_t pos2 = 0;
+
+  while ((pos2 = remap.find(',', pos1)) != std::string::npos)
+  {
+    token = Fmi::trim_copy(remap.substr(pos1, pos2 - pos1));
+
+    if (pos1 == 0)
+    {
+      if (token.empty())
+        name = Fmi::to_string(pos0);
+      else
+      {
+        name = Fmi::ascii_tolower_copy(token);
+
+        if (name == "flaltitude")
+          name = REMAP_ALTITUDE;
+      }
+
+      auto remapping = options.messageremap.insert(std::make_pair(name, std::list<int>()));
+
+      if (!remapping.second)
+        throw std::runtime_error("Duplicate mapping name '" + name + "' for option --remap");
+
+      rit = remapping.first;
+    }
+    else if (token.empty())
+      throw std::runtime_error("Empty code for mapping '" + name + "' for option --remap");
+    else
+    {
+      try
+      {
+        rit->second.push_back(Fmi::stoi(token));
+      }
+      catch (...)
+      {
+        throw std::runtime_error("Invalid code '" + token + "' for mapping '" + name +
+                                 "' for option --remap");
+      }
+    }
+
+    if (options.debug)
+      fprintf(stderr, "    token = %s\n", token.c_str());
+
+    pos1 = pos2 + 1;
+  }
+}
+
+// Add the default remapping unless the mapping has been given
+void add_default_remap(const std::string& name, const std::list<int>& codes)
+{
+  if (options.messageremap.find(name) == options.messageremap.end())
+    options.messageremap.insert(std::make_pair(name, codes));
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Parse amdar or sounding bufr remapping option
  */
 // ----------------------------------------------------------------------
@@ -293,9 +361,6 @@ void parse_option_remap(const std::string& remapdef)
 
     remapstr += ";";
 
-    MessageReMap::iterator rit;
-    std::string token;
-    std::string name;
     size_t pos0 = 0;
     size_t pos = 0;
 
@@ -307,74 +372,15 @@ void parse_option_remap(const std::string& remapdef)
         fprintf(stderr, "  remap = %s\n", remap.c_str());
 
       pos0 = pos + 1;
-      size_t pos1 = 0;
-      size_t pos2 = 0;
-
-      while ((pos2 = remap.find(',', pos1)) != std::string::npos)
-      {
-        token = Fmi::trim_copy(remap.substr(pos1, pos2 - pos1));
-
-        if (pos1 == 0)
-        {
-          if (token.empty())
-            name = Fmi::to_string(pos0);
-          else
-          {
-            name = Fmi::ascii_tolower_copy(token);
-
-            if (name == "flaltitude")
-              name = REMAP_ALTITUDE;
-          }
-
-          auto remapping = options.messageremap.insert(std::make_pair(name, std::list<int>()));
-
-          if (!remapping.second)
-            throw std::runtime_error("Duplicate mapping name '" + name + "' for option --remap");
-
-          rit = remapping.first;
-        }
-        else if (token.empty())
-          throw std::runtime_error("Empty code for mapping '" + name + "' for option --remap");
-        else
-        {
-          try
-          {
-            rit->second.push_back(Fmi::stoi(token));
-          }
-          catch (...)
-          {
-            throw std::runtime_error("Invalid code '" + token + "' for mapping '" + name +
-                                     "' for option --remap");
-          }
-        }
-
-        if (options.debug)
-          fprintf(stderr, "    token = %s\n", token.c_str());
-
-        pos1 = pos2 + 1;
-      }
+      parse_remap_definition(remap, pos0);
     }
   }
 
   // Defaults for aircraft identification, phase of flight and altitude
 
-  if (options.messageremap.find(REMAP_IDENT) == options.messageremap.end())
-  {
-    std::list<int> ident{REMAP_PRIMARY_IDENT, 1008};
-    options.messageremap.insert(std::make_pair(REMAP_IDENT, ident));
-  }
-
-  if (options.messageremap.find(REMAP_PHASE) == options.messageremap.end())
-  {
-    std::list<int> phaseofflight{8004, 8009};
-    options.messageremap.insert(std::make_pair(REMAP_PHASE, phaseofflight));
-  }
-
-  if (options.messageremap.find(REMAP_ALTITUDE) == options.messageremap.end())
-  {
-    std::list<int> flaltitude{7002, 7007, 7010};
-    options.messageremap.insert(std::make_pair(REMAP_ALTITUDE, flaltitude));
-  }
+  add_default_remap(REMAP_IDENT, {REMAP_PRIMARY_IDENT, 1008});
+  add_default_remap(REMAP_PHASE, {8004, 8009});
+  add_default_remap(REMAP_ALTITUDE, {7002, 7007, 7010});
 }
 
 // ----------------------------------------------------------------------

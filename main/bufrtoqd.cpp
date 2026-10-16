@@ -1069,6 +1069,120 @@ std::vector<SubsetRange> subset_ranges(const std::vector<BufrElement>& elements,
  */
 // ----------------------------------------------------------------------
 
+// The replication state of a subset
+struct ReplicationState
+{
+  bool replicating = false;    // set to true if a class 31 descriptor is encountered
+  int replication_count = -1;  // value of that descriptor
+  int replicating_desc = -1;   // the id of the descriptor following above
+  Message replicated_message;  // the message when replication starts
+};
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Add the record to the message, handling the replication of descriptors
+ *
+ * When the replicated descriptor repeats, the message so far is stored and a new
+ * message is started from the message at the start of the replication.
+ */
+// ----------------------------------------------------------------------
+
+void add_record(Messages& messages,
+                Message& message,
+                ReplicationState& st,
+                int desc,
+                bool is_class31,
+                const record& rec)
+{
+  if (st.replicating && st.replicating_desc < 0)
+  {
+    if (!is_class31)
+    {
+      st.replicating_desc = desc;
+    }
+    else
+    {
+      st.replication_count = static_cast<int>(rec.value);
+      st.replicated_message = message;
+    }
+  }
+  else if (desc == st.replicating_desc)
+  {
+    if (!message.empty() && message_looks_valid(message) && message_is_significant(message))
+      messages.push_back(message);
+
+    message = st.replicated_message;
+    message[desc] = rec;
+
+    if (--st.replication_count <= 0)
+    {
+      st.replicating = false;
+      st.replicating_desc = -1;
+    }
+  }
+  else
+  {
+    message[desc] = rec;
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Append the messages of one subset
+ */
+// ----------------------------------------------------------------------
+
+void append_subset(Messages& messages,
+                   const std::vector<BufrElement>& elements,
+                   const SubsetRange& range)
+{
+  Message message;
+
+  // Replication state is reset for every subset
+  ReplicationState st;
+
+  if (options.debug)
+    std::cout << "Subset has " << (range.end - range.begin) << " descriptors" << std::endl;
+
+  // Loop over the expanded descriptors of this subset
+
+  for (size_t j = range.begin; j < range.end; j++)
+  {
+    const BufrElement& elem = elements[j];
+    int desc = elem.code;
+
+    // Class 31 descriptors carry replication factors
+    bool is_class31 = (desc >= 31000 && desc < 32000);
+
+    if (is_class31)
+    {
+      st.replicating = true;
+      st.replicated_message = message;
+    }
+
+    // Begin recording the info
+    record rec;
+    rec.name = elem.name;
+    rec.units = elem.units;
+    if (elem.type == GRIB_TYPE_STRING)
+      rec.svalue = element_svalue(elem, range.index);
+    else
+      rec.value = element_value(elem, range.index);
+
+    // std::cout << desc << " " << rec.name << " = " << rec.value << std::endl;
+
+    add_record(messages, message, st, desc, is_class31, rec);
+  }
+
+  if (!message.empty())
+  {
+    if (!message_looks_valid(message))
+      message.clear();
+    else if (message_is_significant(message))
+      messages.push_back(message);
+  }
+}
+
 void append_message(Messages& messages,
                     const std::vector<BufrElement>& elements,
                     long nsubsets,
@@ -1077,88 +1191,7 @@ void append_message(Messages& messages,
   std::vector<SubsetRange> ranges = subset_ranges(elements, nsubsets, compressed);
 
   for (const SubsetRange& range : ranges)
-  {
-    Message message;
-
-    // Replication state is reset for every subset
-    bool replicating = false;    // set to true if a class 31 descriptor is encountered
-    int replication_count = -1;  // value of that descriptor
-    int replicating_desc = -1;   // the id of the descriptor following above
-    Message replicated_message;  // the message when replication starts
-
-    if (options.debug)
-      std::cout << "Subset has " << (range.end - range.begin) << " descriptors" << std::endl;
-
-    // Loop over the expanded descriptors of this subset
-
-    for (size_t j = range.begin; j < range.end; j++)
-    {
-      const BufrElement& elem = elements[j];
-      int desc = elem.code;
-
-      // Class 31 descriptors carry replication factors
-      bool is_class31 = (desc >= 31000 && desc < 32000);
-
-      if (is_class31)
-      {
-        replicating = true;
-        replicated_message = message;
-      }
-
-      // Begin recording the info
-      record rec;
-      rec.name = elem.name;
-      rec.units = elem.units;
-      if (elem.type == GRIB_TYPE_STRING)
-        rec.svalue = element_svalue(elem, range.index);
-      else
-        rec.value = element_value(elem, range.index);
-
-      // std::cout << desc << " " << rec.name << " = " << rec.value << std::endl;
-
-      if (replicating && replicating_desc < 0)
-      {
-        if (!is_class31)
-        {
-          replicating_desc = desc;
-        }
-        else
-        {
-          replication_count = static_cast<int>(rec.value);
-          replicated_message = message;
-        }
-      }
-      else if (desc == replicating_desc)
-      {
-        if (!message.empty() && message_looks_valid(message))
-        {
-          if (message_is_significant(message))
-            messages.push_back(message);
-        }
-
-        message = replicated_message;
-        message[desc] = rec;
-
-        if (--replication_count <= 0)
-        {
-          replicating = false;
-          replicating_desc = -1;
-        }
-      }
-      else
-      {
-        message[desc] = rec;
-      }
-    }
-
-    if (!message.empty())
-    {
-      if (!message_looks_valid(message))
-        message.clear();
-      else if (message_is_significant(message))
-        messages.push_back(message);
-    }
-  }
+    append_subset(messages, elements, range);
 }
 
 // ----------------------------------------------------------------------

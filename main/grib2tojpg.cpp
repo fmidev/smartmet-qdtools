@@ -231,6 +231,53 @@ const NFmiPoint gMissingGridSize(kFloatMissing, kFloatMissing);
 
 namespace
 {
+// ----------------------------------------------------------------------
+/*!
+ * \brief Parse the extra grid sizes given for pressure and hybrid level data
+ *
+ * \return The grid size function, 3 or 4
+ */
+// ----------------------------------------------------------------------
+
+int ParseExtraGridSizes(const string &theProjStr,
+                        string::size_type pos,
+                        const vector<double> &gridSizesList,
+                        string &projStringUsed,
+                        NFmiPoint &thePressureDataGridSize,
+                        NFmiPoint &theHybridDataGridSize)
+{
+  // laitetaan error koodi päälle ja korjataan se myöhemmin pois jos homma onnistui
+  int gridSizeFunction = 0;
+  string::size_type pos2 = theProjStr.find(',', pos + 1);
+  if (pos2 != string::npos)
+  {
+    pos2 = theProjStr.find(',', pos2 + 1);
+    if (pos2 != string::npos)
+    {  // nyt löytyi toinen pilkku, josta alkaa ylimääräisten hilakokojen määritys. Tämä loppu
+      // pitää saada
+      // pois hilan määritys stringistä
+      projStringUsed = std::string(theProjStr.begin(), theProjStr.begin() + pos2);
+      if (gridSizesList.size() == 4)
+      {
+        theHybridDataGridSize = thePressureDataGridSize =
+            NFmiPoint(gridSizesList[2], gridSizesList[3]);
+        gridSizeFunction = 3;
+      }
+      else
+      {
+        thePressureDataGridSize = NFmiPoint(gridSizesList[2], gridSizesList[3]);
+        theHybridDataGridSize = NFmiPoint(gridSizesList[4], gridSizesList[5]);
+        gridSizeFunction = 4;
+      }
+    }
+    if (gridSizeFunction == 0)
+      throw std::runtime_error(
+          "Error with -P option in HandleProjectionString-function, error with extra grid "
+          "sizes.");
+  }
+  return gridSizeFunction;
+}
+
 // Funktio tekee annetusta projektio stringistä halutun projektio gridin. Lisäksi siinä tarkistetaan
 // onko annettu
 // erilaisille datoille hilakokoja. Jos ei ole, kaikille datoille tulee koko 50x50.
@@ -267,37 +314,13 @@ void HandleProjectionString(const string &theProjStr,
       else if (gridSizesList.size() == 2)  // kaikki hila koot on samaa
         gridSizeFunction = 2;
       else if (gridSizesList.size() == 4 || gridSizesList.size() == 6)
-      {  // nyt on annettu yksi ylimääräinen hila koko
-        gridSizeFunction =
-            0;  // laitetaan error koodi päälle ja korjataan se myöhemmin pois jos homma onnistui
-        string::size_type pos2 = theProjStr.find(',', pos + 1);
-        if (pos2 != string::npos)
-        {
-          pos2 = theProjStr.find(',', pos2 + 1);
-          if (pos2 != string::npos)
-          {  // nyt löytyi toinen pilkku, josta alkaa ylimääräisten hilakokojen määritys. Tämä loppu
-            // pitää saada
-            // pois hilan määritys stringistä
-            projStringUsed = std::string(theProjStr.begin(), theProjStr.begin() + pos2);
-            if (gridSizesList.size() == 4)
-            {
-              theHybridDataGridSize = thePressureDataGridSize =
-                  NFmiPoint(gridSizesList[2], gridSizesList[3]);
-              gridSizeFunction = 3;
-            }
-            else
-            {
-              thePressureDataGridSize = NFmiPoint(gridSizesList[2], gridSizesList[3]);
-              theHybridDataGridSize = NFmiPoint(gridSizesList[4], gridSizesList[5]);
-              gridSizeFunction = 4;
-            }
-          }
-          if (gridSizeFunction == 0)
-            throw std::runtime_error(
-                "Error with -P option in HandleProjectionString-function, error with extra grid "
-                "sizes.");
-        }
-      }
+        // nyt on annettu yksi ylimääräinen hila koko
+        gridSizeFunction = ParseExtraGridSizes(theProjStr,
+                                               pos,
+                                               gridSizesList,
+                                               projStringUsed,
+                                               thePressureDataGridSize,
+                                               theHybridDataGridSize);
     }
   }
   NFmiGrid *wantedGrid = ::CreateWantedGrid(projStringUsed);
@@ -987,6 +1010,77 @@ void MakeParameterConversions(GridRecordData *theGridRecordData,
   }
 }
 
+// Fill the original grid values according to the scanning mode
+void FillScannedValues(const vector<double> &doubleValues,
+                       size_t values_length,
+                       double theMissingValue,
+                       long scanningMode,
+                       NFmiDataMatrix<float> &origValues)
+{
+  auto gridXSize = static_cast<int>(origValues.NX());
+  auto gridYSize = static_cast<int>(origValues.NY());
+  // scanningMode 1. bit 0 -> +i +x | scanningMode 2. bit 0 -> -j -y
+  // scanningMode 80: en tiedä mikä tämä moodi on, grib2 speksi ei määrää 5. tai 7. bitin
+  // merkitystä, jouduin vain kokeilemaan LAPS datan juoksutuksen käsipelillä
+  if (scanningMode != 0 && scanningMode != 80)
+  {
+    // sitten kun tulee lisää ceissejä, lisätään eri täyttö variaatioita
+    throw runtime_error("Error: Found scanning mode not yet implemented.");
+  }
+  for (size_t i = 0; i < values_length; i++)
+  {
+    if (doubleValues[i] == theMissingValue)
+      origValues[i % gridXSize][gridYSize - (i / gridXSize) - 1] = kFloatMissing;
+    else
+      origValues[i % gridXSize][gridYSize - (i / gridXSize) - 1] =
+          static_cast<float>(doubleValues[i]);
+  }
+}
+
+// Interpolate the original values to the wanted grid
+void ProjectGridData(GridRecordData *theGridRecordData, const NFmiDataMatrix<float> &origValues)
+{
+  int destSizeX = theGridRecordData->itsGrid.itsNX;
+  int destSizeY = theGridRecordData->itsGrid.itsNY;
+  theGridRecordData->itsGridData.Resize(destSizeX, destSizeY);
+  NFmiGrid destGrid(theGridRecordData->itsGrid.itsArea,
+                    theGridRecordData->itsGrid.itsNX,
+                    theGridRecordData->itsGrid.itsNY);
+  int counter = 0;
+
+  auto param = FmiParameterName(theGridRecordData->itsParam.GetParam()->GetIdent());
+  for (destGrid.Reset(); destGrid.Next(); counter++)
+  {
+    int destX = counter % theGridRecordData->itsGrid.itsNX;
+    int destY = counter / theGridRecordData->itsGrid.itsNX;
+    theGridRecordData->itsGridData[destX][destY] = DataMatrixUtils::InterpolatedValue(
+        origValues, theGridRecordData->itsOrigGrid.itsArea->ToXY(destGrid.LatLon()), param);
+  }
+}
+
+// Crop the original values to the wanted grid
+void CropGridData(GridRecordData *theGridRecordData, const NFmiDataMatrix<float> &origValues)
+{
+  int x1 = static_cast<int>(theGridRecordData->itsGridPointCropOffset.X());
+  int y1 = static_cast<int>(theGridRecordData->itsGridPointCropOffset.Y());
+  int destSizeX = theGridRecordData->itsGrid.itsNX;
+  int destSizeY = theGridRecordData->itsGrid.itsNY;
+  theGridRecordData->itsGridData.Resize(destSizeX, destSizeY);
+  int origSizeX = theGridRecordData->itsOrigGrid.itsNX;
+  int origSizeY = theGridRecordData->itsOrigGrid.itsNY;
+  for (int j = 0; j < destSizeY; j++)
+  {
+    for (int i = 0; i < destSizeX; i++)
+    {
+      if ((x1 + i < 0) || (x1 + i >= origSizeX))
+        break;
+      if ((y1 + j < 0) || (y1 + j >= origSizeY))
+        break;
+      theGridRecordData->itsGridData[i][j] = origValues[x1 + i][y1 + j];
+    }
+  }
+}
+
 void FillGridData(grib_handle *theGribHandle,
                          GridRecordData *theGridRecordData,
                          bool doGlobeFix,
@@ -1009,39 +1103,8 @@ void FillGridData(grib_handle *theGribHandle,
     int status4 = grib_get_long(theGribHandle, "scanningMode", &scanningMode);
 
     if (status4 == 0)
-    {
-      if (scanningMode == 0)  // scanningMode 1. bit 0 -> +i +x | scanningMode 2. bit 0 -> -j -y
-      {
-        for (size_t i = 0; i < values_length; i++)
-        {
-          if (doubleValues[i] == theGridRecordData->itsMissingValue)
-            origValues[i % gridXSize][gridYSize - (i / gridXSize) - 1] = kFloatMissing;
-          else
-            origValues[i % gridXSize][gridYSize - (i / gridXSize) - 1] =
-                static_cast<float>(doubleValues[i]);
-        }
-      }
-      else if (scanningMode == 80)  // en tiedä mikä tämä moodi on, grib2 speksi ei määrää 5. tai 7.
-                                    // bitin merkitystä
-      // jouduin vain kokeilemaan LAPS datan juoksutuksen käsipelillä
-      {
-        for (size_t i = 0; i < values_length; i++)
-        {
-          if (doubleValues[i] == theGridRecordData->itsMissingValue)
-            origValues[i % gridXSize][gridYSize - (i / gridXSize) - 1] = kFloatMissing;
-          else
-            origValues[i % gridXSize][gridYSize - (i / gridXSize) - 1] =
-                static_cast<float>(doubleValues[i]);
-        }
-      }
-      else  // sitten kun tulee lisää ceissejä, lisätään eri täyttö variaatioita
-      {
-        throw runtime_error("Error: Found scanning mode not yet implemented.");
-        //			for(size_t i = 0; i<values_length; i++)
-        //				theValues[i%gridXSize][i/gridXSize] =
-        // static_cast<float>(doubleValues[i]);
-      }
-    }
+      FillScannedValues(
+          doubleValues, values_length, theGridRecordData->itsMissingValue, scanningMode, origValues);
 
     if (doGlobeFix)
     {
@@ -1064,45 +1127,9 @@ void FillGridData(grib_handle *theGribHandle,
       theGridRecordData->itsGridData = origValues;
     else if (theGridRecordData->fDoProjectionConversion &&
              theGridRecordData->itsLatlonCropRect == gMissingCropRect)
-    {  // tässä tehdään latlon projisointia
-      int destSizeX = theGridRecordData->itsGrid.itsNX;
-      int destSizeY = theGridRecordData->itsGrid.itsNY;
-      theGridRecordData->itsGridData.Resize(destSizeX, destSizeY);
-      NFmiGrid destGrid(theGridRecordData->itsGrid.itsArea,
-                        theGridRecordData->itsGrid.itsNX,
-                        theGridRecordData->itsGrid.itsNY);
-      int counter = 0;
-
-      auto param = FmiParameterName(theGridRecordData->itsParam.GetParam()->GetIdent());
-      for (destGrid.Reset(); destGrid.Next(); counter++)
-      {
-        int destX = counter % theGridRecordData->itsGrid.itsNX;
-        int destY = counter / theGridRecordData->itsGrid.itsNX;
-        theGridRecordData->itsGridData[destX][destY] = DataMatrixUtils::InterpolatedValue(
-            origValues, theGridRecordData->itsOrigGrid.itsArea->ToXY(destGrid.LatLon()), param);
-      }
-    }
+      ProjectGridData(theGridRecordData, origValues);  // tässä tehdään latlon projisointia
     else
-    {  // tässä raaka hila croppaus
-      int x1 = static_cast<int>(theGridRecordData->itsGridPointCropOffset.X());
-      int y1 = static_cast<int>(theGridRecordData->itsGridPointCropOffset.Y());
-      int destSizeX = theGridRecordData->itsGrid.itsNX;
-      int destSizeY = theGridRecordData->itsGrid.itsNY;
-      theGridRecordData->itsGridData.Resize(destSizeX, destSizeY);
-      int origSizeX = theGridRecordData->itsOrigGrid.itsNX;
-      int origSizeY = theGridRecordData->itsOrigGrid.itsNY;
-      for (int j = 0; j < destSizeY; j++)
-      {
-        for (int i = 0; i < destSizeX; i++)
-        {
-          if ((x1 + i < 0) || (x1 + i >= origSizeX))
-            break;
-          if ((y1 + j < 0) || (y1 + j >= origSizeY))
-            break;
-          theGridRecordData->itsGridData[i][j] = origValues[x1 + i][y1 + j];
-        }
-      }
-    }
+      CropGridData(theGridRecordData, origValues);  // tässä raaka hila croppaus
   }
   else
     throw runtime_error("Error: Couldn't get values-data from given grib_handle.");
@@ -1236,6 +1263,30 @@ bool CropParam(GridRecordData *gribData,
   return false;
 }
 
+// ----------------------------------------------------------------------
+/*!
+ * \brief Test whether the grib field is to be used
+ *
+ * The filter ignores the so called control grid, which is a 2x2 latlon area differing from the
+ * other grids at least in hirlam data. It would cause needless problems later on.
+ */
+// ----------------------------------------------------------------------
+
+bool IsGribFieldUsed(GridRecordData *tmpData,
+                     NFmiLevelBag &theIgnoredLevelList,
+                     const vector<FmiLevelType> &theAcceptOnlyLevelTypes,
+                     bool fCropParamsNotMensionedInTable,
+                     const vector<ParamChangeItem> &theParamChangeTable)
+{
+  if (!(tmpData->itsOrigGrid.itsNX > 2 || tmpData->itsOrigGrid.itsNY > 2))
+    return false;
+  if (::IgnoreThisLevel(tmpData, theIgnoredLevelList))
+    return false;
+  if (!::AcceptThisLevelType(tmpData, theAcceptOnlyLevelTypes))
+    return false;
+  return !::CropParam(tmpData, fCropParamsNotMensionedInTable, theParamChangeTable);
+}
+
 vector<NFmiQueryData *> ConvertGrib2QData(FILE *theInput,
                                           int theMaxQDataSizeInBytes,
                                           bool useOutputFile,
@@ -1342,23 +1393,16 @@ vector<NFmiQueryData *> ConvertGrib2QData(FILE *theInput,
         // muista poikkeava 2x2 hila latlon-area.
         // Aiheuttaisi turhia ongelmia jatkossa monessakin paikassa.
         bool gribFieldUsed = false;
-        if (tmpData->itsOrigGrid.itsNX > 2 || tmpData->itsOrigGrid.itsNY > 2)
+        if (IsGribFieldUsed(tmpData,
+                            theIgnoredLevelList,
+                            theAcceptOnlyLevelTypes,
+                            fCropParamsNotMensionedInTable,
+                            theParamChangeTable))
         {
-          if (!::IgnoreThisLevel(tmpData, theIgnoredLevelList))
-          {
-            if (::AcceptThisLevelType(tmpData, theAcceptOnlyLevelTypes))
-            {
-              if (!::CropParam(tmpData, fCropParamsNotMensionedInTable, theParamChangeTable))
-              {
-                //				::FillGridData(gribHandle, tmpData->itsGridData,
-                // tmpData->itsGrid, doGlobeFix);
-                ::FillGridData(gribHandle, tmpData, doGlobeFix, theParamChangeTable);
-                gribRecordDatas.push_back(tmpData);  // taman voisi optimoida, luomalla aluksi niin
-                                                     // iso vektori kuin tarvitaan
-                gribFieldUsed = true;
-              }
-            }
-          }
+          ::FillGridData(gribHandle, tmpData, doGlobeFix, theParamChangeTable);
+          gribRecordDatas.push_back(tmpData);  // taman voisi optimoida, luomalla aluksi niin
+                                               // iso vektori kuin tarvitaan
+          gribFieldUsed = true;
         }
         if (!gribFieldUsed)
         {

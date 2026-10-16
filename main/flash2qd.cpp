@@ -181,6 +181,16 @@ NFmiQueryData *CreateQueryData(const NFmiTimeList &theTimes)
   return NFmiQueryDataUtil::CreateEmptyData(innerInfo);
 }
 
+// Set the values of the parameter for all times if the parameter is in the data
+void fill_param_values(NFmiFastQueryInfo &info,
+                       FmiParameterName param,
+                       const std::vector<float> &values)
+{
+  if (info.Param(param))
+    for (info.ResetTime(); info.NextTime();)
+      info.FloatValue(values[info.TimeIndex()]);
+}
+
 NFmiQueryData *CreateFlashQueryData(std::vector<std::string> &theFlashStrings,
                                     bool fMakeLocal2UtcTimeConversion)
 {
@@ -219,21 +229,11 @@ NFmiQueryData *CreateFlashQueryData(std::vector<std::string> &theFlashStrings,
       NFmiFastQueryInfo info(data);
       info.First();
       // Täytetään lopuksi eri parametrit infoon/dataan
-      if (info.Param(kFmiLongitude))
-        for (info.ResetTime(); info.NextTime();)
-          info.FloatValue(lons[info.TimeIndex()]);
-      if (info.Param(kFmiLatitude))
-        for (info.ResetTime(); info.NextTime();)
-          info.FloatValue(lats[info.TimeIndex()]);
-      if (info.Param(kFmiFlashStrength))
-        for (info.ResetTime(); info.NextTime();)
-          info.FloatValue(powers[info.TimeIndex()]);
-      if (info.Param(kFmiFlashMultiplicity))
-        for (info.ResetTime(); info.NextTime();)
-          info.FloatValue(multiplicitys[info.TimeIndex()]);
-      if (info.Param(kFmiFlashAccuracy))
-        for (info.ResetTime(); info.NextTime();)
-          info.FloatValue(accuracys[info.TimeIndex()]);
+      fill_param_values(info, kFmiLongitude, lons);
+      fill_param_values(info, kFmiLatitude, lats);
+      fill_param_values(info, kFmiFlashStrength, powers);
+      fill_param_values(info, kFmiFlashMultiplicity, multiplicitys);
+      fill_param_values(info, kFmiFlashAccuracy, accuracys);
     }
   }
   return data;

@@ -1440,6 +1440,58 @@ void stat_these_stations_times(NFmiFastQueryInfo& qi)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Analyze all parameters if none were requested, otherwise validate the requested ones
+ */
+// ----------------------------------------------------------------------
+
+void select_parameters(NFmiFastQueryInfo& qi)
+{
+  if (options.these_params.empty())
+  {
+    for (qi.ResetParam(); qi.NextParam(false);)
+      options.these_params.insert(FmiParameterName(qi.Param().GetParam()->GetIdent()));
+  }
+  else
+  {
+    // Otherwise validate the parameters first
+    for (auto p : options.these_params)
+    {
+      if (!qi.Param(p))
+        throw std::runtime_error("Requested parameter not available in the data: '" +
+                                 converter.ToString(p) + "'");
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Replace requests for all times, stations or levels with the specific lists
+ */
+// ----------------------------------------------------------------------
+
+void expand_all_requests(NFmiFastQueryInfo& qi)
+{
+  // If all times were requested, update the specific list
+
+  if (options.all_times)
+    for (qi.ResetTime(); qi.NextTime();)
+      options.these_times.insert(qi.ValidTime().PosixTime());
+
+  // If all stations were requested, update the specific list
+
+  if (options.all_stations)
+    for (qi.ResetLocation(); qi.NextLocation();)
+      options.these_stations.insert(qi.Location()->GetIdent());
+
+  // If all levels were requested, update the specific list
+
+  if (options.all_levels)
+    for (qi.ResetLevel(); qi.NextLevel();)
+      options.these_levels.insert(qi.Level()->LevelValue());
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Main program without exception handling
  */
 // ----------------------------------------------------------------------
@@ -1460,44 +1512,14 @@ int run(int argc, char* argv[])
 
   // If no parameters were requested, analyze all
 
-  if (options.these_params.empty())
-  {
-    for (qi.ResetParam(); qi.NextParam(false);)
-      options.these_params.insert(FmiParameterName(qi.Param().GetParam()->GetIdent()));
-  }
-  else
-  {
-    // Otherwise validate the parameters first
-    for (auto p : options.these_params)
-    {
-      if (!qi.Param(p))
-        throw std::runtime_error("Requested parameter not available in the data: '" +
-                                 converter.ToString(p) + "'");
-    }
-  }
+  select_parameters(qi);
 
   // Validate levels
 
   for (auto levelvalue : options.these_levels)
     set_level(qi, levelvalue);
 
-  // If all times were requested, update the specific list
-
-  if (options.all_times)
-    for (qi.ResetTime(); qi.NextTime();)
-      options.these_times.insert(qi.ValidTime().PosixTime());
-
-  // If all stations were requested, update the specific list
-
-  if (options.all_stations)
-    for (qi.ResetLocation(); qi.NextLocation();)
-      options.these_stations.insert(qi.Location()->GetIdent());
-
-  // If all levels were requested, update the specific list
-
-  if (options.all_levels)
-    for (qi.ResetLevel(); qi.NextLevel();)
-      options.these_levels.insert(qi.Level()->LevelValue());
+  expand_all_requests(qi);
 
   // We can never summarize parameters collectively, there is always a loop
 

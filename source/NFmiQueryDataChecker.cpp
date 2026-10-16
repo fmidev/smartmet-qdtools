@@ -230,6 +230,46 @@ bool NFmiQueryDataChecker::DoOutOfLimitsDataCheck()
   return GoThroughData(&modifier);
 }
 
+// Calculate the check result of the current parameter and store it into the control data
+
+void NFmiQueryDataChecker::CheckParameter(NFmiDataModifier* theModifier, int itsParamIdIndex)
+{
+  theModifier->Clear();
+  switch (itsLocationCheckType)
+  {
+    case 0:  // kaikki
+      GoThroughAllLocationsDataInTime(theModifier);
+      break;
+    case 1:  // halutut locationit
+      GoThroughLocationDataDataInTime(theModifier);
+      break;
+    case 2:  // random locationindex
+      GoThroughRandomLocationsDataInTime(theModifier);
+      break;
+    default:
+      break;
+  }
+
+  float result = theModifier->CalculationResult();
+  switch (itsCheckOperationIndex)
+  {
+    case 1:  // missing data
+      itsOhjausData->itsParamIdCheckList[itsParamIdIndex]
+          .itsCheckedParamMissingDataMaxProcent = result;
+      break;
+    case 2:  // straight data
+      itsOhjausData->itsParamIdCheckList[itsParamIdIndex]
+          .itsCheckedParamStraightDataMaxProcent = result;
+      break;
+    case 4:  // out-of-limit
+      CheckOutOfLimitsTerms(itsOhjausData->itsParamIdCheckList[itsParamIdIndex],
+                            theModifier);
+      break;
+    default:
+      break;
+  }
+}
+
 // ei käy läpi leveleitä!!!!
 bool NFmiQueryDataChecker::GoThroughData(NFmiDataModifier* theModifier)
 {
@@ -247,40 +287,7 @@ bool NFmiQueryDataChecker::GoThroughData(NFmiDataModifier* theModifier)
           int itsParamIdIndex = itsOhjausData->ParamIdIndex(parId);
           if (itsParamIdIndex >= 0)  // tämän pitää onnistua!!!
           {
-            theModifier->Clear();
-            switch (itsLocationCheckType)
-            {
-              case 0:  // kaikki
-                GoThroughAllLocationsDataInTime(theModifier);
-                break;
-              case 1:  // halutut locationit
-                GoThroughLocationDataDataInTime(theModifier);
-                break;
-              case 2:  // random locationindex
-                GoThroughRandomLocationsDataInTime(theModifier);
-                break;
-              default:
-                break;
-            }
-
-            float result = theModifier->CalculationResult();
-            switch (itsCheckOperationIndex)
-            {
-              case 1:  // missing data
-                itsOhjausData->itsParamIdCheckList[itsParamIdIndex]
-                    .itsCheckedParamMissingDataMaxProcent = result;
-                break;
-              case 2:  // straight data
-                itsOhjausData->itsParamIdCheckList[itsParamIdIndex]
-                    .itsCheckedParamStraightDataMaxProcent = result;
-                break;
-              case 4:  // out-of-limit
-                CheckOutOfLimitsTerms(itsOhjausData->itsParamIdCheckList[itsParamIdIndex],
-                                      theModifier);
-                break;
-              default:
-                break;
-            }
+            CheckParameter(theModifier, itsParamIdIndex);
           }
           else
           {

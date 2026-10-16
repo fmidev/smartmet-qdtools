@@ -95,6 +95,7 @@ class NFmiQueryDataChecker
   bool DoOutOfLimitsDataCheck();
   void MakeRandomLocationIndexies();
   bool GoThroughData(NFmiDataModifier* theModifier);
+  void CheckParameter(NFmiDataModifier* theModifier, int itsParamIdIndex);
   bool GoThroughLocationDataDataInTime(NFmiDataModifier* theModifier);
   bool GoThroughRandomLocationsDataInTime(NFmiDataModifier* theModifier);
   bool GoThroughAllLocationsDataInTime(NFmiDataModifier* theModifier);

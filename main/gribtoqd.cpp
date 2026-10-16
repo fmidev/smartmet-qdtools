@@ -4643,6 +4643,186 @@ void FreeDatas(vector<GridRecordData *> &theGribRecordDatas, float *array, unsig
     free(buffer);
 }
 
+// Locate the grib1 message sections
+void ParseGribSections(unsigned char *msg,
+                       unsigned char *&pds,
+                       unsigned char *&gds,
+                       unsigned char *&bms,
+                       unsigned char *&bds,
+                       unsigned char *&pointer)
+{
+  pds = (msg + 8);
+  pointer = pds + PDS_LEN(pds);
+  if (PDS_HAS_GDS(pds))
+  {
+    gds = pointer;
+    pointer += GDS_LEN(gds);
+  }
+  else
+  {
+    gds = nullptr;
+  }
+
+  if (PDS_HAS_BMS(pds))
+  {
+    bms = pointer;
+    pointer += BMS_LEN(bms);
+  }
+  else
+  {
+    bms = nullptr;
+  }
+
+  bds = pointer;
+  pointer += BDS_LEN(bds);
+}
+
+// Figure out the size of the data array
+void CalcGribArraySize(unsigned char *gds,
+                       unsigned char *bds,
+                       unsigned char *bms,
+                       int &nx,
+                       int &ny,
+                       long int &nxny,
+                       vector<long> &variableLengthRows,
+                       long &usedOutputGridRowLength)
+{
+  if (gds != nullptr)
+  {
+    GDS_grid(gds, bds, &nx, &ny, &nxny, variableLengthRows, &usedOutputGridRowLength);
+  }
+  else if (bms != nullptr)
+  {
+    nxny = nx = BMS_nxny(bms);
+    ny = 1;
+  }
+  else
+  {
+    if (BDS_NumBits(bds) == 0)
+    {
+      nxny = nx = 1;
+      fprintf(stderr,
+              "Missing GDS, constant record .. cannot determine number of data points\n");
+    }
+    else
+    {
+      nxny = nx = BDS_NValues(bds);
+    }
+    ny = 1;
+  }
+}
+
+// Unpack the grib1 values into the array
+void UnpackGribValues(
+    float *array, unsigned char *pds, unsigned char *bds, unsigned char *bms, long int nxny)
+{
+  double temp = int_power(10.0, -PDS_DecimalScale(pds));
+  int n_bits = BDS_NumBits(bds);
+  auto pureRefValue = static_cast<float>(BDS_RefValue(bds));
+  if (n_bits == 0)
+  {  // tämä vakiokenttä tapaus on ilmeisesti erikoistapaus ja siinä arvoiksi laitetaan kaikkiin
+    // suoraan referenssi-arvo (kun taas else haarassa referenssi-arvo pitää skaalata)
+    for (long i = 0; i < nxny; i++)
+      array[i] = pureRefValue;
+  }
+  else
+    BDS_unpack(array,
+               bds,
+               BMS_bitmap(bms),
+               n_bits,
+               nxny,
+               temp * pureRefValue,
+               temp * int_power(2.0, BDS_BinScale(bds)));
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Test whether the grib field is to be used
+ *
+ * The filter ignores the so called control grid, which is a 2x2 latlon area differing from the
+ * other grids at least in hirlam data. It would cause needless problems later on.
+ */
+// ----------------------------------------------------------------------
+
+bool IsGribFieldUsed(GridRecordData *tmpData, GribFilterOptions &theGribFilterOptions)
+{
+  if (!(tmpData->itsGrid.itsNX > 2 || tmpData->itsGrid.itsNY > 2))
+    return false;
+  if (IgnoreThisLevel(tmpData, theGribFilterOptions.itsIgnoredLevelList))
+    return false;
+  if (!AcceptThisLevelType(tmpData, theGribFilterOptions.itsAcceptOnlyLevelTypes))
+    return false;
+  return !CropParam(tmpData,
+                    theGribFilterOptions.fCropParamsNotMensionedInTable,
+                    theGribFilterOptions.itsParamChangeTable);
+}
+
+// Grow the buffer if needed to hold the given number of bytes
+unsigned char *GrowGribBuffer(unsigned char *buffer, long int &buffer_size, long needed)
+{
+  if (needed > buffer_size)
+  {
+    buffer_size = needed + 1000;
+    auto *new_buffer = (unsigned char *)realloc((void *)buffer, buffer_size);
+    if (new_buffer == nullptr)
+    {
+      free(buffer);
+      throw runtime_error("ran out of memory");
+    }
+    buffer = new_buffer;
+  }
+  return buffer;
+}
+
+// True if the end section "7777" in ascii is found
+bool HasGribEndSection(const unsigned char *pointer)
+{
+  return !(pointer[0] != 0x37 || pointer[1] != 0x37 || pointer[2] != 0x37 || pointer[3] != 0x37);
+}
+
+// Allocate a bigger array if needed
+float *GrowGribArray(float *array, long int nxny, long int &last_nxny)
+{
+  if (nxny > last_nxny)  // tarkistetaan pitääkö varata isompi taulukko
+  {
+    if (array)
+      free(array);
+    if ((array = (float *)malloc(sizeof(float) * nxny)) == nullptr)
+      throw runtime_error("End of memory, exiting...");
+    last_nxny = nxny;
+  }
+  return array;
+}
+
+// Create the grid record data from the grib1 sections
+GridRecordData *CreateGribRecordData(unsigned char *pds,
+                                     unsigned char *gds,
+                                     unsigned char *bds,
+                                     GribFilterOptions &theGribFilterOptions,
+                                     int &scanIModePos,
+                                     int &scanJModePos,
+                                     int &adjacentIMode)
+{
+  auto* tmpData = new GridRecordData;
+
+  tmpData->itsOrigTime = wgrib2qd::GetGribTime(pds, true);
+  tmpData->itsValidTime = wgrib2qd::GetGribTime(pds, false);
+  tmpData->itsParam = wgrib2qd::GetParam(pds, theGribFilterOptions.itsWantedSurfaceProducer);
+  tmpData->itsLevel = wgrib2qd::GetLevel(pds);
+  wgrib2qd::FillGridInfo(gds,
+                         bds,
+                         tmpData->itsGrid,
+                         scanIModePos,
+                         scanJModePos,
+                         adjacentIMode,
+                         theGribFilterOptions,
+                         theGribFilterOptions.fDoYAxisFlip);
+  if (theGribFilterOptions.fDoYAxisFlip)
+    scanJModePos = !static_cast<bool>(scanJModePos);
+  tmpData->itsGridData.Resize(tmpData->itsGrid.itsNX, tmpData->itsGrid.itsNY);
+  return tmpData;
+}
+
 void ConvertGrib(GribFilterOptions &theGribFilterOptions)
 {
   vector<std::shared_ptr<NFmiQueryData> > datas;
@@ -4660,7 +4840,6 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
   long int buffer_size = 0;
   int nx = 0;
   int ny = 0;
-  double temp = NAN;
   float* array = nullptr;
   vector<long> variableLengthRows;
   long usedOutputGridRowLength =
@@ -4686,49 +4865,12 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
         break;  // tultiin recordien loppuun
 
       /* read all whole grib record */
-      if (len_grib + msg - buffer > buffer_size)
-      {
-        buffer_size = static_cast<long>(len_grib + msg - buffer + 1000);
-        auto *new_buffer = (unsigned char *)realloc((void *)buffer, buffer_size);
-        if (new_buffer == nullptr)
-        {
-          free(buffer);
-          throw runtime_error("ran out of memory");
-        }
-        buffer = new_buffer;
-      }
+      buffer = GrowGribBuffer(buffer, buffer_size, static_cast<long>(len_grib + msg - buffer));
       read_grib(theGribFilterOptions.itsInputFile.fp, pos, len_grib, buffer);
 
       // parse grib message
       msg = buffer;
-      pds = (msg + 8);
-      pointer = pds + PDS_LEN(pds);
-      if (PDS_HAS_GDS(pds))
-      {
-        gds = pointer;
-        pointer += GDS_LEN(gds);
-      }
-      else
-      {
-        gds = nullptr;
-      }
-
-      if (PDS_HAS_BMS(pds))
-      {
-        //			throw runtime_error("gribissä oli bitmap tavaraa, jota tämä ohjelnma
-        // ei
-        // hoida, lopetetaan!");
-        bms = pointer;
-        pointer += BMS_LEN(bms);
-        //			continue;
-      }
-      else
-      {
-        bms = nullptr;
-      }
-
-      bds = pointer;
-      pointer += BDS_LEN(bds);
+      ParseGribSections(msg, pds, gds, bms, bds, pointer);
 
       // tulostetaan err:iin gds infot, jos niin on haluttu
 
@@ -4741,7 +4883,7 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
       }
 
       // end section - "7777" in ascii
-      if (pointer[0] != 0x37 || pointer[1] != 0x37 || pointer[2] != 0x37 || pointer[3] != 0x37)
+      if (!HasGribEndSection(pointer))
       {
         cerr << "Warning: Missing end section 7777, trying to continue to make data..." << endl;
         break;
@@ -4750,79 +4892,19 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
       }
 
       // figure out size of array
-      if (gds != nullptr)
-      {
-        GDS_grid(gds, bds, &nx, &ny, &nxny, variableLengthRows, &usedOutputGridRowLength);
-      }
-      else if (bms != nullptr)
-      {
-        nxny = nx = BMS_nxny(bms);
-        ny = 1;
-      }
-      else
-      {
-        if (BDS_NumBits(bds) == 0)
-        {
-          nxny = nx = 1;
-          fprintf(stderr,
-                  "Missing GDS, constant record .. cannot determine number of data points\n");
-        }
-        else
-        {
-          nxny = nx = BDS_NValues(bds);
-        }
-        ny = 1;
-      }
+      CalcGribArraySize(gds, bds, bms, nx, ny, nxny, variableLengthRows, usedOutputGridRowLength);
 
-      if (nxny > last_nxny)  // tarkistetaan pitääkö varata isompi taulukko
-      {
-        if (array)
-          free(array);
-        if ((array = (float *)malloc(sizeof(float) * nxny)) == nullptr)
-          throw runtime_error("End of memory, exiting...");
-        last_nxny = nxny;
-      }
+      array = GrowGribArray(array, nxny, last_nxny);
 
-      temp = int_power(10.0, -PDS_DecimalScale(pds));
-      int n_bits = BDS_NumBits(bds);
-      auto pureRefValue = static_cast<float>(BDS_RefValue(bds));
-      if (n_bits == 0)
-      {  // tämä vakiokenttä tapaus on ilmeisesti erikoistapaus ja siinä arvoiksi laitetaan kaikkiin
-        // suoraan referenssi-arvo (kun taas else haarassa referenssi-arvo pitää skaalata)
-        for (long i = 0; i < nxny; i++)
-          array[i] = pureRefValue;
-      }
-      else
-        BDS_unpack(array,
-                   bds,
-                   BMS_bitmap(bms),
-                   n_bits,
-                   nxny,
-                   temp * pureRefValue,
-                   temp * int_power(2.0, BDS_BinScale(bds)));
+      UnpackGribValues(array, pds, bds, bms, nxny);
 
       pos += len_grib;
 
-      auto* tmpData = new GridRecordData;
-
-      tmpData->itsOrigTime = wgrib2qd::GetGribTime(pds, true);
-      tmpData->itsValidTime = wgrib2qd::GetGribTime(pds, false);
-      tmpData->itsParam = wgrib2qd::GetParam(pds, theGribFilterOptions.itsWantedSurfaceProducer);
-      tmpData->itsLevel = wgrib2qd::GetLevel(pds);
       int scanIModePos = 0;   // ks. FillGridInfo-funktiosta kommentteja
       int scanJModePos = 0;   // ks. FillGridInfo-funktiosta kommentteja
       int adjacentIMode = 0;  // ks. FillGridInfo-funktiosta kommentteja
-      wgrib2qd::FillGridInfo(gds,
-                             bds,
-                             tmpData->itsGrid,
-                             scanIModePos,
-                             scanJModePos,
-                             adjacentIMode,
-                             theGribFilterOptions,
-                             theGribFilterOptions.fDoYAxisFlip);
-      if (theGribFilterOptions.fDoYAxisFlip)
-        scanJModePos = !static_cast<bool>(scanJModePos);
-      tmpData->itsGridData.Resize(tmpData->itsGrid.itsNX, tmpData->itsGrid.itsNY);
+      auto* tmpData = CreateGribRecordData(
+          pds, gds, bds, theGribFilterOptions, scanIModePos, scanJModePos, adjacentIMode);
 
       ChangeParamSettingsIfNeeded(
           theGribFilterOptions.itsParamChangeTable, tmpData, theGribFilterOptions.fVerbose);
@@ -4833,31 +4915,20 @@ void ConvertGrib(GribFilterOptions &theGribFilterOptions)
       // muista poikkeava 2x2 hila latlon-area.
       // Aiheuttaisi turhia ongelmia jatkossa monessakin paikassa.
       bool gribFieldUsed = false;
-      if (tmpData->itsGrid.itsNX > 2 || tmpData->itsGrid.itsNY > 2)
+      if (IsGribFieldUsed(tmpData, theGribFilterOptions))
       {
-        if (!IgnoreThisLevel(tmpData, theGribFilterOptions.itsIgnoredLevelList))
-        {
-          if (AcceptThisLevelType(tmpData, theGribFilterOptions.itsAcceptOnlyLevelTypes))
-          {
-            if (!CropParam(tmpData,
-                           theGribFilterOptions.fCropParamsNotMensionedInTable,
-                           theGribFilterOptions.itsParamChangeTable))
-            {
-              wgrib2qd::FillGridData(array,
-                                     tmpData,
-                                     scanIModePos,
-                                     scanJModePos,
-                                     adjacentIMode,
-                                     theGribFilterOptions,
-                                     variableLengthRows,
-                                     theGribFilterOptions.itsParamChangeTable,
-                                     theGribFilterOptions.fDoZigzagMode);
-              gribRecordDatas.push_back(tmpData);  // taman voisi optimoida, luomalla aluksi niin
-                                                   // iso vektori kuin tarvitaan
-              gribFieldUsed = true;
-            }
-          }
-        }
+        wgrib2qd::FillGridData(array,
+                               tmpData,
+                               scanIModePos,
+                               scanJModePos,
+                               adjacentIMode,
+                               theGribFilterOptions,
+                               variableLengthRows,
+                               theGribFilterOptions.itsParamChangeTable,
+                               theGribFilterOptions.fDoZigzagMode);
+        gribRecordDatas.push_back(tmpData);  // taman voisi optimoida, luomalla aluksi niin
+                                             // iso vektori kuin tarvitaan
+        gribFieldUsed = true;
       }
       if (!gribFieldUsed)
       {

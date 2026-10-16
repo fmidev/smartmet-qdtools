@@ -3644,30 +3644,49 @@ void store_messages_amdar(const NameMap& namemap,
 
 // ----------------------------------------------------------------------
 /*!
- * \brief Sort amdar messages to time and ident (aircraft reg. nr or other identification) order.
- *
- *        Parameter mapping is set to namemap. Data times (the first time for each amdar)
- *        for the idents/amdars are set to 'identtimemap' and idents are stored to 'timeidentlist'
- *        in time and ident order.
- *
- *        Also set number of data levels from max number of time instants per amdar to 'levelcount'
- *
- *        Messages with missing/unknown ident, phase of flight or altitude are filtered off.
+ * \brief Store the sounding or amdar idents in time and messages in time and ident order into lists
  */
 // ----------------------------------------------------------------------
 
-void organize_messages_amdar(const Messages& origmessages,
-                             const NameMap& parammap,
-                             NameMap& namemap,
-                             Messages& messages,
-                             TimeIdentList& timeidentlist,
-                             IdentTimeMap& identtimemap,
-                             size_t& levelcount)
+void list_time_ident_messages(const TimeIdentMessageMap& timeidentmessages,
+                            TimeIdentList& timeidentlist,
+                            Messages& messages)
 {
-  using TimeMessageMap = std::map<std::string, Message>;
-  using MessageMap = std::map<std::string, TimeMessageMap>;
-  MessageMap messagemap;
-  Messages filteredmessages;
+  for (auto const& timeidents : timeidentmessages)
+  {
+    if (options.debug)
+      fprintf(
+          stderr, "TimeIdent %s %lu idents\n", timeidents.first.c_str(), timeidents.second.size());
+
+    for (auto const& identmessages : timeidents.second)
+    {
+      if (options.debug)
+        fprintf(stderr,
+                "  %s %lu messages\n",
+                identmessages.first.c_str(),
+                identmessages.second.size());
+
+      timeidentlist.push_back(identmessages.first);
+      messages.insert(messages.end(), identmessages.second.begin(), identmessages.second.end());
+    }
+  }
+}
+
+using AmdarTimeMessageMap = std::map<std::string, Message>;
+using AmdarMessageMap = std::map<std::string, AmdarTimeMessageMap>;
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Store messages into a map using aircraft/amdar ident as the (main) key
+ *
+ * Filter off messages with missing/unknown ident, phase of flight or altitude
+ */
+// ----------------------------------------------------------------------
+
+void collect_amdar_messages(const Messages& origmessages,
+                            AmdarMessageMap& messagemap,
+                            Messages& filteredmessages)
+{
   Message remappedmsg;
   std::set<NFmiMetTime> dummytimes;
   NFmiMetTime t;
@@ -3722,7 +3741,7 @@ void organize_messages_amdar(const Messages& origmessages,
 
       if (it == messagemap.end())
       {
-        TimeMessageMap tm;
+        AmdarTimeMessageMap tm;
         tm.insert(std::make_pair(to_iso_string(t.PosixTime()), fmsg));
 
         messagemap.insert(std::make_pair(ident, tm));
@@ -3735,24 +3754,89 @@ void organize_messages_amdar(const Messages& origmessages,
       std::cerr << "Warning: " << e.what() << " ... skipping message " << msgnbr << std::endl;
     }
   }
+}
 
-  // Build a list of all parameter names
+// ----------------------------------------------------------------------
+/*!
+ * \brief Set message ident and join last takeoff message to the start of landing phase
+ *
+ * \return The takeoff message, which is now the first message of the phase
+ */
+// ----------------------------------------------------------------------
 
-  std::set<std::string> names = collect_names(filteredmessages);
+Message* join_takeoff_to_landing(Message& lasttakeoffmsg,
+                                 const std::string& lastident,
+                                 std::string& msgident,
+                                 Messages& phasemessages)
+{
+  auto fit = get_ident(lasttakeoffmsg, options.messageremap, msgident);
+  fit->second.svalue = lastident;
 
-  namemap = map_names(names, parammap);
+  if (options.debug)
+    fprintf(stderr, "Set ident takeoff %s to %s\n", msgident.c_str(), lastident.c_str());
 
-  // Collect/group data by ident, phase of flight and time
+  phasemessages.push_back(lasttakeoffmsg);
 
+  return &lasttakeoffmsg;
+}
+
+// Print the amdar ident setting debugging information
+void print_amdar_ident_debug(const char* prefix,
+                             const Message& msg,
+                             const std::string& msgidentvalue,
+                             const std::string& lastident,
+                             Phase curphase,
+                             double lastaltitude,
+                             const std::string& state,
+                             std::set<NFmiMetTime>& dummytimes,
+                             std::string& msgident)
+{
+  NFmiMetTime t = get_validtime_amdar(dummytimes, msg, msgident, true);
+  fprintf(stderr,
+          "%s %s %s %d %s %5.0f %s\n",
+          prefix,
+          msgidentvalue.c_str(),
+          lastident.c_str(),
+          (int)curphase,
+          to_iso_string(t.PosixTime()).c_str(),
+          lastaltitude,
+          state.c_str());
+}
+
+// The state of grouping the amdar messages by ident, phase of flight and time
+struct AmdarGrouping
+{
+  AmdarGrouping(const NameMap& theNameMap,
+                IdentTimeMap& theIdentTimeMap,
+                TimeIdentMessageMap& theTimeIdentMessages,
+                size_t& theLevelCount)
+      : namemap(theNameMap),
+        identtimemap(theIdentTimeMap),
+        timeidentmessages(theTimeIdentMessages),
+        levelcount(theLevelCount)
+  {
+  }
+
+  void add(Message& msg, const std::string& ident);
+  void start_new_phase(Message& msg,
+                       const std::string& ident,
+                       bool identchange,
+                       const std::string& msgidentvalue);
+  void finish();
+
+  const NameMap& namemap;
+  IdentTimeMap& identtimemap;
+  TimeIdentMessageMap& timeidentmessages;
+  size_t& levelcount;
+
+  std::set<NFmiMetTime> dummytimes;
   Phase curphase = None;
   Phase lastphase = None;
   Phase lastmsgphase = None;
-  TimeIdentMessageMap timeidentmessages;
   Messages phasemessages;
   Message lasttakeoffmsg;
   std::string lastident;
   std::string lastorigident;
-  Fmi::DateTime lasttime;
   std::string msgident;
   std::string state;
   double lastaltitude = 0.0;
@@ -3760,158 +3844,189 @@ void organize_messages_amdar(const Messages& origmessages,
   bool phaserestart = false;
   bool phasereset = false;
   int counter = 0;
+};
 
-  levelcount = 0;
+// ----------------------------------------------------------------------
+/*!
+ * \brief Start a new ident/phase, storing the messages collected so far
+ */
+// ----------------------------------------------------------------------
 
-  auto imm = messagemap.begin();
-  for (; imm != messagemap.end(); imm++)
+void AmdarGrouping::start_new_phase(Message& msg,
+                                    const std::string& ident,
+                                    bool identchange,
+                                    const std::string& msgidentvalue)
+{
+  char cntrstr[16];
+  sprintf(cntrstr, "%06d", counter);
+  counter++;
+
+  lastident = ident + "_" + cntrstr + "_" + Fmi::to_string(curphase);
+  lastorigident = ident;
+
+  auto* firstmessage = &msg;
+
+  if (!phasemessages.empty())
   {
-    auto imt = imm->second.begin();
-    NFmiMetTime t;
+    // Store the ident/amdar
 
-    for (; imt != imm->second.end(); imt++)
-    {
-      auto& msg = imt->second;
-      auto iit = get_ident(msg, options.messageremap, msgident);
-      const std::string ident = imm->first;
-      bool identchange = (ident != lastorigident);
+    store_messages_amdar(
+        namemap, lastident, lastphase, phasemessages, identtimemap, timeidentmessages, levelcount);
+    phasemessages.clear();
 
-      // Get phase of flight. Join takeoff and flight or landing, and flight and landing messages
-      // when applicable.
-      //
-      // Remap phase of flight and altitude bufr codes if requested
-
-      curphase = get_phase_amdar(msg,
-                                 lasttakeoffmsg,
-                                 curphase,
-                                 lastmsgphase,
-                                 phasechange,
-                                 phaserestart,
-                                 phasereset,
-                                 lastaltitude);
-
-      if (phasereset)
-      {
-        // Ignore collected descending level fligth messages on phase change or Flying phase
-        // restart; they can not be joined with landing phase messages
-
-        if (options.debug)
-          fprintf(stderr,
-                  "%s reset %lu messages curphase=%d lastphase=%d\n",
-                  ident.c_str(),
-                  phasemessages.size(),
-                  (int)curphase,
-                  (int)lastphase);
-
-        phasemessages.clear();
-      }
-
-      if (options.debug)
-        debug_state_amdar(ident, lastorigident, curphase, lastphase, state);
-
-      if (identchange || phasechange || phaserestart)
-      {
-        char cntrstr[16];
-        sprintf(cntrstr, "%06d", counter);
-        counter++;
-
-        lastident = ident + "_" + cntrstr + "_" + Fmi::to_string(curphase);
-        lastorigident = ident;
-
-        auto* firstmessage = &msg;
-
-        if (!phasemessages.empty())
-        {
-          // Store the ident/amdar
-
-          store_messages_amdar(namemap,
-                               lastident,
-                               lastphase,
-                               phasemessages,
-                               identtimemap,
-                               timeidentmessages,
-                               levelcount);
-          phasemessages.clear();
-
-          if ((!identchange) && (curphase == Landing) && (!lasttakeoffmsg.empty()))
-          {
-            // Set message ident and join last takeoff message to the start of landing phase
-
-            auto fit = get_ident(lasttakeoffmsg, options.messageremap, msgident);
-            fit->second.svalue = lastident;
-
-            if (options.debug)
-              fprintf(stderr, "Set ident takeoff %s to %s\n", msgident.c_str(), lastident.c_str());
-
-            phasemessages.push_back(lasttakeoffmsg);
-
-            firstmessage = &lasttakeoffmsg;
-          }
-        }
-
-        if (options.debug)
-        {
-          t = get_validtime_amdar(dummytimes, *firstmessage, msgident, true);
-          fprintf(stderr,
-                  "Set ident %s %s %d %s %5.0f %s\n",
-                  iit->second.svalue.c_str(),
-                  lastident.c_str(),
-                  (int)curphase,
-                  to_iso_string(t.PosixTime()).c_str(),
-                  lastaltitude,
-                  state.c_str());
-        }
-
-        if (curphase != Takeoff)
-          lasttakeoffmsg.clear();
-      }
-      else if (options.debug)
-      {
-        t = get_validtime_amdar(dummytimes, msg, msgident, true);
-        fprintf(stderr,
-                "  set ident %s %s %d %s %5.0f %s\n",
-                iit->second.svalue.c_str(),
-                lastident.c_str(),
-                (int)curphase,
-                to_iso_string(t.PosixTime()).c_str(),
-                lastaltitude,
-                state.c_str());
-      }
-
-      iit->second.svalue = lastident;
-
-      phasemessages.push_back(imt->second);
-
-      lastphase = curphase;
-    }
+    if ((!identchange) && (curphase == Landing) && (!lasttakeoffmsg.empty()))
+      firstmessage = join_takeoff_to_landing(lasttakeoffmsg, lastident, msgident, phasemessages);
   }
 
-  // Handle last ident/phase
+  if (options.debug)
+    print_amdar_ident_debug("Set ident",
+                            *firstmessage,
+                            msgidentvalue,
+                            lastident,
+                            curphase,
+                            lastaltitude,
+                            state,
+                            dummytimes,
+                            msgident);
 
+  if (curphase != Takeoff)
+    lasttakeoffmsg.clear();
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Add the message of the ident to the current or a new phase
+ */
+// ----------------------------------------------------------------------
+
+void AmdarGrouping::add(Message& msg, const std::string& ident)
+{
+  auto iit = get_ident(msg, options.messageremap, msgident);
+  bool identchange = (ident != lastorigident);
+
+  // Get phase of flight. Join takeoff and flight or landing, and flight and landing messages
+  // when applicable.
+  //
+  // Remap phase of flight and altitude bufr codes if requested
+
+  curphase = get_phase_amdar(msg,
+                             lasttakeoffmsg,
+                             curphase,
+                             lastmsgphase,
+                             phasechange,
+                             phaserestart,
+                             phasereset,
+                             lastaltitude);
+
+  if (phasereset)
+  {
+    // Ignore collected descending level fligth messages on phase change or Flying phase
+    // restart; they can not be joined with landing phase messages
+
+    if (options.debug)
+      fprintf(stderr,
+              "%s reset %lu messages curphase=%d lastphase=%d\n",
+              ident.c_str(),
+              phasemessages.size(),
+              (int)curphase,
+              (int)lastphase);
+
+    phasemessages.clear();
+  }
+
+  if (options.debug)
+    debug_state_amdar(ident, lastorigident, curphase, lastphase, state);
+
+  if (identchange || phasechange || phaserestart)
+    start_new_phase(msg, ident, identchange, iit->second.svalue);
+  else if (options.debug)
+    print_amdar_ident_debug("  set ident",
+                            msg,
+                            iit->second.svalue,
+                            lastident,
+                            curphase,
+                            lastaltitude,
+                            state,
+                            dummytimes,
+                            msgident);
+
+  iit->second.svalue = lastident;
+
+  phasemessages.push_back(msg);
+
+  lastphase = curphase;
+}
+
+// Handle last ident/phase
+void AmdarGrouping::finish()
+{
   if ((!phasemessages.empty()) && ((curphase != Flying) || (lastmsgphase == Landing)))
     store_messages_amdar(
         namemap, "null", lastphase, phasemessages, identtimemap, timeidentmessages, levelcount);
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Collect/group data by ident, phase of flight and time
+ */
+// ----------------------------------------------------------------------
+
+void group_amdars(AmdarMessageMap& messagemap,
+                  const NameMap& namemap,
+                  IdentTimeMap& identtimemap,
+                  TimeIdentMessageMap& timeidentmessages,
+                  size_t& levelcount)
+{
+  AmdarGrouping grouping(namemap, identtimemap, timeidentmessages, levelcount);
+
+  levelcount = 0;
+
+  for (auto& ident_messages : messagemap)
+    for (auto& time_message : ident_messages.second)
+      grouping.add(time_message.second, ident_messages.first);
+
+  grouping.finish();
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Sort amdar messages to time and ident (aircraft reg. nr or other identification) order.
+ *
+ *        Parameter mapping is set to namemap. Data times (the first time for each amdar)
+ *        for the idents/amdars are set to 'identtimemap' and idents are stored to 'timeidentlist'
+ *        in time and ident order.
+ *
+ *        Also set number of data levels from max number of time instants per amdar to 'levelcount'
+ *
+ *        Messages with missing/unknown ident, phase of flight or altitude are filtered off.
+ */
+// ----------------------------------------------------------------------
+
+void organize_messages_amdar(const Messages& origmessages,
+                             const NameMap& parammap,
+                             NameMap& namemap,
+                             Messages& messages,
+                             TimeIdentList& timeidentlist,
+                             IdentTimeMap& identtimemap,
+                             size_t& levelcount)
+{
+  AmdarMessageMap messagemap;
+  Messages filteredmessages;
+
+  collect_amdar_messages(origmessages, messagemap, filteredmessages);
+
+  // Build a list of all parameter names
+
+  std::set<std::string> names = collect_names(filteredmessages);
+
+  namemap = map_names(names, parammap);
+
+  TimeIdentMessageMap timeidentmessages;
+  group_amdars(messagemap, namemap, identtimemap, timeidentmessages, levelcount);
 
   // Store the amdar idents in time and messages in time and ident order into lists
 
-  for (auto const& timeidents : timeidentmessages)
-  {
-    if (options.debug)
-      fprintf(
-          stderr, "TimeIdent %s %lu idents\n", timeidents.first.c_str(), timeidents.second.size());
-
-    for (auto const& identmessages : timeidents.second)
-    {
-      if (options.debug)
-        fprintf(stderr,
-                "  %s %lu messages\n",
-                identmessages.first.c_str(),
-                identmessages.second.size());
-
-      timeidentlist.push_back(identmessages.first);
-      messages.insert(messages.end(), identmessages.second.begin(), identmessages.second.end());
-    }
-  }
+  list_time_ident_messages(timeidentmessages, timeidentlist, messages);
 
   // Rebuild list of all parameter names with messages eventually collected
 
@@ -4471,36 +4586,6 @@ void group_soundings(SoundingMessageMap& messagemap,
 
 // ----------------------------------------------------------------------
 /*!
- * \brief Store the sounding idents in time and messages in time and ident order into lists
- */
-// ----------------------------------------------------------------------
-
-void list_sounding_messages(const TimeIdentMessageMap& timeidentmessages,
-                            TimeIdentList& timeidentlist,
-                            Messages& messages)
-{
-  for (auto const& timeidents : timeidentmessages)
-  {
-    if (options.debug)
-      fprintf(
-          stderr, "TimeIdent %s %lu idents\n", timeidents.first.c_str(), timeidents.second.size());
-
-    for (auto const& identmessages : timeidents.second)
-    {
-      if (options.debug)
-        fprintf(stderr,
-                "  %s %lu messages\n",
-                identmessages.first.c_str(),
-                identmessages.second.size());
-
-      timeidentlist.push_back(identmessages.first);
-      messages.insert(messages.end(), identmessages.second.begin(), identmessages.second.end());
-    }
-  }
-}
-
-// ----------------------------------------------------------------------
-/*!
  * \brief Sort sounding messages to station and time order
  *
  *        Parameter mapping is set to namemap. Data times (the first time for each sounding)
@@ -4538,7 +4623,7 @@ void organize_messages_sounding(const Messages& origmessages,
 
   // Store the sounding idents in time and messages in time and ident order into lists
 
-  list_sounding_messages(timeidentmessages, timeidentlist, messages);
+  list_time_ident_messages(timeidentmessages, timeidentlist, messages);
 
   // Rebuild list of all parameter names with messages eventually collected
 

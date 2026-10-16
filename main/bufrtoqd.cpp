@@ -4398,6 +4398,31 @@ void organize_messages_sounding(const Messages& origmessages,
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief The qd mapping code for the cloud type based on the vertical significance, or 0
+ *
+ * Only types 1-9 are accepted, 0 (no clouds, and all others) get MissingValue
+ */
+// ----------------------------------------------------------------------
+
+int cloud_type_mapping_code(double significance, double cloudtype)
+{
+  const int QDMappingCodeLowCloudType = 990411;
+  const int QDMappingCodeMiddleCloudType = 990412;
+  const int QDMappingCodeHighCloudType = 990413;
+
+  if (!((cloudtype >= 1) && (cloudtype <= 9)))
+    return 0;
+  if (significance == 7)
+    return QDMappingCodeLowCloudType;  // Low cloud
+  if (significance == 8)
+    return QDMappingCodeMiddleCloudType;  // Middle cloud
+  if (significance == 0)
+    return QDMappingCodeHighCloudType;  // High cloud
+  return 0;
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Decode low/middle/high cloud types
  */
 // ----------------------------------------------------------------------
@@ -4506,10 +4531,6 @@ void decode_cloudtypes(const Messages& origmessages, Messages& messages)
   //
   // Only types 1-9 are accepted, 0 (no clouds, and all others) get MissingValue
 
-  const int QDMappingCodeLowCloudType = 990411;
-  const int QDMappingCodeMiddleCloudType = 990412;
-  const int QDMappingCodeHighCloudType = 990413;
-
   Message msg;
 
   for (auto const& message : origmessages)
@@ -4524,30 +4545,7 @@ void decode_cloudtypes(const Messages& origmessages, Messages& messages)
 
       if ((itt != msg.end()) && (itt->second.value != kFloatMissing))
       {
-        int code = 0;
-
-        if (itl->second.value == 7)
-        {
-          // Low cloud
-
-          if ((itt->second.value >= 1) && (itt->second.value <= 9))
-            code = QDMappingCodeLowCloudType;
-        }
-        else if (itl->second.value == 8)
-        {
-          // Middle cloud
-
-          if ((itt->second.value >= 1) && (itt->second.value <= 9))
-            code = QDMappingCodeMiddleCloudType;
-        }
-        else if (itl->second.value == 0)
-        {
-          // High cloud
-
-          if ((itt->second.value >= 1) && (itt->second.value <= 9))
-            code = QDMappingCodeHighCloudType;
-        }
-
+        int code = cloud_type_mapping_code(itl->second.value, itt->second.value);
         if (code != 0)
           msg.insert(std::make_pair(code, itt->second));
       }

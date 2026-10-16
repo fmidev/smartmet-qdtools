@@ -73,6 +73,45 @@ std::vector<std::string> parse_brace_list(const std::string& s)
   return result;
 }
 
+// True if the metadata contains an entry for the given key
+bool metadata_has_key(CSLConstList meta, const std::string& def_key)
+{
+  for (int i = 0; meta && meta[i]; i++)
+  {
+    const std::string item(meta[i]);
+    if (item.find(def_key + "=") == 0 || item.find(def_key + " =") == 0 ||
+        item.substr(0, def_key.size()) == def_key)
+      return true;
+  }
+  return false;
+}
+
+// True if the subdataset name ends with :varname or //varname
+bool names_variable(const std::string& value, const std::string& varname)
+{
+  const std::string s1 = ":" + varname;
+  const std::string s2 = "//" + varname;
+  return ((value.size() >= s1.size() && value.substr(value.size() - s1.size()) == s1) ||
+          (value.size() >= s2.size() && value.substr(value.size() - s2.size()) == s2));
+}
+
+// Extract N from SUBDATASET_N_NAME, leaving n unchanged if it cannot be parsed
+void subdataset_number(const std::string& key, int& n)
+{
+  const auto name_pos = key.find("SUBDATASET_");
+  const auto name_end = key.rfind('_');
+  if (name_pos != std::string::npos && name_end > name_pos + 11)
+  {
+    try
+    {
+      n = std::stoi(key.substr(name_pos + 11, name_end - name_pos - 11));
+    }
+    catch (...)
+    {
+    }
+  }
+}
+
 bool IsMissingValue(float value, float ncMissingValue)
 {
   const float extraMissingValueLimit = 9.99e034F;
@@ -417,18 +456,7 @@ void nctools::NcFileExtended::merge_dim_meta(const std::string& dimname) const
     if (!ds)
       continue;
     CSLConstList meta = GDALGetMetadata(ds, nullptr);
-    bool has_dim = false;
-    for (int i = 0; meta && meta[i]; i++)
-    {
-      const std::string item(meta[i]);
-      if (item.find(def_key + "=") == 0 || item.find(def_key + " =") == 0 ||
-          item.substr(0, def_key.size()) == def_key)
-      {
-        has_dim = true;
-        break;
-      }
-    }
-    if (has_dim)
+    if (metadata_has_key(meta, def_key))
     {
       // Merge all metadata entries not already present (coordinate attrs + NETCDF_DIM_)
       for (int i = 0; meta && meta[i]; i++)
@@ -522,26 +550,9 @@ std::string nctools::NcFileExtended::get_subdataset_desc(const std::string& varn
     if (key.find("_NAME") == std::string::npos)
       continue;
     // Check if value ends with :varname or //varname
-    const std::string s1 = ":" + varname;
-    const std::string s2 = "//" + varname;
-    if ((value.size() >= s1.size() &&
-         value.substr(value.size() - s1.size()) == s1) ||
-        (value.size() >= s2.size() &&
-         value.substr(value.size() - s2.size()) == s2))
+    if (names_variable(value, varname))
     {
-      // Extract N from SUBDATASET_N_NAME
-      const auto name_pos = key.find("SUBDATASET_");
-      const auto name_end = key.rfind('_');
-      if (name_pos != std::string::npos && name_end > name_pos + 11)
-      {
-        try
-        {
-          matching_n = std::stoi(key.substr(name_pos + 11, name_end - name_pos - 11));
-        }
-        catch (...)
-        {
-        }
-      }
+      subdataset_number(key, matching_n);
       break;
     }
   }

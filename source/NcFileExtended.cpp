@@ -159,6 +159,71 @@ int compare_versions(const std::string& v1, const std::string& v2)
   return 0;
 }
 
+// Find the variable name of a single-variable file from the top-level metadata keys
+// (e.g. "cnc_PM10#units")
+std::vector<std::string> single_gdal_variable_name(GDALDatasetH gdal_dataset)
+{
+  CSLConstList meta = GDALGetMetadata(gdal_dataset, nullptr);
+  for (int i = 0; meta && meta[i]; i++)
+  {
+    const std::string item(meta[i]);
+    const auto hash = item.find('#');
+    if (hash == std::string::npos)
+      continue;
+    const std::string cname = item.substr(0, hash);
+    if (cname.substr(0, 9) == "NC_GLOBAL" || cname.substr(0, 11) == "NETCDF_DIM_")
+      continue;
+    // Check it's not a coordinate variable (lat, lon, time, level names)
+    const std::string lower = boost::algorithm::to_lower_copy(cname);
+    if (lower == "lat" || lower == "latitude" || lower == "lon" || lower == "longitude" ||
+        lower == "time" || lower == "level" || lower == "lev" || lower == "height" ||
+        lower == "depth" || lower == "z")
+      continue;
+    return {cname};
+  }
+  return {};
+}
+
+// The variable name of a SUBDATASET_N_NAME metadata item, or an empty string
+std::string subdataset_variable_name(const std::string &item)
+{
+  if (item.find("_NAME=") == std::string::npos)
+    return {};
+  const std::size_t colon_pos = item.rfind(':');
+  if (colon_pos == std::string::npos)
+    return {};
+  std::string varname = item.substr(colon_pos + 1);
+  if (varname.size() >= 2 && varname.front() == '"' && varname.back() == '"')
+    varname = varname.substr(1, varname.size() - 2);
+  if (varname.size() >= 2 && varname[0] == '/' && varname[1] == '/')
+    varname = varname.substr(2);
+  return varname;
+}
+
+// Throw if the axis values are not strictly monotonous
+void check_monotonic(const std::vector<double> &values, bool isdescending, const char *label)
+{
+  for (std::size_t i = 1; i < values.size(); i++)
+  {
+    if (!isdescending && values[i] <= values[i - 1])
+      throw Fmi::Exception(BCP, std::string(label) + "-axis is not monotonously increasing");
+    if (isdescending && values[i] >= values[i - 1])
+      throw Fmi::Exception(BCP, std::string(label) + "-axis is not monotonously decreasing");
+  }
+}
+
+// Check strict regularity of the axis (matches GDAL's internal ~1e-4 threshold)
+bool is_irregular_axis(const std::vector<double> &values, bool isdescending, double step)
+{
+  for (std::size_t i = 1; i < values.size(); i++)
+  {
+    const double s = isdescending ? (values[i - 1] - values[i]) : (values[i] - values[i - 1]);
+    if (std::abs(s - step) > 1e-4 * std::abs(step))
+      return true;
+  }
+  return false;
+}
+
 }  // anonymous namespace
 
 // ======================================================================
@@ -627,44 +692,12 @@ std::vector<std::string> nctools::NcFileExtended::get_gdal_variable_names() cons
 
     CSLConstList subdatasets = GDALGetMetadata(gdal_dataset, "SUBDATASETS");
     if (!subdatasets)
-    {
-      // No subdatasets: single-variable file.
-      // Find the variable name from the top-level metadata keys (e.g. "cnc_PM10#units").
-      CSLConstList meta = GDALGetMetadata(gdal_dataset, nullptr);
-      for (int i = 0; meta && meta[i]; i++)
-      {
-        const std::string item(meta[i]);
-        const auto hash = item.find('#');
-        if (hash == std::string::npos)
-          continue;
-        const std::string cname = item.substr(0, hash);
-        if (cname.substr(0, 9) == "NC_GLOBAL" || cname.substr(0, 11) == "NETCDF_DIM_")
-          continue;
-        // Check it's not a coordinate variable (lat, lon, time, level names)
-        const std::string lower = boost::algorithm::to_lower_copy(cname);
-        if (lower == "lat" || lower == "latitude" || lower == "lon" || lower == "longitude" ||
-            lower == "time" || lower == "level" || lower == "lev" || lower == "height" ||
-            lower == "depth" || lower == "z")
-          continue;
-        return {cname};
-      }
-      return {};
-    }
+      return single_gdal_variable_name(gdal_dataset);
 
     std::vector<std::string> varnames;
     for (int i = 0; subdatasets[i] != nullptr; ++i)
     {
-      const std::string item(subdatasets[i]);
-      if (item.find("_NAME=") == std::string::npos)
-        continue;
-      const std::size_t colon_pos = item.rfind(':');
-      if (colon_pos == std::string::npos)
-        continue;
-      std::string varname = item.substr(colon_pos + 1);
-      if (varname.size() >= 2 && varname.front() == '"' && varname.back() == '"')
-        varname = varname.substr(1, varname.size() - 2);
-      if (varname.size() >= 2 && varname[0] == '/' && varname[1] == '/')
-        varname = varname.substr(2);
+      std::string varname = subdataset_variable_name(subdatasets[i]);
       if (!varname.empty())
         varnames.push_back(varname);
     }
@@ -1223,15 +1256,7 @@ void nctools::NcFileExtended::find_axis_bounds_gdal(const std::string& coordname
       isdescending = true;
 
     // Verify monotonicity
-    for (std::size_t i = 1; i < values.size(); i++)
-    {
-      if (!isdescending && values[i] <= values[i - 1])
-        throw Fmi::Exception(BCP,
-                             std::string(label) + "-axis is not monotonously increasing");
-      if (isdescending && values[i] >= values[i - 1])
-        throw Fmi::Exception(BCP,
-                             std::string(label) + "-axis is not monotonously decreasing");
-    }
+    check_monotonic(values, isdescending, label);
 
     if (!isdescending)
     {
@@ -1251,18 +1276,7 @@ void nctools::NcFileExtended::find_axis_bounds_gdal(const std::string& coordname
     // Check strict regularity (matches GDAL's internal ~1e-4 threshold).
     // This flag is used to detect when GDAL resamples an irregular lat axis to ascending order.
     if (is_irregular)
-    {
-      *is_irregular = false;
-      for (std::size_t i = 1; i < values.size(); i++)
-      {
-        const double s = isdescending ? (values[i - 1] - values[i]) : (values[i] - values[i - 1]);
-        if (std::abs(s - step) > 1e-4 * std::abs(step))
-        {
-          *is_irregular = true;
-          break;
-        }
-      }
-    }
+      *is_irregular = is_irregular_axis(values, isdescending, step);
     for (std::size_t i = 1; i < values.size(); i++)
     {
       const double s = isdescending ? (values[i - 1] - values[i]) : (values[i] - values[i - 1]);

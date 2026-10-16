@@ -2570,49 +2570,57 @@ void GetLevelVerticalCoordinates(grib_handle *theHandle,
   }
 }
 
+// Change the parameter of the data at the given level and make it surface data
+void ChangeLevelParam(const ParamChangeItem &paramChangeItem,
+                      GridRecordData *theGribData,
+                      bool verbose)
+{
+  if (verbose)
+  {
+    cerr << paramChangeItem.itsOriginalParamId << " changed to "
+         << paramChangeItem.itsWantedParam.GetIdent() << " "
+         << paramChangeItem.itsWantedParam.GetName().CharPtr() << " at level "
+         << theGribData->itsLevel.LevelValue();
+  }
+
+  theGribData->ChangeParam(paramChangeItem.itsWantedParam);
+  theGribData->itsLevel = NFmiLevel(1, "sfc", 0);  // tarkista että tästä tulee pinta level dataa
+  if (verbose)
+    cerr << " level -> sfc";
+}
+
+// Change the parameter of the data
+void ChangeParam(const ParamChangeItem &paramChangeItem, GridRecordData *theGribData, bool verbose)
+{
+  if (verbose)
+  {
+    cerr << paramChangeItem.itsOriginalParamId << " changed to "
+         << paramChangeItem.itsWantedParam.GetIdent() << " "
+         << paramChangeItem.itsWantedParam.GetName().CharPtr();
+  }
+  theGribData->ChangeParam(paramChangeItem.itsWantedParam);
+}
+
 void ChangeParamSettingsIfNeeded(vector<ParamChangeItem> &theParamChangeTable,
                                  GridRecordData *theGribData,
                                  bool verbose)
 {
-  if (!theParamChangeTable.empty())
-  {  // muutetaan tarvittaessa parametrin nimeä ja id:tä
-    for (auto& paramChangeItem : theParamChangeTable)
-    {
-      if (paramChangeItem.itsOriginalParamId ==
-          static_cast<long>(theGribData->itsParam.GetParamIdent()))
-      {
-        if (paramChangeItem.itsLevel != nullptr)
-        {
-          if ((*paramChangeItem.itsLevel) == theGribData->itsLevel)
-          {
-            if (verbose)
-            {
-              cerr << paramChangeItem.itsOriginalParamId << " changed to "
-                   << paramChangeItem.itsWantedParam.GetIdent() << " "
-                   << paramChangeItem.itsWantedParam.GetName().CharPtr() << " at level "
-                   << theGribData->itsLevel.LevelValue();
-            }
+  // muutetaan tarvittaessa parametrin nimeä ja id:tä
+  for (auto& paramChangeItem : theParamChangeTable)
+  {
+    if (paramChangeItem.itsOriginalParamId !=
+        static_cast<long>(theGribData->itsParam.GetParamIdent()))
+      continue;
 
-            theGribData->ChangeParam(paramChangeItem.itsWantedParam);
-            theGribData->itsLevel =
-                NFmiLevel(1, "sfc", 0);  // tarkista että tästä tulee pinta level dataa
-            if (verbose)
-              cerr << " level -> sfc";
-            break;
-          }
-        }
-        else
-        {
-          if (verbose)
-          {
-            cerr << paramChangeItem.itsOriginalParamId << " changed to "
-                 << paramChangeItem.itsWantedParam.GetIdent() << " "
-                 << paramChangeItem.itsWantedParam.GetName().CharPtr();
-          }
-          theGribData->ChangeParam(paramChangeItem.itsWantedParam);
-          break;
-        }
-      }
+    if (paramChangeItem.itsLevel == nullptr)
+    {
+      ChangeParam(paramChangeItem, theGribData, verbose);
+      break;
+    }
+    if ((*paramChangeItem.itsLevel) == theGribData->itsLevel)
+    {
+      ChangeLevelParam(paramChangeItem, theGribData, verbose);
+      break;
     }
   }
 }

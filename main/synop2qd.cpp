@@ -23,7 +23,6 @@
 #include <smarttools/NFmiSoundingFunctions.h>
 
 #include <boost/algorithm/string.hpp>
-#include <fstream>
 
 using namespace std;
 

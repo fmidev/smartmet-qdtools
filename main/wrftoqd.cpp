@@ -918,7 +918,6 @@ NFmiTimeDescriptor CreateWRFTimeDescriptor(const netCDF::NcFile &ncFile)
 {
   try
   {
-    namespace p = std::placeholders;
     netCDF::NcVar var = ::GetWRFVariable(ncFile, "Times");
     if (var.isNull())
       var = ::GetWRFVariable(ncFile, "time");

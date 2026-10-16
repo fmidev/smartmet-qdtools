@@ -1714,6 +1714,48 @@ NFmiHPlaceDescriptor create_hdesc_amdar()
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief The value of the first found of the two coordinate codes, or missing
+ */
+// ----------------------------------------------------------------------
+
+float first_coordinate_value(const Message &msg, int code1, int code2)
+{
+  auto p_id = msg.find(code1);
+  if (p_id == msg.end())
+    p_id = msg.find(code2);
+  if (p_id != msg.end())
+    return static_cast<float>(p_id->second.value);
+  return kFloatMissing;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Test the coordinates are missing or in bounds, warn of invalid coordinates in debug mode
+ */
+// ----------------------------------------------------------------------
+
+bool coordinates_in_bounds(float lon, float lat)
+{
+  if (lon != kFloatMissing && (lon < -180 || lon > 180))
+  {
+    if (options.debug)
+      std::cerr << "Warning: BUFR message contains a station with longitude out of bounds "
+                   "[-180,180]: "
+                << lon << std::endl;
+    return false;
+  }
+  if (lat != kFloatMissing && (lat < -90 || lat > 90))
+  {
+    if (options.debug)
+      std::cerr << "Warning: BUFR message contains a station with latitude out of bounds [-90,90]: "
+                << lat << std::endl;
+    return false;
+  }
+  return true;
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Horizontal descriptor for BUOY/SHIP data
  *
  * These stations do not have numeric IDs, but CCITT IA5 identifier strings.
@@ -1747,36 +1789,10 @@ NFmiHPlaceDescriptor create_hdesc_buoy_ship(const Messages& messages)
     {
       const std::string name = p_id->second.svalue;
 
-      float lon = kFloatMissing;
-      float lat = kFloatMissing;
+      float lat = first_coordinate_value(msg, 5001, 5002);
+      float lon = first_coordinate_value(msg, 6001, 6002);
 
-      p_id = msg.find(5001);
-      if (p_id == msg.end())
-        p_id = msg.find(5002);
-      if (p_id != msg.end())
-        lat = static_cast<float>(p_id->second.value);
-
-      p_id = msg.find(6001);
-      if (p_id == msg.end())
-        p_id = msg.find(6002);
-      if (p_id != msg.end())
-        lon = static_cast<float>(p_id->second.value);
-
-      if (lon != kFloatMissing && (lon < -180 || lon > 180))
-      {
-        if (options.debug)
-          std::cerr << "Warning: BUFR message contains a station with longitude out of bounds "
-                       "[-180,180]: "
-                    << lon << std::endl;
-      }
-      else if (lat != kFloatMissing && (lat < -90 || lat > 90))
-      {
-        if (options.debug)
-          std::cerr
-              << "Warning: BUFR message contains a station with latitude out of bounds [-90,90]: "
-              << lat << std::endl;
-      }
-      else
+      if (coordinates_in_bounds(lon, lat))
         stations.insert(std::make_pair(name, NFmiPoint(lon, lat)));
     }
   }
@@ -2564,48 +2580,6 @@ void copy_records_amdar(NFmiFastQueryInfo &info,
 
     copy_amdar_values(info, msg, namemap, codeindex);
   }
-}
-
-// ----------------------------------------------------------------------
-/*!
- * \brief The value of the first found of the two coordinate codes, or missing
- */
-// ----------------------------------------------------------------------
-
-float first_coordinate_value(const Message &msg, int code1, int code2)
-{
-  auto p_id = msg.find(code1);
-  if (p_id == msg.end())
-    p_id = msg.find(code2);
-  if (p_id != msg.end())
-    return static_cast<float>(p_id->second.value);
-  return kFloatMissing;
-}
-
-// ----------------------------------------------------------------------
-/*!
- * \brief Test the coordinates are missing or in bounds, warn of invalid coordinates in debug mode
- */
-// ----------------------------------------------------------------------
-
-bool coordinates_in_bounds(float lon, float lat)
-{
-  if (lon != kFloatMissing && (lon < -180 || lon > 180))
-  {
-    if (options.debug)
-      std::cerr << "Warning: BUFR message contains a station with longitude out of bounds "
-                   "[-180,180]: "
-                << lon << std::endl;
-    return false;
-  }
-  if (lat != kFloatMissing && (lat < -90 || lat > 90))
-  {
-    if (options.debug)
-      std::cerr << "Warning: BUFR message contains a station with latitude out of bounds [-90,90]: "
-                << lat << std::endl;
-    return false;
-  }
-  return true;
 }
 
 // ----------------------------------------------------------------------

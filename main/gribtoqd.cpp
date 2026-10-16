@@ -2001,122 +2001,141 @@ std::string GetEarthProjFull(const EarthShape &theShape)
  */
 // ----------------------------------------------------------------------
 
-EarthShape GetEarthShape(grib_handle *theHandle)
+// GRIB1 earth shape
+EarthShape Grib1EarthShape(grib_handle *theHandle)
 {
   EarthShape shape;
-
-  double scale = 1;
-  long scalefactor = 1;
-
   long shapeOfTheEarth = 0;
-  if (!GetGribLongValue(theHandle, "shapeOfTheEarth", shapeOfTheEarth))
-  {
-    // GRIB1 handling
-    if (!GetGribLongValue(theHandle, "earthIsOblate", shapeOfTheEarth))
-      throw std::runtime_error("earthIsOblate not set in the GRIB");
+  if (!GetGribLongValue(theHandle, "earthIsOblate", shapeOfTheEarth))
+    throw std::runtime_error("earthIsOblate not set in the GRIB");
 
-    if (shapeOfTheEarth == 0)
-    {
-      // same as shapeOfTheEarth=0 for GRIB2
-      shape.a = 6367470.0;
-      shape.b = shape.a;
-    }
-    else
-    {
-      // shape as shapeOfTheEarth=2 for GRIB2
-      shape.a = 6378160.0;
-      shape.b = 6356775.0;
-    }
-  }
-
-  // Section 3, Code Table 2
-  else if (shapeOfTheEarth == 0)
+  if (shapeOfTheEarth == 0)
   {
-    // Earth assumed spherical with radius = 6,367,470.0 m
+    // same as shapeOfTheEarth=0 for GRIB2
     shape.a = 6367470.0;
     shape.b = shape.a;
   }
-  else if (shapeOfTheEarth == 1)
+  else
   {
-    // Earth assumed spherical with radius specified (in m) by data producer
-    if (GetGribLongValue(theHandle, "scaleFactorOfRadiusOfSphericalEarth", scalefactor))
-      if (scalefactor != GRIB_MISSING_LONG)
-        scale = pow(10.0, scalefactor);
-
-    if (!GetGribDoubleValue(theHandle, "scaledValueOfRadiusOfSphericalEarth", shape.a))
-      throw std::runtime_error("Failed to read scaledValueOfRadiusOfSphericalEarth");
-
-    shape.a *= scale;
-    shape.b = shape.a;
-  }
-  else if (shapeOfTheEarth == 2)
-  {
-    // Earth assumed oblate spheroid with size as determined by IAU in 1965 (major axis =
-    // 6,378,160.0 m, minor axis = 6,356,775.0 m, f = 1/297.0)
+    // shape as shapeOfTheEarth=2 for GRIB2
     shape.a = 6378160.0;
     shape.b = 6356775.0;
   }
-  else if (shapeOfTheEarth == 3 || shapeOfTheEarth == 7)
-  {
-    // Earth assumed oblate spheroid with major and minor axes specified (in m or km) by data
-    // producer
-    if (shapeOfTheEarth == 3)
-      scale = 1000;  // from kilometers to meters
-
-    if (!GetGribDoubleValue(theHandle, "scaledValueOfEarthMajorAxis", shape.a) ||
-        !GetGribDoubleValue(theHandle, "scaledValueOfEarthMinorAxis", shape.b))
-      throw std::runtime_error("Failed to read major/minor axes");
-    shape.a *= scale;
-    shape.b *= scale;
-    if (GetGribLongValue(theHandle, "scaleFactorOfMajorAxisOfOblateSpheroidEarth", scalefactor))
-      if (scalefactor != GRIB_MISSING_LONG)
-        shape.a *= pow(10.0, scalefactor);
-    if (GetGribLongValue(theHandle, "scaleFactorOfMinorAxisOfOblateSpheroidEarth", scalefactor))
-      if (scalefactor != GRIB_MISSING_LONG)
-        shape.b *= pow(10.0, scalefactor);
-  }
-  else if (shapeOfTheEarth == 4)
-  {
-    // Earth assumed oblate spheroid as defined in IAG-GRS80 model (major axis = 6,378,137.0 m,
-    // minor axis = 6,356,752.314 m, f = 1/298.257222101)
-    shape.a = 6378137.0;
-    shape.b = 6356752.314;
-  }
-  else if (shapeOfTheEarth == 5)
-  {
-    // Earth assumed represented by WGS84 (as used by ICAO since 1998)
-    shape.datum = "WGS84";
-    shape.a = 6378137.0;
-    shape.b = 6356752.3142;
-  }
-  else if (shapeOfTheEarth == 6)
-  {
-    // Earth assumed spherical with radius of 6,371,229.0 m
-    shape.a = 6371229.0;
-    shape.b = shape.a;
-  }
-  else if (shapeOfTheEarth == 8)
-  {
-    // Earth model assumed spherical with radius 6371200 m, but the horizontal datum of the
-    // resulting latitude/longitude field is the WGS84 reference frame
-    shape.a = 6371200.0;
-    shape.b = 6371200.0;
-  }
-  else if (shapeOfTheEarth == 9)
-  {
-    // Earth represented by the Ordnance Survey Great Britain 1936 Datum, using the Airy 1830
-    // Spheroid, the Greenwich meridian as 0 longitude, and the Newlyn datum as mean sea level, 0
-    // height
-    shape.datum = "OSGB36";
-    shape.a = 6377563.396;  // From Wikipedia on OSGB36
-    shape.b = 6356256.909;
-  }
-  else if (shapeOfTheEarth == 255)
-    throw std::runtime_error("Earth shape has value 255, the missing value");
-  else
-    throw std::runtime_error("Earth shape number " + std::to_string(shapeOfTheEarth) +
-                             " is reserved for local use (values 192-254)");
   return shape;
+}
+
+// Earth assumed spherical with radius specified (in m) by data producer
+EarthShape ProducerSphericalEarthShape(grib_handle *theHandle)
+{
+  EarthShape shape;
+  double scale = 1;
+  long scalefactor = 1;
+  if (GetGribLongValue(theHandle, "scaleFactorOfRadiusOfSphericalEarth", scalefactor))
+    if (scalefactor != GRIB_MISSING_LONG)
+      scale = pow(10.0, scalefactor);
+
+  if (!GetGribDoubleValue(theHandle, "scaledValueOfRadiusOfSphericalEarth", shape.a))
+    throw std::runtime_error("Failed to read scaledValueOfRadiusOfSphericalEarth");
+
+  shape.a *= scale;
+  shape.b = shape.a;
+  return shape;
+}
+
+// Earth assumed oblate spheroid with major and minor axes specified (in m or km) by data producer
+EarthShape ProducerOblateEarthShape(grib_handle *theHandle, long shapeOfTheEarth)
+{
+  EarthShape shape;
+  double scale = 1;
+  long scalefactor = 1;
+  if (shapeOfTheEarth == 3)
+    scale = 1000;  // from kilometers to meters
+
+  if (!GetGribDoubleValue(theHandle, "scaledValueOfEarthMajorAxis", shape.a) ||
+      !GetGribDoubleValue(theHandle, "scaledValueOfEarthMinorAxis", shape.b))
+    throw std::runtime_error("Failed to read major/minor axes");
+  shape.a *= scale;
+  shape.b *= scale;
+  if (GetGribLongValue(theHandle, "scaleFactorOfMajorAxisOfOblateSpheroidEarth", scalefactor))
+    if (scalefactor != GRIB_MISSING_LONG)
+      shape.a *= pow(10.0, scalefactor);
+  if (GetGribLongValue(theHandle, "scaleFactorOfMinorAxisOfOblateSpheroidEarth", scalefactor))
+    if (scalefactor != GRIB_MISSING_LONG)
+      shape.b *= pow(10.0, scalefactor);
+  return shape;
+}
+
+// Earth shapes with fixed parameters, returns false for other shapes
+bool FixedEarthShape(long shapeOfTheEarth, EarthShape &shape)
+{
+  switch (shapeOfTheEarth)
+  {
+    case 0:
+      // Earth assumed spherical with radius = 6,367,470.0 m
+      shape.a = 6367470.0;
+      shape.b = shape.a;
+      return true;
+    case 2:
+      // Earth assumed oblate spheroid with size as determined by IAU in 1965 (major axis =
+      // 6,378,160.0 m, minor axis = 6,356,775.0 m, f = 1/297.0)
+      shape.a = 6378160.0;
+      shape.b = 6356775.0;
+      return true;
+    case 4:
+      // Earth assumed oblate spheroid as defined in IAG-GRS80 model (major axis = 6,378,137.0 m,
+      // minor axis = 6,356,752.314 m, f = 1/298.257222101)
+      shape.a = 6378137.0;
+      shape.b = 6356752.314;
+      return true;
+    case 5:
+      // Earth assumed represented by WGS84 (as used by ICAO since 1998)
+      shape.datum = "WGS84";
+      shape.a = 6378137.0;
+      shape.b = 6356752.3142;
+      return true;
+    case 6:
+      // Earth assumed spherical with radius of 6,371,229.0 m
+      shape.a = 6371229.0;
+      shape.b = shape.a;
+      return true;
+    case 8:
+      // Earth model assumed spherical with radius 6371200 m, but the horizontal datum of the
+      // resulting latitude/longitude field is the WGS84 reference frame
+      shape.a = 6371200.0;
+      shape.b = 6371200.0;
+      return true;
+    case 9:
+      // Earth represented by the Ordnance Survey Great Britain 1936 Datum, using the Airy 1830
+      // Spheroid, the Greenwich meridian as 0 longitude, and the Newlyn datum as mean sea level, 0
+      // height
+      shape.datum = "OSGB36";
+      shape.a = 6377563.396;  // From Wikipedia on OSGB36
+      shape.b = 6356256.909;
+      return true;
+    default:
+      return false;
+  }
+}
+
+EarthShape GetEarthShape(grib_handle *theHandle)
+{
+  long shapeOfTheEarth = 0;
+  if (!GetGribLongValue(theHandle, "shapeOfTheEarth", shapeOfTheEarth))
+    return Grib1EarthShape(theHandle);
+
+  // Section 3, Code Table 2
+  if (shapeOfTheEarth == 1)
+    return ProducerSphericalEarthShape(theHandle);
+  if (shapeOfTheEarth == 3 || shapeOfTheEarth == 7)
+    return ProducerOblateEarthShape(theHandle, shapeOfTheEarth);
+
+  EarthShape shape;
+  if (FixedEarthShape(shapeOfTheEarth, shape))
+    return shape;
+  if (shapeOfTheEarth == 255)
+    throw std::runtime_error("Earth shape has value 255, the missing value");
+  throw std::runtime_error("Earth shape number " + std::to_string(shapeOfTheEarth) +
+                           " is reserved for local use (values 192-254)");
 }
 
 // ----------------------------------------------------------------------
@@ -2126,6 +2145,188 @@ EarthShape GetEarthShape(grib_handle *theHandle)
  * Throws for unsupported projections. Based on pygrib code in GitHub.
  */
 // ----------------------------------------------------------------------
+
+// The PROJ string for the rotated latlon projection
+std::string GetRotatedLatLonProjString(grib_handle *theHandle, const std::string &earth_proj)
+{
+  double pole_lon = 666;
+  double pole_lat = 666;
+  double rotation = 666;
+  if (!GetGribDoubleValue(theHandle, "longitudeOfSouthernPoleInDegrees", pole_lon) ||
+      !GetGribDoubleValue(theHandle, "latitudeOfSouthernPoleInDegrees", pole_lat) ||
+      !GetGribDoubleValue(theHandle, "angleOfRotationInDegrees", rotation))
+    throw std::runtime_error("Failed to extract rotated_ll parameters");
+
+  if (rotation != 0)
+    throw std::runtime_error("Rotated latlon rotation not supported");  // TODO
+
+  // Note:: convert to eqc == legacy NFmiRotatedLatLonArea
+  return fmt::format(
+      "+type=crs +proj=ob_tran +o_proj=eqc +o_lon_p={} +o_lat_p={} +lon_0={} {} +wktext +over "
+      "+no_defs",
+      0,
+      -pole_lat,
+      pole_lon,
+      earth_proj);
+}
+
+// The PROJ string for the mercator projection
+std::string GetMercatorProjString(grib_handle *theHandle,
+                                  const std::string &earth_proj,
+                                  long truncateDegrees)
+{
+  double lon1 = 0;
+  double lon2 = 0;
+  bool ok = true;
+  ok &= GetGribDoubleValue(theHandle, "longitudeOfFirstGridPointInDegrees", lon1);
+  ok &= GetGribDoubleValue(theHandle, "longitudeOfLastGridPointInDegrees", lon2);
+  // We ignore LaDInDegrees on purpose since the setting is meaningless when the corners
+  // coordinates are given in degrees.
+
+  if (!ok)
+    throw std::runtime_error("Failed to extract mercator parameters");
+
+  if (truncateDegrees)
+  {
+    lon1 = static_cast<int>(lon1);
+    lon2 = static_cast<int>(lon2);
+  }
+  return fmt::format("+type=crs +proj=merc +lon_0={} {}",
+                     // (lon2 > lon1 ? 0.5 * (lon1 + lon2) : 0.5 * (lon1 + lon2 + 360)),
+                     (lon2 > lon1 ? 0 : 180),
+                     earth_proj);
+}
+
+// The PROJ string for the polar stereographic projection
+std::string GetPolarStereographicProjString(grib_handle *theHandle, const std::string &earth_proj)
+{
+  double lat_ts = 0;
+  double lon_0 = 0;
+  long proj_centre = 0;  // north pole by default
+  if (!GetGribDoubleValue(theHandle, "latitudeWhereDxAndDyAreSpecifiedInDegrees", lat_ts) ||
+      !GetGribDoubleValue(theHandle, "orientationOfTheGridInDegrees", lon_0) ||
+      !GetGribLongValue(theHandle, "projectionCentreFlag", proj_centre))
+    throw std::runtime_error("Failed to extract polar_stereographic parameters");
+
+  return fmt::format("+type=crs +proj=stere +lon_0={} +lat_0={} +lat_ts={} {}",
+                     lon_0,
+                     (proj_centre == 0 ? 90 : -90),
+                     lat_ts,
+                     earth_proj);
+}
+
+// The PROJ string for the lambert conformal conic projection
+std::string GetLambertProjString(grib_handle *theHandle, const std::string &earth_proj)
+{
+  double lon_0 = 0;
+  double lat_0 = 0;
+  double lat_1 = 0;
+  double lat_2 = 0;
+  double pole_lon = 0;
+  double pole_lat = 0;
+  if (!GetGribDoubleValue(theHandle, "LoVInDegrees", lon_0) ||
+      !GetGribDoubleValue(theHandle, "LaDInDegrees", lat_0) ||
+      !GetGribDoubleValue(theHandle, "Latin1InDegrees", lat_1) ||
+      !GetGribDoubleValue(theHandle, "Latin2InDegrees", lat_2) ||
+      !GetGribDoubleValue(theHandle, "longitudeOfSouthernPoleInDegrees", pole_lon) ||
+      !GetGribDoubleValue(theHandle, "latitudeOfSouthernPoleInDegrees", pole_lat))
+    throw std::runtime_error("Failed to extract lambert parameters");
+
+  if (pole_lon != 0 || pole_lat != -90)
+    throw std::runtime_error("Rotated Lambert projection not supported");  // TODO
+
+  if (lon_0 > 180)
+    lon_0 -= 360;
+
+  return fmt::format("+type=crs +proj=lcc +lon_0={} +lat_0={} +lat_1={} +lat_2={} {}",
+                     lon_0,
+                     lat_0,
+                     lat_1,
+                     lat_2,
+                     earth_proj);
+}
+
+// The PROJ string for the albers equal area projection
+std::string GetAlbersProjString(grib_handle *theHandle,
+                                const std::string &earth_proj,
+                                long truncateDegrees)
+{
+  double lon_0 = 0;
+  double lat_0 = 0;
+  double lat_1 = 0;
+  double lat_2 = 0;
+  if (!GetGribDoubleValue(theHandle, "LoVInDegrees", lon_0) ||
+      !GetGribDoubleValue(theHandle, "LaDInDegrees", lat_0) ||
+      !GetGribDoubleValue(theHandle, "Latin1InDegrees", lat_1) ||
+      !GetGribDoubleValue(theHandle, "Latin2InDegrees", lat_2))
+    throw std::runtime_error("Failed to extract albers parameters");
+
+  if (truncateDegrees)
+  {
+    lon_0 = static_cast<int>(lon_0);
+    lat_0 = static_cast<int>(lat_0);
+    lat_1 = static_cast<int>(lat_1);
+    lat_2 = static_cast<int>(lat_2);
+  }
+
+  return fmt::format("+type=crs +proj=aea +lon_0={} +lat_0={} +lat_1={} +lat_2={} {}",
+                     lon_0,
+                     lat_0,
+                     lat_1,
+                     lat_2,
+                     earth_proj);
+}
+
+// The PROJ string for the space view projection
+std::string GetSpaceViewProjString(grib_handle *theHandle,
+                                   const EarthShape &earth_shape,
+                                   const std::string &earth_proj)
+{
+  double lon_0 = 0;
+  double lat_0 = 0;
+  double Nr = 0;
+  if (!GetGribDoubleValue(theHandle, "longitudeOfSubSatellitePointInDegrees", lon_0) ||
+      !GetGribDoubleValue(theHandle, "latitudeOfSubSatellitePointInDegrees", lat_0) ||
+      !GetGribDoubleValue(theHandle, "Nr", Nr))
+    throw std::runtime_error("Failed to extract space_view parameters");
+
+  double grib2divider = 1;
+  GetGribDoubleValue(theHandle, "grib2divider", grib2divider);
+
+  return fmt::format(
+      "+type=crs +proj={} +lon_0={} +lat_0={} +h={} {}",
+      (lat_0 == 0 ? "geos" : "nsper"),
+      lon_0,
+      lat_0,
+      earth_shape.a * (Nr / grib2divider - 1),  // == Nr/scale*a - a, the distance from the surface
+      earth_proj);
+}
+
+// The PROJ string for the equatorial azimuthal equidistant projection
+std::string GetAzimuthalEquidistantProjString(grib_handle *theHandle, const std::string &earth_proj)
+{
+  double lon_0 = 0;
+  double lat_0 = 0;
+  if (!GetGribDoubleValue(theHandle, "standardParallel", lat_0) ||
+      !GetGribDoubleValue(theHandle, "centralLongitude", lon_0))
+    throw std::runtime_error("Failed to extract equatorial_azimuthal_equidistant parameters");
+
+  return fmt::format(
+      "+type=crs +proj=aeqd +lon_0={} +lat_0={} {}", lon_0 / 1e6, lat_0 / 1e6, earth_proj);
+}
+
+// The PROJ string for the lambert azimuthal equal area projection
+std::string GetLambertAzimuthalProjString(grib_handle *theHandle, const std::string &earth_proj)
+{
+  double lon_0 = 0;
+  double lat_0 = 0;
+  if (!GetGribDoubleValue(theHandle, "standardParallel", lat_0) ||
+      !GetGribDoubleValue(theHandle, "centralLongitude", lon_0))
+    throw std::runtime_error("Failed to extract lambert_azimuthal_equal_area parameters");
+
+  return fmt::format(
+      "+type=crs +proj=laea +lon_0={} +lat_0={} {}", lon_0 / 1e6, lat_0 / 1e6, earth_proj);
+}
 
 std::string GetProjString(grib_handle *theHandle)
 {
@@ -2148,172 +2349,28 @@ std::string GetProjString(grib_handle *theHandle)
   GetGribLongValue(theHandle, "truncateDegrees", truncateDegrees);
 
   if (proj_name == "rotated_ll" || proj_name == "rotated_gg")
-  {
-    double pole_lon = 666;
-    double pole_lat = 666;
-    double rotation = 666;
-    if (!GetGribDoubleValue(theHandle, "longitudeOfSouthernPoleInDegrees", pole_lon) ||
-        !GetGribDoubleValue(theHandle, "latitudeOfSouthernPoleInDegrees", pole_lat) ||
-        !GetGribDoubleValue(theHandle, "angleOfRotationInDegrees", rotation))
-      throw std::runtime_error("Failed to extract rotated_ll parameters");
-
-    if (rotation != 0)
-      throw std::runtime_error("Rotated latlon rotation not supported");  // TODO
-
-    // Note:: convert to eqc == legacy NFmiRotatedLatLonArea
-    return fmt::format(
-        "+type=crs +proj=ob_tran +o_proj=eqc +o_lon_p={} +o_lat_p={} +lon_0={} {} +wktext +over "
-        "+no_defs",
-        0,
-        -pole_lat,
-        pole_lon,
-        earth_proj);
-  }
+    return GetRotatedLatLonProjString(theHandle, earth_proj);
 
   if (proj_name == "mercator")
-  {
-    double lon1 = 0;
-    double lon2 = 0;
-    bool ok = true;
-    ok &= GetGribDoubleValue(theHandle, "longitudeOfFirstGridPointInDegrees", lon1);
-    ok &= GetGribDoubleValue(theHandle, "longitudeOfLastGridPointInDegrees", lon2);
-    // We ignore LaDInDegrees on purpose since the setting is meaningless when the corners
-    // coordinates are given in degrees.
-
-    if (!ok)
-      throw std::runtime_error("Failed to extract mercator parameters");
-
-    if (truncateDegrees)
-    {
-      lon1 = static_cast<int>(lon1);
-      lon2 = static_cast<int>(lon2);
-    }
-    return fmt::format("+type=crs +proj=merc +lon_0={} {}",
-                       // (lon2 > lon1 ? 0.5 * (lon1 + lon2) : 0.5 * (lon1 + lon2 + 360)),
-                       (lon2 > lon1 ? 0 : 180),
-                       earth_proj);
-  }
+    return GetMercatorProjString(theHandle, earth_proj, truncateDegrees);
 
   if (proj_name == "polar_stereographic")
-  {
-    double lat_ts = 0;
-    double lon_0 = 0;
-    long proj_centre = 0;  // north pole by default
-    if (!GetGribDoubleValue(theHandle, "latitudeWhereDxAndDyAreSpecifiedInDegrees", lat_ts) ||
-        !GetGribDoubleValue(theHandle, "orientationOfTheGridInDegrees", lon_0) ||
-        !GetGribLongValue(theHandle, "projectionCentreFlag", proj_centre))
-      throw std::runtime_error("Failed to extract polar_stereographic parameters");
-
-    return fmt::format("+type=crs +proj=stere +lon_0={} +lat_0={} +lat_ts={} {}",
-                       lon_0,
-                       (proj_centre == 0 ? 90 : -90),
-                       lat_ts,
-                       earth_proj);
-  }
+    return GetPolarStereographicProjString(theHandle, earth_proj);
 
   if (proj_name == "lambert")
-  {
-    double lon_0 = 0;
-    double lat_0 = 0;
-    double lat_1 = 0;
-    double lat_2 = 0;
-    double pole_lon = 0;
-    double pole_lat = 0;
-    if (!GetGribDoubleValue(theHandle, "LoVInDegrees", lon_0) ||
-        !GetGribDoubleValue(theHandle, "LaDInDegrees", lat_0) ||
-        !GetGribDoubleValue(theHandle, "Latin1InDegrees", lat_1) ||
-        !GetGribDoubleValue(theHandle, "Latin2InDegrees", lat_2) ||
-        !GetGribDoubleValue(theHandle, "longitudeOfSouthernPoleInDegrees", pole_lon) ||
-        !GetGribDoubleValue(theHandle, "latitudeOfSouthernPoleInDegrees", pole_lat))
-      throw std::runtime_error("Failed to extract lambert parameters");
-
-    if (pole_lon != 0 || pole_lat != -90)
-      throw std::runtime_error("Rotated Lambert projection not supported");  // TODO
-
-    if (lon_0 > 180)
-      lon_0 -= 360;
-
-    return fmt::format("+type=crs +proj=lcc +lon_0={} +lat_0={} +lat_1={} +lat_2={} {}",
-                       lon_0,
-                       lat_0,
-                       lat_1,
-                       lat_2,
-                       earth_proj);
-  }
+    return GetLambertProjString(theHandle, earth_proj);
 
   if (proj_name == "albers")
-  {
-    double lon_0 = 0;
-    double lat_0 = 0;
-    double lat_1 = 0;
-    double lat_2 = 0;
-    if (!GetGribDoubleValue(theHandle, "LoVInDegrees", lon_0) ||
-        !GetGribDoubleValue(theHandle, "LaDInDegrees", lat_0) ||
-        !GetGribDoubleValue(theHandle, "Latin1InDegrees", lat_1) ||
-        !GetGribDoubleValue(theHandle, "Latin2InDegrees", lat_2))
-      throw std::runtime_error("Failed to extract albers parameters");
-
-    if (truncateDegrees)
-    {
-      lon_0 = static_cast<int>(lon_0);
-      lat_0 = static_cast<int>(lat_0);
-      lat_1 = static_cast<int>(lat_1);
-      lat_2 = static_cast<int>(lat_2);
-    }
-
-    return fmt::format("+type=crs +proj=aea +lon_0={} +lat_0={} +lat_1={} +lat_2={} {}",
-                       lon_0,
-                       lat_0,
-                       lat_1,
-                       lat_2,
-                       earth_proj);
-  }
+    return GetAlbersProjString(theHandle, earth_proj, truncateDegrees);
 
   if (proj_name == "space_view")
-  {
-    double lon_0 = 0;
-    double lat_0 = 0;
-    double Nr = 0;
-    if (!GetGribDoubleValue(theHandle, "longitudeOfSubSatellitePointInDegrees", lon_0) ||
-        !GetGribDoubleValue(theHandle, "latitudeOfSubSatellitePointInDegrees", lat_0) ||
-        !GetGribDoubleValue(theHandle, "Nr", Nr))
-      throw std::runtime_error("Failed to extract space_view parameters");
-
-    double grib2divider = 1;
-    GetGribDoubleValue(theHandle, "grib2divider", grib2divider);
-
-    return fmt::format("+type=crs +proj={} +lon_0={} +lat_0={} +h={} {}",
-                       (lat_0 == 0 ? "geos" : "nsper"),
-                       lon_0,
-                       lat_0,
-                       earth_shape.a * (Nr / grib2divider -
-                                        1),  // == Nr/scale*a - a, the distance from the surface
-                       earth_proj);
-  }
+    return GetSpaceViewProjString(theHandle, earth_shape, earth_proj);
 
   if (proj_name == "equatorial_azimuthal_equidistant")
-  {
-    double lon_0 = 0;
-    double lat_0 = 0;
-    if (!GetGribDoubleValue(theHandle, "standardParallel", lat_0) ||
-        !GetGribDoubleValue(theHandle, "centralLongitude", lon_0))
-      throw std::runtime_error("Failed to extract equatorial_azimuthal_equidistant parameters");
-
-    return fmt::format(
-        "+type=crs +proj=aeqd +lon_0={} +lat_0={} {}", lon_0 / 1e6, lat_0 / 1e6, earth_proj);
-  }
+    return GetAzimuthalEquidistantProjString(theHandle, earth_proj);
 
   if (proj_name == "lambert_azimuthal_equal_area")
-  {
-    double lon_0 = 0;
-    double lat_0 = 0;
-    if (!GetGribDoubleValue(theHandle, "standardParallel", lat_0) ||
-        !GetGribDoubleValue(theHandle, "centralLongitude", lon_0))
-      throw std::runtime_error("Failed to extract lambert_azimuthal_equal_area parameters");
-
-    return fmt::format(
-        "+type=crs +proj=laea +lon_0={} +lat_0={} {}", lon_0 / 1e6, lat_0 / 1e6, earth_proj);
-  }
+    return GetLambertAzimuthalProjString(theHandle, earth_proj);
 
   throw std::runtime_error("Handling of projection " + proj_name +
                            " found from grib is not implemented");

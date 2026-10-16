@@ -20,6 +20,58 @@ using namespace std;
 
 namespace
 {
+// Find the grid x-size whose grid spacing is closest to the given resolution in km
+unsigned long FindClosestXGridSize(const NFmiArea *area, double xRes)
+{
+  unsigned long testGridSize = 50;
+  unsigned long i = 0;
+  double minDist = 999999999;
+  double lastDist = minDist;
+  unsigned long closestXGridSize = 2;
+  for (i = 2; i < 5000; i++)
+  {
+    NFmiGrid grid(area, i, testGridSize);
+    NFmiLocation loc1(grid.GridToLatLon(NFmiPoint(i / 2, testGridSize / 2)));
+    NFmiLocation loc2(grid.GridToLatLon(NFmiPoint(i / 2 + 1, testGridSize / 2)));
+    double currDist = ::fabs(loc1.Distance(loc2) / 1000. - xRes);
+    if (currDist < minDist)
+    {
+      minDist = currDist;
+      closestXGridSize = i;
+    }
+    if (lastDist < currDist)
+      break;  // jos ero haluttuun alkaa taas kasvamaan, lopetetaan
+    lastDist = currDist;
+  }
+  return closestXGridSize;
+}
+
+// Find the grid y-size whose grid spacing is closest to the given resolution in km
+unsigned long FindClosestYGridSize(const NFmiArea *area, double yRes)
+{
+  unsigned long testGridSize = 50;
+  unsigned long i = 0;
+  double minDist = 999999999;
+  double lastDist = minDist;
+  unsigned long closestYGridSize = 2;
+  for (i = 2; i < 5000; i++)
+  {
+    NFmiGrid grid(area, testGridSize, i);
+    NFmiLocation loc1(grid.GridToLatLon(NFmiPoint(testGridSize / 2, i / 2)));
+    NFmiLocation loc2(grid.GridToLatLon(NFmiPoint(testGridSize / 2, i / 2 + 1)));
+    double currDist = ::fabs(loc1.Distance(loc2) / 1000. - yRes);
+    if (currDist < minDist)
+    {
+      minDist = currDist;
+      closestYGridSize = i;
+    }
+    if (lastDist < currDist)
+      break;  // jos ero haluttuun alkaa taas kasvamaan, lopetetaan
+    lastDist = currDist;
+  }
+  return closestYGridSize;
+}
+
 void Domain(int argc, const char *argv[]);
 
 // ----------------------------------------------------------------------
@@ -188,47 +240,8 @@ void Domain(int argc, const char *argv[])
                           doDataGridSizeCheck);
     else
     {
-      unsigned long testGridSize = 50;
-      unsigned long i = 0;
-      double minDist = 999999999;
-      double lastDist = minDist;
-      unsigned long closestXGridSize = 2;
-      // etsitään ensin sopiva x-ulottuvuus
-      for (i = 2; i < 5000; i++)
-      {
-        NFmiGrid grid(areaPtr.get(), i, testGridSize);
-        NFmiLocation loc1(grid.GridToLatLon(NFmiPoint(i / 2, testGridSize / 2)));
-        NFmiLocation loc2(grid.GridToLatLon(NFmiPoint(i / 2 + 1, testGridSize / 2)));
-        double currDist = ::fabs(loc1.Distance(loc2) / 1000. - xRes);
-        if (currDist < minDist)
-        {
-          minDist = currDist;
-          closestXGridSize = i;
-        }
-        if (lastDist < currDist)
-          break;  // jos ero haluttuun alkaa taas kasvamaan, lopetetaan
-        lastDist = currDist;
-      }
-
-      // etsitään sitten sopiva y-ulottuvuus
-      minDist = 999999999;
-      lastDist = minDist;
-      unsigned long closestYGridSize = 2;
-      for (i = 2; i < 5000; i++)
-      {
-        NFmiGrid grid(areaPtr.get(), testGridSize, i);
-        NFmiLocation loc1(grid.GridToLatLon(NFmiPoint(testGridSize / 2, i / 2)));
-        NFmiLocation loc2(grid.GridToLatLon(NFmiPoint(testGridSize / 2, i / 2 + 1)));
-        double currDist = ::fabs(loc1.Distance(loc2) / 1000. - yRes);
-        if (currDist < minDist)
-        {
-          minDist = currDist;
-          closestYGridSize = i;
-        }
-        if (lastDist < currDist)
-          break;  // jos ero haluttuun alkaa taas kasvamaan, lopetetaan
-        lastDist = currDist;
-      }
+      unsigned long closestXGridSize = FindClosestXGridSize(areaPtr.get(), xRes);
+      unsigned long closestYGridSize = FindClosestYGridSize(areaPtr.get(), yRes);
       ::PrintGridSizeInfo(areaPtr.get(), closestXGridSize, closestYGridSize, doDataGridSizeCheck);
     }
   }

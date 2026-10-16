@@ -1931,36 +1931,37 @@ double GetMissingValue(grib_handle *theGribHandle)
   throw runtime_error("Error: Couldn't get missingValue from given grib_handle.");
 }
 
-void MakeParameterConversions(GridRecordData *theGridRecordData,
-                                     const vector<ParamChangeItem>& theParamChangeTable)
+// Apply the base and scale conversion of the parameter to the non-missing grid values
+void ScaleGridData(NFmiDataMatrix<float> &theGridData, const ParamChangeItem &paramChangeItem)
 {
-  if (!theParamChangeTable.empty())
-  {  // tehdään tarvittaessa parametrille base+scale muunnos
-    for (const auto& paramChangeItem : theParamChangeTable)
+  int nx = static_cast<int>(theGridData.NX());
+  int ny = static_cast<int>(theGridData.NY());
+  for (int j = 0; j < ny; j++)
+  {
+    for (int i = 0; i < nx; i++)
     {
-      if (paramChangeItem.itsWantedParam.GetIdent() ==
-          static_cast<long>(theGridRecordData->itsParam.GetParamIdent()))  // parametri on jo
-                                                                           // muutettu, nyt
-                                                                           // katsotaan onko
-                                                                           // wantedparam sama
-      {
-        if (paramChangeItem.itsConversionBase != 0 || paramChangeItem.itsConversionScale != 1)
-        {
-          int nx = static_cast<int>(theGridRecordData->itsGridData.NX());
-          int ny = static_cast<int>(theGridRecordData->itsGridData.NY());
-          for (int j = 0; j < ny; j++)
-          {
-            for (int i = 0; i < nx; i++)
-            {
-              if (theGridRecordData->itsGridData[i][j] != kFloatMissing)
-                theGridRecordData->itsGridData[i][j] =
-                    paramChangeItem.itsConversionBase +
-                    (theGridRecordData->itsGridData[i][j] * paramChangeItem.itsConversionScale);
-            }
-          }
-          break;
-        }
-      }
+      if (theGridData[i][j] != kFloatMissing)
+        theGridData[i][j] =
+            paramChangeItem.itsConversionBase +
+            (theGridData[i][j] * paramChangeItem.itsConversionScale);
+    }
+  }
+}
+
+void MakeParameterConversions(GridRecordData *theGridRecordData,
+                              const vector<ParamChangeItem>& theParamChangeTable)
+{
+  // tehdään tarvittaessa parametrille base+scale muunnos
+  for (const auto& paramChangeItem : theParamChangeTable)
+  {
+    // parametri on jo muutettu, nyt katsotaan onko wantedparam sama
+    if (paramChangeItem.itsWantedParam.GetIdent() !=
+        static_cast<long>(theGridRecordData->itsParam.GetParamIdent()))
+      continue;
+    if (paramChangeItem.itsConversionBase != 0 || paramChangeItem.itsConversionScale != 1)
+    {
+      ScaleGridData(theGridRecordData->itsGridData, paramChangeItem);
+      break;
     }
   }
 }

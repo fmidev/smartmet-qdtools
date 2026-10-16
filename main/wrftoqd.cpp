@@ -235,6 +235,47 @@ WRFData::DimensionMap GetNCDimensionMap(const nctools::Options& options,
   }
 }
 
+// Set the dimension name and size of the i:th dimension of a 3D or 4D parameter
+void SetDimensionData(WRFData::TotalDimensionData& dimData,
+                      const netCDF::NcDim& dim,
+                      int i,
+                      bool noLevels)
+{
+  if (i == 0)
+  {
+    dimData.timeDimName = dim.getName();
+    dimData.timeDimSize = dim.getSize();
+  }
+  else if ((!noLevels && i == 1))
+  {
+    dimData.levDimName = dim.getName();
+    dimData.levDimSize = dim.getSize();
+  }
+  else if ((noLevels && i == 1) || (!noLevels && i == 2))
+  {
+    dimData.xDimName = dim.getName();
+    dimData.xDimSize = dim.getSize();
+  }
+  else if ((noLevels && i == 2) || (!noLevels && i == 3))
+  {
+    dimData.yDimName = dim.getName();
+    dimData.yDimSize = dim.getSize();
+  }
+}
+
+// Print the dimension type and name of the parameter
+void PrintParamDimensionType(const netCDF::NcVar& var, bool fillData, bool noLevels)
+{
+  std::cerr << "param(";
+  if (fillData && noLevels)
+    std::cerr << "3D";
+  else if (fillData)
+    std::cerr << "4D";
+  else
+    std::cerr << "NO";
+  std::cerr << ") " << var.getName() << " (";
+}
+
 WRFData::TotalDimensionData GetTotalDimensionDataFromParam(const nctools::Options& options,
                                                                   const netCDF::NcVar& var)
 {
@@ -246,16 +287,7 @@ WRFData::TotalDimensionData GetTotalDimensionDataFromParam(const nctools::Option
     bool fillData = (numOfDims >= 3 && numOfDims <= 4);
     bool noLevels = (numOfDims == 3);
     if (options.verbose)
-    {
-      std::cerr << "param(";
-      if (fillData && noLevels)
-        std::cerr << "3D";
-      else if (fillData)
-        std::cerr << "4D";
-      else
-        std::cerr << "NO";
-      std::cerr << ") " << var.getName() << " (";
-    }
+      PrintParamDimensionType(var, fillData, noLevels);
     for (int i = 0; i < numOfDims; i++)
     {
       const netCDF::NcDim dim = var.getDim(i);
@@ -266,28 +298,7 @@ WRFData::TotalDimensionData GetTotalDimensionDataFromParam(const nctools::Option
         std::cerr << dim.getName();
       }
       if (fillData)
-      {
-        if (i == 0)
-        {
-          dimData.timeDimName = dim.getName();
-          dimData.timeDimSize = dim.getSize();
-        }
-        else if ((!noLevels && i == 1))
-        {
-          dimData.levDimName = dim.getName();
-          dimData.levDimSize = dim.getSize();
-        }
-        else if ((noLevels && i == 1) || (!noLevels && i == 2))
-        {
-          dimData.xDimName = dim.getName();
-          dimData.xDimSize = dim.getSize();
-        }
-        else if ((noLevels && i == 2) || (!noLevels && i == 3))
-        {
-          dimData.yDimName = dim.getName();
-          dimData.yDimSize = dim.getSize();
-        }
-      }
+        SetDimensionData(dimData, dim, i, noLevels);
     }
 
     if (options.verbose)
@@ -1185,6 +1196,36 @@ bool FindClosestLevelIndexies(float searchedLevelValue,
   }
 }
 
+// Interpolate linearly all the values of the current new level between the lower and upper levels
+void InterpolateBetweenLevels(NFmiFastQueryInfo &newInfo,
+                              NFmiFastQueryInfo &lowerLevel,
+                              NFmiFastQueryInfo &upperLevel,
+                              float factor)
+{
+  for (newInfo.ResetParam(), lowerLevel.ResetParam(), upperLevel.ResetParam();
+       newInfo.NextParam() && lowerLevel.NextParam() && upperLevel.NextParam();)
+  {
+    for (newInfo.ResetTime(), lowerLevel.ResetTime(), upperLevel.ResetTime();
+         newInfo.NextTime() && lowerLevel.NextTime() && upperLevel.NextTime();)
+    {
+      for (newInfo.ResetLocation(),
+           lowerLevel.ResetLocation(),
+           upperLevel.ResetLocation();
+           newInfo.NextLocation() && lowerLevel.NextLocation() &&
+           upperLevel.NextLocation();)
+      {
+        // 3.2. Tee normaali lineaarinen interpolaatio level arvojen avulla (olisiko
+        // logaritmisesta interpolaatiosta hyätyä?)
+        float lowerValue = lowerLevel.FloatValue();
+        float upperValue = upperLevel.FloatValue();
+        auto interpolatedValue =
+            static_cast<float>(NFmiInterpolation::Linear(factor, lowerValue, upperValue));
+        newInfo.FloatValue(interpolatedValue);
+      }
+    }
+  }
+}
+
 std::shared_ptr<NFmiQueryData> MakeLevelStaggeredDataFix(
     const std::shared_ptr<NFmiQueryData> &data,
     const WRFData::TotalDimensionDataSet::value_type &totalDimensionData,
@@ -1223,28 +1264,7 @@ std::shared_ptr<NFmiQueryData> MakeLevelStaggeredDataFix(
             upperLevel.LevelIndex(upperLevelIndex);
             float upperLevelValue = upperLevel.Level()->LevelValue();
             float factor = (newLevelValue - lowerLevelValue) / (upperLevelValue - lowerLevelValue);
-            for (newInfo.ResetParam(), lowerLevel.ResetParam(), upperLevel.ResetParam();
-                 newInfo.NextParam() && lowerLevel.NextParam() && upperLevel.NextParam();)
-            {
-              for (newInfo.ResetTime(), lowerLevel.ResetTime(), upperLevel.ResetTime();
-                   newInfo.NextTime() && lowerLevel.NextTime() && upperLevel.NextTime();)
-              {
-                for (newInfo.ResetLocation(),
-                     lowerLevel.ResetLocation(),
-                     upperLevel.ResetLocation();
-                     newInfo.NextLocation() && lowerLevel.NextLocation() &&
-                     upperLevel.NextLocation();)
-                {
-                  // 3.2. Tee normaali lineaarinen interpolaatio level arvojen avulla (olisiko
-                  // logaritmisesta interpolaatiosta hyätyä?)
-                  float lowerValue = lowerLevel.FloatValue();
-                  float upperValue = upperLevel.FloatValue();
-                  auto interpolatedValue =
-                      static_cast<float>(NFmiInterpolation::Linear(factor, lowerValue, upperValue));
-                  newInfo.FloatValue(interpolatedValue);
-                }
-              }
-            }
+            InterpolateBetweenLevels(newInfo, lowerLevel, upperLevel, factor);
           }
         }
         // 4. Palauta uusi data
@@ -1317,6 +1337,43 @@ bool DataIndexUsed(size_t index, const std::set<size_t> &usedDataIndexies)
   return it != usedDataIndexies.end();
 }
 
+// Combine the data with the later combinable data which have not been used yet
+std::shared_ptr<NFmiQueryData> CombineWithLaterData(
+    const nctools::Options& options,
+    const std::vector<std::shared_ptr<NFmiQueryData> >& dataVector,
+    size_t i,
+    std::shared_ptr<NFmiQueryData> data1,
+    std::set<size_t> &usedDataIndexies)
+{
+  for (size_t j = i + 1; j < dataVector.size(); j++)
+  {
+    if (!DataIndexUsed(j, usedDataIndexies))
+    {
+      const std::shared_ptr<NFmiQueryData>& data2 = dataVector[j];
+      if (AreDataCombinable(data1, data2))
+      {
+        std::shared_ptr<NFmiQueryData> newData = std::shared_ptr<NFmiQueryData>(
+            NFmiQueryDataUtil::CombineParams(data1.get(), data2.get()));
+        if (newData)
+        {
+          data1 = newData;
+          usedDataIndexies.insert(j);
+          if (options.verbose)
+            std::cerr << "Made fixed data combination (" << i << "+" << j
+                      << ") in function " << __FUNCTION__ << std::endl;
+        }
+        else
+          std::cerr
+              << "Error in " << __FUNCTION__
+              << ": combining data failed (error in program or data), continuing with "
+                 "original data"
+              << std::endl;
+      }
+    }
+  }
+  return data1;
+}
+
 std::vector<std::shared_ptr<NFmiQueryData> > CombineFixedStaggeredData(
     const nctools::Options& options, const std::vector<std::shared_ptr<NFmiQueryData> >& dataVector)
 {
@@ -1332,32 +1389,7 @@ std::vector<std::shared_ptr<NFmiQueryData> > CombineFixedStaggeredData(
         if (!DataIndexUsed(i, usedDataIndexies))
         {
           std::shared_ptr<NFmiQueryData> data1 = dataVector[i];
-          for (size_t j = i + 1; j < dataVector.size(); j++)
-          {
-            if (!DataIndexUsed(j, usedDataIndexies))
-            {
-              const std::shared_ptr<NFmiQueryData>& data2 = dataVector[j];
-              if (AreDataCombinable(data1, data2))
-              {
-                std::shared_ptr<NFmiQueryData> newData = std::shared_ptr<NFmiQueryData>(
-                    NFmiQueryDataUtil::CombineParams(data1.get(), data2.get()));
-                if (newData)
-                {
-                  data1 = newData;
-                  usedDataIndexies.insert(j);
-                  if (options.verbose)
-                    std::cerr << "Made fixed data combination (" << i << "+" << j
-                              << ") in function " << __FUNCTION__ << std::endl;
-                }
-                else
-                  std::cerr
-                      << "Error in " << __FUNCTION__
-                      << ": combining data failed (error in program or data), continuing with "
-                         "original data"
-                      << std::endl;
-              }
-            }
-          }
+          data1 = CombineWithLaterData(options, dataVector, i, data1, usedDataIndexies);
           newDataVector.push_back(data1);
         }
       }

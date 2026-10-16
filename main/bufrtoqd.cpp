@@ -4275,36 +4275,25 @@ void store_messages_sounding(const NameMap& namemap,
       im.first->second.begin(), soundingmessages.begin(), soundingmessages.end());
 }
 
+using SoundingTimeMessageMap = std::multimap<std::string, Message>;
+using SoundingMessageMap = std::map<long, SoundingTimeMessageMap>;
+
 // ----------------------------------------------------------------------
 /*!
- * \brief Sort sounding messages to station and time order
+ * \brief Store messages into a map using station and time as the keys
  *
- *        Parameter mapping is set to namemap. Data times (the first time for each sounding)
- *        for the soundings are set to 'stationtimemap' and stations are stored to 'timestationlist'
- *        in time and station order.
- *
- *        Also set number of data levels from max number of time instants per sounding to
- *        'levelcount'
+ * Filter off messages with missing/unknown station or altitude
  */
 // ----------------------------------------------------------------------
 
-void organize_messages_sounding(const Messages& origmessages,
-                                const NameMap& parammap,
-                                NameMap& namemap,
-                                Messages& messages,
-                                TimeIdentList& timeidentlist,
-                                IdentTimeMap& identtimemap,
-                                size_t& levelcount)
+void collect_sounding_messages(const Messages& origmessages,
+                               SoundingMessageMap& messagemap,
+                               Messages& filteredmessages)
 {
-  using TimeMessageMap = std::multimap<std::string, Message>;
-  using MessageMap = std::map<long, TimeMessageMap>;
-  MessageMap messagemap;
-  Messages filteredmessages;
   Message remappedmsg;
   NFmiMetTime t;
   size_t msgnbr = 0;
 
-  // Store messages into a map using station and time as the keys
   // Filter off messages with missing/unknown station or altitude
 
   for (const Message& msg : origmessages)
@@ -4349,7 +4338,7 @@ void organize_messages_sounding(const Messages& origmessages,
 
       if (it == messagemap.end())
       {
-        TimeMessageMap tm;
+        SoundingTimeMessageMap tm;
         tm.insert(std::make_pair(to_iso_string(t.PosixTime()), msg));
 
         messagemap.insert(std::make_pair(station, tm));
@@ -4362,17 +4351,22 @@ void organize_messages_sounding(const Messages& origmessages,
       std::cerr << "Warning: " << e.what() << " ... skipping message " << msgnbr << std::endl;
     }
   }
+}
 
-  // Build a list of all parameter names
+// ----------------------------------------------------------------------
+/*!
+ * \brief Collect/group data by station and time into soundings
+ */
+// ----------------------------------------------------------------------
 
-  std::set<std::string> names = collect_names(filteredmessages);
-
-  namemap = map_names(names, parammap);
-
-  // Collect/group data by station and time
-
+void group_soundings(SoundingMessageMap& messagemap,
+                     const NameMap& namemap,
+                     IdentTimeMap& identtimemap,
+                     TimeIdentMessageMap& timeidentmessages,
+                     size_t& levelcount)
+{
+  NFmiMetTime t;
   StationTimeSet stationtimeset;
-  TimeIdentMessageMap timeidentmessages;
   Messages soundingmessages;
   std::string lastident;
   double lastaltitude = 0.0;
@@ -4473,9 +4467,18 @@ void organize_messages_sounding(const Messages& origmessages,
                             identtimemap,
                             timeidentmessages,
                             levelcount);
+}
 
-  // Store the sounding idents in time and messages in time and ident order into lists
+// ----------------------------------------------------------------------
+/*!
+ * \brief Store the sounding idents in time and messages in time and ident order into lists
+ */
+// ----------------------------------------------------------------------
 
+void list_sounding_messages(const TimeIdentMessageMap& timeidentmessages,
+                            TimeIdentList& timeidentlist,
+                            Messages& messages)
+{
   for (auto const& timeidents : timeidentmessages)
   {
     if (options.debug)
@@ -4494,6 +4497,48 @@ void organize_messages_sounding(const Messages& origmessages,
       messages.insert(messages.end(), identmessages.second.begin(), identmessages.second.end());
     }
   }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Sort sounding messages to station and time order
+ *
+ *        Parameter mapping is set to namemap. Data times (the first time for each sounding)
+ *        for the soundings are set to 'stationtimemap' and stations are stored to 'timestationlist'
+ *        in time and station order.
+ *
+ *        Also set number of data levels from max number of time instants per sounding to
+ *        'levelcount'
+ */
+// ----------------------------------------------------------------------
+
+void organize_messages_sounding(const Messages& origmessages,
+                                const NameMap& parammap,
+                                NameMap& namemap,
+                                Messages& messages,
+                                TimeIdentList& timeidentlist,
+                                IdentTimeMap& identtimemap,
+                                size_t& levelcount)
+{
+  SoundingMessageMap messagemap;
+  Messages filteredmessages;
+
+  collect_sounding_messages(origmessages, messagemap, filteredmessages);
+
+  // Build a list of all parameter names
+
+  std::set<std::string> names = collect_names(filteredmessages);
+
+  namemap = map_names(names, parammap);
+
+  // Collect/group data by station and time
+
+  TimeIdentMessageMap timeidentmessages;
+  group_soundings(messagemap, namemap, identtimemap, timeidentmessages, levelcount);
+
+  // Store the sounding idents in time and messages in time and ident order into lists
+
+  list_sounding_messages(timeidentmessages, timeidentlist, messages);
 
   // Rebuild list of all parameter names with messages eventually collected
 

@@ -131,6 +131,52 @@ int parse_command_line(int argc, const char *argv[])
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Save the querydata converted from the input file unless already done
+ */
+// ----------------------------------------------------------------------
+
+void save_querydata(NFmiQueryData &data, const std::string &infile)
+{
+  // Establish the output name for the file
+  std::string outname = options.outdata + '/';
+  outname += NFmiStringTools::Basename(changesuffix(infile, "sqd"));
+
+  if (NFmiFileSystem::FileExists(outname) && !options.force)
+  {
+    if (options.verbose)
+      cout << "Already converted " << infile << " to " << outname << endl;
+    return;
+  }
+
+  // Now we have a NFmiFastQueryInfo in variable info for
+  // saving in file outname
+
+  // We must use a temporary file name to prevent triggers
+
+  string tmpname = options.tmpdir + '/' + NFmiStringTools::Basename(infile);
+
+  std::ofstream tmpfile(tmpname.c_str(), ios::binary | ios::out);
+  if (!tmpfile)
+  {
+    cout << "Could not write " << tmpname << endl;
+    return;
+  }
+
+  if (options.verbose)
+    cout << "writing " << outname << endl;
+  data.UseBinaryStorage(true);
+  tmpfile << data;
+  tmpfile.close();
+
+  if (!NFmiFileSystem::RenameFile(tmpname, outname))
+  {
+    cout << "Could not rename " << tmpname << " to " << outname << endl;
+    return;
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
  * The main program
  *
  * \param argc The number of arguments on the command line
@@ -170,44 +216,7 @@ int run(int argc, const char *argv[])
   {
     NFmiQueryData *data = FMI::RadContour::Pgm2QueryData(*it, options, cout);
     if (data)
-    {
-      // Establish the output name for the file
-      std::string outname = options.outdata + '/';
-      outname += NFmiStringTools::Basename(changesuffix(*it, "sqd"));
-
-      if (NFmiFileSystem::FileExists(outname) && !options.force)
-      {
-        if (options.verbose)
-          cout << "Already converted " << *it << " to " << outname << endl;
-        continue;
-      }
-
-      // Now we have a NFmiFastQueryInfo in variable info for
-      // saving in file outname
-
-      // We must use a temporary file name to prevent triggers
-
-      string tmpname = options.tmpdir + '/' + NFmiStringTools::Basename(*it);
-
-      std::ofstream tmpfile(tmpname.c_str(), ios::binary | ios::out);
-      if (!tmpfile)
-      {
-        cout << "Could not write " << tmpname << endl;
-        continue;
-      }
-
-      if (options.verbose)
-        cout << "writing " << outname << endl;
-      data->UseBinaryStorage(true);
-      tmpfile << *data;
-      tmpfile.close();
-
-      if (!NFmiFileSystem::RenameFile(tmpname, outname))
-      {
-        cout << "Could not rename " << tmpname << " to outname" << endl;
-        continue;
-      }
-    }
+      save_querydata(*data, *it);
   }
   return 0;
 }

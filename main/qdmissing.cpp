@@ -241,6 +241,84 @@ int analyze_all_parameters(NFmiFastQueryInfo& theQ)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Test whether the value is missing (or NaN if NaN checking is enabled)
+ */
+// ----------------------------------------------------------------------
+
+inline bool is_missing(float value)
+{
+  if (options.checknan)
+  {
+#ifdef UNIX
+    return isnan(value);
+#else
+    return _isnan(value);
+#endif
+  }
+  return (value == kFloatMissing);
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief The count or percentage of missing values for a single parameter
+ */
+// ----------------------------------------------------------------------
+
+float missing_value(size_t missing_count, size_t total_count)
+{
+  if (options.checknan || options.printcount)
+    return missing_count;
+  if (total_count == 0)
+    return 100.0;
+  return 100.0 * missing_count / total_count;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief The total count or mean percentage of missing values for all parameters
+ */
+// ----------------------------------------------------------------------
+
+int summarize(const vector<float>& percentages)
+{
+  if (percentages.empty())
+  {
+    if (options.checknan || options.printcount)
+      return 0;
+    return 100;
+  }
+
+  float sum = accumulate(percentages.begin(), percentages.end(), 0.0);
+  if (options.checknan || options.printcount)
+    return static_cast<int>(sum);
+  return static_cast<int>(sum / percentages.size());
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief The count or percentage of missing values for the current parameter
+ */
+// ----------------------------------------------------------------------
+
+float parameter_missing_value(NFmiFastQueryInfo& theQ)
+{
+  size_t total_count = 0;
+  size_t missing_count = 0;
+
+  for (theQ.ResetLocation(); theQ.NextLocation();)
+    for (theQ.ResetLevel(); theQ.NextLevel();)
+      for (theQ.ResetTime(); theQ.NextTime();)
+      {
+        ++total_count;
+        if (is_missing(theQ.FloatValue()))
+          ++missing_count;
+      }
+
+  return missing_value(missing_count, total_count);
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Calculate percentage of missing values from specified parameters
  */
 // ----------------------------------------------------------------------
@@ -259,48 +337,10 @@ int analyze_given_parameters(NFmiFastQueryInfo& theQ)
         percentages.push_back(100.0);
     }
     else
-    {
-      size_t total_count = 0;
-      size_t missing_count = 0;
-
-      for (theQ.ResetLocation(); theQ.NextLocation();)
-        for (theQ.ResetLevel(); theQ.NextLevel();)
-          for (theQ.ResetTime(); theQ.NextTime();)
-          {
-            ++total_count;
-            if (options.checknan)
-            {
-#ifdef UNIX
-              if (isnan(theQ.FloatValue()))
-#else
-              if (_isnan(theQ.FloatValue()))
-#endif
-                ++missing_count;
-            }
-            else if (theQ.FloatValue() == kFloatMissing)
-              ++missing_count;
-          }
-
-      if (options.checknan || options.printcount)
-        percentages.push_back(missing_count);
-      else if (total_count == 0)
-        percentages.push_back(100.0);
-      else
-        percentages.push_back(100.0 * missing_count / total_count);
-    }
+      percentages.push_back(parameter_missing_value(theQ));
   }
 
-  if (percentages.empty())
-  {
-    if (options.checknan || options.printcount)
-      return 0;
-    return 100;
-  }
-
-  float sum = accumulate(percentages.begin(), percentages.end(), 0.0);
-  if (options.checknan || options.printcount)
-    return static_cast<int>(sum);
-  return static_cast<int>(sum / percentages.size());
+  return summarize(percentages);
 }
 
 // ----------------------------------------------------------------------
@@ -370,37 +410,15 @@ int analyze_given_station_parameters(NFmiFastQueryInfo& theQ)
         for (theQ.ResetTime(); theQ.NextTime();)
         {
           ++total_count;
-          if (options.checknan)
-          {
-#ifdef UNIX
-            if (isnan(theQ.FloatValue()))
-#else
-            if (_isnan(theQ.FloatValue()))
-#endif
-              ++missing_count;
-          }
-          else if (theQ.FloatValue() == kFloatMissing)
+          if (is_missing(theQ.FloatValue()))
             ++missing_count;
         }
 
-      if (options.checknan || options.printcount)
-        percentages.push_back(missing_count);
-      else if (total_count == 0)
-        percentages.push_back(100.0);
-      else
-        percentages.push_back(100.0 * missing_count / total_count);
+      percentages.push_back(missing_value(missing_count, total_count));
     }
   }
 
-  if (percentages.empty())
-  {
-    return (options.checknan || options.printcount ? 0 : 100);
-  }
-
-  float sum = accumulate(percentages.begin(), percentages.end(), 0.0);
-  if (options.checknan || options.printcount)
-    return static_cast<int>(sum);
-  return static_cast<int>(sum / percentages.size());
+  return summarize(percentages);
 }
 
 // ----------------------------------------------------------------------
@@ -470,37 +488,75 @@ int analyze_given_parameters_now(NFmiFastQueryInfo& theQ)
         for (theQ.ResetLevel(); theQ.NextLevel();)
         {
           ++total_count;
-          if (options.checknan)
-          {
-#ifdef UNIX
-            if (isnan(theQ.FloatValue()))
-#else
-            if (_isnan(theQ.FloatValue()))
-#endif
-              ++missing_count;
-          }
-          else if (theQ.FloatValue() == kFloatMissing)
+          if (is_missing(theQ.FloatValue()))
             ++missing_count;
         }
 
-      if (options.checknan || options.printcount)
-        percentages.push_back(missing_count);
-      else if (total_count == 0)
-        percentages.push_back(100.0);
-      else
-        percentages.push_back(100.0 * missing_count / total_count);
+      percentages.push_back(missing_value(missing_count, total_count));
     }
   }
 
-  if (percentages.empty())
-  {
-    return (options.checknan || options.printcount ? 0 : 100);
-  }
+  return summarize(percentages);
+}
 
-  float sum = accumulate(percentages.begin(), percentages.end(), 0.0);
-  if (options.checknan || options.printcount)
-    return static_cast<int>(sum);
-  return static_cast<int>(sum / percentages.size());
+// ----------------------------------------------------------------------
+/*!
+ * \brief Abort if the error limit has been exceeded
+ */
+// ----------------------------------------------------------------------
+
+void check_error_limit(int percentage)
+{
+  if (options.checkErrorLimit && percentage >= options.errorLimit)
+    throw runtime_error("Given error limit has been exceeded, exiting.");
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Analyze and print the missing values for each time step
+ */
+// ----------------------------------------------------------------------
+
+void analyze_timesteps(NFmiFastQueryInfo& q)
+{
+  int percentage = 0;
+  for (q.ResetTime(); q.NextTime();)
+  {
+    if (options.parameters.empty())
+      percentage = analyze_all_parameters_now(q);
+    else
+      percentage = analyze_given_parameters_now(q);
+
+    NFmiTime t = TimeTools::timezone_time(q.ValidTime(), options.timezone);
+    if (options.printzero || percentage != 0)
+      cout << t.ToStr(kYYYYMMDDHHMM).CharPtr() << ' ' << percentage << endl;
+    check_error_limit(percentage);
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Analyze and print the missing values for each station
+ */
+// ----------------------------------------------------------------------
+
+void analyze_stations(NFmiFastQueryInfo& q)
+{
+  int percentage = 0;
+  if (q.IsGrid())
+    throw runtime_error("Option -w can be used only for point data");
+  for (q.ResetLocation(); q.NextLocation();)
+  {
+    if (options.parameters.empty())
+      percentage = analyze_all_station_parameters(q);
+    else
+      percentage = analyze_given_station_parameters(q);
+    const NFmiLocation* loc = q.Location();
+    if (options.printzero || percentage != 0)
+      cout << loc->GetIdent() << '\t' << loc->GetName().CharPtr() << '\t' << loc->GetLongitude()
+           << '\t' << loc->GetLatitude() << '\t' << percentage << endl;
+    check_error_limit(percentage);
+  }
 }
 
 // ----------------------------------------------------------------------
@@ -525,39 +581,9 @@ int run(int argc, const char* argv[])
   // Establish what to do
 
   if (options.alltimesteps)
-  {
-    for (q.ResetTime(); q.NextTime();)
-    {
-      if (options.parameters.empty())
-        percentage = analyze_all_parameters_now(q);
-      else
-        percentage = analyze_given_parameters_now(q);
-
-      NFmiTime t = TimeTools::timezone_time(q.ValidTime(), options.timezone);
-      if (options.printzero || percentage != 0)
-        cout << t.ToStr(kYYYYMMDDHHMM).CharPtr() << ' ' << percentage << endl;
-      if (options.checkErrorLimit && percentage >= options.errorLimit)
-        throw runtime_error("Given error limit has been exceeded, exiting.");
-    }
-  }
+    analyze_timesteps(q);
   else if (options.allstations)
-  {
-    if (q.IsGrid())
-      throw runtime_error("Option -w can be used only for point data");
-    for (q.ResetLocation(); q.NextLocation();)
-    {
-      if (options.parameters.empty())
-        percentage = analyze_all_station_parameters(q);
-      else
-        percentage = analyze_given_station_parameters(q);
-      const NFmiLocation* loc = q.Location();
-      if (options.printzero || percentage != 0)
-        cout << loc->GetIdent() << '\t' << loc->GetName().CharPtr() << '\t' << loc->GetLongitude()
-             << '\t' << loc->GetLatitude() << '\t' << percentage << endl;
-      if (options.checkErrorLimit && percentage >= options.errorLimit)
-        throw runtime_error("Given error limit has been exceeded, exiting.");
-    }
-  }
+    analyze_stations(q);
   else
   {
     if (options.parameters.empty())
@@ -566,8 +592,7 @@ int run(int argc, const char* argv[])
       percentage = analyze_given_parameters(q);
     if (options.printzero || percentage != 0)
       cout << percentage << endl;
-    if (options.checkErrorLimit && percentage >= options.errorLimit)
-      throw runtime_error("Given error limit has been exceeded, exiting.");
+    check_error_limit(percentage);
   }
 
   return 0;

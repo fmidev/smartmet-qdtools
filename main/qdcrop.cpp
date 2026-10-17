@@ -578,10 +578,10 @@ NFmiHPlaceDescriptor MakeHPlaceDescriptor(NFmiFastQueryInfo& theQ,
 
   if (!Fmi::LegacyMode())
   {
-    y2 = (yoff >= 0 ? yoff : ny + yoff - 1);
-    x2 = x1 + (width - 1) * dx;
-
     x1 = (xoff >= 0 ? xoff : nx + xoff - 1);
+    y2 = (yoff >= 0 ? yoff : ny + yoff - 1);
+
+    x2 = x1 + (width - 1) * dx;
     y1 = y2 + (height - 1) * dy;
   }
   else

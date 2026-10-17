@@ -1226,6 +1226,45 @@ void set_level(NFmiFastQueryInfo& qi, float levelvalue)
                            " not available in the data");
 }
 
+// Print the statistics of the parameter over all locations, levels and times
+void print_param_stats(NFmiFastQueryInfo& qi,
+                       FmiParameterName p,
+                       const std::string& name,
+                       int param_width)
+{
+  Stats stats;
+  stats.param(p);
+  stats.interpolation(qi.Param().GetParam()->InterpolationMethod());
+
+  for (qi.ResetLocation(); qi.NextLocation();)
+    for (qi.ResetLevel(); qi.NextLevel();)
+      for (qi.ResetTime(); qi.NextTime();)
+        stats(qi.FloatValue());
+  std::cout << std::setw(param_width) << name << stats.report() << std::endl;
+}
+
+// Print the statistics of the parameter over all locations and times for the selected levels
+void print_param_level_stats(NFmiFastQueryInfo& qi,
+                             FmiParameterName p,
+                             const std::string& name,
+                             int param_width)
+{
+  for (auto levelvalue : options.these_levels)
+  {
+    set_level(qi, levelvalue);
+
+    Stats stats;
+    stats.param(p);
+    stats.interpolation(qi.Param().GetParam()->InterpolationMethod());
+
+    for (qi.ResetLocation(); qi.NextLocation();)
+      for (qi.ResetTime(); qi.NextTime();)
+        stats(qi.FloatValue());
+    std::cout << std::setw(param_width) << name << std::setw(column_width) << levelvalue
+              << stats.report() << std::endl;
+  }
+}
+
 // ----------------------------------------------------------------------
 /*!
  * \brief Analysis over all locations and times
@@ -1254,34 +1293,53 @@ void stat_locations_times(NFmiFastQueryInfo& qi)
       continue;
 
     if (options.these_levels.empty())
-    {
-      Stats stats;
-      stats.param(p);
-      stats.interpolation(qi.Param().GetParam()->InterpolationMethod());
-
-      for (qi.ResetLocation(); qi.NextLocation();)
-        for (qi.ResetLevel(); qi.NextLevel();)
-          for (qi.ResetTime(); qi.NextTime();)
-            stats(qi.FloatValue());
-      std::cout << std::setw(param_width) << name << stats.report() << std::endl;
-    }
+      print_param_stats(qi, p, name, param_width);
     else
-    {
-      for (auto levelvalue : options.these_levels)
-      {
-        set_level(qi, levelvalue);
+      print_param_level_stats(qi, p, name, param_width);
+  }
+}
 
-        Stats stats;
-        stats.param(p);
-        stats.interpolation(qi.Param().GetParam()->InterpolationMethod());
+// Print the statistics of the parameter over all locations and levels for the current time
+void print_param_time_stats(NFmiFastQueryInfo& qi,
+                            FmiParameterName p,
+                            const std::string& name,
+                            int param_width,
+                            const NFmiMetTime& t)
+{
+  Stats stats;
+  stats.param(p);
+  stats.interpolation(qi.Param().GetParam()->InterpolationMethod());
 
-        for (qi.ResetLocation(); qi.NextLocation();)
-          for (qi.ResetTime(); qi.NextTime();)
-            stats(qi.FloatValue());
-        std::cout << std::setw(param_width) << name << std::setw(column_width) << levelvalue
-                  << stats.report() << std::endl;
-      }
-    }
+  for (qi.ResetLocation(); qi.NextLocation();)
+    for (qi.ResetLevel(); qi.NextLevel();)
+      stats(qi.FloatValue());
+
+  std::cout << std::setw(param_width) << std::right << name << std::setw(18) << std::right
+            << to_iso_string(t.PosixTime()) << stats.report() << std::endl;
+}
+
+// Print the statistics of the parameter over all locations for the current time and the selected
+// levels
+void print_param_time_level_stats(NFmiFastQueryInfo& qi,
+                                  FmiParameterName p,
+                                  const std::string& name,
+                                  int param_width,
+                                  const NFmiMetTime& t)
+{
+  for (auto levelvalue : options.these_levels)
+  {
+    set_level(qi, levelvalue);
+
+    Stats stats;
+    stats.param(p);
+    stats.interpolation(qi.Param().GetParam()->InterpolationMethod());
+
+    for (qi.ResetLocation(); qi.NextLocation();)
+      stats(qi.FloatValue());
+
+    std::cout << std::setw(param_width) << std::right << name << std::setw(column_width)
+              << levelvalue << std::setw(18) << std::right << to_iso_string(t.PosixTime())
+              << stats.report() << std::endl;
   }
 }
 
@@ -1318,36 +1376,9 @@ void stat_locations_these_times(NFmiFastQueryInfo& qi)
       qi.Time(t);
 
       if (options.these_levels.empty())
-      {
-        Stats stats;
-        stats.param(p);
-        stats.interpolation(qi.Param().GetParam()->InterpolationMethod());
-
-        for (qi.ResetLocation(); qi.NextLocation();)
-          for (qi.ResetLevel(); qi.NextLevel();)
-            stats(qi.FloatValue());
-
-        std::cout << std::setw(param_width) << std::right << name << std::setw(18) << std::right
-                  << to_iso_string(t.PosixTime()) << stats.report() << std::endl;
-      }
+        print_param_time_stats(qi, p, name, param_width, t);
       else
-      {
-        for (auto levelvalue : options.these_levels)
-        {
-          set_level(qi, levelvalue);
-
-          Stats stats;
-          stats.param(p);
-          stats.interpolation(qi.Param().GetParam()->InterpolationMethod());
-
-          for (qi.ResetLocation(); qi.NextLocation();)
-            stats(qi.FloatValue());
-
-          std::cout << std::setw(param_width) << std::right << name << std::setw(column_width)
-                    << levelvalue << std::setw(18) << std::right << to_iso_string(t.PosixTime())
-                    << stats.report() << std::endl;
-        }
-      }
+        print_param_time_level_stats(qi, p, name, param_width, t);
     }
     std::cout << std::endl;
   }

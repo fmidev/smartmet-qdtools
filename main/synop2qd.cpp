@@ -1347,6 +1347,209 @@ std::string TakeAwayKnownErrorWordFromStart(const std::string &theStr)
   return theStr;
 }
 
+// Parse the time of a message block header
+bool GetBlockHeaderTime(bool fDoBuoyMessages,
+                        const string &timeStr,
+                        const string &dateStr,
+                        const NFmiMetTime &referenceTime,
+                        NFmiMetTime &theTime)
+{
+  try
+  {
+    if (fDoBuoyMessages)
+      theTime = ::GetTimeFromBuoyHeader(timeStr, dateStr);
+    else
+      theTime = ::GetTimeFromSynopHeader(timeStr, referenceTime);
+    return true;
+  }
+  catch (...)
+  {
+    return false;
+  }
+}
+
+// Establish the wind speed unit from the block header time string
+bool IsWindSpeedInKnots(const string &timeStr, bool doNormalTime, bool verbose)
+{
+  size_t windIndicatorPos = (timeStr.size() == 5 ? 4 : 5);
+  int iw = 4;  // defaulttina tuulen nopeus on solmuja
+  if (doNormalTime)
+  {
+    try
+    {
+      iw = ::GetValue<int>(timeStr, windIndicatorPos, windIndicatorPos, timeStr);
+    }
+    catch (...)
+    {
+      if (verbose)
+        cerr << std::string("Problem with time-string in synop header:\n") + timeStr +
+                    "\nWill use knots as wind indicator."
+             << endl;
+    }
+  }
+  return (iw != 0 && iw != 1);
+}
+
+// Parse the header of a subsequent SHIP or BUOY message in a block
+//
+// Returns false if the message is to be skipped
+bool ParseNextMessageHeader(const string &tmpStr,
+                            const string &theCodeParcel,
+                            bool fDoBuoyMessages,
+                            const NFmiMetTime &referenceTime,
+                            bool verbose,
+                            const string &timeStr,
+                            string &shipName,
+                            NFmiMetTime &aTime)
+{
+  stringstream ssin2(tmpStr);
+  string shipName2;
+  ssin2 >> shipName2;
+  string dateStr2;
+  if (fDoBuoyMessages)
+    ssin2 >> dateStr2;  // YYMMJ  (YY päivä, MM on kuukausi ja J on vuosi (2007 = 7))
+  string timeStr2;
+  ssin2 >> timeStr2;  // DDHHiw   (iw on tuulen nopeus indikaattori 0,1 = m/s 3,4= knots)
+  NFmiMetTime aTime2;
+  try
+  {
+    if (fDoBuoyMessages)
+      aTime2 = ::GetTimeFromBuoyHeader(timeStr2, dateStr2);
+    else
+      aTime2 = ::GetTimeFromSynopHeader(timeStr2, referenceTime);
+  }
+  catch (std::exception &e)
+  {
+    if (verbose)
+    {
+      std::cerr << e.what() << std::endl;
+      std::cerr << "In following code: " << theCodeParcel << std::endl;
+    }
+    return false;
+  }
+  catch (...)
+  {
+    return false;
+  }
+  if (shipName == shipName2 && timeStr == timeStr2)
+    return false;  // nämä on jotain ihme monesti roportissa olevia samoilta laivoilta tulevia
+                   // sanomia
+  shipName = shipName2;
+  aTime = aTime2;
+  return true;
+}
+
+// Round the time of the message to the nearest synoptic time
+void RoundToNearestSynopticTime(NFmiSynopCode &synopCode)
+{
+  NFmiMetTime aTime(synopCode.Time());
+  aTime.SetTimeStep(180);
+
+  // Adjust invalid timestamp (e.g. 3023iw (Sep) stepped to 3100 (Sep)) to 1'st day of next
+  // month
+  //
+  try
+  {
+    Fmi::DateTime pt = aTime.PosixTime();
+    (void)pt;
+  }
+  catch (...)
+  {
+    if (aTime.GetMonth() < 12)
+      aTime.SetMonth(aTime.GetMonth() + 1);
+    else
+    {
+      aTime.SetYear(aTime.GetYear() + 1);
+      aTime.SetMonth(1);
+    }
+    aTime.SetDay(1);
+  }
+
+  synopCode.Time(aTime);
+}
+
+// Block level settings and state for decoding the messages of a block
+struct MessageBlockContext
+{
+  const NFmiMetTime &referenceTime;
+  bool fRoundTimesToNearestSynopticTimes;
+  bool verbose;
+  bool fDoShipMessages;
+  bool fDoBuoyMessages;
+  bool windSpeedInKnots;
+  std::string timeStr;
+  std::string shipName;
+  NFmiMetTime aTime;
+};
+
+// Decode a single message of a block and store it if the station is valid
+void DecodeMessageParcel(MessageBlockContext &ctx,
+                         int i,
+                         const std::string &theCodeParcel,
+                         NFmiSynopCode &synopCode,
+                         std::vector<NFmiSynopCode> &theSynopCodeVec,
+                         std::set<unsigned long> &theUnknownWmoIdsInOut)
+{
+  try
+  {
+    string tmpStr = theCodeParcel;
+    tmpStr = ::TakeAwayKnownErrorWordFromStart(tmpStr);
+    tmpStr = ::TrimFromExtraSpaces(tmpStr);
+    if (tmpStr.empty())
+      return;
+    int wordSkipCount = 0;
+    if ((ctx.fDoShipMessages || ctx.fDoBuoyMessages) && i > 0)
+    {
+      if (!::ParseNextMessageHeader(tmpStr,
+                                    theCodeParcel,
+                                    ctx.fDoBuoyMessages,
+                                    ctx.referenceTime,
+                                    ctx.verbose,
+                                    ctx.timeStr,
+                                    ctx.shipName,
+                                    ctx.aTime))
+        return;
+      wordSkipCount =
+          ctx.fDoBuoyMessages
+              ? 3
+              : 2;  // tässä tapauksessa Decode-metodiasa pitää skipata kaksi ensimmäistä sanaa
+    }
+    if (ctx.fDoBuoyMessages)
+      synopCode.DecodeBouy(tmpStr, ctx.windSpeedInKnots, wordSkipCount);
+    else
+      synopCode.Decode(
+          tmpStr, ctx.fDoShipMessages, ctx.windSpeedInKnots, wordSkipCount, theUnknownWmoIdsInOut);
+    synopCode.itsTime = ctx.aTime;  // tässä blokissa on synopit aina samassa ajassa
+    if (ctx.fDoShipMessages || ctx.fDoBuoyMessages)
+      synopCode.itsStation.SetName(ctx.shipName);
+    if (ctx.fDoBuoyMessages)
+      synopCode.itsStation.SetIdent(NFmiStringTools::Convert<unsigned long>(ctx.shipName));
+    if (ctx.fRoundTimesToNearestSynopticTimes)
+      ::RoundToNearestSynopticTime(synopCode);
+
+    // Do not save stations with unknown location info
+
+    bool station_is_valid = (synopCode.Station().GetLongitude() != kFloatMissing &&
+                             synopCode.Station().GetLatitude() != kFloatMissing);
+
+    if (station_is_valid)
+      theSynopCodeVec.push_back(synopCode);
+  }
+  catch (ExceptionSynopEndIgnoreMessage& /* e */)
+  {
+    // tämä oli normaali synop koodin lopetus, eli ei raporttia, mutta ei laiteta talteen
+    // sanoamaa, koska se oli NIL tms.
+  }
+  catch (std::exception &e)
+  {
+    if (ctx.verbose)
+      cerr << e.what() << endl;
+  }
+  catch (...)
+  {
+  }
+}
+
 void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
                                           const string &theUsedSynopBlock,
                                           NFmiAviationStationInfoSystem &theAviStations,
@@ -1374,40 +1577,10 @@ void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
   NFmiMetTime aTime;
   if (!doNormalTime)
     aTime = thePossibleSynoptime;
-  else
-  {
-    try
-    {
-      if (fDoBuoyMessages)
-        aTime = ::GetTimeFromBuoyHeader(timeStr, dateStr);
-      else
-        aTime = ::GetTimeFromSynopHeader(timeStr, referenceTime);
-    }
-    catch (...)
-    {
-      return;
-    }
-  }
+  else if (!::GetBlockHeaderTime(fDoBuoyMessages, timeStr, dateStr, referenceTime, aTime))
+    return;
 
-  size_t windIndicatorPos = (timeStr.size() == 5 ? 4 : 5);
-  int iw = 4;  // defaulttina tuulen nopeus on solmuja
-  if (doNormalTime)
-  {
-    try
-    {
-      iw = ::GetValue<int>(timeStr, windIndicatorPos, windIndicatorPos, timeStr);
-    }
-    catch (...)
-    {
-      if (verbose)
-        cerr << std::string("Problem with time-string in synop header:\n") + timeStr +
-                    "\nWill use knots as wind indicator."
-             << endl;
-    }
-  }
-  bool windSpeedInKnots = true;
-  if (iw == 0 || iw == 1)
-    windSpeedInKnots = false;
+  bool windSpeedInKnots = ::IsWindSpeedInKnots(timeStr, doNormalTime, verbose);
 
   // timeStrin sana pitää vielä skipata alusta
   size_t timeStrPos = theUsedSynopBlock.find(timeStr);
@@ -1421,118 +1594,22 @@ void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
   // synopit on eroteltu =-merkeillä, joten irroitetaan ne toisistaan
   std::vector<std::string> codeParcels = NFmiStringTools::Split(reallyUsedSynopBlock, "=");
 
+  MessageBlockContext ctx{referenceTime,
+                          fRoundTimesToNearestSynopticTimes,
+                          verbose,
+                          fDoShipMessages,
+                          fDoBuoyMessages,
+                          windSpeedInKnots,
+                          timeStr,
+                          shipName,
+                          aTime};
+
   NFmiSynopCode synopCode(&theAviStations, verbose);
   synopCode.itsCorrectionField = theCorrectionField;
   for (int i = 0; i < static_cast<int>(codeParcels.size()); i++)
   {
-    try
-    {
-      string tmpStr = codeParcels[i];
-      tmpStr = ::TakeAwayKnownErrorWordFromStart(tmpStr);
-      tmpStr = ::TrimFromExtraSpaces(tmpStr);
-      if (tmpStr.empty())
-        continue;
-      int wordSkipCount = 0;
-      if ((fDoShipMessages || fDoBuoyMessages) && i > 0)
-      {
-        stringstream ssin2(tmpStr);
-        string shipName2;
-        ssin2 >> shipName2;
-        string dateStr2;
-        if (fDoBuoyMessages)
-          ssin2 >> dateStr2;  // YYMMJ  (YY päivä, MM on kuukausi ja J on vuosi (2007 = 7))
-        string timeStr2;
-        ssin2 >> timeStr2;  // DDHHiw   (iw on tuulen nopeus indikaattori 0,1 = m/s 3,4= knots)
-        NFmiMetTime aTime2;
-        try
-        {
-          if (fDoBuoyMessages)
-            aTime2 = ::GetTimeFromBuoyHeader(timeStr2, dateStr2);
-          else
-            aTime2 = ::GetTimeFromSynopHeader(timeStr2, referenceTime);
-        }
-        catch (std::exception &e)
-        {
-          if (verbose)
-          {
-            std::cerr << e.what() << std::endl;
-            std::cerr << "In following code: " << codeParcels[i] << std::endl;
-          }
-          continue;
-        }
-        catch (...)
-        {
-          continue;
-        }
-        if (shipName == shipName2 && timeStr == timeStr2)
-          continue;  // nämä on jotain ihme monesti roportissa olevia samoilta laivoilta tulevia
-                     // sanomia
-        shipName = shipName2;
-        aTime = aTime2;
-        wordSkipCount =
-            fDoBuoyMessages
-                ? 3
-                : 2;  // tässä tapauksessa Decode-metodiasa pitää skipata kaksi ensimmäistä sanaa
-      }
-      if (fDoBuoyMessages)
-        synopCode.DecodeBouy(tmpStr, windSpeedInKnots, wordSkipCount);
-      else
-        synopCode.Decode(
-            tmpStr, fDoShipMessages, windSpeedInKnots, wordSkipCount, theUnknownWmoIdsInOut);
-      synopCode.itsTime = aTime;  // tässä blokissa on synopit aina samassa ajassa
-      if (fDoShipMessages || fDoBuoyMessages)
-        synopCode.itsStation.SetName(shipName);
-      if (fDoBuoyMessages)
-        synopCode.itsStation.SetIdent(NFmiStringTools::Convert<unsigned long>(shipName));
-      if (fRoundTimesToNearestSynopticTimes)
-      {
-        NFmiMetTime aTime(synopCode.Time());
-        aTime.SetTimeStep(180);
-
-        // Adjust invalid timestamp (e.g. 3023iw (Sep) stepped to 3100 (Sep)) to 1'st day of next
-        // month
-        //
-        try
-        {
-          Fmi::DateTime pt = aTime.PosixTime();
-          (void)pt;
-        }
-        catch (...)
-        {
-          if (aTime.GetMonth() < 12)
-            aTime.SetMonth(aTime.GetMonth() + 1);
-          else
-          {
-            aTime.SetYear(aTime.GetYear() + 1);
-            aTime.SetMonth(1);
-          }
-          aTime.SetDay(1);
-        }
-
-        synopCode.Time(aTime);
-      }
-
-      // Do not save stations with unknown location info
-
-      bool station_is_valid = (synopCode.Station().GetLongitude() != kFloatMissing &&
-                               synopCode.Station().GetLatitude() != kFloatMissing);
-
-      if (station_is_valid)
-        theSynopCodeVec.push_back(synopCode);
-    }
-    catch (ExceptionSynopEndIgnoreMessage & /* e */)
-    {
-      // tämä oli normaali synop koodin lopetus, eli ei raporttia, mutta ei laiteta talteen
-      // sanoamaa, koska se oli NIL tms.
-    }
-    catch (std::exception &e)
-    {
-      if (verbose)
-        cerr << e.what() << endl;
-    }
-    catch (...)
-    {
-    }
+    ::DecodeMessageParcel(
+        ctx, i, codeParcels[i], synopCode, theSynopCodeVec, theUnknownWmoIdsInOut);
   }
 }
 

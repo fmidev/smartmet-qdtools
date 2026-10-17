@@ -148,9 +148,9 @@ void validate_projection_parameters(const ProjectionFlags& flags, const std::str
   else
   {
     if (!flags.got_central_latitude)
-      throw std::runtime_error(error_prefix + " does not need a centrallatitude");
+      throw std::runtime_error(error_prefix + " requires a centrallatitude");
     if (!flags.got_central_longitude)
-      throw std::runtime_error(error_prefix + " does not need a centrallongitude");
+      throw std::runtime_error(error_prefix + " requires a centrallongitude");
   }
 
   if (flags.proj_type == "latlon" || flags.proj_type == "ykj" || flags.proj_type == "mercator" ||

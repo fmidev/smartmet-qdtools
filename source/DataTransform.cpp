@@ -6,6 +6,7 @@
 // ======================================================================
 
 #include "DataTransform.h"
+#include <map>
 #include <stdexcept>
 
 using namespace std;
@@ -29,138 +30,77 @@ namespace DataTransform
 
 double multiplier(const std::string& theParam)
 {
-  if (theParam == "Precipitation1h")
-    return 0.01;
-  if (theParam == "PrecipitationRate")
-    return 0.01;
-  if (theParam == "CorrectedReflectivity")
-    return 0.5;
-  if (theParam == "SurfaceWaterPhase")  // from 0-255 to 0-100
-    return 100.0 / 255.0;
-  if (theParam == "EchoTop")
-    return 0.1;
-  if (theParam == "Detectability")
-    return -100.0 / 255;
-  if (theParam == "Precipitation3hF0")
-    return 0.01;
-  else if (theParam == "Precipitation3hF1")
-    return 0.01;
-  else if (theParam == "Precipitation3hF2")
-    return 0.01;
-  else if (theParam == "Precipitation3hF5")
-    return 0.01;
-  else if (theParam == "Precipitation3hF6")
-    return 0.01;
-  else if (theParam == "Precipitation3hF7")
-    return 0.01;
-  else if (theParam == "Precipitation3hF8")
-    return 0.01;
-  else if (theParam == "Precipitation3hF9")
-    return 0.01;
-  else if (theParam == "Precipitation3hF10")
-    return 0.01;
-  else if (theParam == "Precipitation3hF12")
-    return 0.01;
-  else if (theParam == "Precipitation3hF20")
-    return 0.01;
-  else if (theParam == "Precipitation3hF25")
-    return 0.01;
-  else if (theParam == "Precipitation3hF30")
-    return 0.01;
-  else if (theParam == "Precipitation3hF37")
-    return 0.01;
-  else if (theParam == "Precipitation3hF40")
-    return 0.01;
-  else if (theParam == "Precipitation3hF50")
-    return 0.01;
-  else if (theParam == "Precipitation3hF60")
-    return 0.01;
-  else if (theParam == "Precipitation3hF63")
-    return 0.01;
-  else if (theParam == "Precipitation3hF70")
-    return 0.01;
-  else if (theParam == "Precipitation3hF75")
-    return 0.01;
-  else if (theParam == "Precipitation3hF80")
-    return 0.01;
-  else if (theParam == "Precipitation3hF88")
-    return 0.01;
-  else if (theParam == "Precipitation3hF90")
-    return 0.01;
-  else if (theParam == "Precipitation3hF95")
-    return 0.01;
-  else if (theParam == "Precipitation3hF98")
-    return 0.01;
-  else if (theParam == "Precipitation3hF99")
-    return 0.01;
-  else if (theParam == "Precipitation3hF100")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h0mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h01mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h05mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h1mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h2mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h3mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h4mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h5mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h6mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h7mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h8mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h9mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h10mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h12mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h14mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h16mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h18mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h20mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h25mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h30mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h35mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h40mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h45mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h50mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h60mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h70mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h80mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h90mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h100mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h150mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h200mm")
-    return 0.01;
-  else if (theParam == "ProbabilityOfPrecipitation3h500mm")
-    return 0.01;
-  else
-    return 1.0;
+  static const std::map<std::string, double> multipliers = {
+      {"Precipitation1h", 0.01},
+      {"PrecipitationRate", 0.01},
+      {"CorrectedReflectivity", 0.5},
+      {"SurfaceWaterPhase", 100.0 / 255.0},  // from 0-255 to 0-100
+      {"EchoTop", 0.1},
+      {"Detectability", -100.0 / 255},
+      {"Precipitation3hF0", 0.01},
+      {"Precipitation3hF1", 0.01},
+      {"Precipitation3hF2", 0.01},
+      {"Precipitation3hF5", 0.01},
+      {"Precipitation3hF6", 0.01},
+      {"Precipitation3hF7", 0.01},
+      {"Precipitation3hF8", 0.01},
+      {"Precipitation3hF9", 0.01},
+      {"Precipitation3hF10", 0.01},
+      {"Precipitation3hF12", 0.01},
+      {"Precipitation3hF20", 0.01},
+      {"Precipitation3hF25", 0.01},
+      {"Precipitation3hF30", 0.01},
+      {"Precipitation3hF37", 0.01},
+      {"Precipitation3hF40", 0.01},
+      {"Precipitation3hF50", 0.01},
+      {"Precipitation3hF60", 0.01},
+      {"Precipitation3hF63", 0.01},
+      {"Precipitation3hF70", 0.01},
+      {"Precipitation3hF75", 0.01},
+      {"Precipitation3hF80", 0.01},
+      {"Precipitation3hF88", 0.01},
+      {"Precipitation3hF90", 0.01},
+      {"Precipitation3hF95", 0.01},
+      {"Precipitation3hF98", 0.01},
+      {"Precipitation3hF99", 0.01},
+      {"Precipitation3hF100", 0.01},
+      {"ProbabilityOfPrecipitation3h0mm", 0.01},
+      {"ProbabilityOfPrecipitation3h01mm", 0.01},
+      {"ProbabilityOfPrecipitation3h05mm", 0.01},
+      {"ProbabilityOfPrecipitation3h1mm", 0.01},
+      {"ProbabilityOfPrecipitation3h2mm", 0.01},
+      {"ProbabilityOfPrecipitation3h3mm", 0.01},
+      {"ProbabilityOfPrecipitation3h4mm", 0.01},
+      {"ProbabilityOfPrecipitation3h5mm", 0.01},
+      {"ProbabilityOfPrecipitation3h6mm", 0.01},
+      {"ProbabilityOfPrecipitation3h7mm", 0.01},
+      {"ProbabilityOfPrecipitation3h8mm", 0.01},
+      {"ProbabilityOfPrecipitation3h9mm", 0.01},
+      {"ProbabilityOfPrecipitation3h10mm", 0.01},
+      {"ProbabilityOfPrecipitation3h12mm", 0.01},
+      {"ProbabilityOfPrecipitation3h14mm", 0.01},
+      {"ProbabilityOfPrecipitation3h16mm", 0.01},
+      {"ProbabilityOfPrecipitation3h18mm", 0.01},
+      {"ProbabilityOfPrecipitation3h20mm", 0.01},
+      {"ProbabilityOfPrecipitation3h25mm", 0.01},
+      {"ProbabilityOfPrecipitation3h30mm", 0.01},
+      {"ProbabilityOfPrecipitation3h35mm", 0.01},
+      {"ProbabilityOfPrecipitation3h40mm", 0.01},
+      {"ProbabilityOfPrecipitation3h45mm", 0.01},
+      {"ProbabilityOfPrecipitation3h50mm", 0.01},
+      {"ProbabilityOfPrecipitation3h60mm", 0.01},
+      {"ProbabilityOfPrecipitation3h70mm", 0.01},
+      {"ProbabilityOfPrecipitation3h80mm", 0.01},
+      {"ProbabilityOfPrecipitation3h90mm", 0.01},
+      {"ProbabilityOfPrecipitation3h100mm", 0.01},
+      {"ProbabilityOfPrecipitation3h150mm", 0.01},
+      {"ProbabilityOfPrecipitation3h200mm", 0.01},
+      {"ProbabilityOfPrecipitation3h500mm", 0.01}};
+
+  const auto it = multipliers.find(theParam);
+  if (it != multipliers.end())
+    return it->second;
+  return 1.0;
 }
 
 // ----------------------------------------------------------------------

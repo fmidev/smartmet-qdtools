@@ -95,6 +95,107 @@ Options options;
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Parse the parameter list
+ */
+// ----------------------------------------------------------------------
+
+void parse_params(const string& params, Options& options)
+{
+  NFmiEnumConverter converter;
+  vector<string> parts;
+  boost::algorithm::split(parts, params, boost::algorithm::is_any_of(","));
+  for (const string& str : parts)
+  {
+    int id = converter.ToEnum(str);
+    if (id != kFmiBadParameter)
+      options.params.push_back(id);
+    else
+    {
+      try
+      {
+        id = Fmi::stoi(str);
+        options.params.push_back(id);
+      }
+      catch (...)
+      {
+        throw runtime_error("Unknown parameter '" + str + "'");
+      }
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Parse the column order selection
+ */
+// ----------------------------------------------------------------------
+
+void parse_order(Options& options)
+{
+  if (options.order == "timeid")
+  {
+    options.timecolumn = 0;
+    options.stationcolumn = 1;
+    options.datacolumn = 2;
+    options.levelcolumn = -1;
+  }
+  else if (options.order == "idtime")
+  {
+    options.stationcolumn = 0;
+    options.timecolumn = 1;
+    options.datacolumn = 2;
+    options.levelcolumn = -1;
+  }
+  else if (options.order == "idtimelevel")
+  {
+    options.stationcolumn = 0;
+    options.timecolumn = 1;
+    options.levelcolumn = 2;
+    options.datacolumn = 3;
+  }
+  else if (options.order == "idleveltime")
+  {
+    options.stationcolumn = 0;
+    options.levelcolumn = 1;
+    options.timecolumn = 2;
+    options.datacolumn = 3;
+  }
+  else if (options.order == "timeidlevel")
+  {
+    options.timecolumn = 0;
+    options.stationcolumn = 1;
+    options.levelcolumn = 2;
+    options.datacolumn = 3;
+  }
+  else if (options.order == "timelevelid")
+  {
+    options.timecolumn = 0;
+    options.levelcolumn = 1;
+    options.stationcolumn = 2;
+    options.datacolumn = 3;
+  }
+  else if (options.order == "leveltimeid")
+  {
+    options.levelcolumn = 0;
+    options.timecolumn = 1;
+    options.stationcolumn = 2;
+    options.datacolumn = 3;
+  }
+  else if (options.order == "levelidtime")
+  {
+    options.levelcolumn = 0;
+    options.stationcolumn = 1;
+    options.timecolumn = 2;
+    options.datacolumn = 3;
+  }
+  else
+  {
+    throw runtime_error("Unknown column order: '" + options.order + "'");
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Parse command line options
  *
  * \return True, if execution may continue as usual
@@ -209,90 +310,11 @@ bool parse_options(int argc, char* argv[], Options& options)
   if (params.empty())
     throw runtime_error("Parameter list must be given");
 
-  NFmiEnumConverter converter;
-  vector<string> parts;
-  boost::algorithm::split(parts, params, boost::algorithm::is_any_of(","));
-  for (const string& str : parts)
-  {
-    int id = converter.ToEnum(str);
-    if (id != kFmiBadParameter)
-      options.params.push_back(id);
-    else
-    {
-      try
-      {
-        id = Fmi::stoi(str);
-        options.params.push_back(id);
-      }
-      catch (...)
-      {
-        throw runtime_error("Unknown parameter '" + str + "'");
-      }
-    }
-  }
+  parse_params(params, options);
 
   // Parse order selection
 
-  if (options.order == "timeid")
-  {
-    options.timecolumn = 0;
-    options.stationcolumn = 1;
-    options.datacolumn = 2;
-    options.levelcolumn = -1;
-  }
-  else if (options.order == "idtime")
-  {
-    options.stationcolumn = 0;
-    options.timecolumn = 1;
-    options.datacolumn = 2;
-    options.levelcolumn = -1;
-  }
-  else if (options.order == "idtimelevel")
-  {
-    options.stationcolumn = 0;
-    options.timecolumn = 1;
-    options.levelcolumn = 2;
-    options.datacolumn = 3;
-  }
-  else if (options.order == "idleveltime")
-  {
-    options.stationcolumn = 0;
-    options.levelcolumn = 1;
-    options.timecolumn = 2;
-    options.datacolumn = 3;
-  }
-  else if (options.order == "timeidlevel")
-  {
-    options.timecolumn = 0;
-    options.stationcolumn = 1;
-    options.levelcolumn = 2;
-    options.datacolumn = 3;
-  }
-  else if (options.order == "timelevelid")
-  {
-    options.timecolumn = 0;
-    options.levelcolumn = 1;
-    options.stationcolumn = 2;
-    options.datacolumn = 3;
-  }
-  else if (options.order == "leveltimeid")
-  {
-    options.levelcolumn = 0;
-    options.timecolumn = 1;
-    options.stationcolumn = 2;
-    options.datacolumn = 3;
-  }
-  else if (options.order == "levelidtime")
-  {
-    options.levelcolumn = 0;
-    options.stationcolumn = 1;
-    options.timecolumn = 2;
-    options.datacolumn = 3;
-  }
-  else
-  {
-    throw runtime_error("Unknown column order: '" + options.order + "'");
-  }
+  parse_order(options);
 
   return true;
 }

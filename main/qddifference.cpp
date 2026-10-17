@@ -548,6 +548,85 @@ catch (...)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Abort if the error limit is exceeded or values are missing in only one file
+ */
+// ----------------------------------------------------------------------
+
+void check_result(double difference, std::size_t num_one_missing)
+{
+  if (options.epsilon > 0 && difference > options.epsilon)
+    throw Fmi::Exception(BCP, "Error limit exceeded");
+  if (num_one_missing > 0)
+    throw Fmi::Exception(BCP,
+                         Fmi::to_string(num_one_missing) +
+                             " points had one or several value missing in one of the files with "
+                             "value present in second one.");
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Print the maximum differences per parameter in debug mode
+ */
+// ----------------------------------------------------------------------
+
+void print_debug_differences()
+{
+  if (options.debug && !param_diffs.empty())
+  {
+    cout << "Max differences per parameter:" << endl;
+    for (const auto& [paramName, diff] : param_diffs)
+    {
+      cout << paramName << ": " << diff << '\n';
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Analyze and print the differences of each parameter
+ */
+// ----------------------------------------------------------------------
+
+void print_each_parameter_difference(NFmiFastQueryInfo& q1,
+                                     NFmiFastQueryInfo& q2,
+                                     NFmiEnumConverter& converter)
+{
+  double difference = 0.0;
+  std::size_t num_one_missing = 0;
+  bool ignoresubs = false;
+  for (q1.ResetParam(), q2.ResetParam(); q1.NextParam(ignoresubs) && q2.NextParam(ignoresubs);)
+  {
+    std::tie(difference, num_one_missing) = analyze_this_parameter(q1, q2);
+    cout << converter.ToString(q1.Param().GetParamIdent()) << '\t' << difference << endl;
+
+    check_result(difference, num_one_missing);
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Analyze and print the differences of the parameters given with -P
+ */
+// ----------------------------------------------------------------------
+
+void print_given_parameter_differences(NFmiFastQueryInfo& q1,
+                                       NFmiFastQueryInfo& q2,
+                                       NFmiEnumConverter& converter)
+{
+  double difference = 0.0;
+  std::size_t num_one_missing = 0;
+  for (unsigned int i = 0; i < options.parameters.size(); i++)
+  {
+    if (!q1.Param(options.parameters[i]) || !q2.Param(options.parameters[i]))
+      throw runtime_error("The files must contain the parameters given with -P");
+    std::tie(difference, num_one_missing) = analyze_this_parameter(q1, q2);
+    cout << converter.ToString(q1.Param().GetParamIdent()) << '\t' << difference << endl;
+    check_result(difference, num_one_missing);
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief The main program without error trapping
  */
 // ----------------------------------------------------------------------
@@ -578,7 +657,6 @@ int domain(int argc, const char* argv[])
   // Establish what to do
 
   double difference = 0.0;
-  std::size_t num_one_missing = 0;
 
   if (options.alltimesteps)
   {
@@ -591,66 +669,24 @@ int domain(int argc, const char* argv[])
         std::tie(difference, num_one_missing) = analyze_given_parameters_now(*q1, *q2);
       cout << q1->ValidTime().ToStr(kYYYYMMDDHHMM).CharPtr() << ' ' << difference << endl;
 
-      if (options.epsilon > 0 && difference > options.epsilon)
-        throw Fmi::Exception(BCP, "Error limit exceeded");
-      if (num_one_missing > 0)
-        throw Fmi::Exception(BCP, Fmi::to_string(num_one_missing) +
-             " points had one or several value missing in one of the files with value present in second one.");
+      check_result(difference, num_one_missing);
     }
   }
   else
   {
     if (options.allparams)
-    {
-      bool ignoresubs = false;
-      for (q1->ResetParam(), q2->ResetParam();
-           q1->NextParam(ignoresubs) && q2->NextParam(ignoresubs);)
-      {
-        std::tie(difference, num_one_missing) = analyze_this_parameter(*q1, *q2);
-        cout << converter.ToString(q1->Param().GetParamIdent()) << '\t' << difference << endl;
-
-        if (options.epsilon > 0 && difference > options.epsilon)
-          throw Fmi::Exception(BCP, "Error limit exceeded");
-        if (num_one_missing > 0)
-          throw Fmi::Exception(BCP, Fmi::to_string(num_one_missing) +
-               " points had one or several value missing in one of the files with value present in second one.");
-        }
-    }
+      print_each_parameter_difference(*q1, *q2, converter);
     else if (options.parameters.empty())
     {
       const auto [difference, num_one_missing] = analyze_all_parameters(*q1, *q2);
       cout << difference << endl;
-      if (options.epsilon > 0 && difference > options.epsilon)
-        throw Fmi::Exception(BCP, "Error limit exceeded");
-      if (num_one_missing > 0)
-        throw Fmi::Exception(BCP, Fmi::to_string(num_one_missing) +
-             " points had one or several value missing in one of the files with value present in second one.");
+      check_result(difference, num_one_missing);
     }
     else
-    {
-      for (unsigned int i = 0; i < options.parameters.size(); i++)
-      {
-        if (!q1->Param(options.parameters[i]) || !q2->Param(options.parameters[i]))
-          throw runtime_error("The files must contain the parameters given with -P");
-        std::tie(difference, num_one_missing) = analyze_this_parameter(*q1, *q2);
-        cout << converter.ToString(q1->Param().GetParamIdent()) << '\t' << difference << endl;
-        if (options.epsilon > 0 && difference > options.epsilon)
-          throw Fmi::Exception(BCP, "Error limit exceeded");
-        if (num_one_missing > 0)
-          throw Fmi::Exception(BCP, Fmi::to_string(num_one_missing) +
-               " points had one or several value missing in one of the files with value present in second one.");
-        }
-    }
+      print_given_parameter_differences(*q1, *q2, converter);
   }
 
-  if (options.debug && !param_diffs.empty())
-  {
-    cout << "Max differences per parameter:" << endl;
-    for (const auto& [paramName, diff] : param_diffs)
-    {
-      cout << paramName <<  ": " << diff << '\n';
-    }
-  }
+  print_debug_differences();
 
   return 0;
 }
@@ -670,14 +706,7 @@ int main(int argc, const char* argv[])
   }
   catch (const Fmi::Exception& e)
   {
-    if (options.debug && !param_diffs.empty())
-    {
-      cout << "Max differences per parameter:" << endl;
-      for (const auto& [paramName, diff] : param_diffs)
-      {
-        cout << paramName <<  ": " << diff << '\n';
-      }
-    }
+    print_debug_differences();
 
     cout << e << endl;
     return 1;

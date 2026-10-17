@@ -364,6 +364,116 @@ class NFmiSynopCode
     return P;
   }
 
+  // Decode the 0ddff-field and the optional 00fff-field of the 111-section of a BUOY message
+  void DecodeBuoyWind(istream &ssin,
+                      string &currentSynopField,
+                      const string &theSynopStr,
+                      bool fWindSpeedInKnots)
+  {
+    string commentString;
+
+    auto dd = ::GetValue<float>(currentSynopField, 1, 2, theSynopStr);
+    if (dd != kFloatMissing)
+      itsWD = dd * 10.F;
+    auto ff = ::GetValue<float>(currentSynopField, 3, 4, theSynopStr);
+
+    // if speed is 99, there is an extra 00fff group coming up
+    if (ff == 99)
+    {
+      commentString = "searching 00fff or some following field";
+      ReadNextField(ssin, currentSynopField, "00fff", theSynopStr, true);
+      ff = ::GetValue<float>(currentSynopField, 2, 5, theSynopStr);
+    }
+
+    if (ff != kFloatMissing)
+    {
+      if (fWindSpeedInKnots)
+        itsWS = 1852 * ff / 3600.F;
+      else
+        itsWS = ff;
+    }
+
+    // luetaan lopuksi seuraava kenttä
+    commentString = "next trying to read 1sTTT-field";
+    ReadNextField(ssin, currentSynopField, commentString, theSynopStr, true);
+  }
+
+  // Decode the 111-section of a BUOY message
+  void DecodeBuoySection111(istream &ssin,
+                            string &currentSynopField,
+                            const string &theSynopStr,
+                            bool fWindSpeedInKnots)
+  {
+    string commentString;
+
+    commentString = "searching 0ddff or some following field";
+    ReadNextField(ssin, currentSynopField, "0ddff", theSynopStr, true);
+    if (currentSynopField.size() == 5 && currentSynopField[0] == '0')
+      DecodeBuoyWind(ssin, currentSynopField, theSynopStr, fWindSpeedInKnots);
+
+    if (currentSynopField.size() == 5 && currentSynopField[0] == '1')
+    {  // puretaan 1sTTT-kenttä
+      itsTemperature = GetTemperatureFromField(currentSynopField, theSynopStr);
+
+      // luetaan lopuksi seuraava kenttä
+      commentString = "next trying to read 2sTdTdTd-field";
+      ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
+    }
+
+    if (currentSynopField.size() == 5 && currentSynopField[0] == '2')
+    {  // puretaan 2sTdTdTd-kenttä / 29UUU
+      if (currentSynopField[1] == '9')
+        itsRH = ::GetValue<float>(currentSynopField, 2, 4, theSynopStr);
+      else
+        itsDewPoint = GetTemperatureFromField(currentSynopField, theSynopStr);
+
+      // luetaan lopuksi seuraava kenttä
+      commentString = "next trying to read 3P0P0P0P0-field";
+      ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
+    }
+
+    if (currentSynopField.size() == 5 && currentSynopField[0] == '3')
+    {  // puretaan 3P0P0P0P0-kenttä // tämä on asemalla mitattu paine // tätä ei toistaiseksi
+       // oteta talteen
+#if 0
+					double PPP31 = ::GetValue<double>(currentSynopField, 1, 3, theSynopStr);
+					double PPP32 = ::GetValue<double>(currentSynopField, 4, 4, theSynopStr);
+					double tmpPressure = 0;
+					if(PPP31 != kFloatMissing && PPP32 != kFloatMissing)
+						tmpPressure = (PPP31 < 500.) ? (1000 + PPP31 + PPP32/10.) : (PPP31 + PPP32/10.);
+					else if(PPP31 != kFloatMissing && PPP32 == kFloatMissing)
+						tmpPressure = (PPP31 < 500.) ? (1000 + PPP31) : (PPP31);
+#endif
+
+      // luetaan lopuksi seuraava kenttä
+      commentString = "next trying to read 4PPPP-field";
+      ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
+    }
+
+    if (currentSynopField.size() == 5 && currentSynopField[0] == '4')
+    {
+      itsPressure = GetPressureFromField(currentSynopField, theSynopStr);
+
+      // luetaan lopuksi seuraava kenttä
+      commentString = "next trying to read 5appp-field";
+      ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
+    }
+
+    if (currentSynopField.size() == 5 && currentSynopField[0] == '5')
+    {  // puretaan 5appp-kenttä
+      auto a = ::GetValue<float>(currentSynopField, 1, 1, theSynopStr);
+      if (a != kFloatMissing)
+        itsPressureTendency = a;
+      auto ppp = ::GetValue<float>(currentSynopField, 2, 4, theSynopStr);
+      if (ppp != kFloatMissing)
+        itsPressureChange = ppp / 10.F;
+
+      // luetaan lopuksi seuraava kenttä
+      commentString = "next trying to read 6RRRt-field";
+      ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
+    }
+  }
+
   void DecodeBouy(const std::string &theSynopStr, bool fWindSpeedInKnots, int theWordSkipCount)
   {
     try
@@ -382,15 +492,7 @@ class NFmiSynopCode
       string LoLoLoLoLoLo_Str;  // pakollinen
       ReadNextField(ssin, LoLoLoLoLoLo_Str, "LoLoLoLoLoLo", theSynopStr, true);
       itsLon = GetBuoyLongitude(LoLoLoLoLoLo_Str, theSynopStr);
-      if (quadrantOfGlobe == 7)  // north-east
-        itsLon = -itsLon;
-      else if (quadrantOfGlobe == 5)  // south-east
-      {
-        itsLon = -itsLon;
-        itsLat = -itsLat;
-      }
-      else if (quadrantOfGlobe == 3)  // south-west
-        itsLat = -itsLat;
+      ApplyQuadrantOfGlobe(quadrantOfGlobe);
 
       // asetetaan feikki arvoja poijuille, koska kaikki lasketaan ns. driftereiksi
       itsStation.SetLatitude(itsDriftingStationLocation.Y());
@@ -410,115 +512,10 @@ class NFmiSynopCode
           currentSynopField[1] == '1' && currentSynopField[2] == '1')
       {  // so there was 111QdQx-field and 111-section
 
-        commentString = "searching 0ddff or some following field";
-        ReadNextField(ssin, currentSynopField, "0ddff", theSynopStr, true);
-        if (currentSynopField.size() == 5 && currentSynopField[0] == '0')
-        {
-          auto dd = ::GetValue<float>(currentSynopField, 1, 2, theSynopStr);
-          if (dd != kFloatMissing)
-            itsWD = dd * 10.F;
-          auto ff = ::GetValue<float>(currentSynopField, 3, 4, theSynopStr);
-
-          // if speed is 99, there is an extra 00fff group coming up
-          if (ff == 99)
-          {
-            commentString = "searching 00fff or some following field";
-            ReadNextField(ssin, currentSynopField, "00fff", theSynopStr, true);
-            ff = ::GetValue<float>(currentSynopField, 2, 5, theSynopStr);
-          }
-
-          if (ff != kFloatMissing)
-          {
-            if (fWindSpeedInKnots)
-              itsWS = 1852 * ff / 3600.F;
-            else
-              itsWS = ff;
-          }
-
-          // luetaan lopuksi seuraava kenttä
-          commentString = "next trying to read 1sTTT-field";
-          ReadNextField(ssin, currentSynopField, commentString, theSynopStr, true);
-        }
-
-        if (currentSynopField.size() == 5 && currentSynopField[0] == '1')
-        {  // puretaan 1sTTT-kenttä
-          itsTemperature = GetTemperatureFromField(currentSynopField, theSynopStr);
-
-          // luetaan lopuksi seuraava kenttä
-          commentString = "next trying to read 2sTdTdTd-field";
-          ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
-        }
-
-        if (currentSynopField.size() == 5 && currentSynopField[0] == '2')
-        {  // puretaan 2sTdTdTd-kenttä / 29UUU
-          if (currentSynopField[1] == '9')
-            itsRH = ::GetValue<float>(currentSynopField, 2, 4, theSynopStr);
-          else
-            itsDewPoint = GetTemperatureFromField(currentSynopField, theSynopStr);
-
-          // luetaan lopuksi seuraava kenttä
-          commentString = "next trying to read 3P0P0P0P0-field";
-          ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
-        }
-
-        if (currentSynopField.size() == 5 && currentSynopField[0] == '3')
-        {  // puretaan 3P0P0P0P0-kenttä // tämä on asemalla mitattu paine // tätä ei toistaiseksi
-           // oteta talteen
-#if 0
-					double PPP31 = ::GetValue<double>(currentSynopField, 1, 3, theSynopStr);
-					double PPP32 = ::GetValue<double>(currentSynopField, 4, 4, theSynopStr);
-					double tmpPressure = 0;
-					if(PPP31 != kFloatMissing && PPP32 != kFloatMissing)
-						tmpPressure = (PPP31 < 500.) ? (1000 + PPP31 + PPP32/10.) : (PPP31 + PPP32/10.);
-					else if(PPP31 != kFloatMissing && PPP32 == kFloatMissing)
-						tmpPressure = (PPP31 < 500.) ? (1000 + PPP31) : (PPP31);
-#endif
-
-          // luetaan lopuksi seuraava kenttä
-          commentString = "next trying to read 4PPPP-field";
-          ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
-        }
-
-        if (currentSynopField.size() == 5 && currentSynopField[0] == '4')
-        {
-          itsPressure = GetPressureFromField(currentSynopField, theSynopStr);
-
-          // luetaan lopuksi seuraava kenttä
-          commentString = "next trying to read 5appp-field";
-          ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
-        }
-
-        if (currentSynopField.size() == 5 && currentSynopField[0] == '5')
-        {  // puretaan 5appp-kenttä
-          auto a = ::GetValue<float>(currentSynopField, 1, 1, theSynopStr);
-          if (a != kFloatMissing)
-            itsPressureTendency = a;
-          auto ppp = ::GetValue<float>(currentSynopField, 2, 4, theSynopStr);
-          if (ppp != kFloatMissing)
-            itsPressureChange = ppp / 10.F;
-
-          // luetaan lopuksi seuraava kenttä
-          commentString = "next trying to read 6RRRt-field";
-          ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
-        }
+        DecodeBuoySection111(ssin, currentSynopField, theSynopStr, fWindSpeedInKnots);
       }  // end of 111-section
 
-      if (currentSynopField.size() == 5 && currentSynopField[0] == '2' &&
-          currentSynopField[1] == '2' && currentSynopField[2] == '2')
-      {  // so there was 222QdQx-field and 222-section
-
-        commentString = "searching 0snTwTwTw or some following field";
-        ReadNextField(ssin, currentSynopField, "0snTwTwTw", theSynopStr, true);
-
-        if (currentSynopField.size() == 5 && currentSynopField[0] == '0')
-        {  // puretaan 0snTwTwTw-kenttä
-          itsTwater = GetTemperatureFromField(currentSynopField, theSynopStr);
-
-          // luetaan lopuksi seuraava kenttä
-          commentString = "next trying to read 1PwaPwaHwaHwa-field";
-          ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
-        }
-      }  // end of 222-section
+      DecodeSection222(ssin, currentSynopField, theSynopStr);
     }
     catch (ExceptionSynopEndOk & /* e */)
     {
@@ -547,171 +544,176 @@ class NFmiSynopCode
     StationErrorStrings& operator=(const StationErrorStrings&) = default;
   };
 
-  void Decode(const std::string &theSynopStr,
-              bool fDoShipMessages,
-              bool fWindSpeedInKnots,
-              int theWordSkipCount,
-              std::set<unsigned long> &theUnknownWmoIdsInOut)
+  // Apply the quadrant of the globe to the latitude and longitude
+  void ApplyQuadrantOfGlobe(int quadrantOfGlobe)
   {
+    if (quadrantOfGlobe == 7)  // north-east
+      itsLon = -itsLon;
+    else if (quadrantOfGlobe == 5)  // south-east
+    {
+      itsLon = -itsLon;
+      itsLat = -itsLat;
+    }
+    else if (quadrantOfGlobe == 3)  // south-west
+      itsLat = -itsLat;
+  }
+
+  // Decode the location fields of a SHIP message
+  void DecodeShipLocation(istream &ssin, const string &theSynopStr)
+  {
+    string _99LaLaLa_Str;  // pakollinen
+    ReadNextField(ssin, _99LaLaLa_Str, "99LaLaLa", theSynopStr, true);
+    itsLat = GetShipLatitude(_99LaLaLa_Str, theSynopStr);
+
+    string QcLoLoLoLo_Str;  // pakollinen
+    ReadNextField(ssin, QcLoLoLoLo_Str, "QcLoLoLoLo", theSynopStr, true);
+    int quadrantOfGlobe = 0;
+    itsLon = GetShipLongitude(QcLoLoLoLo_Str, theSynopStr, quadrantOfGlobe);
+    ApplyQuadrantOfGlobe(quadrantOfGlobe);
+
+    // asetetaan feikki arvoja asemalle
+    itsStation.SetLatitude(itsDriftingStationLocation.Y());
+    itsStation.SetLongitude(itsDriftingStationLocation.X());
+    // itsStation.SetName(IIiii_Str); // laivojen tapauksessa aseman nimi annetaan tämän
+    // funktion ulkopuolella
+    itsStation.SetIdent(0);
+  }
+
+  // Decode the station identity field of a SYNOP message
+  void DecodeStationIdentity(istream &ssin,
+                             const string &theSynopStr,
+                             std::set<unsigned long> &theUnknownWmoIdsInOut)
+  {
+    string IIiii_Str;  // pakollinen
+    ReadNextField(ssin, IIiii_Str, "IIiii", theSynopStr, true);
+
+    if (IIiii_Str.size() != 5)
+      throw std::invalid_argument("Expecting section 0 string of form 'IIiii', got " +
+                                  IIiii_Str + " instead");
+
+    if (!static_cast<bool>(::isdigit(static_cast<unsigned char>(IIiii_Str[0]))))
+      //			throw runtime_error(string("Ignoring this synop, starts with non
+      // digit
+      // value, might be header part: \n") + theSynopStr);
+      throw ExceptionSynopEndIgnoreMessage();
+
+    if (itsKnownStations)
+    {
+      auto wmoID = ::GetValue<unsigned long>(IIiii_Str, 0, 4, theSynopStr);
+      NFmiAviationStation *aviationStation = itsKnownStations->FindStation(wmoID);
+      if (aviationStation)
+      {
+        // NOLINTNEXTLINE(cppcoreguidelines-slicing): only the station is wanted
+        itsStation = NFmiStation(*aviationStation);
+      }
+      else
+      {
+        theUnknownWmoIdsInOut.insert(wmoID);
+      }
+    }
+  }
+
+  // Decode the iihVV-field
+  void DecodeVisibility(istream &ssin, const string &theSynopStr)
+  {
+    string iihVV_Str;  // pakollinen
+    ReadNextField(ssin, iihVV_Str, "iihVV", theSynopStr, false);
+
+    if (iihVV_Str.size() != 5)
+      throw std::invalid_argument("Expecting section 1 string of form 'iihVV', got " + iihVV_Str +
+                                  " instead");
+
+    NFmiStringTools::LowerCase(iihVV_Str);
+    if (iihVV_Str == string("nil"))
+      throw ExceptionSynopEndIgnoreMessage();
+    //		double iR = ::GetValue<double>(iihVV_Str, 0, 0);
+    //		double ix = ::GetValue<double>(iihVV_Str, 1, 1);
+    itsCloudBaseHeight = ::GetValue<float>(iihVV_Str, 2, 2, theSynopStr);
+    itsVisibility = ::GetValue<float>(iihVV_Str, 3, 4, theSynopStr);
     try
     {
-      Clear();
-      stringstream ssin(theSynopStr);
-      string tmpStr;
-      for (int i = 0; i < theWordSkipCount; i++)
-        ReadNextField(ssin, tmpStr, "skippin words in Decode", theSynopStr, true);
-
-      if (fDoShipMessages)
+      itsVisibility = ::SynopVisCode2Metres(itsVisibility);
+    }
+    catch (exception &e)
+    {
+      itsVisibility = kFloatMissing;
+      if (fVerbose)
       {
-        string _99LaLaLa_Str;  // pakollinen
-        ReadNextField(ssin, _99LaLaLa_Str, "99LaLaLa", theSynopStr, true);
-        itsLat = GetShipLatitude(_99LaLaLa_Str, theSynopStr);
-
-        string QcLoLoLoLo_Str;  // pakollinen
-        ReadNextField(ssin, QcLoLoLoLo_Str, "QcLoLoLoLo", theSynopStr, true);
-        int quadrantOfGlobe = 0;
-        itsLon = GetShipLongitude(QcLoLoLoLo_Str, theSynopStr, quadrantOfGlobe);
-        if (quadrantOfGlobe == 7)  // north-east
-          itsLon = -itsLon;
-        else if (quadrantOfGlobe == 5)  // south-east
-        {
-          itsLon = -itsLon;
-          itsLat = -itsLat;
-        }
-        else if (quadrantOfGlobe == 3)  // south-west
-          itsLat = -itsLat;
-
-        // asetetaan feikki arvoja asemalle
-        itsStation.SetLatitude(itsDriftingStationLocation.Y());
-        itsStation.SetLongitude(itsDriftingStationLocation.X());
-        // itsStation.SetName(IIiii_Str); // laivojen tapauksessa aseman nimi annetaan tämän
-        // funktion ulkopuolella
-        itsStation.SetIdent(0);
+        cerr << "Warning: NFmiSynopCode::Decode - " << e.what() << endl;
+        cerr << "In synop message: \n" << theSynopStr << endl;
       }
-      else  // normal synop
-      {
-        string IIiii_Str;  // pakollinen
-        ReadNextField(ssin, IIiii_Str, "IIiii", theSynopStr, true);
+    }
+  }
 
-        if (IIiii_Str.size() != 5)
-          throw std::invalid_argument("Expecting section 0 string of form 'IIiii', got " +
-                                      IIiii_Str + " instead");
+  // Decode the Nddff-field and the optional 00fff-field
+  void DecodeWind(istream &ssin, const string &theSynopStr, bool fWindSpeedInKnots)
+  {
+    string Nddff_Str;  // pakollinen
+    ReadNextField(ssin, Nddff_Str, "Nddff", theSynopStr, true);
 
-        if (!static_cast<bool>(::isdigit(static_cast<unsigned char>(IIiii_Str[0]))))
-          //			throw runtime_error(string("Ignoring this synop, starts with non
-          // digit
-          // value, might be header part: \n") + theSynopStr);
-          throw ExceptionSynopEndIgnoreMessage();
+    if (Nddff_Str.size() != 5)
+      throw std::invalid_argument("Expecting section 1 string of form 'Nddff', got " + Nddff_Str +
+                                  " instead");
 
-        if (itsKnownStations)
-        {
-          auto wmoID = ::GetValue<unsigned long>(IIiii_Str, 0, 4, theSynopStr);
-          NFmiAviationStation *aviationStation = itsKnownStations->FindStation(wmoID);
-          if (aviationStation)
-          {
-            // NOLINTNEXTLINE(cppcoreguidelines-slicing): only the station is wanted
-            itsStation = NFmiStation(*aviationStation);
-          }
-          else
-          {
-            theUnknownWmoIdsInOut.insert(wmoID);
-          }
-        }
-      }
-      string iihVV_Str;  // pakollinen
-      ReadNextField(ssin, iihVV_Str, "iihVV", theSynopStr, false);
+    itsN = ::GetValue<float>(Nddff_Str, 0, 0, theSynopStr);
+    auto dd = ::GetValue<float>(Nddff_Str, 1, 2, theSynopStr);
+    if (dd != kFloatMissing)
+      itsWD = dd * 10.F;
+    auto ff = ::GetValue<float>(Nddff_Str, 3, 4, theSynopStr);
 
-      if (iihVV_Str.size() != 5)
-        throw std::invalid_argument("Expecting section 1 string of form 'iihVV', got " + iihVV_Str +
-                                    " instead");
+    // if speed is 99, there is an extra 00fff group coming up
+    if (ff == 99)
+    {
+      ReadNextField(ssin, Nddff_Str, "00fff", theSynopStr, true);
+      ff = ::GetValue<float>(Nddff_Str, 2, 5, theSynopStr);
+    }
 
-      NFmiStringTools::LowerCase(iihVV_Str);
-      if (iihVV_Str == string("nil"))
-        throw ExceptionSynopEndIgnoreMessage();
-      //		double iR = ::GetValue<double>(iihVV_Str, 0, 0);
-      //		double ix = ::GetValue<double>(iihVV_Str, 1, 1);
-      itsCloudBaseHeight = ::GetValue<float>(iihVV_Str, 2, 2, theSynopStr);
-      itsVisibility = ::GetValue<float>(iihVV_Str, 3, 4, theSynopStr);
-      try
-      {
-        itsVisibility = ::SynopVisCode2Metres(itsVisibility);
-      }
-      catch (exception &e)
-      {
-        itsVisibility = kFloatMissing;
-        if (fVerbose)
-        {
-          cerr << "Warning: NFmiSynopCode::Decode - " << e.what() << endl;
-          cerr << "In synop message: \n" << theSynopStr << endl;
-        }
-      }
+    if (ff != kFloatMissing)
+    {
+      if (fWindSpeedInKnots)
+        itsWS = 1852 * ff / 3600.F;
+      else
+        itsWS = ff;
+    }
+  }
 
-      string Nddff_Str;  // pakollinen
-      ReadNextField(ssin, Nddff_Str, "Nddff", theSynopStr, true);
+  // Decode the 1sTTT, 2sTdTdTd, 3P0P0P0P0, 4PPPP and 5appp groups
+  void DecodeSynopGroups1to5(istream &ssin, string &currentSynopField, const string &theSynopStr)
+  {
+    string commentString;
 
-      if (Nddff_Str.size() != 5)
-        throw std::invalid_argument("Expecting section 1 string of form 'Nddff', got " + Nddff_Str +
-                                    " instead");
+    if (currentSynopField.size() == 5 && currentSynopField[0] == '1')
+    {  // puretaan 1sTTT-kenttä
+      itsTemperature = GetTemperatureFromField(currentSynopField, theSynopStr);
 
-      itsN = ::GetValue<float>(Nddff_Str, 0, 0, theSynopStr);
-      auto dd = ::GetValue<float>(Nddff_Str, 1, 2, theSynopStr);
-      if (dd != kFloatMissing)
-        itsWD = dd * 10.F;
-      auto ff = ::GetValue<float>(Nddff_Str, 3, 4, theSynopStr);
-
-      // if speed is 99, there is an extra 00fff group coming up
-      if (ff == 99)
-      {
-        ReadNextField(ssin, Nddff_Str, "00fff", theSynopStr, true);
-        ff = ::GetValue<float>(Nddff_Str, 2, 5, theSynopStr);
-      }
-
-      if (ff != kFloatMissing)
-      {
-        if (fWindSpeedInKnots)
-          itsWS = 1852 * ff / 3600.F;
-        else
-          itsWS = ff;
-      }
-
-      string commentString;
-      string currentSynopField;
-
-      commentString = "next trying to read 1sTTT -field";
+      // luetaan lopuksi seuraava kenttä
+      commentString = "next trying to read 2sTdTdTd-field";
       ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
+    }
 
-      if (currentSynopField.size() == 5 && currentSynopField[0] == '1')
-      {  // puretaan 1sTTT-kenttä
-        itsTemperature = GetTemperatureFromField(currentSynopField, theSynopStr);
-
-        // luetaan lopuksi seuraava kenttä
-        commentString = "next trying to read 2sTdTdTd-field";
-        ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
-      }
-
-      if (currentSynopField.size() == 5 && currentSynopField[0] == '2')
-      {  // puretaan 2sTdTdTd-kenttä / 29UUU
-        if (currentSynopField[1] == '9')
-          itsRH = ::GetValue<float>(currentSynopField, 2, 4, theSynopStr);
-        else
+    if (currentSynopField.size() == 5 && currentSynopField[0] == '2')
+    {  // puretaan 2sTdTdTd-kenttä / 29UUU
+      if (currentSynopField[1] == '9')
+        itsRH = ::GetValue<float>(currentSynopField, 2, 4, theSynopStr);
+      else
+      {
+        try
         {
-          try
-          {
-            itsDewPoint = GetTemperatureFromField(currentSynopField, theSynopStr);
-          }
-          catch (...)
-          {  // joskus tulee invaliideja 20/05 tms kenttiä, jotka pitää vain ohittaa
-          }
+          itsDewPoint = GetTemperatureFromField(currentSynopField, theSynopStr);
         }
-
-        // luetaan lopuksi seuraava kenttä
-        commentString = "next trying to read 3P0P0P0P0-field";
-        ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
+        catch (...)
+        {  // joskus tulee invaliideja 20/05 tms kenttiä, jotka pitää vain ohittaa
+        }
       }
 
-      if (currentSynopField.size() == 5 && currentSynopField[0] == '3')
-      {  // puretaan 3P0P0P0P0-kenttä // tämä on asemalla mitattu paine // tätä ei toistaiseksi
-         // oteta talteen
+      // luetaan lopuksi seuraava kenttä
+      commentString = "next trying to read 3P0P0P0P0-field";
+      ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
+    }
+
+    if (currentSynopField.size() == 5 && currentSynopField[0] == '3')
+    {  // puretaan 3P0P0P0P0-kenttä // tämä on asemalla mitattu paine // tätä ei toistaiseksi
+       // oteta talteen
 #if 0
 				double PPP31 = kFloatMissing;
 				try
@@ -729,161 +731,208 @@ class NFmiSynopCode
 					tmpPressure = (PPP31 < 500.) ? (1000 + PPP31) : (PPP31);
 #endif
 
-        // luetaan lopuksi seuraava kenttä
-        commentString = "next trying to read 4PPPP-field";
-        ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
-      }
+      // luetaan lopuksi seuraava kenttä
+      commentString = "next trying to read 4PPPP-field";
+      ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
+    }
 
-      if (currentSynopField.size() == 5 && currentSynopField[0] == '4')
+    if (currentSynopField.size() == 5 && currentSynopField[0] == '4')
+    {
+      itsPressure = GetPressureFromField(currentSynopField, theSynopStr);
+
+      // luetaan lopuksi seuraava kenttä
+      commentString = "next trying to read 5appp-field";
+      ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
+    }
+
+    if (currentSynopField.size() == 5 && currentSynopField[0] == '5')
+    {  // puretaan 5appp-kenttä
+      auto a = ::GetValue<float>(currentSynopField, 1, 1, theSynopStr);
+      if (a != kFloatMissing)
+        itsPressureTendency = a;
+      auto ppp = ::GetValue<float>(currentSynopField, 2, 4, theSynopStr);
+      if (ppp != kFloatMissing)
+        itsPressureChange = ppp / 10.F;
+
+      // luetaan lopuksi seuraava kenttä
+      commentString = "next trying to read 6RRRt-field";
+      ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
+    }
+  }
+
+  // Decode the 6RRRt, 7wwWW, 8NhClCmCh and 9GGgg groups
+  void DecodeSynopGroups6to9(istream &ssin, string &currentSynopField, const string &theSynopStr)
+  {
+    string commentString;
+
+    if (currentSynopField.size() == 5 && currentSynopField[0] == '6')
+    {  // puretaan 6RRRt-kenttä
+      auto RRR = ::GetValue<float>(currentSynopField, 1, 3, theSynopStr);
+      if (RRR != kFloatMissing)
       {
-        itsPressure = GetPressureFromField(currentSynopField, theSynopStr);
+        itsPrecipitation = RRR;
+        if (itsPrecipitation < 0)
+          throw runtime_error(
+              string("Error in NFmiSynopCode::Decode, RRR-code was negative value in synop:\n") +
+              theSynopStr);
+        if (itsPrecipitation >= 990)
+          itsPrecipitation = (static_cast<int>(itsPrecipitation) % 10) / 10.F;
+      }
+      //			double t = ::GetValue<double>(currentSynopField, 4, 4); // t(r) on
+      // Duration of period of precip, ei käytetä
+
+      // luetaan lopuksi seuraava kenttä
+      commentString = "next trying to read 7wwWW-field";
+      ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
+    }
+
+    if (currentSynopField.size() == 5 && currentSynopField[0] == '7')
+    {  // puretaan 7wwWW-kenttä
+      itsPresentWeatherCode = ::GetValue<float>(currentSynopField, 1, 2, theSynopStr);
+      itsW1 = ::GetValue<float>(currentSynopField, 3, 3, theSynopStr);
+      itsW2 = ::GetValue<float>(currentSynopField, 4, 4, theSynopStr);
+
+      // luetaan lopuksi seuraava kenttä
+      commentString = "next trying to read 8NhClCmCh-field";
+      ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
+    }
+
+    if (currentSynopField.size() == 5 && currentSynopField[0] == '8')
+    {  // puretaan 8NhClCmCh-kenttä
+      itsNh = ::GetValue<float>(currentSynopField, 1, 1, theSynopStr);
+      itsCl = ::GetValue<float>(currentSynopField, 2, 2, theSynopStr);
+      itsCm = ::GetValue<float>(currentSynopField, 3, 3, theSynopStr);
+      itsCh = ::GetValue<float>(currentSynopField, 4, 4, theSynopStr);
+
+      // luetaan lopuksi seuraava kenttä
+      commentString = "next trying to read 9GGgg-field";
+      ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
+    }
+
+    if (currentSynopField.size() == 5 && currentSynopField[0] == '9')
+    {  // 9GGgg kenttä skipataan
+
+      // luetaan lopuksi seuraava kenttä
+      commentString = "next trying to read 333-field";
+      ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
+    }
+  }
+
+  // Decode the 222-section if there is one
+  void DecodeSection222(istream &ssin, string &currentSynopField, const string &theSynopStr)
+  {
+    string commentString;
+
+    if (currentSynopField.size() == 5 && currentSynopField[0] == '2' &&
+        currentSynopField[1] == '2' && currentSynopField[2] == '2')
+    {  // so there was 222DSvS-field and 222-section
+
+      commentString = "searching 0snTwTwTw or some following field";
+      ReadNextField(ssin, currentSynopField, "0snTwTwTw", theSynopStr, true);
+
+      if (currentSynopField.size() == 5 && currentSynopField[0] == '0')
+      {  // puretaan 0snTwTwTw-kenttä
+        itsTwater = GetTemperatureFromField(currentSynopField, theSynopStr);
 
         // luetaan lopuksi seuraava kenttä
-        commentString = "next trying to read 5appp-field";
+        commentString = "next trying to read 1PwaPwaHwaHwa-field";
         ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
       }
+    }  // end of 222-section
+  }
 
-      if (currentSynopField.size() == 5 && currentSynopField[0] == '5')
-      {  // puretaan 5appp-kenttä
-        auto a = ::GetValue<float>(currentSynopField, 1, 1, theSynopStr);
-        if (a != kFloatMissing)
-          itsPressureTendency = a;
-        auto ppp = ::GetValue<float>(currentSynopField, 2, 4, theSynopStr);
-        if (ppp != kFloatMissing)
-          itsPressureChange = ppp / 10.F;
+  // Find and decode the 333-section
+  void DecodeSection333(istream &ssin,
+                        string &currentSynopField,
+                        const string &theSynopStr,
+                        bool fWindSpeedInKnots)
+  {
+    string commentString;
 
-        // luetaan lopuksi seuraava kenttä
-        commentString = "next trying to read 6RRRt-field";
-        ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
-      }
-
-      if (currentSynopField.size() == 5 && currentSynopField[0] == '6')
-      {  // puretaan 6RRRt-kenttä
-        auto RRR = ::GetValue<float>(currentSynopField, 1, 3, theSynopStr);
-        if (RRR != kFloatMissing)
-        {
-          itsPrecipitation = RRR;
-          if (itsPrecipitation < 0)
-            throw runtime_error(
-                string("Error in NFmiSynopCode::Decode, RRR-code was negative value in synop:\n") +
-                theSynopStr);
-          if (itsPrecipitation >= 990)
-            itsPrecipitation = (static_cast<int>(itsPrecipitation) % 10) / 10.F;
-        }
-        //			double t = ::GetValue<double>(currentSynopField, 4, 4); // t(r) on
-        // Duration of period of precip, ei käytetä
-
-        // luetaan lopuksi seuraava kenttä
-        commentString = "next trying to read 7wwWW-field";
-        ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
-      }
-
-      if (currentSynopField.size() == 5 && currentSynopField[0] == '7')
-      {  // puretaan 7wwWW-kenttä
-        itsPresentWeatherCode = ::GetValue<float>(currentSynopField, 1, 2, theSynopStr);
-        itsW1 = ::GetValue<float>(currentSynopField, 3, 3, theSynopStr);
-        itsW2 = ::GetValue<float>(currentSynopField, 4, 4, theSynopStr);
-
-        // luetaan lopuksi seuraava kenttä
-        commentString = "next trying to read 8NhClCmCh-field";
-        ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
-      }
-
-      if (currentSynopField.size() == 5 && currentSynopField[0] == '8')
-      {  // puretaan 8NhClCmCh-kenttä
-        itsNh = ::GetValue<float>(currentSynopField, 1, 1, theSynopStr);
-        itsCl = ::GetValue<float>(currentSynopField, 2, 2, theSynopStr);
-        itsCm = ::GetValue<float>(currentSynopField, 3, 3, theSynopStr);
-        itsCh = ::GetValue<float>(currentSynopField, 4, 4, theSynopStr);
-
-        // luetaan lopuksi seuraava kenttä
-        commentString = "next trying to read 9GGgg-field";
-        ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
-      }
-
-      if (currentSynopField.size() == 5 && currentSynopField[0] == '9')
-      {  // 9GGgg kenttä skipataan
-
-        // luetaan lopuksi seuraava kenttä
-        commentString = "next trying to read 333-field";
-        ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
-      }
-
-      // tutkitaan onko sanomassa 222-sectionia
-      if (currentSynopField.size() == 5 && currentSynopField[0] == '2' &&
-          currentSynopField[1] == '2' && currentSynopField[2] == '2')
-      {  // so there was 222DSvS-field and 222-section
-
-        commentString = "searching 0snTwTwTw or some following field";
-        ReadNextField(ssin, currentSynopField, "0snTwTwTw", theSynopStr, true);
-
-        if (currentSynopField.size() == 5 && currentSynopField[0] == '0')
-        {  // puretaan 0snTwTwTw-kenttä
-          itsTwater = GetTemperatureFromField(currentSynopField, theSynopStr);
-
-          // luetaan lopuksi seuraava kenttä
-          commentString = "next trying to read 1PwaPwaHwaHwa-field";
-          ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
-        }
-      }  // end of 222-section
-
-      // tutkitaan onko sanomassa 333-sectiota
-      if (currentSynopField != string("333"))
+    // tutkitaan onko sanomassa 333-sectiota
+    if (currentSynopField != string("333"))
+    {
+      commentString = "next trying to find 333-field";
+      for (bool more = true; more; more = currentSynopField != string("333"))
       {
-        commentString = "next trying to find 333-field";
-        for (bool more = true; more; more = currentSynopField != string("333"))
-        {
-          ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
-        }
-      }
-
-      // käydään tarvittaessa läpi 333-sectionin kohtia
-      if (currentSynopField == string("333"))
-      {
-        // luetaan 333:sta seuraava kenttä
-        commentString = "next trying to read 1SnTxTxTx-field from 333-section";
         ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
-
-        if (currentSynopField.size() == 5 && currentSynopField[0] == '1')
-        {  // puretaan 1SnTxTxTx-kenttä
-          itsTmax = GetTemperatureFromField(currentSynopField, theSynopStr);
-
-          // luetaan lopuksi seuraava kenttä
-          commentString = "next trying to read 2SnTnTnTn-field";
-          ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
-        }
-
-        commentString = "next trying to read 910xx/911xx";
-
-        if (currentSynopField.size() == 5 && currentSynopField[0] == '2')
-        {
-          // puretaan 1SnTnTnTn-kenttä
-          itsTmin = GetTemperatureFromField(currentSynopField, theSynopStr);
-
-          // luetaan lopuksi seuraava kenttä
-          ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
-        }
-
-        while (ssin.good())
-        {
-          string prefix = currentSynopField.substr(0, 3);
-          if (prefix == "910" && currentSynopField.size() == 5)
-          {
-            // We'll use 910ff if it is available
-            itsGust = ::GetValue<float>(currentSynopField, 3, 4, theSynopStr);
-            if (itsGust != kFloatMissing && fWindSpeedInKnots)
-              itsGust = 1852 * itsGust / 3600.F;
-          }
-          else if (prefix == "911" && currentSynopField.size() == 5)
-          {
-            // We prefer 911ff over 910ff
-            itsGust = ::GetValue<float>(currentSynopField, 3, 4, theSynopStr);
-            if (itsGust != kFloatMissing && fWindSpeedInKnots)
-              itsGust = 1852 * itsGust / 3600.F;
-          }
-          ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
-        }
       }
+    }
+
+    // käydään tarvittaessa läpi 333-sectionin kohtia
+    if (currentSynopField == string("333"))
+    {
+      // luetaan 333:sta seuraava kenttä
+      commentString = "next trying to read 1SnTxTxTx-field from 333-section";
+      ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
+
+      if (currentSynopField.size() == 5 && currentSynopField[0] == '1')
+      {  // puretaan 1SnTxTxTx-kenttä
+        itsTmax = GetTemperatureFromField(currentSynopField, theSynopStr);
+
+        // luetaan lopuksi seuraava kenttä
+        commentString = "next trying to read 2SnTnTnTn-field";
+        ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
+      }
+
+      commentString = "next trying to read 910xx/911xx";
+
+      if (currentSynopField.size() == 5 && currentSynopField[0] == '2')
+      {
+        // puretaan 1SnTnTnTn-kenttä
+        itsTmin = GetTemperatureFromField(currentSynopField, theSynopStr);
+
+        // luetaan lopuksi seuraava kenttä
+        ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
+      }
+
+      while (ssin.good())
+      {
+        string prefix = currentSynopField.substr(0, 3);
+        // We'll use 910ff if it is available, but we prefer 911ff over 910ff
+        if ((prefix == "910" || prefix == "911") && currentSynopField.size() == 5)
+        {
+          itsGust = ::GetValue<float>(currentSynopField, 3, 4, theSynopStr);
+          if (itsGust != kFloatMissing && fWindSpeedInKnots)
+            itsGust = 1852 * itsGust / 3600.F;
+        }
+        ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
+      }
+    }
+  }
+
+  void Decode(const std::string &theSynopStr,
+              bool fDoShipMessages,
+              bool fWindSpeedInKnots,
+              int theWordSkipCount,
+              std::set<unsigned long> &theUnknownWmoIdsInOut)
+  {
+    try
+    {
+      Clear();
+      stringstream ssin(theSynopStr);
+      string tmpStr;
+      for (int i = 0; i < theWordSkipCount; i++)
+        ReadNextField(ssin, tmpStr, "skippin words in Decode", theSynopStr, true);
+
+      if (fDoShipMessages)
+        DecodeShipLocation(ssin, theSynopStr);
+      else  // normal synop
+        DecodeStationIdentity(ssin, theSynopStr, theUnknownWmoIdsInOut);
+
+      DecodeVisibility(ssin, theSynopStr);
+      DecodeWind(ssin, theSynopStr, fWindSpeedInKnots);
+
+      string commentString;
+      string currentSynopField;
+
+      commentString = "next trying to read 1sTTT -field";
+      ReadNextField(ssin, currentSynopField, commentString, theSynopStr, false);
+
+      DecodeSynopGroups1to5(ssin, currentSynopField, theSynopStr);
+      DecodeSynopGroups6to9(ssin, currentSynopField, theSynopStr);
+      DecodeSection222(ssin, currentSynopField, theSynopStr);
+      DecodeSection333(ssin, currentSynopField, theSynopStr, fWindSpeedInKnots);
     }
     catch (ExceptionSynopEndOk & /* e */)
     {

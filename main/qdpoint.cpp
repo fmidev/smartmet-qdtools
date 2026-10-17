@@ -913,6 +913,7 @@ bool ValidRow(NFmiFastQueryInfo& qd,
 
       string name = ParamName(*iter);
       long level = ParamLevel(*iter);
+      ++iter;
 
       if (level < 0)
         qd.FirstLevel();
@@ -935,7 +936,6 @@ bool ValidRow(NFmiFastQueryInfo& qd,
           {
             // throw runtime_error("Unknown parameter: "+name);
           }
-          ++iter;
 
           if (qd.IsGrid())
             value = qd.InterpolatedValue(lonlat);

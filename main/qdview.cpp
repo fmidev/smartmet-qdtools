@@ -258,6 +258,36 @@ void draw_map(Imagine::NFmiImage& theImage, NFmiArea* theProj, char theResolutio
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Test whether the current location has any valid value
+ *
+ * \param theQ The querydata
+ * \param param The parameter to check (or check all if bad param)
+ */
+// ----------------------------------------------------------------------
+
+bool has_valid_value(NFmiFastQueryInfo& theQ, FmiParameterName param)
+{
+  for (theQ.ResetLevel(); theQ.NextLevel();)
+  {
+    if (param == kFmiBadParameter)
+    {
+      for (theQ.ResetParam(); theQ.NextParam();)
+        for (theQ.ResetTime(); theQ.NextTime();)
+          if (theQ.FloatValue() != kFloatMissing)
+            return true;
+    }
+    else
+    {
+      for (theQ.ResetTime(); theQ.NextTime();)
+        if (theQ.FloatValue() != kFloatMissing)
+          return true;
+    }
+  }
+  return false;
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Draw querydata locations onto the given image
  *
  * \param theImage The image to draw into
@@ -296,40 +326,7 @@ void draw_grid(Imagine::NFmiImage& theImage,
     const int y = static_cast<int>(round(xy.Y()));
 
     // Establish whether to render or not
-    bool ok = true;
-    if (validpoints)
-    {
-      ok = false;
-      for (theQ.ResetLevel(); theQ.NextLevel();)
-      {
-        if (param == kFmiBadParameter)
-        {
-          for (theQ.ResetParam(); theQ.NextParam();)
-          {
-            for (theQ.ResetTime(); theQ.NextTime();)
-            {
-              if (theQ.FloatValue() != kFloatMissing)
-              {
-                ok = true;
-                goto pointok;
-              }
-            }
-          }
-        }
-        else
-        {
-          for (theQ.ResetTime(); theQ.NextTime();)
-          {
-            if (theQ.FloatValue() != kFloatMissing)
-            {
-              ok = true;
-              goto pointok;
-            }
-          }
-        }
-      }
-    pointok:;
-    }
+    const bool ok = (!validpoints || has_valid_value(theQ, param));
 
     if (ok)
     {
@@ -337,6 +334,52 @@ void draw_grid(Imagine::NFmiImage& theImage,
           red, Imagine::NFmiColorTools::kFmiColorCopy, Imagine::kFmiAlignCenter, x, y);
     }
   }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Parse the dot size options -s and -S
+ */
+// ----------------------------------------------------------------------
+
+void parse_dot_options(NFmiCmdLine& cmdline, bool& validpoints, int& dotsize)
+{
+  if (cmdline.isOption('s'))
+  {
+    validpoints = false;
+    dotsize = lexical_cast<int>(cmdline.OptionValue('s'));
+    if (dotsize < 0)
+      throw runtime_error("Argument for option -s must be nonnegative");
+  }
+  if (cmdline.isOption('S'))
+  {
+    validpoints = true;
+    dotsize = lexical_cast<int>(cmdline.OptionValue('S'));
+    if (dotsize < 0)
+      throw runtime_error("Argument for option -S must be nonnegative");
+  }
+  if (cmdline.isOption('s') && cmdline.isOption('S'))
+    throw runtime_error("Options -s and -S are mutually exclusive");
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Establish the area to draw given the margin in degrees
+ */
+// ----------------------------------------------------------------------
+
+NFmiArea* make_draw_area(NFmiArea* area, int margin)
+{
+  if (margin == 0)
+    return area;
+
+  NFmiPoint bl = area->BottomLeftLatLon();
+  NFmiPoint tr = area->TopRightLatLon();
+  bl.X(max(-180.0, bl.X() - margin));
+  bl.Y(max(-90.0, bl.Y() - margin));
+  tr.X(min(180.0, tr.X() + margin));
+  tr.Y(min(90.0, tr.Y() + margin));
+  return area->NewArea(bl, tr);
 }
 
 // ----------------------------------------------------------------------
@@ -381,22 +424,7 @@ int domain(int argc, const char* argv[])
       throw runtime_error("Argument for option -m must be nonnegative");
   }
 
-  if (cmdline.isOption('s'))
-  {
-    validpoints = false;
-    dotsize = lexical_cast<int>(cmdline.OptionValue('s'));
-    if (dotsize < 0)
-      throw runtime_error("Argument for option -s must be nonnegative");
-  }
-  if (cmdline.isOption('S'))
-  {
-    validpoints = true;
-    dotsize = lexical_cast<int>(cmdline.OptionValue('S'));
-    if (dotsize < 0)
-      throw runtime_error("Argument for option -S must be nonnegative");
-  }
-  if (cmdline.isOption('s') && cmdline.isOption('S'))
-    throw runtime_error("Options -s and -S are mutually exclusive");
+  parse_dot_options(cmdline, validpoints, dotsize);
 
   if (cmdline.isOption('r'))
   {
@@ -443,19 +471,7 @@ int domain(int argc, const char* argv[])
   else
     area = create_bbox(q);
 
-  NFmiArea* drawarea = nullptr;
-  if (margin == 0)
-    drawarea = area;
-  else
-  {
-    NFmiPoint bl = area->BottomLeftLatLon();
-    NFmiPoint tr = area->TopRightLatLon();
-    bl.X(max(-180.0, bl.X() - margin));
-    bl.Y(max(-90.0, bl.Y() - margin));
-    tr.X(min(180.0, tr.X() + margin));
-    tr.Y(min(90.0, tr.Y() + margin));
-    drawarea = area->NewArea(bl, tr);
-  }
+  NFmiArea* drawarea = make_draw_area(area, margin);
 
   // Check and recalculate width & height if necessary
 

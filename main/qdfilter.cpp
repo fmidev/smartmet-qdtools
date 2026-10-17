@@ -222,6 +222,51 @@ NFmiParamDescriptor MakeParamDescriptor(NFmiFastQueryInfo& theQ, const vector<st
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Test whether the time matches the time step or the desired hours
+ */
+// ----------------------------------------------------------------------
+
+bool is_wanted_time(const NFmiMetTime& t,
+                    bool all_timesteps,
+                    bool has_timestep,
+                    int dt,
+                    bool utc,
+                    const std::vector<int>& local_hours,
+                    const std::vector<int>& utc_hours)
+{
+  bool ok = all_timesteps;
+
+  if (!ok && has_timestep)
+  {
+    if (dt == 1)
+      ok = true;
+    else if (utc)
+      ok = (t.GetHour() % dt == 0);
+    else
+      ok = (t.CorrectLocalTime().GetHour() % dt == 0);
+  }
+
+  // Accept desired local hours only
+
+  if (!ok && !local_hours.empty())
+  {
+    NFmiTime tlocal = t.CorrectLocalTime();
+    auto pos = find(local_hours.begin(), local_hours.end(), tlocal.GetHour());
+    ok = (pos != local_hours.end());
+  }
+
+  // Accept desired UTC hours only
+  if (!ok && !utc_hours.empty())
+  {
+    auto pos = find(utc_hours.begin(), utc_hours.end(), t.GetHour());
+    ok = (pos != utc_hours.end());
+  }
+
+  return ok;
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Build a new NFmiTimeDescriptor
  *
  * \param theQ The query info from which to construct
@@ -297,8 +342,6 @@ NFmiTimeDescriptor MakeTimeDescriptor(NFmiFastQueryInfo& theQ,
   NFmiTimeList datatimes;
   for (theQ.ResetTime(); theQ.NextTime();)
   {
-    bool ok = all_timesteps;
-
     const NFmiMetTime& t = theQ.ValidTime();
 
     if (has_timestep)
@@ -309,31 +352,7 @@ NFmiTimeDescriptor MakeTimeDescriptor(NFmiFastQueryInfo& theQ,
         continue;
     }
 
-    if (!ok && has_timestep)
-    {
-      if (dt == 1)
-        ok = true;
-      else if (utc)
-        ok = (t.GetHour() % dt == 0);
-      else
-        ok = (t.CorrectLocalTime().GetHour() % dt == 0);
-    }
-
-    // Accept desired local hours only
-
-    if (!ok && !local_hours.empty())
-    {
-      NFmiTime tlocal = t.CorrectLocalTime();
-      auto pos = find(local_hours.begin(), local_hours.end(), tlocal.GetHour());
-      ok = (pos != local_hours.end());
-    }
-
-    // Accept desired UTC hours only
-    if (!ok && !utc_hours.empty())
-    {
-      auto pos = find(utc_hours.begin(), utc_hours.end(), t.GetHour());
-      ok = (pos != utc_hours.end());
-    }
+    bool ok = is_wanted_time(t, all_timesteps, has_timestep, dt, utc, local_hours, utc_hours);
 
     if (!ok)
       continue;
@@ -386,6 +405,89 @@ std::shared_ptr<NFmiDataModifier> create_modifier(const string& theName)
     return std::shared_ptr<NFmiDataModifier>(new NFmiDataModifierStandardDeviation);
 
   throw runtime_error("Unknown function: '" + theName + "'");
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Parse the time interval options -t and -T
+ */
+// ----------------------------------------------------------------------
+
+void parse_time_options(NFmiCmdLine& cmdline, list<int>& opt_times, bool& opt_utc)
+{
+  if (cmdline.isOption('t'))
+  {
+    opt_utc = false;
+    opt_times = NFmiStringTools::Split<list<int> >(cmdline.OptionValue('t'));
+    if (opt_times.empty() || opt_times.size() > 3)
+      throw runtime_error("Option -t argument must have 1-3 values");
+  }
+
+  if (cmdline.isOption('T'))
+  {
+    opt_utc = true;
+    opt_times = NFmiStringTools::Split<list<int> >(cmdline.OptionValue('T'));
+    if (opt_times.empty() || opt_times.size() > 3)
+      throw runtime_error("Option -t argument must have 1-3 values");
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Check that the output does not contain composite parameters
+ */
+// ----------------------------------------------------------------------
+
+void check_no_composite_params(NFmiFastQueryInfo& dstinfo)
+{
+  for (dstinfo.ResetParam(); dstinfo.NextParam();)
+  {
+    auto p = FmiParameterName(dstinfo.Param().GetParam()->GetIdent());
+    if (p == kFmiWeatherAndCloudiness)
+      throw runtime_error("Cannot filter WeatherAndCloudiness");
+    if (p == kFmiTotalWindMS)
+      throw runtime_error("Cannot filter TotalWindMS");
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Calculate the filtered values
+ */
+// ----------------------------------------------------------------------
+
+void filter_data(NFmiFastQueryInfo& dstinfo,
+                 NFmiFastQueryInfo& srcinfo,
+                 NFmiDataModifier& modifier,
+                 int startoffset,
+                 int endoffset)
+{
+  for (dstinfo.ResetTime(); dstinfo.NextTime();)
+  {
+    NFmiMetTime starttime = dstinfo.ValidTime();
+    NFmiMetTime endtime = dstinfo.ValidTime();
+
+    starttime.ChangeByMinutes(startoffset);
+    endtime.ChangeByMinutes(endoffset);
+
+    for (dstinfo.ResetParam(); dstinfo.NextParam();)
+    {
+      if (!srcinfo.Param(dstinfo.Param()))
+        throw runtime_error("Internal error in parameter loop");
+
+      // We assume levels and locations are identical
+
+      for (dstinfo.ResetLocation(), srcinfo.ResetLocation();
+           dstinfo.NextLocation() && srcinfo.NextLocation();)
+        for (dstinfo.ResetLevel(), srcinfo.ResetLevel();
+             dstinfo.NextLevel() && srcinfo.NextLevel();)
+        {
+          modifier.Clear();
+          float value = NFmiDataIntegrator::Integrate(srcinfo, starttime, endtime, modifier);
+          dstinfo.FloatValue(value);
+        }
+    }
+  }
 }
 
 // ----------------------------------------------------------------------
@@ -454,21 +556,7 @@ int run(int argc, const char* argv[])
   if (cmdline.isOption('t') && cmdline.isOption('T'))
     throw runtime_error("Cannot use -t and -T simultaneously");
 
-  if (cmdline.isOption('t'))
-  {
-    opt_utc = false;
-    opt_times = NFmiStringTools::Split<list<int> >(cmdline.OptionValue('t'));
-    if (opt_times.empty() || opt_times.size() > 3)
-      throw runtime_error("Option -t argument must have 1-3 values");
-  }
-
-  if (cmdline.isOption('T'))
-  {
-    opt_utc = true;
-    opt_times = NFmiStringTools::Split<list<int> >(cmdline.OptionValue('T'));
-    if (opt_times.empty() || opt_times.size() > 3)
-      throw runtime_error("Option -t argument must have 1-3 values");
-  }
+  parse_time_options(cmdline, opt_times, opt_utc);
 
   if (cmdline.isOption('i'))
   {
@@ -530,14 +618,7 @@ int run(int argc, const char* argv[])
 
   // Check that the output does not contain composite parameters
 
-  for (dstinfo.ResetParam(); dstinfo.NextParam();)
-  {
-    auto p = FmiParameterName(dstinfo.Param().GetParam()->GetIdent());
-    if (p == kFmiWeatherAndCloudiness)
-      throw runtime_error("Cannot filter WeatherAndCloudiness");
-    if (p == kFmiTotalWindMS)
-      throw runtime_error("Cannot filter TotalWindMS");
-  }
+  check_no_composite_params(dstinfo);
 
   // If -a is given, we make sure the start offset is within the data range
 
@@ -556,32 +637,7 @@ int run(int argc, const char* argv[])
   // set the data modifier
   std::shared_ptr<NFmiDataModifier> modifier = create_modifier(opt_function);
 
-  for (dstinfo.ResetTime(); dstinfo.NextTime();)
-  {
-    NFmiMetTime starttime = dstinfo.ValidTime();
-    NFmiMetTime endtime = dstinfo.ValidTime();
-
-    starttime.ChangeByMinutes(opt_startoffset);
-    endtime.ChangeByMinutes(opt_endoffset);
-
-    for (dstinfo.ResetParam(); dstinfo.NextParam();)
-    {
-      if (!srcinfo->Param(dstinfo.Param()))
-        throw runtime_error("Internal error in parameter loop");
-
-      // We assume levels and locations are identical
-
-      for (dstinfo.ResetLocation(), srcinfo->ResetLocation();
-           dstinfo.NextLocation() && srcinfo->NextLocation();)
-        for (dstinfo.ResetLevel(), srcinfo->ResetLevel();
-             dstinfo.NextLevel() && srcinfo->NextLevel();)
-        {
-          modifier->Clear();
-          float value = NFmiDataIntegrator::Integrate(*srcinfo, starttime, endtime, *modifier);
-          dstinfo.FloatValue(value);
-        }
-    }
-  }
+  filter_data(dstinfo, *srcinfo, *modifier, opt_startoffset, opt_endoffset);
 
   // finish up by printing the result
 

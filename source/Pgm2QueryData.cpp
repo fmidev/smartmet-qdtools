@@ -46,6 +46,46 @@ class PgmHeaderInfo
 
 namespace
 {
+// Parse the level information of the header
+void ReadPgmLevel(std::istream &input,
+                  const std::string &token,
+                  PgmHeaderInfo &thePgmHeaderInfo,
+                  const PgmReadOptions &theOptions,
+                  std::ostream &theReportStream)
+{
+  std::string foo;
+  input >> foo;
+  try
+  {
+    // foo:ssa pilkulla erotettuna level tyyppi, arvo ja nimi eli esim.
+    // hpa,950,"950"
+    std::vector<std::string> splitStrs = NFmiStringTools::Split(foo);
+    if (splitStrs.size() != 3)
+    {
+      if (theOptions.verbose)
+        theReportStream << "Warning: Unrecognized level line: '" << token << " " << foo << "'"
+                        << endl;
+    }
+    else
+    {
+      FmiLevelType levType = kFmiHeight;
+      if (splitStrs[0] == "hpa")
+        levType = kFmiPressureLevel;
+
+      std::string levelName = splitStrs[2];
+      levelName = NFmiStringTools::Trim(levelName, '"');
+      NFmiLevel aLevel(levType, levelName, NFmiStringTools::Convert<unsigned long>(splitStrs[1]));
+      thePgmHeaderInfo.level = aLevel;
+    }
+  }
+  catch (std::exception &e)
+  {
+    if (theOptions.verbose)
+      theReportStream << "Warning: error in level info: " << e.what() << endl
+                      << "In string: " << token << " " << foo << endl;
+  }
+}
+
 void ReadPgmHeader(std::istream &input,
                           PgmHeaderInfo &thePgmHeaderInfo,
                           const PgmReadOptions &theOptions,
@@ -77,37 +117,7 @@ void ReadPgmHeader(std::istream &input,
       input >> thePgmHeaderInfo.partnum >> thePgmHeaderInfo.totalparts;
     else if (token == "level")
     {  // tästä tulkitaan väliaikaisesti level tieto
-      input >> foo;
-      try
-      {
-        // foo:ssa pilkulla erotettuna level tyyppi, arvo ja nimi eli esim.
-        // hpa,950,"950"
-        std::vector<std::string> splitStrs = NFmiStringTools::Split(foo);
-        if (splitStrs.size() != 3)
-        {
-          if (theOptions.verbose)
-            theReportStream << "Warning: Unrecognized level line: '" << token << " " << foo << "'"
-                            << endl;
-        }
-        else
-        {
-          FmiLevelType levType = kFmiHeight;
-          if (splitStrs[0] == "hpa")
-            levType = kFmiPressureLevel;
-
-          std::string levelName = splitStrs[2];
-          levelName = NFmiStringTools::Trim(levelName, '"');
-          NFmiLevel aLevel(
-              levType, levelName, NFmiStringTools::Convert<unsigned long>(splitStrs[1]));
-          thePgmHeaderInfo.level = aLevel;
-        }
-      }
-      catch (std::exception &e)
-      {
-        if (theOptions.verbose)
-          theReportStream << "Warning: error in level info: " << e.what() << endl
-                          << "In string: " << token << " " << foo << endl;
-      }
+      ReadPgmLevel(input, token, thePgmHeaderInfo, theOptions, theReportStream);
     }
     // Currently just skip extra params
     else if (token == "radar")
@@ -255,19 +265,22 @@ bool FillQueryData(NFmiQueryData &theData,
   info.SetProducer(NFmiProducer(theOptions.producer_number, theOptions.producer_name));
   return true;
 }
-}  // namespace
 
-// Luetaan annetusta PGM-tiedostosta data ja muutetaan se queryDataksi.
-NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
-                             const PgmReadOptions &theOptions,
-                             std::ostream &theReportStream)
+// Valid PGM maximum values
+const int valid_size1 = (1 << 8) - 1;
+const int valid_size2 = (1 << 16) - 1;
+
+// Test whether the file should be converted
+bool IsAcceptableFile(const std::string &theFileName,
+                      const PgmReadOptions &theOptions,
+                      std::ostream &theReportStream)
 {
   // Skip the file if it has the wrong suffix
   if (NFmiStringTools::Suffix(theFileName) != "pgm")
   {
     if (theOptions.verbose)
       theReportStream << "Skipping non .pgm file " << theFileName << endl;
-    return nullptr;
+    return false;
   }
 
   // Establish the output name from the header of the file
@@ -277,7 +290,7 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
   {
     if (theOptions.verbose)
       theReportStream << "Skipping nonexistent " << theFileName << endl;
-    return nullptr;
+    return false;
   }
 
   // Skip the file if it is too old
@@ -289,9 +302,98 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
     {
       if (theOptions.verbose)
         theReportStream << "Skipping " << theFileName << " as too old" << endl;
-      return nullptr;
+      return false;
     }
   }
+  return true;
+}
+
+// Read and validate the P5 specs
+bool ReadPgmSize(std::ifstream &infile,
+                 int &width,
+                 int &height,
+                 int &bytes,
+                 const std::string &theFileName,
+                 const PgmReadOptions &theOptions,
+                 std::ostream &theReportStream)
+{
+  std::string line;
+  infile >> width >> height >> bytes;
+  if (!infile.good())
+  {
+    infile.close();
+    if (theOptions.verbose)
+      theReportStream << "Failed to read pgm width, height and bytes from " << theFileName << endl;
+    return false;
+  }
+
+  // Skip the rest of the line after the bytesize indicator
+  getline(infile, line);
+
+  // Check that width height and bytes seem OK
+  if (width <= 0 || height <= 0)
+  {
+    infile.close();
+    if (theOptions.verbose)
+      theReportStream << "Nonnegative size fields in " << theFileName << endl;
+    return false;
+  }
+
+  if (bytes != valid_size1 && bytes != valid_size2)
+  {
+    infile.close();
+    if (theOptions.verbose)
+      theReportStream << "Invalid bytesize " << bytes << " in " << theFileName << endl;
+    return false;
+  }
+  return true;
+}
+
+// Test whether the header contains the required information
+bool IsValidHeader(const PgmHeaderInfo &pgmHeaderInfo,
+                   const std::string &theFileName,
+                   const PgmReadOptions &theOptions,
+                   std::ostream &theReportStream)
+{
+  // We must have an observation time
+  if (pgmHeaderInfo.obstime.empty())
+  {
+    if (theOptions.verbose)
+      theReportStream << "Observation time is missing in " << theFileName << endl;
+    return false;
+  }
+
+  // Must have parameter name
+  if (pgmHeaderInfo.param.empty())
+  {
+    if (theOptions.verbose)
+      theReportStream << "Parameter missing from " << theFileName << endl;
+    return false;
+  }
+
+  // Establish the projection
+  if (pgmHeaderInfo.projections.names().empty())
+  {
+    theReportStream << "Header does not contain projection in " << theFileName << endl;
+    return false;
+  }
+
+  if (pgmHeaderInfo.projections.names().size() > 1)
+  {
+    theReportStream << "Header contains multiple projections in " << theFileName << endl;
+    return false;
+  }
+  return true;
+}
+}  // namespace
+
+// Luetaan annetusta PGM-tiedostosta data ja muutetaan se queryDataksi.
+NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
+                             const PgmReadOptions &theOptions,
+                             std::ostream &theReportStream)
+{
+  if (!IsAcceptableFile(theFileName, theOptions, theReportStream))
+    return nullptr;
 
   // Read the header
   std::ifstream infile(theFileName.c_str(), ios::in | ios::binary);
@@ -345,71 +447,16 @@ NFmiQueryData *Pgm2QueryData(const std::string &theFileName,
   int width = 0;
   int height = 0;
   int bytes = 0;
-  infile >> width >> height >> bytes;
-  if (!infile.good())
-  {
-    infile.close();
-    if (theOptions.verbose)
-      theReportStream << "Failed to read pgm width, height and bytes from " << theFileName << endl;
+  if (!ReadPgmSize(infile, width, height, bytes, theFileName, theOptions, theReportStream))
     return nullptr;
-  }
-
-  // Skip the rest of the line after the bytesize indicator
-  getline(infile, line);
-
-  // Check that width height and bytes seem OK
-  if (width <= 0 || height <= 0)
-  {
-    infile.close();
-    if (theOptions.verbose)
-      theReportStream << "Nonnegative size fields in " << theFileName << endl;
-    return nullptr;
-  }
-
-  const int valid_size1 = (1 << 8) - 1;
-  const int valid_size2 = (1 << 16) - 1;
-
-  if (bytes != valid_size1 && bytes != valid_size2)
-  {
-    infile.close();
-    if (theOptions.verbose)
-      theReportStream << "Invalid bytesize " << bytes << " in " << theFileName << endl;
-    return nullptr;
-  }
 
   // Establish the position so that newbase can skip to this
   // current point
   int header_end_pos = static_cast<int>(infile.tellg());
   infile.close();
 
-  // We must have an observation time
-  if (pgmHeaderInfo.obstime.empty())
-  {
-    if (theOptions.verbose)
-      theReportStream << "Observation time is missing in " << theFileName << endl;
+  if (!IsValidHeader(pgmHeaderInfo, theFileName, theOptions, theReportStream))
     return nullptr;
-  }
-
-  // Must have parameter name
-  if (pgmHeaderInfo.param.empty())
-  {
-    if (theOptions.verbose)
-      theReportStream << "Parameter missing from " << theFileName << endl;
-    return nullptr;
-  }
-
-  // Establish the projection
-  if (pgmHeaderInfo.projections.names().empty())
-  {
-    theReportStream << "Header does not contain projection in " << theFileName << endl;
-    return nullptr;
-  }
-
-  if (pgmHeaderInfo.projections.names().size() > 1)
-  {
-    theReportStream << "Header contains multiple projections in " << theFileName << endl;
-    return nullptr;
-  }
 
   NFmiQueryInfo tmpinfo = MakeQdInfo(pgmHeaderInfo, width, height, theOptions, theReportStream);
 

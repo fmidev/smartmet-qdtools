@@ -113,6 +113,319 @@ bool ConvertTimeList2TimeBag(const NFmiTimeList& theTimeList, NFmiTimeBag& theTi
   }
   return false;
 }
+// Program settings
+struct Settings
+{
+  long maxPastAge = 48;      // maximum age in hours
+  long maxFutureAge = 8;     // maximum future time in hours
+  bool verbose = false;      // verbose mode
+  bool latest = false;       // only latest files
+  bool sameorigin = false;   // do not require same origintime
+  bool newestorigin = true;  // pick newest origin time
+  std::string outfile = "-";
+  NFmiMetTime now;
+};
+
+// Read the options
+void read_options(NFmiCmdLine& cmdline, Settings& settings)
+{
+  if (cmdline.isOption('v'))
+    settings.verbose = true;
+
+  if (cmdline.isOption('r'))
+    settings.newestorigin = !settings.newestorigin;
+
+  if (cmdline.isOption('p'))
+    settings.maxPastAge = Fmi::stol(cmdline.OptionValue('p'));
+
+  if (cmdline.isOption('f'))
+    settings.maxFutureAge = Fmi::stol(cmdline.OptionValue('f'));
+
+  if (cmdline.isOption('1'))
+    settings.latest = true;
+
+  if (cmdline.isOption('o'))
+    settings.sameorigin = true;
+
+  if (cmdline.isOption('O'))
+    settings.outfile = cmdline.OptionValue('O');
+
+  if (cmdline.isOption('S'))
+    settings.now = Fmi::TimeParser::parse(cmdline.OptionValue('S'));
+}
+
+// Establish the query files. Returns false if a directory is empty.
+bool find_files(const list<string>& datapaths, const Settings& settings, list<string>& files)
+{
+  for (auto& datapath : datapaths)
+  {
+    if (NFmiFileSystem::FileReadable(datapath))
+      files.push_back(datapath);
+
+    else if (settings.latest)
+    {
+      string newest = NFmiFileSystem::NewestFile(datapath);
+      if (newest.empty())
+      {
+        cerr << "Directory '" + datapath + "' is empty" << endl;
+        return false;
+      }
+      files.push_back(datapath + '/' + newest);
+    }
+    else
+    {
+      list<string> dirfiles;
+
+      dirfiles = NFmiFileSystem::DirectoryFiles(datapath);
+
+      // Alphabetical order is assumed to be the time order
+      // so that reverse alphabetical orders gives files
+      // from newest to oldest
+
+      dirfiles.sort();
+      dirfiles.reverse();
+
+      for (auto& dirfile : dirfiles)
+      {
+        files.push_back(datapath + '/' + dirfile);
+      }
+    }
+  }
+  return true;
+}
+
+// Read the querydata header. Returns false if the file could not be read.
+bool read_header(const string& filename, NFmiQueryInfo& qi)
+{
+  try
+  {
+    ifstream in(filename.c_str(), ios::in | ios::binary);
+    if (!in)
+      return false;
+    in >> qi;
+    in.close();
+  }
+  catch (...)
+  {
+    return false;
+  }
+  return true;
+}
+
+// Collect the valid times of the data in the time range, returns the number of new times
+int accept_times(NFmiQueryInfo& qi,
+                 const NFmiMetTime& firsttime,
+                 const NFmiMetTime& lasttime,
+                 const Settings& settings,
+                 NFmiTimeList& timelist)
+{
+  int accepted_count = 0;
+
+  qi.FirstTime();
+  for (bool more = true; more; more = qi.NextTime() && qi.ValidTime() <= lasttime)
+  {
+    if (qi.ValidTime() >= firsttime && qi.ValidTime() <= lasttime)
+    {
+      if (!timelist.Find(qi.ValidTime()))
+      {
+        if (settings.verbose)
+          cerr << "\taccepted " << qi.ValidTime().ToStr(kYYYYMMDDHHMM).CharPtr() << " ("
+               << qi.ValidTime().DifferenceInHours(settings.now) << "h)" << endl;
+        timelist.Add(new NFmiMetTime(qi.ValidTime()), false, false);
+        ++accepted_count;
+      }
+    }
+    else
+    {
+      if (settings.verbose)
+        cerr << "\tnot accepted " << qi.ValidTime().ToStr(kYYYYMMDDHHMM).CharPtr() << " ("
+             << qi.ValidTime().DifferenceInHours(settings.now) << "h)" << endl;
+    }
+  }
+  return accepted_count;
+}
+
+// Create the output querydata based on the first file
+NFmiQueryData* create_output(NFmiCmdLine& cmdline,
+                             NFmiFastQueryInfo& qi,
+                             const NFmiMetTime& origintime,
+                             const NFmiTimeList& timelist,
+                             const NFmiParamBag& pbag,
+                             const string& outfile)
+{
+  NFmiTimeBag timeBag;
+  bool fUseTimeBag = false;
+  if (cmdline.isOption(
+          't'))  // jos t-optio päällä, yritetään konvertoida timebagiksi jos mahdollista
+    fUseTimeBag = ConvertTimeList2TimeBag(timelist, timeBag);  // muutetaan jos mahd.
+  NFmiTimeDescriptor tmpTimeDesc = fUseTimeBag ? NFmiTimeDescriptor(origintime, timeBag)
+                                               : NFmiTimeDescriptor(origintime, timelist);
+  tmpTimeDesc.OriginTime(origintime);
+  NFmiQueryInfo tmpInfo(
+      NFmiParamDescriptor(pbag), tmpTimeDesc, qi.HPlaceDescriptor(), qi.VPlaceDescriptor());
+  tmpInfo.InfoVersion(qi.InfoVersion());
+
+  // Change producer name if so requested
+  NFmiProducer producer(*tmpInfo.Producer());
+  if (cmdline.isOption('N'))
+    producer.SetName(cmdline.OptionValue('N'));
+  if (cmdline.isOption('D'))
+    producer.SetIdent(NFmiStringTools::Convert<unsigned long>(cmdline.OptionValue('D')));
+  if (cmdline.isOption('N') || cmdline.isOption('D'))
+    tmpInfo.SetProducer(producer);
+
+  if (outfile == "-")
+    return NFmiQueryDataUtil::CreateEmptyData(tmpInfo);
+  else
+    return NFmiQueryDataUtil::CreateEmptyData(tmpInfo, outfile, true);
+}
+
+// Check whether point data must be combined slowly
+bool needs_slow_copy(NFmiFastQueryInfo& outqi, NFmiFastQueryInfo& qi)
+{
+  bool slowcopy = false;
+  {
+    if (!outqi.IsGrid() && !qi.IsGrid())
+    {
+      for (outqi.ResetLocation(), qi.ResetLocation(); outqi.NextLocation() && qi.NextLocation();)
+      {
+        if (outqi.Location()->GetIdent() != qi.Location()->GetIdent())
+        {
+          slowcopy = true;
+          break;
+        }
+      }
+    }
+  }
+  return slowcopy;
+}
+
+// Collect time indexes which will be copied, from and to
+void collect_time_indexes(NFmiFastQueryInfo& qi,
+                          NFmiFastQueryInfo& outqi,
+                          NFmiTimeList& timelist,
+                          set<NFmiMetTime>& handled_times,
+                          bool verbose,
+                          std::vector<unsigned long>& input_time_indexes,
+                          std::vector<unsigned long>& output_time_indexes)
+{
+  for (qi.ResetTime(); qi.NextTime();)
+  {
+    if (timelist.Find(qi.ValidTime()) &&
+        handled_times.find(qi.ValidTime()) == handled_times.end() && outqi.Time(qi.ValidTime()))
+    {
+      input_time_indexes.push_back(qi.TimeIndex());
+      output_time_indexes.push_back(outqi.TimeIndex());
+      handled_times.insert(qi.ValidTime());
+      if (verbose)
+        cerr << "\ttaking " << qi.ValidTime().ToStr(kYYYYMMDDHHMM).CharPtr() << endl;
+    }
+  }
+}
+
+// Copy the values of the current parameter, location and level for the collected times
+void copy_times(NFmiFastQueryInfo& qi,
+                NFmiFastQueryInfo& outqi,
+                const std::vector<unsigned long>& input_time_indexes,
+                const std::vector<unsigned long>& output_time_indexes)
+{
+  for (outqi.ResetLevel(), qi.ResetLevel(); outqi.NextLevel() && qi.NextLevel();)
+  {
+    for (size_t i = 0; i < input_time_indexes.size(); i++)
+    {
+      qi.TimeIndex(input_time_indexes[i]);
+      outqi.TimeIndex(output_time_indexes[i]);
+      outqi.FloatValue(qi.FloatValue());
+    }
+  }
+}
+
+// Copy the collected times from the input data
+void copy_data(NFmiFastQueryInfo& qi,
+               NFmiFastQueryInfo& outqi,
+               bool slowcopy,
+               bool verbose,
+               const std::vector<unsigned long>& input_time_indexes,
+               const std::vector<unsigned long>& output_time_indexes)
+{
+  for (qi.ResetParam(); qi.NextParam();)
+  {
+    if (outqi.Param(qi.Param()))
+    {
+      if (!slowcopy)
+      {
+        for (outqi.ResetLocation(), qi.ResetLocation(); outqi.NextLocation() && qi.NextLocation();)
+          copy_times(qi, outqi, input_time_indexes, output_time_indexes);
+      }
+
+      else  // slow copy
+      {
+        // Resolution changes cause slow copies until
+        // old data has been forgotten
+        for (outqi.ResetLocation(); outqi.NextLocation();)
+        {
+          if (qi.Location(outqi.Location()->GetIdent()))
+            copy_times(qi, outqi, input_time_indexes, output_time_indexes);
+        }
+      }
+    }
+    else if (verbose)
+    {
+      cerr << "Warning: Parameter " << qi.Param() << " is not available in all datas" << endl;
+    }
+  }
+}
+
+// Collect all times and parameters in the requested time range, and the files
+// which contained accepted times sorted by origin time
+void scan_headers(const list<string>& files,
+                  const Settings& settings,
+                  const NFmiMetTime& firsttime,
+                  const NFmiMetTime& lasttime,
+                  NFmiTimeList& timelist,
+                  multimap<NFmiMetTime, string>& accepted_files,
+                  NFmiMetTime& origintime,
+                  NFmiParamBag& pbag)
+{
+  for (const auto& filename : files)
+  {
+    if (settings.verbose)
+      cerr << "Reading " << filename << " header" << endl;
+
+    NFmiQueryInfo qi;
+    if (!read_header(filename, qi))
+      continue;
+
+    // discard files with different origin time
+    if (settings.sameorigin && !accepted_files.empty())
+    {
+      if (origintime != qi.OriginTime())
+      {
+        if (settings.verbose)
+          cerr << ".. discared due to different origin time" << endl;
+        continue;
+      }
+    }
+
+    // Choose newest/oldest origin time of output
+
+    if (accepted_files.empty())
+      origintime = qi.OriginTime();
+    else if (settings.newestorigin && qi.OriginTime() > origintime)
+      origintime = qi.OriginTime();
+    else if (!settings.newestorigin && qi.OriginTime() < origintime)
+      origintime = qi.OriginTime();
+
+    int accepted_count = accept_times(qi, firsttime, lasttime, settings, timelist);
+
+    if (accepted_count > 0)
+    {
+      accepted_files.insert(make_pair(qi.OriginTime(), filename));
+      pbag = pbag.Combine(*qi.ParamDescriptor().ParamBag());
+    }
+  }
+}
+
 }  // namespace
 
 // ----------------------------------------------------------------------
@@ -143,14 +456,7 @@ int main(int argc, const char *argv[])
 {
   // The default options
 
-  long maxPastAge = 48;      // maximum age in hours
-  long maxFutureAge = 8;     // maximum future time in hours
-  bool verbose = false;      // verbose mode
-  bool latest = false;       // only latest files
-  bool sameorigin = false;   // do not require same origintime
-  bool newestorigin = true;  // pick newest origin time
-  std::string outfile = "-";
-  NFmiMetTime now;
+  Settings settings;
 
   NFmiCmdLine cmdline(argc, argv, "vp!f!1otN!D!rO!S!");
 
@@ -176,29 +482,7 @@ int main(int argc, const char *argv[])
       datapaths.emplace_back(cmdline.Parameter(i));
   }
 
-  if (cmdline.isOption('v'))
-    verbose = true;
-
-  if (cmdline.isOption('r'))
-    newestorigin = !newestorigin;
-
-  if (cmdline.isOption('p'))
-    maxPastAge = Fmi::stol(cmdline.OptionValue('p'));
-
-  if (cmdline.isOption('f'))
-    maxFutureAge = Fmi::stol(cmdline.OptionValue('f'));
-
-  if (cmdline.isOption('1'))
-    latest = true;
-
-  if (cmdline.isOption('o'))
-    sameorigin = true;
-
-  if (cmdline.isOption('O'))
-    outfile = cmdline.OptionValue('O');
-
-  if (cmdline.isOption('S'))
-    now = Fmi::TimeParser::parse(cmdline.OptionValue('S'));
+  read_options(cmdline, settings);
 
   // Check arguments
 
@@ -214,12 +498,12 @@ int main(int argc, const char *argv[])
   // Establish the minimum and maximum times to be included
   // in the output.
 
-  NFmiMetTime firsttime(now);
-  NFmiMetTime lasttime(now);
-  firsttime.ChangeByHours(-maxPastAge);
-  lasttime.ChangeByHours(maxFutureAge);
+  NFmiMetTime firsttime(settings.now);
+  NFmiMetTime lasttime(settings.now);
+  firsttime.ChangeByHours(-settings.maxPastAge);
+  lasttime.ChangeByHours(settings.maxFutureAge);
 
-  if (verbose)
+  if (settings.verbose)
   {
     cerr << "Timerange = " << firsttime.ToStr(kYYYYMMDDHHMM).CharPtr() << " - "
          << lasttime.ToStr(kYYYYMMDDHHMM).CharPtr() << endl;
@@ -233,40 +517,8 @@ int main(int argc, const char *argv[])
 
   list<string> files;
 
-  for (auto& datapath : datapaths)
-  {
-    if (NFmiFileSystem::FileReadable(datapath))
-      files.push_back(datapath);
-
-    else if (latest)
-    {
-      string newest = NFmiFileSystem::NewestFile(datapath);
-      if (newest.empty())
-      {
-        cerr << "Directory '" + datapath + "' is empty" << endl;
-        return 1;
-      }
-      files.push_back(datapath + '/' + newest);
-    }
-    else
-    {
-      list<string> dirfiles;
-
-      dirfiles = NFmiFileSystem::DirectoryFiles(datapath);
-
-      // Alphabetical order is assumed to be the time order
-      // so that reverse alphabetical orders gives files
-      // from newest to oldest
-
-      dirfiles.sort();
-      dirfiles.reverse();
-
-      for (auto& dirfile : dirfiles)
-      {
-        files.push_back(datapath + '/' + dirfile);
-      }
-    }
-  }
+  if (!find_files(datapaths, settings, files))
+    return 1;
 
   // We collect a list of files which contained accepted
   // timestamps to speed up the main loop. The files are
@@ -280,75 +532,7 @@ int main(int argc, const char *argv[])
 
   NFmiParamBag pbag;
 
-  for (const auto& filename : files)
-  {
-    if (verbose)
-      cerr << "Reading " << filename << " header" << endl;
-
-    NFmiQueryInfo qi;
-    try
-    {
-      ifstream in(filename.c_str(), ios::in | ios::binary);
-      if (!in)
-        continue;
-      in >> qi;
-      in.close();
-    }
-    catch (...)
-    {
-      continue;
-    }
-
-    // discard files with different origin time
-    if (sameorigin && !accepted_files.empty())
-    {
-      if (origintime != qi.OriginTime())
-      {
-        if (verbose)
-          cerr << ".. discared due to different origin time" << endl;
-        continue;
-      }
-    }
-
-    // Choose newest/oldest origin time of output
-
-    if (accepted_files.empty())
-      origintime = qi.OriginTime();
-    else if (newestorigin && qi.OriginTime() > origintime)
-      origintime = qi.OriginTime();
-    else if (!newestorigin && qi.OriginTime() < origintime)
-      origintime = qi.OriginTime();
-
-    int accepted_count = 0;
-
-    qi.FirstTime();
-    for (bool more = true; more; more = qi.NextTime() && qi.ValidTime() <= lasttime)
-    {
-      if (qi.ValidTime() >= firsttime && qi.ValidTime() <= lasttime)
-      {
-        if (!timelist.Find(qi.ValidTime()))
-        {
-          if (verbose)
-            cerr << "\taccepted " << qi.ValidTime().ToStr(kYYYYMMDDHHMM).CharPtr() << " ("
-                 << qi.ValidTime().DifferenceInHours(now) << "h)" << endl;
-          timelist.Add(new NFmiMetTime(qi.ValidTime()), false, false);
-          ++accepted_count;
-        }
-      }
-      else
-      {
-        if (verbose)
-          cerr << "\tnot accepted " << qi.ValidTime().ToStr(kYYYYMMDDHHMM).CharPtr() << " ("
-               << qi.ValidTime().DifferenceInHours(now) << "h)" << endl;
-      }
-    }
-
-    if (accepted_count > 0)
-    {
-      accepted_files.insert(make_pair(qi.OriginTime(), filename));
-      pbag = pbag.Combine(*qi.ParamDescriptor().ParamBag());
-    }
-  }
+  scan_headers(files, settings, firsttime, lasttime, timelist, accepted_files, origintime, pbag);
 
   // It is an error if there are no timestamps in the desired range
 
@@ -369,7 +553,7 @@ int main(int argc, const char *argv[])
   for (auto it = accepted_files.rbegin(); it != accepted_files.rend(); ++it)
   {
     const string &filename = it->second;
-    if (verbose)
+    if (settings.verbose)
       cerr << "Reading " << filename << endl;
 
     NFmiQueryData qd(filename);
@@ -379,127 +563,37 @@ int main(int argc, const char *argv[])
 
     if (outqd == nullptr)
     {
-      NFmiTimeBag timeBag;
-      bool fUseTimeBag = false;
-      if (cmdline.isOption(
-              't'))  // jos t-optio päällä, yritetään konvertoida timebagiksi jos mahdollista
-        fUseTimeBag = ConvertTimeList2TimeBag(timelist, timeBag);  // muutetaan jos mahd.
-      NFmiTimeDescriptor tmpTimeDesc = fUseTimeBag ? NFmiTimeDescriptor(origintime, timeBag)
-                                                   : NFmiTimeDescriptor(origintime, timelist);
-      tmpTimeDesc.OriginTime(origintime);
-      NFmiQueryInfo tmpInfo(
-          NFmiParamDescriptor(pbag), tmpTimeDesc, qi.HPlaceDescriptor(), qi.VPlaceDescriptor());
-      tmpInfo.InfoVersion(qi.InfoVersion());
-
-      // Change producer name if so requested
-      NFmiProducer producer(*tmpInfo.Producer());
-      if (cmdline.isOption('N'))
-        producer.SetName(cmdline.OptionValue('N'));
-      if (cmdline.isOption('D'))
-        producer.SetIdent(NFmiStringTools::Convert<unsigned long>(cmdline.OptionValue('D')));
-      if (cmdline.isOption('N') || cmdline.isOption('D'))
-        tmpInfo.SetProducer(producer);
-
-      if (outfile == "-")
-        outqd = NFmiQueryDataUtil::CreateEmptyData(tmpInfo);
-      else
-        outqd = NFmiQueryDataUtil::CreateEmptyData(tmpInfo, outfile, true);
+      outqd = create_output(cmdline, qi, origintime, timelist, pbag, settings.outfile);
       outqi = new NFmiFastQueryInfo(outqd);
     }
 
     // Check whether point data must be combined slowly
 
-    bool slowcopy = false;
-    {
-      if (!outqi->IsGrid() && !qi.IsGrid())
-      {
-        for (outqi->ResetLocation(), qi.ResetLocation();
-             outqi->NextLocation() && qi.NextLocation();)
-        {
-          if (outqi->Location()->GetIdent() != qi.Location()->GetIdent())
-          {
-            slowcopy = true;
-            break;
-          }
-        }
-      }
-    }
+    bool slowcopy = needs_slow_copy(*outqi, qi);
 
-    if (verbose && slowcopy)
+    if (settings.verbose && slowcopy)
       cerr << "Must perform slow copy of point data, locations differ\n";
 
     // Collect time indexes which will be copied, from and to
 
     std::vector<unsigned long> input_time_indexes;
     std::vector<unsigned long> output_time_indexes;
-
-    for (qi.ResetTime(); qi.NextTime();)
-    {
-      if (timelist.Find(qi.ValidTime()) &&
-          handled_times.find(qi.ValidTime()) == handled_times.end() && outqi->Time(qi.ValidTime()))
-      {
-        input_time_indexes.push_back(qi.TimeIndex());
-        output_time_indexes.push_back(outqi->TimeIndex());
-        handled_times.insert(qi.ValidTime());
-        if (verbose)
-          cerr << "\ttaking " << qi.ValidTime().ToStr(kYYYYMMDDHHMM).CharPtr() << endl;
-      }
-    }
+    collect_time_indexes(qi,
+                         *outqi,
+                         timelist,
+                         handled_times,
+                         settings.verbose,
+                         input_time_indexes,
+                         output_time_indexes);
 
     // Copy
 
-    for (qi.ResetParam(); qi.NextParam();)
-    {
-      if (outqi->Param(qi.Param()))
-      {
-        if (!slowcopy)
-        {
-          for (outqi->ResetLocation(), qi.ResetLocation();
-               outqi->NextLocation() && qi.NextLocation();)
-          {
-            for (outqi->ResetLevel(), qi.ResetLevel(); outqi->NextLevel() && qi.NextLevel();)
-            {
-              for (size_t i = 0; i < input_time_indexes.size(); i++)
-              {
-                qi.TimeIndex(input_time_indexes[i]);
-                outqi->TimeIndex(output_time_indexes[i]);
-                outqi->FloatValue(qi.FloatValue());
-              }
-            }
-          }
-        }
-
-        else  // slow copy
-        {
-          // Resolution changes cause slow copies until
-          // old data has been forgotten
-          for (outqi->ResetLocation(); outqi->NextLocation();)
-          {
-            if (qi.Location(outqi->Location()->GetIdent()))
-            {
-              for (outqi->ResetLevel(), qi.ResetLevel(); outqi->NextLevel() && qi.NextLevel();)
-              {
-                for (size_t i = 0; i < input_time_indexes.size(); i++)
-                {
-                  qi.TimeIndex(input_time_indexes[i]);
-                  outqi->TimeIndex(output_time_indexes[i]);
-                  outqi->FloatValue(qi.FloatValue());
-                }
-              }
-            }
-          }
-        }
-      }
-      else if (verbose)
-      {
-        cerr << "Warning: Parameter " << qi.Param() << " is not available in all datas" << endl;
-      }
-    }
+    copy_data(qi, *outqi, slowcopy, settings.verbose, input_time_indexes, output_time_indexes);
   }
 
   // Done
 
-  if (outfile == "-")
+  if (settings.outfile == "-")
     cout << *outqd;
 
   // Clean up memory, flush mmapped file to disk

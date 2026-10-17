@@ -1963,6 +1963,83 @@ NFmiQueryData *MakeQueryDataFromSynopCodeDataVector(
   return newData;
 }
 
+// Report the ignored unknown stations
+void ReportUnknownStations(const std::set<unsigned long> &unknownWmoIdsInOut)
+{
+  if (unknownWmoIdsInOut.empty())
+    return;
+  cerr << "Warning, there were messages from unknown stations (" << unknownWmoIdsInOut.size()
+       << ") that were ignored." << endl;
+  for (unsigned long it : unknownWmoIdsInOut)
+    cerr << it << " ";
+  cerr << endl;
+}
+
+// Establish the producer of the output data
+NFmiProducer GetWantedProducer(NFmiCmdLine &cmdline, bool doShipMessages, bool doBuoyMessages)
+{
+  NFmiProducer wantedProducer =
+      doShipMessages ? NFmiProducer(kFmiSHIP, "SHIP") : NFmiProducer(kFmiSYNOP, "SYNOP");
+  if (doBuoyMessages)
+    wantedProducer = NFmiProducer(kFmiBUOY, "BUOY");
+  if (cmdline.isOption('p'))
+  {
+    std::vector<std::string> strVector = NFmiStringTools::Split(cmdline.OptionValue('p'), ",");
+    if (strVector.size() != 2)
+      throw runtime_error(
+          "Error: with p-option 2 comma separated parameters expected (e.g. 1001,SYNOP)");
+
+    auto prodId = NFmiStringTools::Convert<unsigned long>(strVector[0]);
+    wantedProducer = NFmiProducer(prodId, strVector[1]);
+  }
+  return wantedProducer;
+}
+
+// Decode all the files matching the given file pattern
+//
+// Returns true if any files were found
+bool ReadSynopFiles(const std::string &filePatternStr,
+                    const NFmiMetTime &referenceTime,
+                    std::vector<NFmiSynopCode> &synopCodeVector,
+                    NFmiAviationStationInfoSystem &aviStationInfoSystem,
+                    bool roundTimesToNearestSynopticTimes,
+                    bool verbose,
+                    bool doShipMessages,
+                    bool doBuoyMessages,
+                    std::set<unsigned long> &unknownWmoIdsInOut)
+{
+  bool foundAnyFiles = false;
+  //	2. Hae jokaista filefilteriä vastaavat tiedostonimet omaan listaan
+  std::string usedPath = NFmiFileSystem::PathFromPattern(filePatternStr);
+  list<string> fileList = NFmiFileSystem::PatternFiles(filePatternStr);
+  for (auto &it : fileList)
+  {
+    //	3. Lue listan tiedostot vuorollaan sisään ja tulkitse siitä sanomat
+    // synopCode-vektoriin
+    std::string finalFileName = usedPath + it;
+    foundAnyFiles = true;
+    string synopFileContent;
+    if (NFmiFileSystem::ReadFile2String(finalFileName, synopFileContent))
+    {
+      string errorStr;
+      ::FillSynopCodeDataVectorFromSYNOPStr(referenceTime,
+                                            synopCodeVector,
+                                            synopFileContent,
+                                            aviStationInfoSystem,
+                                            roundTimesToNearestSynopticTimes,
+                                            verbose,
+                                            doShipMessages,
+                                            doBuoyMessages,
+                                            unknownWmoIdsInOut,
+                                            it);
+    }
+    else
+      cerr << "Warning, couldn't read the file: '" << finalFileName
+           << "', continuing to next file..." << endl;
+  }
+  return foundAnyFiles;
+}
+
 void Domain(int argc, const char *argv[])
 {
   NFmiMilliSecondTimer timer;
@@ -2028,20 +2105,7 @@ void Domain(int argc, const char *argv[])
   if (doBuoyMessages && doShipMessages)
     throw runtime_error("Error with S- and B-options, don't use them at the same time.");
 
-  NFmiProducer wantedProducer =
-      doShipMessages ? NFmiProducer(kFmiSHIP, "SHIP") : NFmiProducer(kFmiSYNOP, "SYNOP");
-  if (doBuoyMessages)
-    wantedProducer = NFmiProducer(kFmiBUOY, "BUOY");
-  if (cmdline.isOption('p'))
-  {
-    std::vector<std::string> strVector = NFmiStringTools::Split(cmdline.OptionValue('p'), ",");
-    if (strVector.size() != 2)
-      throw runtime_error(
-          "Error: with p-option 2 comma separated parameters expected (e.g. 1001,SYNOP)");
-
-    auto prodId = NFmiStringTools::Convert<unsigned long>(strVector[0]);
-    wantedProducer = NFmiProducer(prodId, strVector[1]);
-  }
+  NFmiProducer wantedProducer = ::GetWantedProducer(cmdline, doShipMessages, doBuoyMessages);
 
   bool roundTimesToNearestSynopticTimes = false;
   if (cmdline.isOption('t'))
@@ -2059,47 +2123,23 @@ void Domain(int argc, const char *argv[])
   std::vector<NFmiSynopCode> synopCodeVector;
   for (const auto& filePatternStr : fileFilterList)
   {
-    //	2. Hae jokaista filefilteriä vastaavat tiedostonimet omaan listaan
-    std::string usedPath = NFmiFileSystem::PathFromPattern(filePatternStr);
-    list<string> fileList = NFmiFileSystem::PatternFiles(filePatternStr);
-    for (auto& it : fileList)
-    {
-      //	3. Lue listan tiedostot vuorollaan sisään ja tulkitse siitä sanomat
-      // synopCode-vektoriin
-      std::string finalFileName = usedPath + it;
+    if (::ReadSynopFiles(filePatternStr,
+                         referenceTime,
+                         synopCodeVector,
+                         aviStationInfoSystem,
+                         roundTimesToNearestSynopticTimes,
+                         verbose,
+                         doShipMessages,
+                         doBuoyMessages,
+                         unknownWmoIdsInOut))
       foundAnyFiles = true;
-      string synopFileContent;
-      if (NFmiFileSystem::ReadFile2String(finalFileName, synopFileContent))
-      {
-        string errorStr;
-        ::FillSynopCodeDataVectorFromSYNOPStr(referenceTime,
-                                              synopCodeVector,
-                                              synopFileContent,
-                                              aviStationInfoSystem,
-                                              roundTimesToNearestSynopticTimes,
-                                              verbose,
-                                              doShipMessages,
-                                              doBuoyMessages,
-                                              unknownWmoIdsInOut,
-                                              it);
-      }
-      else
-        cerr << "Warning, couldn't read the file: '" << finalFileName
-             << "', continuing to next file..." << endl;
-    }
   }
   if (!foundAnyFiles)
     throw runtime_error("Error: Didn't find any files to read.");
   if (synopCodeVector.empty())
     throw runtime_error("Error: Couldn't decode any synops from any files.");
-  if (verbose && !unknownWmoIdsInOut.empty())
-  {
-    cerr << "Warning, there were messages from unknown stations (" << unknownWmoIdsInOut.size()
-         << ") that were ignored." << endl;
-    for (unsigned long it : unknownWmoIdsInOut)
-      cerr << it << " ";
-    cerr << endl;
-  }
+  if (verbose)
+    ::ReportUnknownStations(unknownWmoIdsInOut);
   //	6. Tee synopCode-vektorista lopullinen data kerralla
   NFmiQueryData *data = ::MakeQueryDataFromSynopCodeDataVector(
       synopCodeVector, wantedProducer, doShipMessages, doBuoyMessages);

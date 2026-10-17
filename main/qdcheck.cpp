@@ -302,6 +302,246 @@ bool IsDewPointOK(NFmiFastQueryInfo &info)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Report the check results of a single parameter
+ */
+// ----------------------------------------------------------------------
+
+void report_param_check(std::ostream &out,
+                        NFmiFastQueryInfo *info,
+                        NFmiParamCheckData &check,
+                        int &returnValue)
+{
+  out << "Param ID: " << check.itsParamId;
+  if (info && info->Param(FmiParameterName(check.itsParamId)))
+    out << " '" << static_cast<char*>(info->Param().GetParamName()) << "'" << endl;
+  else
+  {
+    out << " #ERROR#: (the parameter is not in the querydata?)" << endl;
+    SetErrorStatus(returnValue, 2);
+  }
+  if (check.itsCheckedParamMissingDataMaxProcent == kFloatMissing)
+    out << "Data missing: No inspection." << endl;
+  else
+  {
+    out << "Data missing: " << check.itsCheckedParamMissingDataMaxProcent << " %. ";
+    NFmiString errorText;
+    static_cast<void>(CheckErrorLevelAndProduceStatusTextAndUpdateErrorCode(
+        check.itsParamMissingDataMaxProcent,
+        check.itsCheckedParamMissingDataMaxProcent,
+        returnValue,
+        errorText));
+    out << static_cast<char*>(errorText) << endl;
+  }
+
+  if (check.itsCheckedParamStraightDataMaxProcent == kFloatMissing)
+    out << "Data was straight. No inspection." << endl;
+  else
+  {
+    out << "Data was straight: " << check.itsCheckedParamStraightDataMaxProcent << " %. ";
+    NFmiString errorText;
+    static_cast<void>(CheckErrorLevelAndProduceStatusTextAndUpdateErrorCode(
+        check.itsParamStraightDataMaxProcent,
+        check.itsCheckedParamStraightDataMaxProcent,
+        returnValue,
+        errorText));
+    out << static_cast<char*>(errorText) << endl;
+  }
+
+  if (check.itsCheckedParamOutOfLimitError)
+  {
+    out << "#ERROR#: Data containd values exceeding the set min/max values: "
+        << check.itsParamLowerLimits[1] << " - " << check.itsParamUpperLimits[1] << " "
+        << GetParamMinMaxString(check) << endl;
+    SetErrorStatus(returnValue, 2);
+  }
+  else if (check.itsCheckedParamOutOfLimitWarning)
+  {
+    out << "Warning: Data contained values exceeding the set min/max warning limits: "
+        << check.itsParamLowerLimits[2] << " - " << check.itsParamUpperLimits[2] << " "
+        << GetParamMinMaxString(check) << endl;
+    SetErrorStatus(returnValue, 3);
+  }
+  else
+  {
+    out << "Data was within the set warning limits " << GetParamMinMaxString(check) << "." << endl;
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Report the length of the data
+ */
+// ----------------------------------------------------------------------
+
+void report_data_length(std::ostream &out,
+                        const NFmiOhjausData &ohjausData,
+                        int diffInHours,
+                        int &returnValue)
+{
+  if (ohjausData.itsMinDataLengthInHours[0] != -1 &&
+      diffInHours < ohjausData.itsMinDataLengthInHours[0])
+  {
+    out << "###FATAL ERROR###: Data does not cover a sufficient long time interval. The "
+           "limit: "
+        << ohjausData.itsMinDataLengthInHours[0] << "h, file covered only " << diffInHours << "h"
+        << endl;
+    SetErrorStatus(returnValue, 1);
+  }
+  else if (ohjausData.itsMinDataLengthInHours[1] != -1 &&
+           diffInHours < ohjausData.itsMinDataLengthInHours[1])
+  {
+    out << "#ERROR#: Data does not cover a sufficiently long time interval. The limit: "
+        << ohjausData.itsMinDataLengthInHours[1] << "h, file covered only " << diffInHours << "h"
+        << endl;
+    SetErrorStatus(returnValue, 2);
+  }
+  else if (ohjausData.itsMinDataLengthInHours[2] != -1 &&
+           diffInHours < ohjausData.itsMinDataLengthInHours[2])
+  {
+    out << "Warning: Data does not cover a sufficiently long time interval. The limit: "
+        << ohjausData.itsMinDataLengthInHours[2] << "h, file covered only " << diffInHours << "h"
+        << endl;
+    SetErrorStatus(returnValue, 3);
+  }
+  else
+    out << "OK: File covered " << diffInHours << " hours." << endl;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Report whether the data begins too early
+ */
+// ----------------------------------------------------------------------
+
+void report_start_backward(std::ostream &out,
+                           const NFmiOhjausData &ohjausData,
+                           int diffToCurrentHour,
+                           int &returnValue)
+{
+  if (ohjausData.itsMaxDataStartHourDifferenceBackwardInHours[0] != -1 &&
+      diffToCurrentHour > ohjausData.itsMaxDataStartHourDifferenceBackwardInHours[0])
+  {
+    out << "###FATAL ERROR###: Data begins too early. The limit: "
+        << ohjausData.itsMaxDataStartHourDifferenceBackwardInHours[0]
+        << "h before present, the data begins " << diffToCurrentHour << "h before present." << endl;
+    SetErrorStatus(returnValue, 1);
+  }
+  else if (ohjausData.itsMaxDataStartHourDifferenceBackwardInHours[1] != -1 &&
+           diffToCurrentHour > ohjausData.itsMaxDataStartHourDifferenceBackwardInHours[1])
+  {
+    out << "#ERROR#: Data begins too early. The limit:: "
+        << ohjausData.itsMaxDataStartHourDifferenceBackwardInHours[1]
+        << "h before present, the data begins " << diffToCurrentHour << "h before present." << endl;
+    SetErrorStatus(returnValue, 2);
+  }
+  else if (ohjausData.itsMaxDataStartHourDifferenceBackwardInHours[2] != -1 &&
+           diffToCurrentHour > ohjausData.itsMaxDataStartHourDifferenceBackwardInHours[2])
+  {
+    out << "Warning: Data begins too early. The limit: "
+        << ohjausData.itsMaxDataStartHourDifferenceBackwardInHours[2]
+        << "h before present, the data begins " << diffToCurrentHour << "h before present." << endl;
+    SetErrorStatus(returnValue, 3);
+  }
+  else if (diffToCurrentHour >= 0)
+    out << "OK: Data begins " << diffToCurrentHour << " before present." << endl;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Report whether the data begins too late
+ */
+// ----------------------------------------------------------------------
+
+void report_start_forward(std::ostream &out,
+                          const NFmiOhjausData &ohjausData,
+                          int diffToCurrentHour,
+                          int &returnValue)
+{
+  if (ohjausData.itsMaxDataStartHourDifferenceForwardInHours[0] != -1 &&
+      -diffToCurrentHour > ohjausData.itsMaxDataStartHourDifferenceForwardInHours[0])
+  {
+    out << "###FATAL ERROR###: Data begins too late. The limit: "
+        << ohjausData.itsMaxDataStartHourDifferenceForwardInHours[0]
+        << "h before present, the data begins " << -diffToCurrentHour << "h before present."
+        << endl;
+    SetErrorStatus(returnValue, 1);
+  }
+  else if (ohjausData.itsMaxDataStartHourDifferenceForwardInHours[1] != -1 &&
+           -diffToCurrentHour > ohjausData.itsMaxDataStartHourDifferenceForwardInHours[1])
+  {
+    out << "#ERROR#: Data begins too late. The limit: "
+        << ohjausData.itsMaxDataStartHourDifferenceForwardInHours[1]
+        << "h before present, the data begins " << -diffToCurrentHour << "h before present."
+        << endl;
+    SetErrorStatus(returnValue, 2);
+  }
+  else if (ohjausData.itsMaxDataStartHourDifferenceForwardInHours[2] != -1 &&
+           -diffToCurrentHour > ohjausData.itsMaxDataStartHourDifferenceForwardInHours[2])
+  {
+    out << "Warning: Data begins too late. The limit: "
+        << ohjausData.itsMaxDataStartHourDifferenceForwardInHours[2]
+        << "h before present, the data begins " << -diffToCurrentHour << "h before present."
+        << endl;
+    SetErrorStatus(returnValue, 3);
+  }
+  else if (-diffToCurrentHour > 0)
+    out << "OK: Data begins " << -diffToCurrentHour << "h before present." << endl;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Report the dew point and time checks
+ */
+// ----------------------------------------------------------------------
+
+void report_time_checks(std::ostream &out,
+                        NFmiFastQueryInfo &info,
+                        const NFmiOhjausData &ohjausData,
+                        const NFmiMetTime &currentTime,
+                        int &returnValue)
+{
+  if (options.check_tdew)
+  {
+    if (!IsDewPointOK(info))
+    {
+      out << "#ERROR#: Dew point > Temperature at some points in the data" << endl;
+      SetErrorStatus(returnValue, 2);
+    }
+    else
+      out << "OK: Dew point <= Temperature at all points" << endl;
+    out << endl;
+  }
+
+  info.First();
+
+  NFmiMetTime time1(info.Time());
+  info.LastTime();
+  info.PreviousTime();
+  NFmiMetTime time2(info.Time());
+  int diffInHours = time2.DifferenceInHours(time1);
+  report_data_length(out, ohjausData, diffInHours, returnValue);
+
+  int diffToCurrentHour = currentTime.DifferenceInHours(time1);
+  report_start_backward(out, ohjausData, diffToCurrentHour, returnValue);
+
+  report_start_forward(out, ohjausData, diffToCurrentHour, returnValue);
+
+  // aika-askeleen tarkistus
+  int timeStep = info.TimeResolution();
+  if (ohjausData.itsWantedTimeStepInMinutes != -1 &&
+      timeStep != ohjausData.itsWantedTimeStepInMinutes)
+  {
+    out << "#ERROR#: Data time resolution of " << timeStep
+        << " minutes is incorrect, the desired value is " << ohjausData.itsWantedTimeStepInMinutes
+        << " minutes." << endl;
+    SetErrorStatus(returnValue, 2);
+  }
+  else
+    out << "OK: Data time resolution " << timeStep << " minutes is correct." << endl;
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Main program without exception trapping
  */
 // ----------------------------------------------------------------------
@@ -369,192 +609,13 @@ int run(int argc, char *argv[])
     int parCount = ohjausData.itsParamIdCheckList.size();
     for (int i = 0; i < parCount; i++)
     {
-      out << "Param ID: " << ohjausData.itsParamIdCheckList[i].itsParamId;
-      if (info && info->Param(FmiParameterName(ohjausData.itsParamIdCheckList[i].itsParamId)))
-        out << " '" << static_cast<char *>(info->Param().GetParamName()) << "'" << endl;
-      else
-      {
-        out << " #ERROR#: (the parameter is not in the querydata?)" << endl;
-        SetErrorStatus(returnValue, 2);
-      }
-      if (ohjausData.itsParamIdCheckList[i].itsCheckedParamMissingDataMaxProcent == kFloatMissing)
-        out << "Data missing: No inspection." << endl;
-      else
-      {
-        out << "Data missing: "
-            << ohjausData.itsParamIdCheckList[i].itsCheckedParamMissingDataMaxProcent << " %. ";
-        NFmiString errorText;
-        static_cast<void>(CheckErrorLevelAndProduceStatusTextAndUpdateErrorCode(
-            ohjausData.itsParamIdCheckList[i].itsParamMissingDataMaxProcent,
-            ohjausData.itsParamIdCheckList[i].itsCheckedParamMissingDataMaxProcent,
-            returnValue,
-            errorText));
-        out << static_cast<char *>(errorText) << endl;
-      }
-
-      if (ohjausData.itsParamIdCheckList[i].itsCheckedParamStraightDataMaxProcent == kFloatMissing)
-        out << "Data was straight. No inspection." << endl;
-      else
-      {
-        out << "Data was straight: "
-            << ohjausData.itsParamIdCheckList[i].itsCheckedParamStraightDataMaxProcent << " %. ";
-        NFmiString errorText;
-        static_cast<void>(CheckErrorLevelAndProduceStatusTextAndUpdateErrorCode(
-            ohjausData.itsParamIdCheckList[i].itsParamStraightDataMaxProcent,
-            ohjausData.itsParamIdCheckList[i].itsCheckedParamStraightDataMaxProcent,
-            returnValue,
-            errorText));
-        out << static_cast<char *>(errorText) << endl;
-      }
-
-      if (ohjausData.itsParamIdCheckList[i].itsCheckedParamOutOfLimitError)
-      {
-        out << "#ERROR#: Data containd values exceeding the set min/max values: "
-            << ohjausData.itsParamIdCheckList[i].itsParamLowerLimits[1] << " - "
-            << ohjausData.itsParamIdCheckList[i].itsParamUpperLimits[1] << " "
-            << GetParamMinMaxString(ohjausData.itsParamIdCheckList[i]) << endl;
-        SetErrorStatus(returnValue, 2);
-      }
-      else if (ohjausData.itsParamIdCheckList[i].itsCheckedParamOutOfLimitWarning)
-      {
-        out << "Warning: Data contained values exceeding the set min/max warning limits: "
-            << ohjausData.itsParamIdCheckList[i].itsParamLowerLimits[2] << " - "
-            << ohjausData.itsParamIdCheckList[i].itsParamUpperLimits[2] << " "
-            << GetParamMinMaxString(ohjausData.itsParamIdCheckList[i]) << endl;
-        SetErrorStatus(returnValue, 3);
-      }
-      else
-      {
-        out << "Data was within the set warning limits "
-            << GetParamMinMaxString(ohjausData.itsParamIdCheckList[i]) << "." << endl;
-      }
+      report_param_check(out, info, ohjausData.itsParamIdCheckList[i], returnValue);
       out << endl;
     }
 
     //			NFmiFastQueryInfo* info = dataChecker.Info();
     if (info)
-    {
-      if (options.check_tdew)
-      {
-        if (!IsDewPointOK(*info))
-        {
-          out << "#ERROR#: Dew point > Temperature at some points in the data" << endl;
-          SetErrorStatus(returnValue, 2);
-        }
-        else
-          out << "OK: Dew point <= Temperature at all points" << endl;
-        out << endl;
-      }
-
-      info->First();
-
-      NFmiMetTime time1(info->Time());
-      info->LastTime();
-      info->PreviousTime();
-      NFmiMetTime time2(info->Time());
-      int diffInHours = time2.DifferenceInHours(time1);
-      if (ohjausData.itsMinDataLengthInHours[0] != -1 &&
-          diffInHours < ohjausData.itsMinDataLengthInHours[0])
-      {
-        out << "###FATAL ERROR###: Data does not cover a sufficient long time interval. The "
-               "limit: "
-            << ohjausData.itsMinDataLengthInHours[0] << "h, file covered only " << diffInHours
-            << "h" << endl;
-        SetErrorStatus(returnValue, 1);
-      }
-      else if (ohjausData.itsMinDataLengthInHours[1] != -1 &&
-               diffInHours < ohjausData.itsMinDataLengthInHours[1])
-      {
-        out << "#ERROR#: Data does not cover a sufficiently long time interval. The limit: "
-            << ohjausData.itsMinDataLengthInHours[1] << "h, file covered only " << diffInHours
-            << "h" << endl;
-        SetErrorStatus(returnValue, 2);
-      }
-      else if (ohjausData.itsMinDataLengthInHours[2] != -1 &&
-               diffInHours < ohjausData.itsMinDataLengthInHours[2])
-      {
-        out << "Warning: Data does not cover a sufficiently long time interval. The limit: "
-            << ohjausData.itsMinDataLengthInHours[2] << "h, file covered only " << diffInHours
-            << "h" << endl;
-        SetErrorStatus(returnValue, 3);
-      }
-      else
-        out << "OK: File covered " << diffInHours << " hours." << endl;
-
-      int diffToCurrentHour = currentTime.DifferenceInHours(time1);
-      if (ohjausData.itsMaxDataStartHourDifferenceBackwardInHours[0] != -1 &&
-          diffToCurrentHour > ohjausData.itsMaxDataStartHourDifferenceBackwardInHours[0])
-      {
-        out << "###FATAL ERROR###: Data begins too early. The limit: "
-            << ohjausData.itsMaxDataStartHourDifferenceBackwardInHours[0]
-            << "h before present, the data begins " << diffToCurrentHour << "h before present."
-            << endl;
-        SetErrorStatus(returnValue, 1);
-      }
-      else if (ohjausData.itsMaxDataStartHourDifferenceBackwardInHours[1] != -1 &&
-               diffToCurrentHour > ohjausData.itsMaxDataStartHourDifferenceBackwardInHours[1])
-      {
-        out << "#ERROR#: Data begins too early. The limit:: "
-            << ohjausData.itsMaxDataStartHourDifferenceBackwardInHours[1]
-            << "h before present, the data begins " << diffToCurrentHour << "h before present."
-            << endl;
-        SetErrorStatus(returnValue, 2);
-      }
-      else if (ohjausData.itsMaxDataStartHourDifferenceBackwardInHours[2] != -1 &&
-               diffToCurrentHour > ohjausData.itsMaxDataStartHourDifferenceBackwardInHours[2])
-      {
-        out << "Warning: Data begins too early. The limit: "
-            << ohjausData.itsMaxDataStartHourDifferenceBackwardInHours[2]
-            << "h before present, the data begins " << diffToCurrentHour << "h before present."
-            << endl;
-        SetErrorStatus(returnValue, 3);
-      }
-      else if (diffToCurrentHour >= 0)
-        out << "OK: Data begins " << diffToCurrentHour << " before present." << endl;
-
-      if (ohjausData.itsMaxDataStartHourDifferenceForwardInHours[0] != -1 &&
-          -diffToCurrentHour > ohjausData.itsMaxDataStartHourDifferenceForwardInHours[0])
-      {
-        out << "###FATAL ERROR###: Data begins too late. The limit: "
-            << ohjausData.itsMaxDataStartHourDifferenceForwardInHours[0]
-            << "h before present, the data begins " << -diffToCurrentHour << "h before present."
-            << endl;
-        SetErrorStatus(returnValue, 1);
-      }
-      else if (ohjausData.itsMaxDataStartHourDifferenceForwardInHours[1] != -1 &&
-               -diffToCurrentHour > ohjausData.itsMaxDataStartHourDifferenceForwardInHours[1])
-      {
-        out << "#ERROR#: Data begins too late. The limit: "
-            << ohjausData.itsMaxDataStartHourDifferenceForwardInHours[1]
-            << "h before present, the data begins " << -diffToCurrentHour << "h before present."
-            << endl;
-        SetErrorStatus(returnValue, 2);
-      }
-      else if (ohjausData.itsMaxDataStartHourDifferenceForwardInHours[2] != -1 &&
-               -diffToCurrentHour > ohjausData.itsMaxDataStartHourDifferenceForwardInHours[2])
-      {
-        out << "Warning: Data begins too late. The limit: "
-            << ohjausData.itsMaxDataStartHourDifferenceForwardInHours[2]
-            << "h before present, the data begins " << -diffToCurrentHour << "h before present."
-            << endl;
-        SetErrorStatus(returnValue, 3);
-      }
-      else if (-diffToCurrentHour > 0)
-        out << "OK: Data begins " << -diffToCurrentHour << "h before present." << endl;
-
-      // aika-askeleen tarkistus
-      int timeStep = info->TimeResolution();
-      if (ohjausData.itsWantedTimeStepInMinutes != -1 &&
-          timeStep != ohjausData.itsWantedTimeStepInMinutes)
-      {
-        out << "#ERROR#: Data time resolution of " << timeStep
-            << " minutes is incorrect, the desired value is "
-            << ohjausData.itsWantedTimeStepInMinutes << " minutes." << endl;
-        SetErrorStatus(returnValue, 2);
-      }
-      else
-        out << "OK: Data time resolution " << timeStep << " minutes is correct." << endl;
-    }
+      report_time_checks(out, *info, ohjausData, currentTime, returnValue);
     else
     {
       out << "#ERROR#: Could not extract information for time validation." << endl;

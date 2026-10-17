@@ -178,6 +178,13 @@ class NcFileExtended
   void copy_values_var(const Options& opts,
                        const std::string& varname,
                        NFmiFastQueryInfo& info);
+  void copy_level_values(NFmiFastQueryInfo& info,
+                         const std::vector<float>& vals,
+                         unsigned long ystart,
+                         float missingvalue,
+                         float scale,
+                         float offset,
+                         bool gdal_southup);
   void copy_values_wind(NFmiFastQueryInfo& info,
                         const ParamInfo& pinfo,
                         const Options* opts);

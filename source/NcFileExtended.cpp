@@ -1791,6 +1791,150 @@ void nctools::NcFileExtended::copy_values(const Options& opts,
 // copy_values_var (regular scalar variable)
 // ======================================================================
 
+namespace
+{
+// Read variable metadata: for NetCDF/GDAL, variable attributes appear as "varname#attr" in
+// dataset metadata; for HDF5 (and some NetCDF via GDAL), they appear without prefix in band
+// metadata.
+std::string get_var_meta(GDALDatasetH ds,
+                         GDALRasterBandH band1,
+                         const std::string& varname,
+                         const std::string& attr)
+{
+  const std::string key = varname + "#" + attr;
+  const char* v = GDALGetMetadataItem(ds, key.c_str(), nullptr);
+  if (v)
+    return v;
+  // HDF5 fallback: check band 1 metadata without prefix
+  if (band1)
+  {
+    const char* bv = GDALGetMetadataItem(band1, attr.c_str(), nullptr);
+    if (bv)
+      return bv;
+  }
+  return {};
+}
+
+// Parse a float value, keep the old value if the string is empty or not a number
+void parse_float(const std::string& str, float& value)
+{
+  if (str.empty())
+    return;
+  try
+  {
+    value = std::stof(str);
+  }
+  catch (...)
+  {
+  }
+}
+
+// Establish the missing value of the variable
+float get_var_missing_value(GDALDatasetH ds, GDALRasterBandH band1, const std::string& varname)
+{
+  float missingvalue = std::numeric_limits<float>::quiet_NaN();
+  parse_float(get_var_meta(ds, band1, varname, "_FillValue"), missingvalue);
+  if (std::isnan(missingvalue))
+    parse_float(get_var_meta(ds, band1, varname, "fill_value"), missingvalue);
+
+  // Fallback: use GDAL band NoData value (covers cases where _FillValue is not in metadata)
+  if (std::isnan(missingvalue) && band1)
+  {
+    int hasNoData = 0;
+    const double nodata = GDALGetRasterNoDataValue(band1, &hasNoData);
+    if (hasNoData)
+      missingvalue = static_cast<float>(nodata);
+  }
+  return missingvalue;
+}
+
+// Report the unit conversion to be done
+void report_unit_conversion(const std::string& varname,
+                            const std::string& units,
+                            bool ignoreUnitChange)
+{
+  if (!ignoreUnitChange && units == "K")
+    std::cout << "Note: " << varname << " units converted from K to C\n";
+  else if (!ignoreUnitChange && units == "Pa")
+    std::cout << "Note: " << varname << " units converted from pa to hPa\n";
+  else if (!ignoreUnitChange && units == "fraction")
+    std::cout << "Note: " << varname << " units converted from fraction to percentage\n";
+}
+
+// Modify the scale and offset for unit conversions
+void apply_unit_conversion(const std::string& units, float& scale, float& offset)
+{
+  if (units == "K")
+    offset -= 273.15F;
+  else if (units == "Pa")
+    scale *= 0.01F;
+  else if (units == "fraction")
+    scale *= 100.0F;
+}
+
+// Read all bands into a flat array (closes the dataset on failure)
+std::vector<float> read_all_bands(GDALDatasetH ds, int nx, int ny, int nbands)
+{
+  std::vector<float> vals(static_cast<std::size_t>(nx) * ny * nbands);
+  for (int b = 1; b <= nbands; b++)
+  {
+    GDALRasterBandH band = GDALGetRasterBand(ds, b);
+    if (GDALRasterIO(band,
+                     GF_Read,
+                     0,
+                     0,
+                     nx,
+                     ny,
+                     vals.data() + static_cast<std::size_t>(b - 1) * nx * ny,
+                     nx,
+                     ny,
+                     GDT_Float32,
+                     0,
+                     0) != CE_None)
+    {
+      GDALClose(ds);
+      throw Fmi::Exception(BCP, "Failed to read raster data");
+    }
+  }
+  return vals;
+}
+}  // namespace
+
+// Copy the values of a single level (the location loop of copy_values_var)
+void nctools::NcFileExtended::copy_level_values(NFmiFastQueryInfo& info,
+                                                const std::vector<float>& vals,
+                                                unsigned long ystart,
+                                                float missingvalue,
+                                                float scale,
+                                                float offset,
+                                                bool gdal_southup)
+{
+  const std::size_t x_size = _xsize;
+  unsigned long xcounter = (xinverted() ? x_size - 1 : 0);
+  for (info.ResetLocation(); info.NextLocation();)
+  {
+    const float value_raw = vals.at(ystart + xcounter);
+    if (!IsMissingValue(value_raw, missingvalue))
+    {
+      const float value = scale * value_raw + offset;
+      info.FloatValue(value);
+    }
+    if (xcounter == (xinverted() ? 0UL : x_size - 1))
+    {
+      // Move to next row (northward)
+      if (gdal_southup)
+        ystart += x_size;  // south-up: row 0=south, ascending toward north
+      else
+        ystart -= x_size;  // north-up: row 0=north, descending toward south
+      xcounter = (xinverted() ? x_size - 1 : 0);
+    }
+    else
+    {
+      (xinverted() ? xcounter-- : xcounter++);
+    }
+  }
+}
+
 void nctools::NcFileExtended::copy_values_var(const Options& opts,
                                                const std::string& varname,
                                                NFmiFastQueryInfo& info)
@@ -1808,110 +1952,26 @@ void nctools::NcFileExtended::copy_values_var(const Options& opts,
     // metadata; for HDF5 (and some NetCDF via GDAL), they appear without prefix in band metadata.
     GDALRasterBandH band1 = GDALGetRasterBand(ds, 1);
     auto get_meta = [&](const std::string& attr) -> std::string
-    {
-      const std::string key = varname + "#" + attr;
-      const char* v = GDALGetMetadataItem(ds, key.c_str(), nullptr);
-      if (v)
-        return v;
-      // HDF5 fallback: check band 1 metadata without prefix
-      if (band1)
-      {
-        const char* bv = GDALGetMetadataItem(band1, attr.c_str(), nullptr);
-        if (bv)
-          return bv;
-      }
-      return {};
-    };
+    { return get_var_meta(ds, band1, varname, attr); };
 
     const std::string units = get_meta("units");
     const bool ignoreUnitChange = is_name_in_list(opts.ignoreUnitChangeParams, varname);
 
     if (opts.verbose && !units.empty())
-    {
-      if (!ignoreUnitChange && units == "K")
-        std::cout << "Note: " << varname << " units converted from K to C\n";
-      else if (!ignoreUnitChange && units == "Pa")
-        std::cout << "Note: " << varname << " units converted from pa to hPa\n";
-      else if (!ignoreUnitChange && units == "fraction")
-        std::cout << "Note: " << varname << " units converted from fraction to percentage\n";
-    }
+      report_unit_conversion(varname, units, ignoreUnitChange);
 
     // Missing value
-    float missingvalue = std::numeric_limits<float>::quiet_NaN();
-    {
-      const std::string fv_str = get_meta("_FillValue");
-      if (!fv_str.empty())
-      {
-        try
-        {
-          missingvalue = std::stof(fv_str);
-        }
-        catch (...)
-        {
-        }
-      }
-      if (std::isnan(missingvalue))
-      {
-        const std::string fv2_str = get_meta("fill_value");
-        if (!fv2_str.empty())
-        {
-          try
-          {
-            missingvalue = std::stof(fv2_str);
-          }
-          catch (...)
-          {
-          }
-        }
-      }
-      // Fallback: use GDAL band NoData value (covers cases where _FillValue is not in metadata)
-      if (std::isnan(missingvalue) && band1)
-      {
-        int hasNoData = 0;
-        const double nodata = GDALGetRasterNoDataValue(band1, &hasNoData);
-        if (hasNoData)
-          missingvalue = static_cast<float>(nodata);
-      }
-    }
+    const float missingvalue = get_var_missing_value(ds, band1, varname);
 
     // scale_factor and add_offset
     float scale = 1.0F;
     float offset = 0.0F;
-    {
-      const std::string sf_str = get_meta("scale_factor");
-      if (!sf_str.empty())
-      {
-        try
-        {
-          scale = std::stof(sf_str);
-        }
-        catch (...)
-        {
-        }
-      }
-      const std::string ao_str = get_meta("add_offset");
-      if (!ao_str.empty())
-      {
-        try
-        {
-          offset = std::stof(ao_str);
-        }
-        catch (...)
-        {
-        }
-      }
-    }
+    parse_float(get_meta("scale_factor"), scale);
+    parse_float(get_meta("add_offset"), offset);
 
     // Unit conversions
     if (!ignoreUnitChange)
-    {
-      if (units == "K")
-        offset -= 273.15F;
-      else if (units == "Pa")
-        scale *= 0.01F;
-      else if (units == "fraction")
-        scale *= 100.0F;
-    }
+      apply_unit_conversion(units, scale, offset);
 
     // Read all bands into a flat array
     const int nx = GDALGetRasterXSize(ds);
@@ -1924,27 +1984,7 @@ void nctools::NcFileExtended::copy_values_var(const Options& opts,
     // _y_lat_irregular is set in find_bounds() by checking strict step regularity.
     const bool gdal_southup = _y_lat_irregular;
 
-    std::vector<float> vals(static_cast<std::size_t>(nx) * ny * nbands);
-    for (int b = 1; b <= nbands; b++)
-    {
-      GDALRasterBandH band = GDALGetRasterBand(ds, b);
-      if (GDALRasterIO(band,
-                       GF_Read,
-                       0,
-                       0,
-                       nx,
-                       ny,
-                       vals.data() + static_cast<std::size_t>(b - 1) * nx * ny,
-                       nx,
-                       ny,
-                       GDT_Float32,
-                       0,
-                       0) != CE_None)
-      {
-        GDALClose(ds);
-        throw Fmi::Exception(BCP, "Failed to read raster data");
-      }
-    }
+    const std::vector<float> vals = read_all_bands(ds, nx, ny, nbands);
     GDALClose(ds);
 
     // Debug: print first value at row 0 and last row for comparison
@@ -1968,35 +2008,13 @@ void nctools::NcFileExtended::copy_values_var(const Options& opts,
       {
         for (info.ResetLevel(); info.NextLevel();)
         {
-          unsigned long xcounter = (xinverted() ? x_size - 1 : 0);
           // NFmiQueryInfo iterates y=0=southernmost.
           // Standard GDAL (gt[5]<0): row 0 = northernmost → start at last row, decrement.
           // South-up GDAL (gt[5]>0, e.g. after resampling irregular lat): row 0 = southernmost
           // → start at first row, increment.
           unsigned long ystart = gdal_southup ? zstart : zstart + (y_size - 1) * x_size;
 
-          for (info.ResetLocation(); info.NextLocation();)
-          {
-            const float value_raw = vals.at(ystart + xcounter);
-            if (!IsMissingValue(value_raw, missingvalue))
-            {
-              const float value = scale * value_raw + offset;
-              info.FloatValue(value);
-            }
-            if (xcounter == (xinverted() ? 0UL : x_size - 1))
-            {
-              // Move to next row (northward)
-              if (gdal_southup)
-                ystart += x_size;  // south-up: row 0=south, ascending toward north
-              else
-                ystart -= x_size;  // north-up: row 0=north, descending toward south
-              xcounter = (xinverted() ? x_size - 1 : 0);
-            }
-            else
-            {
-              (xinverted() ? xcounter-- : xcounter++);
-            }
-          }
+          copy_level_values(info, vals, ystart, missingvalue, scale, offset, gdal_southup);
           zstart += x_size * y_size;
         }
         sourcetimeindex++;

@@ -16,6 +16,12 @@ in minutes relative to the time step.
 The recognised aggregator functions are
 .IR min ", " max ", " mean ", " meanabs ", " sum ", " change ", " median ", " maxmean ", and " sdev
 (sample standard deviation).
+.PP
+A negative
+.I startoffset
+must be preceded by a lone
+.B \-
+argument which ends the options, as in the examples below.
 .SH OPTIONS
 .TP
 .B \-Q
@@ -26,9 +32,6 @@ Output filename instead of standard output.
 .TP
 .BI \-p " param1,param2,..."
 Parameters to extract, comma-separated. Default is all parameters.
-.TP
-.BI \-l " level1,level2,..."
-Levels to extract, comma-separated. Default is all levels.
 .TP
 .B \-a
 Keep only the final time step in the data; the start offset is forced
@@ -56,13 +59,13 @@ Extract only the given UTC hour.
 Compute the 06\(en18 UTC temperature maximum:
 .PP
 .RS 4
-qdfilter \-p Temperature \-I 18 \-720 0 max forecast.sqd > tmax.sqd
+qdfilter \-p Temperature \-I 18 \- \-720 0 max forecast.sqd > tmax.sqd
 .RE
 .PP
 Compute the 06\(en18 UTC precipitation sum:
 .PP
 .RS 4
-qdfilter \-p Precipitation1h \-I 18 \-660 0 sum forecast.sqd > rsum.sqd
+qdfilter \-p Precipitation1h \-I 18 \- \-660 0 sum forecast.sqd > rsum.sqd
 .RE
 .SH SEE ALSO
 .BR qdcrop (1),

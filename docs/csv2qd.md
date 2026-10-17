@@ -10,6 +10,8 @@ The csv2qd program converts ASCII files in CSV format into querydata format. The
     print out help message
 * **-v [--verbose]**  
     set verbose mode on
+* **-q [--quiet]**  
+    set quiet mode on
 * **-V [--version]**  
     display version number
 * **-m [--missing] arg**  
@@ -25,11 +27,19 @@ The csv2qd program converts ASCII files in CSV format into querydata format. The
 * **-p [--params] arg**  
     parameter names of csv columns
 * **-P [ --paramsfile] arg**  
-    parameter configuration file (/smartmet/share/csv/parameters.csv)
+    parameter configuration file (/usr/share/smartmet/parameters.csv)
 * **-O [--order] arg**  
     column ordering (idtime|timeid|idtimelevel|idleveltime|timeidlevel|timelevelid|levelidtime|leveltimeid)
 * **-S [ --stationsfile ] arg**  
     station configuration file (/smartmet/share/csv/stations.csv)
+* **-A [--allstations]**  
+    store all stations in the station file into the output, not only the ones with data
+* **--origintime arg**  
+    origin time of the output querydata
+* **-t [--timezone] arg**  
+    time zone of the input timestamps (default=UTC)
+* **--leveltype arg**  
+    level type as a number (default=5000)
 
 ### Input file syntax
 
@@ -58,7 +68,7 @@ The order of the first 2-3 columns, depending on whether level information is pr
 
 ### Timestamp syntax
 
-The time stamp must be given in UTC time. The program accepts several input forms:
+The time stamp must be given in UTC time, unless a different time zone is selected with option -t. The program accepts several input forms:
 
 *    ISO-format: 20110311T131920
 *    Timestamp format: 201103111319

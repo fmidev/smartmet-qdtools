@@ -2,8 +2,17 @@ qdinterpolatetime interpolates data to desired time resolution (also to lower ti
 
 Usage:
 
-    qdinterpolatetime timeResInMinutes [startTimeResInMinutes=32700] [maxSearchRangeInMinutes=360 (min)
+    qdinterpolatetime [options] timeResInMinutes [startTimeResInMinutes=32700] [maxSearchRangeInMinutes=360 (min)
     [generalInterpolationMethod=1 (=linearly, 5=lagrange)]
+
+Options:
+
+* **-i infile**  
+    Read the given input file instead of standard input
+* **-o outfile**  
+    Write to the given file instead of standard output
+
+The default value for both the input and the output file is '-', indicating standard input and standard output.
 
 For example:
 

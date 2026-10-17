@@ -70,7 +70,8 @@ Ignore reduced_ll handling and let grib_api do the conversion.
 Crop all parameters except those listed in the parameter change table.
 .TP
 .BI \-c " file"
-Parameter change table file with parameter id and name remaps.
+Parameter change table file with parameter id and name remaps (default
+.IR /usr/share/smartmet/formats/grib.conf ).
 .TP
 .BI \-g " count"
 Print info about the first
@@ -99,6 +100,20 @@ convention used elsewhere in newbase, for example
 Surface, pressure and hybrid data may use different grid sizes by
 appending dimensions, or three projection strings separated with
 semicolons.
+.TP
+.BI \-R " wantedStep:parid1[,parid2,...]"
+Step range filter: accept only data with the given step range for the
+listed parameter ids.
+.TP
+.BI \-m " size"
+Deprecated and ignored; the size of the generated data is no longer
+limited.
+.TP
+.B \-y
+Deprecated and ignored; the need to flip the data is detected
+automatically from the
+.I jScansPositively
+setting.
 .SH EXAMPLES
 Convert a directory of GRIB files into one querydata file:
 .PP

@@ -3,6 +3,7 @@ Converts CF-1.4 conforming NetCDF to querydata. Only features in known use are s
 ### Usage
 
     nctoqd [options] infile outfile
+    nctoqd [options] -o outfile infile ...
 
 ### Options
 
@@ -45,11 +46,11 @@ Converts CF-1.4 conforming NetCDF to querydata. Only features in known use are s
 * **-T [ --tolerance ] arg**  
     axis stepping tolerance
 * **-U [ --autoids ]**  
-    generate ids automatically for unknown parameters
+    generate ids automatically for unknown parameters starting from id 30000
 * **-x [ --excludeparams ] arg**  
     exclude params
 * **--addparams arg**  
-    add parameters by calculating them
+    add parameters by calculating them. Supported parameters: Humidity
 * **--tdim arg**  
     name of T-dimension parameter
 * **--xdim arg**  
@@ -67,7 +68,7 @@ Converts CF-1.4 conforming NetCDF to querydata. Only features in known use are s
 
 The default configuration file for parameter name conversions is
 
-    /smartmet/cnf/netcdf.conf
+    /usr/share/smartmet/formats/netcdf.conf
 
 If the parameter name is not found from the conversion table, nctoqd will try to match the name to known newbase names. If there is no success, the parameter will be skipped, and the skipping will be reported to standard output if verbose mode on.
 

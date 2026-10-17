@@ -23,6 +23,13 @@ Options:
 * **-s New parameter scale value**  
 * **-b New parameter base value**  
 * **-p precisionString New parameter precision string**  
+* **-Z New level value**  
+* **-L New level type**  
+* **-T New UTC origin time in ISO, SQL or timestamp format**  
+* **-w New station id**  
+* **-W New station name**  
+
+Options -N, -D, -Z, -L and -T modify the whole data and do not require the parameter_id argument. With options -w and -W the second argument is the id of the station to be modified instead of a parameter id.
 
 Example usage:
 

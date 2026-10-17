@@ -10,6 +10,8 @@ Converts EUMETNET OPERA radar files to querydata. Only features in known use are
     print out help message
 * **-v [ --verbose ]**  
     set verbose mode on
+* **--quietproj**  
+    disable PROJ error messages
 * **-V [ --version ]**  
     display version number
 * **-P [ --projection ] arg**  
@@ -18,23 +20,47 @@ Converts EUMETNET OPERA radar files to querydata. Only features in known use are
     input HDF5 file
 * **-o [ --outfile ] arg**  
     output querydata file
+* **--prodparfix**  
+    take the last number from the prodpar array
+* **--lowercase**  
+    convert the output filename to lower case
+* **--uppercase**  
+    convert the output filename to upper case
 * **--datasetname arg**  
     dataset name prefix (default=dataset)
 * **-p [ --producer ] arg**  
     producer number,name
 * **--producernumber arg**  
-    producer number
+    producer number (default: 1014)
 * **--producername arg**  
-    producer name
+    producer name (default: RADAR)
+* **--startepochs**  
+    store the HDF5 startepochs as the valid time
+* **--default-plc arg**  
+    default replacement for %PLC (default=comp)
+* **--default-wmo arg**  
+    default replacement for %WMO (default=wmo)
+* **--default-rad arg**  
+    default replacement for %RAD (default=rad)
+* **--default-nod arg**  
+    default replacement for %NOD (default=nod)
+* **--default-org arg**  
+    default replacement for %ORG (default=org)
+* **--default-cty arg**  
+    default replacement for %CTY (default=cty)
 
-**Known projections**
+**Output file name**
 
-At the moment h5toqd does not have a generic proj.4 projection definition parser. Instead, the projections in known use a hard coded into the C++ source code. This will change later on as FMI implements a generic parser.
+The output filename may contain the following strings, which will be replaced by the respective settings according to the ODIM specifications:
 
-The known proj.4 descriptions are:
+*    %ORIGINTIME
+*    %PRODUCT - taken from product
+*    %QUANTITY - taken from quantity
+*    %WMO, %RAD, %PLC, %NOD, %ORG, %CTY - taken from the respective source components
+*    %INTERVAL - enddate,endtime - startdate,starttime or empty if not available or zero
 
-*    +lat_0=56.9143 +proj=aeqd +lon_0=23.9897 +a=6371000
-*    +proj=aeqd +lon_0=23.9897 +lat_0=56.9143 +ellps=sphere +a=6371000
-*    +proj=stere +lat_0=90 +lon_0=20 +lat_ts=60 +a=6371288 +x_0=124657.602609 +y_0=3252402.178534 +units=m
+If the ODIM setting is missing, a default replacement will be used. The defaults can be changed using the --default-* options.
 
-Until a generic parser is finished, new hardcoded projections can be requested from support@weatherproof.fi.
+**Projections**
+
+For composites, images and Cartesian volumes (object COMP, IMAGE or CVOL) the projection is read from the /where/projdef attribute, and the area from the corner coordinates (LL/UR or UL/LR) in /where. Polar volumes (PVOL) are converted to an azimuthal equidistant grid centred on the radar, with the range and resolution determined from the data. Option -P can be used to project the result to a different area.

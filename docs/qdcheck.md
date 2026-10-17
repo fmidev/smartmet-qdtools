@@ -9,4 +9,19 @@ Return codes are:
 
 Usage:
 
-    qdcheck controlfile datafile resultfile
+    qdcheck [options] controlfile datafile resultfile
+
+Options:
+
+* **-h [ --help ]**  
+    print out help message
+* **-V [ --version ]**  
+    display version number
+* **--check-dewpoint-difference**  
+    enable the temperature >= dew point check
+* **--config arg**  
+    configuration file (same as the controlfile argument)
+* **--infile arg**  
+    input querydata (same as the datafile argument)
+* **--outfile arg**  
+    output report filename (same as the resultfile argument)

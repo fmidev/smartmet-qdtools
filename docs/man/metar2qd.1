@@ -16,7 +16,8 @@ written to standard output.
 .TP
 .BI \-s " file"
 Station info CSV file. The expected format is the one converted from
-the master-location-identifier-database spreadsheet.
+the master-location-identifier-database spreadsheet (default
+.IR /usr/share/smartmet/stations.csv ).
 .TP
 .B \-v
 Verbose warning and error reporting.
@@ -27,8 +28,8 @@ Ignore bad station descriptions in the station info file.
 .BI \-r " minutes"
 Round message times to the given resolution (default 30 minutes).
 .TP
-.BI \-n " 0|1"
-Try reading NOAA METAR format files (default false).
+.B \-n
+Try reading NOAA METAR format files.
 .TP
 .B \-W
 Do not create a combined Wind parameter in the result.

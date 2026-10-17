@@ -7,7 +7,9 @@ Reads all the files files given as arguments and tries to find SYNOP messages fr
 ### Options
 
 * **-s stationInfoFile**  
-    File that contains different synop station infos.
+    File that contains different synop station infos. The default is /usr/share/smartmet/stations.csv.
+* **-f**  
+    Use the WMO flat-table format for the station info file.
 * **-p <1001,SYNOP or 1002,SHIP or 1017,BUOY>**  
     Set producer id and name.
 * **-t**  
@@ -18,6 +20,8 @@ Reads all the files files given as arguments and tries to find SYNOP messages fr
     Use this to convert SHIP-messages to qd (not with B-option).
 * **-B**  
     Use this to convert BUOY-messages to qd (not with S-option).
+* **-r <date>**  
+    Reference date to be used instead of the wall clock time.
 
 Note that fileFilter has to be put into quotes 
 

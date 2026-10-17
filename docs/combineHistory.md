@@ -6,7 +6,8 @@ The most common use of combineHistory is to merge several files containing obser
 
 The syntax of the command line is
 
-    combineHistory [options] directory [ directory2 directory3 _.]
+    combineHistory [options] directory [ directory2 directory3 _.] > output
+    combineHistory [options] -O outfile directory [ directory2 directory3 _.]
 
 Normally only one directory argument is given, and all files in
 that directory will be merged. However, in connection with
@@ -19,12 +20,20 @@ The available options are
     verbose mode
 * **-o**  
     require all data to have the same origin time
+* **-r**  
+    pick the oldest origin time instead of the latest
 * **-t**  
     attempt to minimize the size of the time descriptor in the result
+* **-1**  
+    take only the latest file from each directory
+* **-O filename**  
+    write the result into the given memory mapped output file instead of standard output
+* **-S timestamp**  
+    reference time to use instead of the wall clock
 * **-p hours**  
     maximum age of allowed timesteps into the past (default = 48h)
 * **-f hours**  
-    maximum age of allowed timesteps into the future (default = 8)
+    maximum age of allowed timesteps into the future (default = 8h)
 * **-N name**  
     new producer name
 * **-D id**  

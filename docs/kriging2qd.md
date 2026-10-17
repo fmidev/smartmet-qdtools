@@ -30,4 +30,6 @@ The number of columns after the 2 coordinate columns must match the number of pa
 * **-t stamp**
     Specify the data time in UTC (default: now)
 * **-T stamp**
-    Specify origin time (overrides -t)
+    Specify origin time (default: the valid time)
+* **-m value**
+    Specify the missing data value in the input (default: 32700)

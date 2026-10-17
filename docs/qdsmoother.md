@@ -6,6 +6,8 @@ The command line syntax is
 
     qdsmoother [options] configfile inputquerydata outputquerydata
 
+If the input is a directory, the newest file in the directory will be used. If the output is a directory, the input filename will be used.
+
 The available options are
 
 * **-h**  

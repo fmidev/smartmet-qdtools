@@ -12,14 +12,20 @@ modifies missing values in parameter number 353 (Precipitation1h) to zero. Pleas
 
 Usage:
 
-    qdscript macroFile [qdata1 qdata2 _.] < inputdata > outputData
+    qdscript [options] macroFile [qdata1 qdata2 _.] < inputdata > outputData
 
 Options:
 
+* **-i infile**  
+ input querydata filename, default is to read standard input
+* **-o outfile**  
+ output querydata filename, default is to write standard output
 * **-d dictionary-file**  
  defines what file to use as a dictionaqry for error messages
 * **-a param1,param2,...**  
  parameters to be added to the data
+* **-A id1,name1,id2,name2,...**  
+ parameter id and name pairs to be added to the data
 * **-l**  
  disables automatic looping over all levels
 * **-s**  

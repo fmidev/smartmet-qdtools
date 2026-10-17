@@ -20,6 +20,8 @@ The available options are
 Verbose mode prints extra information at the start  
 * **-q filename**  
 The querydata to be used instead of the default one. If the argument is a directory, the newest file in it is used.  
+* **-Q**  
+Use all files from the input directories (multifile mode).  
 * **-p place1,place2,...**  
 The locations to be extracted identified by their names.  
 * **-l filename**  
@@ -31,15 +33,15 @@ The longitude of the location. Used with option -y.
 * **-y latitude**  
 The latitude of the location. Used with option -x.  
 * **-w wmo1,wmo2,...**  
-The numbers of the stations to be extracted.  
+The numbers of the stations to be extracted. Plain -w or -w all selects all stations.  
 * **-c filename**  
 An alternative file containing information on named locations.  
 * **-n number_of_lines**  
-Number of lines to print (newest lines).  
+Number of lines to print for each location (the newest valid lines). The default is to print all lines, plain -n prints one line.  
 * **-N number_of_nearest_stations**  
-How many stations to search for in the neighbourhood of the given point.  
+How many stations to search for in the neighbourhood of the given point (default: 1).  
 * **-d max_search_radius_km**  
-The maximum search radius for finding a station close enough to the given named point or coordinates. This option is not needed for gridded forecasts, but is sometimes needed for extracting observations in point data form.  
+The maximum search radius for finding a station close enough to the given named point or coordinates. This option is not needed for gridded forecasts, but is sometimes needed for extracting observations in point data form. The default is 100 km.  
 * **-C**  
 The validity of the data for the nearest stations is checked.  
 * **-f**  
@@ -57,7 +59,7 @@ The string to be printed for missing values. The default is "-"
 * **-i minutes**  
 Interpolate values when a missing value is encountered. The argument specifies the maximum length of the gap for the interpolated result to be considered acceptably accurate. Depending on the parameter this value usually ranges from 180 up to 360.  
 * **-u id**  
-An optional ID so that one can identify which process started the call to qdpoint  
+An unused legacy option. It used to be an optional ID so that one could identify which process started the call to qdpoint.  
 
 ## Meta parameters
 

@@ -7,13 +7,17 @@ Program reads all the files/filefilter files given as arguments and tries to fin
 ### Options
 
 * **-s station-info-file**  
-    Give station info from in csv-format which is converted from file http://www.weathergraphics.com/identifiers/master-location-identifier-database.xls and which is provided now in file master-location-identifier-database.csv.
+    Give station info from in csv-format which is converted from file http://www.weathergraphics.com/identifiers/master-location-identifier-database.xls and which is provided now in file master-location-identifier-database.csv. The default is /usr/share/smartmet/stations.csv.
 * **-v**  
     Use verbose warning and error reporting.
 * **-F**  
     Ignore bad station descriptions in station info.
 * **-r <round_time_in_minutes>**  
     Use messages time rounding, default value is 30 minutes.
+* **-n**  
+    Try reading NOAA METAR format files.
+* **-W**  
+    Don't create the combined Wind parameter in the result data.
 
 ### Example
 

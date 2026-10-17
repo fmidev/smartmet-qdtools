@@ -60,7 +60,7 @@ In the following all documentation is common for qdcontour and qdcontour2 unless
 
 The program is used as follows:
 
-    qdcontour [-v] [-f] [-q querydata] [controlfile]
+    qdcontour [-v] [-f] [-q querydata] [-c "config line"] [controlfile]
 
 The options are
 
@@ -76,7 +76,7 @@ The options are
         Use the given querydata file as if the respective "querydata" command was given in the control file.
  
     -c "config line"
-        qdcontour2 only. Useful for mainly temporarily changing the some default setting. For example -c "format pdf".
+        Process the given control file line before the control files. Useful for mainly temporarily changing the some default setting. For example -c "format pdf".
 
 **Control file syntax**
 
@@ -453,6 +453,7 @@ The relevant settings may be controlled with
     contourlabelcolor [color]       # default = black
     contourlabelbackground [color]  # default = #20B4B4B4
     contourlabelmargin [dx] [dy]    # default = 2 2
+    contourlabelimagemargin [dx] [dy]   # default = 20 20, minimum distance of labels from the image borders
  
     contourlabelmindistsamevalue [value]            # default = 200
     contourlabelmindistdifferentvalue [value]       # default = 30
@@ -512,7 +513,11 @@ or alternatively with
 
     speedcomponents parametername U parametername V
 
-Note that U- and V-component up-direction is assumed to be grid north, not true north as when direction and speed is used.
+By default the U- and V-components are assumed to be oriented along the data grid, that is, their up-direction is grid north, not true north as when direction and speed is used, and the wind direction is corrected for the direction of grid north at each location. If the components are oriented to true north and east instead, the grid north correction can be disabled with
+
+    uvorientation 0
+
+The default is uvorientation 1.
 
 The default values are WindDirection and WindSpeedMS respectively.
 
@@ -661,7 +666,6 @@ One can modify the appearance of the label itself using the following commands
     labelrule [rule]                      (default OnOpaque)
     labelalign [alignment]                (default Center)
     labelformat [format]                  (default is "%.1f", - implies no output)
-    labelangle [angle]                    (default 0)
     labelmissing [label]                  (default is -, disable with none)
 
 The format is the format string of a sprintf command for a floating point value.
@@ -1181,12 +1185,20 @@ Below is a sample control file which is used to render T2m contour images for La
     cache 0
 
 ### Deprecated features
+
+The following commands are deprecated, but still accepted. The contourdepth, gamma, contourtriangles and imagecache commands have no effect.
     
-    querydatalevel [level]
     contourdepth [depth]
     draw imagemap [fieldname] [filename]
     labelfile [filename]
+    hilimit [value]
+    gamma [value]
+    contourtriangles [0|1]
+    imagecache [0|1]
+
+The following commands have been removed and are reported as unknown commands:
+
+    querydatalevel [level]
     labelstroke
     labelfill
-    hilimit [value]
 

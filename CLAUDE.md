@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`smartmet-qdtools` is a collection of ~48 command-line tools for converting, manipulating, and inspecting FMI's QueryData format — a native gridded/point weather data format used throughout the SmartMet ecosystem. Tools fall into two categories: **converters** (gribtoqd, bufrtoqd, nctoqd, h5toqd, etc.) and **querydata manipulators** (qdinfo, qdpoint, qdarea, qdcrop, qdcombine, etc.).
+`smartmet-qdtools` is a collection of ~46 command-line tools for converting, manipulating, and inspecting FMI's QueryData format — a native gridded/point weather data format used throughout the SmartMet ecosystem. Tools fall into two categories: **converters** (gribtoqd, bufrtoqd, nctoqd, h5toqd, etc.) and **querydata manipulators** (qdinfo, qdpoint, qdarea, qdcrop, qdcombine, etc.).
 
 ## Build commands
 
@@ -25,7 +25,7 @@ cd test && make test-data && ./qdinfo.test    # Run one test file
 cd test && make test                           # Run all tests via RunTests.sh
 ```
 
-Tests are Perl scripts (`*.test`) that run tool commands and diff output against expected results in `results/`. Test data is symlinked from `/usr/share/smartmet/test/data/qdtools/`. The test framework module is `test/QDToolsTest.pm`. Currently `nctoqd.test` and `gribtoqd.test` are marked XFAIL in `RunTests.sh`.
+Tests are Perl scripts (`*.test`) that run tool commands and diff output against expected results in `results/`. Test data is symlinked from `/usr/share/smartmet/test/data/qdtools/`. The test framework module is `test/QDToolsTest.pm`. No tests are currently marked XFAIL in `RunTests.sh`.
 
 ## Build architecture
 
@@ -34,16 +34,17 @@ Tests are Perl scripts (`*.test`) that run tool commands and diff output against
 - `include/` — headers for the shared library
 - Each tool links against `libqdtools.a` plus system/SmartMet libraries
 - Per-tool extra link dependencies are specified via target-specific `EXTRA_LIBS` in the Makefile (e.g., gribtoqd needs `-leccodes`, nctoqd needs `-lnetcdf_c++4 -lnetcdf`)
-- `-fpermissive` is required globally due to mdsplib headers
+- `-fpermissive` is added to the compiler flags due to mdsplib headers
+- jemalloc is linked first into every tool to reduce the allocation overhead of the eccodes BUFR/GRIB decoders
 
 ## Key dependencies
 
-SmartMet libraries: `newbase` (QueryData format), `macgyver` (utilities), `smarttools` (scripting), `gis` (projections/GDAL), `calculator`, `imagine`. External: GDAL, NetCDF, HDF5, eccodes (GRIB), libecbufr (BUFR), Boost (program_options, regex, iostreams, thread), fmt 12.x.
+SmartMet libraries: `newbase` (QueryData format), `macgyver` (utilities), `smarttools` (scripting), `gis` (projections/GDAL), `calculator`, `imagine`. External: GDAL, NetCDF, HDF5, eccodes (GRIB and BUFR), the OPERA bufr library (radartoqd), mdsplib (metar2qd), jemalloc, Boost (program_options, regex, iostreams, thread), fmt 12.x.
 
 ## Code conventions
 
 - Missing values use `kFloatMissing` constant from newbase
 - SmartMet headers included as `<newbase/NFmiQueryData.h>`, `<macgyver/TimeZones.h>`, etc.
 - Project headers included with quotes: `#include "QueryDataManager.h"`
-- Tools use `boost::program_options` for CLI argument parsing
+- Newer tools use `boost::program_options` for CLI argument parsing, older ones newbase `NFmiCmdLine` (single-letter options, `!` marks an option with a value)
 - `cnf/` contains runtime config files (netcdf.conf, grib.conf, bufr.conf, stations.csv, parameters.csv) installed to `/usr/share/smartmet/`

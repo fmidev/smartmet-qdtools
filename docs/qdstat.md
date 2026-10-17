@@ -35,7 +35,7 @@ max number of bins in the distribution
 width of the bar distribution  
 * **-t** [ --times ] arg  
 times to process  
-* **-p** [ --parameters ] arg  
+* **-p** [ --params ] arg  
 parameters to process  
 * **-z** [ --levels ] arg  
 levels to process  

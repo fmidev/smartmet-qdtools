@@ -31,22 +31,28 @@ for calculating the mean absolute value mean(abs(x))
 for calculating the sum sum(x)
 * **median**  
     for calculating the median value median(x)
+* **change**  
+    for calculating the change change(x)
 * **maxmean**  
     for calculating the value mean(mean(x),max(x))
+* **sdev**  
+    for calculating the sample standard deviation sdev(x)
 
 ### Available options
 
 The available options are
 
+* **-Q**  
+    Use all files in the directory (multifile mode)
+* **-o outfile**  
+    The output filename instead of standard output
 * **-p param1,param2,...**  
     The parameters to be extracted as a comma separated list of parameter names, for example temperature,Precipitation1h. By default all parameters are extracted.
-* **-l level1,level2,...**  
-    The levels to be extracted as a comma separated list of level numbers. By default all levels are extracted.
 * **-a**  
     Only the final time step will remain in the data. The startoffset is forced not to exceed the range of the data itself. For example, using startoffset -999999999 you should get the function value for the entire data, but with -1440 only for the final 24 hours
 * **-t dt1,dt2,dt**  
     The time interval to be extracted as offsets from the origin time. For example parameters 24,48 would extract times between +24 and +48 hours from the origin time. dt1 may be omitted, in which case it is assumed to be zero. If the last dt parameter is given, it indicates the desired time step (in local time)
-* **T dt1,dt2,dt**  
+* **-T dt1,dt2,dt**  
     Same as -t, but dt is used in UTC-time mode
 * **-i hour**  
     The hour to be extracted (local time)

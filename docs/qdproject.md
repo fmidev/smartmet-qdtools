@@ -49,7 +49,7 @@ For example, for Scandinavia FMI often uses a projection description of the form
 
     stereographic,20:6,51.3,49,70.2:600,-1
 
-which describes a polar stereographic projection with central longitude 20°. The bottom left coordinate is at 6°E 51.3°N, the top right at 49°W 70.2°N. The width of the image is 600 pixels, the height will be calculated automatically so that the aspect ratio of the map is correct.
+which describes a polar stereographic projection with central longitude 20°. The bottom left coordinate is at 6°E 51.3°N, the top right at 49°E 70.2°N. The width of the image is 600 pixels, the height will be calculated automatically so that the aspect ratio of the map is correct.
 
 A sample input for the -c option would be file
 
@@ -67,12 +67,12 @@ If a projection description is:
 
 The coordinates of Riga are 56.946°N 24.1059°E. The pixel coordinates of Riga in the image is then obtained with
 
-    > qdproject -l -d latlon:20,55,29,59:600,-1 - 59.946,24.1059
+    > qdproject -l -d latlon:20,55,29,59:600,-1 - 24.1059,56.946
      273.7266667 137.1045
 
 Note that the pixel coordinate is measured from the upper left corner. This is common in graphics, using bottom left corner is more common in mathematics and physics.
 
-Note also the use of the special "-" marker to indicate the end of the command line. Without it qdproject would try to interpret the string 56.946,24.1059 as a command line option due to the leading minus character.
+Note also the use of the special "-" marker to indicate the end of the options. It is required whenever the first coordinate is negative, since otherwise qdproject would try to interpret a coordinate such as -24.1059,56.946 as a command line option due to the leading minus character.
 
 The inverse result is obtained like this:
 

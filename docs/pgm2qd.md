@@ -56,8 +56,8 @@ The keywords recognized by pgmtoqd in the comment section are:
 The projection is described in a block surrounded by curly braces {}. The known keywords in the block are
 
 *    type name
-*    centrallatitude lon
-*    centrallongitude lat
+*    centrallatitude lat
+*    centrallongitude lon
 *    truelatitude lat
 *    bottomleft lon lat
 *    topright lon lat

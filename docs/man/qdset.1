@@ -14,9 +14,18 @@ argument, given as a parameter id or name); options
 .B \-N
 and
 .B \-D
-change the producer for all parameters and do not require the
+change the producer for all parameters and, like the level and origin
+time options
+.BR \-Z ", " \-L " and " \-T ,
+do not require the
 .I param
-argument.
+argument. With options
+.B \-w
+and
+.B \-W
+the
+.I param
+argument is the id of the station to modify.
 .PP
 Default values for the metadata are the parameter's current values, so
 only changed fields need to be supplied.

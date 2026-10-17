@@ -13,7 +13,7 @@ Before using gribtoqd user should know something about grib file structure. It i
 * **-o outputfile**  
     By default data is writen to stdout.
 * **-c paramChangeTableFile**  
-    Mapping between grib parameter id and smartmet id are done in this configuration file. It is also possible to do some scaling f.eg. unit conversions. File should contain semicolon separated values GribID;SmartMetID;Name;Base;Scale;LevelType;LevelValue F.eg. to take 2m temperature in kelvins from grib2 file and to change it to celcius add:  0;4;T;-273.15;1;103;2 If level type and value are not specified, conversion is done to every level that is found in the data. Note that in grib2 files parameter number is category + parameter. F.eg. Relative Humidity Cat 1 and Param 1 = 1001.
+    Mapping between grib parameter id and smartmet id are done in this configuration file (default /usr/share/smartmet/formats/grib.conf). It is also possible to do some scaling f.eg. unit conversions. File should contain semicolon separated values GribID;SmartMetID;Name;Base;Scale;LevelType;LevelValue F.eg. to take 2m temperature in kelvins from grib2 file and to change it to celcius add:  0;4;T;-273.15;1;103;2 If level type and value are not specified, conversion is done to every level that is found in the data. Note that in grib2 files parameter number is category + parameter. F.eg. Relative Humidity Cat 1 and Param 1 = 1001.
 * **-p producerId,producerName**  
     Set querydata producer id and name f.eg. 240,ECMWF Surface
 * **-P** **<****projectionString****>**  
@@ -24,7 +24,7 @@ Before using gribtoqd user should know something about grib file structure. It i
 **Other options:**
 
 * **-m** **<****max-data-sizeMB****>**  
-    Max size of generated data, default = 1024 MB
+    Deprecated and ignored, the size of the generated data is no longer limited.
 * **-l t105v3,t109v255,...***  
     Ignore following individual levels (e.g. 1. type 105, value 3, 2. type 109, value 255, etc.) You can use **-wildcard with level value to ignore certain level type all together (e.g. t109v)**
 * **-L 105,109,...**  
@@ -38,7 +38,7 @@ Before using gribtoqd user should know something about grib file structure. It i
 * **-S**  
     Swap left and right hand halves of the data.
 * **-y**  
-    Flip the data along the y-axis.
+    Deprecated and ignored. The need to flip the data is detected automatically from the jScansPositively setting.
 * **-C**  
     Try to combine tiled GRIB files into larger combined grids.
 * **-z**  

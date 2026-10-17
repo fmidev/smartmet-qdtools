@@ -12,8 +12,18 @@ Options are:
     prints a brief summary of the command line syntax
 * **-v**  
     verbose mode, the program prints out what it is doing
+* **-t n**  
+    how many time steps to process simultaneously (default is 1)
+* **-T n**  
+    how many time steps to process simultaneously using memory mapped output files
+* **-m limit**  
+    how much data is allowed to be missing (in percent, default is 100). Time steps with more missing data are not written.
+* **-O**  
+    set the origin time equal to the valid time in the output files
 * **-s**  
-    short filename mode, only the timestamp is used The querydata argument can be either a filename or a directory, in which case the newest file in the directory is used. The original name of the file is used to construct the names of the output filenames like this YYYYMMDDHHMI_originalname unless option -s is used, in which case the filenames will be of the format YYYYMMDDHHMI.sqd
+    short filename mode, only the timestamp is used
+
+The querydata argument can be either a filename or a directory, in which case the newest file in the directory is used. The original name of the file is used to construct the names of the output filenames like this YYYYMMDDHHMI_originalname unless option -s is used, in which case the filenames will be of the format YYYYMMDDHHMI.sqd
 
 ## Examples
 

@@ -28,16 +28,16 @@ all the options below combined
 list all known parameter names  
 * **-p**  
 list all parameters in the querydata  
-* **-T**  
-show querydata time information in UTC time  
+* **-T [format]**  
+show querydata time information in UTC time. An optional strftime format may be given (default %Y%m%d%H)  
 * **-a**  
 all the options below combined  
 * **-v**  
 show querydata version number  
 * **-P**  
 show all parameters in the querydata, including subparameters  
-* **-t**  
-show querydata times in local time  
+* **-t [format]**  
+show querydata times in local time. An optional strftime format may be given (default %Y%m%d%H)  
 * **-x**  
 show querydata projection information  
 * **-X**  

@@ -9,13 +9,15 @@ Usage
 Options
 
 * **-s <Columns_x_Rows>**  
-    Wanted grid size, default 3 x 3
+    Wanted grid size, default 1 x 1. The size may also be given in kilometres or metres, for example 10x10km.
 * **-p** **<****projection****>**  
     Wanted projection, if given, overrides controlGridFile (fileName not given then).
 * **-i** **<****inputfile****>**  
     Default is to read standard input.
 * **-o** **<****outputfile****>**  
     Default is to write to standard output.
+* **-t** **<****threads****>**  
+    Maximum number of threads to use, or a percentage of all cores (for example 50%). Default is 4 threads.
 
 Example uses
 

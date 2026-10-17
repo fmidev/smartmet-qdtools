@@ -83,6 +83,90 @@ void ReadGridData(const vector<string>& theDataFileNames, MyGrid& theUsedGrid)
   }
 }
 
+using IndexPair = std::pair<unsigned int, unsigned int>;
+using Indexes = std::vector<IndexPair>;
+
+// Collect indexes for common parameters, times and levels
+void CollectCommonIndexes(NFmiFastQueryInfo& sourceInfo,
+                          NFmiFastQueryInfo& theInfo,
+                          NFmiLevel* theForcedLevel,
+                          Indexes& params,
+                          Indexes& times,
+                          Indexes& levels)
+{
+  for (sourceInfo.ResetParam(); sourceInfo.NextParam();)
+    if (theInfo.Param(*(sourceInfo.Param().GetParam())))
+      params.emplace_back(sourceInfo.ParamIndex(), theInfo.ParamIndex());
+
+  for (sourceInfo.ResetTime(); sourceInfo.NextTime();)
+    if (theInfo.Time(sourceInfo.Time()))
+      times.emplace_back(sourceInfo.TimeIndex(), theInfo.TimeIndex());
+
+  for (sourceInfo.ResetLevel(); sourceInfo.NextLevel();)
+    if (theForcedLevel || theInfo.Level(*sourceInfo.Level()))
+      levels.emplace_back(sourceInfo.LevelIndex(), theInfo.LevelIndex());
+}
+
+// Copy the values for the common levels and times of the current parameter and location
+// when the value is missing in the output
+void CopyMissingValues(NFmiFastQueryInfo& sourceInfo,
+                       NFmiFastQueryInfo& theInfo,
+                       const Indexes& levels,
+                       const Indexes& times)
+{
+  for (const IndexPair& level : levels)
+  {
+    sourceInfo.LevelIndex(level.first);
+    theInfo.LevelIndex(level.second);
+
+    for (const IndexPair& time : times)
+    {
+      sourceInfo.TimeIndex(time.first);
+      theInfo.TimeIndex(time.second);
+
+      if (theInfo.FloatValue() == kFloatMissing)
+        theInfo.FloatValue(sourceInfo.FloatValue());
+    }  // times
+  }  // levels
+}
+
+// Fill the combined point data from a single source
+void FillCombinedPointData(NFmiFastQueryInfo& sourceInfo,
+                           NFmiFastQueryInfo& theInfo,
+                           NFmiLevel* theForcedLevel)
+{
+  Indexes params;
+  Indexes times;
+  Indexes levels;
+  Indexes locations;
+
+  // Collect indexes for common parameters, times, levels and locations
+  CollectCommonIndexes(sourceInfo, theInfo, theForcedLevel, params, times, levels);
+
+  for (sourceInfo.ResetLocation(); sourceInfo.NextLocation();)
+    if (theInfo.Location(sourceInfo.Location()->GetIdent()))
+      locations.emplace_back(sourceInfo.LocationIndex(), theInfo.LocationIndex());
+
+  // We avoid unnecessary location loops with this extra test
+
+  if (!params.empty() && !times.empty() && !levels.empty() && !locations.empty())
+  {
+    for (const IndexPair& param : params)
+    {
+      sourceInfo.ParamIndex(param.first);
+      theInfo.ParamIndex(param.second);
+
+      for (const IndexPair& loc : locations)
+      {
+        sourceInfo.LocationIndex(loc.first);
+        theInfo.LocationIndex(loc.second);
+
+        CopyMissingValues(sourceInfo, theInfo, levels, times);
+      }  // locations
+    }  // params
+  }  // if !empty
+}
+
 void FillCombinedData(const vector<string> &theDataFileNames,
                              NFmiFastQueryInfo &theInfo,
                              NFmiLevel *theForcedLevel)
@@ -95,24 +179,12 @@ void FillCombinedData(const vector<string> &theDataFileNames,
 
     if (sourceInfo.Grid() && usedGrid == *sourceInfo.Grid())
     {
-      using IndexPair = std::pair<unsigned int, unsigned int>;
-      using Indexes = std::vector<IndexPair>;
       Indexes params;
       Indexes times;
       Indexes levels;
 
       // Collect indexes for common parameters, times and levels
-      for (sourceInfo.ResetParam(); sourceInfo.NextParam();)
-        if (theInfo.Param(*(sourceInfo.Param().GetParam())))
-          params.emplace_back(sourceInfo.ParamIndex(), theInfo.ParamIndex());
-
-      for (sourceInfo.ResetTime(); sourceInfo.NextTime();)
-        if (theInfo.Time(sourceInfo.Time()))
-          times.emplace_back(sourceInfo.TimeIndex(), theInfo.TimeIndex());
-
-      for (sourceInfo.ResetLevel(); sourceInfo.NextLevel();)
-        if (theForcedLevel || theInfo.Level(*sourceInfo.Level()))
-          levels.emplace_back(sourceInfo.LevelIndex(), theInfo.LevelIndex());
+      CollectCommonIndexes(sourceInfo, theInfo, theForcedLevel, params, times, levels);
 
       // We avoid unnecessary location loops with this extra test
 
@@ -126,20 +198,7 @@ void FillCombinedData(const vector<string> &theDataFileNames,
           for (sourceInfo.ResetLocation(), theInfo.ResetLocation();
                sourceInfo.NextLocation() && theInfo.NextLocation();)
           {
-            for (const IndexPair &level : levels)
-            {
-              sourceInfo.LevelIndex(level.first);
-              theInfo.LevelIndex(level.second);
-
-              for (const IndexPair &time : times)
-              {
-                sourceInfo.TimeIndex(time.first);
-                theInfo.TimeIndex(time.second);
-
-                if (theInfo.FloatValue() == kFloatMissing)
-                  theInfo.FloatValue(sourceInfo.FloatValue());
-              }  // times
-            }    // levels
+            CopyMissingValues(sourceInfo, theInfo, levels, times);
           }      // locations
         }        // params
       }          // if !empty
@@ -162,63 +221,7 @@ void FillCombinedData(const vector<string> &theDataFileNames,
       NFmiFastQueryInfo sourceInfo(&qd);
 
       if (!sourceInfo.Grid())
-      {
-        using IndexPair = std::pair<unsigned int, unsigned int>;
-        using Indexes = std::vector<IndexPair>;
-        Indexes params;
-        Indexes times;
-        Indexes levels;
-        Indexes locations;
-
-        // Collect indexes for common parameters, times, levels and locations
-        for (sourceInfo.ResetParam(); sourceInfo.NextParam();)
-          if (theInfo.Param(*(sourceInfo.Param().GetParam())))
-            params.emplace_back(sourceInfo.ParamIndex(), theInfo.ParamIndex());
-
-        for (sourceInfo.ResetTime(); sourceInfo.NextTime();)
-          if (theInfo.Time(sourceInfo.Time()))
-            times.emplace_back(sourceInfo.TimeIndex(), theInfo.TimeIndex());
-
-        for (sourceInfo.ResetLevel(); sourceInfo.NextLevel();)
-          if (theForcedLevel || theInfo.Level(*sourceInfo.Level()))
-            levels.emplace_back(sourceInfo.LevelIndex(), theInfo.LevelIndex());
-
-        for (sourceInfo.ResetLocation(); sourceInfo.NextLocation();)
-          if (theInfo.Location(sourceInfo.Location()->GetIdent()))
-            locations.emplace_back(sourceInfo.LocationIndex(), theInfo.LocationIndex());
-
-        // We avoid unnecessary location loops with this extra test
-
-        if (!params.empty() && !times.empty() && !levels.empty() && !locations.empty())
-        {
-          for (const IndexPair &param : params)
-          {
-            sourceInfo.ParamIndex(param.first);
-            theInfo.ParamIndex(param.second);
-
-            for (const IndexPair &loc : locations)
-            {
-              sourceInfo.LocationIndex(loc.first);
-              theInfo.LocationIndex(loc.second);
-
-              for (const IndexPair &level : levels)
-              {
-                sourceInfo.LevelIndex(level.first);
-                theInfo.LevelIndex(level.second);
-
-                for (const IndexPair &time : times)
-                {
-                  sourceInfo.TimeIndex(time.first);
-                  theInfo.TimeIndex(time.second);
-
-                  if (theInfo.FloatValue() == kFloatMissing)
-                    theInfo.FloatValue(sourceInfo.FloatValue());
-                }  // times
-              }    // levels
-            }      // locations
-          }        // params
-        }          // if !empty
-      }            // if same grid
+        FillCombinedPointData(sourceInfo, theInfo, theForcedLevel);
     }              // for files
   }
 }
@@ -238,6 +241,51 @@ struct LevelLessThan
 
 namespace
 {
+// Test whether the data can be combined
+bool IsCombinable(NFmiFastQueryInfo &info, bool use_point_data, const MyGrid &theUsedGrid)
+{
+  if (use_point_data)
+    return !info.Grid();
+  return (info.Grid() && theUsedGrid == *info.Grid());
+}
+
+// Insert the stations of the data into the set
+void InsertStations(NFmiFastQueryInfo& info, std::set<NFmiStation>& stations)
+{
+  for (info.ResetLocation(); info.NextLocation();)
+  {
+    const auto* loc = info.Location();
+    // loc may by NFmiStation, NFmiLocation or NFmiRadarStation. We select NFmiStation
+    NFmiStation station(loc->GetIdent(), loc->GetName(), loc->GetLongitude(), loc->GetLatitude());
+    stations.insert(station);
+  }
+}
+
+// Make a parameter bag containing all the parameters
+NFmiParamBag MakeCombinedParamBag(const set<NFmiParam>& allParams, const NFmiProducer& usedProducer)
+{
+  NFmiParamBag paramBag;
+  for (const auto& allParam : allParams)
+  {
+    auto parId = static_cast<FmiParameterName>(allParam.GetIdent());
+    if (parId == kFmiTotalWindMS ||
+        parId == kFmiWeatherAndCloudiness)  // HUOM! yhdistelmä parametrit totalWind ja
+                                            // weatherAndCloudiness ovat erikois tapauksia!!!
+    {
+      NFmiTotalWind totWind;  // pitäisi muuttaa kyseisten luokkien CreateParam
+                              // static-metodiksi, niin koodista tulisi fiksumpaa
+      NFmiWeatherAndCloudiness weatAndC;
+      NFmiDataIdent* dataIdent = (parId == kFmiTotalWindMS) ? totWind.CreateParam(usedProducer)
+                                                            : weatAndC.CreateParam(usedProducer);
+      paramBag.Add(*dataIdent);
+      delete dataIdent;
+    }
+    else
+      paramBag.Add(NFmiDataIdent(allParam, usedProducer));
+  }
+  return paramBag;
+}
+
 NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
                                            bool use_point_data,
                                            const MyGrid& theUsedGrid,
@@ -278,13 +326,7 @@ NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
     NFmiQueryData data(dataFileName);
     NFmiFastQueryInfo info(&data);
 
-    bool ok = false;
-    if (use_point_data)
-      ok = !info.Grid();
-    else
-      ok = (info.Grid() && theUsedGrid == *info.Grid());
-
-    if (ok)
+    if (IsCombinable(info, use_point_data, theUsedGrid))
     {
       isAllParamBagsIdentical &= (firstParaBag == info.ParamBag());
 
@@ -299,16 +341,7 @@ NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
           allLevels.insert(*(info.Level()));
 
       if (use_point_data)
-      {
-        for (info.ResetLocation(); info.NextLocation();)
-        {
-          const auto* loc = info.Location();
-          // loc may by NFmiStation, NFmiLocation or NFmiRadarStation. We select NFmiStation
-          NFmiStation station(
-              loc->GetIdent(), loc->GetName(), loc->GetLongitude(), loc->GetLatitude());
-          stations.insert(station);
-        }
-      }
+        InsertStations(info, stations);
     }
   }
 
@@ -323,26 +356,7 @@ NFmiQueryInfo MakeCombinedInnerInfo(const vector<string> &dataFileNames,
   if (isAllParamBagsIdentical)
     paramBag = firstParaBag;
   else
-  {
-    for (const auto& allParam : allParams)
-    {
-      auto parId = static_cast<FmiParameterName>(allParam.GetIdent());
-      if (parId == kFmiTotalWindMS ||
-          parId == kFmiWeatherAndCloudiness)  // HUOM! yhdistelmä parametrit totalWind ja
-                                              // weatherAndCloudiness ovat erikois tapauksia!!!
-      {
-        NFmiTotalWind totWind;  // pitäisi muuttaa kyseisten luokkien CreateParam
-                                // static-metodiksi, niin koodista tulisi fiksumpaa
-        NFmiWeatherAndCloudiness weatAndC;
-        NFmiDataIdent *dataIdent = (parId == kFmiTotalWindMS) ? totWind.CreateParam(usedProducer)
-                                                              : weatAndC.CreateParam(usedProducer);
-        paramBag.Add(*dataIdent);
-        delete dataIdent;
-      }
-      else
-        paramBag.Add(NFmiDataIdent(allParam, usedProducer));
-    }
-  }
+    paramBag = MakeCombinedParamBag(allParams, usedProducer);
   NFmiParamDescriptor pdesc(paramBag);
 
   // Tehdään kaikkia datoja yhdistävä vPlaceDescriptor

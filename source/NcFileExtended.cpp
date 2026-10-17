@@ -720,6 +720,212 @@ std::vector<std::string> nctools::NcFileExtended::get_gdal_variable_names() cons
 // initAxis
 // ======================================================================
 
+namespace
+{
+// Build a map: coordname -> {attrname -> value} from metadata
+std::map<std::string, std::map<std::string, std::string>> build_coord_attrs(
+    const std::map<std::string, std::string>& first_var_meta)
+{
+  std::map<std::string, std::map<std::string, std::string>> coord_attrs;
+  for (const auto& [key, val] : first_var_meta)
+  {
+    const auto hash = key.find('#');
+    if (hash == std::string::npos)
+      continue;
+    const std::string cname = key.substr(0, hash);
+    const std::string aname = key.substr(hash + 1);
+    // Skip NETCDF_DIM_* entries (they use # after the prefix too)
+    if (cname.substr(0, 11) == "NETCDF_DIM_")
+      continue;
+    coord_attrs[cname][aname] = val;
+  }
+  return coord_attrs;
+}
+
+// Test whether the coordinate is in the list of allowed coordinates (if any)
+bool is_allowed_coord(const std::vector<std::string>* restrict_to, const std::string& coord)
+{
+  if (!restrict_to)
+    return true;
+  return std::find(restrict_to->begin(), restrict_to->end(), coord) != restrict_to->end();
+}
+
+// Find a coordinate whose attribute has one of the given values
+std::string find_coord_by_attr(
+    const std::map<std::string, std::map<std::string, std::string>>& coord_attrs,
+    const std::string& attrname,
+    const std::set<std::string>& values,
+    const std::vector<std::string>* restrict_to)
+{
+  for (const auto& [coord, attrs] : coord_attrs)
+  {
+    if (!is_allowed_coord(restrict_to, coord))
+      continue;
+    const auto it = attrs.find(attrname);
+    if (it != attrs.end() && values.count(it->second))
+      return coord;
+  }
+  return {};
+}
+
+// Find the time dimension by checking for "since" in the units
+std::string find_time_by_units(
+    const std::map<std::string, std::map<std::string, std::string>>& coord_attrs,
+    const std::vector<std::string>& extra_dims)
+{
+  for (const auto& dim : extra_dims)
+  {
+    const auto it = coord_attrs.find(dim);
+    if (it == coord_attrs.end())
+      continue;
+    const auto uit = it->second.find("units");
+    if (uit != it->second.end() && uit->second.find("since") != std::string::npos)
+      return dim;
+  }
+  return {};
+}
+
+// Merge key=value metadata items with the given key prefix without overriding existing values
+void merge_prefixed_metadata(std::map<std::string, std::string>& target,
+                             const char* const* meta,
+                             const std::string& prefix)
+{
+  for (int j = 0; meta && meta[j]; j++)
+  {
+    const std::string mitem(meta[j]);
+    const auto eq = mitem.find('=');
+    if (eq == std::string::npos)
+      continue;
+    const std::string k = prefix + mitem.substr(0, eq);
+    if (target.find(k) == target.end())
+      target[k] = mitem.substr(eq + 1);
+  }
+}
+}  // namespace
+
+// WRF mode: axis names come from options; just cache spatial sizes
+void nctools::NcFileExtended::init_wrf_axis()
+{
+  // WRF mode: axis names come from options; just cache spatial sizes
+  load_first_var_meta();
+
+  if (options.xdim)
+    x_name = *options.xdim;
+  if (options.ydim)
+    y_name = *options.ydim;
+  if (options.zdim && !options.zdim->empty())
+    z_name = *options.zdim;
+  if (options.tdim)
+    t_name = *options.tdim;
+
+  // For WRF, xsize/ysize come from the first data variable raster
+  // _xsize and _ysize were set in load_first_var_meta
+  if (_xsize == 0 || _ysize == 0)
+  {
+    // Try opening first variable's dataset directly
+    const auto varnames = get_gdal_variable_names();
+    if (!varnames.empty())
+    {
+      GDALDatasetH ds = open_var_dataset(varnames.front());
+      if (ds)
+      {
+        _xsize = static_cast<unsigned long>(GDALGetRasterXSize(ds));
+        _ysize = static_cast<unsigned long>(GDALGetRasterYSize(ds));
+        GDALClose(ds);
+      }
+    }
+  }
+}
+
+// Find a coordinate variable name matching axis or units criteria
+std::string nctools::NcFileExtended::find_coord(const CoordAttrs& coord_attrs,
+                                                const std::set<std::string>& axis_vals,
+                                                const std::set<std::string>& units_vals,
+                                                const std::vector<std::string>& name_fallbacks,
+                                                const std::vector<std::string>* restrict_to) const
+{
+  // Check #axis attribute
+  auto coord = find_coord_by_attr(coord_attrs, "axis", axis_vals, restrict_to);
+  if (!coord.empty())
+    return coord;
+  // Check #units attribute
+  coord = find_coord_by_attr(coord_attrs, "units", units_vals, restrict_to);
+  if (!coord.empty())
+    return coord;
+  return find_coord_by_name(coord_attrs, name_fallbacks, restrict_to);
+}
+
+// Name-based fallback: check coord_attrs first, then try direct open.
+// Only apply restrict_to filter when it is non-empty; an empty restrict_to
+// means no NETCDF_DIM_EXTRA info is available (e.g. HDF5 files), so we
+// should still try the well-known names.
+std::string nctools::NcFileExtended::find_coord_by_name(
+    const CoordAttrs& coord_attrs,
+    const std::vector<std::string>& name_fallbacks,
+    const std::vector<std::string>* restrict_to) const
+{
+  for (const auto& name : name_fallbacks)
+  {
+    if (restrict_to && !restrict_to->empty() && !is_allowed_coord(restrict_to, name))
+      continue;
+    if (coord_attrs.count(name))
+      return name;
+    // For HDF5 or files without coord variable metadata: try opening the variable
+    GDALDatasetH tds = open_var_dataset(name);
+    if (tds)
+    {
+      // Merge this coord variable's metadata (dataset + band 1) into first_var_meta_
+      // so that get_coord_attr("lon", "units") etc. work for HDF5 files
+      merge_coord_var_meta(tds, name);
+      GDALClose(tds);
+      return name;
+    }
+  }
+  return {};
+}
+
+// Merge the dataset + band 1 metadata of a coordinate variable with prefix name+"#"
+// into first_var_meta_ without overriding existing values
+void nctools::NcFileExtended::merge_coord_var_meta(GDALDatasetH tds, const std::string& name) const
+{
+  merge_prefixed_metadata(first_var_meta_, GDALGetMetadata(tds, nullptr), name + "#");
+  GDALRasterBandH b1 = GDALGetRasterBand(tds, 1);
+  if (b1)
+    merge_prefixed_metadata(first_var_meta_, GDALGetMetadata(b1, nullptr), name + "#");
+}
+
+// Ensure coordinate variable metadata (especially 'units') is in first_var_meta_.
+// When a coord var is found via axis= attribute in another variable, its own
+// metadata (like units=km) may not be loaded yet.
+void nctools::NcFileExtended::ensure_coord_meta(const std::string& cname) const
+{
+  if (cname.empty())
+    return;
+  // Already have units for this coord variable?
+  if (!get_first_var_meta(cname + "#units").empty())
+    return;
+  GDALDatasetH tds = open_var_dataset(cname);
+  if (!tds)
+    return;
+  // Merge dataset + band 1 metadata with prefix cname+"#"
+  merge_coord_var_meta(tds, cname);
+  GDALClose(tds);
+}
+
+// Validate the detected axes
+void nctools::NcFileExtended::validate_axes(const std::optional<std::string>& zname,
+                                            const std::optional<std::string>& tname) const
+{
+  if (x_name.empty())
+    throw Fmi::Exception(BCP, "X-axis not found in file " + path);
+  if (y_name.empty())
+    throw Fmi::Exception(BCP, "Y-axis not found in file " + path);
+  if (z_name.empty() && zname && !zname->empty())
+    throw Fmi::Exception(BCP, "Z-axis '" + *zname + "' not found in file " + path);
+  if (t_name.empty() && tname && !tname->empty())
+    throw Fmi::Exception(BCP, "T-axis '" + *tname + "' not found in file " + path);
+}
+
 void nctools::NcFileExtended::initAxis(const std::optional<std::string>& xname,
                                        const std::optional<std::string>& yname,
                                        const std::optional<std::string>& zname,
@@ -729,35 +935,7 @@ void nctools::NcFileExtended::initAxis(const std::optional<std::string>& xname,
   {
     if (wrf)
     {
-      // WRF mode: axis names come from options; just cache spatial sizes
-      load_first_var_meta();
-
-      if (options.xdim)
-        x_name = *options.xdim;
-      if (options.ydim)
-        y_name = *options.ydim;
-      if (options.zdim && !options.zdim->empty())
-        z_name = *options.zdim;
-      if (options.tdim)
-        t_name = *options.tdim;
-
-      // For WRF, xsize/ysize come from the first data variable raster
-      // _xsize and _ysize were set in load_first_var_meta
-      if (_xsize == 0 || _ysize == 0)
-      {
-        // Try opening first variable's dataset directly
-        const auto varnames = get_gdal_variable_names();
-        if (!varnames.empty())
-        {
-          GDALDatasetH ds = open_var_dataset(varnames.front());
-          if (ds)
-          {
-            _xsize = static_cast<unsigned long>(GDALGetRasterXSize(ds));
-            _ysize = static_cast<unsigned long>(GDALGetRasterYSize(ds));
-            GDALClose(ds);
-          }
-        }
-      }
+      init_wrf_axis();
       return;
     }
 
@@ -771,164 +949,55 @@ void nctools::NcFileExtended::initAxis(const std::optional<std::string>& xname,
     const std::vector<std::string> extra_dims = parse_brace_list(extra_raw);
 
     // Build a map: coordname → {attrname → value} from metadata
-    std::map<std::string, std::map<std::string, std::string>> coord_attrs;
-    for (const auto& [key, val] : first_var_meta_)
-    {
-      const auto hash = key.find('#');
-      if (hash == std::string::npos)
-        continue;
-      const std::string cname = key.substr(0, hash);
-      const std::string aname = key.substr(hash + 1);
-      // Skip NETCDF_DIM_* entries (they use # after the prefix too)
-      if (cname.substr(0, 11) == "NETCDF_DIM_")
-        continue;
-      coord_attrs[cname][aname] = val;
-    }
-
-    // Helper: find a coordinate variable name matching axis or units criteria
-    auto find_by_axis_or_units =
-        [&](const std::set<std::string>& axis_vals,
-            const std::set<std::string>& units_vals,
-            const std::vector<std::string>& name_fallbacks,
-            const std::vector<std::string>* restrict_to = nullptr) -> std::string
-    {
-      // Check #axis attribute
-      for (const auto& [coord, attrs] : coord_attrs)
-      {
-        if (restrict_to)
-        {
-          bool found = std::find(restrict_to->begin(), restrict_to->end(), coord) !=
-                       restrict_to->end();
-          if (!found)
-            continue;
-        }
-        const auto it = attrs.find("axis");
-        if (it != attrs.end() && axis_vals.count(it->second))
-          return coord;
-      }
-      // Check #units attribute
-      for (const auto& [coord, attrs] : coord_attrs)
-      {
-        if (restrict_to)
-        {
-          bool found = std::find(restrict_to->begin(), restrict_to->end(), coord) !=
-                       restrict_to->end();
-          if (!found)
-            continue;
-        }
-        const auto it = attrs.find("units");
-        if (it != attrs.end() && units_vals.count(it->second))
-          return coord;
-      }
-      // Name-based fallback: check coord_attrs first, then try direct open.
-      // Only apply restrict_to filter when it is non-empty; an empty restrict_to
-      // means no NETCDF_DIM_EXTRA info is available (e.g. HDF5 files), so we
-      // should still try the well-known names.
-      for (const auto& name : name_fallbacks)
-      {
-        if (restrict_to && !restrict_to->empty())
-        {
-          bool found = std::find(restrict_to->begin(), restrict_to->end(), name) !=
-                       restrict_to->end();
-          if (!found)
-            continue;
-        }
-        if (coord_attrs.count(name))
-          return name;
-        // For HDF5 or files without coord variable metadata: try opening the variable
-        GDALDatasetH tds = open_var_dataset(name);
-        if (tds)
-        {
-          // Merge this coord variable's metadata (dataset + band 1) into first_var_meta_
-          // so that get_coord_attr("lon", "units") etc. work for HDF5 files
-          const auto load_meta = [&](const char* const* meta, const std::string& prefix)
-          {
-            for (int j = 0; meta && meta[j]; j++)
-            {
-              const std::string mitem(meta[j]);
-              const auto eq = mitem.find('=');
-              if (eq == std::string::npos)
-                continue;
-              const std::string k = prefix + mitem.substr(0, eq);
-              if (first_var_meta_.find(k) == first_var_meta_.end())
-                first_var_meta_[k] = mitem.substr(eq + 1);
-            }
-          };
-          load_meta(GDALGetMetadata(tds, nullptr), name + "#");
-          GDALRasterBandH b1 = GDALGetRasterBand(tds, 1);
-          if (b1)
-            load_meta(GDALGetMetadata(b1, nullptr), name + "#");
-          GDALClose(tds);
-          return name;
-        }
-      }
-      return {};
-    };
+    const auto coord_attrs = build_coord_attrs(first_var_meta_);
 
     // Detect x_name
     if (xname && !xname->empty())
       x_name = *xname;  // preserve case as provided
     else if (!xname)
-      x_name = find_by_axis_or_units(
-          {"X"},
-          {"degrees_east",
-           "degree_east",
-           "degree_E",
-           "degrees_E",
-           "degreeE",
-           "degreesE",
-           "100  km",
-           "m",
-           "km",
-           "Meter"},
-          {"lon", "longitude", "x", "xc"});
+      x_name = find_coord(coord_attrs,
+                          {"X"},
+                          {"degrees_east",
+                           "degree_east",
+                           "degree_E",
+                           "degrees_E",
+                           "degreeE",
+                           "degreesE",
+                           "100  km",
+                           "m",
+                           "km",
+                           "Meter"},
+                          {"lon", "longitude", "x", "xc"});
     // xname == "" → x_name stays ""
 
     // Detect y_name
     if (yname && !yname->empty())
       y_name = *yname;  // preserve case as provided
     else if (!yname)
-      y_name = find_by_axis_or_units(
-          {"Y"},
-          {"degrees_north",
-           "degree_north",
-           "degree_N",
-           "degrees_N",
-           "degreeN",
-           "degreesN",
-           "100  km",
-           "m",
-           "km",
-           "Meter"},
-          {"lat", "latitude", "y", "yc"});
+      y_name = find_coord(coord_attrs,
+                          {"Y"},
+                          {"degrees_north",
+                           "degree_north",
+                           "degree_N",
+                           "degrees_N",
+                           "degreeN",
+                           "degreesN",
+                           "100  km",
+                           "m",
+                           "km",
+                           "Meter"},
+                          {"lat", "latitude", "y", "yc"});
 
     // Detect t_name (only from extra_dims)
     if (tname && !tname->empty())
       t_name = *tname;  // preserve case as provided
     else if (!tname)
-      t_name = find_by_axis_or_units(
-          {"T"},
-          {},
-          {"time", "t"},
-          &extra_dims);
+      t_name = find_coord(coord_attrs, {"T"}, {}, {"time", "t"}, &extra_dims);
     // tname == "" → t_name stays "" (static data)
 
     // If t_name not found via axis/units, check for "since" in units
     if (t_name.empty() && !tname)
-    {
-      for (const auto& dim : extra_dims)
-      {
-        const auto it = coord_attrs.find(dim);
-        if (it == coord_attrs.end())
-          continue;
-        const auto uit = it->second.find("units");
-        if (uit != it->second.end() && uit->second.find("since") != std::string::npos)
-        {
-          t_name = dim;
-          break;
-        }
-      }
-    }
+      t_name = find_time_by_units(coord_attrs, extra_dims);
 
     // Detect z_name (only if user requests it or it's auto-detected from extra_dims)
     if (zname && !zname->empty())
@@ -936,56 +1005,18 @@ void nctools::NcFileExtended::initAxis(const std::optional<std::string>& xname,
     else if (!zname)
     {
       // Auto-detect: look for Z axis in extra_dims
-      z_name = find_by_axis_or_units(
-          {"Z"}, {}, {"lev", "level", "z", "zc"}, &extra_dims);
+      z_name = find_coord(coord_attrs, {"Z"}, {}, {"lev", "level", "z", "zc"}, &extra_dims);
     }
     // zname == "" (default) → z_name stays ""
 
     // Ensure coordinate variable metadata (especially 'units') is in first_var_meta_
     // for x_name and y_name. When a coord var is found via axis= attribute in another
     // variable, its own metadata (like units=km) may not be loaded yet.
-    const auto ensure_coord_meta = [&](const std::string& cname)
-    {
-      if (cname.empty())
-        return;
-      // Already have units for this coord variable?
-      if (!get_first_var_meta(cname + "#units").empty())
-        return;
-      GDALDatasetH tds = open_var_dataset(cname);
-      if (!tds)
-        return;
-      // Merge dataset + band 1 metadata with prefix cname+"#"
-      const auto load_m = [&](const char* const* meta, const std::string& prefix)
-      {
-        for (int j = 0; meta && meta[j]; j++)
-        {
-          const std::string mitem(meta[j]);
-          const auto eq = mitem.find('=');
-          if (eq == std::string::npos)
-            continue;
-          const std::string k = prefix + mitem.substr(0, eq);
-          if (first_var_meta_.find(k) == first_var_meta_.end())
-            first_var_meta_[k] = mitem.substr(eq + 1);
-        }
-      };
-      load_m(GDALGetMetadata(tds, nullptr), cname + "#");
-      GDALRasterBandH b1 = GDALGetRasterBand(tds, 1);
-      if (b1)
-        load_m(GDALGetMetadata(b1, nullptr), cname + "#");
-      GDALClose(tds);
-    };
     ensure_coord_meta(x_name);
     ensure_coord_meta(y_name);
 
     // Validate
-    if (x_name.empty())
-      throw Fmi::Exception(BCP, "X-axis not found in file " + path);
-    if (y_name.empty())
-      throw Fmi::Exception(BCP, "Y-axis not found in file " + path);
-    if (z_name.empty() && zname && !zname->empty())
-      throw Fmi::Exception(BCP, "Z-axis '" + *zname + "' not found in file " + path);
-    if (t_name.empty() && tname && !tname->empty())
-      throw Fmi::Exception(BCP, "T-axis '" + *tname + "' not found in file " + path);
+    validate_axes(zname, tname);
 
     // If user specified a z-dim or t-dim, ensure we have metadata from a variable with those dims
     if (!z_name.empty())

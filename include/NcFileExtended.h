@@ -6,8 +6,10 @@
 #include <macgyver/StringConversion.h>
 #include <newbase/NFmiTimeList.h>
 #include <gdal.h>
+#include <map>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -145,6 +147,23 @@ class NcFileExtended
   double axis_scale_from_units(const std::string& units) const;
 
   void load_first_var_meta() const;
+
+  // initAxis helpers
+  using CoordAttrs = std::map<std::string, std::map<std::string, std::string>>;
+  void init_wrf_axis();
+  std::string find_coord(const CoordAttrs& coord_attrs,
+                         const std::set<std::string>& axis_vals,
+                         const std::set<std::string>& units_vals,
+                         const std::vector<std::string>& name_fallbacks,
+                         const std::vector<std::string>* restrict_to = nullptr) const;
+  std::string find_coord_by_name(const CoordAttrs& coord_attrs,
+                                 const std::vector<std::string>& name_fallbacks,
+                                 const std::vector<std::string>* restrict_to) const;
+  void merge_coord_var_meta(GDALDatasetH tds, const std::string& name) const;
+  void ensure_coord_meta(const std::string& cname) const;
+  void validate_axes(const std::optional<std::string>& zname,
+                     const std::optional<std::string>& tname) const;
+
   void merge_dim_meta(const std::string& dimname) const;  // merge metadata from a var that has dimname
   void find_bounds();
   void find_axis_bounds_gdal(const std::string& coordname,

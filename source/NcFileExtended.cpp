@@ -1609,6 +1609,51 @@ float nctools::NcFileExtended::get_missingvalue_for_var(const std::string& varna
 // timeList
 // ======================================================================
 
+namespace
+{
+// Read the WRF Times character variable (closes the dataset)
+void add_wrf_times(GDALDatasetH times_ds, NFmiTimeList& tlist)
+{
+  const int ncols = GDALGetRasterXSize(times_ds);  // character width (e.g. 19)
+  const int nrows = GDALGetRasterYSize(times_ds);  // time count
+  std::vector<char> ncvals(static_cast<std::size_t>(ncols) * nrows);
+  GDALRasterBandH band = GDALGetRasterBand(times_ds, 1);
+  const CPLErr err =
+      GDALRasterIO(band, GF_Read, 0, 0, ncols, nrows, ncvals.data(), ncols, nrows, GDT_Byte, 0, 0);
+  GDALClose(times_ds);
+  if (err != CE_None)
+    throw Fmi::Exception(BCP, "Failed to read raster data");
+  for (int row = 0; row < nrows; row++)
+  {
+    std::string stamp;
+    for (int col = 0; col < ncols; col++)
+    {
+      char ch = ncvals[static_cast<std::size_t>(row) * ncols + col];
+      if (ch == '_')
+        ch = 'T';
+      stamp += ch;
+    }
+    auto t = Fmi::TimeParser::parse(stamp);
+    tlist.Add(new NFmiMetTime(nctools::tomettime(t)));
+  }
+}
+
+// Read all the values of the dataset (closes the dataset)
+std::vector<double> read_raster_doubles(GDALDatasetH tds)
+{
+  const int xsz = GDALGetRasterXSize(tds);
+  const int ysz = GDALGetRasterYSize(tds);
+  std::vector<double> tvals(static_cast<std::size_t>(xsz) * ysz);
+  GDALRasterBandH band = GDALGetRasterBand(tds, 1);
+  const CPLErr err =
+      GDALRasterIO(band, GF_Read, 0, 0, xsz, ysz, tvals.data(), xsz, ysz, GDT_Float64, 0, 0);
+  GDALClose(tds);
+  if (err != CE_None)
+    throw Fmi::Exception(BCP, "Failed to read raster data");
+  return tvals;
+}
+}  // namespace
+
 NFmiTimeList nctools::NcFileExtended::timeList(const std::string& varName,
                                                const std::string& unitAttrName)
 {
@@ -1626,30 +1671,7 @@ NFmiTimeList nctools::NcFileExtended::timeList(const std::string& varName,
       // WRF: read Times character variable via GDAL
       GDALDatasetH times_ds = open_var_dataset("Times");
       if (times_ds)
-      {
-        const int ncols = GDALGetRasterXSize(times_ds);  // character width (e.g. 19)
-        const int nrows = GDALGetRasterYSize(times_ds);  // time count
-        std::vector<char> ncvals(static_cast<std::size_t>(ncols) * nrows);
-        GDALRasterBandH band = GDALGetRasterBand(times_ds, 1);
-        const CPLErr err = GDALRasterIO(
-            band, GF_Read, 0, 0, ncols, nrows, ncvals.data(), ncols, nrows, GDT_Byte, 0, 0);
-        GDALClose(times_ds);
-        if (err != CE_None)
-          throw Fmi::Exception(BCP, "Failed to read raster data");
-        for (int row = 0; row < nrows; row++)
-        {
-          std::string stamp;
-          for (int col = 0; col < ncols; col++)
-          {
-            char ch = ncvals[static_cast<std::size_t>(row) * ncols + col];
-            if (ch == '_')
-              ch = 'T';
-            stamp += ch;
-          }
-          auto t = Fmi::TimeParser::parse(stamp);
-          tlist->Add(new NFmiMetTime(tomettime(t)));
-        }
-      }
+        add_wrf_times(times_ds, *tlist);
       timelist = tlist;
       return *timelist;
     }
@@ -1697,18 +1719,7 @@ NFmiTimeList nctools::NcFileExtended::timeList(const std::string& varName,
       {
         GDALDatasetH tds = open_var_dataset(t_var);
         if (tds)
-        {
-          const int xsz = GDALGetRasterXSize(tds);
-          const int ysz = GDALGetRasterYSize(tds);
-          std::vector<double> tvals(static_cast<std::size_t>(xsz) * ysz);
-          GDALRasterBandH band = GDALGetRasterBand(tds, 1);
-          const CPLErr err = GDALRasterIO(
-              band, GF_Read, 0, 0, xsz, ysz, tvals.data(), xsz, ysz, GDT_Float64, 0, 0);
-          GDALClose(tds);
-          if (err != CE_None)
-            throw Fmi::Exception(BCP, "Failed to read raster data");
-          raw_values = tvals;
-        }
+          raw_values = read_raster_doubles(tds);
       }
 
       for (double val_d : raw_values)

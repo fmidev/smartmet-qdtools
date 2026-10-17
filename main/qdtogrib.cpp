@@ -983,6 +983,48 @@ void write_grib(NFmiFastQueryInfo &theInfo, grib_handle *gribHandle, const std::
 }
 
 // ----------------------------------------------------------------------
+/*!
+ * \brief Create the GRIB handle for the selected edition
+ */
+// ----------------------------------------------------------------------
+
+grib_handle *create_grib_handle(grib_context *context)
+{
+  if (options.grib1)
+    return grib_handle_new_from_samples(context, "GRIB1");
+  if (options.grib2)
+    return grib_handle_new_from_samples(context, "GRIB2");
+  throw std::runtime_error("Invalid GRIB format selected");  // never happens
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Write all the times of the current parameter and level
+ */
+// ----------------------------------------------------------------------
+
+void write_param(NFmiFastQueryInfo &qi,
+                 grib_handle *gribHandle,
+                 std::vector<double> &valueArray,
+                 bool use_minutes,
+                 int option_flags,
+                 FILE *out)
+{
+  for (qi.ResetTime(); qi.NextTime();)
+  {
+    if (copy_values(qi, gribHandle, valueArray, use_minutes))
+    {
+      if (options.dump)
+        grib_dump_content(gribHandle, stdout, "serialize", option_flags, nullptr);
+      if (!options.split)
+        write_grib(out, gribHandle);
+      else
+        write_grib(qi, gribHandle, options.outfile);
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
 
 int run(const int argc, char *argv[])
 {
@@ -999,13 +1041,7 @@ int run(const int argc, char *argv[])
 
   grib_context *context = grib_context_get_default();
 
-  grib_handle* gribHandle = nullptr;
-  if (options.grib1)
-    gribHandle = grib_handle_new_from_samples(context, "GRIB1");
-  else if (options.grib2)
-    gribHandle = grib_handle_new_from_samples(context, "GRIB2");
-  else
-    throw std::runtime_error("Invalid GRIB format selected");  // never happens
+  grib_handle* gribHandle = create_grib_handle(context);
 
 #ifdef SOME_OTHER_VERSION
   int option_flags = GRIB_DUMP_FLAG_VALUES | GRIB_DUMP_FLAG_OPTIONAL | GRIB_DUMP_FLAG_READ_ONLY;
@@ -1054,20 +1090,7 @@ int run(const int argc, char *argv[])
                     << qi.Param().GetParamIdent() << ")" << std::endl;
         }
         else
-        {
-          for (qi.ResetTime(); qi.NextTime();)
-          {
-            if (copy_values(qi, gribHandle, valueArray, use_minutes))
-            {
-              if (options.dump)
-                grib_dump_content(gribHandle, stdout, "serialize", option_flags, nullptr);
-              if (!options.split)
-                write_grib(out, gribHandle);
-              else
-                write_grib(qi, gribHandle, options.outfile);
-            }
-          }
-        }
+          write_param(qi, gribHandle, valueArray, use_minutes, option_flags, out);
       }
     }
   }

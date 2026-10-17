@@ -10,6 +10,10 @@ The shape parameters are given without any trailing .shp suffix.
 
 The available options are
 
+* **-h**  
+    Print the help message
+* **-v**  
+    Verbose mode
 * **-f name=value**  
     Keep only the elements whose attributes match the desired value
 * **-e**  

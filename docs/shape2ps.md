@@ -8,6 +8,7 @@ Table of Contents:
   * [projection](#projection)
   * [body](#body)
   * [boundingbox](#boundingbox)
+  * [clipmargin](#clipmargin)
   * [shape](#shape)
   * [subshape](#subshape)
   * [gshhs](#gshhs)
@@ -27,6 +28,8 @@ Table of Contents:
   * [contourline](#contourline)
   * [contourfill](#contourfill)
   * [bezier](#bezier)
+  * [windarrows](#windarrows)
+  * [Deprecated keywords](#deprecated-keywords)
 
 See also [Projection descriptions in Smartmet](projection-descriptions-in-SmartMet.md)
 
@@ -34,7 +37,9 @@ See also [Projection descriptions in Smartmet](projection-descriptions-in-SmartM
 
 The command line syntax is
 
-    shape2ps controlfile
+    shape2ps [-v] controlfile
+
+Option -v enables verbose mode, in which the projection settings are printed to standard error.
 
 The result will be printed to standard output, so it is more common to use the command line this:
 
@@ -150,6 +155,14 @@ The command adds to the current path a rectangle the size of the bounding box. T
 *    fill the background with a color
 *    stroke the bounding box to aid working with Adobe Illustrator, which normally does not limit rendering to the bounding box like most programs
  
+### clipmargin
+
+The command syntax is:
+
+    clipmargin [margin]
+
+The paths produced by the shape, subshape and gshhs commands are clipped to the bounding box expanded by the given margin. The default margin is 0.
+
 ### shape
 
 The command syntax is:
@@ -290,10 +303,9 @@ Set the timemode to utc or local time. The command syntax is
 
 Set the time to be selected out of the current querydata. The command syntax is
 
-    time [days] [hour]
+    time [now|origintime|firsttime] [days] [hour]
 
-The days argument how many days forward to proceed from the start of the querydata,
-and the hour argument which hour to set active for that day.
+The first argument selects the reference time. With now the days argument tells how many days forward to proceed from the current date, and the hour argument which hour to set active for that day. With origintime and firsttime the given days and hours are added to the origin time or the first valid time of the querydata.
 
 ### smoother
 
@@ -308,7 +320,7 @@ Currently the only good smoother type is PseudoGaussian. The value for factor sh
 
 The command syntax is
 
-    contourcommands [moveto] [lineto] [closepath]
+    contourcommands [moveto] [lineto] [curveto] [closepath]
 
 The command is used to specify the aliases for the contours produced when contouring querydata.
 
@@ -346,3 +358,24 @@ where the given argument is a tolerance factor. This command will settle for an 
 where maxerror measures the allowed maximum error at node points measured in PostScript points. This will produce a tighter fit:
 
     bezier tight [maxerror]
+
+### windarrows
+
+The command syntax is
+
+    windarrows [dx] [dy]
+
+The command outputs the line
+
+    [direction] [x] [y] windarrow
+
+for every dx:th and dy:th grid point of the WindDirection parameter in the current querydata at the selected level and time. The control file must define the PostScript procedure windarrow which draws the arrow.
+
+### Deprecated keywords
+
+The commands
+
+    area [classid] [classname] [area definition]
+    projectioncenter [longitude] [latitude] [scale]
+
+are deprecated, and print a warning when used. Use the projection command instead.

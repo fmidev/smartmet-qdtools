@@ -1472,6 +1472,225 @@ void ReportParams(QueryDataManager& theMgr,
 // 3. Tarkistetaan koordinaattien jarkevyys
 // 4. Luetaan data
 // ----------------------------------------------------------------------
+// Muuntaa placename optiot koordinaateiksi
+// ----------------------------------------------------------------------
+
+map<string, NFmiPoint> FindOptionPlaces()
+{
+  // Muuttujalle coordfile annetaan oletusarvo, eli tassa on
+  // ylivarmistusta.
+
+  if (options.coordinatefile.empty())
+    throw runtime_error("Places defined but no coordinates file is set");
+
+  map<string, NFmiPoint> places = FindPlaces(options.places, options.coordinatefile, options.force);
+
+  if (options.verbose)
+  {
+    for (auto& place : places)
+      cout << "# Location: " << place.first << endl
+           << "# Coordinate: " << place.second.X() << ' ' << place.second.Y() << endl;
+  }
+  return places;
+}
+
+// ----------------------------------------------------------------------
+// Valitsee kaikki asemat tai lähimmät asemat tarvittaessa
+// ----------------------------------------------------------------------
+
+void SelectStations(QueryDataManager& qmgr,
+                    map<string, NFmiPoint>& places,
+                    const NFmiPoint& referencelonlat)
+{
+  if (options.all_stations)
+  {
+    std::set<int> stats = qmgr.stations();
+    std::copy(stats.begin(), stats.end(), back_inserter(options.stations));
+  }
+  // Listataan kaikki lähimmat asemat tarvittaessa
+
+  else if (options.nearest_stations > 1 || options.validate)
+  {
+    if (places.size() != 1)
+      throw runtime_error("Must specify exactly 1 reference point for -N or -C");
+
+    std::map<double, int> stats = qmgr.nearest(
+        referencelonlat, options.nearest_stations, 1000 * options.max_distance, options.validate);
+
+    for (auto& stat : stats)
+      options.stations.push_back(stat.second);
+
+    // Ja putsataan places - sitä tarvittiin vain lähimpien pisteiden hakuun
+    places.clear();
+  }
+}
+
+// ----------------------------------------------------------------------
+// Tulostaa kaikki aika-askeleet
+// ----------------------------------------------------------------------
+
+void PrintAllRows(NFmiFastQueryInfo& qi,
+                  bool ignoresubs,
+                  LocalTimeZones& zones,
+                  const NFmiPoint& lonlat,
+                  const string& prefix)
+{
+  qi.ResetTime();
+  while (qi.NextTime())
+  {
+    cout << prefix;
+    PrintRow(qi, ignoresubs, zones, lonlat);
+  }
+}
+
+// ----------------------------------------------------------------------
+// Tulostaa options.rows viimeisintä validia aika-askelta
+//
+// Palauttaa puuttuvien rivien lukumäärän
+// ----------------------------------------------------------------------
+
+int PrintLastRows(NFmiFastQueryInfo& qi,
+                  bool ignoresubs,
+                  LocalTimeZones& zones,
+                  const NFmiPoint& lonlat,
+                  const NFmiPoint& validationlonlat,
+                  const string& prefix)
+{
+  while (qi.NextTime())
+    ;
+  qi.PreviousTime();
+  // qi.LastTime();
+
+  int rows = options.rows;
+  for (bool more = true; more; more = rows > 0 && qi.PreviousTime())
+  {
+    if (options.max_missing_gap > 0 || ValidRow(qi, ignoresubs, validationlonlat))
+    {
+      cout << prefix;
+      PrintRow(qi, ignoresubs, zones, lonlat);
+      --rows;
+    }
+  }
+  return rows;
+}
+
+// ----------------------------------------------------------------------
+// Tulostaa asemien tiedot
+// ----------------------------------------------------------------------
+
+void PrintStations(QueryDataManager& qmgr, LocalTimeZones& zones, bool ignoresubs)
+{
+  for (int station : options.stations)
+  {
+    qmgr.setstation(station);
+    NFmiFastQueryInfo* qi = &qmgr.info();
+
+    qi->FirstLevel();
+
+    if (!qi->Location(station))
+      continue;
+
+    NFmiPoint lonlat = qi->Location()->GetLocation();
+
+    const string wmoprefix = string(NFmiValueString(station, "%05d").CharPtr()) + ' ';
+
+    if (options.rows < 0)
+    {
+      // Taaksepäin yhteensopivuus vaatii, että
+      // tulostetaan WMO-numero vain kun niitä on useita
+      PrintAllRows(*qi, ignoresubs, zones, lonlat, options.stations.size() > 1 ? wmoprefix : "");
+    }
+    else
+    {
+      int rows = PrintLastRows(
+          *qi, ignoresubs, zones, lonlat, NFmiPoint(kFloatMissing, kFloatMissing), wmoprefix);
+      if (rows > 0 && options.verbose)
+        cout << "# Warning: " << rows << " missing rows for WMO-number " << station
+             << " due to insufficient data in the queryfile" << endl;
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
+// Asettaa annetun pisteen, palauttaa nullptr jos piste ohitetaan
+// ----------------------------------------------------------------------
+
+NFmiFastQueryInfo* SetPoint(QueryDataManager& qmgr, const NFmiPoint& lonlat)
+{
+  try
+  {
+    qmgr.setpoint(lonlat, 1000 * options.max_distance);
+    return &qmgr.info();
+  }
+  catch (...)
+  {
+    if (options.force)
+      return nullptr;
+    throw;
+  }
+}
+
+// ----------------------------------------------------------------------
+// Tulostaa yhden pisteen tiedot
+// ----------------------------------------------------------------------
+
+void PrintPoint(NFmiFastQueryInfo& qi,
+                bool ignoresubs,
+                LocalTimeZones& zones,
+                const NFmiPoint& lonlat,
+                const string& prefix)
+{
+  qi.FirstLevel();
+  if (options.rows < 0)
+    PrintAllRows(qi, ignoresubs, zones, lonlat, prefix);
+  else
+  {
+    int rows = PrintLastRows(qi, ignoresubs, zones, lonlat, lonlat, prefix);
+    if (rows > 0 && options.verbose)
+      cout << "# Warning: " << rows << " missing rows due to insufficient data in the queryfile"
+           << endl;
+  }
+}
+
+// ----------------------------------------------------------------------
+// Tulostaa nimettyjen koordinaattien tiedot
+// ----------------------------------------------------------------------
+
+void PrintLocations(QueryDataManager& qmgr, LocalTimeZones& zones, bool ignoresubs)
+{
+  for (const auto& location : options.locations)
+  {
+    NFmiPoint lonlat = location.latlon;
+    NFmiFastQueryInfo* qi = SetPoint(qmgr, lonlat);
+    if (qi == nullptr)
+      continue;
+    PrintPoint(*qi, ignoresubs, zones, lonlat, location.name + ' ');
+  }
+}
+
+// ----------------------------------------------------------------------
+// Tulostaa paikkojen tiedot
+// ----------------------------------------------------------------------
+
+void PrintPlaces(QueryDataManager& qmgr,
+                 const map<string, NFmiPoint>& places,
+                 LocalTimeZones& zones,
+                 bool ignoresubs)
+{
+  for (const auto& place : places)
+  {
+    if (places.size() > 1)
+      cout << "Location: " << place.first << endl;
+
+    NFmiPoint lonlat = place.second;
+    NFmiFastQueryInfo* qi = SetPoint(qmgr, lonlat);
+    if (qi == nullptr)
+      continue;
+    PrintPoint(*qi, ignoresubs, zones, lonlat, "");
+  }
+}
+
+// ----------------------------------------------------------------------
 
 int run(int argc, char* argv[])
 {
@@ -1500,22 +1719,7 @@ int run(int argc, char* argv[])
   // Muunnetaan mahdolliset placename optiot koordinaateiksi
 
   if (!options.places.empty())
-  {
-    // Muuttujalle coordfile annetaan oletusarvo, eli tassa on
-    // ylivarmistusta.
-
-    if (options.coordinatefile.empty())
-      throw runtime_error("Places defined but no coordinates file is set");
-
-    places = FindPlaces(options.places, options.coordinatefile, options.force);
-
-    if (options.verbose)
-    {
-      for (auto& place : places)
-        cout << "# Location: " << place.first << endl
-             << "# Coordinate: " << place.second.X() << ' ' << place.second.Y() << endl;
-    }
-  }
+    places = FindOptionPlaces();
 
   // Timezone polygons are read on demand
 
@@ -1537,27 +1741,7 @@ int run(int argc, char* argv[])
 
   // Listataan kaikki asemat tarvittaessa
 
-  if (options.all_stations)
-  {
-    std::set<int> stats = qmgr.stations();
-    std::copy(stats.begin(), stats.end(), back_inserter(options.stations));
-  }
-  // Listataan kaikki lähimmat asemat tarvittaessa
-
-  else if (options.nearest_stations > 1 || options.validate)
-  {
-    if (places.size() != 1)
-      throw runtime_error("Must specify exactly 1 reference point for -N or -C");
-
-    std::map<double, int> stats = qmgr.nearest(
-        referencelonlat, options.nearest_stations, 1000 * options.max_distance, options.validate);
-
-    for (auto& stat : stats)
-      options.stations.push_back(stat.second);
-
-    // Ja putsataan places - sitä tarvittiin vain lähimpien pisteiden hakuun
-    places.clear();
-  }
+  SelectStations(qmgr, places, referencelonlat);
 
   // Tarkistetaan, etta saatiin jarkevat koordinaatit jotain kautta
   // (Halutaan joko wmo-numerot tai koordinaatit)
@@ -1589,156 +1773,12 @@ int run(int argc, char* argv[])
 
   bool ignoresubs = false;
 
-  NFmiFastQueryInfo* qi = nullptr;
-
   if (!options.stations.empty())
-  {
-    auto begin = options.stations.begin();
-    auto end = options.stations.end();
-    for (auto iter = begin; iter != end; ++iter)
-    {
-      qmgr.setstation(*iter);
-      qi = &qmgr.info();
-
-      qi->FirstLevel();
-
-      if (!qi->Location(*iter))
-        continue;
-
-      NFmiPoint lonlat = qi->Location()->GetLocation();
-
-      if (options.rows < 0)
-      {
-        qi->ResetTime();
-        while (qi->NextTime())
-        {
-          // Taaksepäin yhteensopivuus vaatii, että
-          // tulostetaan WMO-numero vain kun niitä on useita
-          if (options.stations.size() > 1)
-            cout << NFmiValueString(*iter, "%05d").CharPtr() << ' ';
-          PrintRow(*qi, ignoresubs, zones, lonlat);
-        }
-      }
-      else
-      {
-        while (qi->NextTime())
-          ;
-        qi->PreviousTime();
-        // qi->LastTime();
-
-        int rows = options.rows;
-        for (bool more = true; more; more = rows > 0 && qi->PreviousTime())
-        {
-          if (options.max_missing_gap > 0 || ValidRow(*qi, ignoresubs))
-          {
-            cout << NFmiValueString(*iter, "%05d").CharPtr() << ' ';
-            PrintRow(*qi, ignoresubs, zones, lonlat);
-            --rows;
-          }
-        }
-        if (rows > 0 && options.verbose)
-          cout << "# Warning: " << rows << " missing rows for WMO-number " << *iter
-               << " due to insufficient data in the queryfile" << endl;
-      }
-    }
-  }
+    PrintStations(qmgr, zones, ignoresubs);
   else if (!options.locations.empty())
-  {
-    for (auto it = options.locations.begin(); it != options.locations.end(); ++it)
-    {
-      NFmiPoint lonlat = it->latlon;
-      try
-      {
-        qmgr.setpoint(lonlat, 1000 * options.max_distance);
-        qi = &qmgr.info();
-      }
-      catch (...)
-      {
-        if (options.force)
-          continue;
-        throw;
-      }
-
-      qi->FirstLevel();
-      if (options.rows < 0)
-      {
-        qi->ResetTime();
-        while (qi->NextTime())
-        {
-          cout << it->name << ' ';
-          PrintRow(*qi, ignoresubs, zones, lonlat);
-        }
-      }
-      else
-      {
-        while (qi->NextTime())
-          ;
-        qi->PreviousTime();
-        // qi->LastTime()
-        int rows = options.rows;
-        for (bool more = true; more; more = rows > 0 && qi->PreviousTime())
-        {
-          if (options.max_missing_gap > 0 || ValidRow(*qi, ignoresubs, lonlat))
-          {
-            cout << it->name << ' ';
-            PrintRow(*qi, ignoresubs, zones, lonlat);
-            --rows;
-          }
-        }
-        if (rows > 0 && options.verbose)
-          cout << "# Warning: " << rows << " missing rows due to insufficient data in the queryfile"
-               << endl;
-      }
-    }
-  }
+    PrintLocations(qmgr, zones, ignoresubs);
   else
-  {
-    for (auto it = places.begin(); it != places.end(); ++it)
-    {
-      if (places.size() > 1)
-        cout << "Location: " << it->first << endl;
-
-      NFmiPoint lonlat = it->second;
-      try
-      {
-        qmgr.setpoint(lonlat, 1000 * options.max_distance);
-        qi = &qmgr.info();
-      }
-      catch (...)
-      {
-        if (options.force)
-          continue;
-        throw;
-      }
-
-      qi->FirstLevel();
-      if (options.rows < 0)
-      {
-        qi->ResetTime();
-        while (qi->NextTime())
-          PrintRow(*qi, ignoresubs, zones, lonlat);
-      }
-      else
-      {
-        while (qi->NextTime())
-          ;
-        qi->PreviousTime();
-        // qi->LastTime()
-        int rows = options.rows;
-        for (bool more = true; more; more = rows > 0 && qi->PreviousTime())
-        {
-          if (options.max_missing_gap > 0 || ValidRow(*qi, ignoresubs, lonlat))
-          {
-            PrintRow(*qi, ignoresubs, zones, lonlat);
-            --rows;
-          }
-        }
-        if (rows > 0 && options.verbose)
-          cout << "# Warning: " << rows << " missing rows due to insufficient data in the queryfile"
-               << endl;
-      }
-    }
-  }
+    PrintPlaces(qmgr, places, zones, ignoresubs);
 
   return 0;
 }

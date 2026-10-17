@@ -81,23 +81,9 @@ void Usage()
        << endl;
 }
 
-void run(int argc, const char* argv[])
+// Check the number of command line parameters
+void check_arguments(NFmiCmdLine& cmdline, bool producerChange, bool levelChange, bool originChange)
 {
-  NFmiCmdLine cmdline(argc, argv, "n!d!N!D!l!u!i!t!s!b!p!Z!L!T!w!W!");
-  // Tarkistetaan optioiden oikeus:
-  if (cmdline.Status().IsError())
-  {
-    cerr << "Error: Invalid command line:" << endl << cmdline.Status().ErrorLog().CharPtr() << endl;
-
-    Usage();
-    throw runtime_error("");  // tässä piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
-                              // joten en voinut laittaa virheviesti poikkeuksen mukana.
-  }
-
-  bool producerChange = (cmdline.isOption('N') || cmdline.isOption('D'));
-  bool levelChange = (cmdline.isOption('Z') || cmdline.isOption('L'));
-  bool originChange = cmdline.isOption('T');
-
   if ((producerChange || originChange || levelChange) &&
       (cmdline.NumberofParameters() < 1 || cmdline.NumberofParameters() > 2))
   {
@@ -113,19 +99,14 @@ void run(int argc, const char* argv[])
     throw runtime_error("");  // tässä piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
   }
+}
 
-  string dataFile(cmdline.Parameter(1));
-
-  NFmiQueryData qd(dataFile, false);
-
-  NFmiQueryInfo* info =
-      qd.Info();  // tässä pitää kopeloida ihan datan sisuksia, että muutokset saadaan voimaan!
-
-  // Katsotaan ensin onko 2. parametrina annettu parametri-tunniste nimi (esim. Temperature), vai
-  // identti (esim. 4)
-  bool paramFound = static_cast<bool>(cmdline.isOption('w')) || cmdline.isOption('W');
-  string paramIdOrName(cmdline.Parameter(2));
-  NFmiEnumConverter eConv;
+// Find the parameter given by name or id
+bool find_param(NFmiQueryInfo* info,
+                NFmiEnumConverter& eConv,
+                const string& paramIdOrName,
+                bool paramFound)
+{
   auto parNameId = static_cast<FmiParameterName>(eConv.ToEnum(paramIdOrName));
   if (parNameId != kFmiBadParameter && info->Param(parNameId))
     paramFound = true;
@@ -141,13 +122,12 @@ void run(int argc, const char* argv[])
     {
     }
   }
-  if (!paramFound)
-    if (!producerChange && !originChange && !levelChange)
-      throw runtime_error(string("Annettua parametria: '") + paramIdOrName +
-                          "' ei löytynyt datasta.");
+  return paramFound;
+}
 
-  NFmiDataIdent newDataIdent(info->Param());  // defaultti arvot täältä
-
+// Modify the parameter descriptor according to the options
+void modify_param(NFmiDataIdent& newDataIdent, NFmiCmdLine& cmdline, NFmiEnumConverter& eConv)
+{
   if (cmdline.isOption('n'))
     newDataIdent.GetParam()->SetName(cmdline.OptionValue('n'));
 
@@ -180,9 +160,14 @@ void run(int argc, const char* argv[])
 
   if (cmdline.isOption('p'))
     newDataIdent.GetParam()->Precision(cmdline.OptionValue('p'));
+}
 
-  info->Param() = newDataIdent;
-
+// Modify the producer according to the options
+void modify_producer(NFmiQueryInfo* info,
+                     NFmiDataIdent& newDataIdent,
+                     NFmiCmdLine& cmdline,
+                     bool producerChange)
+{
   bool changeProducerForAllParams = false;
   NFmiProducer producer(*info->Producer());
   if (producerChange)
@@ -206,6 +191,84 @@ void run(int argc, const char* argv[])
 
   if (changeProducerForAllParams)
     info->SetProducer(producer);
+}
+
+// Modify the station identity or name according to the options
+void modify_station(NFmiQueryInfo* info, NFmiCmdLine& cmdline, const string& paramIdOrName)
+{
+  if (info->IsGrid())
+    throw runtime_error("Querydata is in grid format");
+
+  long oldId = 0;
+
+  try
+  {
+    oldId = stol(paramIdOrName);
+  }
+  catch (const invalid_argument&)
+  {
+    throw runtime_error("Station id must be all numbers");
+  }
+
+  if (!info->Location(oldId))
+    throw runtime_error("station " + paramIdOrName + " not found from data");
+
+  if (cmdline.isOption('w'))
+  {
+    const long newId = stol(cmdline.OptionValue('w'));
+
+    info->EditStation().SetIdent(newId);
+  }
+  if (cmdline.isOption('W'))
+  {
+    info->EditStation().SetName(cmdline.OptionValue('W'));
+  }
+}
+
+void run(int argc, const char* argv[])
+{
+  NFmiCmdLine cmdline(argc, argv, "n!d!N!D!l!u!i!t!s!b!p!Z!L!T!w!W!");
+  // Tarkistetaan optioiden oikeus:
+  if (cmdline.Status().IsError())
+  {
+    cerr << "Error: Invalid command line:" << endl << cmdline.Status().ErrorLog().CharPtr() << endl;
+
+    Usage();
+    throw runtime_error("");  // tässä piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
+                              // joten en voinut laittaa virheviesti poikkeuksen mukana.
+  }
+
+  bool producerChange = (cmdline.isOption('N') || cmdline.isOption('D'));
+  bool levelChange = (cmdline.isOption('Z') || cmdline.isOption('L'));
+  bool originChange = cmdline.isOption('T');
+
+  check_arguments(cmdline, producerChange, levelChange, originChange);
+
+  string dataFile(cmdline.Parameter(1));
+
+  NFmiQueryData qd(dataFile, false);
+
+  NFmiQueryInfo* info =
+      qd.Info();  // tässä pitää kopeloida ihan datan sisuksia, että muutokset saadaan voimaan!
+
+  // Katsotaan ensin onko 2. parametrina annettu parametri-tunniste nimi (esim. Temperature), vai
+  // identti (esim. 4)
+  bool paramFound = static_cast<bool>(cmdline.isOption('w')) || cmdline.isOption('W');
+  string paramIdOrName(cmdline.Parameter(2));
+  NFmiEnumConverter eConv;
+  paramFound = find_param(info, eConv, paramIdOrName, paramFound);
+  if (!paramFound)
+    if (!producerChange && !originChange && !levelChange)
+      throw runtime_error(string("Annettua parametria: '") + paramIdOrName +
+                          "' ei löytynyt datasta.");
+
+  NFmiDataIdent newDataIdent(info->Param());  // defaultti arvot täältä
+
+  modify_param(newDataIdent, cmdline, eConv);
+
+  info->Param() = newDataIdent;
+
+  modify_producer(info, newDataIdent, cmdline, producerChange);
 
   if (cmdline.isOption('Z'))
   {
@@ -228,35 +291,7 @@ void run(int argc, const char* argv[])
   }
 
   if (cmdline.isOption('w') || cmdline.isOption('W'))
-  {
-    if (info->IsGrid())
-      throw runtime_error("Querydata is in grid format");
-
-    long oldId = 0;
-
-    try
-    {
-      oldId = stol(paramIdOrName);
-    }
-    catch (const invalid_argument&)
-    {
-      throw runtime_error("Station id must be all numbers");
-    }
-
-    if (!info->Location(oldId))
-      throw runtime_error("station " + paramIdOrName + " not found from data");
-
-    if (cmdline.isOption('w'))
-    {
-      const long newId = stol(cmdline.OptionValue('w'));
-
-      info->EditStation().SetIdent(newId);
-    }
-    if (cmdline.isOption('W'))
-    {
-      info->EditStation().SetName(cmdline.OptionValue('W'));
-    }
-  }
+    modify_station(info, cmdline, paramIdOrName);
 
   // Copied from NFmiStreamQueryData::WriteData for backward compatibility
 

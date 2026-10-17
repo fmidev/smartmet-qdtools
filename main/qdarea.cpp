@@ -1016,6 +1016,63 @@ void print_results()
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Print the values of a single area as a PHP hash table
+ */
+// ----------------------------------------------------------------------
+
+template <typename T>
+void print_php_values(const T& theValues, bool print_names)
+{
+  cout << "  \"values\" => array(" << endl;
+  for (auto it = theValues.begin(); it != theValues.end();)
+  {
+    cout << "   \"" << format_time_period(it->first, '-') << "\" => array(";
+
+    unsigned int j = 0;
+    for (auto jt = it->second.begin(); jt != it->second.end();)
+    {
+      if (print_names)
+        cout << '"' << options.php_names[j++] << "\"=>";
+      cout << format_value(jt->value(), "x");
+      ++jt;
+      if (jt != it->second.end())
+        cout << ',';
+    }
+    ++it;
+    if (it == theValues.end())
+      cout << ")" << endl;
+    else
+      cout << ")," << endl;
+  }
+  cout << "   )," << endl;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Print the extrema of a single area as PHP hash table elements
+ */
+// ----------------------------------------------------------------------
+
+template <typename Calculator, typename T>
+void print_php_extrema(const T& theValues, bool print_names)
+{
+  unsigned int j = 0;
+  for (unsigned int i = 0; i < options.parameters.size(); i++)
+  {
+    Calculator calculator;
+    for (auto& it : theValues)
+      calculator(it.second[i].value());
+
+    if (i > 0)
+      cout << ',';
+    if (print_names)
+      cout << '"' << options.php_names[j++] << "\"=>";
+    cout << format_value(calculator(), "x");
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Print the calculated results as a PHP hash table
  */
 // ----------------------------------------------------------------------
@@ -1030,61 +1087,16 @@ void print_php_results()
     cout << " \"" << at->first << "\" => array(" << endl;
 
     // Print the values themselves
-    cout << "  \"values\" => array(" << endl;
-    for (auto it = at->second.begin(); it != at->second.end();)
-    {
-      cout << "   \"" << format_time_period(it->first, '-') << "\" => array(";
-
-      unsigned int j = 0;
-      for (auto jt = it->second.begin(); jt != it->second.end();)
-      {
-        if (print_names)
-          cout << '"' << options.php_names[j++] << "\"=>";
-        cout << format_value(jt->value(), "x");
-        ++jt;
-        if (jt != it->second.end())
-          cout << ',';
-      }
-      ++it;
-      if (it == at->second.end())
-        cout << ")" << endl;
-      else
-        cout << ")," << endl;
-    }
-    cout << "   )," << endl;
+    print_php_values(at->second, print_names);
 
     // Print the maximum values
-    unsigned int j = 0;
     cout << "  \"maxima\" => array(";
-    for (unsigned int i = 0; i < options.parameters.size(); i++)
-    {
-      MaximumCalculator calculator;
-      for (auto& it : at->second)
-        calculator(it.second[i].value());
-
-      if (i > 0)
-        cout << ',';
-      if (print_names)
-        cout << '"' << options.php_names[j++] << "\"=>";
-      cout << format_value(calculator(), "x");
-    }
+    print_php_extrema<MaximumCalculator>(at->second, print_names);
     cout << ")," << endl;
 
     // Print the minimum values
-    j = 0;
     cout << "  \"minima\" => array(";
-    for (unsigned int i = 0; i < options.parameters.size(); i++)
-    {
-      MinimumCalculator calculator;
-      for (auto& it : at->second)
-        calculator(it.second[i].value());
-
-      if (i > 0)
-        cout << ',';
-      if (print_names)
-        cout << '"' << options.php_names[j++] << "\"=>";
-      cout << format_value(calculator(), "x");
-    }
+    print_php_extrema<MinimumCalculator>(at->second, print_names);
     cout << ")" << endl;
 
     ++at;

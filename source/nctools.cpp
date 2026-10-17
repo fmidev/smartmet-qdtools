@@ -46,6 +46,114 @@ NFmiEnumConverter& get_enumconverter()
 {
   return converter;
 }
+namespace
+{
+// Print the usage information
+void print_help(const char* argv0, const boost::program_options::options_description& desc)
+{
+  if (strstr(argv0, "wrftoqd") != nullptr)
+  {
+    std::cout << "Usage: wrfoqd [options] infile outfile" << std::endl
+              << std::endl
+              << "Converts Weather Research and Forecasting (WRF) Model NetCDF to querydata."
+              << std::endl
+              << std::endl
+              << desc << std::endl;
+  }
+  else
+  {
+    std::cout << "Usage:\n"
+                 "  nctoqd [options] infile outfile\n"
+                 "  nctoqd [options] -o outfile infile ...\n"
+                 "\n"
+                 "Converts CF-1.4 conforming NetCDF to querydata.\n"
+                 "\n"
+              << desc
+              << "\n"
+                 "Parameters supported by --addparams: Humidity\n"
+              << std::endl;
+  }
+}
+
+// Check the input files of wrftoqd
+void check_wrftoqd_files(const boost::program_options::variables_map& opt, const Options& options)
+{
+  namespace fs = std::filesystem;
+
+  // Running wrftoqd
+  if (opt.count("infile") == 0)
+    throw std::runtime_error("Expecting input file as parameter 1");
+
+  if (opt.count("infile") > 2)
+    throw std::runtime_error("Multiple input files for wrtoqd not supported");
+
+  if (!fs::exists(options.infiles[0]))
+    throw std::runtime_error("Input file '" + options.infiles[0] + "' does not exist");
+}
+
+// Check the input and output files of nctoqd
+void check_nctoqd_files(const boost::program_options::variables_map& opt, Options& options)
+{
+  namespace fs = std::filesystem;
+
+  // Running nctoqd
+  if (opt.count("infile") == 0)
+    throw std::runtime_error("Expecting input file as parameter 1");
+
+  if (!options.info)
+  {
+    if (opt.count("outfile") == 0)
+    {
+      // Output file not explicitly specified
+      if (options.infiles.size() > 2)
+        throw std::runtime_error(
+            "You must specifify desired output file with -o parameter for multiple inputs");
+      if (options.infiles.size() == 1)
+        throw std::runtime_error(
+            "Must specify output file either with the -o option or as the last parameter");
+      options.outfile = options.infiles[1];
+      options.infiles.pop_back();  // Remove the output element which was the last argument
+    }
+  }
+
+  for (const auto& infile : options.infiles)
+  {
+    if (!fs::exists(infile))
+      throw std::runtime_error("Input file '" + infile + "' does not exist");
+  }
+}
+
+// Parse the --producer option
+void parse_producer(const std::string& producerinfo, Options& options)
+{
+  std::vector<std::string> parts;
+  boost::algorithm::split(parts, producerinfo, boost::algorithm::is_any_of(","));
+  if (parts.size() != 2)
+    throw std::runtime_error("Option --producer expects a comma separated number,name argument");
+
+  options.producernumber = std::stol(parts[0]);
+  options.producername = parts[1];
+}
+
+// Parse the global attributes given in the form DX=1356.3;DY=1265.3
+void parse_global_attributes(const std::string& theAttributes, Options& options)
+{
+  // globaalit attribuutit annetaan muodossa -a DX=1356.3;DY=1265.3, eli eri attribuutit on
+  // erotelty ;-merkeillä ja avain/arvot on eroteltu = -merkeillä
+  auto attributeListParts = NFmiStringTools::Split<std::list<std::string>>(theAttributes, ";");
+  for (auto& attributeListPart : attributeListParts)
+  {
+    auto attributeParts = NFmiStringTools::Split<std::vector<std::string>>(attributeListPart, "=");
+    if (attributeParts.size() == 2)
+      options.cmdLineGlobalAttributes.insert(std::make_pair(attributeParts[0], attributeParts[1]));
+    else
+      throw std::runtime_error(
+          "Option -a (global attributes) was ilformatted, give option in following format:\n-a "
+          "DX=1356.3;DY=1265.3");
+  }
+}
+}  // namespace
+
 // ----------------------------------------------------------------------
 /*!
  * \brief Parse command line options
@@ -57,7 +165,6 @@ NFmiEnumConverter& get_enumconverter()
 bool parse_options(int argc, char *argv[], Options &options)
 {
   namespace po = boost::program_options;
-  namespace fs = std::filesystem;
 
   std::string producerinfo;
 
@@ -159,29 +266,7 @@ bool parse_options(int argc, char *argv[], Options &options)
 
   if (opt.count("help"))
   {
-    if (strstr(argv[0], "wrftoqd") != nullptr)
-    {
-      std::cout << "Usage: wrfoqd [options] infile outfile" << std::endl
-                << std::endl
-                << "Converts Weather Research and Forecasting (WRF) Model NetCDF to querydata."
-                << std::endl
-                << std::endl
-                << desc << std::endl;
-    }
-    else
-    {
-      std::cout << "Usage:\n"
-                   "  nctoqd [options] infile outfile\n"
-                   "  nctoqd [options] -o outfile infile ...\n"
-                   "\n"
-                   "Converts CF-1.4 conforming NetCDF to querydata.\n"
-                   "\n"
-                << desc
-                << "\n"
-                   "Parameters supported by --addparams: Humidity\n"
-                << std::endl;
-    }
-
+    print_help(argv[0], desc);
     return false;
   }
 
@@ -195,45 +280,9 @@ bool parse_options(int argc, char *argv[], Options &options)
     options.zdim = opt["zdim"].as<std::string>();
 
   if (strstr(argv[0], "wrftoqd") != nullptr)
-  {
-    // Running wrftoqd
-    if (opt.count("infile") == 0)
-      throw std::runtime_error("Expecting input file as parameter 1");
-
-    if (opt.count("infile") > 2)
-      throw std::runtime_error("Multiple input files for wrtoqd not supported");
-
-    if (!fs::exists(options.infiles[0]))
-      throw std::runtime_error("Input file '" + options.infiles[0] + "' does not exist");
-  }
+    check_wrftoqd_files(opt, options);
   else
-  {
-    // Running nctoqd
-    if (opt.count("infile") == 0)
-      throw std::runtime_error("Expecting input file as parameter 1");
-
-    if (!options.info)
-    {
-      if (opt.count("outfile") == 0)
-      {
-        // Output file not explicitly specified
-        if (options.infiles.size() > 2)
-          throw std::runtime_error(
-              "You must specifify desired output file with -o parameter for multiple inputs");
-        if (options.infiles.size() == 1)
-          throw std::runtime_error(
-              "Must specify output file either with the -o option or as the last parameter");
-        options.outfile = options.infiles[1];
-        options.infiles.pop_back();  // Remove the output element which was the last argument
-      }
-    }
-
-    for (const auto& infile : options.infiles)
-    {
-      if (!fs::exists(infile))
-        throw std::runtime_error("Input file '" + infile + "' does not exist");
-    }
-  }
+    check_nctoqd_files(opt, options);
 
   if (options.memorymap && options.outfile == "-")
     throw std::runtime_error("Cannot memory map standard output");
@@ -241,15 +290,7 @@ bool parse_options(int argc, char *argv[], Options &options)
   // Parse parameter settings
 
   if (!producerinfo.empty())
-  {
-    std::vector<std::string> parts;
-    boost::algorithm::split(parts, producerinfo, boost::algorithm::is_any_of(","));
-    if (parts.size() != 2)
-      throw std::runtime_error("Option --producer expects a comma separated number,name argument");
-
-    options.producernumber = std::stol(parts[0]);
-    options.producername = parts[1];
-  }
+    parse_producer(producerinfo, options);
 
   if (!tmpIgnoreUnitChangeParamsStr.empty())
     options.ignoreUnitChangeParams =
@@ -263,24 +304,7 @@ bool parse_options(int argc, char *argv[], Options &options)
     options.addParams = NFmiStringTools::Split<std::list<std::string>>(tmpAddParamsStr, ",");
 
   if (!tmpCmdLineGlobalAttributesStr.empty())
-  {
-    // globaalit attribuutit annetaan muodossa -a DX=1356.3;DY=1265.3, eli eri attribuutit on
-    // erotelty ;-merkeillä ja avain/arvot on eroteltu = -merkeillä
-    auto attributeListParts =
-        NFmiStringTools::Split<std::list<std::string>>(tmpCmdLineGlobalAttributesStr, ";");
-    for (auto& attributeListPart : attributeListParts)
-    {
-      auto attributeParts =
-          NFmiStringTools::Split<std::vector<std::string>>(attributeListPart, "=");
-      if (attributeParts.size() == 2)
-        options.cmdLineGlobalAttributes.insert(
-            std::make_pair(attributeParts[0], attributeParts[1]));
-      else
-        throw std::runtime_error(
-            "Option -a (global attributes) was ilformatted, give option in following format:\n-a "
-            "DX=1356.3;DY=1265.3");
-    }
-  }
+    parse_global_attributes(tmpCmdLineGlobalAttributesStr, options);
 
   return true;
 }

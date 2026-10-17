@@ -35,6 +35,7 @@
 #include <fstream>
 #include <gdal.h>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <numeric>
 #include <optional>
@@ -459,144 +460,89 @@ NFmiTimeDescriptor create_tdesc(const Fmi::HDF5::Hdf5File& file)
  */
 // ----------------------------------------------------------------------
 
+// RaVaKe probability parameters
+FmiParameterName opera_probability_to_newbase(const std::string& product,
+                                              const std::string& quantity,
+                                              const Fmi::HDF5::Hdf5File& file,
+                                              const std::string& prefix)
+{
+  static const FmiParameterName probabilities[] = {kFmiProbabilityOfPrec,
+                                                   kFmiProbabilityOfPrecLimit1,
+                                                   kFmiProbabilityOfPrecLimit2,
+                                                   kFmiProbabilityOfPrecLimit3,
+                                                   kFmiProbabilityOfPrecLimit4,
+                                                   kFmiProbabilityOfPrecLimit5,
+                                                   kFmiProbabilityOfPrecLimit6,
+                                                   kFmiProbabilityOfPrecLimit7,
+                                                   kFmiProbabilityOfPrecLimit8,
+                                                   kFmiProbabilityOfPrecLimit9,
+                                                   kFmiProbabilityOfPrecLimit10};
+
+  int limit = file.get_attribute<int>(prefix, "threshold_id"s);
+  if (limit < 0 || limit > 10)
+    throw std::runtime_error("Unable to handle parameters of type " + product + " with quantity " +
+                             quantity + " with threshold_id outside range 0-10");
+  return probabilities[limit];
+}
+
 FmiParameterName opera_name_to_newbase(const std::string& product,
                                        const std::string& quantity,
                                        const Fmi::HDF5::Hdf5File& file,
                                        const std::string& prefix)
 {
-  if (product == "PPI" || product == "CAPPI" || product == "PCAPPI")
-  {
-    if (quantity == "TH")
-      return kFmiReflectivity;
-    if (quantity == "DBZ")
-      return kFmiReflectivity;
-    if (quantity == "DBZH")
-      return kFmiCorrectedReflectivity;
-    if (quantity == "VRAD")
-      return kFmiRadialVelocity;
-    if (quantity == "WRAD" || quantity == "W")  // W is used by Latvians
-      return kFmiSpectralWidth;
-    if (quantity == "RATE")
-      return kFmiPrecipitationRate;
-  }
-  else if (product == "ETOP")
-  {
-    if (quantity == "HGHT")
-      return kFmiEchoTop;
-  }
-  else if (product == "MAX")
-  {
-    if (quantity == "TH")
-      return kFmiReflectivity;
-    if (quantity == "DBZH")
-      return kFmiCorrectedReflectivity;
-  }
-  else if (product == "RR")
-  {
-    if (quantity == "ACRR")
-      return kFmiPrecipitationAmount;
-    if (quantity == "RATE")
-      return kFmiPrecipitationRate;
-  }
-  else if (product == "VIL")
-  {
-    if (quantity == "ACRR")
-      return kFmiPrecipitationAmount;
-  }
-  else if (product == "SCAN")
-  {
-    if (quantity == "TH")
-      return kFmiReflectivity;
-    if (quantity == "DBZH")
-      return kFmiCorrectedReflectivity;
-    if (quantity == "VRAD")
-      return kFmiRadialVelocity;
-    if (quantity == "WRAD" || quantity == "W")  // W is used by Latvians
-      return kFmiSpectralWidth;
-    if (quantity == "ZDR")
-      return kFmiDifferentialReflectivity;
-    if (quantity == "KDP")
-      return kFmiSpecificDifferentialPhase;
-    if (quantity == "PHIDP")
-      return kFmiDifferentialPhase;
-    else if (quantity == "SQI")
-      return kFmiSignalQualityIndex;
-    else if (quantity == "RHOHV")
-      return kFmiReflectivityCorrelation;
-  }
-  else if (product == "COMP")
-  {
-    if (quantity == "RATE")
-      return kFmiPrecipitationRate;
-    if (quantity == "BRDR")
-      return kFmiRadarBorder;
-    if (quantity == "TH")
-      return kFmiReflectivity;
-    if (quantity == "DBZH")
-      return kFmiCorrectedReflectivity;
-    if (quantity == "ACRR")
-      return kFmiPrecipitationAmount;
-    if (quantity == "QIND")
-      return kFmiSignalQualityIndex;
-    if (quantity == "PROB")
-    {
-      // RaVaKe parameters
-      int limit = file.get_attribute<int>(prefix, "threshold_id"s);
-      switch (limit)
-      {
-        case 0:
-          return kFmiProbabilityOfPrec;
-        case 1:
-          return kFmiProbabilityOfPrecLimit1;
-        case 2:
-          return kFmiProbabilityOfPrecLimit2;
-        case 3:
-          return kFmiProbabilityOfPrecLimit3;
-        case 4:
-          return kFmiProbabilityOfPrecLimit4;
-        case 5:
-          return kFmiProbabilityOfPrecLimit5;
-        case 6:
-          return kFmiProbabilityOfPrecLimit6;
-        case 7:
-          return kFmiProbabilityOfPrecLimit7;
-        case 8:
-          return kFmiProbabilityOfPrecLimit8;
-        case 9:
-          return kFmiProbabilityOfPrecLimit9;
-        case 10:
-          return kFmiProbabilityOfPrecLimit10;
-        default:
-          throw std::runtime_error("Unable to handle parameters of type " + product +
-                                   " with quantity " + quantity +
-                                   " with threshold_id outside range 0-10");
-      }
-    }
-  }
-  else if (product == "VP")
-  {
-  }
-  else if (product == "RHI")
-  {
-  }
-  else if (product == "XSEC")
-  {
-  }
-  else if (product == "VSP")
-  {
-  }
-  else if (product == "HSP")
-  {
-  }
-  else if (product == "RAY")
-  {
-  }
-  else if (product == "AZIM")
-  {
-  }
-  else if (product == "QUAL")
-  {
-  }
+  // Known product and quantity combinations. The products VP, RHI, XSEC, VSP, HSP, RAY, AZIM
+  // and QUAL have no supported quantities.
+  static const std::map<std::pair<std::string, std::string>, FmiParameterName> conversions = {
+      {{"PPI", "TH"}, kFmiReflectivity},
+      {{"PPI", "DBZ"}, kFmiReflectivity},
+      {{"PPI", "DBZH"}, kFmiCorrectedReflectivity},
+      {{"PPI", "VRAD"}, kFmiRadialVelocity},
+      {{"PPI", "WRAD"}, kFmiSpectralWidth},
+      {{"PPI", "W"}, kFmiSpectralWidth},  // W is used by Latvians
+      {{"PPI", "RATE"}, kFmiPrecipitationRate},
+      {{"CAPPI", "TH"}, kFmiReflectivity},
+      {{"CAPPI", "DBZ"}, kFmiReflectivity},
+      {{"CAPPI", "DBZH"}, kFmiCorrectedReflectivity},
+      {{"CAPPI", "VRAD"}, kFmiRadialVelocity},
+      {{"CAPPI", "WRAD"}, kFmiSpectralWidth},
+      {{"CAPPI", "W"}, kFmiSpectralWidth},
+      {{"CAPPI", "RATE"}, kFmiPrecipitationRate},
+      {{"PCAPPI", "TH"}, kFmiReflectivity},
+      {{"PCAPPI", "DBZ"}, kFmiReflectivity},
+      {{"PCAPPI", "DBZH"}, kFmiCorrectedReflectivity},
+      {{"PCAPPI", "VRAD"}, kFmiRadialVelocity},
+      {{"PCAPPI", "WRAD"}, kFmiSpectralWidth},
+      {{"PCAPPI", "W"}, kFmiSpectralWidth},
+      {{"PCAPPI", "RATE"}, kFmiPrecipitationRate},
+      {{"ETOP", "HGHT"}, kFmiEchoTop},
+      {{"MAX", "TH"}, kFmiReflectivity},
+      {{"MAX", "DBZH"}, kFmiCorrectedReflectivity},
+      {{"RR", "ACRR"}, kFmiPrecipitationAmount},
+      {{"RR", "RATE"}, kFmiPrecipitationRate},
+      {{"VIL", "ACRR"}, kFmiPrecipitationAmount},
+      {{"SCAN", "TH"}, kFmiReflectivity},
+      {{"SCAN", "DBZH"}, kFmiCorrectedReflectivity},
+      {{"SCAN", "VRAD"}, kFmiRadialVelocity},
+      {{"SCAN", "WRAD"}, kFmiSpectralWidth},
+      {{"SCAN", "W"}, kFmiSpectralWidth},  // W is used by Latvians
+      {{"SCAN", "ZDR"}, kFmiDifferentialReflectivity},
+      {{"SCAN", "KDP"}, kFmiSpecificDifferentialPhase},
+      {{"SCAN", "PHIDP"}, kFmiDifferentialPhase},
+      {{"SCAN", "SQI"}, kFmiSignalQualityIndex},
+      {{"SCAN", "RHOHV"}, kFmiReflectivityCorrelation},
+      {{"COMP", "RATE"}, kFmiPrecipitationRate},
+      {{"COMP", "BRDR"}, kFmiRadarBorder},
+      {{"COMP", "TH"}, kFmiReflectivity},
+      {{"COMP", "DBZH"}, kFmiCorrectedReflectivity},
+      {{"COMP", "ACRR"}, kFmiPrecipitationAmount},
+      {{"COMP", "QIND"}, kFmiSignalQualityIndex}};
+
+  const auto it = conversions.find(std::make_pair(product, quantity));
+  if (it != conversions.end())
+    return it->second;
+
+  if (product == "COMP" && quantity == "PROB")
+    return opera_probability_to_newbase(product, quantity, file, prefix);
 
   throw std::runtime_error("Unable to handle parameters of type " + product + " with quantity " +
                            quantity);

@@ -520,6 +520,65 @@ int add_to_pbag(const nctools::NcFileExtended& ncfile,
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Check the axes of the file
+ */
+// ----------------------------------------------------------------------
+
+void check_axes(const nctools::NcFileExtended& ncfile)
+{
+  if (!ncfile.has_x_axis())
+    throw Exception(BCP, "X-axis has no values");
+  if (!ncfile.has_y_axis())
+    throw Exception(BCP, "Y-axis has no values");
+
+  check_xaxis_units(ncfile.x_units());
+  check_yaxis_units(ncfile.y_units());
+
+  if (ncfile.xsize() == 0)
+    throw Exception(BCP, "X-dimension is of size zero");
+  if (ncfile.ysize() == 0)
+    throw Exception(BCP, "Y-dimension is of size zero");
+  if (ncfile.zsize() == 0)
+    throw Exception(BCP, "Z-dimension is of size zero");
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Merge the descriptors of a subsequent file into the descriptors of the first file
+ */
+// ----------------------------------------------------------------------
+
+void merge_descriptors(nctools::NcFileExtended& ncfile,
+                       nctools::NcFileExtended& first_ncfile,
+                       const NFmiHPlaceDescriptor& hdesc,
+                       const NFmiVPlaceDescriptor& vdesc,
+                       NFmiTimeDescriptor& tdesc)
+{
+  std::vector<std::string> failreasons;
+  if (!ncfile.joinable(first_ncfile, &failreasons))
+  {
+    std::cerr << "Unable to combine " << first_ncfile.path << " and " << ncfile.path << ":"
+              << std::endl;
+    for (const auto& error : failreasons)
+      std::cerr << "  " << error << std::endl;
+
+    throw Exception(BCP, "Files not joinable", nullptr);
+  }
+
+  auto new_hdesc = create_hdesc(ncfile);
+  auto new_vdesc = create_vdesc(ncfile);
+  auto new_tdesc = create_tdesc(ncfile);
+
+  if (!(new_hdesc == hdesc))
+    throw Exception(BCP, "Hdesc differs from " + first_ncfile.path);
+  if (!(new_vdesc == vdesc))
+    throw Exception(BCP, "Vdesc differs from " + first_ncfile.path);
+
+  tdesc = tdesc.Combine(new_tdesc);
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Main program without exception handling
  */
 // ----------------------------------------------------------------------
@@ -590,20 +649,7 @@ int run(int argc, char* argv[])
         // Save initialized state for further processing
         ncfilelist.push_back(ncfile);
 
-        if (!ncfile->has_x_axis())
-          throw Exception(BCP, "X-axis has no values");
-        if (!ncfile->has_y_axis())
-          throw Exception(BCP, "Y-axis has no values");
-
-        check_xaxis_units(ncfile->x_units());
-        check_yaxis_units(ncfile->y_units());
-
-        if (ncfile->xsize() == 0)
-          throw Exception(BCP, "X-dimension is of size zero");
-        if (ncfile->ysize() == 0)
-          throw Exception(BCP, "Y-dimension is of size zero");
-        if (ncfile->zsize() == 0)
-          throw Exception(BCP, "Z-dimension is of size zero");
+        check_axes(*ncfile);
 
         // Crate initial descriptors based on the first NetCDF file
         if (file_counter == 1)
@@ -617,27 +663,7 @@ int run(int argc, char* argv[])
         else
         {
           // Try to merge times and parameters from other files with the same grid and levels
-          std::vector<std::string> failreasons;
-          if (!ncfile->joinable(*first_ncfile, &failreasons))
-          {
-            std::cerr << "Unable to combine " << first_ncfile->path << " and " << infile << ":"
-                      << std::endl;
-            for (const auto& error : failreasons)
-              std::cerr << "  " << error << std::endl;
-
-            throw Exception(BCP, "Files not joinable", nullptr);
-          }
-
-          auto new_hdesc = create_hdesc(*ncfile);
-          auto new_vdesc = create_vdesc(*ncfile);
-          auto new_tdesc = create_tdesc(*ncfile);
-
-          if (!(new_hdesc == hdesc))
-            throw Exception(BCP, "Hdesc differs from " + first_ncfile->path);
-          if (!(new_vdesc == vdesc))
-            throw Exception(BCP, "Vdesc differs from " + first_ncfile->path);
-
-          tdesc = tdesc.Combine(new_tdesc);
+          merge_descriptors(*ncfile, *first_ncfile, hdesc, vdesc, tdesc);
         }
         known_variables += add_to_pbag(*ncfile, paramconvs, pbag);
       }

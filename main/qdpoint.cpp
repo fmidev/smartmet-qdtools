@@ -879,6 +879,58 @@ long ParamLevel(const string& theParam)
 }
 
 // ----------------------------------------------------------------------
+// Asettaa halutun levelin, tai ensimmäisen levelin jos leveliä ei ole annettu
+// ----------------------------------------------------------------------
+
+void SelectLevel(NFmiFastQueryInfo& qd, long level)
+{
+  if (level < 0)
+    qd.FirstLevel();
+  else
+  {
+    for (qd.ResetLevel(); qd.NextLevel();)
+      if (qd.Level()->LevelValue() == static_cast<unsigned int>(level))
+        break;
+  }
+}
+
+// ----------------------------------------------------------------------
+// Palauttaa asetetun parametrin arvon (interpoloituna jos data on gridiä)
+// ----------------------------------------------------------------------
+
+float CurrentValue(NFmiFastQueryInfo& qd, const NFmiPoint& lonlat)
+{
+  if (qd.IsGrid())
+    return qd.InterpolatedValue(lonlat);
+  return qd.FloatValue();
+}
+
+// ----------------------------------------------------------------------
+// Palauttaa annetun parametrin (nimi[:level]) arvon
+// ----------------------------------------------------------------------
+
+float ParamSpecValue(NFmiFastQueryInfo& qd, const string& theParam, const NFmiPoint& lonlat)
+{
+  string name = ParamName(theParam);
+  long level = ParamLevel(theParam);
+
+  SelectLevel(qd, level);
+
+  if (!qd.IsLevel())
+    return kFloatMissing;
+
+  if (name.substr(0, 4) == "Meta")
+    return MetaFunction(qd, name, lonlat);
+
+  if (!qd.Param(ParamEnum(name)))
+  {
+    // throw runtime_error("Unknown parameter: "+name);
+  }
+
+  return CurrentValue(qd, lonlat);
+}
+
+// ----------------------------------------------------------------------
 // Testaa ovatko asetetun sijainnin ja ajan halutut parametrit valideja.
 // Yksi ainoa validi arvo riittää.
 // ----------------------------------------------------------------------
@@ -901,50 +953,15 @@ bool ValidRow(NFmiFastQueryInfo& qd,
     {
       if (!qd.NextParam(ignoresubs))
         break;
-      if (qd.IsGrid())
-        value = qd.InterpolatedValue(lonlat);
-      else
-        value = qd.FloatValue();
+      value = CurrentValue(qd, lonlat);
     }
     else
     {
       if (iter == options.params.end())
         break;
 
-      string name = ParamName(*iter);
-      long level = ParamLevel(*iter);
+      value = ParamSpecValue(qd, *iter, lonlat);
       ++iter;
-
-      if (level < 0)
-        qd.FirstLevel();
-      else
-      {
-        for (qd.ResetLevel(); qd.NextLevel();)
-          if (qd.Level()->LevelValue() == static_cast<unsigned int>(level))
-            break;
-      }
-
-      if (!qd.IsLevel())
-      {
-        value = kFloatMissing;
-      }
-      else
-      {
-        if (name.substr(0, 4) != "Meta")
-        {
-          if (!qd.Param(ParamEnum(name)))
-          {
-            // throw runtime_error("Unknown parameter: "+name);
-          }
-
-          if (qd.IsGrid())
-            value = qd.InterpolatedValue(lonlat);
-          else
-            value = qd.FloatValue();
-        }
-        else
-          value = MetaFunction(qd, name, lonlat);
-      }
     }
 
     valid = (value != kFloatMissing);
@@ -1142,33 +1159,14 @@ class LocalTimeZones
   bool itsLoadAll = false;
 };
 
-// ----------------------------------------------------------------------
-// Tulosta asetetun sijainnin ja ajan halutut parametrit. Annettu boolean
-// määrää, tulostetaanko wmo numero.
-// ----------------------------------------------------------------------
-
 namespace
 {
-void PrintRow(NFmiFastQueryInfo& qd,
-              bool ignoresubs,
-              LocalTimeZones& zones,
-              NFmiPoint lonlat = NFmiPoint(kFloatMissing, kFloatMissing))
+// ----------------------------------------------------------------------
+// Palauttaa rivin ajan halutussa aikavyöhykkeessä
+// ----------------------------------------------------------------------
+
+NFmiTime RowTime(const NFmiMetTime& utctime, LocalTimeZones& zones, const NFmiPoint& lonlat)
 {
-  // Kello nyt UTC-ajassa minuutin tarkkuudella
-
-  NFmiMetTime now(1);
-
-  // Kellonaika
-
-  NFmiMetTime utctime = qd.ValidTime();
-
-  // Ei näytetä, jos käyttäjä ei halua menneisyyttä
-
-  if (options.future && utctime.IsLessThan(now))
-    return;
-
-  // Rivi näytetään
-
   NFmiTime t;
 
   if (options.timezone == "local")
@@ -1189,6 +1187,100 @@ void PrintRow(NFmiFastQueryInfo& qd,
   }
   else
     t = TimeTools::timezone_time(utctime, options.timezone);
+  return t;
+}
+
+// ----------------------------------------------------------------------
+// Palauttaa asetetun parametrin arvon puuttuvat arvot interpoloiden
+// ----------------------------------------------------------------------
+
+float CurrentInterpolatedValue(NFmiFastQueryInfo& qd, const NFmiPoint& lonlat)
+{
+  if (qd.IsGrid())
+    return InterpolatedValue(qd, options.max_missing_gap, lonlat);
+  return InterpolatedValue(qd, options.max_missing_gap);
+}
+
+// ----------------------------------------------------------------------
+// Palauttaa annetun parametrin (nimi[:level]) arvon ja tulostustarkkuuden
+// ----------------------------------------------------------------------
+
+float PrintParamSpecValue(NFmiFastQueryInfo& qd,
+                          const string& theParam,
+                          const NFmiPoint& lonlat,
+                          NFmiString& precision)
+{
+  string name = ParamName(theParam);
+  long level = ParamLevel(theParam);
+
+  SelectLevel(qd, level);
+
+  if (!qd.IsLevel())
+    return kFloatMissing;
+
+  if (name.substr(0, 4) == "Meta")
+  {
+    float value = MetaFunction(qd, name, lonlat);
+    precision = MetaPrecision(name);
+    return value;
+  }
+
+  FmiParameterName p = ParamEnum(name);
+  if (!qd.Param(p))
+  {
+    // throw runtime_error("Unknown parameter: "+name);
+  }
+
+  precision = qd.Param().GetParam()->Precision();
+  return CurrentInterpolatedValue(qd, lonlat);
+}
+
+// ----------------------------------------------------------------------
+// Tulostaa arvon
+// ----------------------------------------------------------------------
+
+void PrintValue(float value, const NFmiString& precision)
+{
+  // Pyöristetään negatiivinen nolla nollaksi
+  if (value == -0)
+    value = 0;
+
+  NFmiString tmp;
+  if (value == kFloatMissing)
+    tmp = options.missingvalue;
+  else
+    // NOLINTNEXTLINE(cppcoreguidelines-slicing): only the formatted text is wanted
+    tmp = NFmiValueString(value, precision);
+
+  cout << " " << tmp.CharPtr();
+}
+
+// ----------------------------------------------------------------------
+// Tulosta asetetun sijainnin ja ajan halutut parametrit. Annettu boolean
+// määrää, tulostetaanko wmo numero.
+// ----------------------------------------------------------------------
+
+void PrintRow(NFmiFastQueryInfo& qd,
+              bool ignoresubs,
+              LocalTimeZones& zones,
+              NFmiPoint lonlat = NFmiPoint(kFloatMissing, kFloatMissing))
+{
+  // Kello nyt UTC-ajassa minuutin tarkkuudella
+
+  NFmiMetTime now(1);
+
+  // Kellonaika
+
+  NFmiMetTime utctime = qd.ValidTime();
+
+  // Ei näytetä, jos käyttäjä ei halua menneisyyttä
+
+  if (options.future && utctime.IsLessThan(now))
+    return;
+
+  // Rivi näytetään
+
+  NFmiTime t = RowTime(utctime, zones, lonlat);
 
   cout << t.ToStr(kYYYYMMDDHHMM).CharPtr();
 
@@ -1206,68 +1298,18 @@ void PrintRow(NFmiFastQueryInfo& qd,
       if (!qd.NextParam(ignoresubs))
         break;
       precision = qd.Param().GetParam()->Precision();
-
-      if (qd.IsGrid())
-        value = InterpolatedValue(qd, options.max_missing_gap, lonlat);
-      else
-        value = InterpolatedValue(qd, options.max_missing_gap);
+      value = CurrentInterpolatedValue(qd, lonlat);
     }
     else
     {
       if (iter == options.params.end())
         break;
 
-      string name = ParamName(*iter);
-      long level = ParamLevel(*iter);
-
-      if (level < 0)
-        qd.FirstLevel();
-      else
-      {
-        for (qd.ResetLevel(); qd.NextLevel();)
-          if (qd.Level()->LevelValue() == static_cast<unsigned int>(level))
-            break;
-      }
-
-      if (!qd.IsLevel())
-      {
-        value = kFloatMissing;
-      }
-      else if (name.substr(0, 4) != "Meta")
-      {
-        FmiParameterName p = ParamEnum(name);
-        if (!qd.Param(p))
-        {
-          // throw runtime_error("Unknown parameter: "+name);
-        }
-
-        precision = qd.Param().GetParam()->Precision();
-
-        if (qd.IsGrid())
-          value = InterpolatedValue(qd, options.max_missing_gap, lonlat);
-        else
-          value = InterpolatedValue(qd, options.max_missing_gap);
-      }
-      else
-      {
-        value = MetaFunction(qd, name, lonlat);
-        precision = MetaPrecision(name);
-      }
+      value = PrintParamSpecValue(qd, *iter, lonlat, precision);
       ++iter;
     }
 
-    // Pyöristetään negatiivinen nolla nollaksi
-    if (value == -0)
-      value = 0;
-
-    NFmiString tmp;
-    if (value == kFloatMissing)
-      tmp = options.missingvalue;
-    else
-      // NOLINTNEXTLINE(cppcoreguidelines-slicing): only the formatted text is wanted
-      tmp = NFmiValueString(value, precision);
-
-    cout << " " << tmp.CharPtr();
+    PrintValue(value, precision);
   }
   cout << endl;
 }

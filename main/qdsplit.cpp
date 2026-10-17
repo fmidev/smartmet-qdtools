@@ -255,6 +255,93 @@ pair<string, string> make_outnames(NFmiFastQueryInfo& info)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Copy the values for the selected times
+ */
+// ----------------------------------------------------------------------
+
+void copy_times(NFmiFastQueryInfo& theQ,
+                std::vector<NFmiFastQueryInfo*>& infos,
+                unsigned long index1,
+                unsigned long index2)
+{
+  for (theQ.ResetParam(); theQ.NextParam();)
+  {
+    for (auto& info : infos)
+      info->ParamIndex(theQ.ParamIndex());
+
+    for (theQ.ResetLocation(); theQ.NextLocation();)
+    {
+      for (auto& info : infos)
+        info->LocationIndex(theQ.LocationIndex());
+
+      for (theQ.ResetLevel(); theQ.NextLevel();)
+      {
+        for (auto& info : infos)
+          info->LevelIndex(theQ.LevelIndex());
+        {
+          for (unsigned long i = index1; i < index2; ++i)
+          {
+            theQ.TimeIndex(i);
+            float value = theQ.FloatValue();
+            infos[i - index1]->FloatValue(value);
+          }
+        }
+      }
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Write a single time step unless there is too much missing data
+ */
+// ----------------------------------------------------------------------
+
+void write_data(NFmiQueryData& data, NFmiFastQueryInfo& info)
+{
+  // Count the amount of missing values if needed
+
+  float misses = calc_missing(info);
+
+  info.FirstTime();
+  pair<string, string> names = make_outnames(info);
+  const string& outname = names.first;
+  const string& tmpname = names.second;
+
+  if (options.missinglimit < 100 && misses > options.missinglimit)
+  {
+    if (options.verbose)
+    {
+      cout << "Skipping " << outname << " since missing percentage is " << misses << endl;
+      if (options.memorymapping)
+        std::filesystem::remove(tmpname);
+    }
+  }
+  else
+  {
+    // write the data out
+
+    if (options.verbose)
+    {
+      if (misses >= 0)
+        cout << "Writing '" << outname << " (missing " << misses << "%)" << endl;
+      else
+        cout << "Writing '" << outname << endl;
+    }
+
+    // Use dotfile to prevent for example roadmodel crashes
+
+    if (!options.memorymapping)
+      data.Write(tmpname);
+
+    if (std::filesystem::exists(outname))
+      std::filesystem::remove(outname);
+    std::filesystem::rename(tmpname, outname);
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Extract the given time indices from the querydata
  */
 // ----------------------------------------------------------------------
@@ -295,75 +382,13 @@ void extract_times(NFmiFastQueryInfo& theQ, unsigned long index1, unsigned long 
 
   // copy the data for time selected times
 
-  for (theQ.ResetParam(); theQ.NextParam();)
-  {
-    for (auto& info : infos)
-      info->ParamIndex(theQ.ParamIndex());
-
-    for (theQ.ResetLocation(); theQ.NextLocation();)
-    {
-      for (auto& info : infos)
-        info->LocationIndex(theQ.LocationIndex());
-
-      for (theQ.ResetLevel(); theQ.NextLevel();)
-      {
-        for (auto& info : infos)
-          info->LevelIndex(theQ.LevelIndex());
-        {
-          for (unsigned long i = index1; i < index2; ++i)
-          {
-            theQ.TimeIndex(i);
-            float value = theQ.FloatValue();
-            infos[i - index1]->FloatValue(value);
-          }
-        }
-      }
-    }
-  }
+  copy_times(theQ, infos, index1, index2);
 
   // Write the datas
 
   for (std::size_t i = 0; i < datas.size(); i++)
   {
-    // Count the amount of missing values if needed
-
-    float misses = calc_missing(*infos[i]);
-
-    infos[i]->FirstTime();
-    pair<string, string> names = make_outnames(*infos[i]);
-    const string& outname = names.first;
-    const string& tmpname = names.second;
-
-    if (options.missinglimit < 100 && misses > options.missinglimit)
-    {
-      if (options.verbose)
-      {
-        cout << "Skipping " << outname << " since missing percentage is " << misses << endl;
-        if (options.memorymapping)
-          std::filesystem::remove(tmpname);
-      }
-    }
-    else
-    {
-      // write the data out
-
-      if (options.verbose)
-      {
-        if (misses >= 0)
-          cout << "Writing '" << outname << " (missing " << misses << "%)" << endl;
-        else
-          cout << "Writing '" << outname << endl;
-      }
-
-      // Use dotfile to prevent for example roadmodel crashes
-
-      if (!options.memorymapping)
-        datas[i]->Write(tmpname);
-
-      if (std::filesystem::exists(outname))
-        std::filesystem::remove(outname);
-      std::filesystem::rename(tmpname, outname);
-    }
+    write_data(*datas[i], *infos[i]);
 
     delete datas[i];
     delete infos[i];

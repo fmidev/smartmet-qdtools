@@ -78,6 +78,28 @@ struct PointerDestroyer
 
 namespace
 {
+// Copy the sounding values of the current time
+void CopySoundingTime(NFmiFastQueryInfo &sourceInfo, NFmiFastQueryInfo &theInfo)
+{
+  for (sourceInfo.ResetParam(); sourceInfo.NextParam();)
+  {
+    if (theInfo.Param(*(sourceInfo.Param().GetParam())))
+    {
+      for (sourceInfo.ResetLevel(), theInfo.ResetLevel();
+           sourceInfo.NextLevel() && theInfo.NextLevel();)
+      {
+        for (sourceInfo.ResetLocation(); sourceInfo.NextLocation();)
+        {
+          if (theInfo.Location(*sourceInfo.Location()))
+          {
+            theInfo.FloatValue(sourceInfo.FloatValue());
+          }
+        }
+      }
+    }
+  }
+}
+
 void FillCombinedSoundingData(const vector<NFmiQueryData*>& theDataList,
                                      NFmiFastQueryInfo &theInfo)
 {
@@ -87,25 +109,7 @@ void FillCombinedSoundingData(const vector<NFmiQueryData*>& theDataList,
     for (sourceInfo.ResetTime(); sourceInfo.NextTime();)
     {
       if (theInfo.Time(sourceInfo.Time()))
-      {
-        for (sourceInfo.ResetParam(); sourceInfo.NextParam();)
-        {
-          if (theInfo.Param(*(sourceInfo.Param().GetParam())))
-          {
-            for (sourceInfo.ResetLevel(), theInfo.ResetLevel();
-                 sourceInfo.NextLevel() && theInfo.NextLevel();)
-            {
-              for (sourceInfo.ResetLocation(); sourceInfo.NextLocation();)
-              {
-                if (theInfo.Location(*sourceInfo.Location()))
-                {
-                  theInfo.FloatValue(sourceInfo.FloatValue());
-                }
-              }
-            }
-          }
-        }
-      }
+        ::CopySoundingTime(sourceInfo, theInfo);
     }
   }
 }

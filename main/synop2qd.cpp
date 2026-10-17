@@ -1440,7 +1440,7 @@ void MakeSynopCodeDataFromSYNOPStr(const NFmiMetTime &referenceTime,
         ssin2 >> shipName2;
         string dateStr2;
         if (fDoBuoyMessages)
-          ssin >> dateStr2;  // YYMMJ  (YY päivä, MM on kuukausi ja J on vuosi (2007 = 7))
+          ssin2 >> dateStr2;  // YYMMJ  (YY päivä, MM on kuukausi ja J on vuosi (2007 = 7))
         string timeStr2;
         ssin2 >> timeStr2;  // DDHHiw   (iw on tuulen nopeus indikaattori 0,1 = m/s 3,4= knots)
         NFmiMetTime aTime2;

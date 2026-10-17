@@ -174,6 +174,86 @@ bool parse_command_line(int argc, const char* argv[])
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Test whether the values at the current param, level and time differ
+ */
+// ----------------------------------------------------------------------
+
+bool locations_differ(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
+{
+  for (theQ2.ResetLocation(), theQ1.ResetLocation(); theQ2.NextLocation() && theQ1.NextLocation();)
+    if (theQ1.FloatValue() != theQ2.FloatValue())
+      return true;
+  return false;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Analyze parameter changes at the current level and time
+ *
+ * \return True if some parameter was missing or changed
+ */
+// ----------------------------------------------------------------------
+
+bool analyze_param_changes(NFmiFastQueryInfo& theQ1,
+                           NFmiFastQueryInfo& theQ2,
+                           map<FmiParameterName, bool>& param_checked,
+                           map<FmiParameterName, int>& param_status,
+                           int& missing_params)
+{
+  bool different = false;
+  for (theQ2.ResetParam(); theQ2.NextParam(false);)
+  {
+    // The output data may contain the same parameter as a standalone
+    // parameter and as a subparameter. We ignore the second test,
+    // it is the first parameter only that matters
+    auto p = FmiParameterName(theQ2.Param().GetParam()->GetIdent());
+    if (param_checked[p])
+      continue;
+
+    param_checked[p] = true;
+
+    // Do not compare producers, only parameter numbers
+    auto param = FmiParameterName(theQ2.Param().GetParamIdent());
+
+    if (!theQ1.Param(param))
+    {
+      different = true;
+      missing_params++;
+    }
+    else if (locations_differ(theQ1, theQ2))
+    {
+      ++param_status[p];
+      different = true;
+    }
+  }
+  return different;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Test whether some parameter differs at the current level and time
+ */
+// ----------------------------------------------------------------------
+
+bool params_differ(NFmiFastQueryInfo& theQ1,
+                   NFmiFastQueryInfo& theQ2,
+                   map<FmiParameterName, bool>& param_checked)
+{
+  for (theQ2.ResetParam(); theQ2.NextParam();)
+  {
+    auto p = FmiParameterName(theQ2.Param().GetParam()->GetIdent());
+    if (param_checked[p])
+      continue;
+    param_checked[p] = true;
+
+    if (!theQ1.Param(theQ2.Param()) || locations_differ(theQ1, theQ2))
+      return true;
+  }
+  return false;
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Print an analysis of data changes
  */
 // ----------------------------------------------------------------------
@@ -219,43 +299,8 @@ void print_change_analysis(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
           missing_levels++;
         }
         else
-        {
-          for (theQ2.ResetParam(); theQ2.NextParam(false);)
-          {
-            bool paramdifferent = false;
-
-            // The output data may contain the same parameter as a standalone
-            // parameter and as a subparameter. We ignore the second test,
-            // it is the first parameter only that matters
-            auto p = FmiParameterName(theQ2.Param().GetParam()->GetIdent());
-            if (param_checked[p])
-              continue;
-
-            param_checked[p] = true;
-
-            // Do not compare producers, only parameter numbers
-            auto param = FmiParameterName(theQ2.Param().GetParamIdent());
-
-            if (!theQ1.Param(param))
-            {
-              different = true;
-              missing_params++;
-            }
-            else
-            {
-              for (theQ2.ResetLocation(), theQ1.ResetLocation();
-                   !paramdifferent && theQ2.NextLocation() && theQ1.NextLocation();)
-              {
-                paramdifferent = (theQ1.FloatValue() != theQ2.FloatValue());
-              }
-              if (paramdifferent)
-              {
-                ++param_status[p];
-                different = true;
-              }
-            }
-          }
-        }
+          different =
+              analyze_param_changes(theQ1, theQ2, param_checked, param_status, missing_params);
       }
     }
     if (different)
@@ -306,29 +351,7 @@ NFmiTimeList extract_all(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
     else
     {
       for (theQ2.ResetLevel(); !different && theQ2.NextLevel();)
-      {
-        if (!theQ1.Level(*theQ2.Level()))
-          different = true;
-        else
-        {
-          for (theQ2.ResetParam(); !different && theQ2.NextParam();)
-          {
-            auto p = FmiParameterName(theQ2.Param().GetParam()->GetIdent());
-            if (param_checked[p])
-              continue;
-            param_checked[p] = true;
-
-            if (!theQ1.Param(theQ2.Param()))
-              different = true;
-            else
-            {
-              for (theQ2.ResetLocation(), theQ1.ResetLocation();
-                   !different && theQ2.NextLocation() && theQ1.NextLocation();)
-                different = (theQ1.FloatValue() != theQ2.FloatValue());
-            }
-          }
-        }
-      }
+        different = (!theQ1.Level(*theQ2.Level()) || params_differ(theQ1, theQ2, param_checked));
     }
     if (different)
     {
@@ -383,27 +406,8 @@ NFmiTimeList extract_params(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
     if (theQ1.Time(theQ2.ValidTime()))
     {
       for (theQ2.ResetLevel(); !different && theQ2.NextLevel();)
-      {
         if (theQ1.Level(*theQ2.Level()))
-        {
-          for (theQ2.ResetParam(); !different && theQ2.NextParam();)
-          {
-            auto p = FmiParameterName(theQ2.Param().GetParam()->GetIdent());
-            if (param_checked[p])
-              continue;
-            param_checked[p] = true;
-
-            if (!theQ1.Param(theQ2.Param()))
-              different = true;
-            else
-            {
-              for (theQ2.ResetLocation(), theQ1.ResetLocation();
-                   !different && theQ2.NextLocation() && theQ1.NextLocation();)
-                different = (theQ1.FloatValue() != theQ2.FloatValue());
-            }
-          }
-        }
-      }
+          different = params_differ(theQ1, theQ2, param_checked);
     }
     if (different)
     {
@@ -414,6 +418,45 @@ NFmiTimeList extract_params(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
   }
 
   return times;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Copy the values for the selected times
+ */
+// ----------------------------------------------------------------------
+
+void copy_values(NFmiFastQueryInfo& q, NFmiFastQueryInfo& q2)
+{
+  for (q.ResetLevel(), q2.ResetLevel(); q.NextLevel() && q2.NextLevel();)
+    for (q.ResetParam(), q2.ResetParam(); q.NextParam() && q2.NextParam();)
+      for (q.ResetTime(); q.NextTime();)
+      {
+        if (!q2.Time(q.ValidTime()))
+          throw runtime_error("Failed to copy a required time");
+        for (q.ResetLocation(), q2.ResetLocation(); q.NextLocation() && q2.NextLocation();)
+          q.FloatValue(q2.FloatValue());
+      }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Write the output data
+ */
+// ----------------------------------------------------------------------
+
+void write_data(const NFmiQueryData& data)
+{
+  if (options.outputfile == "-")
+    cout << data;
+  else
+  {
+    ofstream out(options.outputfile.c_str(), ios::binary | ios::out);
+    if (!out)
+      throw runtime_error("Failed to open '" + options.outputfile + "' for writing");
+    out << data;
+    out.close();
+  }
 }
 
 // ----------------------------------------------------------------------
@@ -489,31 +532,14 @@ void process_difference()
 
   // Copy the values
 
-  for (q.ResetLevel(), q2.ResetLevel(); q.NextLevel() && q2.NextLevel();)
-    for (q.ResetParam(), q2.ResetParam(); q.NextParam() && q2.NextParam();)
-      for (q.ResetTime(); q.NextTime();)
-      {
-        if (!q2.Time(q.ValidTime()))
-          throw runtime_error("Failed to copy a required time");
-        for (q.ResetLocation(), q2.ResetLocation(); q.NextLocation() && q2.NextLocation();)
-          q.FloatValue(q2.FloatValue());
-      }
+  copy_values(q, q2);
 
   // And write the data
 
   if (options.verbose)
     cout << "Writing " << options.outputfile << endl;
 
-  if (options.outputfile == "-")
-    cout << *data;
-  else
-  {
-    ofstream out(options.outputfile.c_str(), ios::binary | ios::out);
-    if (!out)
-      throw runtime_error("Failed to open '" + options.outputfile + "' for writing");
-    out << *data;
-    out.close();
-  }
+  write_data(*data);
 }
 
 // ----------------------------------------------------------------------

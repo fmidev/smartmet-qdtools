@@ -231,11 +231,9 @@ struct LevelLessThan
 {
   bool operator()(const NFmiLevel &l1, const NFmiLevel &l2) const
   {
-    if (l1.LevelType() < l2.LevelType())
-      return true;
-    if (l1.LevelValue() < l2.LevelValue())
-      return true;
-    return false;
+    if (l1.LevelType() != l2.LevelType())
+      return l1.LevelType() < l2.LevelType();
+    return l1.LevelValue() < l2.LevelValue();
   }
 };
 

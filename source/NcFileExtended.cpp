@@ -2031,14 +2031,96 @@ void nctools::NcFileExtended::copy_values_var(const Options& opts,
 // copy_values_wind (U/V or speed/direction components)
 // ======================================================================
 
+namespace
+{
+// Read a float valued metadata item of the variable, NaN if not available
+float get_float_meta(GDALDatasetH ds, const std::string& varname, const std::string& attr)
+{
+  const std::string key = varname + "#" + attr;
+  const char* v = GDALGetMetadataItem(ds, key.c_str(), nullptr);
+  if (!v)
+    return std::numeric_limits<float>::quiet_NaN();
+  try
+  {
+    return std::stof(v);
+  }
+  catch (...)
+  {
+    return std::numeric_limits<float>::quiet_NaN();
+  }
+}
+
+// Values and value transformation of a wind component
+struct WindComponent
+{
+  std::vector<float> vals;
+  float missingvalue = 0;
+  float scale = 1.0F;
+  float offset = 0.0F;
+};
+
+// Read a wind component (closes the dataset on failure)
+WindComponent read_wind_component(GDALDatasetH ds, const std::string& varname)
+{
+  WindComponent comp;
+  comp.missingvalue = get_float_meta(ds, varname, "_FillValue");
+  comp.scale = get_float_meta(ds, varname, "scale_factor");
+  if (std::isnan(comp.scale))
+    comp.scale = 1.0F;
+  comp.offset = get_float_meta(ds, varname, "add_offset");
+  if (std::isnan(comp.offset))
+    comp.offset = 0.0F;
+
+  const int nx = GDALGetRasterXSize(ds);
+  const int ny = GDALGetRasterYSize(ds);
+  const int nb = GDALGetRasterCount(ds);
+  comp.vals = read_all_bands(ds, nx, ny, nb);
+  return comp;
+}
+
+// Copy the wind speed or direction values of a single level
+void copy_wind_level(NFmiFastQueryInfo& info,
+                     const WindComponent& xc,
+                     const WindComponent& yc,
+                     std::size_t ystart,
+                     std::size_t nx,
+                     bool isspeed)
+{
+  const float pi = 3.14159265358979326F;
+  std::size_t xcounter = 0;
+  for (info.ResetLocation(); info.NextLocation();)
+  {
+    const std::size_t idx = ystart + xcounter;
+    const float xv = xc.vals.at(idx);
+    const float yv = yc.vals.at(idx);
+    if (xv != xc.missingvalue && yv != yc.missingvalue)
+    {
+      const float x = xc.scale * xv + xc.offset;
+      const float y = yc.scale * yv + yc.offset;
+      if (isspeed)
+        info.FloatValue(std::sqrt(x * x + y * y));
+      else
+        info.FloatValue(180.0F * std::atan2(x, y) / pi);
+    }
+    if (xcounter == nx - 1)
+    {
+      ystart -= nx;
+      xcounter = 0;
+    }
+    else
+    {
+      xcounter++;
+    }
+  }
+}
+}  // namespace
+
 void nctools::NcFileExtended::copy_values_wind(NFmiFastQueryInfo& info,
                                                 const ParamInfo& pinfo,
                                                 const Options* opts)
 {
   try
   {
-    const float pi = 3.14159265358979326F;
-
     // Read X component
     GDALDatasetH xds = open_var_dataset(pinfo.x_component);
     if (!xds)
@@ -2050,91 +2132,22 @@ void nctools::NcFileExtended::copy_values_wind(NFmiFastQueryInfo& info,
       return;
     }
 
-    auto get_float_meta = [](GDALDatasetH ds, const std::string& varname,
-                              const std::string& attr) -> float
+    WindComponent xc;
+    try
     {
-      const std::string key = varname + "#" + attr;
-      const char* v = GDALGetMetadataItem(ds, key.c_str(), nullptr);
-      if (!v)
-        return std::numeric_limits<float>::quiet_NaN();
-      try
-      {
-        return std::stof(v);
-      }
-      catch (...)
-      {
-        return std::numeric_limits<float>::quiet_NaN();
-      }
-    };
-
-    const float xmissingvalue = get_float_meta(xds, pinfo.x_component, "_FillValue");
-    float xscale = get_float_meta(xds, pinfo.x_component, "scale_factor");
-    if (std::isnan(xscale))
-      xscale = 1.0F;
-    float xoffset = get_float_meta(xds, pinfo.x_component, "add_offset");
-    if (std::isnan(xoffset))
-      xoffset = 0.0F;
-
-    const float ymissingvalue = get_float_meta(yds, pinfo.y_component, "_FillValue");
-    float yscale = get_float_meta(yds, pinfo.y_component, "scale_factor");
-    if (std::isnan(yscale))
-      yscale = 1.0F;
-    float yoffset = get_float_meta(yds, pinfo.y_component, "add_offset");
-    if (std::isnan(yoffset))
-      yoffset = 0.0F;
-
-    const int xnx = GDALGetRasterXSize(xds);
-    const int xny = GDALGetRasterYSize(xds);
-    const int xnb = GDALGetRasterCount(xds);
-    std::vector<float> xvals(static_cast<std::size_t>(xnx) * xny * xnb);
-    for (int b = 1; b <= xnb; b++)
+      xc = read_wind_component(xds, pinfo.x_component);
+    }
+    catch (...)
     {
-      GDALRasterBandH band = GDALGetRasterBand(xds, b);
-      if (GDALRasterIO(band,
-                       GF_Read,
-                       0,
-                       0,
-                       xnx,
-                       xny,
-                       xvals.data() + static_cast<std::size_t>(b - 1) * xnx * xny,
-                       xnx,
-                       xny,
-                       GDT_Float32,
-                       0,
-                       0) != CE_None)
-      {
-        GDALClose(xds);
-        GDALClose(yds);
-        throw Fmi::Exception(BCP, "Failed to read raster data");
-      }
+      GDALClose(yds);
+      throw;
     }
     GDALClose(xds);
 
-    const int ynx = GDALGetRasterXSize(yds);
-    const int yny = GDALGetRasterYSize(yds);
-    const int ynb = GDALGetRasterCount(yds);
-    std::vector<float> yvals(static_cast<std::size_t>(ynx) * yny * ynb);
-    for (int b = 1; b <= ynb; b++)
-    {
-      GDALRasterBandH band = GDALGetRasterBand(yds, b);
-      if (GDALRasterIO(band,
-                       GF_Read,
-                       0,
-                       0,
-                       ynx,
-                       yny,
-                       yvals.data() + static_cast<std::size_t>(b - 1) * ynx * yny,
-                       ynx,
-                       yny,
-                       GDT_Float32,
-                       0,
-                       0) != CE_None)
-      {
-        GDALClose(yds);
-        throw Fmi::Exception(BCP, "Failed to read raster data");
-      }
-    }
+    const WindComponent yc = read_wind_component(yds, pinfo.y_component);
     GDALClose(yds);
+
+    const std::vector<float>& xvals = xc.vals;
 
     const auto src_tlist = timeList();
     const auto nsrctimes = static_cast<std::size_t>(src_tlist.NumberOfItems());
@@ -2172,31 +2185,7 @@ void nctools::NcFileExtended::copy_values_wind(NFmiFastQueryInfo& info,
         for (info.ResetLevel(); info.NextLevel();)
         {
           std::size_t ystart = t_offset + zstart + (ny - 1) * nx;
-          std::size_t xcounter = 0;
-          for (info.ResetLocation(); info.NextLocation();)
-          {
-            const std::size_t idx = ystart + xcounter;
-            const float xv = xvals.at(idx);
-            const float yv = yvals.at(idx);
-            if (xv != xmissingvalue && yv != ymissingvalue)
-            {
-              const float x = xscale * xv + xoffset;
-              const float y = yscale * yv + yoffset;
-              if (pinfo.isspeed)
-                info.FloatValue(std::sqrt(x * x + y * y));
-              else
-                info.FloatValue(180.0F * std::atan2(x, y) / pi);
-            }
-            if (xcounter == nx - 1)
-            {
-              ystart -= nx;
-              xcounter = 0;
-            }
-            else
-            {
-              xcounter++;
-            }
-          }
+          copy_wind_level(info, xc, yc, ystart, nx, pinfo.isspeed);
           zstart += nx * ny;
         }
         sourcetimeindex++;

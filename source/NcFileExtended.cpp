@@ -397,6 +397,41 @@ GDALDatasetH nctools::NcFileExtended::open_var_dataset(const std::string& varnam
   return GDALOpenEx(ds_name.c_str(), GDAL_OF_RASTER | GDAL_OF_READONLY, nullptr, open_options, nullptr);
 }
 
+namespace
+{
+// Determine the variable name from metadata keys (e.g. "cnc_PM10#units" → "cnc_PM10")
+std::string guess_variable_name(CSLConstList meta)
+{
+  for (int i = 0; meta[i]; i++)
+  {
+    const std::string item(meta[i]);
+    const auto hash = item.find('#');
+    if (hash == std::string::npos)
+      continue;
+    const std::string cname = item.substr(0, hash);
+    // Skip NC_GLOBAL, NETCDF_DIM_, and coordinate variable names
+    if (cname.substr(0, 9) == "NC_GLOBAL" || cname.substr(0, 11) == "NETCDF_DIM_")
+      continue;
+    // The first non-coordinate, non-global key is likely the data variable
+    return cname;
+  }
+  return {};
+}
+
+// Copy the key=value metadata items into the map
+void add_metadata(std::map<std::string, std::string>& target, CSLConstList meta)
+{
+  for (int i = 0; meta && meta[i]; i++)
+  {
+    const std::string item(meta[i]);
+    const auto eq = item.find('=');
+    if (eq == std::string::npos)
+      continue;
+    target[item.substr(0, eq)] = item.substr(eq + 1);
+  }
+}
+}  // namespace
+
 void nctools::NcFileExtended::load_first_var_meta() const
 {
   if (!first_var_name_.empty())
@@ -412,30 +447,9 @@ void nctools::NcFileExtended::load_first_var_meta() const
     if (!meta)
       return;
     // Determine variable name from metadata keys (e.g. "cnc_PM10#units" → "cnc_PM10")
-    std::string vname;
-    for (int i = 0; meta[i]; i++)
-    {
-      const std::string item(meta[i]);
-      const auto hash = item.find('#');
-      if (hash == std::string::npos)
-        continue;
-      const std::string cname = item.substr(0, hash);
-      // Skip NC_GLOBAL, NETCDF_DIM_, and coordinate variable names
-      if (cname.substr(0, 9) == "NC_GLOBAL" || cname.substr(0, 11) == "NETCDF_DIM_")
-        continue;
-      // The first non-coordinate, non-global key is likely the data variable
-      vname = cname;
-      break;
-    }
+    std::string vname = guess_variable_name(meta);
     first_var_name_ = vname.empty() ? "unknown" : vname;
-    for (int i = 0; meta[i]; i++)
-    {
-      const std::string item(meta[i]);
-      const auto eq = item.find('=');
-      if (eq == std::string::npos)
-        continue;
-      first_var_meta_[item.substr(0, eq)] = item.substr(eq + 1);
-    }
+    add_metadata(first_var_meta_, meta);
     _xsize = static_cast<unsigned long>(GDALGetRasterXSize(gdal_dataset));
     _ysize = static_cast<unsigned long>(GDALGetRasterYSize(gdal_dataset));
     return;
@@ -446,14 +460,7 @@ void nctools::NcFileExtended::load_first_var_meta() const
   {
     first_var_name_ = vname;
     CSLConstList meta = GDALGetMetadata(ds, nullptr);
-    for (int i = 0; meta && meta[i]; i++)
-    {
-      const std::string item(meta[i]);
-      const auto eq = item.find('=');
-      if (eq == std::string::npos)
-        continue;
-      first_var_meta_[item.substr(0, eq)] = item.substr(eq + 1);
-    }
+    add_metadata(first_var_meta_, meta);
     _xsize = static_cast<unsigned long>(GDALGetRasterXSize(ds));
     _ysize = static_cast<unsigned long>(GDALGetRasterYSize(ds));
     GDALClose(ds);

@@ -513,6 +513,332 @@ bool parse_options(int argc, char *argv[], Options &options)
  */
 // ----------------------------------------------------------------------
 
+int bufr_callback(varfl val, int ind);
+
+namespace
+{
+int bufr_in_seq = 0;   /* flag to indicate sequences */
+int bufr_first_in_seq; /* flag to indicate first element in sequence */
+
+// Store the station and time descriptors, returns false for other descriptors
+bool store_station_and_time(dd* d, varfl val)
+{
+  if (bufr_check_fxy(d, 0, 1, 1)) /* WMO block number */
+    radar_data.wmoblock = val;
+  else if (bufr_check_fxy(d, 0, 1, 2)) /* WMO station number */
+    radar_data.wmostat = val;
+  else if (bufr_check_fxy(d, 0, 2, 135)) /* Antenna elevation */
+    radar_data.img.elevation = val;
+  else if (bufr_check_fxy(d, 0, 4, 1)) /* Year */
+    radar_data.meta.year = val;
+  else if (bufr_check_fxy(d, 0, 4, 2)) /* Month */
+    radar_data.meta.month = val;
+  else if (bufr_check_fxy(d, 0, 4, 3)) /* Day */
+    radar_data.meta.day = val;
+  else if (bufr_check_fxy(d, 0, 4, 4)) /* Hour */
+    radar_data.meta.hour = val;
+  else if (bufr_check_fxy(d, 0, 4, 5)) /* Minute */
+    radar_data.meta.min = val;
+  else
+    return false;
+  return true;
+}
+
+// Store the location and height descriptors, returns false for other descriptors
+bool store_geometry(dd* d, varfl val)
+{
+  if (bufr_check_fxy(d, 0, 5, 2)) /* Latitude */
+  {
+    if (!radar_data.img.nw.lat)
+      radar_data.img.nw.lat = val;
+    else if (!radar_data.img.ne.lat)
+      radar_data.img.ne.lat = val;
+    else if (!radar_data.img.se.lat)
+      radar_data.img.se.lat = val;
+    else if (!radar_data.img.sw.lat)
+      radar_data.img.sw.lat = val;
+    else if (!radar_data.meta.radar.lat)
+      radar_data.meta.radar.lat = val;
+    else if (!options.quiet)
+      std::cerr << "Ignoring latitudes after 5th time" << std::endl;
+  }
+  else if (bufr_check_fxy(d, 0, 5, 33)) /* Pixel size on horizontal */
+    radar_data.img.psizex = val;
+  else if (bufr_check_fxy(d, 0, 6, 2)) /* Longitude */
+  {
+    if (!radar_data.img.nw.lon)
+      radar_data.img.nw.lon = val;
+    else if (!radar_data.img.ne.lon)
+      radar_data.img.ne.lon = val;
+    else if (!radar_data.img.se.lon)
+      radar_data.img.se.lon = val;
+    else if (!radar_data.img.sw.lon)
+      radar_data.img.sw.lon = val;
+    else if (!radar_data.meta.radar.lon)
+      radar_data.meta.radar.lon = val;
+    else if (!options.quiet)
+      std::cerr << "Ignoring longitudes after 5th time" << std::endl;
+  }
+  else if (bufr_check_fxy(d, 0, 6, 33)) /* Pixel size on vertical */
+    radar_data.img.psizey = val;
+  else if (bufr_check_fxy(d, 0, 7, 1)) /* Height of station */
+    radar_data.meta.radar_height = val;
+  else if (bufr_check_fxy(d, 0, 7, 6)) /* Height above station */
+    radar_data.meta.height_above_station = val;
+  else if (bufr_check_fxy(d, 0, 10, 7)) /* Measurement heigts */
+    radar_data.img.heights.push_back(val);
+  else
+    return false;
+  return true;
+}
+
+// Store the measurement scale descriptors, returns false for other descriptors
+bool store_scale(dd* d, varfl val)
+{
+  if (bufr_check_fxy(d, 0, 21, 200)) /* Measurement heigts */
+    radar_data.img.cappi_heights.push_back(val);
+  else if (bufr_check_fxy(d, 0, 21, 1)) /* dBZ measurement limit */
+    radar_data.img.scale.dbz_values.push_back(val);
+  else if (bufr_check_fxy(d, 0, 21, 36)) /* rainfall intensity limit */
+    radar_data.img.scale.intensity_values.push_back(val);
+  else if (bufr_check_fxy(d, 0, 25, 6)) /* Z to R conversion */
+    radar_data.img.scale.z_to_r_conversion = val;
+  else if (bufr_check_fxy(d, 0, 25, 7)) /* Z to R conversion factor */
+    radar_data.img.scale.z_to_r_conversion_factor = val;
+  else if (bufr_check_fxy(d, 0, 25, 8)) /* Z to R conversion exponent */
+    radar_data.img.scale.z_to_r_conversion_exponent = val;
+  else if (bufr_check_fxy(d, 0, 21, 198)) /* dBZ Value offset */
+    radar_data.img.scale.offset = val;
+  else if (bufr_check_fxy(d, 0, 21, 199)) /* dBZ Value increment */
+    radar_data.img.scale.increment = val;
+  else
+    return false;
+  return true;
+}
+
+// Store the correction descriptors, returns false for other descriptors
+bool store_corrections(dd* d, varfl val)
+{
+  if (bufr_check_fxy(d, 0, 25, 9)) /* Calibration method*/
+    radar_data.img.calibration_method = val;
+  else if (bufr_check_fxy(d, 0, 25, 10)) /* Clutter treatment */
+    radar_data.img.clutter_treatment = val;
+  else if (bufr_check_fxy(d, 0, 25, 11)) /* Ground occultation correction (screening)*/
+    radar_data.img.ground_occultation_correction = val;
+  else if (bufr_check_fxy(d, 0, 25, 12)) /* Range attenuation correction */
+    radar_data.img.range_attenuation_correction = val;
+  else if (bufr_check_fxy(d, 0, 25, 13)) /* Bright-band correction */
+    radar_data.img.bright_band_correction = val;
+  else if (bufr_check_fxy(d, 0, 25, 15)) /* Radome attenuation correction */
+    radar_data.img.radome_attenuation_correction = val;
+  else if (bufr_check_fxy(d, 0, 25, 16)) /* Clear-air attenuation correction */
+    radar_data.img.clear_air_attenuation_correction = val;
+  else if (bufr_check_fxy(d, 0, 25, 17)) /* Precipitation attenuation correction */
+    radar_data.img.precipitation_attenuation_correction = val;
+  else
+    return false;
+  return true;
+}
+
+// Store the projection descriptors, returns false for other descriptors
+bool store_projection(dd* d, varfl val)
+{
+  // WHY IS THERE 29.1 and 29.201 ???
+  if (bufr_check_fxy(d, 0, 29, 1)) /* Projection type */
+    radar_data.proj.type = val;
+  else if (bufr_check_fxy(d, 0, 29, 2)) /* Co-ordinate grid type */
+    radar_data.img.grid = (int)val;
+  else if (bufr_check_fxy(d, 0, 29, 193)) /* Longitude Origin */
+    radar_data.proj.origin.lon = val;
+  else if (bufr_check_fxy(d, 0, 29, 194)) /* Latitude Origin */
+    radar_data.proj.origin.lat = val;
+  else if (bufr_check_fxy(d, 0, 29, 195)) /* False Easting */
+    radar_data.proj.xoff = (int)val;
+  else if (bufr_check_fxy(d, 0, 29, 196)) /* False Northing */
+    radar_data.proj.yoff = (int)val;
+  else if (bufr_check_fxy(d, 0, 29, 197)) /* 1st Standard Parallel */
+    radar_data.proj.stdpar1 = val;
+  else if (bufr_check_fxy(d, 0, 29, 198)) /* 2nd Standard Parallel */
+    radar_data.proj.stdpar2 = val;
+  else if (bufr_check_fxy(d, 0, 29, 199)) /* Semi-major axis of ellipsoid */
+    radar_data.proj.majax = val;
+  else if (bufr_check_fxy(d, 0, 29, 200)) /* Semi-minor axis of ellipsoid */
+    radar_data.proj.minax = val;
+  else if (bufr_check_fxy(d, 0, 29, 201)) /* Projection type */
+    radar_data.proj.type = val;
+  else
+    return false;
+  return true;
+}
+
+// Store the image descriptors, returns false for other descriptors
+bool store_image(dd* d, varfl val)
+{
+  if (bufr_check_fxy(d, 0, 30, 21)) /* Number of pixels per row */
+    radar_data.img.nrows = val;
+  else if (bufr_check_fxy(d, 0, 30, 22)) /* Number of pixels per column */
+    radar_data.img.ncols = val;
+  else if (bufr_check_fxy(d, 0, 30, 192)) /* North south view organisation */
+    radar_data.img.ns_organisation = val;
+  else if (bufr_check_fxy(d, 0, 30, 193)) /* East west view organisation */
+    radar_data.img.ew_organisation = val;
+  else if (bufr_check_fxy(d, 0, 30, 31)) /* Image type */
+    radar_data.img.type = (int)val;
+  else if (bufr_check_fxy(d, 0, 30, 32)) /* Combination with other data */
+    ;                                    // we have no use for the value
+  else if (bufr_check_fxy(d, 0, 31, 1))  /* Delayed descriptor replication factor */
+    ;
+  else if (bufr_check_fxy(d, 0, 33, 3)) /* Quality information */
+    radar_data.img.qual = val;
+  else
+    return false;
+  return true;
+}
+
+// Print the value of an element descriptor in debug mode
+void print_element_value(varfl val, int ind, dd* d)
+{
+  char sval[80];
+
+  if (val == MISSVAL)
+    strcpy(sval, "      missing");
+  else
+    sprintf(sval, "%15.7f", val);
+
+  /* do we have a descriptor before the data element? */
+
+  if (!bufr_in_seq && ind != add_f_special)
+    fprintf(stdout, "%s            %s\n", sval, des[ind]->el->elname);
+  else
+  {
+    if (!bufr_first_in_seq)
+      fprintf(stdout, "          ");
+
+    fprintf(stdout, "%s  %2d %2d %3d %s\n", sval, d->f, d->x, d->y, des[ind]->el->elname);
+    bufr_first_in_seq = 0;
+  }
+}
+
+// Store the value of a known element descriptor
+void store_element(dd* d, varfl val)
+{
+  if (!store_station_and_time(d, val) && !store_geometry(d, val) && !store_scale(d, val) &&
+      !store_corrections(d, val) && !store_projection(d, val) && !store_image(d, val))
+  {
+    if (!options.quiet)
+      fprintf(stderr, "Unknown element descriptor %d %d %d\n", d->f, d->x, d->y);
+  }
+}
+
+// Handle an element descriptor
+void handle_element(varfl val, int ind)
+{
+  dd* d = &(des[ind]->el->d);
+
+  /* output descriptor if not inside a sequence */
+
+  if (options.debug && !bufr_in_seq && ind != ccitt_special && ind != add_f_special)
+    fprintf(stdout, "%2d %2d %3d ", d->f, d->x, d->y);
+
+  /* descriptor without data (1.x.y, 2.x.y) or ascii) */
+
+  if (ind == _desc_special)
+  {
+    /* descriptor -> add newline */
+
+    if (!bufr_in_seq && options.debug)
+    {
+      fprintf(stdout, "\n");
+    }
+  }
+
+  /* "normal" data */
+
+  else
+  {
+    /* check for missing values and flag tables */
+
+    if (options.debug)
+      print_element_value(val, ind, d);
+
+    // Store known descriptors
+    if (val != MISSVAL)
+      store_element(d, val);
+  }
+}
+
+// Read bitmap and run length decode
+int read_bitmap(int ind)
+{
+  /* read bitmap and run length decode */
+
+  bufrval_t* vals = bufr_open_val_array();
+  if (vals == nullptr)
+    return 0;
+
+  if (!bufr_parse_out(des[ind]->seq->del, 0, des[ind]->seq->nel - 1, bufr_val_to_global, 0))
+  {
+    bufr_close_val_array();
+    return 0;
+  }
+
+  // Decode vals to our output array
+  int nvals = 0;
+  int nrows = 0;
+  int ncols = 0;
+
+  if (!rldec_to_mem(vals->vals, &(radar_data.img.data), &nvals, &nrows, &ncols))
+  {
+    bufr_close_val_array();
+    fprintf(stderr, "Error during runlength-decompression.\n");
+    return 0;
+  }
+
+  if (options.debug)
+    std::cerr << " image of size " << nrows << 'x' << ncols << " from " << nvals << " values\n";
+
+  // TODO: Should we push data to a vector of raw buffers???
+
+  bufr_close_val_array();
+  return 1;
+}
+
+// Handle a sequence descriptor
+int handle_sequence(int ind)
+{
+  dd* d = &(des[ind]->seq->d);
+
+  /* output descriptor if not inside another sequence descriptor */
+
+  if (options.debug && !bufr_in_seq)
+    fprintf(stdout, "%2d %2d %3d ", d->f, d->x, d->y);
+
+  // Detect bitmaps. From desc.c: 3,21,192 3,21,193 3,21,194 3,21,195 3,21,196 3,21,197 3,21,200
+  // 3,21,202
+
+  int depth = check_bitmap_desc(d);
+
+  if (depth > 0)  // 3,21,193 etc descriptors, see bufr.c desc.c list
+    return read_bitmap(ind);
+
+#if 0
+		  if(options.debug)
+			fprintf (stderr, "Expanding sequence descriptor %d %d %d\n", d->f, d->x, d->y);
+#endif
+
+  /* normal sequence descriptor - just call bufr_parse_out and
+         remember that we are in a sequence */
+
+  if (bufr_in_seq == 0)
+    bufr_first_in_seq = 1;
+  bufr_in_seq++;
+  int ok = bufr_parse_out(des[ind]->seq->del, 0, des[ind]->seq->nel - 1, &bufr_callback, 1);
+  bufr_close_val_array();
+  bufr_in_seq--;
+  return ok;
+}
+}  // namespace
+
 // ----------------------------------------------------------------------
 /*!
  * \brief Callback for storing the values in a radar_data_t structure
@@ -523,287 +849,20 @@ bool parse_options(int argc, char *argv[], Options &options)
 
 int bufr_callback(varfl val, int ind)
 {
-  static int in_seq = 0;   /* flag to indicate sequences */
-  static int first_in_seq; /* flag to indicate first element in sequence */
-
   std::string imgfile = "bufr_image";
 
   /* element descriptor */
 
   if (des[ind]->id == ELDESC)
   {
-    dd *d = &(des[ind]->el->d);
-
-    /* output descriptor if not inside a sequence */
-
-    if (options.debug && !in_seq && ind != ccitt_special && ind != add_f_special)
-      fprintf(stdout, "%2d %2d %3d ", d->f, d->x, d->y);
-
-    /* descriptor without data (1.x.y, 2.x.y) or ascii) */
-
-    if (ind == _desc_special)
-    {
-      /* descriptor -> add newline */
-
-      if (!in_seq && options.debug)
-      {
-        fprintf(stdout, "\n");
-      }
-    }
-
-    /* "normal" data */
-
-    else
-    {
-      /* check for missing values and flag tables */
-
-      if (options.debug)
-      {
-        char sval[80];
-
-        if (val == MISSVAL)
-          strcpy(sval, "      missing");
-        else
-          sprintf(sval, "%15.7f", val);
-
-        /* do we have a descriptor before the data element? */
-
-        if (!in_seq && ind != add_f_special)
-          fprintf(stdout, "%s            %s\n", sval, des[ind]->el->elname);
-        else
-        {
-          if (!first_in_seq)
-            fprintf(stdout, "          ");
-
-          fprintf(stdout, "%s  %2d %2d %3d %s\n", sval, d->f, d->x, d->y, des[ind]->el->elname);
-          first_in_seq = 0;
-        }
-      }
-
-      // Store known descriptors
-      if (val != MISSVAL)
-      {
-        if (bufr_check_fxy(d, 0, 1, 1)) /* WMO block number */
-          radar_data.wmoblock = val;
-        else if (bufr_check_fxy(d, 0, 1, 2)) /* WMO station number */
-          radar_data.wmostat = val;
-
-        else if (bufr_check_fxy(d, 0, 2, 135)) /* Antenna elevation */
-          radar_data.img.elevation = val;
-
-        else if (bufr_check_fxy(d, 0, 4, 1)) /* Year */
-          radar_data.meta.year = val;
-        else if (bufr_check_fxy(d, 0, 4, 2)) /* Month */
-          radar_data.meta.month = val;
-        else if (bufr_check_fxy(d, 0, 4, 3)) /* Day */
-          radar_data.meta.day = val;
-        else if (bufr_check_fxy(d, 0, 4, 4)) /* Hour */
-          radar_data.meta.hour = val;
-        else if (bufr_check_fxy(d, 0, 4, 5)) /* Minute */
-          radar_data.meta.min = val;
-
-        else if (bufr_check_fxy(d, 0, 5, 2)) /* Latitude */
-        {
-          if (!radar_data.img.nw.lat)
-            radar_data.img.nw.lat = val;
-          else if (!radar_data.img.ne.lat)
-            radar_data.img.ne.lat = val;
-          else if (!radar_data.img.se.lat)
-            radar_data.img.se.lat = val;
-          else if (!radar_data.img.sw.lat)
-            radar_data.img.sw.lat = val;
-          else if (!radar_data.meta.radar.lat)
-            radar_data.meta.radar.lat = val;
-          else if (!options.quiet)
-            std::cerr << "Ignoring latitudes after 5th time" << std::endl;
-        }
-        else if (bufr_check_fxy(d, 0, 5, 33)) /* Pixel size on horizontal */
-          radar_data.img.psizex = val;
-
-        else if (bufr_check_fxy(d, 0, 6, 2)) /* Longitude */
-        {
-          if (!radar_data.img.nw.lon)
-            radar_data.img.nw.lon = val;
-          else if (!radar_data.img.ne.lon)
-            radar_data.img.ne.lon = val;
-          else if (!radar_data.img.se.lon)
-            radar_data.img.se.lon = val;
-          else if (!radar_data.img.sw.lon)
-            radar_data.img.sw.lon = val;
-          else if (!radar_data.meta.radar.lon)
-            radar_data.meta.radar.lon = val;
-          else if (!options.quiet)
-            std::cerr << "Ignoring longitudes after 5th time" << std::endl;
-        }
-        else if (bufr_check_fxy(d, 0, 6, 33)) /* Pixel size on vertical */
-          radar_data.img.psizey = val;
-
-        else if (bufr_check_fxy(d, 0, 7, 1)) /* Height of station */
-          radar_data.meta.radar_height = val;
-        else if (bufr_check_fxy(d, 0, 7, 6)) /* Height above station */
-          radar_data.meta.height_above_station = val;
-
-        else if (bufr_check_fxy(d, 0, 10, 7)) /* Measurement heigts */
-          radar_data.img.heights.push_back(val);
-
-        else if (bufr_check_fxy(d, 0, 21, 200)) /* Measurement heigts */
-          radar_data.img.cappi_heights.push_back(val);
-
-        else if (bufr_check_fxy(d, 0, 21, 1)) /* dBZ measurement limit */
-          radar_data.img.scale.dbz_values.push_back(val);
-        else if (bufr_check_fxy(d, 0, 21, 36)) /* rainfall intensity limit */
-          radar_data.img.scale.intensity_values.push_back(val);
-
-        else if (bufr_check_fxy(d, 0, 25, 6)) /* Z to R conversion */
-          radar_data.img.scale.z_to_r_conversion = val;
-        else if (bufr_check_fxy(d, 0, 25, 7)) /* Z to R conversion factor */
-          radar_data.img.scale.z_to_r_conversion_factor = val;
-        else if (bufr_check_fxy(d, 0, 25, 8)) /* Z to R conversion exponent */
-          radar_data.img.scale.z_to_r_conversion_exponent = val;
-
-        else if (bufr_check_fxy(d, 0, 25, 9)) /* Calibration method*/
-          radar_data.img.calibration_method = val;
-        else if (bufr_check_fxy(d, 0, 25, 10)) /* Clutter treatment */
-          radar_data.img.clutter_treatment = val;
-        else if (bufr_check_fxy(d, 0, 25, 11)) /* Ground occultation correction (screening)*/
-          radar_data.img.ground_occultation_correction = val;
-        else if (bufr_check_fxy(d, 0, 25, 12)) /* Range attenuation correction */
-          radar_data.img.range_attenuation_correction = val;
-        else if (bufr_check_fxy(d, 0, 25, 13)) /* Bright-band correction */
-          radar_data.img.bright_band_correction = val;
-        else if (bufr_check_fxy(d, 0, 25, 15)) /* Radome attenuation correction */
-          radar_data.img.radome_attenuation_correction = val;
-        else if (bufr_check_fxy(d, 0, 25, 16)) /* Clear-air attenuation correction */
-          radar_data.img.clear_air_attenuation_correction = val;
-        else if (bufr_check_fxy(d, 0, 25, 17)) /* Precipitation attenuation correction */
-          radar_data.img.precipitation_attenuation_correction = val;
-
-        // WHY IS THERE 29.1 and 29.201 ???
-
-        else if (bufr_check_fxy(d, 0, 29, 1)) /* Projection type */
-          radar_data.proj.type = val;
-        else if (bufr_check_fxy(d, 0, 29, 2)) /* Co-ordinate grid type */
-          radar_data.img.grid = (int)val;
-        else if (bufr_check_fxy(d, 0, 21, 198)) /* dBZ Value offset */
-          radar_data.img.scale.offset = val;
-        else if (bufr_check_fxy(d, 0, 21, 199)) /* dBZ Value increment */
-          radar_data.img.scale.increment = val;
-        else if (bufr_check_fxy(d, 0, 29, 193)) /* Longitude Origin */
-          radar_data.proj.origin.lon = val;
-        else if (bufr_check_fxy(d, 0, 29, 194)) /* Latitude Origin */
-          radar_data.proj.origin.lat = val;
-        else if (bufr_check_fxy(d, 0, 29, 195)) /* False Easting */
-          radar_data.proj.xoff = (int)val;
-        else if (bufr_check_fxy(d, 0, 29, 196)) /* False Northing */
-          radar_data.proj.yoff = (int)val;
-        else if (bufr_check_fxy(d, 0, 29, 197)) /* 1st Standard Parallel */
-          radar_data.proj.stdpar1 = val;
-        else if (bufr_check_fxy(d, 0, 29, 198)) /* 2nd Standard Parallel */
-          radar_data.proj.stdpar2 = val;
-        else if (bufr_check_fxy(d, 0, 29, 199)) /* Semi-major axis of ellipsoid */
-          radar_data.proj.majax = val;
-        else if (bufr_check_fxy(d, 0, 29, 200)) /* Semi-minor axis of ellipsoid */
-          radar_data.proj.minax = val;
-        else if (bufr_check_fxy(d, 0, 29, 201)) /* Projection type */
-          radar_data.proj.type = val;
-
-        else if (bufr_check_fxy(d, 0, 30, 21)) /* Number of pixels per row */
-          radar_data.img.nrows = val;
-        else if (bufr_check_fxy(d, 0, 30, 22)) /* Number of pixels per column */
-          radar_data.img.ncols = val;
-        else if (bufr_check_fxy(d, 0, 30, 192)) /* North south view organisation */
-          radar_data.img.ns_organisation = val;
-        else if (bufr_check_fxy(d, 0, 30, 193)) /* East west view organisation */
-          radar_data.img.ew_organisation = val;
-
-        else if (bufr_check_fxy(d, 0, 30, 31)) /* Image type */
-          radar_data.img.type = (int)val;
-        else if (bufr_check_fxy(d, 0, 30, 32)) /* Combination with other data */
-          ;                                    // we have no use for the value
-
-        else if (bufr_check_fxy(d, 0, 31, 1)) /* Delayed descriptor replication factor */
-          ;
-
-        else if (bufr_check_fxy(d, 0, 33, 3)) /* Quality information */
-          radar_data.img.qual = val;
-
-        else
-        {
-          if (!options.quiet)
-            fprintf(stderr, "Unknown element descriptor %d %d %d\n", d->f, d->x, d->y);
-        }
-      }
-    }
-
+    handle_element(val, ind);
   } /* end if ("Element descriptor") */
 
   /* sequence descriptor */
 
   else if (des[ind]->id == SEQDESC)
   {
-    dd *d = &(des[ind]->seq->d);
-
-    /* output descriptor if not inside another sequence descriptor */
-
-    if (options.debug && !in_seq)
-      fprintf(stdout, "%2d %2d %3d ", d->f, d->x, d->y);
-
-    // Detect bitmaps. From desc.c: 3,21,192 3,21,193 3,21,194 3,21,195 3,21,196 3,21,197 3,21,200
-    // 3,21,202
-
-    int depth = check_bitmap_desc(d);
-
-    if (depth > 0)  // 3,21,193 etc descriptors, see bufr.c desc.c list
-    {
-      /* read bitmap and run length decode */
-
-      bufrval_t *vals = bufr_open_val_array();
-      if (vals == nullptr)
-        return 0;
-
-      if (!bufr_parse_out(des[ind]->seq->del, 0, des[ind]->seq->nel - 1, bufr_val_to_global, 0))
-      {
-        bufr_close_val_array();
-        return 0;
-      }
-
-      // Decode vals to our output array
-      int nvals = 0;
-      int nrows = 0;
-      int ncols = 0;
-
-      if (!rldec_to_mem(vals->vals, &(radar_data.img.data), &nvals, &nrows, &ncols))
-      {
-        bufr_close_val_array();
-        fprintf(stderr, "Error during runlength-decompression.\n");
-        return 0;
-      }
-
-      if (options.debug)
-        std::cerr << " image of size " << nrows << 'x' << ncols << " from " << nvals << " values\n";
-
-      // TODO: Should we push data to a vector of raw buffers???
-
-      bufr_close_val_array();
-      return 1;
-    }
-
-#if 0
-		  if(options.debug)
-			fprintf (stderr, "Expanding sequence descriptor %d %d %d\n", d->f, d->x, d->y);
-#endif
-
-    /* normal sequence descriptor - just call bufr_parse_out and
-           remember that we are in a sequence */
-
-    if (in_seq == 0)
-      first_in_seq = 1;
-    in_seq++;
-    int ok = bufr_parse_out(des[ind]->seq->del, 0, des[ind]->seq->nel - 1, &bufr_callback, 1);
-    bufr_close_val_array();
-    in_seq--;
-    return ok;
-
+    return handle_sequence(ind);
   } /* if ("seqdesc") */
   return 1;
 }

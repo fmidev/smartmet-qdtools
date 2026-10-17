@@ -1126,6 +1126,75 @@ double apply_gain_offset(double value,
  */
 // ----------------------------------------------------------------------
 
+// Activate the level of a level product
+void set_product_level(const Fmi::HDF5::Hdf5File& file,
+                       NFmiFastQueryInfo& info,
+                       const std::string& product,
+                       const std::string& prefix)
+{
+  if (is_level_parameter(product))
+  {
+    const double prodpar = get_prodpar(file, prefix);
+    NFmiLevel level(level_type(product), product, prodpar);
+    if (!info.Level(level))
+      throw std::runtime_error("Failed to activate correct level in output querydata");
+  }
+}
+
+// Numeric transformation of the data values
+struct ValueTransform
+{
+  std::optional<double> nodata;
+  std::optional<double> undetect;
+  std::optional<double> gain;
+  std::optional<double> offset;
+};
+
+// Establish numeric transformation
+ValueTransform read_value_transform(const Fmi::HDF5::Hdf5File& file, const std::string& prefix)
+{
+  ValueTransform transform;
+  transform.nodata = file.get_optional_attribute_recursive<double>(prefix, "what", "nodata");
+  transform.undetect = file.get_optional_attribute_recursive<double>(prefix, "what", "undetect");
+  transform.gain = file.get_optional_attribute_recursive<double>(prefix, "what", "gain");
+  transform.offset = file.get_optional_attribute_recursive<double>(prefix, "what", "offset");
+  return transform;
+}
+
+// Copy values into querydata. Unfortunately a simple loop will not do, the data would go upside
+// down. Hence we need to index the data directly.
+void copy_grid_values(NFmiFastQueryInfo& info,
+                      const std::vector<int>& values,
+                      const ValueTransform& transform)
+{
+  const unsigned long width = info.Grid()->XNumber();
+  const unsigned long height = info.Grid()->YNumber();
+
+  unsigned long pos = 0;
+
+  for (info.ResetLocation(); info.NextLocation();)
+  {
+    // Newbase grid location
+    unsigned long i = pos % width;
+    unsigned long j = pos / width;
+    // HDF5 grid location is inverted
+    j = height - j - 1;
+    // Respective vector position
+    unsigned long k = i + width * j;
+
+    // And copy the value
+    int value = values[k];
+
+    if (transform.nodata && value == *transform.nodata)
+      info.FloatValue(kFloatMissing);
+    else if (transform.undetect && value == *transform.undetect)
+      info.FloatValue(apply_gain_offset(0, transform.gain, transform.offset));
+    else
+      info.FloatValue(apply_gain_offset(value, transform.gain, transform.offset));
+    ++pos;
+  }
+}
+
 void copy_dataset(const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo& info, int datanum)
 {
   std::string prefix = options.datasetname + Fmi::to_string(datanum);
@@ -1147,24 +1216,11 @@ void copy_dataset(const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo& info, int 
       auto product = file.get_attribute_recursive<std::string>(iprefix, "what", "product");
       auto quantity = file.get_attribute_recursive<std::string>(iprefix, "what", "quantity");
 
-      if (is_level_parameter(product))
-      {
-        const double prodpar = get_prodpar(file, iprefix);
-        NFmiLevel level(level_type(product), product, prodpar);
-        if (!info.Level(level))
-          throw std::runtime_error("Failed to activate correct level in output querydata");
-      }
+      set_product_level(file, info, product, iprefix);
 
       // Establish numeric transformation
 
-      const std::optional<double> nodata =
-          file.get_optional_attribute_recursive<double>(iprefix, "what", "nodata");
-      const std::optional<double> undetect =
-          file.get_optional_attribute_recursive<double>(iprefix, "what", "undetect");
-      const std::optional<double> gain =
-          file.get_optional_attribute_recursive<double>(iprefix, "what", "gain");
-      const std::optional<double> offset =
-          file.get_optional_attribute_recursive<double>(iprefix, "what", "offset");
+      const ValueTransform transform = read_value_transform(file, iprefix);
 
       FmiParameterName id = opera_name_to_newbase(product, quantity, file, iprefix + "/what");
 
@@ -1185,32 +1241,7 @@ void copy_dataset(const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo& info, int 
 
       std::vector<int> values = file.read_dataset<int>(iprefix);
 
-      const unsigned long width = info.Grid()->XNumber();
-      const unsigned long height = info.Grid()->YNumber();
-
-      unsigned long pos = 0;
-
-      for (info.ResetLocation(); info.NextLocation();)
-      {
-        // Newbase grid location
-        unsigned long i = pos % width;
-        unsigned long j = pos / width;
-        // HDF5 grid location is inverted
-        j = height - j - 1;
-        // Respective vector position
-        unsigned long k = i + width * j;
-
-        // And copy the value
-        int value = values[k];
-
-        if (nodata && value == *nodata)
-          info.FloatValue(kFloatMissing);
-        else if (undetect && value == *undetect)
-          info.FloatValue(apply_gain_offset(0, gain, offset));
-        else
-          info.FloatValue(apply_gain_offset(value, gain, offset));
-        ++pos;
-      }
+      copy_grid_values(info, values, transform);
     }
   }
   else
@@ -1221,24 +1252,11 @@ void copy_dataset(const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo& info, int 
     auto product = file.get_attribute_recursive<std::string>(prefix, "what", "product");
     auto quantity = file.get_attribute_recursive<std::string>(prefix, "what", "quantity");
 
-    if (is_level_parameter(product))
-    {
-      const double prodpar = get_prodpar(file, prefix);
-      NFmiLevel level(level_type(product), product, prodpar);
-      if (!info.Level(level))
-        throw std::runtime_error("Failed to activate correct level in output querydata");
-    }
+    set_product_level(file, info, product, prefix);
 
     // Establish numeric transformation
 
-    const std::optional<double> nodata =
-        file.get_optional_attribute_recursive<double>(prefix, "what", "nodata");
-    const std::optional<double> undetect =
-        file.get_optional_attribute_recursive<double>(prefix, "what", "undetect");
-    const std::optional<double> gain =
-        file.get_optional_attribute_recursive<double>(prefix, "what", "gain");
-    const std::optional<double> offset =
-        file.get_optional_attribute_recursive<double>(prefix, "what", "offset");
+    const ValueTransform transform = read_value_transform(file, prefix);
 
     FmiParameterName id = opera_name_to_newbase(product, quantity, file, "/" + prefix + "/what");
 
@@ -1257,32 +1275,7 @@ void copy_dataset(const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo& info, int 
     // to index the data directly.
 
 #if 1
-    const unsigned long width = info.Grid()->XNumber();
-    const unsigned long height = info.Grid()->YNumber();
-
-    unsigned long pos = 0;
-
-    for (info.ResetLocation(); info.NextLocation();)
-    {
-      // Newbase grid location
-      unsigned long i = pos % width;
-      unsigned long j = pos / width;
-      // HDF5 grid location is inverted
-      j = height - j - 1;
-      // Respective vector position
-      unsigned long k = i + width * j;
-
-      // And copy the value
-      int value = values[k];
-
-      if (nodata && value == *nodata)
-        info.FloatValue(kFloatMissing);
-      else if (undetect && value == *undetect)
-        info.FloatValue(apply_gain_offset(0, gain, offset));
-      else
-        info.FloatValue(apply_gain_offset(value, gain, offset));
-      ++pos;
-    }
+    copy_grid_values(info, values, transform);
 #else
     // Does not work
     info.ResetLocation();
@@ -1290,12 +1283,12 @@ void copy_dataset(const Fmi::HDF5::Hdf5File& file, NFmiFastQueryInfo& info, int 
     for (int value : values)
     {
       info.NextLocation();
-      if (nodata && value == *nodata)
+      if (transform.nodata && value == *transform.nodata)
         info.FloatValue(kFloatMissing);
-      else if (undetect && value == *undetect)
-        info.FloatValue(apply_gain_offset(0, gain, offset));
+      else if (transform.undetect && value == *transform.undetect)
+        info.FloatValue(apply_gain_offset(0, transform.gain, transform.offset));
       else
-        info.FloatValue(apply_gain_offset(value, gain, offset));
+        info.FloatValue(apply_gain_offset(value, transform.gain, transform.offset));
     }
 #endif
   }

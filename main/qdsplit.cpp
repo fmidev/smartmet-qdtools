@@ -311,11 +311,9 @@ void write_data(NFmiQueryData& data, NFmiFastQueryInfo& info)
   if (options.missinglimit < 100 && misses > options.missinglimit)
   {
     if (options.verbose)
-    {
       cout << "Skipping " << outname << " since missing percentage is " << misses << endl;
-      if (options.memorymapping)
-        std::filesystem::remove(tmpname);
-    }
+    if (options.memorymapping)
+      std::filesystem::remove(tmpname);
   }
   else
   {

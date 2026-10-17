@@ -731,6 +731,119 @@ void ReportMetadata(NFmiFastQueryInfo *q, const string &theKey)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Read the querydata given with option -q
+ */
+// ----------------------------------------------------------------------
+
+unique_ptr<NFmiQueryInfo> read_query_info(NFmiCmdLine& cmdline, const string& datapath)
+{
+  string opt_queryfile;
+
+  if (cmdline.isOption('q'))
+  {
+    if (cmdline.OptionValue('q') != nullptr)
+    {
+      opt_queryfile = cmdline.OptionValue('q');
+      opt_queryfile = NFmiFileSystem::FileComplete(opt_queryfile, datapath);
+    }
+    else
+    {
+      throw runtime_error("Error: Missing argument for option -q.");
+    }
+  }
+
+  // Actual processing begins
+
+  unique_ptr<NFmiQueryInfo> qi;
+
+  if (cmdline.isOption('q'))
+  {
+    string filename = opt_queryfile;
+    if (NFmiFileSystem::DirectoryExists(opt_queryfile))
+    {
+      string newestfile = NFmiFileSystem::NewestFile(opt_queryfile);
+      if (newestfile.empty())
+      {
+        throw runtime_error("Error: Directory " + opt_queryfile + " is empty.");
+      }
+      filename += '/';
+      filename += newestfile;
+    }
+
+    qi.reset(new NFmiQueryInfo(filename));
+  }
+  return qi;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Report time information for options -t and -T
+ */
+// ----------------------------------------------------------------------
+
+void report_times(NFmiCmdLine& cmdline, NFmiFastQueryInfo* q, bool opt_all, bool opt_all_extended)
+{
+  // Option -t shows time information
+
+  string dateFormat;
+
+  if (cmdline.isOption('t') || (opt_all && !cmdline.isOption('T')))
+  {
+    if (cmdline.OptionValue('t') == nullptr)
+      dateFormat = "%Y%m%d%H";
+    else
+      dateFormat = cmdline.OptionValue('t');
+    ReportTimes(q, false, dateFormat);
+  }
+
+  // Option -T shows time information in UTC
+
+  if (cmdline.isOption('T') || (opt_all_extended && !cmdline.isOption('t')))
+  {
+    if (cmdline.OptionValue('T') == nullptr)
+      dateFormat = "%Y%m%d%H";
+    else
+      dateFormat = cmdline.OptionValue('T');
+    ReportTimes(q, true, dateFormat);
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Report version, parameter and producer information
+ */
+// ----------------------------------------------------------------------
+
+void report_info(NFmiCmdLine &cmdline, NFmiFastQueryInfo *q, bool opt_all, bool opt_all_extended)
+{
+  // Option -v shows the queryinfo version number
+
+  if (cmdline.isOption('v') || opt_all)
+    ReportVersion(q);
+
+  // Option -l lists the known parameternames
+
+  if (cmdline.isOption('l') || opt_all_extended)
+    ReportParameterNames();
+
+  // Option -p lists the parameters in the queryfile
+
+  if (cmdline.isOption('p') || opt_all_extended)
+    ReportParameters(q, true);
+
+  // Option -P lists the parameters in the queryfile, including subparameters
+
+  if (cmdline.isOption('P') || opt_all)
+    ReportParameters(q, false);
+
+  // Option -r shows producer information
+
+  if (cmdline.isOption('r') || opt_all)
+    ReportProducer(q);
+}
+
+// ----------------------------------------------------------------------
+/*!
  * The main program
  *
  * \param argc The number of arguments
@@ -741,8 +854,6 @@ void ReportMetadata(NFmiFastQueryInfo *q, const string &theKey)
 
 int domain(int argc, const char *argv[])
 {
-  string opt_queryfile;
-
   NFmiCmdLine cmdline(argc, argv, "hq!avAlpPt:rT:xXzm!M");
 
   if (cmdline.Status().IsError())
@@ -778,39 +889,7 @@ int domain(int argc, const char *argv[])
 
   // option -q
 
-  if (cmdline.isOption('q'))
-  {
-    if (cmdline.OptionValue('q') != nullptr)
-    {
-      opt_queryfile = cmdline.OptionValue('q');
-      opt_queryfile = NFmiFileSystem::FileComplete(opt_queryfile, datapath);
-    }
-    else
-    {
-      throw runtime_error("Error: Missing argument for option -q.");
-    }
-  }
-
-  // Actual processing begins
-
-  unique_ptr<NFmiQueryInfo> qi;
-
-  if (cmdline.isOption('q'))
-  {
-    string filename = opt_queryfile;
-    if (NFmiFileSystem::DirectoryExists(opt_queryfile))
-    {
-      string newestfile = NFmiFileSystem::NewestFile(opt_queryfile);
-      if (newestfile.empty())
-      {
-        throw runtime_error("Error: Directory " + opt_queryfile + " is empty.");
-      }
-      filename += '/';
-      filename += newestfile;
-    }
-
-    qi.reset(new NFmiQueryInfo(filename));
-  }
+  unique_ptr<NFmiQueryInfo> qi = read_query_info(cmdline, datapath);
 
   NFmiFastQueryInfo* q = (qi == nullptr ? nullptr : new NFmiFastQueryInfo(*qi));
 
@@ -820,54 +899,11 @@ int domain(int argc, const char *argv[])
   bool opt_all_extended = cmdline.isOption('A');
   bool opt_all = cmdline.isOption('a') || opt_all_extended;
 
-  // Option -v shows the queryinfo version number
+  report_info(cmdline, q, opt_all, opt_all_extended);
 
-  if (cmdline.isOption('v') || opt_all)
-    ReportVersion(q);
+  // Options -t and -T show time information
 
-  // Option -l lists the known parameternames
-
-  if (cmdline.isOption('l') || opt_all_extended)
-    ReportParameterNames();
-
-  // Option -p lists the parameters in the queryfile
-
-  if (cmdline.isOption('p') || opt_all_extended)
-    ReportParameters(q, true);
-
-  // Option -P lists the parameters in the queryfile, including subparameters
-
-  if (cmdline.isOption('P') || opt_all)
-    ReportParameters(q, false);
-
-  // Option -r shows producer information
-
-  if (cmdline.isOption('r') || opt_all)
-    ReportProducer(q);
-
-  // Option -t shows time information
-
-  string dateFormat;
-
-  if (cmdline.isOption('t') || (opt_all && !cmdline.isOption('T')))
-  {
-    if (cmdline.OptionValue('t') == nullptr)
-      dateFormat = "%Y%m%d%H";
-    else
-      dateFormat = cmdline.OptionValue('t');
-    ReportTimes(q, false, dateFormat);
-  }
-
-  // Option -T shows time information in UTC
-
-  if (cmdline.isOption('T') || (opt_all_extended && !cmdline.isOption('t')))
-  {
-    if (cmdline.OptionValue('T') == nullptr)
-      dateFormat = "%Y%m%d%H";
-    else
-      dateFormat = cmdline.OptionValue('T');
-    ReportTimes(q, true, dateFormat);
-  }
+  report_times(cmdline, q, opt_all, opt_all_extended);
 
   // Option -x shows projection information
 

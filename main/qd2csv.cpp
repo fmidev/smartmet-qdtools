@@ -88,6 +88,49 @@ string makename(const NFmiFastQueryInfo& theQ)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Print the data row for the current location and time
+ */
+// ----------------------------------------------------------------------
+
+void print_row(NFmiFastQueryInfo& q,
+               const vector<bool>& okvariables,
+               bool coordOutput,
+               const NFmiString& timestr)
+{
+  int column = 0;
+  int printedcolumns = 0;
+  auto prec = cout.precision();
+  for (q.ResetLevel(); q.NextLevel();)
+    for (q.ResetParam(); q.NextParam();)
+    {
+      if (okvariables[column])
+      {
+        if (++printedcolumns == 1)
+        {
+          if (coordOutput)
+          {
+            auto const& p = q.Location()->GetLocation();
+            cout << q.Location()->GetIdent() << ',' << setprecision(5) << p.Y() << "," << p.X()
+                 << setprecision(prec) << "," << timestr.CharPtr();
+          }
+          else
+            cout << q.Location()->GetIdent() << ',' << timestr.CharPtr();
+        }
+        cout << ',';
+        float value = q.FloatValue();
+        if (value == kFloatMissing)
+          cout << "NA";
+        else
+          cout << value;
+      }
+      ++column;
+    }
+  if (printedcolumns > 0)
+    cout << endl;
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Main algorithm
  */
 // ----------------------------------------------------------------------
@@ -149,36 +192,7 @@ int domain(int argc, const char* argv[])
     {
       NFmiString timestr = q->ValidTime().ToStr(kYYYYMMDDHH);
 
-      int column = 0;
-      int printedcolumns = 0;
-      auto prec = cout.precision();
-      for (q->ResetLevel(); q->NextLevel();)
-        for (q->ResetParam(); q->NextParam();)
-        {
-          if (okvariables[column])
-          {
-            if (++printedcolumns == 1)
-            {
-              if (coordOutput)
-              {
-                auto const& p = q->Location()->GetLocation();
-                cout << q->Location()->GetIdent() << ',' << setprecision(5) << p.Y() << "," << p.X()
-                     << setprecision(prec) << "," << timestr.CharPtr();
-              }
-              else
-                cout << q->Location()->GetIdent() << ',' << timestr.CharPtr();
-            }
-            cout << ',';
-            float value = q->FloatValue();
-            if (value == kFloatMissing)
-              cout << "NA";
-            else
-              cout << value;
-          }
-          ++column;
-        }
-      if (printedcolumns > 0)
-        cout << endl;
+      print_row(*q, okvariables, coordOutput, timestr);
     }
   }
 

@@ -304,6 +304,86 @@ void add_calculated_params_to_pbag(NFmiParamBag& pbag)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Calculate humidity from temperature and dew point
+ */
+// ----------------------------------------------------------------------
+
+void calculate_humidity_from_dewpoint(NFmiFastQueryInfo& info,
+                                      unsigned long rh_idx,
+                                      unsigned long t_idx,
+                                      unsigned long td_idx)
+{
+  for (info.ResetLevel(); info.NextLevel();)
+    for (info.ResetLocation(); info.NextLocation();)
+      for (info.ResetTime(); info.NextTime();)
+      {
+        info.ParamIndex(t_idx);
+        auto t = info.FloatValue();
+        info.ParamIndex(td_idx);
+        auto td = info.FloatValue();
+        if (t != kFloatMissing && td != kFloatMissing)
+        {
+          // t -= 273.15;  // we assume Celsius
+          // td -= 273.15;
+          auto rh = 100 * (exp(1.8 + 17.27 * (td / (td + 237.3)))) /
+                    (exp(1.8 + 17.27 * (t / (t + 237.3))));
+          rh = std::max(0.0, std::min(100.0, rh));
+          info.ParamIndex(rh_idx);
+          info.FloatValue(rh);
+        }
+      }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Calculate humidity from temperature, specific humidity and pressure
+ *
+ * The pressure is taken from the pressure level if p_idx is negative
+ */
+// ----------------------------------------------------------------------
+
+void calculate_humidity_from_specific_humidity(NFmiFastQueryInfo& info,
+                                               unsigned long rh_idx,
+                                               unsigned long t_idx,
+                                               unsigned long q_idx,
+                                               int p_idx)
+{
+  for (info.ResetLevel(); info.NextLevel();)
+    for (info.ResetLocation(); info.NextLocation();)
+      for (info.ResetTime(); info.NextTime();)
+      {
+        float p = kFloatMissing;
+        if (p_idx >= 0)
+        {
+          info.ParamIndex(p_idx);
+          p = info.FloatValue();  // we assume hPa
+        }
+        else
+          p = info.Level()->LevelValue();  // we assume hPa
+
+        info.ParamIndex(t_idx);
+        auto t = info.FloatValue();
+        info.ParamIndex(q_idx);
+        auto q = info.FloatValue();
+
+        if (t != kFloatMissing && q != kFloatMissing && p != kFloatMissing)
+        {
+          // t -= 273.15;  // we assume Celsius
+          // p *= 100;     // we assume hPa
+          q /= 1000;  // g/kg to kg/kg
+          auto e = (t > -5) ? (6.107 * pow(10, 7.5 * t / (237 + t)))
+                            : (6.107 * pow(10, 9.5 * t / (265.5 + t)));
+          auto rh = 100 * (p * q) / (0.622 * e) * (p - e) / (p - q * p / 0.622);
+          rh = std::max(0.0, std::min(100.0, rh));
+
+          info.ParamIndex(rh_idx);
+          info.FloatValue(rh);
+        }
+      }
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Calculate humidity
  */
 // ----------------------------------------------------------------------
@@ -324,25 +404,7 @@ void calculate_humidity(NFmiFastQueryInfo& info)
   {
     const auto td_idx = info.ParamIndex();
 
-    for (info.ResetLevel(); info.NextLevel();)
-      for (info.ResetLocation(); info.NextLocation();)
-        for (info.ResetTime(); info.NextTime();)
-        {
-          info.ParamIndex(t_idx);
-          auto t = info.FloatValue();
-          info.ParamIndex(td_idx);
-          auto td = info.FloatValue();
-          if (t != kFloatMissing && td != kFloatMissing)
-          {
-            // t -= 273.15;  // we assume Celsius
-            // td -= 273.15;
-            auto rh = 100 * (exp(1.8 + 17.27 * (td / (td + 237.3)))) /
-                      (exp(1.8 + 17.27 * (t / (t + 237.3))));
-            rh = std::max(0.0, std::min(100.0, rh));
-            info.ParamIndex(rh_idx);
-            info.FloatValue(rh);
-          }
-        }
+    calculate_humidity_from_dewpoint(info, rh_idx, t_idx, td_idx);
   }
   else if (info.Param(kFmiSpecificHumidity))
   {
@@ -358,38 +420,7 @@ void calculate_humidity(NFmiFastQueryInfo& info)
         throw Exception(BCP, "Pressure data is required for calculating humidity");
     }
 
-    for (info.ResetLevel(); info.NextLevel();)
-      for (info.ResetLocation(); info.NextLocation();)
-        for (info.ResetTime(); info.NextTime();)
-        {
-          float p = kFloatMissing;
-          if (p_idx >= 0)
-          {
-            info.ParamIndex(p_idx);
-            p = info.FloatValue();  // we assume hPa
-          }
-          else
-            p = info.Level()->LevelValue();  // we assume hPa
-
-          info.ParamIndex(t_idx);
-          auto t = info.FloatValue();
-          info.ParamIndex(q_idx);
-          auto q = info.FloatValue();
-
-          if (t != kFloatMissing && q != kFloatMissing && p != kFloatMissing)
-          {
-            // t -= 273.15;  // we assume Celsius
-            // p *= 100;     // we assume hPa
-            q /= 1000;  // g/kg to kg/kg
-            auto e = (t > -5) ? (6.107 * pow(10, 7.5 * t / (237 + t)))
-                              : (6.107 * pow(10, 9.5 * t / (265.5 + t)));
-            auto rh = 100 * (p * q) / (0.622 * e) * (p - e) / (p - q * p / 0.622);
-            rh = std::max(0.0, std::min(100.0, rh));
-
-            info.ParamIndex(rh_idx);
-            info.FloatValue(rh);
-          }
-        }
+    calculate_humidity_from_specific_humidity(info, rh_idx, t_idx, q_idx, p_idx);
   }
   else
     throw Exception(

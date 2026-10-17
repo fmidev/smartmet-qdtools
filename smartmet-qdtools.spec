@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 26.10.16
+Version: 26.10.17
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -72,11 +72,11 @@ Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
 Requires: netcdf-cxx4
 Requires: smartmet-library-calculator >= 26.10.16
-Requires: smartmet-library-gis >= 26.10.16
-Requires: smartmet-library-imagine >= 26.10.16
-Requires: smartmet-library-macgyver >= 26.10.16
-Requires: smartmet-library-newbase >= 26.10.16
-Requires: smartmet-library-smarttools >= 26.10.16
+Requires: smartmet-library-gis >= 26.10.17
+Requires: smartmet-library-imagine >= 26.10.17
+Requires: smartmet-library-macgyver >= 26.10.17
+Requires: smartmet-library-newbase >= 26.10.17
+Requires: smartmet-library-smarttools >= 26.10.17
 Requires: smartmet-timezones >= 26.9.26
 Requires: zlib
 #TestRequires: smartmet-library-macgyver-devel >= 26.10.16
@@ -210,6 +210,16 @@ make %{_smp_mflags}
 %{_mandir}/man1/*.1.gz
 
 %changelog
+* Sat Oct 17 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.17-1.fmi
+- pgm2qd: free the converted query data
+- synop2qd: read the date of subsequent BUOY messages from the message itself
+- qdcrop MakeHPlaceDescriptor: use the X-offset for the right edge in non-legacy mode
+- qdcombine: make LevelLessThan a strict weak ordering
+- qdpoint ValidRow: advance to the next parameter also for missing levels and meta parameters
+- qdsplit: remove the skipped memory mapped temporary file also in non-verbose mode
+- ProjectionParser: report missing central latitude and longitude as required
+- Split functions with a cognitive complexity above 25 into smaller helpers, no functional changes
+
 * Fri Oct 16 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.16-1.fmi
 - h5toqd skips PVOL bins outside the target grid explicitly
 - qdinterpolatearea no longer leaks the target grid

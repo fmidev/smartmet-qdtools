@@ -297,6 +297,11 @@ class Stats
   const char* desc(double value) const;
 
  private:
+  void report_value_distribution(std::ostream& out,
+                                 const std::map<double, std::size_t>& counts) const;
+  void report_binned_distribution(std::ostream& out,
+                                  const std::map<double, std::size_t>& counts) const;
+
   FmiParameterName itsParam = kFmiBadParameter;  // parameter name
   FmiInterpolationMethod itsInterpolationMethod =
       kNearestPoint;                // interpolation method (NearestPoint/other)
@@ -1003,6 +1008,37 @@ int estimate_precision(const std::map<double, std::size_t>& theCounts)
 
   return precision;
 }
+
+// Calculate the mode and median of the value counts
+void mode_and_median(const std::map<double, std::size_t>& counts, double& mode, double& median)
+{
+  // Mode
+  std::size_t max_count = 0;
+  for (const auto& value_count : counts)
+    if (value_count.second > max_count)
+    {
+      max_count = value_count.second;
+      mode = value_count.first;
+    }
+
+  // Median
+  std::size_t total_count = 0;
+  for (const auto& value_count : counts)
+    total_count += value_count.second;
+
+  std::size_t median_count = total_count / 2;
+
+  std::size_t partial_count = 0;
+  for (const auto& value_count : counts)
+  {
+    median = value_count.first;
+    partial_count += value_count.second;
+
+    if (partial_count >= median_count)
+      break;
+  }
+}
+
 }  // namespace
 
 std::string Stats::report() const
@@ -1025,31 +1061,7 @@ std::string Stats::report() const
     if (itsInterpolationMethod != kNearestPoint)
       mean = itsSum / itsValidCount;
 
-    // Mode
-    std::size_t max_count = 0;
-    for (const auto& value_count : counts)
-      if (value_count.second > max_count)
-      {
-        max_count = value_count.second;
-        mode = value_count.first;
-      }
-
-    // Median
-    std::size_t total_count = 0;
-    for (const auto& value_count : counts)
-      total_count += value_count.second;
-
-    std::size_t median_count = total_count / 2;
-
-    std::size_t partial_count = 0;
-    for (const auto& value_count : counts)
-    {
-      median = value_count.first;
-      partial_count += value_count.second;
-
-      if (partial_count >= median_count)
-        break;
-    }
+    mode_and_median(counts, mode, median);
   }
 
   if (options.percentages)
@@ -1088,72 +1100,80 @@ std::string Stats::report() const
     const int max_parameter_values = 50;
 
     if (counts.size() < options.bins || counts.size() < max_parameter_values)
-    {
-      const int precision = estimate_precision(counts);
-
-      for (const auto& value_count : counts)
-      {
-        double value = value_count.first;
-        std::size_t count = value_count.second;
-
-        if (options.percentages)
-        {
-          out << std::fixed << std::setprecision(precision) << std::setw(10) << std::right << value
-              << std::setw(column_width + 1) << std::right << 100.0 * count / itsValidCount;
-        }
-        else
-        {
-          out << std::fixed << std::setprecision(precision) << std::setw(10) << std::right << value
-              << std::setw(column_width + 1) << std::right << count;
-        }
-
-        int w = static_cast<int>(std::round(options.barsize * count / itsValidCount));
-        out << std::setw(5) << std::right << '|' << std::string(w, '=')
-            << std::setw(options.barsize - w) << std::right << '|' << desc(value) << std::endl;
-      }
-    }
+      report_value_distribution(out, counts);
     else
-    {
-      double binmin = NAN;
-      double binmax = NAN;
-      double tick = NAN;
-      int precision = 0;
-      autoscale(itsMin, itsMax, options.bins, binmin, binmax, tick, precision);
-
-      for (std::size_t i = 0;; i++)
-      {
-        double minvalue = binmin + i * tick;
-        if (minvalue >= itsMax)
-          break;
-        double maxvalue = minvalue + tick;
-        std::size_t count = 0;
-        for (const auto& value_count : counts)
-        {
-          double value = value_count.first;
-          // The max value must be counted into the last bin
-          if ((value >= minvalue && value < maxvalue))
-            count += value_count.second;
-          else if (value == itsMax && value == maxvalue)
-            count += value_count.second;
-        }
-
-        std::ostringstream range;
-        range << std::fixed << std::setprecision(precision) << minvalue << "..." << maxvalue;
-
-        out << std::setw(20) << std::right << range.str();
-        if (options.percentages)
-          out << std::setw(column_width + 1) << std::right << 100.0 * count / itsValidCount;
-        else
-          out << std::setw(column_width + 1) << std::right << count;
-
-        int w = static_cast<int>(std::round(options.barsize * count / itsValidCount));
-        out << std::setw(5) << std::right << '|' << std::string(w, '=')
-            << std::setw(options.barsize - w) << std::right << '|' << std::endl;
-      }
-    }
+      report_binned_distribution(out, counts);
   }
 
   return out.str();
+}
+
+void Stats::report_value_distribution(std::ostream& out,
+                                      const std::map<double, std::size_t>& counts) const
+{
+  const int precision = estimate_precision(counts);
+
+  for (const auto& value_count : counts)
+  {
+    double value = value_count.first;
+    std::size_t count = value_count.second;
+
+    if (options.percentages)
+    {
+      out << std::fixed << std::setprecision(precision) << std::setw(10) << std::right << value
+          << std::setw(column_width + 1) << std::right << 100.0 * count / itsValidCount;
+    }
+    else
+    {
+      out << std::fixed << std::setprecision(precision) << std::setw(10) << std::right << value
+          << std::setw(column_width + 1) << std::right << count;
+    }
+
+    int w = static_cast<int>(std::round(options.barsize * count / itsValidCount));
+    out << std::setw(5) << std::right << '|' << std::string(w, '=')
+        << std::setw(options.barsize - w) << std::right << '|' << desc(value) << std::endl;
+  }
+}
+
+void Stats::report_binned_distribution(std::ostream& out,
+                                       const std::map<double, std::size_t>& counts) const
+{
+  double binmin = NAN;
+  double binmax = NAN;
+  double tick = NAN;
+  int precision = 0;
+  autoscale(itsMin, itsMax, options.bins, binmin, binmax, tick, precision);
+
+  for (std::size_t i = 0;; i++)
+  {
+    double minvalue = binmin + i * tick;
+    if (minvalue >= itsMax)
+      break;
+    double maxvalue = minvalue + tick;
+    std::size_t count = 0;
+    for (const auto& value_count : counts)
+    {
+      double value = value_count.first;
+      // The max value must be counted into the last bin
+      if ((value >= minvalue && value < maxvalue))
+        count += value_count.second;
+      else if (value == itsMax && value == maxvalue)
+        count += value_count.second;
+    }
+
+    std::ostringstream range;
+    range << std::fixed << std::setprecision(precision) << minvalue << "..." << maxvalue;
+
+    out << std::setw(20) << std::right << range.str();
+    if (options.percentages)
+      out << std::setw(column_width + 1) << std::right << 100.0 * count / itsValidCount;
+    else
+      out << std::setw(column_width + 1) << std::right << count;
+
+    int w = static_cast<int>(std::round(options.barsize * count / itsValidCount));
+    out << std::setw(5) << std::right << '|' << std::string(w, '=')
+        << std::setw(options.barsize - w) << std::right << '|' << std::endl;
+  }
 }
 
 // ----------------------------------------------------------------------

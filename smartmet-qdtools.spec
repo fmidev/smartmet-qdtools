@@ -211,6 +211,7 @@ make %{_smp_mflags}
 
 %changelog
 * Sat Oct 17 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.17-1.fmi
+- combineHistory: the output data is no longer leaked when an error is thrown
 - pgm2qd: free the converted query data
 - synop2qd: read the date of subsequent BUOY messages from the message itself
 - qdcrop MakeHPlaceDescriptor: use the X-offset for the right edge in non-legacy mode

@@ -369,7 +369,7 @@ The command outputs the line
 
     [direction] [x] [y] windarrow
 
-for every dx:th and dy:th grid point of the WindDirection parameter in the current querydata at the selected level and time. The control file must define the PostScript procedure windarrow which draws the arrow.
+for every dx:th and dy:th grid point of the WindDirection parameter in the current querydata at the selected level and time. Only grid points inside the map area are output. The control file must define the PostScript procedure windarrow which draws the arrow.
 
 ### Deprecated keywords
 

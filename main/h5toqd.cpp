@@ -977,7 +977,6 @@ NFmiHPlaceDescriptor create_hdesc(const Fmi::HDF5::Hdf5File& file)
       auto UL_lat = file.get_attribute<double>("/where", "UL_lat");
       std::shared_ptr<NFmiArea> area(NFmiArea::CreateFromReverseCorners(
           projdef, sphere, NFmiPoint(UL_lon, UL_lat), NFmiPoint(LR_lon, LR_lat)));
-      std::cout << "A: area=" << *area << std::endl;
       NFmiGrid grid(area->Clone(), xsize, ysize);
       return NFmiHPlaceDescriptor(grid);
     }

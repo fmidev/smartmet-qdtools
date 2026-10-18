@@ -60,6 +60,7 @@
 #include <newbase/NFmiTimeList.h>
 
 #include <fstream>
+#include <memory>
 
 using namespace std;
 
@@ -544,8 +545,8 @@ int main(int argc, const char *argv[])
 
   // Now a second pass reads all files which contained valid time stamps
 
-  NFmiQueryData* outqd = nullptr;
-  NFmiFastQueryInfo* outqi = nullptr;
+  std::unique_ptr<NFmiQueryData> outqd;
+  std::unique_ptr<NFmiFastQueryInfo> outqi;
 
   // This will contain all times that have already been handled
   set<NFmiMetTime> handled_times;
@@ -561,10 +562,10 @@ int main(int argc, const char *argv[])
 
     // If first file, create output file
 
-    if (outqd == nullptr)
+    if (!outqd)
     {
-      outqd = create_output(cmdline, qi, origintime, timelist, pbag, settings.outfile);
-      outqi = new NFmiFastQueryInfo(outqd);
+      outqd.reset(create_output(cmdline, qi, origintime, timelist, pbag, settings.outfile));
+      outqi = std::make_unique<NFmiFastQueryInfo>(outqd.get());
     }
 
     // Check whether point data must be combined slowly
@@ -598,8 +599,8 @@ int main(int argc, const char *argv[])
 
   // Clean up memory, flush mmapped file to disk
 
-  delete outqi;
-  delete outqd;
+  outqi.reset();
+  outqd.reset();
 }
 
 // ======================================================================

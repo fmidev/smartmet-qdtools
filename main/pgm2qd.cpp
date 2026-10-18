@@ -66,8 +66,8 @@ void usage()
           "  -h\t\tprint this usage information\n"
           "  -v\t\tverbose mode\n"
           "  -f\t\tforce rewrite if already converted\n"
-          "  -e ellipsoid\treference ellipsoid, default=intl (see 'cs2cs -le' for a list of "
-          "ellipsoids)\n"
+          "  -e ellipsoid\treference ellipsoid, default=intl (accepted for compatibility, "
+          "currently has no effect)\n"
           "  -t dir\ttemporary work directory to use (default is /tmp)\n"
           "  -p int,name\tset producer id and name (default = 1014,NRD)\n"
           "  -l minutes\tset age limit for input files (default = none)\n"
@@ -82,7 +82,7 @@ void usage()
 
 int parse_command_line(int argc, const char *argv[])
 {
-  NFmiCmdLine cmdline(argc, argv, "hvfp!t!l!");
+  NFmiCmdLine cmdline(argc, argv, "hvfe!p!t!l!");
 
   if (cmdline.Status().IsError())
     throw runtime_error(cmdline.Status().ErrorLog().CharPtr());

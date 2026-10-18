@@ -144,11 +144,6 @@ void usage()
        << "\tof parameter names, for example Temperature,Precipitation1h." << endl
        << "\tBy default all parameters are extracted." << endl
        << endl
-       << "-l <level1,level2,...,levelN>" << endl
-       << endl
-       << "\tThe levels to be extracted as a comma separated list of" << endl
-       << "\tlevel numbers. By default all levels are extracted." << endl
-       << endl
        << "-a" << endl
        << endl
        << "\tOnly the final time step will remain in the data. The startoffset" << endl

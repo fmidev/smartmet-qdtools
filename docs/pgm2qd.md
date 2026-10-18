@@ -12,6 +12,8 @@ pgm2qd converts pgm files into querydata. The files are expected to contain meta
     verbose mode
 * **-f**  
     force rewrite if already converted
+* **-e ellipsoid**  
+    reference ellipsoid (default = intl). Accepted for compatibility but currently has no effect: the projections are built as legacy newbase areas on the FMI sphere.
 * **-t dir**  
     temporary work directory to use (default is /tmp)
 * **-p int,name**  

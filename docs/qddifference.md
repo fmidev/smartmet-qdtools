@@ -20,3 +20,5 @@ The program assumes the two files have the same levels, locations, times and par
     Specify the parameters to check
 * **-e epsilon**
     Maximum allowed difference
+* **-d**
+    Display debug information

@@ -121,7 +121,7 @@ void usage()
 
 bool parse_command_line(int argc, const char* argv[])
 {
-  NFmiCmdLine cmdline(argc, argv, "htpP!e!");
+  NFmiCmdLine cmdline(argc, argv, "htdpP!e!");
 
   if (cmdline.Status().IsError())
     throw runtime_error(cmdline.Status().ErrorLog().CharPtr());

@@ -221,6 +221,7 @@ make %{_smp_mflags}
 - ProjectionParser: report missing central latitude and longitude as required
 - Split functions with a cognitive complexity above 25 into smaller helpers, no functional changes
 - pgm2qd, qddifference: accept the documented -e and -d options; qdfilter: remove the nonexistent -l option from the help
+- qdproject: reject the obsolete -g -G -w -W options instead of failing with an internal error
 
 * Fri Oct 16 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.16-1.fmi
 - h5toqd skips PVOL bins outside the target grid explicitly

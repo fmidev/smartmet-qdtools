@@ -247,7 +247,7 @@ int run(int argc, const char* argv[])
 {
   // Parse the command line
 
-  NFmiCmdLine cmdline(argc, argv, "hvd!c!q!lLiIgGwW");
+  NFmiCmdLine cmdline(argc, argv, "hvd!c!q!lLiI");
 
   if (cmdline.Status().IsError())
     throw runtime_error(cmdline.Status().ErrorLog().CharPtr());
@@ -285,15 +285,13 @@ int run(int argc, const char* argv[])
   // Check how many of the conversion options are given
 
   int opts = (cmdline.isOption('l') + cmdline.isOption('L') + cmdline.isOption('i') +
-              cmdline.isOption('I') + cmdline.isOption('g') + cmdline.isOption('G') +
-              cmdline.isOption('w') + cmdline.isOption('W'));
+              cmdline.isOption('I'));
 
   if (opts == 0)
-    throw runtime_error("Atleast one of options -l -L -i -I -g -G -w -W must be given");
+    throw runtime_error("Atleast one of options -l -L -i -I must be given");
 
   if (opts > 1)
-    throw runtime_error(
-        "Only one of options -l -L -i -I -g -G -w -W can be given at the same time");
+    throw runtime_error("Only one of options -l -L -i -I can be given at the same time");
 
   // Call proper projection handlers
 
@@ -305,14 +303,6 @@ int run(int argc, const char* argv[])
     project_coordinates(verbose, cmdline, 'i', *area);
   else if (cmdline.isOption('I'))
     project_coordinates(verbose, cmdline, 'I', *area);
-  else if (cmdline.isOption('g'))
-    project_coordinates(verbose, cmdline, 'g', *area);
-  else if (cmdline.isOption('G'))
-    project_coordinates(verbose, cmdline, 'G', *area);
-  else if (cmdline.isOption('w'))
-    project_coordinates(verbose, cmdline, 'w', *area);
-  else if (cmdline.isOption('W'))
-    project_coordinates(verbose, cmdline, 'W', *area);
   else
     throw runtime_error("Internal error - unhandled projection selection");
 

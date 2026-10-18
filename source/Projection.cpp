@@ -32,7 +32,6 @@ namespace RadContour
 struct ProjectionPimple
 {
   std::string itsType;
-  std::string itsEllipsoid;
   float itsCentralLatitude = kFloatMissing;
   float itsCentralLongitude = kFloatMissing;
   float itsTrueLatitude = kFloatMissing;
@@ -189,17 +188,6 @@ void Projection::center(float theLon, float theLat)
 void Projection::scale(float theScale)
 {
   itsPimple->itsScale = theScale;
-}
-
-// ----------------------------------------------------------------------
-/*!
- * \brief Set the ellipsoid
- */
-// ----------------------------------------------------------------------
-
-void Projection::ellipsoid(const std::string& theEllipsoid)
-{
-  itsPimple->itsEllipsoid = theEllipsoid;
 }
 
 // ----------------------------------------------------------------------

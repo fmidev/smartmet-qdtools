@@ -57,7 +57,7 @@ class ProjectionStore;
 class ProjectionParser
 {
  public:
-  static void parse(std::istream& is, ProjectionStore& theStore, const std::string& theEllipsoid);
+  static void parse(std::istream& is, ProjectionStore& theStore);
 
  private:
   ~ProjectionParser() = delete;

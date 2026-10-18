@@ -220,7 +220,10 @@ make %{_smp_mflags}
 - qdsplit: remove the skipped memory mapped temporary file also in non-verbose mode
 - ProjectionParser: report missing central latitude and longitude as required
 - Split functions with a cognitive complexity above 25 into smaller helpers, no functional changes
-- pgm2qd, qddifference: accept the documented -e and -d options; qdfilter: remove the nonexistent -l option from the help
+- pgm2qd: remove the -e option, which has had no effect since the projections are built on the
+  FMI sphere
+- qddifference: accept the documented -d option
+- qdfilter: remove the nonexistent -l option from the help
 - qdproject: reject the obsolete -g -G -w -W options instead of failing with an internal error
 - h5toqd: remove a debug print of the area for Latvian style corners
 

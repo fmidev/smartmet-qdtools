@@ -102,7 +102,7 @@ void ReadPgmHeader(std::istream &input,
     else if (token == "fortime")
       input >> thePgmHeaderInfo.fortime;
     else if (token == "projection")
-      ProjectionParser::parse(input, thePgmHeaderInfo.projections, theOptions.ellipsoid);
+      ProjectionParser::parse(input, thePgmHeaderInfo.projections);
     else if (token == "param")
     {
       input >> thePgmHeaderInfo.param;

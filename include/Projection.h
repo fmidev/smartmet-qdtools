@@ -71,8 +71,6 @@ class Projection
   void center(float theLon, float theLat);
   void scale(float theScale);
 
-  void ellipsoid(const std::string& theEllipsoid);
-
   std::shared_ptr<NFmiArea> area(unsigned int theWidth, unsigned int theHeight) const;
   Imagine::NFmiPath project(const Imagine::NFmiPath& thePath,
                             const Imagine::NFmiImage& theImage) const;

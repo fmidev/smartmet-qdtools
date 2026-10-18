@@ -203,9 +203,7 @@ void validate_projection(const ProjectionFlags& flags, const std::string& proj_n
  */
 // ----------------------------------------------------------------------
 
-void ProjectionParser::parse(std::istream& is,
-                             ProjectionStore& theStore,
-                             const std::string& theEllipsoid)
+void ProjectionParser::parse(std::istream& is, ProjectionStore& theStore)
 {
   // An initial safety check
   if (!is.good())
@@ -225,7 +223,6 @@ void ProjectionParser::parse(std::istream& is,
   // The projection info
 
   Projection projection;
-  projection.ellipsoid(theEllipsoid);
 
   ProjectionFlags flags;
   read_projection_settings(is, projection, flags, proj_name);

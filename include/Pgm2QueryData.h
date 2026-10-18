@@ -23,7 +23,6 @@ struct PgmReadOptions
   int agelimit = -1;
   int producer_number = 1014;
   int maxtimesteps = 0;            // all
-  std::string ellipsoid = "intl";  // See 'cs2cs -le'
   std::string producer_name = "NRD";
 #ifdef UNIX
   std::string tmpdir = "/tmp";

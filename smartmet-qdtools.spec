@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 26.10.17
+Version: 26.10.26
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -210,6 +210,9 @@ make %{_smp_mflags}
 %{_mandir}/man1/*.1.gz
 
 %changelog
+* Mon Oct 26 2026 Andris Pavēnis <andris.pavenis@fmi.fi> 26.10.26-1.fmi
+- Bump version
+
 * Sat Oct 17 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.17-1.fmi
 - combineHistory: the output data is no longer leaked when an error is thrown
 - pgm2qd: free the converted query data

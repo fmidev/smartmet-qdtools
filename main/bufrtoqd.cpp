@@ -1128,6 +1128,13 @@ void add_record(Messages& messages,
   }
   else
   {
+    // A descriptor may occur again later in the subset with a different meaning, for
+    // example 012101 in the first order statistics block of template 307096. Do not let
+    // a missing value there replace a valid value decoded earlier.
+    auto it = message.find(desc);
+    if (it != message.end() && rec.value == kFloatMissing && it->second.value != kFloatMissing &&
+        !std::isnan(it->second.value))
+      return;
     message[desc] = rec;
   }
 }

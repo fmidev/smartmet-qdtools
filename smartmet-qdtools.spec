@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 26.10.26
+Version: 26.11.3
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -43,12 +43,12 @@ BuildRequires: mdsplib >= 21.3.1
 BuildRequires: netcdf-cxx4-devel
 BuildRequires: netcdf-devel >= 4.3.3.1
 BuildRequires: rpm-build
-BuildRequires: smartmet-library-calculator-devel >= 26.10.16
-BuildRequires: smartmet-library-gis-devel >= 26.10.16
-BuildRequires: smartmet-library-imagine-devel >= 26.10.16
-BuildRequires: smartmet-library-macgyver-devel >= 26.10.16
-BuildRequires: smartmet-library-newbase-devel >= 26.10.16
-BuildRequires: smartmet-library-smarttools-devel >= 26.10.16
+BuildRequires: smartmet-library-calculator-devel >= 26.10.26
+BuildRequires: smartmet-library-gis-devel >= 26.10.26
+BuildRequires: smartmet-library-imagine-devel >= 26.10.17
+BuildRequires: smartmet-library-macgyver-devel >= 26.10.27
+BuildRequires: smartmet-library-newbase-devel >= 26.10.25
+BuildRequires: smartmet-library-smarttools-devel >= 26.10.17
 BuildRequires: smartmet-timezones >= 26.9.26
 BuildRequires: zlib-devel
 Requires: %{smartmet_boost}-filesystem
@@ -71,18 +71,18 @@ Requires: libpng
 Requires: libstdc++
 Requires: netcdf >= 4.3.3.1
 Requires: netcdf-cxx4
-Requires: smartmet-library-calculator >= 26.10.16
-Requires: smartmet-library-gis >= 26.10.17
+Requires: smartmet-library-calculator >= 26.10.26
+Requires: smartmet-library-gis >= 26.10.26
 Requires: smartmet-library-imagine >= 26.10.17
-Requires: smartmet-library-macgyver >= 26.10.17
-Requires: smartmet-library-newbase >= 26.10.17
+Requires: smartmet-library-macgyver >= 26.10.27
+Requires: smartmet-library-newbase >= 26.10.25
 Requires: smartmet-library-smarttools >= 26.10.17
 Requires: smartmet-timezones >= 26.9.26
 Requires: zlib
-#TestRequires: smartmet-library-macgyver-devel >= 26.10.16
+#TestRequires: smartmet-library-macgyver-devel >= 26.10.27
 #TestRequires: gcc-c++
-#TestRequires: smartmet-library-newbase-devel >= 26.10.16
-#TestRequires: smartmet-qdtools-test-data >= 26.10.9
+#TestRequires: smartmet-library-newbase-devel >= 26.10.25
+#TestRequires: smartmet-qdtools-test-data >= 26.11.3
 #TestRequires: libbufr
 
 Provides: ashtoqd = %{version}
@@ -210,6 +210,9 @@ make %{_smp_mflags}
 %{_mandir}/man1/*.1.gz
 
 %changelog
+* Tue Nov  3 2026 Mikko Visa <mikko.visa@fmi.fi> 26.11.3-1.fmi
+- bufrtoqd: do not overwrite a valid value with a missing one
+
 * Mon Oct 26 2026 Andris Pavēnis <andris.pavenis@fmi.fi> 26.10.26-1.fmi
 - Bump version
 

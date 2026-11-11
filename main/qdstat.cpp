@@ -610,7 +610,7 @@ const char* Stats::desc(double value) const
         case 48:
           return " fog depositing rime, sky visible";
         case 49:
-          return " fog repositing rime, sky invisible";
+          return " fog depositing rime, sky invisible";
         case 50:
           return " slight intermittent drizzle";
         case 51:

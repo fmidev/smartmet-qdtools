@@ -146,7 +146,7 @@ struct GribFilterOptions
   vector<FmiLevelType> itsAcceptOnlyLevelTypes;  // lista jossa ainoat hyväksyttävät level typet
   int itsGridInfoPrintCount = 0;
   vector<ParamChangeItem> itsParamChangeTable;
-  bool fCropParamsNotMensionedInTable = false;
+  bool fCropParamsNotMentionedInTable = false;
   bool fDoGlobeFix = true;
   bool fUseLevelTypeFileNaming = false;  // n optiolla voidaan laittaa output tiedostojen nimen
                                          // perään esim. _levelType_100
@@ -715,7 +715,7 @@ int GetOptions(const NFmiCmdLine& theCmdLine, GribFilterOptions& theGribFilterOp
   if (theCmdLine.isOption('g'))
     theGribFilterOptions.itsGridInfoPrintCount = Fmi::stoi(theCmdLine.OptionValue('g'));
   if (theCmdLine.isOption('d'))
-    theGribFilterOptions.fCropParamsNotMensionedInTable = true;
+    theGribFilterOptions.fCropParamsNotMentionedInTable = true;
 
   if (theCmdLine.isOption('f'))
     theGribFilterOptions.fDoGlobeFix = false;
@@ -2237,10 +2237,10 @@ void ChangeParamSettingsIfNeeded(const vector<ParamChangeItem>& theParamChangeTa
 }
 
 bool CropParam(GridRecordData *gribData,
-                      bool fCropParamsNotMensionedInTable,
+                      bool fCropParamsNotMentionedInTable,
                       const vector<ParamChangeItem>& theParamChangeTable)
 {
-  if (fCropParamsNotMensionedInTable && !theParamChangeTable.empty())
+  if (fCropParamsNotMentionedInTable && !theParamChangeTable.empty())
   {
     for (const auto& paramChangeItem : theParamChangeTable)
     {
@@ -2340,7 +2340,7 @@ bool IsGribFieldUsed(GridRecordData *tmpData, GribFilterOptions &theGribFilterOp
   if (!::AcceptThisLevelType(tmpData, theGribFilterOptions.itsAcceptOnlyLevelTypes))
     return false;
   return ::CropParam(tmpData,
-                     theGribFilterOptions.fCropParamsNotMensionedInTable,
+                     theGribFilterOptions.fCropParamsNotMentionedInTable,
                      theGribFilterOptions.itsParamChangeTable) == false;
 }
 
@@ -2502,7 +2502,7 @@ struct LevelLessThan
 
 namespace
 {
-map<int, int>::iterator FindHighesLevelType(map<int, int> levelTypeCounter)
+map<int, int>::iterator FindHighestLevelType(map<int, int> levelTypeCounter)
 {
   auto it = levelTypeCounter.begin();
   auto highestIt = levelTypeCounter.end();
@@ -2569,7 +2569,7 @@ vector<NFmiVPlaceDescriptor> GetAllVPlaceDescriptors(vector<GridRecordData *> &t
   else
   {  // tulostus tehdään cout:iin, ja tehdään vain yksi data, toivottavasti se on se merkitsevin,
      // eli otetaan se minkä tyyppisiä esiintyi eniten
-    auto lt = FindHighesLevelType(levelTypeCounter);
+    auto lt = FindHighestLevelType(levelTypeCounter);
     if (lt != levelTypeCounter.end())
     {
       NFmiVPlaceDescriptor vDesc = ::MakeVPlaceDescriptor(theGribRecordDatas, lt->first);

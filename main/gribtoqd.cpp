@@ -130,7 +130,7 @@ struct GribFilterOptions
   vector<FmiLevelType> itsAcceptOnlyLevelTypes;  // lista jossa ainoat hyväksyttävät level typet
   int itsGridInfoPrintCount = 0;
   vector<ParamChangeItem> itsParamChangeTable;
-  bool fCropParamsNotMensionedInTable = false;
+  bool fCropParamsNotMentionedInTable = false;
   bool fDoAtlanticFix = false;  // 0->360 global data ==> -180->180
   bool fDoPacificFix = false;   // -180->180 global data ==> 0->360
   bool fDoYAxisFlip = false;
@@ -1115,7 +1115,7 @@ struct ConnectionEdgeInfo
         throw runtime_error(
             "Only latlon-area types are supported when combining data areas, stopping...");
 
-      if (HasSameLatlonWidthAndHeigth(*finfo1.Grid()->Area(), *finfo2.Grid()->Area()))
+      if (HasSameLatlonWidthAndHeight(*finfo1.Grid()->Area(), *finfo2.Grid()->Area()))
       {
         if (finfo1.Level()->LevelType() == finfo2.Level()->LevelType())
         {
@@ -1154,7 +1154,7 @@ struct ConnectionEdgeInfo
     return kNoDirection;
   }
 
-  bool HasSameLatlonWidthAndHeigth(const NFmiArea &area1, const NFmiArea &area2)
+  bool HasSameLatlonWidthAndHeight(const NFmiArea &area1, const NFmiArea &area2)
   {
     double lonDiff1 = CalcLongitudeWidth(area1);
     double latDiff1 = CalcLatitudeWidth(area1);
@@ -2783,10 +2783,10 @@ bool AcceptThisLevelType(GridRecordData *data, vector<FmiLevelType> &theAcceptOn
 }
 
 bool CropParam(GridRecordData *gribData,
-               bool fCropParamsNotMensionedInTable,
+               bool fCropParamsNotMentionedInTable,
                vector<ParamChangeItem> &theParamChangeTable)
 {
-  if (fCropParamsNotMensionedInTable && !theParamChangeTable.empty())
+  if (fCropParamsNotMentionedInTable && !theParamChangeTable.empty())
   {
     for (auto& paramChangeItem : theParamChangeTable)
     {
@@ -3081,7 +3081,7 @@ NFmiVPlaceDescriptor MakeVPlaceDescriptor(vector<GridRecordData *> &theGribRecor
   return NFmiVPlaceDescriptor(levelBag);
 }
 
-map<int, int>::iterator FindHighesLevelType(map<int, int> levelTypeCounter)
+map<int, int>::iterator FindHighestLevelType(map<int, int> levelTypeCounter)
 {
   auto it = levelTypeCounter.begin();
   auto highestIt = levelTypeCounter.end();
@@ -3128,7 +3128,7 @@ vector<NFmiVPlaceDescriptor> GetAllVPlaceDescriptors(vector<GridRecordData *> &t
   else
   {  // tulostus tehdään cout:iin, ja tehdään vain yksi data, toivottavasti se on se merkitsevin,
      // eli otetaan se minkä tyyppisiä esiintyi eniten
-    auto lt = FindHighesLevelType(levelTypeCounter);
+    auto lt = FindHighestLevelType(levelTypeCounter);
     if (lt != levelTypeCounter.end())
     {
       NFmiVPlaceDescriptor vDesc = ::MakeVPlaceDescriptor(theGribRecordDatas, lt->first);
@@ -3716,7 +3716,7 @@ bool IsGribFieldUsed(grib_handle *gribHandle,
   if (!AcceptThisLevelType(tmpData, theGribFilterOptions.itsAcceptOnlyLevelTypes))
     return false;
   if (CropParam(tmpData,
-                theGribFilterOptions.fCropParamsNotMensionedInTable,
+                theGribFilterOptions.fCropParamsNotMentionedInTable,
                 theGribFilterOptions.itsParamChangeTable))
     return false;
   if (IsStepRangeCorrect(gribHandle,
@@ -4753,7 +4753,7 @@ bool IsGribFieldUsed(GridRecordData *tmpData, GribFilterOptions &theGribFilterOp
   if (!AcceptThisLevelType(tmpData, theGribFilterOptions.itsAcceptOnlyLevelTypes))
     return false;
   return !CropParam(tmpData,
-                    theGribFilterOptions.fCropParamsNotMensionedInTable,
+                    theGribFilterOptions.fCropParamsNotMentionedInTable,
                     theGribFilterOptions.itsParamChangeTable);
 }
 
@@ -5242,7 +5242,7 @@ int GetOptions(NFmiCmdLine &theCmdLine, GribFilterOptions &theGribFilterOptions)
   if (theCmdLine.isOption('g'))
     theGribFilterOptions.itsGridInfoPrintCount = Fmi::stoi(theCmdLine.OptionValue('g'));
   if (theCmdLine.isOption('d'))
-    theGribFilterOptions.fCropParamsNotMensionedInTable = true;
+    theGribFilterOptions.fCropParamsNotMentionedInTable = true;
 
   if (theCmdLine.isOption('a'))
     theGribFilterOptions.fDoAtlanticFix = true;

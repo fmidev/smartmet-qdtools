@@ -140,7 +140,7 @@ vector<NFmiQueryData *> ConvertGrib2QData(FILE *theInput,
                                           int &theDifferentAreaCount,
                                           const NFmiRect &theLatlonCropRect,
                                          const vector<ParamChangeItem>& theParamChangeTable,
-                                          bool fCropParamsNotMensionedInTable,
+                                          bool fCropParamsNotMentionedInTable,
                                           bool verbose,
                                           NFmiGrid *theWantedGrid,
                                           const NFmiPoint &thePressureDataGridSize,
@@ -390,7 +390,7 @@ int main(int argc, const char **argv)
       globalInvert = false;
     }
 
-    bool cropParamsNotMensionedInTable = false;
+    bool cropParamsNotMentionedInTable = false;
     bool doGlobeFix = true;
     if (cmdline.isOption('f'))
       doGlobeFix = false;
@@ -449,7 +449,7 @@ int main(int argc, const char **argv)
                               differentAreaCount,
                               latlonCropRect,
                               paramChangeTable,
-                              cropParamsNotMensionedInTable,
+                              cropParamsNotMentionedInTable,
                               verbose,
                               wantedGrid,
                               pressureDataGridSize,
@@ -1237,10 +1237,10 @@ void ChangeParamSettingsIfNeeded(const vector<ParamChangeItem>& theParamChangeTa
 }
 
 bool CropParam(GridRecordData *gribData,
-                      bool fCropParamsNotMensionedInTable,
+                      bool fCropParamsNotMentionedInTable,
                       const vector<ParamChangeItem>& theParamChangeTable)
 {
-  if (fCropParamsNotMensionedInTable && !theParamChangeTable.empty())
+  if (fCropParamsNotMentionedInTable && !theParamChangeTable.empty())
   {
     for (const auto& paramChangeItem : theParamChangeTable)
     {
@@ -1275,7 +1275,7 @@ bool CropParam(GridRecordData *gribData,
 bool IsGribFieldUsed(GridRecordData *tmpData,
                      NFmiLevelBag &theIgnoredLevelList,
                      const vector<FmiLevelType> &theAcceptOnlyLevelTypes,
-                     bool fCropParamsNotMensionedInTable,
+                     bool fCropParamsNotMentionedInTable,
                      const vector<ParamChangeItem> &theParamChangeTable)
 {
   if (!(tmpData->itsOrigGrid.itsNX > 2 || tmpData->itsOrigGrid.itsNY > 2))
@@ -1284,7 +1284,7 @@ bool IsGribFieldUsed(GridRecordData *tmpData,
     return false;
   if (!::AcceptThisLevelType(tmpData, theAcceptOnlyLevelTypes))
     return false;
-  return !::CropParam(tmpData, fCropParamsNotMensionedInTable, theParamChangeTable);
+  return !::CropParam(tmpData, fCropParamsNotMentionedInTable, theParamChangeTable);
 }
 
 vector<NFmiQueryData *> ConvertGrib2QData(FILE *theInput,
@@ -1298,7 +1298,7 @@ vector<NFmiQueryData *> ConvertGrib2QData(FILE *theInput,
                                           int &theDifferentAreaCount,
                                           const NFmiRect &theLatlonCropRect,
                                          const vector<ParamChangeItem>& theParamChangeTable,
-                                          bool fCropParamsNotMensionedInTable,
+                                          bool fCropParamsNotMentionedInTable,
                                           bool verbose,
                                           NFmiGrid *theWantedGrid,
                                           const NFmiPoint &thePressureDataGridSize,
@@ -1396,7 +1396,7 @@ vector<NFmiQueryData *> ConvertGrib2QData(FILE *theInput,
         if (IsGribFieldUsed(tmpData,
                             theIgnoredLevelList,
                             theAcceptOnlyLevelTypes,
-                            fCropParamsNotMensionedInTable,
+                            fCropParamsNotMentionedInTable,
                             theParamChangeTable))
         {
           ::FillGridData(gribHandle, tmpData, doGlobeFix, theParamChangeTable);
@@ -1469,7 +1469,7 @@ struct LevelLessThan
 
 namespace
 {
-map<int, int>::iterator FindHighesLevelType(map<int, int> levelTypeCounter)
+map<int, int>::iterator FindHighestLevelType(map<int, int> levelTypeCounter)
 {
   auto it = levelTypeCounter.begin();
   auto highestIt = levelTypeCounter.end();
@@ -1536,7 +1536,7 @@ vector<NFmiVPlaceDescriptor> GetAllVPlaceDescriptors(vector<GridRecordData *> &t
   else
   {  // tulostus tehdään cout:iin, ja tehdään vain yksi data, toivottavasti se on se merkitsevin,
      // eli otetaan se minkä tyyppisiä esiintyi eniten
-    auto lt = FindHighesLevelType(levelTypeCounter);
+    auto lt = FindHighestLevelType(levelTypeCounter);
     if (lt != levelTypeCounter.end())
     {
       NFmiVPlaceDescriptor vDesc = ::MakeVPlaceDescriptor(theGribRecordDatas, lt->first);

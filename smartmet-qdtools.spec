@@ -211,7 +211,7 @@ make %{_smp_mflags}
 
 %changelog
 * Wed Nov 11 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.11.11-1.fmi
-- Fixed typos in messages and comments
+- Fixed typos in messages, comments and identifiers
 
 * Tue Nov  3 2026 Mikko Visa <mikko.visa@fmi.fi> 26.11.3-1.fmi
 - bufrtoqd: do not overwrite a valid value with a missing one

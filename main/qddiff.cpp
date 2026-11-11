@@ -320,12 +320,12 @@ void print_change_analysis(NFmiFastQueryInfo& theQ1, NFmiFastQueryInfo& theQ2)
 
   cout << endl;
 
-  for (auto& param_statu : param_status)
+  for (auto& param_entry : param_status)
   {
-    cout << (param_statu.second ? "CHANGED " : "unchanged ")
-         << converter.ToString(param_statu.first);
-    if (param_statu.second)
-      cout << " in " << param_statu.second << " timesteps";
+    cout << (param_entry.second ? "CHANGED " : "unchanged ")
+         << converter.ToString(param_entry.first);
+    if (param_entry.second)
+      cout << " in " << param_entry.second << " timesteps";
     cout << endl;
   }
 }

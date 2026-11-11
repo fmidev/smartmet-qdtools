@@ -157,10 +157,10 @@ string GetParamMinMaxString(const NFmiParamCheckData &theParamCheckData)
  */
 // ----------------------------------------------------------------------
 
-void SetErrorStatus(int &theCurrentErrorLevel, int theOccuredErrorCode)
+void SetErrorStatus(int &theCurrentErrorLevel, int theOccurredErrorCode)
 {
-  if (theCurrentErrorLevel == 0 || theCurrentErrorLevel > theOccuredErrorCode)
-    theCurrentErrorLevel = theOccuredErrorCode;
+  if (theCurrentErrorLevel == 0 || theCurrentErrorLevel > theOccurredErrorCode)
+    theCurrentErrorLevel = theOccurredErrorCode;
 }
 
 // ----------------------------------------------------------------------

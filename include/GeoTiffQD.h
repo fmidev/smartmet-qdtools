@@ -32,7 +32,7 @@ class GeoTiffQD
   virtual ~GeoTiffQD(void) {}
   GeoTiffQD(int code = 0);
 
-  GeomDefinedType ConverQD2GeoTiff(string aNameVersion,
+  GeomDefinedType ConvertQD2GeoTiff(string aNameVersion,
                                    NFmiFastQueryInfo *theData,
                                    NFmiFastQueryInfo *theExternal,
                                    string tsrs,
@@ -42,7 +42,7 @@ class GeoTiffQD
   void SetTestMode(bool testMode);
 
  private:
-  NFmiFastQueryInfo *generateLatLonInfo(NFmiFastQueryInfo *orginData);
+  NFmiFastQueryInfo *generateLatLonInfo(NFmiFastQueryInfo *originData);
   int *fillIntRasterByQD(NFmiFastQueryInfo *theData,
                          NFmiFastQueryInfo *theSecondData,
                          int width,

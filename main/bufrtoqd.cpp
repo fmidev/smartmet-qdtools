@@ -1369,24 +1369,24 @@ std::pair<BufrDataCategory, Messages> read_messages(const std::list<std::string>
 
   // Process the files
 
-  int succesful_parse_events = 0;
-  int errorneous_parse_events = 0;
+  int successful_parse_events = 0;
+  int erroneous_parse_events = 0;
 
   for (const std::string& file : files)
   {
     try
     {
       read_message(file, messages, datacategories, skipped_categories);
-      succesful_parse_events++;
+      successful_parse_events++;
     }
     catch (std::exception& e)
     {
-      errorneous_parse_events++;
+      erroneous_parse_events++;
       std::cerr << "Warning: " << e.what() << std::endl;
     }
     catch (...)
     {
-      errorneous_parse_events++;
+      erroneous_parse_events++;
       std::cerr << "Warning: Failed to interpret message '" << file << "'" << std::endl;
     }
   }
@@ -1428,8 +1428,8 @@ std::pair<BufrDataCategory, Messages> read_messages(const std::list<std::string>
   if (options.verbose)
   {
     std::cout << "Examined " << files.size() << " files" << std::endl
-              << "Successfully parsed " << succesful_parse_events << " files" << std::endl
-              << "Failed to parse " << errorneous_parse_events << " files" << std::endl;
+              << "Successfully parsed " << successful_parse_events << " files" << std::endl
+              << "Failed to parse " << erroneous_parse_events << " files" << std::endl;
   }
 
   return std::make_pair(BufrDataCategory(*datacategories.begin()), messages);

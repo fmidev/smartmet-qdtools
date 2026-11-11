@@ -202,7 +202,7 @@ void Domain(int argc, const char *argv[])
   int numOfParams = cmdline.NumberofParameters();
   if (numOfParams < 1)
   {
-    cerr << "Error: Atleast 1 parameter expected, 'fileFilter1 [fileFilter2 ...]'\n\n";
+    cerr << "Error: At least 1 parameter expected, 'fileFilter1 [fileFilter2 ...]'\n\n";
     Usage();
     throw runtime_error("");  // tässä piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
@@ -294,6 +294,6 @@ void Domain(int argc, const char *argv[])
       throw runtime_error("Error: Couldn't write combined qdata to stdout.");
   }
   else
-    throw runtime_error("Error CombineQueryDatas: coudn't combine datas.");
+    throw runtime_error("Error CombineQueryDatas: couldn't combine datas.");
 }
 }  // namespace

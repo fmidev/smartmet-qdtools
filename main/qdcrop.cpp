@@ -502,7 +502,7 @@ void BoundsToGeometry(NFmiFastQueryInfo& theQ,
  * \param theQ The query info from which to construct
  * \param theStations The stations to extract, or extract all if empty
  * \param theStations The stations to remove
- * \param theGeometry The geomery to parse
+ * \param theGeometry The geometry to parse
  * \param theBounds The bounds to parse
  * \param theSteps The grid stepsizes to parse
  * \param theProj The projection specification

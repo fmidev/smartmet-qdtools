@@ -58,7 +58,7 @@ struct Options
   std::optional<std::string> zdim{""};  // --zdim name. Usually 'lev' or 'zc'
   std::optional<std::string> tdim;      // --tdim name. Usually 'time', sometimes 't'
 
-  AttributesMap cmdLineGlobalAttributes;  // -a Add global attrubutes, f.ex. -a DX=1356.3;DY=1265.3
+  AttributesMap cmdLineGlobalAttributes;  // -a Add global attributes, f.ex. -a DX=1356.3;DY=1265.3
   double tolerance = 1e-3;                // Axis stepping tolerance
   long producernumber = 0;                // --producernumber
   long timeshift = 0;                     // -t <minutes>

@@ -838,7 +838,7 @@ bool IsYVariable(const netCDF::NcVar &theVar)
 long GetVarLongValue(const netCDF::NcVar &theVar, long theIndex = 0)
 {
   // There is API for getting the value of a variable as specified type, but this form
-  // of call wuold only work is getDimCount() == 1. Is that correct?
+  // of call would only work is getDimCount() == 1. Is that correct?
   // Try to get entire data to avoid this possible problem
   const std::vector<long> vals = get_values<long>(theVar);
   return vals.at(theIndex);
@@ -849,7 +849,7 @@ float GetVarFloatValue(const netCDF::NcVar &theVar, long theIndex = 0)
 {
   //return theVar.as_float(theIndex);
   // There is API for getting the value of a variable as specified type, but this form
-  // of call wuold only work is getDimCount() == 1. Is that correct?
+  // of call would only work is getDimCount() == 1. Is that correct?
   // Try to get entire data to avoid this possible problem
   const std::vector<float> vals = get_values<float>(theVar);
   return vals.at(theIndex);

@@ -783,7 +783,7 @@ void copy_ash_boundary_file(NFmiFastQueryInfo& info, const fs::path& file)
 
   // Poke the on/off values into the querydata.
 
-  // Needed since for does not like templates in it : atleast not with g++
+  // Needed since for does not like templates in it : at least not with g++
   using value_type = std::map<std::string, NFmiSvgPath>::value_type;
 
   for (const value_type& vt : paths)

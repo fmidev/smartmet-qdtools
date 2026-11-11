@@ -445,7 +445,7 @@ int Run(int argc, const char *argv[])
 
   if (cmdline.NumberofParameters() < 1)
   {
-    cerr << "Error: Atleast 1 parameter expected, 'directory'\n\n";
+    cerr << "Error: At least 1 parameter expected, 'directory'\n\n";
     Usage();
     throw runtime_error("");  // tässä piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.

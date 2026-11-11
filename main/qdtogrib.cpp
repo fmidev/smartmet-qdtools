@@ -543,7 +543,7 @@ void set_rotated_latlon_geometry(NFmiFastQueryInfo &theInfo,
  * gridType = "polar_stereographic"
  * bitmapPresent = 0
  *
- * HOWEVER: GRIB1 has a fixed true latitude of 60 degrees, atleast if you
+ * HOWEVER: GRIB1 has a fixed true latitude of 60 degrees, at least if you
  * look at /usr/share/grib_api/definitions/grib1/grid_definition_5.def
  */
 // ----------------------------------------------------------------------

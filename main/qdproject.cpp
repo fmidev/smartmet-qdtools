@@ -288,7 +288,7 @@ int run(int argc, const char* argv[])
               cmdline.isOption('I'));
 
   if (opts == 0)
-    throw runtime_error("Atleast one of options -l -L -i -I must be given");
+    throw runtime_error("At least one of options -l -L -i -I must be given");
 
   if (opts > 1)
     throw runtime_error("Only one of options -l -L -i -I can be given at the same time");

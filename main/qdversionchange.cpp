@@ -16,7 +16,7 @@
  *  totalwind parametrit. WD ja WS parametreja on käytetty rakentamaan totalwind
  *  parametria ja ne on sitten poistettu lopullisesta datasta. \par
  *
- *  Muutoksia vanhaan versioon: \par
+ *  Muutoksia vanhaan version: \par
  *  \li Enää ei tarvitse antaa tulosdatan parambagia ohjelman argumenttina,
  *  koska ohjelma analysoi datan itse.
  *  \li UusiFiltteri-ohjelma toimii putkena, joten sille annetaan lähde

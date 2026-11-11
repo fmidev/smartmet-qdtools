@@ -643,7 +643,7 @@ int run(int argc, char* argv[])
         // Verify convention requirement
         ncfile->require_conventions(&(options.conventions));
 
-        // Establish wanted axis parameters, this throws if unsuccesful
+        // Establish wanted axis parameters, this throws if unsuccessful
         ncfile->initAxis(options.xdim, options.ydim, options.zdim, options.tdim);
 
         // Save initialized state for further processing

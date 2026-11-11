@@ -531,7 +531,7 @@ std::shared_ptr<NFmiGrid> GetGridFromProjectionStr(string &theProjectionStr,
     std::shared_ptr<NFmiArea> area = NFmiAreaFactory::Create(areaStr);
     auto values = NFmiStringTools::Split<std::vector<double> >(gridStr, ",");
     if (values.size() != 2)
-      throw runtime_error("Given GridSize was invlid, has to be two numbers (e.g. x,y).");
+      throw runtime_error("Given GridSize was invalid, has to be two numbers (e.g. x,y).");
     NFmiPoint gridSize(values[0], values[1]);
     std::shared_ptr<NFmiGrid> grid(new NFmiGrid(area->Clone(),
                                                 static_cast<unsigned int>(gridSize.X()),
@@ -543,7 +543,7 @@ std::shared_ptr<NFmiGrid> GetGridFromProjectionStr(string &theProjectionStr,
 
   auto values = NFmiStringTools::Split<std::vector<double> >(gridStr, ",");
   if (values.size() != 2)
-    throw runtime_error("Given GridSize was invlid, has to be two numbers (e.g. x,y).");
+    throw runtime_error("Given GridSize was invalid, has to be two numbers (e.g. x,y).");
 
   NFmiPoint gridSize(values[0], values[1]);
   std::shared_ptr<NFmiGrid> grid(new NFmiGrid(area->Clone(),
@@ -3880,7 +3880,7 @@ void ConvertOneGribFile(const GribFilterOptions &theGribFilterOptionsIn,
     {
       std::string errorStr(
           "Encountered reduced_ll grib data, ignoring it and won't use wgrib to unpack it");
-      DoErrorReporting("Error accured when converting grib-file:",
+      DoErrorReporting("Error occurred when converting grib-file:",
                        "with error:",
                        theGribFileName,
                        nullptr,
@@ -3900,11 +3900,11 @@ void ConvertOneGribFile(const GribFilterOptions &theGribFilterOptionsIn,
   catch (std::exception &e)
   {
     DoErrorReporting(
-        "Error accured when converting grib-file:", "with error:", theGribFileName, &e);
+        "Error occurred when converting grib-file:", "with error:", theGribFileName, &e);
   }
   catch (...)
   {
-    DoErrorReporting("Unknown error accured when converting grib-file:", "", theGribFileName);
+    DoErrorReporting("Unknown error occurred when converting grib-file:", "", theGribFileName);
   }
 }
 }  // namespace
@@ -4979,11 +4979,11 @@ void ConvertOneGribFile(const GribFilterOptions &theGribFilterOptionsIn,
   catch (std::exception &e)
   {
     DoErrorReporting(
-        "Error occured when converting grib-file:", "with error:", theGribFileName, &e);
+        "Error occurred when converting grib-file:", "with error:", theGribFileName, &e);
   }
   catch (...)
   {
-    DoErrorReporting("Unknown error occured when converting grib-file:", "", theGribFileName);
+    DoErrorReporting("Unknown error occurred when converting grib-file:", "", theGribFileName);
   }
 }
 }  // namespace
@@ -5087,7 +5087,7 @@ void Usage()
        << endl
        << "Options:" << endl
        << endl
-       << "\t-o output\tDefault data is writen to stdout." << endl
+       << "\t-o output\tDefault data is written to stdout." << endl
        << "\t-l t105v3,t109v255,...\tIgnore following individual levels" << endl
        << "\t\t(e.g. 1. type 105, value 3, 2. type 109, value 255, etc.)" << endl
        << "\t\tYou can use *-wildcard with level value to ignore" << endl
@@ -5106,10 +5106,10 @@ void Usage()
        << "\t-t   Reports run-time to the stderr at the end of execution" << endl
        << "\t-v   verbose mode" << endl
        << "\t-C   try to combine larger areas" << endl
-       << "\t-z   read data lines in zig-zag fashion, starting left to rigth" << endl
+       << "\t-z   read data lines in zig-zag fashion, starting left to right" << endl
        << "\t-i   Ignore reduced_ll data, keep using grib_api for conversion" << endl
-       << "\t-d   Crop all params except those mensioned in paramChangeTable" << endl
-       << "\t\t(and their mensioned levels)" << endl
+       << "\t-d   Crop all params except those mentioned in paramChangeTable" << endl
+       << "\t\t(and their mentioned levels)" << endl
        << "\t-c paramChangeTableFile\tIf params id and name changes are done here is" << endl
        << "\t\tfile name where is the wanted change table." << endl
        << "\t-g printed-grid-info-count\tIf you want to print out (to cerr)" << endl

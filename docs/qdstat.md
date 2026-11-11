@@ -1,6 +1,6 @@
 The qdstat program calculates statistics on querydata values. Useful when inspecting suspicious data.
 
-NOTE! Some parametres cannot be checked with `qdstat` or are checked wrong. For example parameter WindVectorMS is reported to have very strange values, when in fact it can be correct in the querydata. 
+NOTE! Some parameters cannot be checked with `qdstat` or are checked wrong. For example parameter WindVectorMS is reported to have very strange values, when in fact it can be correct in the querydata. 
 
 ## Command line
 

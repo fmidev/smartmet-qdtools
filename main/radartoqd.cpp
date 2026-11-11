@@ -353,7 +353,7 @@ void print_metadata()
             << std::endl
             << "Clear-air attenuation correction      = " << i.clear_air_attenuation_correction
             << std::endl
-            << "Precipitation attentuation correction = " << i.precipitation_attenuation_correction
+            << "Precipitation attenuation correction = " << i.precipitation_attenuation_correction
             << std::endl
             << std::endl
             << "dBZ scale                             = " << i.scale.dbz_values << std::endl
@@ -585,7 +585,7 @@ bool store_geometry(dd* d, varfl val)
     radar_data.meta.radar_height = val;
   else if (bufr_check_fxy(d, 0, 7, 6)) /* Height above station */
     radar_data.meta.height_above_station = val;
-  else if (bufr_check_fxy(d, 0, 10, 7)) /* Measurement heigts */
+  else if (bufr_check_fxy(d, 0, 10, 7)) /* Measurement heights */
     radar_data.img.heights.push_back(val);
   else
     return false;
@@ -595,7 +595,7 @@ bool store_geometry(dd* d, varfl val)
 // Store the measurement scale descriptors, returns false for other descriptors
 bool store_scale(dd* d, varfl val)
 {
-  if (bufr_check_fxy(d, 0, 21, 200)) /* Measurement heigts */
+  if (bufr_check_fxy(d, 0, 21, 200)) /* Measurement heights */
     radar_data.img.cappi_heights.push_back(val);
   else if (bufr_check_fxy(d, 0, 21, 1)) /* dBZ measurement limit */
     radar_data.img.scale.dbz_values.push_back(val);

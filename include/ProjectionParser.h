@@ -38,7 +38,7 @@
  *
  * All projections require either the bottomleft and topright commands
  * or the center and scale commands. latlon, ykj and mercator require
- * nothing else. The others require atleast central longitude and latitude,
+ * nothing else. The others require at least central longitude and latitude,
  * gnomonic and stereographic also the true latitude.
  */
 // ======================================================================

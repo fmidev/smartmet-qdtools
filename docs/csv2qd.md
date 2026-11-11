@@ -90,7 +90,7 @@ A sample file:
     98747,98747,124.28,8.43,"Lumbia Airport"
     3318,3318,-3.03,53.76,"Blackpool Airport"
 
-### Parameter defininition file syntax
+### Parameter definition file syntax
 
 The parameters are described using a CSV file which can be specified with option -P. The format of the file is
 

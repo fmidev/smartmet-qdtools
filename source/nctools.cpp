@@ -107,7 +107,7 @@ void check_nctoqd_files(const boost::program_options::variables_map& opt, Option
       // Output file not explicitly specified
       if (options.infiles.size() > 2)
         throw std::runtime_error(
-            "You must specifify desired output file with -o parameter for multiple inputs");
+            "You must specify desired output file with -o parameter for multiple inputs");
       if (options.infiles.size() == 1)
         throw std::runtime_error(
             "Must specify output file either with the -o option or as the last parameter");

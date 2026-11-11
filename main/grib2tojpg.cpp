@@ -1317,7 +1317,7 @@ vector<NFmiQueryData *> ConvertGrib2QData(FILE *theInput,
     //		int status = 0;
     int counter = 0;
     NFmiMetTime firstValidTime;
-    cerr << endl << "Reading and intepreting grib fields." << endl;
+    cerr << endl << "Reading and interpreting grib fields." << endl;
     //		while((gribHandle = grib_handle_new_from_file(0, theInput, &err)) != nullptr)
     while ((gribHandle = grib_handle_new_from_file(gribContext, theInput, &err)) != nullptr ||
            err != GRIB_SUCCESS)

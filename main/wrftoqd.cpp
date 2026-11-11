@@ -1586,7 +1586,7 @@ int run(int argc, char *argv[])
     ncfile.setOptions(options);
     ncfile.setWRF(true);
 
-    // Establish wanted axis parameters, this throws if unsuccesful
+    // Establish wanted axis parameters, this throws if unsuccessful
     ncfile.initAxis(options.xdim, options.ydim, options.zdim, options.tdim);
 
     if (!ncfile.is_open())

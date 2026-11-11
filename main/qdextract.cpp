@@ -127,7 +127,7 @@ bool parse_options(int argc, char* argv[])
   }
 
   if (opt.count("locations") == 0)
-    throw std::runtime_error("Excpecting locations file as parameter 1");
+    throw std::runtime_error("Expecting locations file as parameter 1");
 
   return true;
 }

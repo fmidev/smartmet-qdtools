@@ -59,7 +59,7 @@ void Usage()
        << "Options (default values are always current parameters current values):" << endl
        << endl
        << "   -d <paramId>\t\tNew parameter id/name (seew qdinfo -l)" << endl
-       << "   -n <description>\t\tNew parameter desciption" << endl
+       << "   -n <description>\t\tNew parameter description" << endl
        << "   -N <producerName>\tNew producer name (changes all parameters prod name," << endl
        << "   \t\t\tno param id argument needed" << endl
        << "   -D <producerId>\tNew producer id (changes all parameters prod ID," << endl
@@ -87,7 +87,7 @@ void check_arguments(NFmiCmdLine& cmdline, bool producerChange, bool levelChange
   if ((producerChange || originChange || levelChange) &&
       (cmdline.NumberofParameters() < 1 || cmdline.NumberofParameters() > 2))
   {
-    cerr << "Error: atleast 1 parameter expected when changing producer, level or origin time, "
+    cerr << "Error: at least 1 parameter expected when changing producer, level or origin time, "
             "dataFile\n\n";
     Usage();
     throw runtime_error("");

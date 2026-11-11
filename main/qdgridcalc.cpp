@@ -208,7 +208,7 @@ void Domain(int argc, const char *argv[])
   int numOfParams = cmdline.NumberofParameters();
   if (!doDataGridSizeCheck && numOfParams != 3)
   {
-    cout << "Error: Atleast 3 parameter expected, 'projectionstring x_km y_km'\n\n";
+    cout << "Error: At least 3 parameter expected, 'projectionstring x_km y_km'\n\n";
     ::Usage();
     throw runtime_error("");  // tässä piti ensin tulostaa cout:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.

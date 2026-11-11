@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 26.11.3
+Version: 26.11.11
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -210,6 +210,9 @@ make %{_smp_mflags}
 %{_mandir}/man1/*.1.gz
 
 %changelog
+* Wed Nov 11 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.11.11-1.fmi
+- Fixed typos in messages and comments
+
 * Tue Nov  3 2026 Mikko Visa <mikko.visa@fmi.fi> 26.11.3-1.fmi
 - bufrtoqd: do not overwrite a valid value with a missing one
 

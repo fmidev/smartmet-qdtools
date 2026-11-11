@@ -53,7 +53,7 @@ void Run(int argc, const char *argv[])
 
   if (cmdline.NumberofParameters() < 1)
   {
-    cerr << "Error: atleast 1 parameter expected, 'scriptFile'\n\n";
+    cerr << "Error: at least 1 parameter expected, 'scriptFile'\n\n";
     Usage(argv[0]);
     throw runtime_error("");  // tässä piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.

@@ -419,7 +419,7 @@ void ensemble(unsigned char *pds, int mode);
  *                              Wesley Ebisuzaki
  *
  * 11/94 - v1.0
- * 11/94 - v1.1: arbitary size grids, -i option
+ * 11/94 - v1.1: arbitrary size grids, -i option
  * 11/94 - v1.2: bug fixes, ieee option, more info
  * 1/95  - v1.2.4: fix headers for SUN acc
  * 2/95  - v1.2.5: add num_ave in -s listing

@@ -1506,7 +1506,7 @@ std::string get_interval(const Fmi::HDF5::Hdf5File& file)
     if (intervals.empty() || intervals.size() > 1)
       return {};
 
-    // Interval must be nonzero. Negative is probably a data error, we handle it simultaenously.
+    // Interval must be nonzero. Negative is probably a data error, we handle it simultaneously.
     auto interval = *intervals.begin();
     auto seconds = interval.total_seconds();
     if (seconds <= 0)

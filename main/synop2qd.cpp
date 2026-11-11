@@ -482,7 +482,7 @@ class NFmiSynopCode
       stringstream ssin(theSynopStr);
       string tmpStr;
       for (int i = 0; i < theWordSkipCount; i++)
-        ReadNextField(ssin, tmpStr, "skippin words in DecodeBouy", theSynopStr, true);
+        ReadNextField(ssin, tmpStr, "skipping words in DecodeBouy", theSynopStr, true);
 
       string QcLaLaLaLaLa_Str;  // pakollinen
       ReadNextField(ssin, QcLaLaLaLaLa_Str, "QcLaLaLaLaLa", theSynopStr, true);
@@ -913,7 +913,7 @@ class NFmiSynopCode
       stringstream ssin(theSynopStr);
       string tmpStr;
       for (int i = 0; i < theWordSkipCount; i++)
-        ReadNextField(ssin, tmpStr, "skippin words in Decode", theSynopStr, true);
+        ReadNextField(ssin, tmpStr, "skipping words in Decode", theSynopStr, true);
 
       if (fDoShipMessages)
         DecodeShipLocation(ssin, theSynopStr);
@@ -2059,7 +2059,7 @@ void Domain(int argc, const char *argv[])
   int numOfParams = cmdline.NumberofParameters();
   if (numOfParams < 1)
   {
-    cerr << "Error: Atleast 1 parameter expected, 'fileFilter1 [fileFilter2 ...]'\n\n";
+    cerr << "Error: At least 1 parameter expected, 'fileFilter1 [fileFilter2 ...]'\n\n";
     ::Usage();
     throw runtime_error("");  // tässä piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.
@@ -2153,7 +2153,7 @@ void Domain(int argc, const char *argv[])
     cerr << "Completing the task, data was created and written to a file (stdout)." << endl;
   }
   else
-    throw runtime_error("Error CombineQueryDatas: coudn't combine datas.");
+    throw runtime_error("Error CombineQueryDatas: couldn't combine datas.");
 
   timer.StopTimer();
   std::cerr << "Elapsed time " << timer.EasyTimeDiffStr() << std::endl;

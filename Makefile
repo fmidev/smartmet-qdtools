@@ -47,7 +47,7 @@ LIBS += -ljemalloc \
 EXTRA_LIBS :=
 bufrtoqd: EXTRA_LIBS += -leccodes
 radartoqd: EXTRA_LIBS += -lbufr
-# Unfortunatelly HdfTools.o presence in libqdtools.a requires use of libqdf5 in common libraries for all
+# Unfortunately HdfTools.o presence in libqdtools.a requires use of libqdf5 in common libraries for all
 #h5toqd: EXTRA_LIBS += -lhdf5
 metar2qd: EXTRA_LIBS += -lmetar
 grib2tojpg grib2toqd gribtoqd qdtogrib: EXTRA_LIBS += -leccodes

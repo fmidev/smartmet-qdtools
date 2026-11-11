@@ -314,7 +314,7 @@ The command syntax is
     smoother [type] [factor] [radius]
 
 The command is used to smoothen the querydata before contours are calculated from it.
-Currently the only good smoother type is PseudoGaussian. The value for factor should range somewhere from 1 up to 20-30, with higher values meaning less smoothing. The radius should be adapted to the data. Usually the value should be atleast twice the value of the grid spacing, maybe even 3. Any higher values will slow down the smoother rapidly.
+Currently the only good smoother type is PseudoGaussian. The value for factor should range somewhere from 1 up to 20-30, with higher values meaning less smoothing. The radius should be adapted to the data. Usually the value should be at least twice the value of the grid spacing, maybe even 3. Any higher values will slow down the smoother rapidly.
 
 ### contourcommands
 

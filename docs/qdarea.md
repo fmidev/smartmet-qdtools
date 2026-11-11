@@ -90,8 +90,8 @@ The functions available for option -P are
 |sdev|Standard deviation|
 |trend|Trend|
 |change|Total change|
-|count[lo:hi]|Occurrance count, requires limits|
-|percentage[lo:hi]|Occurrance percentage, requires limits|
+|count[lo:hi]|Occurrence count, requires limits|
+|percentage[lo:hi]|Occurrence percentage, requires limits|
 
 If either limit is missing from count or percentage, the accepted range is open ended.
 

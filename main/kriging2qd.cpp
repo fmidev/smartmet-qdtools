@@ -427,7 +427,7 @@ NFmiHPlaceDescriptor make_hdesc(const KrigingData& theData)
     yset.insert(it.first.Y());
   }
 
-  // We require atleast a 2x2 grid
+  // We require at least a 2x2 grid
 
   if (xset.size() < 2)
     throw runtime_error("Not enough x-coordinates in to deduce grid size");

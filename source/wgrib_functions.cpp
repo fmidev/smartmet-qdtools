@@ -5701,7 +5701,7 @@ int add_time(int *year, int *month, int *day, int *hour, int dtime, int unit)
       jday++;
     dtime += jday;
 
-    /* 4 year chuncks */
+    /* 4 year chunks */
     i = dtime / (4 * 365 + 1);
     if (i)
     {

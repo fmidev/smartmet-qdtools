@@ -331,7 +331,7 @@ ParameterRequest::ParameterRequest(const string& theRequest)
   }
 
   if (parts.size() < 2 || parts.size() > 3)
-    throw runtime_error("Errorneous parameter request: '" + theRequest + "'");
+    throw runtime_error("Erroneous parameter request: '" + theRequest + "'");
 
   const string paramname = parts.back();
   const string functionname1 = parts.front();

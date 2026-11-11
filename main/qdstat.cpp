@@ -244,7 +244,7 @@ bool parse_options(int argc, char* argv[])
   }
 
   if (opt.count("infile") == 0)
-    throw std::runtime_error("Excpecting input querydata as parameter 1");
+    throw std::runtime_error("Expecting input querydata as parameter 1");
 
   if (options.infile != "-" && !fs::exists(options.infile))
     throw std::runtime_error("Input file '" + options.infile + "' does not exist");
@@ -262,7 +262,7 @@ bool parse_options(int argc, char* argv[])
     throw std::runtime_error("Must have at least 2 bins");
 
   if (options.barsize < 10)
-    throw std::runtime_error("Bar graph width must be at leats 10");
+    throw std::runtime_error("Bar graph width must be at least 10");
 
   // Check incompatible options
 
@@ -638,7 +638,7 @@ const char* Stats::desc(double value) const
         case 62:
           return " moderate intermittent rain";
         case 63:
-          return " moderate continous rain";
+          return " moderate continuous rain";
         case 64:
           return " heavy intermittent rain";
         case 65:

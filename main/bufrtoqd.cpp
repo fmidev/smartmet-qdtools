@@ -341,7 +341,7 @@ void parse_option_remap(const std::string& remapdef)
   //
   // All given bufr codes are changed to first/primary code before loading the messages.
   // Thus data can be loaded from multiple bufr codes to the same qd parameter, without
-  // defining multiple mappings in configuration (which would currenty result into duplicate
+  // defining multiple mappings in configuration (which would currently result into duplicate
   // qd parameters in parambag). Mapping 'ident' is used to list the codes to extract aircraft
   // reg. nr or other identification to group/collect amdar messages
   //
@@ -1428,7 +1428,7 @@ std::pair<BufrDataCategory, Messages> read_messages(const std::list<std::string>
   if (options.verbose)
   {
     std::cout << "Examined " << files.size() << " files" << std::endl
-              << "Succesfully parsed " << succesful_parse_events << " files" << std::endl
+              << "Successfully parsed " << succesful_parse_events << " files" << std::endl
               << "Failed to parse " << errorneous_parse_events << " files" << std::endl;
   }
 
@@ -2296,7 +2296,7 @@ NFmiTimeDescriptor create_tdesc(const Messages& messages,
     }
     catch (const std::exception& e)
     {
-      std::cerr << "Skipping errorneous valid time: " << e.what() << std::endl;
+      std::cerr << "Skipping erroneous valid time: " << e.what() << std::endl;
     }
   }
 
@@ -4715,7 +4715,7 @@ void decode_cloudtypes(const Messages& origmessages, Messages& messages)
     Note: See Regulation 12.5 concerning the use of Section 4.
   */
 
-  /* Test data contais following 8002 and 12002 combinations / value ranges:
+  /* Test data contains following 8002 and 12002 combinations / value ranges:
 
        CL, low clouds:
 

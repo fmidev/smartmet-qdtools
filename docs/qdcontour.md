@@ -295,7 +295,7 @@ The origintimestamp is the time stamp string generated from the origin time of t
 
     timestamp [0-1|0-1]
 
-The format of the tiemstamp can be controlled using the command
+The format of the timestamp can be controlled using the command
 
     timestampformat value
 
@@ -631,7 +631,7 @@ Note that the steps dx and dy can be fractional. For example, using a step 0.5 w
 
 The commands have an effect only on the active parameter.
 
-Often the coordinate from which the label value is taken is not convenient for placing the label itself. One can adjust the location of the label sligthly by using
+Often the coordinate from which the label value is taken is not convenient for placing the label itself. One can adjust the location of the label slightly by using
 
     labeloffset [dx] [dy]
 
@@ -743,7 +743,7 @@ one can turn on an internal cache for all calculated contours. The contours will
 
 However, there is no doubt the cache is not foolproof. For example, if one changes the data smoother between two maps, the cache will not notice it.
 
-As a key rule, if all you change is the backgrounds, foregrounds and the projections, you're safe in using the cache. If not, one should atleast clear the cache before rendering the "new" set of images with
+As a key rule, if all you change is the backgrounds, foregrounds and the projections, you're safe in using the cache. If not, one should at least clear the cache before rendering the "new" set of images with
 
     clear cache
 
@@ -1014,7 +1014,7 @@ In addition, the following extra blending modes are defined:
     Substract alpha-factored RGBA values (Fs=1, Fd=-1)
 * **Add**  
     Add RGBA values
-* **Substract**  
+* **Subtract**  
     Substract RGBA values
 * **Multiply**  
     Multiply RGBA values

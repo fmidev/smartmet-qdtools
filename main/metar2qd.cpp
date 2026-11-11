@@ -1214,7 +1214,7 @@ void FillMetarDataCloudSection2(MetarData &data,
       cloudCoverStr);  // joskus stringissä on rivin vaihtoja tms, siivotaan se ensin
   if (!cloudCoverStr.empty() &&
       cloudCoverStr !=
-          "VV")  // VV eli vertical visibilty ignoorataan tässä, koska se hoidetaan toisaalla
+          "VV")  // VV eli vertical visibility ignoorataan tässä, koska se hoidetaan toisaalla
   {
     float value = kFloatMissing;
     if (::FindWeatherValue(cloudCoverStr, cloudCover_symbols, value, true))
@@ -1224,7 +1224,7 @@ void FillMetarDataCloudSection2(MetarData &data,
       if (fVerboseMode)
       {
         cerr << "Warning: " << theFieldName.c_str()
-             << " field was given but there was unkonwn code in it: '" << cloudCoverStr.c_str()
+             << " field was given but there was unknown code in it: '" << cloudCoverStr.c_str()
              << "' from METAR:\n";
         cerr << theMetarStr.c_str();
         cerr << "\nFrom file: " << theMetarFileName.c_str();
@@ -1247,7 +1247,7 @@ void FillMetarDataCloudSection2(MetarData &data,
       if (fVerboseMode)
       {
         cerr << "Warning: " << theFieldName.c_str()
-             << " field was given but there was unkonwn code in it: '" << cloudTypeStr.c_str()
+             << " field was given but there was unknown code in it: '" << cloudTypeStr.c_str()
              << "' from METAR:\n";
         cerr << theMetarStr.c_str();
         cerr << "\nFrom file: " << theMetarFileName.c_str();
@@ -1927,7 +1927,7 @@ void run(int argc, const char *argv[])
   int numOfParams = cmdline.NumberofParameters();
   if (numOfParams < 1)
   {
-    cerr << "Error: Atleast 1 parameter expected, 'fileFilter1[,fileFilter2,...]'\n\n";
+    cerr << "Error: At least 1 parameter expected, 'fileFilter1[,fileFilter2,...]'\n\n";
     ::Usage(argv[0]);
     throw runtime_error("");  // tässä piti ensin tulostaa cerr:iin tavaraa ja sitten vasta Usage,
                               // joten en voinut laittaa virheviesti poikkeuksen mukana.

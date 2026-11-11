@@ -69,7 +69,7 @@ Alternatively, if we wish to keep only forecasts less than 48 hours old we can u
 
     cleaner -maxmtime 48 '\.sqd$' /smartmet/data/gfs/europe/surface/querydata
 
-However, in case there is a problem with obtaining GFS querydata, this command might actually delete the latest available forecast. Hence it would be better to make sure atleast one forecast remains with
+However, in case there is a problem with obtaining GFS querydata, this command might actually delete the latest available forecast. Hence it would be better to make sure at least one forecast remains with
 
     cleaner -minfiles 1 -maxmtime 48 '\.sqd$' /smartmet/data/gfs/europe/surface/querydata
 

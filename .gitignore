@@ -33,6 +33,8 @@ obj/
 .kdbgrc*
 Dependencies*
 /.vscode
+/.claude
+/tmp
 /ashtoqd
 /bufrtoqd
 /combineHistory

@@ -26,8 +26,8 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot-%(%{__id_u} -n)
 
 BuildRequires: %{smartmet_boost}-devel
 BuildRequires: bzip2-devel
-BuildRequires: eccodes <= 2.31.1
-BuildRequires: eccodes-devel <= 2.31.1
+BuildRequires: eccodes >= 2.31.0
+BuildRequires: eccodes-devel >= 2.31.0
 BuildRequires: %{smartmet_fmt_devel}
 BuildRequires: gcc-c++
 BuildRequires: gdal312-devel
@@ -58,7 +58,7 @@ Requires: %{smartmet_boost}-regex
 Requires: %{smartmet_boost}-system
 Requires: %{smartmet_boost}-thread
 Requires: bzip2-libs
-Requires: eccodes <= 2.31.1
+Requires: eccodes >= 2.31.0
 Requires: %{smartmet_fmt}
 Requires: gdal312-libs
 Requires: glibc

@@ -130,6 +130,7 @@ struct GribFilterOptions
   vector<FmiLevelType> itsAcceptOnlyLevelTypes;  // lista jossa ainoat hyväksyttävät level typet
   int itsGridInfoPrintCount = 0;
   vector<ParamChangeItem> itsParamChangeTable;
+  vector<Grib2FallbackParam> itsGrib2FallbackParams;  // for GRIB2 params eccodes cannot identify
   bool fCropParamsNotMentionedInTable = false;
   bool fDoAtlanticFix = false;  // 0->360 global data ==> -180->180
   bool fDoPacificFix = false;   // -180->180 global data ==> 0->360
@@ -1654,17 +1655,12 @@ void DoErrorReporting(const std::string& theBaseString,
   cerr << errStr << std::endl;
 }
 
-std::string GetParamName(grib_handle *theHandle)
+// Parameter name for the case eccodes does not know the name of the parameter
+std::string GetAlternativeParamName(grib_handle *theHandle)
 {
-  std::string name;
   std::string units;
-  bool ok1 = GetGribStringValue(theHandle, "parameter.name", name);
   bool ok2 = GetGribStringValue(theHandle, "parameter.units", units);
 
-  if (ok1 && ok2)
-    return (name + " [" + units + "]");
-
-  // Let's try other methods to obtain name
   std::string cfName;
   bool cfNameOk = GetGribStringValue(theHandle, "cfName", cfName);
   std::string shortName;
@@ -1766,12 +1762,68 @@ void PrintAllParamInfo_forDebugging(grib_handle *theHandle)
 
 namespace
 {
-NFmiDataIdent GetParam(grib_handle *theHandle, const NFmiProducer &theWantedProducer)
+// Find the grib.conf fallback identification for a GRIB2 message. GRIB1 messages
+// do not have the keys used and hence never match.
+const Grib2FallbackParam *FindGrib2FallbackParam(
+    grib_handle *theHandle, const vector<Grib2FallbackParam> &theFallbackParams)
+{
+  if (theFallbackParams.empty())
+    return nullptr;
+
+  long discipline = 0;
+  long category = 0;
+  long number = 0;
+  if (!GetGribLongValue(theHandle, "discipline", discipline) ||
+      !GetGribLongValue(theHandle, "parameterCategory", category) ||
+      !GetGribLongValue(theHandle, "parameterNumber", number))
+    return nullptr;
+
+  for (const auto &fallbackParam : theFallbackParams)
+  {
+    if (fallbackParam.itsDiscipline == discipline && fallbackParam.itsCategory == category &&
+        fallbackParam.itsNumber == number)
+      return &fallbackParam;
+  }
+  return nullptr;
+}
+
+NFmiDataIdent GetParam(grib_handle *theHandle,
+                       const NFmiProducer &theWantedProducer,
+                       const vector<Grib2FallbackParam> &theFallbackParams)
 {
   // TODO producerin voisi päätellä originating center numeroista
 
-  std::string usedParameterName = ::GetParamName(theHandle);
-  long usedParId = GetUsedParamId(theHandle);
+  long usedParId = 0;
+  const bool paramIdOk = GetGribLongValue(theHandle, "paramId", usedParId) && usedParId != 0;
+
+  std::string name;
+  std::string units;
+  const bool nameOk = GetGribStringValue(theHandle, "parameter.name", name) &&
+                      GetGribStringValue(theHandle, "parameter.units", units);
+
+  std::string usedParameterName;
+  const Grib2FallbackParam *fallbackParam = nullptr;
+
+  // Which GRIB2 messages eccodes can identify changes from one eccodes version to another.
+  // What eccodes leaves open is taken from grib.conf if possible, so that the result does
+  // not depend on the eccodes version. If eccodes has no id for the parameter, the name
+  // is taken from grib.conf too, even if eccodes has one.
+  if (!paramIdOk || !nameOk)
+    fallbackParam = FindGrib2FallbackParam(theHandle, theFallbackParams);
+
+  if (fallbackParam != nullptr)
+  {
+    if (!paramIdOk)
+      usedParId = fallbackParam->itsParamId;
+    usedParameterName = fallbackParam->itsName;
+  }
+  else
+  {
+    if (!paramIdOk)
+      usedParId = GetUsedParamId(theHandle);
+    usedParameterName = nameOk ? name + " [" + units + "]" : GetAlternativeParamName(theHandle);
+  }
+
   if (usedParameterName.empty())
     usedParameterName = NFmiStringTools::Convert(usedParId);
   return NFmiDataIdent(NFmiParam(usedParId,
@@ -3678,7 +3730,9 @@ void ReadGridRecordData(grib_handle *gribHandle,
 {
   // param ja level tiedot pitää hanskata ennen hilan koon määritystä
   //                PrintAllParamInfo_forDebugging(gribHandle);
-  tmpData->itsParam = GetParam(gribHandle, theGribFilterOptions.itsWantedSurfaceProducer);
+  tmpData->itsParam = GetParam(gribHandle,
+                               theGribFilterOptions.itsWantedSurfaceProducer,
+                               theGribFilterOptions.itsGrib2FallbackParams);
   tmpData->itsLevel = GetLevel(gribHandle);
   ExtractGridInfo(
       gribHandle, tmpData, theGribFilterOptions, theGribFilterOptions.itsGridSettings);
@@ -5237,7 +5291,10 @@ int GetOptions(NFmiCmdLine &theCmdLine, GribFilterOptions &theGribFilterOptions)
   if (theCmdLine.isOption('c'))
     paramChangeTableFileName = theCmdLine.OptionValue('c');
   if (!paramChangeTableFileName.empty())
+  {
     theGribFilterOptions.itsParamChangeTable = ReadGribConf(paramChangeTableFileName);
+    theGribFilterOptions.itsGrib2FallbackParams = ReadGrib2FallbackParams(paramChangeTableFileName);
+  }
 
   if (theCmdLine.isOption('g'))
     theGribFilterOptions.itsGridInfoPrintCount = Fmi::stoi(theCmdLine.OptionValue('g'));

@@ -227,6 +227,62 @@ void ParamChangeItem::Reset()
 // 129;57;PrecForm;;;;;2  // (final value 2 is the nearest interpolation)
 // ----------------------------------------------------------------------
 
+namespace
+{
+// Parse the "discipline.category.number" key of a GRIB2 fallback identification entry.
+// Returns false if the field is not such a key (plain parameter ids contain no dots).
+
+bool ParseGrib2Key(const std::string &theField, Grib2FallbackParam &theParamOut)
+{
+  long values[3] = {0, 0, 0};
+  int index = 0;
+  bool digits = false;
+  for (char ch : theField)
+  {
+    if (ch >= '0' && ch <= '9')
+    {
+      values[index] = 10 * values[index] + (ch - '0');
+      digits = true;
+    }
+    else if (ch == '.' && digits && index < 2)
+    {
+      ++index;
+      digits = false;
+    }
+    else if (ch != ' ' && ch != '\t')
+      return false;
+  }
+  if (index != 2 || !digits)
+    return false;
+
+  theParamOut.itsDiscipline = values[0];
+  theParamOut.itsCategory = values[1];
+  theParamOut.itsNumber = values[2];
+  return true;
+}
+
+// Read the given configuration file with comments removed
+
+std::vector<std::string> ReadGribConfLines(const std::string &theFileName)
+{
+  if (theFileName.empty())
+    throw std::runtime_error(
+        "InitParamChangeTable: empty ParamChangeTableFileName filename given.");
+
+  NFmiCommentStripper stripComments;
+  if (!stripComments.ReadAndStripFile(theFileName))
+    throw std::runtime_error(std::string("InitParamChangeTable: trouble reading file: ") +
+                             theFileName);
+
+  std::vector<std::string> lines;
+  std::stringstream in(stripComments.GetString());
+  std::string line;
+  while (std::getline(in, line))
+    lines.push_back(line);
+  return lines;
+}
+}  // namespace
+
 bool GetParamChangeItemFromString(const std::string &buffer,
                                   const std::string &theInitFileName,
                                   ParamChangeItem &theParamChangeItemOut)
@@ -234,6 +290,12 @@ bool GetParamChangeItemFromString(const std::string &buffer,
   std::vector<std::string> strVector = NFmiStringTools::Split(buffer, ";");
   if (strVector.size() <= 1)
     return false;  // skipataan tyhjät rivit
+
+  // GRIB2 fallback identification entries are not parameter changes,
+  // they are read with ReadGrib2FallbackParams
+  Grib2FallbackParam fallbackParam;
+  if (ParseGrib2Key(strVector[0], fallbackParam))
+    return false;
   if (strVector.size() < 3)
   {
     std::string errStr(
@@ -319,34 +381,45 @@ std::vector<ParamChangeItem> ReadGribConf(const std::string &theParamChangeTable
 {
   std::vector<ParamChangeItem> paramChangeTable;
 
-  if (theParamChangeTableFileName.empty())
-    throw std::runtime_error(
-        "InitParamChangeTable: empty ParamChangeTableFileName filename given.");
-
-  NFmiCommentStripper stripComments;
-  if (stripComments.ReadAndStripFile(theParamChangeTableFileName))
+  ParamChangeItem paramChangeItem;
+  for (const auto &line : ReadGribConfLines(theParamChangeTableFileName))
   {
-    std::stringstream in(stripComments.GetString());
-
-    const int maxBufferSize = 1024 + 1;  // kuinka pitkä yhden rivin maksimissaan oletetaan olevan
-    std::string buffer;
-    ParamChangeItem paramChangeItem;
-    for (bool more = true; more; more = in.good())
-    {
-      buffer.resize(maxBufferSize);
-      in.getline(&buffer[0], maxBufferSize);
-
-      size_t realSize = strlen(buffer.c_str());
-      buffer.resize(realSize);
-      if (::GetParamChangeItemFromString(buffer, theParamChangeTableFileName, paramChangeItem))
-      {
-        paramChangeTable.push_back(paramChangeItem);
-      }
-    }
+    if (::GetParamChangeItemFromString(line, theParamChangeTableFileName, paramChangeItem))
+      paramChangeTable.push_back(paramChangeItem);
   }
-  else
-    throw std::runtime_error(std::string("InitParamChangeTable: trouble reading file: ") +
-                             theParamChangeTableFileName);
 
   return paramChangeTable;
+}
+
+// ----------------------------------------------------------------------
+// Read the GRIB2 fallback identification entries of grib.conf:
+//
+// // discipline.category.number;paramId;name
+// 0.6.11;260107;Cloud base [m]
+//
+// All other lines are parameter changes read with ReadGribConf.
+// ----------------------------------------------------------------------
+
+std::vector<Grib2FallbackParam> ReadGrib2FallbackParams(const std::string &theGribConfFileName)
+{
+  std::vector<Grib2FallbackParam> fallbackParams;
+
+  for (const auto &line : ReadGribConfLines(theGribConfFileName))
+  {
+    std::vector<std::string> strVector = NFmiStringTools::Split(line, ";");
+    Grib2FallbackParam fallbackParam;
+    if (strVector.size() <= 1 || !ParseGrib2Key(strVector[0], fallbackParam))
+      continue;
+
+    if (strVector.size() != 3)
+      throw std::runtime_error(
+          "ReadGrib2FallbackParams - expected discipline.category.number;paramId;name on line\n" +
+          line + "\n in file: " + theGribConfFileName);
+
+    fallbackParam.itsParamId = Fmi::stol(strVector[1]);
+    fallbackParam.itsName = strVector[2];
+    fallbackParams.push_back(fallbackParam);
+  }
+
+  return fallbackParams;
 }

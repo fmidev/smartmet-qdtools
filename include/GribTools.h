@@ -54,6 +54,25 @@ bool GetParamChangeItemFromString(const std::string &buffer,
 
 std::vector<ParamChangeItem> ReadGribConf(const std::string &theParamChangeTableFileName);
 
+// GRIB2 fallback identification entry of grib.conf:
+//
+//   discipline.category.number;paramId;name
+//
+// The id and name eccodes assigns to a GRIB2 message depend on the eccodes version and on
+// local definition patches. These entries give the id and name to use for the messages
+// eccodes cannot identify, keyed by values stored in the message itself.
+
+struct Grib2FallbackParam
+{
+  long itsDiscipline = 0;
+  long itsCategory = 0;
+  long itsNumber = 0;
+  long itsParamId = 0;
+  std::string itsName;
+};
+
+std::vector<Grib2FallbackParam> ReadGrib2FallbackParams(const std::string &theGribConfFileName);
+
 #endif  //  GRIBTOOLS_H
 
 // ----------------------------------------------------------------------

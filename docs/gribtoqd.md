@@ -14,6 +14,8 @@ Before using gribtoqd user should know something about grib file structure. It i
     By default data is writen to stdout.
 * **-c paramChangeTableFile**  
     Mapping between grib parameter id and smartmet id are done in this configuration file (default /usr/share/smartmet/formats/grib.conf). It is also possible to do some scaling f.eg. unit conversions. File should contain semicolon separated values GribID;SmartMetID;Name;Base;Scale;LevelType;LevelValue F.eg. to take 2m temperature in kelvins from grib2 file and to change it to celcius add:  0;4;T;-273.15;1;103;2 If level type and value are not specified, conversion is done to every level that is found in the data. Note that in grib2 files parameter number is category + parameter. F.eg. Relative Humidity Cat 1 and Param 1 = 1001.
+
+    The grib parameter id and name come from eccodes, and they may change between eccodes versions. The file may therefore also contain GRIB2 fallback identification entries of the form discipline.category.number;GribID;Name, f.eg. 0.6.11;260107;Cloud base [m]. They are used for the GRIB2 messages eccodes cannot identify: GribID is used if eccodes gives no paramId, and Name if eccodes gives no paramId or no parameter name. The normal mappings are then applied to the resulting GribID.
 * **-p producerId,producerName**  
     Set querydata producer id and name f.eg. 240,ECMWF Surface
 * **-P** **<****projectionString****>**  

@@ -10,32 +10,9 @@ fi
 
 version_suffix=
 eccodes_version=$(codes_info -v)
-case $eccodes_version in
-    2.2*.*)
-        version_suffixes="2X"
-        ;;
-    2.30.*)
-        version_suffixes="30"
-        ;;
-    2.3[2-6].*)
-        version_suffixes="32"
-        ;;
-    2.37.*)
-        version_suffixes="37 32"
-        ;;
-    2.38.*)
-        version_suffixes="38 37 32"
-        ;;
-    2.39.*)
-        version_suffixes="39 38 37 32"
-        ;;
-    2.4[0-9].*|2.[5-9][0-9].*)
-        version_suffixes="44 39 38 37 32"
-        ;;
-esac
+version_suffixes=
 
 echo "eccodes version   : $eccodes_version"
-echo "version_suffixes  : $version_suffixes"
 
 errors=0
 

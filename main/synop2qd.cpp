@@ -3,26 +3,59 @@
 // löytyvät SYNOP-koodit tulkitaan ja niistä muodostetaan
 // querydata, missä on yhdistettynä kaikki tulkitut synop-havainnot.
 
-#include <fstream>
-
+#include <boost/algorithm/string.hpp>
+#include <macgyver/DateTime.h>
 #include <macgyver/TimeParser.h>
 #include <newbase/NFmiArea.h>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiDataIdent.h>
+#include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileString.h>
 #include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiGlobals.h>
 #include <newbase/NFmiGrid.h>
+#include <newbase/NFmiHPlaceDescriptor.h>
+#include <newbase/NFmiLocation.h>
+#include <newbase/NFmiLocationBag.h>
+#include <newbase/NFmiMetTime.h>
 #include <newbase/NFmiMilliSecondTimer.h>
+#include <newbase/NFmiParam.h>
+#include <newbase/NFmiParamBag.h>
+#include <newbase/NFmiParamDescriptor.h>
+#include <newbase/NFmiParameterName.h>
+#include <newbase/NFmiPoint.h>
+#include <newbase/NFmiProducer.h>
 #include <newbase/NFmiProducerName.h>
 #include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiQueryInfo.h>
+#include <newbase/NFmiStation.h>
+#include <newbase/NFmiStatus.h>
 #include <newbase/NFmiStreamQueryData.h>
+#include <newbase/NFmiString.h>
 #include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiTimeList.h>
+#include <newbase/NFmiTimePeriod.h>
 #include <newbase/NFmiTotalWind.h>
+#include <newbase/NFmiVPlaceDescriptor.h>
 #include <smarttools/NFmiAviationStationInfoSystem.h>
 #include <smarttools/NFmiSoundingFunctions.h>
-
-#include <boost/algorithm/string.hpp>
+#include <algorithm>
+#include <cctype>
+#include <cstddef>
+#include <exception>
+#include <fstream>
+#include <iostream>
+#include <list>
+#include <map>
+#include <memory>
+#include <set>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 using namespace std;
 

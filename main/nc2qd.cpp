@@ -4,11 +4,18 @@
 #include "FmiNetCdfQueryData.h"
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiFileString.h>
+#include <newbase/NFmiLevel.h>
+#include <newbase/NFmiLevelType.h>
 #include <newbase/NFmiMilliSecondTimer.h>
 #include <newbase/NFmiProducer.h>
+#include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiQueryInfo.h>
 #include <newbase/NFmiStreamQueryData.h>
+#include <newbase/NFmiString.h>
 #include <newbase/NFmiStringTools.h>
+#include <exception>
 #include <iostream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 

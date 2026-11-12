@@ -22,27 +22,57 @@ RJTT 242030Z 36010KT 6000 -RA FEW007 SCT010 BKN015 12/11 Q1008 RMK
 #pragma warning(disable : 4109 4068 4996)  // Disables many warnings that MSVC++ 7.1 generates
 #endif
 
-#include <fstream>
-#include <iostream>
-#include <map>
-#include <utility>
-
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
-
 #include <macgyver/FileSystem.h>
 #include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiDataIdent.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileString.h>
 #include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiGlobals.h>
+#include <newbase/NFmiHPlaceDescriptor.h>
+#include <newbase/NFmiLocationBag.h>
+#include <newbase/NFmiMetTime.h>
+#include <newbase/NFmiParam.h>
+#include <newbase/NFmiParamBag.h>
+#include <newbase/NFmiParamDescriptor.h>
+#include <newbase/NFmiParameterName.h>
+#include <newbase/NFmiProducer.h>
 #include <newbase/NFmiProducerName.h>
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiQueryInfo.h>
+#include <newbase/NFmiStation.h>
+#include <newbase/NFmiStatus.h>
 #include <newbase/NFmiStreamQueryData.h>
+#include <newbase/NFmiString.h>
+#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiTimeBag.h>
+#include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiTimeList.h>
+#include <newbase/NFmiTimePeriod.h>
+#include <newbase/NFmiVPlaceDescriptor.h>
 #include <smarttools/NFmiAviationStationInfoSystem.h>
+#include <cctype>
+#include <ctime>
+#include <exception>
+#include <filesystem>
+#include <fstream>
+#include <functional>
+#include <iostream>
+#include <list>
+#include <local.h>
+#include <map>
+#include <metar.h>
+#include <optional>
+#include <set>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 extern "C"
 {

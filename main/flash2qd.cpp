@@ -24,15 +24,36 @@
  */
 
 #include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiDataIdent.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiGlobals.h>
+#include <newbase/NFmiHPlaceDescriptor.h>
+#include <newbase/NFmiLocation.h>
+#include <newbase/NFmiLocationBag.h>
+#include <newbase/NFmiMetTime.h>
+#include <newbase/NFmiParam.h>
+#include <newbase/NFmiParamBag.h>
+#include <newbase/NFmiParamDescriptor.h>
+#include <newbase/NFmiParameterName.h>
+#include <newbase/NFmiProducer.h>
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiQueryInfo.h>
+#include <newbase/NFmiStatus.h>
 #include <newbase/NFmiStreamQueryData.h>
+#include <newbase/NFmiString.h>
 #include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiTimeList.h>
+#include <newbase/NFmiVPlaceDescriptor.h>
 #include <newbase/NFmiValueString.h>
-
+#include <exception>
 #include <fstream>
+#include <iostream>
+#include <memory>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace
 {

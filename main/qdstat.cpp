@@ -6,13 +6,24 @@
 #include <macgyver/DateTime.h>
 #include <macgyver/StringConversion.h>
 #include <macgyver/TimeParser.h>
+#include <newbase/NFmiDataIdent.h>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiGlobals.h>
+#include <newbase/NFmiLevel.h>
+#include <newbase/NFmiLocation.h>
 #include <newbase/NFmiMetTime.h>
+#include <newbase/NFmiParam.h>
 #include <newbase/NFmiParameterName.h>
 #include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiString.h>
+#include <algorithm>
 #include <cmath>
+#include <cstddef>
+#include <exception>
+#include <filesystem>
 #include <iomanip>
+#include <iostream>
 #include <limits>
 #include <list>
 #include <map>
@@ -20,7 +31,10 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <termios.h>
+#include <unistd.h>
 #include <unordered_map>
+#include <utility>
 
 #ifdef UNIX
 #include <sys/ioctl.h>

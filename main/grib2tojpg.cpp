@@ -8,27 +8,56 @@
 #endif
 
 #include <fmt/format.h>
-#include <cmath>
+#include <newbase/NFmiArea.h>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiAreaTools.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiCommentStripper.h>
+#include <newbase/NFmiDataIdent.h>
+#include <newbase/NFmiDataMatrix.h>
 #include <newbase/NFmiDataMatrixUtils.h>
+#include <newbase/NFmiGlobals.h>
 #include <newbase/NFmiGrid.h>
+#include <newbase/NFmiHPlaceDescriptor.h>
 #include <newbase/NFmiInterpolation.h>
+#include <newbase/NFmiLevel.h>
+#include <newbase/NFmiLevelBag.h>
+#include <newbase/NFmiLevelType.h>
+#include <newbase/NFmiMetTime.h>
+#include <newbase/NFmiParam.h>
+#include <newbase/NFmiParameterName.h>
+#include <newbase/NFmiPoint.h>
+#include <newbase/NFmiProducer.h>
 #include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiRect.h>
+#include <newbase/NFmiSaveBaseFactory.h>
 #include <newbase/NFmiSettings.h>
+#include <newbase/NFmiStatus.h>
 #include <newbase/NFmiStreamQueryData.h>
+#include <newbase/NFmiString.h>
 #include <newbase/NFmiStringTools.h>
 #include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiTotalWind.h>
+#include <newbase/NFmiVPlaceDescriptor.h>
 #include <newbase/NFmiValueString.h>
+#include <algorithm>
+#include <cmath>
 #include <cstdio>
+#include <cstdlib>
+#include <ctime>
+#include <exception>
 #include <functional>
 #include <grib_api.h>
+#include <iostream>
+#include <jmorecfg.h>
+#include <map>
+#include <memory>
 #include <set>
 #include <sstream>
 #include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 extern "C"
 {

@@ -32,13 +32,23 @@
 // outputTiedosto
 
 #include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiGlobals.h>
 #include <newbase/NFmiMilliSecondTimer.h>
+#include <newbase/NFmiParameterName.h>
+#include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiStatus.h>
 #include <newbase/NFmiStreamQueryData.h>
+#include <newbase/NFmiString.h>
 #include <newbase/NFmiStringTools.h>
 #include <newbase/NFmiValueString.h>
-
+#include <exception>
+#include <iostream>
+#include <memory>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 using namespace std;
 

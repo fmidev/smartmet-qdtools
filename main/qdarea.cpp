@@ -5,8 +5,10 @@
  */
 // ======================================================================
 
+#include <boost/accumulators/accumulators.hpp>
 #include <calculator/Acceptor.h>
 #include <calculator/AnalysisSources.h>
+#include <calculator/DefaultAcceptor.h>
 #include <calculator/GridForecaster.h>
 #include <calculator/HourPeriodGenerator.h>
 #include <calculator/IntervalPeriodGenerator.h>
@@ -14,30 +16,47 @@
 #include <calculator/ListedPeriodGenerator.h>
 #include <calculator/MaximumCalculator.h>
 #include <calculator/MinimumCalculator.h>
+#include <calculator/NullAcceptor.h>
 #include <calculator/NullPeriodGenerator.h>
 #include <calculator/RangeAcceptor.h>
 #include <calculator/RegularMaskSource.h>
 #include <calculator/Settings.h>
+#include <calculator/TextGenPosixTime.h>
 #include <calculator/WeatherArea.h>
 #include <calculator/WeatherFunction.h>
 #include <calculator/WeatherParameter.h>
 #include <calculator/WeatherPeriod.h>
+#include <calculator/WeatherPeriodGenerator.h>
 #include <calculator/WeatherResult.h>
-
+#include <calculator/WeatherSource.h>
 #include <newbase/NFmiArea.h>
 #include <newbase/NFmiCmdLine.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiGlobals.h>
+#include <newbase/NFmiMetTime.h>
+#include <newbase/NFmiPoint.h>
 #include <newbase/NFmiSettings.h>
-
-#include <memory>
-
+#include <newbase/NFmiStaticTime.h>
+#include <newbase/NFmiStatus.h>
+#include <newbase/NFmiString.h>
+#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiSvgPath.h>
+#include <algorithm>
 #include <cstdlib>  // putenv
-#include <ctime>    // tzset
+#include <cstring>
+#include <ctime>  // tzset
+#include <exception>
 #include <iomanip>
 #include <iostream>
+#include <iterator>
 #include <list>
 #include <map>
+#include <memory>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <utility>
 #include <vector>
 
 using namespace std;

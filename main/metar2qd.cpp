@@ -64,9 +64,7 @@ RJTT 242030Z 36010KT 6000 -RA FEW007 SCT010 BKN015 12/11 Q1008 RMK
 #include <functional>
 #include <iostream>
 #include <list>
-#include <local.h>
 #include <map>
-#include <metar.h>
 #include <optional>
 #include <set>
 #include <stdexcept>

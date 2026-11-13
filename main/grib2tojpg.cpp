@@ -49,7 +49,6 @@
 #include <functional>
 #include <grib_api.h>
 #include <iostream>
-#include <jmorecfg.h>
 #include <map>
 #include <memory>
 #include <set>

@@ -3,20 +3,48 @@
 // aikojen/parametrien/leveleiden mukaan ja tuottaa niistä yksi
 // yhteinen data tiedosto.
 
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <newbase/NFmiArea.h>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiDataIdent.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiGlobals.h>
 #include <newbase/NFmiGrid.h>
+#include <newbase/NFmiHPlaceDescriptor.h>
+#include <newbase/NFmiLevel.h>
+#include <newbase/NFmiLevelBag.h>
+#include <newbase/NFmiLevelType.h>
+#include <newbase/NFmiLocation.h>
+#include <newbase/NFmiLocationBag.h>
+#include <newbase/NFmiMetTime.h>
+#include <newbase/NFmiParam.h>
+#include <newbase/NFmiParamBag.h>
+#include <newbase/NFmiParamDescriptor.h>
+#include <newbase/NFmiParameterName.h>
+#include <newbase/NFmiProducer.h>
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiQueryInfo.h>
+#include <newbase/NFmiStation.h>
+#include <newbase/NFmiStatus.h>
+#include <newbase/NFmiString.h>
 #include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiTimeList.h>
 #include <newbase/NFmiTotalWind.h>
+#include <newbase/NFmiVPlaceDescriptor.h>
 #include <newbase/NFmiWeatherAndCloudiness.h>
+#include <exception>
 #include <iostream>
+#include <list>
+#include <memory>
+#include <set>
+#include <stdexcept>
+#include <string>
 #include <utility>
+#include <vector>
 
 using namespace std;
 

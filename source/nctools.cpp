@@ -7,11 +7,16 @@
 #include <macgyver/Join.h>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiStringTools.h>
+#include <cstring>
 #include <filesystem>
 #include <functional>
 #include <iostream>
 #include <list>
+#include <stdexcept>
 #include <string>
+#include <termios.h>
+#include <unistd.h>
+#include <utility>
 
 #ifdef UNIX
 #include <sys/ioctl.h>

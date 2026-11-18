@@ -3,6 +3,7 @@
 
 #include <macgyver/CsvReader.h>
 #include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiParameterName.h>
 #include <list>
 #include <map>
 #include <optional>

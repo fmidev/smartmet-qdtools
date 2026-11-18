@@ -52,15 +52,36 @@
 #include <macgyver/StringConversion.h>
 #include <macgyver/TimeParser.h>
 #include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiDataIdent.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiLocation.h>
+#include <newbase/NFmiMetTime.h>
+#include <newbase/NFmiParamBag.h>
+#include <newbase/NFmiParamDescriptor.h>
+#include <newbase/NFmiProducer.h>
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
 #include <newbase/NFmiQueryInfo.h>
+#include <newbase/NFmiStaticTime.h>
+#include <newbase/NFmiStatus.h>
+#include <newbase/NFmiString.h>
+#include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiTimeBag.h>
+#include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiTimeList.h>
-
+#include <newbase/NFmiTimePeriod.h>
+#include <cstddef>
 #include <fstream>
+#include <iostream>
+#include <iterator>
+#include <list>
+#include <map>
 #include <memory>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
 
 using namespace std;
 

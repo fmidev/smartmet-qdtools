@@ -55,24 +55,45 @@
 
 #include <boost/algorithm/string.hpp>
 #include <fmt/format.h>
+#include <newbase/NFmiArea.h>
 #include <newbase/NFmiAreaTools.h>
 #include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiDataIdent.h>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiGlobals.h>
 #include <newbase/NFmiGrid.h>
+#include <newbase/NFmiHPlaceDescriptor.h>
+#include <newbase/NFmiLevelBag.h>
+#include <newbase/NFmiLevelType.h>
+#include <newbase/NFmiMetTime.h>
+#include <newbase/NFmiParam.h>
+#include <newbase/NFmiParamBag.h>
+#include <newbase/NFmiParamDescriptor.h>
+#include <newbase/NFmiParameterName.h>
 #include <newbase/NFmiPoint.h>
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiStatus.h>
+#include <newbase/NFmiString.h>
 #include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiTime.h>
+#include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiTimeList.h>
+#include <newbase/NFmiVPlaceDescriptor.h>
 #include <cmath>
+#include <exception>
 #include <fstream>
 #include <iomanip>
+#include <iostream>
 #include <map>
 #include <memory>
+#include <set>
+#include <sstream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 using namespace std;

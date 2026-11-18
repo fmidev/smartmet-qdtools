@@ -31,22 +31,42 @@
  */
 // ======================================================================
 
-#include <macgyver/Join.h>
-#include <newbase/NFmiCmdLine.h>
-#include <newbase/NFmiEnumConverter.h>
-#include <newbase/NFmiFileSystem.h>
-#include <newbase/NFmiStreamQueryData.h>
-#include <newbase/NFmiStringTools.h>
-
-#include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
-
-#include <iostream>
-#include <stdexcept>
-#include <vector>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/lexical_cast.hpp>
 #include <dtl/dtl.hpp>
-
+#include <macgyver/Exception.h>
+#include <macgyver/Join.h>
+#include <macgyver/StringConversion.h>
+#include <newbase/NFmiArea.h>
+#include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiDataIdent.h>
+#include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiGlobals.h>
+#include <newbase/NFmiHPlaceDescriptor.h>
+#include <newbase/NFmiLevel.h>
+#include <newbase/NFmiMetTime.h>
+#include <newbase/NFmiParam.h>
+#include <newbase/NFmiParameterName.h>
+#include <newbase/NFmiStaticTime.h>
+#include <newbase/NFmiStatus.h>
+#include <newbase/NFmiStreamQueryData.h>
+#include <newbase/NFmiString.h>
+#include <newbase/NFmiStringTools.h>
+#include <algorithm>
+#include <cstdlib>
+#include <exception>
+#include <iostream>
+#include <map>
+#include <set>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 using namespace std;
 

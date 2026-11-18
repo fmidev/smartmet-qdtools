@@ -15,11 +15,25 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/program_options.hpp>
 #include <newbase/NFmiCommentStripper.h>
+#include <newbase/NFmiDataIdent.h>
 #include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiGlobals.h>
+#include <newbase/NFmiMetTime.h>
+#include <newbase/NFmiParamBag.h>
+#include <newbase/NFmiParameterName.h>
 #include <newbase/NFmiQueryData.h>
+#include <newbase/NFmiString.h>
 #include <newbase/NFmiValueString.h>
+#include <exception>
+#include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <sstream>
+#include <stdexcept>
+#include <string>
+#include <termios.h>
+#include <unistd.h>
+#include <vector>
 
 #ifdef UNIX
 #include <sys/ioctl.h>

@@ -116,24 +116,55 @@
 // ======================================================================
 
 #include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
 #include <macgyver/StringConversion.h>
+#include <newbase/NFmiArea.h>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiDataIdent.h>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiGlobals.h>
 #include <newbase/NFmiGrid.h>
+#include <newbase/NFmiHPlaceDescriptor.h>
+#include <newbase/NFmiLevel.h>
+#include <newbase/NFmiLevelBag.h>
+#include <newbase/NFmiLocation.h>
+#include <newbase/NFmiLocationBag.h>
+#include <newbase/NFmiMetTime.h>
 #include <newbase/NFmiMultiQueryInfo.h>
+#include <newbase/NFmiParam.h>
+#include <newbase/NFmiParamBag.h>
+#include <newbase/NFmiParamDescriptor.h>
+#include <newbase/NFmiParameterName.h>
+#include <newbase/NFmiPoint.h>
+#include <newbase/NFmiProducer.h>
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiQueryInfo.h>
+#include <newbase/NFmiRect.h>
+#include <newbase/NFmiStatus.h>
+#include <newbase/NFmiString.h>
 #include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiTime.h>
+#include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiTimeList.h>
+#include <newbase/NFmiVPlaceDescriptor.h>
+#include <newbase/NFmiVersion.h>
+#include <algorithm>
+#include <cmath>
 #include <ctime>
 #include <deque>
+#include <exception>
 #include <fstream>
+#include <iostream>
+#include <list>
+#include <memory>
 #include <set>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 using namespace std;
 using namespace boost;

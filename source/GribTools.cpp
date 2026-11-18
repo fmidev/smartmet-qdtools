@@ -7,9 +7,14 @@
 #include "GribTools.h"
 #include <macgyver/StringConversion.h>
 #include <newbase/NFmiCommentStripper.h>
+#include <newbase/NFmiGlobals.h>
+#include <newbase/NFmiLevel.h>
+#include <newbase/NFmiString.h>
+#include <newbase/NFmiStringTools.h>
 #include <cmath>
-
+#include <cstring>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 
 // ----------------------------------------------------------------------

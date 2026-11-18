@@ -107,22 +107,36 @@
  */
 // ======================================================================
 
+#include <gis/CoordinateMatrix.h>
 #include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiDataIdent.h>
+#include <newbase/NFmiDataMatrix.h>
 #include <newbase/NFmiEnumConverter.h>
 #include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileSystem.h>
+#include <newbase/NFmiHPlaceDescriptor.h>
+#include <newbase/NFmiMetTime.h>
+#include <newbase/NFmiParamBag.h>
+#include <newbase/NFmiParamDescriptor.h>
+#include <newbase/NFmiParameterName.h>
 #include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
 #include <newbase/NFmiSettings.h>
 #include <newbase/NFmiSmoother.h>
+#include <newbase/NFmiStatus.h>
+#include <newbase/NFmiString.h>
 #include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiTimeList.h>
-
-#include <memory>
-
+#include <newbase/NFmiVPlaceDescriptor.h>
+#include <exception>
 #include <fstream>
+#include <iostream>
+#include <memory>
+#include <set>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 using namespace std;
 

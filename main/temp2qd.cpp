@@ -3,20 +3,40 @@
 // löytyvät TEMP-luotaus koodit tulkitaan ja niistä muodostetaan
 // querydata, missä on yhdistettynä kaikki tulkitut luotaukset.
 
-#include <iostream>
-
 #include <newbase/NFmiArea.h>
 #include <newbase/NFmiAreaFactory.h>
 #include <newbase/NFmiCmdLine.h>
+#include <newbase/NFmiDataIdent.h>
+#include <newbase/NFmiFastQueryInfo.h>
 #include <newbase/NFmiFileString.h>
 #include <newbase/NFmiFileSystem.h>
 #include <newbase/NFmiGrid.h>
+#include <newbase/NFmiHPlaceDescriptor.h>
+#include <newbase/NFmiLocationBag.h>
+#include <newbase/NFmiMetTime.h>
+#include <newbase/NFmiParamBag.h>
+#include <newbase/NFmiParamDescriptor.h>
+#include <newbase/NFmiPoint.h>
+#include <newbase/NFmiProducer.h>
+#include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiQueryDataUtil.h>
+#include <newbase/NFmiQueryInfo.h>
+#include <newbase/NFmiStation.h>
+#include <newbase/NFmiStatus.h>
 #include <newbase/NFmiStreamQueryData.h>
+#include <newbase/NFmiString.h>
 #include <newbase/NFmiStringTools.h>
+#include <newbase/NFmiTimeDescriptor.h>
 #include <newbase/NFmiTimeList.h>
 #include <smarttools/NFmiAviationStationInfoSystem.h>
 #include <smarttools/NFmiTEMPCode.h>
+#include <exception>
+#include <iostream>
+#include <list>
+#include <set>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 using namespace std;
 

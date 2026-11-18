@@ -18,12 +18,26 @@
  */
 // ======================================================================
 
+#include <newbase/NFmiDataIdent.h>
+#include <newbase/NFmiEnumConverter.h>
+#include <newbase/NFmiFastQueryInfo.h>
+#include <newbase/NFmiGlobals.h>
+#include <newbase/NFmiLevel.h>
+#include <newbase/NFmiLevelType.h>
+#include <newbase/NFmiLocation.h>
+#include <newbase/NFmiMetTime.h>
+#include <newbase/NFmiPoint.h>
+#include <newbase/NFmiStaticTime.h>
+#include <newbase/NFmiStreamQueryData.h>
+#include <newbase/NFmiString.h>
+#include <cstring>
+#include <exception>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-
-#include <newbase/NFmiEnumConverter.h>
-#include <newbase/NFmiStreamQueryData.h>
+#include <string>
+#include <vector>
 
 using namespace std;
 

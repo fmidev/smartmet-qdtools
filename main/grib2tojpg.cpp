@@ -16,6 +16,7 @@
 #include <newbase/NFmiDataIdent.h>
 #include <newbase/NFmiDataMatrix.h>
 #include <newbase/NFmiDataMatrixUtils.h>
+#include <newbase/NFmiQueryData.h>
 #include <newbase/NFmiGlobals.h>
 #include <newbase/NFmiGrid.h>
 #include <newbase/NFmiHPlaceDescriptor.h>

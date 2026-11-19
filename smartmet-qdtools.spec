@@ -2,7 +2,7 @@
 %define RPMNAME smartmet-%{BINNAME}
 Summary: Command line tools for handling querydata
 Name: %{RPMNAME}
-Version: 26.11.13
+Version: 26.11.19
 Release: 1%{?dist}.fmi
 License: MIT
 Group: Development/Tools
@@ -26,8 +26,8 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot-%(%{__id_u} -n)
 
 BuildRequires: %{smartmet_boost}-devel
 BuildRequires: bzip2-devel
-BuildRequires: eccodes >= 2.31.0
-BuildRequires: eccodes-devel >= 2.31.0
+BuildRequires: eccodes >= 2.48.0
+BuildRequires: eccodes-devel >= 2.48.0
 BuildRequires: %{smartmet_fmt_devel}
 BuildRequires: gcc-c++
 BuildRequires: gdal312-devel
@@ -58,7 +58,7 @@ Requires: %{smartmet_boost}-regex
 Requires: %{smartmet_boost}-system
 Requires: %{smartmet_boost}-thread
 Requires: bzip2-libs
-Requires: eccodes >= 2.31.0
+Requires: eccodes >= 2.48.0
 Requires: %{smartmet_fmt}
 Requires: gdal312-libs
 Requires: glibc
@@ -210,6 +210,9 @@ make %{_smp_mflags}
 %{_mandir}/man1/*.1.gz
 
 %changelog
+* Thu Nov 19 2026 Andris Pavēnis <andris.pavenis@fmi.fi> - 26.11.19-1.fmi
+- Support newer versions of eccodes and require eccodes >= 2.48.0
+
 * Fri Nov 13 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.11.13-1.fmi
 - Added includes no longer provided indirectly by SmartMet library headers
 
